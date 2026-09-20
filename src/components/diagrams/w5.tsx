@@ -1,43 +1,5 @@
-import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
+import DiagramFrame, { colors, ink, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-
-export function AttentionQkv() {
-  const tokens = ["나는", "사과를", "먹었다"];
-  const weights = [0.08, 0.75, 0.17]; // attention from "먹었다" query
-  const tokX = [80, 220, 360];
-  const tokY = 40;
-  return (
-    <DiagramFrame
-      title="Self-Attention: Query가 Key들과의 유사도로 Value를 가중합"
-      viewBox="0 0 620 280"
-      caption="질의(먹었다)가 각 Key와 내적한 뒤 softmax(QKᵀ/√dk)로 가중치를 얻고, 그 가중치로 Value들을 합쳐 출력을 만든다."
-    >
-      <ArrowDefs />
-      {tokens.map((t, i) => (
-        <g key={i}>
-          <Box x={tokX[i] - 44} y={tokY} w={88} h={38} label={t} fill={i === 2 ? colors.violet : card2Bg} labelColor={i === 2 ? "#fff" : ink} />
-          <Label x={tokX[i]} y={tokY + 56} text={i === 2 ? "Query" : "Key / Value"} color={i === 2 ? colors.violet : inkSecondary} size={10.5} />
-        </g>
-      ))}
-      {tokens.map((_, i) => (
-        <Arrow
-          key={i}
-          x1={tokX[2]}
-          y1={tokY + 38 + 18}
-          x2={tokX[i]}
-          y2={150}
-          color={colors.orange}
-          strokeWidth={1 + weights[i] * 3}
-        />
-      ))}
-      {tokens.map((t, i) => (
-        <Label key={i} x={(tokX[2] + tokX[i]) / 2} y={150 - 8} text={`${(weights[i] * 100).toFixed(0)}%`} color={colors.orange} weight={700} size={11} />
-      ))}
-      <Box x={tokX[1] - 70} y={190} w={140} h={44} label="출력" sub="Σ 가중치 × Value" fill={colors.blue} labelColor="#fff" subColor="#eaf2fd" />
-      <Label x={310} y={260} text='softmax(Q·Kᵀ / √dk) · V   — "먹었다"는 "사과를"에 75% 주목' color={inkMuted} size={11} />
-    </DiagramFrame>
-  );
-}
 
 export function TransformerDecoderBlock() {
   const x = 210;

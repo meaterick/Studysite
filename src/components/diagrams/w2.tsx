@@ -1,63 +1,6 @@
 import DiagramFrame, { colors, inkSecondary, inkMuted, gridline, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Label } from "./primitives";
 
-export function BiasVarianceCurve() {
-  const width = 560;
-  const height = 300;
-  const padL = 50;
-  const padB = 40;
-  const padT = 16;
-  const padR = 20;
-  const xMax = 10;
-  const yMax = 10;
-  const px = (x: number) => padL + (x / xMax) * (width - padL - padR);
-  const py = (y: number) => height - padB - (y / yMax) * (height - padB - padT);
-
-  const bias2 = (x: number) => 8 * Math.exp(-0.55 * x) + 0.3;
-  const variance = (x: number) => 0.25 * Math.exp(0.42 * x) * 0.35 + 0.2;
-  const total = (x: number) => bias2(x) + variance(x) + 0.3;
-
-  const mkPath = (f: (x: number) => number) => {
-    const pts: string[] = [];
-    for (let x = 0; x <= xMax; x += 0.2) pts.push(`${px(x).toFixed(1)},${py(Math.min(f(x), yMax)).toFixed(1)}`);
-    return "M " + pts.join(" L ");
-  };
-
-  let minX = 0;
-  let minY = Infinity;
-  for (let x = 0; x <= xMax; x += 0.1) {
-    const t = total(x);
-    if (t < minY) {
-      minY = t;
-      minX = x;
-    }
-  }
-
-  return (
-    <DiagramFrame
-      title="편향-분산 트레이드오프"
-      viewBox={`0 0 ${width} ${height}`}
-      caption="모델 복잡도가 커질수록 편향²은 줄지만 분산이 늘어난다 — 총 오차가 최소가 되는 지점이 최적 복잡도다."
-    >
-      <ArrowDefs />
-      <line x1={padL} y1={height - padB} x2={width - padR} y2={height - padB} stroke={gridline} />
-      <line x1={padL} y1={padT} x2={padL} y2={height - padB} stroke={gridline} />
-      <Label x={width / 2} y={height - 10} text="모델 복잡도 →" color={inkMuted} />
-      <Label x={16} y={padT + 8} text="오차" color={inkMuted} anchor="start" />
-      <path d={mkPath(bias2)} fill="none" stroke={colors.blue} strokeWidth={2} />
-      <path d={mkPath(variance)} fill="none" stroke={colors.orange} strokeWidth={2} />
-      <path d={mkPath(total)} fill="none" stroke={colors.violet} strokeWidth={2.6} />
-      <line x1={px(minX)} y1={py(minY)} x2={px(minX)} y2={height - padB} stroke={gridline} strokeDasharray="3 3" />
-      <Label x={px(minX)} y={height - padB + 16} text="최적 복잡도" color={colors.violet} weight={700} />
-      <Label x={px(1.6)} y={py(bias2(1.6)) - 8} text="편향²" color={colors.blue} weight={700} anchor="start" />
-      <Label x={px(7.6)} y={py(variance(7.6)) - 8} text="분산" color={colors.orange} weight={700} anchor="start" />
-      <Label x={px(9)} y={py(total(9)) - 10} text="총 오차" color={colors.violet} weight={700} anchor="end" />
-      <Label x={px(0.4)} y={py(minY) - 60} text="과소적합" color={inkSecondary} anchor="start" />
-      <Label x={px(9)} y={py(minY) - 60} text="과적합" color={inkSecondary} anchor="end" />
-    </DiagramFrame>
-  );
-}
-
 export function ConfusionMatrix() {
   const cell = 110;
   const x0 = 170;

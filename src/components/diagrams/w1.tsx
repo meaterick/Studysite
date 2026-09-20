@@ -1,4 +1,4 @@
-import DiagramFrame, { colors, inkSecondary, inkMuted, gridline, card2Bg } from "./DiagramFrame";
+import DiagramFrame, { colors, inkSecondary, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
 
 export function AiHierarchy() {
@@ -85,65 +85,3 @@ export function MlLoop() {
   );
 }
 
-export function GradientDescentCurve() {
-  const width = 520;
-  const height = 300;
-  const padL = 50;
-  const padB = 34;
-  const padT = 16;
-  const padR = 20;
-  const xMin = -1;
-  const xMax = 7;
-  const yMax = 16;
-  const px = (w: number) => padL + ((w - xMin) / (xMax - xMin)) * (width - padL - padR);
-  const py = (L: number) => height - padB - (L / yMax) * (height - padB - padT);
-
-  const curvePts: [number, number][] = [];
-  for (let w = xMin; w <= xMax; w += 0.1) {
-    curvePts.push([w, (w - 3) ** 2]);
-  }
-  const path = curvePts.map(([w, L], i) => `${i === 0 ? "M" : "L"} ${px(w).toFixed(1)} ${py(L).toFixed(1)}`).join(" ");
-
-  // gradient descent steps, w0=0, lr=0.1
-  const steps: number[] = [0];
-  for (let i = 0; i < 7; i++) {
-    const w = steps[steps.length - 1];
-    const grad = 2 * (w - 3);
-    steps.push(w - 0.1 * grad);
-  }
-
-  return (
-    <DiagramFrame
-      title="경사하강법: L(w) = (w − 3)² 을 최소화"
-      viewBox={`0 0 ${width} ${height}`}
-      caption="η=0.1일 때 w=0에서 시작해 최솟값 w=3으로 수렴한다. 점 사이 간격이 점점 좁아지는 것에 주목."
-    >
-      <ArrowDefs />
-      {/* axes */}
-      <line x1={padL} y1={height - padB} x2={width - padR} y2={height - padB} stroke={gridline} strokeWidth={1} />
-      <line x1={padL} y1={padT} x2={padL} y2={height - padB} stroke={gridline} strokeWidth={1} />
-      <Label x={width / 2} y={height - 6} text="w" color={inkMuted} />
-      <Label x={16} y={padT + 8} text="L" color={inkMuted} anchor="start" />
-      {/* min marker */}
-      <line x1={px(3)} y1={py(0)} x2={px(3)} y2={padT} stroke={gridline} strokeDasharray="3 3" />
-      <Label x={px(3)} y={height - padB + 16} text="w*=3" color={inkSecondary} />
-      <path d={path} fill="none" stroke={colors.blue} strokeWidth={2.4} />
-      {steps.map((w, i) => (
-        <g key={i}>
-          <circle cx={px(w)} cy={py((w - 3) ** 2)} r={4} fill={colors.orange} />
-          {i < steps.length - 1 && (
-            <Arrow
-              x1={px(w)}
-              y1={py((w - 3) ** 2)}
-              x2={px(steps[i + 1])}
-              y2={py((steps[i + 1] - 3) ** 2)}
-              color={colors.orange}
-              strokeWidth={1.3}
-            />
-          )}
-        </g>
-      ))}
-      <Label x={px(0) - 4} y={py(9) - 10} text="w₀=0" color={colors.orange} anchor="start" weight={700} />
-    </DiagramFrame>
-  );
-}
