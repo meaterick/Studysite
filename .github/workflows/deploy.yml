@@ -112,6 +112,15 @@ jobs:
             echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
           fi
 
+      - name: Remove the old custom TLS proxy, if still registered
+        # One-time (but idempotent) cleanup for boxes that deployed the
+        # earlier nginx-free design: that PM2 app (aegis-tls-proxy) isn't
+        # declared in the current ecosystem.config.js, so plain `pm2
+        # delete` of that file can't touch it -- and if it's still alive
+        # it's squatting on :80/:443, which would stop nginx from binding
+        # them. No-ops cleanly once it's gone.
+        run: pm2 delete aegis-tls-proxy 2>/dev/null || true
+
       - name: Install and configure nginx
         # Idempotent: safe to run on every deploy. Installs nginx if it
         # isn't there yet, writes a plain-HTTP reverse-proxy site pointing
