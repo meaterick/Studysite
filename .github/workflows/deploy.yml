@@ -94,6 +94,17 @@ jobs:
             echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
           fi
 
+      - name: Stop any pre-existing nginx
+        # This box had nginx installed before the switch to
+        # proxy/tls-proxy.js. If it's still running it squats on :80 and
+        # aegis-tls-proxy fails to bind — best-effort, idempotent, never
+        # blocks the deploy (no-ops cleanly if nginx isn't installed).
+        run: |
+          if systemctl is-active --quiet nginx 2>/dev/null; then
+            sudo systemctl stop nginx || echo "::warning::Could not stop nginx — it may still be holding :80, which will block aegis-tls-proxy from binding it."
+          fi
+          sudo systemctl disable nginx >/dev/null 2>&1 || true
+
       - name: Start or reload with PM2
         # aegis-tls-proxy comes up here too — its :80 listener is what
         # certbot's webroot challenge below needs already running. If no
