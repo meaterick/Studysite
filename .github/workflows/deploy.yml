@@ -261,3 +261,10 @@ jobs:
           sleep 5
           curl -m 5 -s -o /dev/null -w "  http://127.0.0.1:3000/ (after isolated restart) -> %{http_code}\n" http://127.0.0.1:3000/ || echo "  http://127.0.0.1:3000/ -> (connection failed)"
           pm2 describe aegis-ai-study || true
+          echo "Sanity-check the deployed build directory:"
+          ls -la "$DEPLOY_DIR/.next/standalone" || true
+          ls -la "$DEPLOY_DIR/.next/standalone/.next" || true
+          echo "Direct 'node server.js' run, completely bypassing PM2, for an unambiguous error message:"
+          pm2 stop aegis-ai-study || true
+          (cd "$DEPLOY_DIR/.next/standalone" && PORT=3001 NODE_ENV=production HOSTNAME=127.0.0.1 timeout 6 node server.js 2>&1 | head -80) || true
+          pm2 restart aegis-ai-study || true
