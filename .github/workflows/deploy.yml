@@ -150,8 +150,19 @@ jobs:
         # aegis-tls-proxy comes up here too — its :80 listener is what
         # certbot's webroot challenge below needs already running. If no
         # certificate exists yet, the proxy simply skips :443 for now.
+        #
+        # Delete + start, not startOrReload: PM2's "reload" of an
+        # already-registered app reuses its originally-stored cwd/script/
+        # env and does not re-read those from the config file, even though
+        # a fresh apply of the file is exactly what startOrReload sounds
+        # like it should do. That left aegis-ai-study permanently pinned to
+        # the runner workspace path from whichever deploy first registered
+        # it (long before the move to DEPLOY_DIR), crash-looping on a path
+        # `git clean` had since deleted. Deleting first guarantees every
+        # deploy fully re-registers both apps from the current file.
         run: |
-          pm2 startOrReload "$DEPLOY_DIR/ecosystem.config.js"
+          pm2 delete "$DEPLOY_DIR/ecosystem.config.js" 2>/dev/null || true
+          pm2 start "$DEPLOY_DIR/ecosystem.config.js"
           pm2 save
 
       - name: Obtain/renew the HTTPS certificate (certbot, no nginx)
