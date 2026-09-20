@@ -196,3 +196,20 @@ jobs:
           else
             echo "::error::Could not register PM2 as a systemd service (${SERVICE}.service not found) -- the site will go down as soon as this job ends, because the runner kills any process left in its job tree. This needs passwordless sudo for the runner user; check the 'pm2 startup systemd' output above this step."
           fi
+
+      - name: Verify the site actually responds
+        # Runs from the OCI box itself, so it isn't affected by whatever
+        # network path a browser or CI runner elsewhere on the internet
+        # takes to get here. Never fails the job (informational) -- read
+        # the printed status codes to tell apart "proxy isn't listening",
+        # "OCI's firewall/Security List blocks inbound", and "DNS points
+        # somewhere else".
+        run: |
+          sleep 2
+          echo "Loopback (proxy listening on this box at all?):"
+          curl -m 5 -s -o /dev/null -w '  http://127.0.0.1/ -> %{http_code}\n' http://127.0.0.1/ || echo "  http://127.0.0.1/ -> (connection failed)"
+          echo "Public domain, from this box (DNS + routing + OCI firewall, minus the client's own network path):"
+          curl -m 5 -s -o /dev/null -w "  http://${DOMAIN}/ -> %{http_code}\n" "http://${DOMAIN}/" || echo "  http://${DOMAIN}/ -> (connection failed)"
+          echo "This box's own public IP (compare against the DNS record for ${DOMAIN}):"
+          curl -m 5 -s https://ifconfig.me || echo "(could not determine)"
+          echo
