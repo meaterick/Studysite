@@ -59,6 +59,17 @@ Buolamwini와 Gebru의 2018년 연구 "Gender Shades"는 상용 얼굴 인식 �
 
 [[diagram:nist-framework]]
 
+미국 국립표준기술연구소(NIST)가 2023년 내놓은 AI 위험관리 프레임워크(AI RMF)는 이 점검을 네 가지 동사로 정리한다 — Govern(거버넌스: 조직 전체의 원칙과 책임 구조를 세운다), Map(맥락 파악: 이 시스템이 어디에, 누구에게 쓰이는지 파악한다), Measure(측정: 위험을 실제로 수치화하고 검증한다), Manage(관리: 발견된 위험에 우선순위를 매겨 대응한다). 이 넷이 한 방향으로만 흘러가는 단계가 아니라 서로 맞물려 도는 순환 구조라는 점이 원 그림의 핵심이다 — Measure에서 새로운 위험을 발견하면 다시 Map으로 돌아가 맥락을 다시 짚어봐야 할 수도 있다.
+
+\`\`\`image
+src: /images/week8/nist-rmf.png
+alt: NIST AI 위험관리 프레임워크의 네 가지 핵심 기능을 원형으로 나타낸 다이어그램
+caption: Govern·Map·Measure·Manage 네 기능이 서로 맞물려 순환하는 구조. Govern은 나머지 셋을 감싸는 바탕이 된다.
+credit: N. Hanacek/NIST, Public Domain (미국 연방정부 저작물)
+width: 700
+height: 790
+\`\`\`
+
 \`\`\`formula
 EU AI Act 위험 등급: [금지] ▸ [고위험: 채용·신용·의료 등, 엄격 의무] ▸ [제한적: 투명성 고지] ▸ [최소]
 모델카드: 의도된 용도 / 비의도 용도 / 데이터 / 집단별 성능 / 한계 / 윤리적 고려
