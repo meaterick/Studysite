@@ -52,23 +52,36 @@ npm run start
 직접 설정하세요 (`.env.example` 참고). 이 폴더의 내용(퀴즈 정답, 채점
 기준 원본, 운영 노하우)은 스터디원에게 공개하지 않는 것이 원칙입니다.
 
-## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음
+## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음, nginx 없음
 
-`main`에 푸시하면 전부 자동입니다. **서버에 SSH로 들어가서 할 일이 없도록**
-설계했습니다:
+`main`에 푸시하면 전부 자동입니다. 도메인 **meaterickedu.kro.kr**이 이미 이
+서버 IP를 가리키고 있다는 전제로, **nginx 없이** HTTPS까지 이 워크플로우가
+끝까지 처리합니다:
 
 1. GitHub이 제공하는 `ubuntu-latest` 러너가 `npm ci && npm run build`를
    실행합니다 — OCI는 RAM이 1GB뿐이라 빌드는 항상 여기서만 합니다.
 2. `next.config.ts`의 `output: "standalone"`으로 만들어진 최소 실행 번들
    (pruned `node_modules` 포함, 약 50MB)을 아티팩트로 올립니다.
 3. OCI에 등록된 self-hosted 러너가 그 아티팩트를 받아 `.next/standalone`에
-   풀고, `.env.production.local`을 GitHub Secret에서 새로 만들고,
-   `pm2 startOrReload`로 (최초 실행이든 이후 배포든 동일하게) 기동합니다.
-   재부팅 후에도 PM2가 살아나도록 `pm2 startup`도 매 배포마다 시도합니다.
+   풀고, `.env.production.local`을 GitHub Secret에서 새로 만들고, PM2로
+   **두 개**의 프로세스를 올립니다:
+   - `aegis-ai-study` — Next.js 앱 본체, `127.0.0.1:3000`에서만 대기(외부
+     직접 노출 안 됨)
+   - `aegis-tls-proxy` — `proxy/tls-proxy.js`. 의존성 0개짜리 순수 Node
+     스크립트로 nginx 대신 다음을 전부 처리:
+     - `:80` — certbot ACME 인증 파일 서빙 + 나머지는 `https://`로 리다이렉트
+     - `:443` — Let's Encrypt 인증서로 TLS 종료 후 `aegis-ai-study`로 프록시
+4. 같은 워크플로우가 `certbot certonly --webroot`로 `meaterickedu.kro.kr`의
+   인증서를 발급/갱신합니다(이미 유효하면 조용히 스킵 — 매 배포마다 실행해도
+   안전). 갱신 시 인증서를 다시 불러오도록 `aegis-tls-proxy`를 재시작하는
+   certbot deploy-hook도 함께 등록합니다.
+5. 재부팅 후에도 PM2가 살아나도록 `pm2 startup`도 매 배포마다 시도합니다.
 
 즉 `git clone`도, `.env` 파일을 직접 만드는 것도, `npm install`도, 최초
-`pm2 start`도 전부 워크플로우가 처리합니다. 서버에는 Node.js·PM2·git과
-self-hosted runner 서비스만 떠 있으면 됩니다(이미 되어 있다고 하셨죠).
+`pm2 start`도, **nginx 설정도, `certbot` 실행도** 전부 워크플로우가
+처리합니다. 서버에는 Node.js·PM2·git·`sudo` 가능한 self-hosted runner
+서비스만 떠 있으면 됩니다(certbot이 없으면 `apt-get install`로 자동 설치를
+시도합니다 — 실패하면 배포 로그에 경고만 남고 나머지는 계속 진행됩니다).
 
 ### 딱 하나, GitHub에서 할 일 (서버 아님)
 
@@ -84,12 +97,19 @@ variables → Actions → New repository secret**:
 값이니 꼭 등록해 주세요. 나중에 값을 바꾸고 싶으면 이 화면에서 값만
 바꾸고 다시 푸시(또는 Actions 탭에서 워크플로우 재실행)하면 됩니다.
 
-### nginx (한 번만, 서버에서 — 이미 하셨다면 생략)
+도메인을 나중에 바꾸게 되면 `.github/workflows/deploy.yml` 맨 위의
+`env.DOMAIN` 한 줄만 고치면 됩니다.
 
-`deploy/nginx.conf.sample`을 참고해 `127.0.0.1:3000`으로 리버스 프록시하는
-site를 등록하세요. HTTPS는 `certbot --nginx`로 붙이는 것을 권장합니다. 이
-설정은 저장소 코드가 아니라 서버의 nginx 자체 설정이라 워크플로우가 대신 해줄
-수 없는 유일한 부분입니다.
+### 처음 배포될 때 확인할 것
+
+- DNS가 아직 전파 중이거나 OCI 보안 목록(Security List)에서 80/443 포트가
+  안 열려 있으면 certbot 인증서 발급이 실패합니다 — 이 경우 사이트는 아직
+  HTTPS 없이도 뜨지 않습니다(443이 아예 안 열리므로). Actions 로그에서
+  `Obtain/renew the HTTPS certificate` 단계의 경고 메시지를 확인하세요.
+  오라클 클라우드는 **보안 목록/NSG에서 80·443 인바운드를 따로 열어줘야**
+  하는 경우가 많습니다 — 콘솔에서 VCN → Security Lists 확인해 주세요.
+- `curl -I http://meaterickedu.kro.kr`로 301이 뜨는지, `curl -Ik
+  https://meaterickedu.kro.kr`로 200이 뜨는지로 빠르게 확인할 수 있습니다.
 
 ## 스택
 

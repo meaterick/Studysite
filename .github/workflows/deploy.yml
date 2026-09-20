@@ -4,9 +4,11 @@ name: Deploy to OCI
 # a GitHub-hosted runner does the build and ships the "standalone" output
 # (next.config.ts: output: "standalone") as an artifact. The self-hosted
 # runner registered on the OCI box only unpacks it, writes the runtime
-# secret from a GitHub Actions secret, and asks PM2 to run `node server.js`.
-# There is nothing to set up by hand on the server itself — the one-time
-# setup is a GitHub secret (see README).
+# secret from a GitHub Actions secret, makes sure a Let's Encrypt cert
+# exists for DOMAIN (via certbot), and asks PM2 to run the app + the
+# dependency-free TLS proxy in proxy/tls-proxy.js (no nginx). There is
+# nothing to set up by hand on the server — the one-time setup is a GitHub
+# secret (see README).
 on:
   push:
     branches: [main]
@@ -15,6 +17,9 @@ on:
 concurrency:
   group: deploy-production
   cancel-in-progress: false
+
+env:
+  DOMAIN: meaterickedu.kro.kr
 
 jobs:
   build:
@@ -81,14 +86,51 @@ jobs:
         env:
           OPERATOR_PASSCODE: ${{ secrets.OPERATOR_PASSCODE }}
         run: |
-          echo "OPERATOR_PASSCODE=${OPERATOR_PASSCODE}" > .env.production.local
+          {
+            echo "OPERATOR_PASSCODE=${OPERATOR_PASSCODE}"
+            echo "DOMAIN=${DOMAIN}"
+          } > .env.production.local
           if [ -z "${OPERATOR_PASSCODE}" ]; then
             echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
           fi
 
       - name: Start or reload with PM2
+        # aegis-tls-proxy comes up here too — its :80 listener is what
+        # certbot's webroot challenge below needs already running. If no
+        # certificate exists yet, the proxy simply skips :443 for now.
         run: |
           pm2 startOrReload ecosystem.config.js
+          pm2 save
+
+      - name: Obtain/renew the HTTPS certificate (certbot, no nginx)
+        # Idempotent: certbot no-ops if the existing cert still has >30 days
+        # left, so this is safe and cheap to run on every deploy. Uses the
+        # webroot plugin — it only writes challenge files, it never binds a
+        # port itself, so there's no conflict with aegis-tls-proxy already
+        # owning :80/:443.
+        run: |
+          if ! command -v certbot >/dev/null 2>&1; then
+            sudo apt-get update -y && sudo apt-get install -y certbot || \
+              echo "::warning::Could not install certbot automatically — HTTPS cert cannot be obtained. Install certbot once manually (apt-get install certbot) and re-run this workflow."
+          fi
+          if command -v certbot >/dev/null 2>&1; then
+            sudo certbot certonly --webroot \
+              -w "${{ github.workspace }}/certs/webroot" \
+              -d "${DOMAIN}" \
+              --non-interactive --agree-tos --register-unsafely-without-email \
+              --keep-until-expiring \
+              || echo "::warning::certbot did not succeed — check that ${DOMAIN} really points at this server's public IP and that :80 is reachable from the internet."
+
+            # So renewals (certbot's own systemd timer/cron, installed by
+            # the package) reload the new cert without any manual step.
+            sudo mkdir -p /etc/letsencrypt/renewal-hooks/deploy
+            printf '#!/bin/sh\npm2 restart aegis-tls-proxy\n' | sudo tee /etc/letsencrypt/renewal-hooks/deploy/aegis-tls-proxy.sh >/dev/null
+            sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/aegis-tls-proxy.sh
+          fi
+
+          # Pick up a certificate that may have just been issued for the
+          # first time (a no-op restart if it was already loaded).
+          pm2 restart aegis-tls-proxy || true
           pm2 save
 
       - name: Keep PM2 running across server reboots
