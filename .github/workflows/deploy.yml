@@ -144,12 +144,38 @@ jobs:
           pm2 restart aegis-tls-proxy || true
           pm2 save
 
-      - name: Keep PM2 running across server reboots
-        # Best-effort and non-interactive: only succeeds if the runner
-        # already has passwordless root/sudo. Never blocks the deploy.
+      - name: Hand PM2 off to systemd (survive this job ending)
+        # Self-hosted runners kill every process still in the job's
+        # process tree once the job completes ("Cleaning up orphan
+        # processes" in the run log) -- including a PM2 daemon started
+        # with `detached: true`. That was killing aegis-tls-proxy (and
+        # the PM2 daemon itself) a few seconds after every "successful"
+        # deploy, taking the whole site down.
+        #
+        # Fix: register PM2 as a systemd service (idempotent), then stop
+        # the daemon that's still attached to this job and let systemd
+        # spawn a fresh one from the saved process list. That daemon (and
+        # everything PM2 runs under it) then lives under systemd, outside
+        # the runner's job tree entirely, and survives both this job
+        # ending and server reboots.
         run: |
+          pm2 save
+
+          SERVICE="pm2-$(whoami)"
           STARTUP_LINE=$(pm2 startup systemd -u "$(whoami)" --hp "$HOME" 2>&1 | grep -E '^(sudo )?env PATH=' || true)
           if [ -n "$STARTUP_LINE" ]; then
-            eval "$STARTUP_LINE" || echo "::warning::Could not register PM2 as a boot service automatically (needs passwordless sudo). The app still redeploys fine on the next push either way."
+            eval "$STARTUP_LINE" || true
           fi
-          pm2 save
+
+          if systemctl list-unit-files "${SERVICE}.service" 2>/dev/null | grep -q "${SERVICE}.service"; then
+            pm2 kill
+            if sudo systemctl restart "$SERVICE"; then
+              sleep 3
+              pm2 list
+              echo "PM2 now runs under systemd (${SERVICE}.service) -- it will survive this job ending and server reboots."
+            else
+              echo "::error::'sudo systemctl restart ${SERVICE}' failed after 'pm2 kill' -- the site is down right now. Run that command by hand on the server to bring it back."
+            fi
+          else
+            echo "::error::Could not register PM2 as a systemd service (${SERVICE}.service not found) -- the site will go down as soon as this job ends, because the runner kills any process left in its job tree. This needs passwordless sudo for the runner user; check the 'pm2 startup systemd' output above this step."
+          fi
