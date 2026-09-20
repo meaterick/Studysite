@@ -1,0 +1,94 @@
+export const syllabus = {
+  title: "Aegis AI 스터디 — 「AI 기초부터 활용까지」 8주 커리큘럼",
+  designNote:
+    "설계 원칙: Stanford CS229/CS231n/CS224n/CS336, MIT 6.S191, Berkeley CS188, CMU 10-601 등 세계 최상위 대학 강의의 구조를 참고하되, \"이해 → 직접 구현 → 설명 → 활용\" 순환으로 재구성했습니다.",
+  goalsMd: `
+## 1. 스터디 목표 (수료 시 할 수 있는 것)
+
+1. AI/ML/DL/LLM의 수학적·구조적 원리를 백지에 그려가며 설명할 수 있다.
+2. 선형회귀·MLP·CNN·Self-Attention을 라이브러리 없이 직접 구현할 수 있다.
+3. LLM이 어떻게 학습되고(사전학습→SFT→정렬) 왜 환각을 일으키는지 설명할 수 있다.
+4. 프롬프트·RAG·에이전트로 실제 문제를 해결하고, 평가셋으로 성능을 측정할 수 있다.
+5. AI의 한계·편향·안전 문제를 비판적으로 논의할 수 있다.
+
+## 2. 학습 구조 한눈에 보기
+
+[[diagram:phase-roadmap]]
+
+[[diagram:difficulty-curve]]
+`,
+  rhythmMd: `
+## 4. 주간 리듬 (학습 사이클)
+
+\`\`\`formula
+월: 자료 배포 ─▶ 화~목: 개인 학습(읽기·영상·실습 6~8h) ─▶ 금: 백지공부 + 퀴즈 제출
+─▶ 토: 정규 세션(120분) ─▶ 일: 과제 제출 ─▶ 다음 월: 피드백 + 다음 자료
+\`\`\`
+
+### 정규 세션 120분 구성
+
+| 시간(분) | 내용 | 목적 |
+| --- | --- | --- |
+| 0~10 | 백지 워밍업(지난주 핵심 5분 쓰기) | 인출 연습 (간격 반복) |
+| 10~40 | 핵심 개념 리뷰 + 질문 (스터디원이 번갈아 설명) | 파인만 기법 |
+| 40~85 | 페어 실습 (한 명 코딩 / 한 명 설명) | 능동 학습 |
+| 85~105 | 토론 (오개념 사냥, 논문 Q&A) | 비판적 사고 |
+| 105~120 | Exit Ticket + 과제 안내 | 형성평가 |
+
+## 5. 학습 방법론: 백지공부법
+
+책을 덮고 빈 종이(또는 아래 &ldquo;백지공부&rdquo; 탭)에 **제목 → 핵심 키워드 → 구조도 → 수식/코드 스케치 → 내 말로 설명** 순으로 채웁니다. 막힌 곳이 곧 학습해야 할 곳입니다. 주차별 학습자료 페이지마다 「백지공부 시트」가 포함되어 있습니다.
+`,
+  evaluationMd: `
+## 6. 평가 체계 (총 100점)
+
+| 항목 | 비중 | 내용 |
+| --- | --- | --- |
+| 출석·세션 참여 | 15 | 8회, 무단결석 -3 |
+| 백지공부 시트 | 20 | 주 1회, 루브릭(정확성·구조화·자기언어) |
+| 주간 과제 | 35 | W1~W7, 코드 + 짧은 리포트 |
+| 퀴즈 | 10 | 주 5문항 (자기 점검 목적) |
+| 캡스톤 | 20 | W8 발표 + 재현 가능한 코드 |
+
+수료 기준: 70점 이상 + 캡스톤 제출.
+`,
+  resourcesMd: `
+## 7. 핵심 참고자료 (전체)
+
+### 교재
+
+- Goodfellow, Bengio, Courville. *Deep Learning* — deeplearningbook.org
+- Zhang et al. *Dive into Deep Learning (d2l.ai)* — 코드 포함 무료
+- Prince. *Understanding Deep Learning* — udlbook.github.io/udlbook
+- James et al. *An Introduction to Statistical Learning (ISLP)* — statlearning.com
+- Deisenroth et al. *Mathematics for Machine Learning* — mml-book.com
+- Russell & Norvig. *Artificial Intelligence: A Modern Approach* (전체 지형 참고)
+- Jurafsky & Martin. *Speech and Language Processing (3판 초안)* — web.stanford.edu/~jurafsky/slp3
+- Chip Huyen. *AI Engineering* (활용 단계)
+
+### 대학 강의
+
+- Stanford CS229 (ML), CS231n (Vision), CS224n (NLP), CS336 (LLM from Scratch)
+- MIT 6.S191 Intro to Deep Learning — introtodeeplearning.com
+- Andrej Karpathy, Neural Networks: Zero to Hero — karpathy.ai/zero-to-hero.html
+- 3Blue1Brown — Essence of Linear Algebra / Neural Networks 시리즈
+
+### 필수 논문 (주차별 배정)
+
+- W4 He et al., Deep Residual Learning (arXiv 1512.03385)
+- W5 Vaswani et al., Attention Is All You Need (arXiv 1706.03762)
+- W6 Kaplan et al., Scaling Laws (2001.08361); Hoffmann et al., Chinchilla (2203.15556); Ouyang et al., InstructGPT (2203.02155)
+- W7 Lewis et al., RAG (2005.11401); Yao et al., ReAct (2210.03629)
+- W8 Mitchell et al., Model Cards (1810.03993)
+
+:::warn 안내
+링크·판본은 변동될 수 있으므로 운영자가 학기 시작 전에 재확인합니다. (운영자 가이드 참조)
+:::
+
+## 8. 사전 준비물
+
+- Google 계정 (Colab 사용, 별도 설치 불필요)
+- Python 기초 문법(변수·함수·리스트)
+- 고등학교 수준 미적분·확률 (부족하면 W1에서 보충)
+`,
+};

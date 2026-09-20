@@ -1,0 +1,55 @@
+import type { Metadata } from "next";
+import { syllabus } from "@/content/syllabus";
+import { WEEKS } from "@/content/weeks";
+import Markdown from "@/components/MarkdownBlocks";
+import Link from "next/link";
+
+export const metadata: Metadata = { title: "커리큘럼" };
+
+export default function CurriculumPage() {
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+      <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">8주 커리큘럼</p>
+      <h1 className="mb-3 text-3xl font-black text-ink">{syllabus.title}</h1>
+      <p className="mb-10 text-sm italic text-ink-secondary">{syllabus.designNote}</p>
+
+      <Markdown source={syllabus.goalsMd} />
+
+      <h2 className="mb-4 mt-8 text-xl font-black text-ink">3. 주차별 개요</h2>
+      <div className="not-prose mb-10 overflow-x-auto rounded-lg border border-[var(--border-hairline)]">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-[var(--surface-card-2)]">
+              {["주", "주제", "핵심 개념", "난이도", ""].map((h) => (
+                <th key={h} className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {WEEKS.map((w) => (
+              <tr key={w.slug} className="even:bg-[var(--surface-card-2)]/40">
+                <td className="border-b border-[var(--border-hairline)] px-3 py-2 font-bold">{w.number}</td>
+                <td className="border-b border-[var(--border-hairline)] px-3 py-2">{w.title}</td>
+                <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">
+                  {w.keywords.join(" · ")}
+                </td>
+                <td className="border-b border-[var(--border-hairline)] px-3 py-2">{"★".repeat(w.difficulty)}</td>
+                <td className="border-b border-[var(--border-hairline)] px-3 py-2">
+                  <Link href={`/weeks/${w.slug}`} className="font-bold text-[var(--series-blue)]">
+                    보기 →
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <Markdown source={syllabus.rhythmMd} />
+      <Markdown source={syllabus.evaluationMd} />
+      <Markdown source={syllabus.resourcesMd} />
+    </div>
+  );
+}

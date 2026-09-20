@@ -1,0 +1,43 @@
+name: Deploy to OCI
+
+# Runs on the self-hosted runner registered on the OCI box (Node.js, PM2, nginx,
+# git already installed there per repo setup). Builds the Next.js app and asks
+# PM2 to (re)start it — nginx just keeps reverse-proxying to the same port.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain versions
+        run: |
+          node -v
+          npm -v
+          pm2 -v
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Warn if runtime env file is missing
+        run: |
+          if [ ! -f ".env.production.local" ]; then
+            echo "::warning::.env.production.local not found on the server — OPERATOR_PASSCODE will fall back to the built-in dev default. Copy .env.example to .env.production.local and set a real passcode."
+          fi
+
+      - name: Start or reload with PM2
+        run: |
+          pm2 startOrReload ecosystem.config.js --env production
+          pm2 save
