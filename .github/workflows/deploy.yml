@@ -126,6 +126,26 @@ jobs:
           fi
           sudo systemctl disable nginx >/dev/null 2>&1 || true
 
+      - name: Allow Node.js to bind :80/:443 as a non-root user
+        # aegis-tls-proxy runs as "ubuntu" (via PM2/systemd), not root, and
+        # Linux blocks binding ports <1024 without CAP_NET_BIND_SERVICE.
+        # proxy/tls-proxy.js only logs a bind error and keeps running
+        # (autorestart would just loop forever otherwise), so a missing
+        # capability here looks like "PM2 says online" while curl to :80
+        # gets connection refused. Grant the capability to the actual node
+        # binary; idempotent and safe to redo every deploy.
+        run: |
+          if ! command -v setcap >/dev/null 2>&1; then
+            sudo apt-get update -y && sudo apt-get install -y libcap2-bin || \
+              echo "::warning::Could not install libcap2-bin (for setcap) automatically."
+          fi
+          NODE_BIN="$(readlink -f "$(command -v node)")"
+          if command -v setcap >/dev/null 2>&1 && sudo setcap 'cap_net_bind_service=+ep' "$NODE_BIN"; then
+            getcap "$NODE_BIN"
+          else
+            echo "::error::Could not grant cap_net_bind_service to $NODE_BIN -- aegis-tls-proxy cannot bind :80/:443 as a non-root user without it."
+          fi
+
       - name: Start or reload with PM2
         # aegis-tls-proxy comes up here too — its :80 listener is what
         # certbot's webroot challenge below needs already running. If no
