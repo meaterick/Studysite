@@ -174,10 +174,13 @@ jobs:
         # reloads nginx itself -- nothing else to wire up. Renewal is
         # handled by the certbot package's own systemd timer.
         run: |
-          if ! command -v certbot >/dev/null 2>&1; then
-            sudo apt-get update -y && sudo apt-get install -y certbot python3-certbot-nginx || \
-              echo "::warning::Could not install certbot automatically — HTTPS cert cannot be obtained. Install certbot + python3-certbot-nginx once manually and re-run this workflow."
-          fi
+          # Always attempt this (apt-get is a fast no-op when already
+          # installed) rather than gating on `command -v certbot` -- a box
+          # that already had plain certbot installed (e.g. from an earlier
+          # design) would skip installing python3-certbot-nginx too,
+          # leaving certbot unable to find "the requested nginx plugin".
+          sudo apt-get update -y && sudo apt-get install -y certbot python3-certbot-nginx || \
+            echo "::warning::Could not install certbot/python3-certbot-nginx automatically — HTTPS cert cannot be obtained. Install them once manually and re-run this workflow."
           if command -v certbot >/dev/null 2>&1; then
             sudo certbot --nginx \
               -d "${DOMAIN}" \
