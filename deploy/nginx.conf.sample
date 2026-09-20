@@ -1,14 +1,20 @@
 # Reference nginx config — reverse proxy to the PM2-managed Next.js server.
-# Copy to e.g. /etc/nginx/sites-available/aegis-ai-study, adjust the domain,
+# Copy to e.g. /etc/nginx/sites-available/aegis-ai-study, adjust server_name,
 # symlink into sites-enabled, then `nginx -t && systemctl reload nginx`.
 # For HTTPS, run `certbot --nginx -d study.example.com` afterwards (certbot
 # rewrites this file to add the ssl_certificate directives).
+#
+# No domain yet? Use `server_name _;` and hit the site by the server's IP
+# over plain http:// for now — add a domain + certbot later, same file.
 
 server {
     listen 80;
     listen [::]:80;
     server_name study.example.com;
 
+    # Everything — including /_next/static/* — is proxied to the PM2-managed
+    # Next.js process. Its standalone server bundles its own static assets,
+    # so there's no separate file path here to keep in sync with the repo.
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -19,11 +25,5 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-    }
-
-    # Serve pre-built static assets straight from disk with long-lived caching.
-    location /_next/static/ {
-        alias /path/to/Studysite/.next/static/;
-        add_header Cache-Control "public, max-age=31536000, immutable";
     }
 }
