@@ -1,8 +1,10 @@
 name: Deploy to OCI
 
-# Runs on the self-hosted runner registered on the OCI box (Node.js, PM2, nginx,
-# git already installed there per repo setup). Builds the Next.js app and asks
-# PM2 to (re)start it — nginx just keeps reverse-proxying to the same port.
+# The OCI box only has 1GB RAM, so `npm ci` / `next build` never run there —
+# a GitHub-hosted runner does the build and ships the "standalone" output
+# (next.config.ts: output: "standalone") as an artifact. The self-hosted
+# runner registered on the OCI box only unpacks it and asks PM2 to run
+# `node server.js`.
 on:
   push:
     branches: [main]
@@ -13,17 +15,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    runs-on: self-hosted
+  build:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show toolchain versions
-        run: |
-          node -v
-          npm -v
-          pm2 -v
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -31,13 +33,49 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Warn if runtime env file is missing
+      - name: Assemble standalone bundle
+        run: |
+          mkdir -p .next/standalone/public
+          [ -d public ] && cp -r public/. .next/standalone/public/ || true
+          mkdir -p .next/standalone/.next/static
+          cp -r .next/static/. .next/standalone/.next/static/
+
+      - name: Upload standalone bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: standalone-build
+          path: .next/standalone
+          retention-days: 3
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Checkout (keep ecosystem.config.js etc. in sync)
+        uses: actions/checkout@v4
+        with:
+          # Do NOT clean: .env.production.local lives untracked in this same
+          # checkout directory and must survive across runs.
+          clean: false
+
+      - name: Show toolchain versions
+        run: |
+          node -v
+          pm2 -v
+
+      - name: Download standalone bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: standalone-build
+          path: .next/standalone
+
+      - name: Warn if runtime secrets file is missing
         run: |
           if [ ! -f ".env.production.local" ]; then
-            echo "::warning::.env.production.local not found on the server — OPERATOR_PASSCODE will fall back to the built-in dev default. Copy .env.example to .env.production.local and set a real passcode."
+            echo "::warning::.env.production.local not found on the server — OPERATOR_PASSCODE will fall back to the built-in dev default. Copy .env.example to .env.production.local and set a real passcode (see README)."
           fi
 
       - name: Start or reload with PM2
         run: |
-          pm2 startOrReload ecosystem.config.js --env production
+          pm2 startOrReload ecosystem.config.js
           pm2 save

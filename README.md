@@ -58,6 +58,14 @@ npm run start
 등록된 self-hosted runner를 사용해 `main` 브랜치에 푸시할 때마다 자동
 배포되도록 구성되어 있습니다 (`.github/workflows/deploy.yml`).
 
+**OCI 인스턴스가 RAM 1GB라서 서버에서는 절대 빌드하지 않습니다.** `npm ci` /
+`next build`는 GitHub이 제공하는 `ubuntu-latest` 러너에서 실행되고,
+`next.config.ts`의 `output: "standalone"`으로 만들어진 최소 실행 번들
+(`.next/standalone/` — pruned된 `node_modules` 포함, 약 50MB)을 아티팩트로
+올립니다. self-hosted 러너(OCI)는 그 번들을 내려받아 `node server.js`를
+PM2로 띄우기만 합니다 — `npm install`도, 빌드도 서버에서는 전혀 일어나지
+않습니다.
+
 ### 서버 최초 설정 (1회)
 
 ```bash
@@ -65,9 +73,14 @@ git clone <repo-url> /path/to/Studysite
 cd /path/to/Studysite
 cp .env.example .env.production.local
 vi .env.production.local          # OPERATOR_PASSCODE를 실제 값으로 변경
-npm ci
-npm run build
-pm2 start ecosystem.config.js --env production
+
+# 최초 1회는 GitHub Actions가 아직 아무것도 배포하지 않았으므로 로컬에서 한 번
+# 빌드해 .next/standalone을 채워 넣습니다 (RAM이 빠듯하면 --max-old-space-size로
+# 메모리를 제한하거나, GitHub Actions를 한 번 수동 실행(workflow_dispatch)해서
+# 얻은 결과를 기다려도 됩니다).
+npm ci && npm run build
+
+pm2 start ecosystem.config.js
 pm2 save
 pm2 startup                        # 서버 재부팅 시 PM2 자동 시작 (안내되는 명령 1회 실행)
 ```
@@ -78,10 +91,13 @@ HTTPS는 `certbot --nginx`로 붙이는 것을 권장합니다.
 
 ### 이후 배포
 
-`main` 브랜치에 머지/푸시되면 워크플로우가 self-hosted runner에서
-`npm ci && npm run build`를 실행하고 `pm2 startOrReload`로 무중단에
-가깝게 재기동합니다. `.env.production.local`은 저장소에 커밋되지 않으므로
-서버에 이미 있는 값을 그대로 사용합니다.
+`main`에 머지/푸시되면 ① GitHub의 `ubuntu-latest` 러너가 빌드해
+`.next/standalone` 아티팩트를 만들고, ② OCI의 self-hosted 러너가 그
+아티팩트를 내려받아 `.next/standalone`을 통째로 교체한 뒤
+`pm2 startOrReload`로 재기동합니다. `.env.production.local`은 저장소
+루트(= `.next/standalone` 바깥)에 두므로 매 배포마다 덮어써지지 않고
+그대로 유지됩니다. `ecosystem.config.js`가 이 파일을 직접 읽어 PM2 프로세스의
+환경변수로 주입합니다.
 
 ## 스택
 
