@@ -109,11 +109,12 @@ variables → Actions → New repository secret**:
 ### 처음 배포될 때 확인할 것
 
 - DNS가 아직 전파 중이거나 OCI 보안 목록(Security List)에서 80/443 포트가
-  안 열려 있으면 certbot 인증서 발급이 실패합니다 — 이 경우 사이트는 아직
-  HTTPS 없이도 뜨지 않습니다(443이 아예 안 열리므로). Actions 로그에서
-  `Obtain/renew the HTTPS certificate` 단계의 경고 메시지를 확인하세요.
-  오라클 클라우드는 **보안 목록/NSG에서 80·443 인바운드를 따로 열어줘야**
-  하는 경우가 많습니다 — 콘솔에서 VCN → Security Lists 확인해 주세요.
+  안 열려 있으면 certbot 인증서 발급이 실패합니다 — 이 경우에도 nginx는
+  계속 `:80`으로 평문 HTTP는 서빙합니다(리다이렉트만 아직 안 붙은 상태),
+  완전히 접속 불가가 되지는 않습니다. Actions 로그에서 `Obtain/renew the
+  HTTPS certificate` 단계의 경고 메시지를 확인하세요. 오라클 클라우드는
+  **보안 목록/NSG에서 80·443 인바운드를 따로 열어줘야** 하는 경우가
+  많습니다 — 콘솔에서 VCN → Security Lists 확인해 주세요.
 - `curl -I http://meaterickedu.kro.kr`로 301이 뜨는지, `curl -Ik
   https://meaterickedu.kro.kr`로 200이 뜨는지로 빠르게 확인할 수 있습니다.
 

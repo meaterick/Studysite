@@ -112,15 +112,6 @@ jobs:
             echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
           fi
 
-      - name: Remove the old custom TLS proxy, if still registered
-        # One-time (but idempotent) cleanup for boxes that deployed the
-        # earlier nginx-free design: that PM2 app (aegis-tls-proxy) isn't
-        # declared in the current ecosystem.config.js, so plain `pm2
-        # delete` of that file can't touch it -- and if it's still alive
-        # it's squatting on :80/:443, which would stop nginx from binding
-        # them. No-ops cleanly once it's gone.
-        run: pm2 delete aegis-tls-proxy 2>/dev/null || true
-
       - name: Install and configure nginx
         # Idempotent: safe to run on every deploy. Installs nginx if it
         # isn't there yet, writes a plain-HTTP reverse-proxy site pointing
@@ -225,9 +216,12 @@ jobs:
       - name: Verify the site actually responds
         # Runs from the OCI box itself, so it isn't affected by whatever
         # network path a browser or CI runner elsewhere on the internet
-        # takes to get here. Never fails the job (informational).
+        # takes to get here. Never fails the job (informational). The
+        # loopback checks send a Host header matching DOMAIN -- certbot's
+        # --redirect config only redirects/serves that host, so plain
+        # `curl http://127.0.0.1/` would just show its catch-all 404.
         run: |
           sleep 2
-          curl -m 5 -s -o /dev/null -w "http://127.0.0.1/ -> %{http_code}\n" http://127.0.0.1/ || echo "http://127.0.0.1/ -> (connection failed)"
-          curl -m 5 -sk -o /dev/null -w "https://127.0.0.1/ -> %{http_code}\n" https://127.0.0.1/ || echo "https://127.0.0.1/ -> (connection failed)"
+          curl -m 5 -s -H "Host: ${DOMAIN}" -o /dev/null -w "http://127.0.0.1/ -> %{http_code} (expect 301)\n" http://127.0.0.1/ || echo "http://127.0.0.1/ -> (connection failed)"
+          curl -m 5 -sk -H "Host: ${DOMAIN}" -o /dev/null -w "https://127.0.0.1/ -> %{http_code}\n" https://127.0.0.1/ || echo "https://127.0.0.1/ -> (connection failed)"
           curl -m 5 -s -o /dev/null -w "https://${DOMAIN}/ -> %{http_code}\n" "https://${DOMAIN}/" || echo "https://${DOMAIN}/ -> (connection failed -- check DNS / OCI Security List for 80+443, 'sudo certbot certificates', and 'pm2 logs aegis-ai-study')"
