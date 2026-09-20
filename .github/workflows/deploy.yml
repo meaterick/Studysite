@@ -250,3 +250,14 @@ jobs:
           pm2 describe aegis-ai-study || true
           echo "aegis-ai-study recent logs:"
           pm2 logs aegis-ai-study --lines 60 --nostream || true
+          echo "Memory on this box (1GB total -- checking for OOM pressure):"
+          free -h || true
+          echo "Recent kernel OOM-killer activity, if any:"
+          (sudo dmesg 2>/dev/null || dmesg 2>/dev/null) | grep -i -E 'killed process|out of memory' | tail -20 || echo "  (none found / dmesg not readable)"
+          echo "Flush stale pm2 logs so future checks show only current-run output:"
+          pm2 flush || true
+          echo "One isolated restart attempt, away from the rest of this deploy's CPU/memory load:"
+          pm2 restart aegis-ai-study || true
+          sleep 5
+          curl -m 5 -s -o /dev/null -w "  http://127.0.0.1:3000/ (after isolated restart) -> %{http_code}\n" http://127.0.0.1:3000/ || echo "  http://127.0.0.1:3000/ -> (connection failed)"
+          pm2 describe aegis-ai-study || true
