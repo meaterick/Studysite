@@ -233,3 +233,9 @@ jobs:
           echo "This box's own public IP (compare against the DNS record for ${DOMAIN}):"
           curl -m 5 -s https://ifconfig.me || echo "(could not determine)"
           echo
+          echo "aegis-ai-study upstream (127.0.0.1:${UPSTREAM_PORT:-3000} -- what the proxy actually forwards to):"
+          curl -m 5 -s -o /dev/null -w "  http://127.0.0.1:3000/ -> %{http_code}\n" http://127.0.0.1:3000/ || echo "  http://127.0.0.1:3000/ -> (connection failed)"
+          echo "pm2 describe aegis-ai-study:"
+          pm2 describe aegis-ai-study || true
+          echo "aegis-ai-study recent logs:"
+          pm2 logs aegis-ai-study --lines 60 --nostream || true
