@@ -52,11 +52,11 @@ npm run start
 직접 설정하세요 (`.env.example` 참고). 이 폴더의 내용(퀴즈 정답, 채점
 기준 원본, 운영 노하우)은 스터디원에게 공개하지 않는 것이 원칙입니다.
 
-## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음, nginx 없음
+## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음
 
 `main`에 푸시하면 전부 자동입니다. 도메인 **meaterickedu.kro.kr**이 이미 이
-서버 IP를 가리키고 있다는 전제로, **nginx 없이** HTTPS까지 이 워크플로우가
-끝까지 처리합니다:
+서버 IP를 가리키고 있다는 전제로, nginx + Let's Encrypt로 HTTPS까지 이
+워크플로우가 끝까지 처리합니다:
 
 1. GitHub이 제공하는 `ubuntu-latest` 러너가 `npm ci && npm run build`를
    실행합니다 — OCI는 RAM이 1GB뿐이라 빌드는 항상 여기서만 합니다.
@@ -64,30 +64,30 @@ npm run start
    (pruned `node_modules` 포함, 약 50MB)을 아티팩트로 올립니다.
 3. OCI에 등록된 self-hosted 러너가 그 아티팩트를 러너 자신의 작업 폴더가
    아니라 `/home/ubuntu/aegis-ai-study`(`DEPLOY_DIR`)에 풀고,
-   `.env.production.local`을 GitHub Secret에서 새로 만들고, PM2로 **두 개**의
-   프로세스를 올립니다. (러너는 job이 끝나면 자기 작업 폴더 안에 있는
-   프로세스를 전부 죽이기 때문에, 실제로 계속 떠 있어야 하는 서버 프로세스는
-   반드시 러너 작업 폴더 밖에서 돌려야 합니다.)
-   - `aegis-ai-study` — Next.js 앱 본체, `127.0.0.1:3000`에서만 대기(외부
-     직접 노출 안 됨)
-   - `aegis-tls-proxy` — `proxy/tls-proxy.js`. 의존성 0개짜리 순수 Node
-     스크립트로 nginx 대신 다음을 전부 처리:
-     - `:80` — certbot ACME 인증 파일 서빙 + 나머지는 `https://`로 리다이렉트
-     - `:443` — Let's Encrypt 인증서로 TLS 종료 후 `aegis-ai-study`로 프록시
-4. 같은 워크플로우가 `certbot certonly --webroot`로 `meaterickedu.kro.kr`의
-   인증서를 발급/갱신합니다(이미 유효하면 조용히 스킵 — 매 배포마다 실행해도
-   안전). 갱신 시 인증서를 다시 불러오도록 `aegis-tls-proxy`를 재시작하는
-   certbot deploy-hook도 함께 등록합니다.
-5. 마지막으로 PM2를 systemd 서비스(`pm2-ubuntu.service`)로 완전히 넘깁니다
+   `.env.production.local`을 GitHub Secret에서 새로 만들고, PM2로 Next.js 앱
+   (`aegis-ai-study`, `127.0.0.1:3000`에서만 대기)을 올립니다. (러너는 job이
+   끝나면 자기 작업 폴더 안에 있는 프로세스를 전부 죽이기 때문에, 실제로
+   계속 떠 있어야 하는 서버 프로세스는 반드시 러너 작업 폴더 밖에서
+   돌려야 합니다.)
+4. nginx를 설치(없으면)하고 `meaterickedu.kro.kr`을 `127.0.0.1:3000`으로
+   리버스 프록시하는 사이트 설정을 등록합니다.
+5. `certbot`의 공식 nginx 플러그인(`certbot --nginx`)으로 인증서를
+   발급/갱신하고, nginx 설정에 TLS와 http→https 리다이렉트까지 자동으로
+   추가합니다(이미 유효하면 조용히 스킵 — 매 배포마다 실행해도 안전).
+   갱신은 certbot 패키지가 설치하는 자체 systemd 타이머가 처리합니다 —
+   따로 등록할 deploy-hook이 없습니다.
+6. 마지막으로 PM2를 systemd 서비스(`pm2-ubuntu.service`)로 완전히 넘깁니다
    — `pm2 kill`로 러너 job에 붙어있던 데몬을 끄고 systemd가 저장된 프로세스
    목록을 다시 띄우게 합니다. 이렇게 해야 이 배포 job 자체가 끝나도, 재부팅이
-   되어도 계속 살아있습니다.
+   되어도 계속 살아있습니다. (nginx는 처음부터 systemd 서비스라 이 문제와
+   무관합니다.)
 
 즉 `git clone`도, `.env` 파일을 직접 만드는 것도, `npm install`도, 최초
-`pm2 start`도, **nginx 설정도, `certbot` 실행도** 전부 워크플로우가
+`pm2 start`도, **nginx 설치/설정도, `certbot` 실행도** 전부 워크플로우가
 처리합니다. 서버에는 Node.js·PM2·git·`sudo` 가능한 self-hosted runner
-서비스만 떠 있으면 됩니다(certbot이 없으면 `apt-get install`로 자동 설치를
-시도합니다 — 실패하면 배포 로그에 경고만 남고 나머지는 계속 진행됩니다).
+서비스만 떠 있으면 됩니다(nginx·certbot이 없으면 `apt-get install`로 자동
+설치를 시도합니다 — 실패하면 배포 로그에 경고만 남고 나머지는 계속
+진행됩니다).
 
 ### 딱 하나, GitHub에서 할 일 (서버 아님)
 

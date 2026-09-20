@@ -6,10 +6,13 @@ name: Deploy to OCI
 # runner registered on the OCI box unpacks it into DEPLOY_DIR (a stable
 # directory *outside* the runner's own workspace -- see the "Sync app
 # files" step for why that matters), writes the runtime secret from a
-# GitHub Actions secret, makes sure a Let's Encrypt cert exists for DOMAIN
-# (via certbot), and asks PM2 to run the app + the dependency-free TLS
-# proxy in proxy/tls-proxy.js (no nginx). There is nothing to set up by
-# hand on the server — the one-time setup is a GitHub secret (see README).
+# GitHub Actions secret, runs the app under PM2, and makes sure nginx +
+# a Let's Encrypt certificate are set up for DOMAIN. nginx (not a custom
+# proxy) terminates TLS and reverse-proxies to the app -- it's a proper
+# systemd service from the moment it's installed, has near-zero RAM
+# overhead, and certbot's official nginx plugin handles obtaining and
+# renewing the certificate end to end. There is nothing to set up by hand
+# on the server — the one-time setup is a GitHub secret (see README).
 on:
   push:
     branches: [main]
@@ -21,14 +24,13 @@ concurrency:
 
 env:
   DOMAIN: meaterickedu.kro.kr
-  # Everything the running app/proxy touches lives here, NOT inside the
-  # runner's own _work checkout. The self-hosted runner kills any process
-  # whose executable path is still inside its job workspace once the job
-  # ends ("Cleaning up orphan processes" in the run log) -- it did this to
-  # aegis-tls-proxy on every deploy, even after handing PM2 off to
-  # systemd, because the running proxy/app files were served straight out
-  # of the checkout. Running them from a directory the runner doesn't own
-  # sidesteps that entirely.
+  # Everything the running app touches lives here, NOT inside the runner's
+  # own _work checkout. The self-hosted runner kills any process whose
+  # executable path is still inside its job workspace once the job ends
+  # ("Cleaning up orphan processes" in the run log) -- running from a
+  # directory the runner doesn't own sidesteps that entirely. (nginx
+  # itself isn't affected either way -- it's a systemd service, never part
+  # of the runner's process tree.)
   DEPLOY_DIR: /home/ubuntu/aegis-ai-study
 
 jobs:
@@ -65,10 +67,7 @@ jobs:
           retention-days: 3
           # upload-artifact v4 drops dotfiles/dot-directories by default --
           # silently excluding .next/standalone/.next itself (the compiled
-          # server output + the static assets just copied in above). That
-          # left every deploy shipping a standalone bundle with no .next
-          # directory at all, so the app crash-looped forever with "Could
-          # not find a production build in the './.next' directory".
+          # server output + the static assets just copied in above).
           include-hidden-files: true
 
   deploy:
@@ -84,15 +83,9 @@ jobs:
           pm2 -v
 
       - name: Sync app files into a stable directory outside the runner workspace
-        # ecosystem.config.js and proxy/ are the only source files the
-        # running processes need -- copy the current versions in, so this
-        # stays in sync with the repo on every deploy without ever running
-        # anything from inside $GITHUB_WORKSPACE.
         run: |
           mkdir -p "$DEPLOY_DIR"
           cp ecosystem.config.js "$DEPLOY_DIR/ecosystem.config.js"
-          rm -rf "$DEPLOY_DIR/proxy"
-          cp -r proxy "$DEPLOY_DIR/proxy"
 
       - name: Clear previous build
         run: rm -rf "$DEPLOY_DIR/.next"
@@ -114,96 +107,77 @@ jobs:
         env:
           OPERATOR_PASSCODE: ${{ secrets.OPERATOR_PASSCODE }}
         run: |
-          {
-            echo "OPERATOR_PASSCODE=${OPERATOR_PASSCODE}"
-            echo "DOMAIN=${DOMAIN}"
-          } > "$DEPLOY_DIR/.env.production.local"
+          echo "OPERATOR_PASSCODE=${OPERATOR_PASSCODE}" > "$DEPLOY_DIR/.env.production.local"
           if [ -z "${OPERATOR_PASSCODE}" ]; then
             echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
           fi
 
-      - name: Stop any pre-existing nginx
-        # This box had nginx installed before the switch to
-        # proxy/tls-proxy.js. If it's still running it squats on :80 and
-        # aegis-tls-proxy fails to bind — best-effort, idempotent, never
-        # blocks the deploy (no-ops cleanly if nginx isn't installed).
+      - name: Install and configure nginx
+        # Idempotent: safe to run on every deploy. Installs nginx if it
+        # isn't there yet, writes a plain-HTTP reverse-proxy site pointing
+        # at the app, and disables the stock default site so it can't
+        # collide with ours.
         run: |
-          if systemctl is-active --quiet nginx 2>/dev/null; then
-            sudo systemctl stop nginx || echo "::warning::Could not stop nginx — it may still be holding :80, which will block aegis-tls-proxy from binding it."
-          fi
-          sudo systemctl disable nginx >/dev/null 2>&1 || true
-
-      - name: Allow Node.js to bind :80/:443 as a non-root user
-        # aegis-tls-proxy runs as "ubuntu" (via PM2/systemd), not root, and
-        # Linux blocks binding ports <1024 without CAP_NET_BIND_SERVICE.
-        # proxy/tls-proxy.js only logs a bind error and keeps running
-        # (autorestart would just loop forever otherwise), so a missing
-        # capability here looks like "PM2 says online" while curl to :80
-        # gets connection refused. Grant the capability to the actual node
-        # binary; idempotent and safe to redo every deploy.
-        run: |
-          if ! command -v setcap >/dev/null 2>&1; then
-            sudo apt-get update -y && sudo apt-get install -y libcap2-bin || \
-              echo "::warning::Could not install libcap2-bin (for setcap) automatically."
-          fi
-          NODE_BIN="$(readlink -f "$(command -v node)")"
-          if command -v setcap >/dev/null 2>&1 && sudo setcap 'cap_net_bind_service=+ep' "$NODE_BIN"; then
-            getcap "$NODE_BIN"
-          else
-            echo "::error::Could not grant cap_net_bind_service to $NODE_BIN -- aegis-tls-proxy cannot bind :80/:443 as a non-root user without it."
+          if ! command -v nginx >/dev/null 2>&1; then
+            sudo apt-get update -y && sudo apt-get install -y nginx
           fi
 
-      - name: Start or reload with PM2
-        # aegis-tls-proxy comes up here too — its :80 listener is what
-        # certbot's webroot challenge below needs already running. If no
-        # certificate exists yet, the proxy simply skips :443 for now.
-        #
+          cat <<NGINX_CONF | sudo tee /etc/nginx/sites-available/aegis-ai-study.conf >/dev/null
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name ${DOMAIN};
+
+              location / {
+                  proxy_pass http://127.0.0.1:3000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade \$http_upgrade;
+                  proxy_set_header Connection "upgrade";
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+              }
+          }
+          NGINX_CONF
+
+          sudo ln -sf /etc/nginx/sites-available/aegis-ai-study.conf /etc/nginx/sites-enabled/aegis-ai-study.conf
+          sudo rm -f /etc/nginx/sites-enabled/default
+          sudo nginx -t
+          sudo systemctl enable --now nginx
+          sudo systemctl reload nginx
+
+      - name: Start or reload the app with PM2
         # Delete + start, not startOrReload: PM2's "reload" of an
         # already-registered app reuses its originally-stored cwd/script/
-        # env and does not re-read those from the config file, even though
-        # a fresh apply of the file is exactly what startOrReload sounds
-        # like it should do. That left aegis-ai-study permanently pinned to
-        # the runner workspace path from whichever deploy first registered
-        # it (long before the move to DEPLOY_DIR), crash-looping on a path
-        # `git clean` had since deleted. Deleting first guarantees every
-        # deploy fully re-registers both apps from the current file.
+        # env and does not re-read those from the config file. Deleting
+        # first guarantees every deploy fully re-registers the app from
+        # the current file.
         run: |
           pm2 delete "$DEPLOY_DIR/ecosystem.config.js" 2>/dev/null || true
           pm2 start "$DEPLOY_DIR/ecosystem.config.js"
           pm2 save
 
-      - name: Obtain/renew the HTTPS certificate (certbot, no nginx)
+      - name: Obtain/renew the HTTPS certificate (certbot's nginx plugin)
         # Idempotent: certbot no-ops if the existing cert still has >30 days
-        # left, so this is safe and cheap to run on every deploy. Uses the
-        # webroot plugin — it only writes challenge files, it never binds a
-        # port itself, so there's no conflict with aegis-tls-proxy already
-        # owning :80/:443.
+        # left. The nginx plugin edits the site config in place to add the
+        # ssl_certificate directives and the http->https redirect, and
+        # reloads nginx itself -- nothing else to wire up. Renewal is
+        # handled by the certbot package's own systemd timer.
         run: |
           if ! command -v certbot >/dev/null 2>&1; then
-            sudo apt-get update -y && sudo apt-get install -y certbot || \
-              echo "::warning::Could not install certbot automatically — HTTPS cert cannot be obtained. Install certbot once manually (apt-get install certbot) and re-run this workflow."
+            sudo apt-get update -y && sudo apt-get install -y certbot python3-certbot-nginx || \
+              echo "::warning::Could not install certbot automatically — HTTPS cert cannot be obtained. Install certbot + python3-certbot-nginx once manually and re-run this workflow."
           fi
           if command -v certbot >/dev/null 2>&1; then
-            sudo certbot certonly --webroot \
-              -w "$DEPLOY_DIR/certs/webroot" \
+            sudo certbot --nginx \
               -d "${DOMAIN}" \
               --non-interactive --agree-tos --register-unsafely-without-email \
-              --keep-until-expiring \
+              --redirect --keep-until-expiring \
               || echo "::warning::certbot did not succeed — check that ${DOMAIN} really points at this server's public IP and that :80 is reachable from the internet."
-
-            # So renewals (certbot's own systemd timer/cron, installed by
-            # the package) reload the new cert without any manual step.
-            sudo mkdir -p /etc/letsencrypt/renewal-hooks/deploy
-            printf '#!/bin/sh\npm2 restart aegis-tls-proxy\n' | sudo tee /etc/letsencrypt/renewal-hooks/deploy/aegis-tls-proxy.sh >/dev/null
-            sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/aegis-tls-proxy.sh
           fi
 
-          # Pick up a certificate that may have just been issued for the
-          # first time (a no-op restart if it was already loaded).
-          pm2 restart aegis-tls-proxy || true
-          pm2 save
-
-      - name: Hand PM2 off to systemd (survive this job ending)
+      - name: Keep PM2 running across this job ending and server reboots
         # Self-hosted runners kill every process still in the job's
         # process tree once the job completes ("Cleaning up orphan
         # processes" in the run log) -- including a PM2 daemon started
@@ -212,7 +186,8 @@ jobs:
         # job and let systemd spawn a fresh one from the saved process
         # list. Combined with running everything out of DEPLOY_DIR above
         # (not $GITHUB_WORKSPACE), this survives both this job ending and
-        # server reboots.
+        # server reboots. (nginx needs none of this -- it's already a
+        # systemd service.)
         run: |
           pm2 save
 
@@ -238,40 +213,9 @@ jobs:
       - name: Verify the site actually responds
         # Runs from the OCI box itself, so it isn't affected by whatever
         # network path a browser or CI runner elsewhere on the internet
-        # takes to get here. Never fails the job (informational) -- read
-        # the printed status codes to tell apart "proxy isn't listening",
-        # "OCI's firewall/Security List blocks inbound", and "DNS points
-        # somewhere else".
+        # takes to get here. Never fails the job (informational).
         run: |
           sleep 2
-          echo "Loopback (proxy listening on this box at all?):"
-          curl -m 5 -s -o /dev/null -w '  http://127.0.0.1/ -> %{http_code}\n' http://127.0.0.1/ || echo "  http://127.0.0.1/ -> (connection failed)"
-          echo "Public domain, from this box (DNS + routing + OCI firewall, minus the client's own network path):"
-          curl -m 5 -s -o /dev/null -w "  http://${DOMAIN}/ -> %{http_code}\n" "http://${DOMAIN}/" || echo "  http://${DOMAIN}/ -> (connection failed)"
-          echo "This box's own public IP (compare against the DNS record for ${DOMAIN}):"
-          curl -m 5 -s https://ifconfig.me || echo "(could not determine)"
-          echo
-          echo "aegis-ai-study upstream (127.0.0.1:${UPSTREAM_PORT:-3000} -- what the proxy actually forwards to):"
-          curl -m 5 -s -o /dev/null -w "  http://127.0.0.1:3000/ -> %{http_code}\n" http://127.0.0.1:3000/ || echo "  http://127.0.0.1:3000/ -> (connection failed)"
-          echo "pm2 describe aegis-ai-study:"
-          pm2 describe aegis-ai-study || true
-          echo "aegis-ai-study recent logs:"
-          pm2 logs aegis-ai-study --lines 60 --nostream || true
-          echo "Memory on this box (1GB total -- checking for OOM pressure):"
-          free -h || true
-          echo "Recent kernel OOM-killer activity, if any:"
-          (sudo dmesg 2>/dev/null || dmesg 2>/dev/null) | grep -i -E 'killed process|out of memory' | tail -20 || echo "  (none found / dmesg not readable)"
-          echo "Flush stale pm2 logs so future checks show only current-run output:"
-          pm2 flush || true
-          echo "One isolated restart attempt, away from the rest of this deploy's CPU/memory load:"
-          pm2 restart aegis-ai-study || true
-          sleep 5
-          curl -m 5 -s -o /dev/null -w "  http://127.0.0.1:3000/ (after isolated restart) -> %{http_code}\n" http://127.0.0.1:3000/ || echo "  http://127.0.0.1:3000/ -> (connection failed)"
-          pm2 describe aegis-ai-study || true
-          echo "Sanity-check the deployed build directory:"
-          ls -la "$DEPLOY_DIR/.next/standalone" || true
-          ls -la "$DEPLOY_DIR/.next/standalone/.next" || true
-          echo "Direct 'node server.js' run, completely bypassing PM2, for an unambiguous error message:"
-          pm2 stop aegis-ai-study || true
-          (cd "$DEPLOY_DIR/.next/standalone" && PORT=3001 NODE_ENV=production HOSTNAME=127.0.0.1 timeout 6 node server.js 2>&1 | head -80) || true
-          pm2 restart aegis-ai-study || true
+          curl -m 5 -s -o /dev/null -w "http://127.0.0.1/ -> %{http_code}\n" http://127.0.0.1/ || echo "http://127.0.0.1/ -> (connection failed)"
+          curl -m 5 -sk -o /dev/null -w "https://127.0.0.1/ -> %{http_code}\n" https://127.0.0.1/ || echo "https://127.0.0.1/ -> (connection failed)"
+          curl -m 5 -s -o /dev/null -w "https://${DOMAIN}/ -> %{http_code}\n" "https://${DOMAIN}/" || echo "https://${DOMAIN}/ -> (connection failed -- check DNS / OCI Security List for 80+443, 'sudo certbot certificates', and 'pm2 logs aegis-ai-study')"

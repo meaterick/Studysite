@@ -24,9 +24,6 @@
 .DS_Store
 *.pem
 
-# certbot ACME webroot (created at runtime by proxy/tls-proxy.js on the server)
-/certs/
-
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -12,10 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Plain Node/CommonJS scripts run directly (PM2 config, TLS proxy),
-    // not app source.
+    // Plain Node/CommonJS script run directly (PM2 config), not app source.
     "ecosystem.config.js",
-    "proxy/**",
   ]),
 ]);
 
