@@ -56,8 +56,20 @@ function lineCommentChar(lang: string): string | undefined {
 
 const TOKEN_RE = /(#.*$)|(\/\/.*$)|('''[\s\S]*?'''|"""[\s\S]*?""")|('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*")|(@\w+)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)(?=\s*\()|([A-Za-z_]\w*)|(\s+)|(.)/g;
 
+// 콘텐츠(code)는 빌드에 포함된 상수라 매 요청마다 다시 토큰화할 필요가 없다.
+const highlightCache = new Map<string, Token[][]>();
+
 /** 한 언어 전체 코드를 줄 단위 토큰 배열로 변환합니다. */
 export function highlightCode(code: string, lang?: string): Token[][] {
+  const cacheKey = `${lang ?? ""}\u0000${code}`;
+  const cached = highlightCache.get(cacheKey);
+  if (cached) return cached;
+  const result = highlightCodeUncached(code, lang);
+  highlightCache.set(cacheKey, result);
+  return result;
+}
+
+function highlightCodeUncached(code: string, lang?: string): Token[][] {
   const language = (lang ?? "").toLowerCase();
   const keywords = KEYWORDS[language];
   const commentChar = lineCommentChar(language);

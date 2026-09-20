@@ -5,8 +5,10 @@ export type Block =
   | { type: "table"; headers: string[]; rows: string[][] }
   | { type: "code"; lang?: string; code: string }
   | { type: "formula"; code: string }
+  | { type: "math"; tex: string }
   | { type: "callout"; tone: "info" | "warn" | "example" | "quote"; title?: string; text: string }
-  | { type: "diagram"; id: string };
+  | { type: "diagram"; id: string }
+  | { type: "image"; src: string; alt: string; caption?: string; credit?: string; width: number; height: number };
 
 export interface WeekMeta {
   slug: string;

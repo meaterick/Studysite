@@ -1,7 +1,9 @@
+import Image from "next/image";
 import type { Block } from "@/content/types";
 import { parseMarkdown, renderInline } from "@/content/markdown";
 import { DIAGRAMS } from "@/components/diagrams";
 import CodeBlock from "@/components/CodeBlock";
+import { renderMath } from "@/lib/katex";
 
 function Inline({ text }: { text: string }) {
   const parts = renderInline(text);
@@ -10,6 +12,7 @@ function Inline({ text }: { text: string }) {
       {parts.map((p, i) => {
         if (typeof p === "string") return <span key={i}>{p}</span>;
         if ("bold" in p) return <strong key={i} className="font-bold text-ink">{p.bold}</strong>;
+        if ("math" in p) return <span key={i} dangerouslySetInnerHTML={{ __html: renderMath(p.math, false) }} />;
         return (
           <code
             key={i}
@@ -123,6 +126,33 @@ export function BlocksRenderer({ blocks }: { blocks: Block[] }) {
                   {b.code}
                 </pre>
               </div>
+            );
+          case "math":
+            return (
+              <div
+                key={i}
+                className="not-prose overflow-x-auto rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-5 text-center"
+                dangerouslySetInnerHTML={{ __html: renderMath(b.tex, true) }}
+              />
+            );
+          case "image":
+            return (
+              <figure key={i} className="not-prose my-6 overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card">
+                <Image
+                  src={b.src}
+                  alt={b.alt}
+                  width={b.width}
+                  height={b.height}
+                  className="w-full"
+                  sizes="(max-width: 768px) 100vw, 768px"
+                />
+                {(b.caption || b.credit) && (
+                  <figcaption className="border-t border-[var(--border-hairline)] px-4 py-2.5 text-xs text-ink-secondary">
+                    {b.caption}
+                    {b.credit && <span className="ml-2 text-ink-muted">— {b.credit}</span>}
+                  </figcaption>
+                )}
+              </figure>
             );
           case "callout": {
             const style = CALLOUT_STYLE[b.tone];

@@ -6,7 +6,20 @@ import type { Block } from "./types";
 // GFM-style tables, fenced code blocks, "formula" fences for math/derivation
 // display, tone-labelled callout containers, and a diagram marker line that
 // maps to a React diagram component.
+// 콘텐츠는 빌드에 포함된 상수 문자열이라 같은 입력은 항상 같은 결과를 낸다.
+// 페이지가 동적 렌더링되더라도(로그인 상태 확인 때문에) 매 요청마다 정규식
+// 파싱을 반복하지 않도록, 서버 프로세스가 떠 있는 동안 결과를 재사용한다.
+const parseCache = new Map<string, Block[]>();
+
 export function parseMarkdown(source: string): Block[] {
+  const cached = parseCache.get(source);
+  if (cached) return cached;
+  const blocks = parseMarkdownUncached(source);
+  parseCache.set(source, blocks);
+  return blocks;
+}
+
+function parseMarkdownUncached(source: string): Block[] {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
 
@@ -68,6 +81,26 @@ export function parseMarkdown(source: string): Block[] {
       const code = codeLines.join("\n");
       if (lang === "formula") {
         blocks.push({ type: "formula", code });
+      } else if (lang === "math") {
+        blocks.push({ type: "math", tex: code });
+      } else if (lang === "image") {
+        const fields: Record<string, string> = {};
+        for (const l of codeLines) {
+          const idx = l.indexOf(":");
+          if (idx === -1) continue;
+          fields[l.slice(0, idx).trim()] = l.slice(idx + 1).trim();
+        }
+        if (fields.src && fields.alt && fields.width && fields.height) {
+          blocks.push({
+            type: "image",
+            src: fields.src,
+            alt: fields.alt,
+            caption: fields.caption,
+            credit: fields.credit,
+            width: Number(fields.width),
+            height: Number(fields.height),
+          });
+        }
       } else {
         blocks.push({ type: "code", lang: lang || undefined, code });
       }
@@ -144,16 +177,19 @@ export function parseMarkdown(source: string): Block[] {
   return blocks;
 }
 
-/** Render simple inline markdown (**bold**, `code`) into React nodes. */
-export function renderInline(text: string): (string | { bold: string } | { code: string })[] {
-  const parts: (string | { bold: string } | { code: string })[] = [];
-  const regex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+export type InlineToken = string | { bold: string } | { code: string } | { math: string };
+
+/** Render simple inline markdown (**bold**, `code`, $math$) into React nodes. */
+export function renderInline(text: string): InlineToken[] {
+  const parts: InlineToken[] = [];
+  const regex = /(\*\*[^*]+\*\*|`[^`]+`|\$[^$\n]+\$)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
     const token = match[0];
     if (token.startsWith("**")) parts.push({ bold: token.slice(2, -2) });
+    else if (token.startsWith("$")) parts.push({ math: token.slice(1, -1) });
     else parts.push({ code: token.slice(1, -1) });
     lastIndex = match.index + token.length;
   }
