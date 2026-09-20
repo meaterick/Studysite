@@ -1,9 +1,11 @@
 import { quizAnswers } from "@/content/operator/quizAnswers";
 import { WEEKS } from "@/content/weeks";
+import { requireAdmin } from "@/lib/dal";
 
 export const metadata = { title: "퀴즈 정답·해설" };
 
-export default function QuizAnswersPage() {
+export default async function QuizAnswersPage() {
+  await requireAdmin("/operator/quiz-answers");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-orange)]">운영자 전용 · 스터디원에게 공유 금지</p>

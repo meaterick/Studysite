@@ -1,9 +1,11 @@
 import { qualityLog } from "@/content/operator/qualityLog";
 import Markdown from "@/components/MarkdownBlocks";
+import { requireAdmin } from "@/lib/dal";
 
 export const metadata = { title: "품질 검토·개선 로그" };
 
-export default function QualityLogPage() {
+export default async function QualityLogPage() {
+  await requireAdmin("/operator/quality-log");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-orange)]">운영자 전용</p>

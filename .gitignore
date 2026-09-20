@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local user database (production data lives outside the repo, in DATA_DIR)
+/data
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

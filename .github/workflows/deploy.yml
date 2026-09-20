@@ -86,6 +86,9 @@ jobs:
         run: |
           mkdir -p "$DEPLOY_DIR"
           cp ecosystem.config.js "$DEPLOY_DIR/ecosystem.config.js"
+          # 회원 계정(users.json)은 여기, .next 바깥에 둡니다 — 다음 스텝에서
+          # .next만 지우고 다시 받으므로 이 디렉터리는 재배포에도 살아남습니다.
+          mkdir -p "$DEPLOY_DIR/data"
 
       - name: Clear previous build
         run: rm -rf "$DEPLOY_DIR/.next"
@@ -97,19 +100,24 @@ jobs:
           path: ${{ env.DEPLOY_DIR }}/.next/standalone
 
       - name: Write runtime secrets
-        # Regenerated on every deploy from the GitHub Actions secret, so
+        # Regenerated on every deploy from the GitHub Actions secrets, so
         # nothing has to be created or edited by hand on the server. Set/
-        # rotate the passcode at: repo Settings → Secrets and variables →
-        # Actions → OPERATOR_PASSCODE.
+        # rotate them at: repo Settings → Secrets and variables →
+        # Actions → SESSION_SECRET / ADMIN_EMAILS.
         # (Passed via env:, not interpolated into the script, so the secret
         # can never break out of the shell command.) Lives in DEPLOY_DIR,
         # not the checkout, so it survives every checkout untouched.
         env:
-          OPERATOR_PASSCODE: ${{ secrets.OPERATOR_PASSCODE }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
         run: |
-          echo "OPERATOR_PASSCODE=${OPERATOR_PASSCODE}" > "$DEPLOY_DIR/.env.production.local"
-          if [ -z "${OPERATOR_PASSCODE}" ]; then
-            echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
+          {
+            echo "SESSION_SECRET=${SESSION_SECRET}"
+            echo "ADMIN_EMAILS=${ADMIN_EMAILS}"
+            echo "DATA_DIR=${DEPLOY_DIR}/data"
+          } > "$DEPLOY_DIR/.env.production.local"
+          if [ -z "${SESSION_SECRET}" ]; then
+            echo "::warning::SESSION_SECRET secret is not set — falling back to the built-in dev secret, which means anyone who reads the source code could forge login cookies. Add it under repo Settings > Secrets and variables > Actions (openssl rand -base64 32)."
           fi
 
       - name: Install and configure nginx

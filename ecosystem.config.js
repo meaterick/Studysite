@@ -10,7 +10,7 @@
 // it here as `.next/standalone/`. This file just tells PM2 to run that
 // bundle's `server.js` directly with `node`.
 //
-// Secrets (OPERATOR_PASSCODE, ...) live in `.env.production.local` next to
+// Secrets (SESSION_SECRET, ADMIN_EMAILS, DATA_DIR, ...) live in `.env.production.local` next to
 // this file — NOT inside .next/standalone, which gets wiped and replaced on
 // every deploy. We read that file ourselves and pass the values to PM2 as
 // real process env vars, because the standalone server does not reliably

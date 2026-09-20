@@ -3,8 +3,10 @@ import { WEEKS } from "@/content/weeks";
 import { syllabus } from "@/content/syllabus";
 import WeekCard from "@/components/WeekCard";
 import { PhaseRoadmap } from "@/components/diagrams/shared";
+import { getCurrentUser } from "@/lib/dal";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <section className="mb-16">
@@ -31,6 +33,14 @@ export default function Home() {
           >
             Week 1부터 시작하기
           </Link>
+          {!user && (
+            <Link
+              href="/signup"
+              className="rounded-lg border border-dashed border-[var(--series-blue)] px-5 py-3 text-sm font-bold text-[var(--series-blue)] transition hover:bg-[var(--surface-card-2)]"
+            >
+              스터디원으로 가입하기
+            </Link>
+          )}
         </div>
       </section>
 

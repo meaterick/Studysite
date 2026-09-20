@@ -30,7 +30,8 @@ npm run start
 | `/curriculum` | 8주 커리큘럼 총괄(시러버스) |
 | `/weeks`, `/weeks/[slug]` | 주차별 학습목표·핵심개념·실습·퀴즈·백지공부·과제 |
 | `/progress` | 개인 학습 진도 대시보드 (브라우저 localStorage) |
-| `/operator/*` | 운영자 전용 — 운영 가이드, 퀴즈 정답, 품질 로그 (패스코드 보호) |
+| `/signup`, `/login`, `/account` | 회원가입·로그인·내 계정(탈퇴) |
+| `/operator/*` | 관리자 전용 — 운영 가이드, 퀴즈 정답, 품질 로그, 스터디원 관리 |
 
 ## 콘텐츠 수정하기
 
@@ -45,12 +46,24 @@ npm run start
   `DIAGRAMS` 레지스트리에 id로 등록). 새 다이어그램을 추가하면 콘텐츠에서
   `[[diagram:my-id]]` 한 줄로 삽입할 수 있습니다.
 
-## 운영자 전용 구역
+## 회원가입·로그인·관리자 구역
 
-`/operator/*`는 패스코드로 보호됩니다(`src/proxy.ts`). 로컬 기본값은
-`aegis-operator-2026`이며, 배포 시에는 반드시 `.env.production.local`에
-직접 설정하세요 (`.env.example` 참고). 이 폴더의 내용(퀴즈 정답, 채점
-기준 원본, 운영 노하우)은 스터디원에게 공개하지 않는 것이 원칙입니다.
+계정은 서버의 `data/users.json`(배포 시에는 `DATA_DIR`, 아래 참고)에 저장되고
+비밀번호는 bcrypt로 해시되어 저장됩니다. 세션은 서명된(JWT, `SESSION_SECRET`)
+httpOnly 쿠키로 관리합니다 (`src/lib/session.ts`, `src/lib/dal.ts`).
+
+- 누구나 `/signup`에서 가입할 수 있고, **가장 먼저 가입하는 계정이 자동으로
+  관리자**가 됩니다 — 배포 직후 운영자 본인이 제일 먼저 가입하면 됩니다.
+  (`ADMIN_EMAILS` 환경변수로 특정 이메일을 항상 관리자로 지정할 수도
+  있습니다.)
+- `/operator/*`(운영 가이드, 퀴즈 정답, 품질 로그, 스터디원 관리)는 관리자
+  역할(role)로만 접근할 수 있습니다(`src/proxy.ts`에서 1차 확인, 각 페이지에서
+  `requireAdmin()`으로 재확인). 이 폴더의 내용(퀴즈 정답, 채점 기준 원본,
+  운영 노하우)은 스터디원에게 공개하지 않는 것이 원칙입니다.
+- `/account`에서 본인 정보를 확인하고 비밀번호 확인 후 회원 탈퇴(계정 삭제)를
+  할 수 있습니다. 마지막 남은 관리자 계정은 탈퇴/강등할 수 없습니다.
+- `/operator/members`에서 관리자가 가입자 목록을 보고 권한을 부여/회수하거나
+  계정을 삭제할 수 있습니다.
 
 ## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음
 
@@ -91,17 +104,19 @@ npm run start
 
 ### 딱 하나, GitHub에서 할 일 (서버 아님)
 
-`/operator` 패스코드를 저장소 비밀로 등록하세요 — **Settings → Secrets and
+로그인 세션 서명 키를 저장소 비밀로 등록하세요 — **Settings → Secrets and
 variables → Actions → New repository secret**:
 
 | Name | Value |
 | --- | --- |
-| `OPERATOR_PASSCODE` | 원하는 패스코드 (예: 운영진끼리만 공유할 문구) |
+| `SESSION_SECRET` | `openssl rand -base64 32`로 생성한 임의의 문자열 |
+| `ADMIN_EMAILS` | (선택) 항상 관리자로 지정할 이메일, 쉼표로 구분. 비워두면 최초 가입자가 자동으로 관리자가 됩니다 |
 
-등록하지 않으면 `src/lib/auth.ts`의 개발용 기본값(`aegis-operator-2026`)이
+`SESSION_SECRET`을 등록하지 않으면 `src/lib/session.ts`의 개발용 기본값이
 그대로 쓰이고, 배포 로그에 경고가 남습니다 — 동작은 하지만 누구나 아는
-값이니 꼭 등록해 주세요. 나중에 값을 바꾸고 싶으면 이 화면에서 값만
-바꾸고 다시 푸시(또는 Actions 탭에서 워크플로우 재실행)하면 됩니다.
+값이라 로그인 쿠키를 위조당할 수 있으니 꼭 등록해 주세요. 나중에 값을
+바꾸면 기존에 로그인해 있던 모든 사람이 로그아웃됩니다(피해 없음, 다시
+로그인하면 됩니다).
 
 도메인을 나중에 바꾸게 되면 `.github/workflows/deploy.yml` 맨 위의
 `env.DOMAIN` 한 줄만 고치면 됩니다.
@@ -122,4 +137,5 @@ variables → Actions → New repository secret**:
 
 - Next.js 16 (App Router, Server Actions, Turbopack)
 - TypeScript, Tailwind CSS 4
-- 데이터 저장 없음 — 개인 진도/백지공부는 각자 브라우저의 localStorage에만 저장
+- 계정 정보만 서버(`data/users.json`, bcrypt 해시)에 저장 — 개인 진도/백지공부는
+  여전히 각자 브라우저의 localStorage에만 저장됩니다
