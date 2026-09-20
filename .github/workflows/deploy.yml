@@ -63,6 +63,13 @@ jobs:
           name: standalone-build
           path: .next/standalone
           retention-days: 3
+          # upload-artifact v4 drops dotfiles/dot-directories by default --
+          # silently excluding .next/standalone/.next itself (the compiled
+          # server output + the static assets just copied in above). That
+          # left every deploy shipping a standalone bundle with no .next
+          # directory at all, so the app crash-looped forever with "Could
+          # not find a production build in the './.next' directory".
+          include-hidden-files: true
 
   deploy:
     needs: build
