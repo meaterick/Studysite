@@ -3,12 +3,13 @@ name: Deploy to OCI
 # The OCI box only has 1GB RAM, so `npm ci` / `next build` never run there —
 # a GitHub-hosted runner does the build and ships the "standalone" output
 # (next.config.ts: output: "standalone") as an artifact. The self-hosted
-# runner registered on the OCI box only unpacks it, writes the runtime
-# secret from a GitHub Actions secret, makes sure a Let's Encrypt cert
-# exists for DOMAIN (via certbot), and asks PM2 to run the app + the
-# dependency-free TLS proxy in proxy/tls-proxy.js (no nginx). There is
-# nothing to set up by hand on the server — the one-time setup is a GitHub
-# secret (see README).
+# runner registered on the OCI box unpacks it into DEPLOY_DIR (a stable
+# directory *outside* the runner's own workspace -- see the "Sync app
+# files" step for why that matters), writes the runtime secret from a
+# GitHub Actions secret, makes sure a Let's Encrypt cert exists for DOMAIN
+# (via certbot), and asks PM2 to run the app + the dependency-free TLS
+# proxy in proxy/tls-proxy.js (no nginx). There is nothing to set up by
+# hand on the server — the one-time setup is a GitHub secret (see README).
 on:
   push:
     branches: [main]
@@ -20,6 +21,15 @@ concurrency:
 
 env:
   DOMAIN: meaterickedu.kro.kr
+  # Everything the running app/proxy touches lives here, NOT inside the
+  # runner's own _work checkout. The self-hosted runner kills any process
+  # whose executable path is still inside its job workspace once the job
+  # ends ("Cleaning up orphan processes" in the run log) -- it did this to
+  # aegis-tls-proxy on every deploy, even after handing PM2 off to
+  # systemd, because the running proxy/app files were served straight out
+  # of the checkout. Running them from a directory the runner doesn't own
+  # sidesteps that entirely.
+  DEPLOY_DIR: /home/ubuntu/aegis-ai-study
 
 jobs:
   build:
@@ -58,23 +68,33 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Checkout (keep ecosystem.config.js etc. in sync)
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          # Do NOT clean: .env.production.local lives untracked in this same
-          # checkout directory and must survive across runs.
-          clean: false
 
       - name: Show toolchain versions
         run: |
           node -v
           pm2 -v
 
+      - name: Sync app files into a stable directory outside the runner workspace
+        # ecosystem.config.js and proxy/ are the only source files the
+        # running processes need -- copy the current versions in, so this
+        # stays in sync with the repo on every deploy without ever running
+        # anything from inside $GITHUB_WORKSPACE.
+        run: |
+          mkdir -p "$DEPLOY_DIR"
+          cp ecosystem.config.js "$DEPLOY_DIR/ecosystem.config.js"
+          rm -rf "$DEPLOY_DIR/proxy"
+          cp -r proxy "$DEPLOY_DIR/proxy"
+
+      - name: Clear previous build
+        run: rm -rf "$DEPLOY_DIR/.next"
+
       - name: Download standalone bundle
         uses: actions/download-artifact@v4
         with:
           name: standalone-build
-          path: .next/standalone
+          path: ${{ env.DEPLOY_DIR }}/.next/standalone
 
       - name: Write runtime secrets
         # Regenerated on every deploy from the GitHub Actions secret, so
@@ -82,14 +102,15 @@ jobs:
         # rotate the passcode at: repo Settings → Secrets and variables →
         # Actions → OPERATOR_PASSCODE.
         # (Passed via env:, not interpolated into the script, so the secret
-        # can never break out of the shell command.)
+        # can never break out of the shell command.) Lives in DEPLOY_DIR,
+        # not the checkout, so it survives every checkout untouched.
         env:
           OPERATOR_PASSCODE: ${{ secrets.OPERATOR_PASSCODE }}
         run: |
           {
             echo "OPERATOR_PASSCODE=${OPERATOR_PASSCODE}"
             echo "DOMAIN=${DOMAIN}"
-          } > .env.production.local
+          } > "$DEPLOY_DIR/.env.production.local"
           if [ -z "${OPERATOR_PASSCODE}" ]; then
             echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
           fi
@@ -110,7 +131,7 @@ jobs:
         # certbot's webroot challenge below needs already running. If no
         # certificate exists yet, the proxy simply skips :443 for now.
         run: |
-          pm2 startOrReload ecosystem.config.js
+          pm2 startOrReload "$DEPLOY_DIR/ecosystem.config.js"
           pm2 save
 
       - name: Obtain/renew the HTTPS certificate (certbot, no nginx)
@@ -126,7 +147,7 @@ jobs:
           fi
           if command -v certbot >/dev/null 2>&1; then
             sudo certbot certonly --webroot \
-              -w "${{ github.workspace }}/certs/webroot" \
+              -w "$DEPLOY_DIR/certs/webroot" \
               -d "${DOMAIN}" \
               --non-interactive --agree-tos --register-unsafely-without-email \
               --keep-until-expiring \
@@ -148,16 +169,12 @@ jobs:
         # Self-hosted runners kill every process still in the job's
         # process tree once the job completes ("Cleaning up orphan
         # processes" in the run log) -- including a PM2 daemon started
-        # with `detached: true`. That was killing aegis-tls-proxy (and
-        # the PM2 daemon itself) a few seconds after every "successful"
-        # deploy, taking the whole site down.
-        #
-        # Fix: register PM2 as a systemd service (idempotent), then stop
-        # the daemon that's still attached to this job and let systemd
-        # spawn a fresh one from the saved process list. That daemon (and
-        # everything PM2 runs under it) then lives under systemd, outside
-        # the runner's job tree entirely, and survives both this job
-        # ending and server reboots.
+        # with `detached: true`. Register PM2 as a systemd service
+        # (idempotent), then stop the daemon that's still attached to this
+        # job and let systemd spawn a fresh one from the saved process
+        # list. Combined with running everything out of DEPLOY_DIR above
+        # (not $GITHUB_WORKSPACE), this survives both this job ending and
+        # server reboots.
         run: |
           pm2 save
 

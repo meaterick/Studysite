@@ -62,9 +62,12 @@ npm run start
    실행합니다 — OCI는 RAM이 1GB뿐이라 빌드는 항상 여기서만 합니다.
 2. `next.config.ts`의 `output: "standalone"`으로 만들어진 최소 실행 번들
    (pruned `node_modules` 포함, 약 50MB)을 아티팩트로 올립니다.
-3. OCI에 등록된 self-hosted 러너가 그 아티팩트를 받아 `.next/standalone`에
-   풀고, `.env.production.local`을 GitHub Secret에서 새로 만들고, PM2로
-   **두 개**의 프로세스를 올립니다:
+3. OCI에 등록된 self-hosted 러너가 그 아티팩트를 러너 자신의 작업 폴더가
+   아니라 `/home/ubuntu/aegis-ai-study`(`DEPLOY_DIR`)에 풀고,
+   `.env.production.local`을 GitHub Secret에서 새로 만들고, PM2로 **두 개**의
+   프로세스를 올립니다. (러너는 job이 끝나면 자기 작업 폴더 안에 있는
+   프로세스를 전부 죽이기 때문에, 실제로 계속 떠 있어야 하는 서버 프로세스는
+   반드시 러너 작업 폴더 밖에서 돌려야 합니다.)
    - `aegis-ai-study` — Next.js 앱 본체, `127.0.0.1:3000`에서만 대기(외부
      직접 노출 안 됨)
    - `aegis-tls-proxy` — `proxy/tls-proxy.js`. 의존성 0개짜리 순수 Node
@@ -75,7 +78,10 @@ npm run start
    인증서를 발급/갱신합니다(이미 유효하면 조용히 스킵 — 매 배포마다 실행해도
    안전). 갱신 시 인증서를 다시 불러오도록 `aegis-tls-proxy`를 재시작하는
    certbot deploy-hook도 함께 등록합니다.
-5. 재부팅 후에도 PM2가 살아나도록 `pm2 startup`도 매 배포마다 시도합니다.
+5. 마지막으로 PM2를 systemd 서비스(`pm2-ubuntu.service`)로 완전히 넘깁니다
+   — `pm2 kill`로 러너 job에 붙어있던 데몬을 끄고 systemd가 저장된 프로세스
+   목록을 다시 띄우게 합니다. 이렇게 해야 이 배포 job 자체가 끝나도, 재부팅이
+   되어도 계속 살아있습니다.
 
 즉 `git clone`도, `.env` 파일을 직접 만드는 것도, `npm install`도, 최초
 `pm2 start`도, **nginx 설정도, `certbot` 실행도** 전부 워크플로우가
