@@ -3,8 +3,10 @@ name: Deploy to OCI
 # The OCI box only has 1GB RAM, so `npm ci` / `next build` never run there —
 # a GitHub-hosted runner does the build and ships the "standalone" output
 # (next.config.ts: output: "standalone") as an artifact. The self-hosted
-# runner registered on the OCI box only unpacks it and asks PM2 to run
-# `node server.js`.
+# runner registered on the OCI box only unpacks it, writes the runtime
+# secret from a GitHub Actions secret, and asks PM2 to run `node server.js`.
+# There is nothing to set up by hand on the server itself — the one-time
+# setup is a GitHub secret (see README).
 on:
   push:
     branches: [main]
@@ -69,13 +71,32 @@ jobs:
           name: standalone-build
           path: .next/standalone
 
-      - name: Warn if runtime secrets file is missing
+      - name: Write runtime secrets
+        # Regenerated on every deploy from the GitHub Actions secret, so
+        # nothing has to be created or edited by hand on the server. Set/
+        # rotate the passcode at: repo Settings → Secrets and variables →
+        # Actions → OPERATOR_PASSCODE.
+        # (Passed via env:, not interpolated into the script, so the secret
+        # can never break out of the shell command.)
+        env:
+          OPERATOR_PASSCODE: ${{ secrets.OPERATOR_PASSCODE }}
         run: |
-          if [ ! -f ".env.production.local" ]; then
-            echo "::warning::.env.production.local not found on the server — OPERATOR_PASSCODE will fall back to the built-in dev default. Copy .env.example to .env.production.local and set a real passcode (see README)."
+          echo "OPERATOR_PASSCODE=${OPERATOR_PASSCODE}" > .env.production.local
+          if [ -z "${OPERATOR_PASSCODE}" ]; then
+            echo "::warning::OPERATOR_PASSCODE secret is not set — falling back to the built-in dev passcode. Add it under repo Settings > Secrets and variables > Actions."
           fi
 
       - name: Start or reload with PM2
         run: |
           pm2 startOrReload ecosystem.config.js
+          pm2 save
+
+      - name: Keep PM2 running across server reboots
+        # Best-effort and non-interactive: only succeeds if the runner
+        # already has passwordless root/sudo. Never blocks the deploy.
+        run: |
+          STARTUP_LINE=$(pm2 startup systemd -u "$(whoami)" --hp "$HOME" 2>&1 | grep -E '^(sudo )?env PATH=' || true)
+          if [ -n "$STARTUP_LINE" ]; then
+            eval "$STARTUP_LINE" || echo "::warning::Could not register PM2 as a boot service automatically (needs passwordless sudo). The app still redeploys fine on the next push either way."
+          fi
           pm2 save

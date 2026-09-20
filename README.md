@@ -52,52 +52,44 @@ npm run start
 직접 설정하세요 (`.env.example` 참고). 이 폴더의 내용(퀴즈 정답, 채점
 기준 원본, 운영 노하우)은 스터디원에게 공개하지 않는 것이 원칙입니다.
 
-## 배포 (OCI + self-hosted GitHub Actions runner)
+## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음
 
-이 저장소는 OCI 서버에 이미 설치된 Node.js / PM2 / nginx / git과, 그 서버에
-등록된 self-hosted runner를 사용해 `main` 브랜치에 푸시할 때마다 자동
-배포되도록 구성되어 있습니다 (`.github/workflows/deploy.yml`).
+`main`에 푸시하면 전부 자동입니다. **서버에 SSH로 들어가서 할 일이 없도록**
+설계했습니다:
 
-**OCI 인스턴스가 RAM 1GB라서 서버에서는 절대 빌드하지 않습니다.** `npm ci` /
-`next build`는 GitHub이 제공하는 `ubuntu-latest` 러너에서 실행되고,
-`next.config.ts`의 `output: "standalone"`으로 만들어진 최소 실행 번들
-(`.next/standalone/` — pruned된 `node_modules` 포함, 약 50MB)을 아티팩트로
-올립니다. self-hosted 러너(OCI)는 그 번들을 내려받아 `node server.js`를
-PM2로 띄우기만 합니다 — `npm install`도, 빌드도 서버에서는 전혀 일어나지
-않습니다.
+1. GitHub이 제공하는 `ubuntu-latest` 러너가 `npm ci && npm run build`를
+   실행합니다 — OCI는 RAM이 1GB뿐이라 빌드는 항상 여기서만 합니다.
+2. `next.config.ts`의 `output: "standalone"`으로 만들어진 최소 실행 번들
+   (pruned `node_modules` 포함, 약 50MB)을 아티팩트로 올립니다.
+3. OCI에 등록된 self-hosted 러너가 그 아티팩트를 받아 `.next/standalone`에
+   풀고, `.env.production.local`을 GitHub Secret에서 새로 만들고,
+   `pm2 startOrReload`로 (최초 실행이든 이후 배포든 동일하게) 기동합니다.
+   재부팅 후에도 PM2가 살아나도록 `pm2 startup`도 매 배포마다 시도합니다.
 
-### 서버 최초 설정 (1회)
+즉 `git clone`도, `.env` 파일을 직접 만드는 것도, `npm install`도, 최초
+`pm2 start`도 전부 워크플로우가 처리합니다. 서버에는 Node.js·PM2·git과
+self-hosted runner 서비스만 떠 있으면 됩니다(이미 되어 있다고 하셨죠).
 
-```bash
-git clone <repo-url> /path/to/Studysite
-cd /path/to/Studysite
-cp .env.example .env.production.local
-vi .env.production.local          # OPERATOR_PASSCODE를 실제 값으로 변경
+### 딱 하나, GitHub에서 할 일 (서버 아님)
 
-# 최초 1회는 GitHub Actions가 아직 아무것도 배포하지 않았으므로 로컬에서 한 번
-# 빌드해 .next/standalone을 채워 넣습니다 (RAM이 빠듯하면 --max-old-space-size로
-# 메모리를 제한하거나, GitHub Actions를 한 번 수동 실행(workflow_dispatch)해서
-# 얻은 결과를 기다려도 됩니다).
-npm ci && npm run build
+`/operator` 패스코드를 저장소 비밀로 등록하세요 — **Settings → Secrets and
+variables → Actions → New repository secret**:
 
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup                        # 서버 재부팅 시 PM2 자동 시작 (안내되는 명령 1회 실행)
-```
+| Name | Value |
+| --- | --- |
+| `OPERATOR_PASSCODE` | 원하는 패스코드 (예: 운영진끼리만 공유할 문구) |
 
-nginx는 `deploy/nginx.conf.sample`을 참고해 `127.0.0.1:3000`(또는
-`.env.production.local`의 `PORT`)으로 리버스 프록시하도록 설정하세요.
-HTTPS는 `certbot --nginx`로 붙이는 것을 권장합니다.
+등록하지 않으면 `src/lib/auth.ts`의 개발용 기본값(`aegis-operator-2026`)이
+그대로 쓰이고, 배포 로그에 경고가 남습니다 — 동작은 하지만 누구나 아는
+값이니 꼭 등록해 주세요. 나중에 값을 바꾸고 싶으면 이 화면에서 값만
+바꾸고 다시 푸시(또는 Actions 탭에서 워크플로우 재실행)하면 됩니다.
 
-### 이후 배포
+### nginx (한 번만, 서버에서 — 이미 하셨다면 생략)
 
-`main`에 머지/푸시되면 ① GitHub의 `ubuntu-latest` 러너가 빌드해
-`.next/standalone` 아티팩트를 만들고, ② OCI의 self-hosted 러너가 그
-아티팩트를 내려받아 `.next/standalone`을 통째로 교체한 뒤
-`pm2 startOrReload`로 재기동합니다. `.env.production.local`은 저장소
-루트(= `.next/standalone` 바깥)에 두므로 매 배포마다 덮어써지지 않고
-그대로 유지됩니다. `ecosystem.config.js`가 이 파일을 직접 읽어 PM2 프로세스의
-환경변수로 주입합니다.
+`deploy/nginx.conf.sample`을 참고해 `127.0.0.1:3000`으로 리버스 프록시하는
+site를 등록하세요. HTTPS는 `certbot --nginx`로 붙이는 것을 권장합니다. 이
+설정은 저장소 코드가 아니라 서버의 nginx 자체 설정이라 워크플로우가 대신 해줄
+수 없는 유일한 부분입니다.
 
 ## 스택
 
