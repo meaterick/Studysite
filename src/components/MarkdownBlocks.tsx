@@ -1,6 +1,7 @@
 import type { Block } from "@/content/types";
 import { parseMarkdown, renderInline } from "@/content/markdown";
 import { DIAGRAMS } from "@/components/diagrams";
+import CodeBlock from "@/components/CodeBlock";
 
 function Inline({ text }: { text: string }) {
   const parts = renderInline(text);
@@ -111,18 +112,7 @@ export function BlocksRenderer({ blocks }: { blocks: Block[] }) {
               </div>
             );
           case "code":
-            return (
-              <div key={i} className="not-prose overflow-hidden rounded-lg border border-[var(--border-hairline)]">
-                {b.lang && (
-                  <div className="border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-ink-muted">
-                    {b.lang}
-                  </div>
-                )}
-                <pre className="overflow-x-auto bg-[var(--surface-card)] p-4 text-[12.5px] leading-relaxed">
-                  <code className="font-mono text-ink">{b.code}</code>
-                </pre>
-              </div>
-            );
+            return <CodeBlock key={i} lang={b.lang} code={b.code} />;
           case "formula":
             return (
               <div
