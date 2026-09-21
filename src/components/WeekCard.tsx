@@ -20,7 +20,6 @@ export default function WeekCard({ week }: { week: WeekMeta }) {
       <p className="text-sm text-ink-secondary">{week.subtitle}</p>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
         <span>{"★".repeat(week.difficulty)}{"☆".repeat(5 - week.difficulty)}</span>
-        <span>{week.selfHours} + {week.sessionHours}</span>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {week.keywords.map((k) => (

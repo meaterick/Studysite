@@ -15,6 +15,7 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
 const LANG_LABEL: Record<string, string> = {
   python: "Python",
   py: "Python",
+  "python-colab": "Python · 읽기용 (Colab에서 실행)",
   bash: "Bash",
   sh: "Shell",
   shell: "Shell",

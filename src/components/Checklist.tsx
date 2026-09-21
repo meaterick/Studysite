@@ -5,21 +5,26 @@ import ProgressRing from "./ProgressRing";
 import {
   CHECKLIST_ITEMS,
   ChecklistId,
+  getProgressStore,
   getWeekProgress,
-  progressStore,
   setChecklistItem,
   weekCompletionRatio,
 } from "@/lib/progress";
+import { useUserScope } from "./UserScope";
 
 export function WeekProgressBadge({ slug }: { slug: string }) {
-  const store = useSyncExternalStore(progressStore.subscribe, progressStore.getSnapshot, progressStore.getServerSnapshot);
-  const ratio = weekCompletionRatio(getWeekProgress(store, slug));
+  const uid = useUserScope();
+  const store = getProgressStore(uid);
+  const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+  const ratio = weekCompletionRatio(getWeekProgress(snapshot, slug));
   return <ProgressRing ratio={ratio} size={44} />;
 }
 
 export default function Checklist({ slug }: { slug: string }) {
-  const store = useSyncExternalStore(progressStore.subscribe, progressStore.getSnapshot, progressStore.getServerSnapshot);
-  const progress = getWeekProgress(store, slug);
+  const uid = useUserScope();
+  const store = getProgressStore(uid);
+  const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+  const progress = getWeekProgress(snapshot, slug);
   const ratio = weekCompletionRatio(progress);
 
   return (
@@ -35,7 +40,7 @@ export default function Checklist({ slug }: { slug: string }) {
               <input
                 type="checkbox"
                 checked={!!progress[item.id]}
-                onChange={() => setChecklistItem(slug, item.id as ChecklistId, !progress[item.id])}
+                onChange={() => setChecklistItem(uid, slug, item.id as ChecklistId, !progress[item.id])}
                 className="h-4 w-4 shrink-0 accent-[var(--series-blue)]"
               />
               <span className={progress[item.id] ? "line-through opacity-60" : ""}>{item.label}</span>
@@ -43,7 +48,9 @@ export default function Checklist({ slug }: { slug: string }) {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[11px] text-ink-muted">이 브라우저에만 저장됩니다 (localStorage). 기기를 바꾸면 초기화됩니다.</p>
+      <p className="mt-3 text-[11px] text-ink-muted">
+        이 브라우저의 내 계정에만 저장됩니다. 같은 PC를 함께 써도 계정별로 따로 기록되며, 기기를 바꾸면 초기화됩니다.
+      </p>
     </div>
   );
 }

@@ -41,7 +41,6 @@ export default async function WeekLayout({
         </h1>
         <p className="mt-2 max-w-2xl text-ink-secondary">{week.subtitle}</p>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink-muted">
-          <span>{week.selfHours} + {week.sessionHours}</span>
           <span>난이도 {"★".repeat(week.difficulty)}{"☆".repeat(5 - week.difficulty)}</span>
           <span>{week.keywords.join(" · ")}</span>
         </div>

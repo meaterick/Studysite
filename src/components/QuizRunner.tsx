@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { quizStore, readQuizState, writeQuizDraft, writeQuizIndex, resetQuiz } from "@/lib/progress";
+import { getQuizStore, readQuizState, writeQuizDraft, writeQuizIndex, resetQuiz } from "@/lib/progress";
+import { useUserScope } from "./UserScope";
 
 export default function QuizRunner({
   slug,
@@ -16,6 +17,8 @@ export default function QuizRunner({
   renderedQuestions: Record<string, ReactNode>;
   renderedAnswers: Record<string, ReactNode>;
 }) {
+  const uid = useUserScope();
+  const quizStore = getQuizStore(uid);
   const store = useSyncExternalStore(quizStore.subscribe, quizStore.getSnapshot, quizStore.getServerSnapshot);
   const state = readQuizState(store, slug);
   const index = Math.min(state.index, quiz.length - 1);
@@ -25,14 +28,14 @@ export default function QuizRunner({
 
   const onDraftChange = (value: string) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => writeQuizDraft(slug, current.id, value), 300);
+    saveTimer.current = setTimeout(() => writeQuizDraft(uid, slug, current.id, value), 300);
   };
 
   const goNext = () => {
-    if (index < quiz.length - 1) writeQuizIndex(slug, index + 1);
+    if (index < quiz.length - 1) writeQuizIndex(uid, slug, index + 1);
   };
   const goPrev = () => {
-    if (index > 0) writeQuizIndex(slug, index - 1);
+    if (index > 0) writeQuizIndex(uid, slug, index - 1);
   };
   const reveal = () => setRevealed((prev) => new Set(prev).add(current.id));
 
@@ -49,7 +52,7 @@ export default function QuizRunner({
         <button
           onClick={() => {
             if (confirm("퀴즈 진행 상황과 작성한 답을 모두 초기화할까요?")) {
-              resetQuiz(slug);
+              resetQuiz(uid, slug);
               setRevealed(new Set());
             }
           }}

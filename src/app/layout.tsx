@@ -4,6 +4,8 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { UserScopeProvider } from "@/components/UserScope";
+import { getCurrentUser } from "@/lib/dal";
 
 const sansKr = Noto_Sans_KR({
   variable: "--font-sans-kr",
@@ -26,7 +28,8 @@ export const metadata: Metadata = {
     "Aegis 동아리 「AI 기초부터 활용까지」 8주 스터디 — 세계 최상위 대학 강의 구조를 참고한 커리큘럼, 주차별 학습자료, 실습, 퀴즈, 백지공부 시트, 과제.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const user = await getCurrentUser();
   return (
     <html
       lang="ko"
@@ -42,9 +45,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col bg-page text-ink">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <UserScopeProvider uid={user?.id ?? "guest"}>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </UserScopeProvider>
       </body>
     </html>
   );

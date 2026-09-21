@@ -4,9 +4,12 @@ import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { WEEKS } from "@/content/weeks";
 import ProgressRing from "@/components/ProgressRing";
-import { CHECKLIST_ITEMS, getWeekProgress, progressStore, weekCompletionRatio } from "@/lib/progress";
+import { CHECKLIST_ITEMS, getProgressStore, getWeekProgress, weekCompletionRatio } from "@/lib/progress";
+import { useUserScope } from "@/components/UserScope";
 
 export default function ProgressPage() {
+  const uid = useUserScope();
+  const progressStore = getProgressStore(uid);
   const store = useSyncExternalStore(progressStore.subscribe, progressStore.getSnapshot, progressStore.getServerSnapshot);
   const ratios = WEEKS.map((w) => weekCompletionRatio(getWeekProgress(store, w.slug)));
   const overall = ratios.reduce((a, b) => a + b, 0) / ratios.length;
@@ -16,7 +19,7 @@ export default function ProgressPage() {
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">내 학습 진도</p>
       <h1 className="mb-2 text-3xl font-black text-ink">진도 대시보드</h1>
       <p className="mb-8 text-sm text-ink-muted">
-        이 기기의 브라우저에만 저장됩니다. 운영자 트래커(출석·점수)와는 별개의 개인용 자기 점검 도구입니다.
+        이 기기의 브라우저에, 로그인한 계정별로 따로 저장됩니다. 운영자 트래커(출석·점수)와는 별개의 개인용 자기 점검 도구입니다.
       </p>
 
       <div className="mb-10 flex items-center gap-5 rounded-xl border border-[var(--border-hairline)] bg-card p-6">

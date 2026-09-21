@@ -6,8 +6,6 @@ const week3: WeekMeta = {
   phase: "Phase 2 · 딥러닝",
   title: "신경망과 역전파 (Backpropagation)",
   subtitle: "MLP, 활성화, 연쇄법칙, 계산 그래프, SGD/Adam, PyTorch",
-  selfHours: "개인 10h",
-  sessionHours: "세션 2h",
   difficulty: 4,
   keywords: ["MLP", "활성화", "연쇄법칙", "계산 그래프", "SGD/Adam", "PyTorch", "Autograd", "GPU/CUDA"],
   objectives: [

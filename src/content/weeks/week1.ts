@@ -6,8 +6,6 @@ const week1: WeekMeta = {
   phase: "Phase 1 · 기초",
   title: "AI 지형도와 수학·코드 기초",
   subtitle: "벡터·내적, 확률·베이즈, 미분·경사하강법 — 모든 것의 출발점",
-  selfHours: "개인 14~16h",
-  sessionHours: "세션 2h",
   difficulty: 3,
   keywords: [
     "벡터",

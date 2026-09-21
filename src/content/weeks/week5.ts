@@ -6,8 +6,6 @@ const week5: WeekMeta = {
   phase: "Phase 3 · 현대 AI",
   title: "Transformer와 Attention",
   subtitle: "시퀀스/NLP 기초, RNN·LSTM·GRU, Seq2Seq, 임베딩, Self-Attention, QKV, 멀티헤드, 위치 인코딩, 토크나이저(BPE)",
-  selfHours: "개인 12h",
-  sessionHours: "세션 2h",
   difficulty: 5,
   keywords: [
     "One-hot Encoding",

@@ -16,8 +16,6 @@ export interface WeekMeta {
   phase: string;
   title: string;
   subtitle: string;
-  selfHours: string;
-  sessionHours: string;
   difficulty: number; // 1-5
   keywords: string[];
   objectives: string[];

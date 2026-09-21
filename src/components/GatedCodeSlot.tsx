@@ -2,7 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 import CodeCell from "@/components/CodeCellLoader";
-import { assignmentGateStore, readUnlockedCodeCount, unlockNextCode } from "@/lib/progress";
+import { getAssignmentGateStore, readUnlockedCodeCount, unlockNextCode } from "@/lib/progress";
+import { useUserScope } from "./UserScope";
 
 // 이 파일은 의도적으로 MarkdownBlocks/katex를 import하지 않는다 — 이 파일은
 // "use client"라서, 만약 server-only인 katex 렌더러를 끌고 들어오면 빌드가
@@ -18,11 +19,9 @@ export default function GatedCodeSlot({
   cellId: string;
   starterCode: string;
 }) {
-  const store = useSyncExternalStore(
-    assignmentGateStore.subscribe,
-    assignmentGateStore.getSnapshot,
-    assignmentGateStore.getServerSnapshot
-  );
+  const uid = useUserScope();
+  const gateStore = getAssignmentGateStore(uid);
+  const store = useSyncExternalStore(gateStore.subscribe, gateStore.getSnapshot, gateStore.getServerSnapshot);
   const unlocked = readUnlockedCodeCount(store, slug);
 
   if (index > unlocked) {
@@ -33,5 +32,5 @@ export default function GatedCodeSlot({
     );
   }
 
-  return <CodeCell cellId={cellId} starterCode={starterCode} onComplete={() => unlockNextCode(slug, index)} />;
+  return <CodeCell cellId={cellId} starterCode={starterCode} onComplete={() => unlockNextCode(uid, slug, index)} />;
 }

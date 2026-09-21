@@ -6,8 +6,6 @@ const week2: WeekMeta = {
   phase: "Phase 1 · 기초",
   title: "머신러닝 기본기",
   subtitle: "데이터 전처리, 회귀·분류 알고리즘 서베이, 손실함수, 편향-분산, 교차검증, 평가지표",
-  selfHours: "개인 12h",
-  sessionHours: "세션 2h",
   difficulty: 4,
   keywords: [
     "데이터 전처리",

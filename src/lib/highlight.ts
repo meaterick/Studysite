@@ -28,6 +28,9 @@ const KEYWORDS: Record<string, Set<string>> = {
   ),
 };
 KEYWORDS.py = KEYWORDS.python;
+// 브라우저(Pyodide)에 없는 패키지(torch·transformers 등)를 쓰는 코드는 실행
+// 셀이 아니라 읽기용 블록으로 보여준다 — 강조는 Python과 똑같이 한다.
+KEYWORDS["python-colab"] = KEYWORDS.python;
 KEYWORDS.js = KEYWORDS.javascript;
 KEYWORDS.ts = KEYWORDS.javascript;
 KEYWORDS.typescript = KEYWORDS.javascript;
@@ -43,6 +46,7 @@ const BUILTINS = new Set(
 const COMMENT_CHAR: Record<string, string> = {
   python: "#",
   py: "#",
+  "python-colab": "#",
   bash: "#",
   sh: "#",
   shell: "#",

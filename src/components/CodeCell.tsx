@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { loadCellCode, resetCellCode, saveCellCode } from "@/lib/codeStore";
 import { forceStop, preloadPyodide, runPython, type RunStatus } from "@/lib/pyRunner";
+import { useUserScope } from "./UserScope";
 
 const STATUS_LABEL: Record<RunStatus, string> = {
   "loading-runtime": "Python 실행 환경을 준비하는 중… (처음 한 번만, 몇 초 정도 걸립니다)",
@@ -34,7 +35,7 @@ function useEditorTheme() {
 }
 
 export default function CodeCell({
-  cellId,
+  cellId: rawCellId,
   starterCode,
   onComplete,
 }: {
@@ -43,6 +44,9 @@ export default function CodeCell({
   /** 과제 등 순차 공개 흐름에서, 성공적으로 한 번 실행되면 다음 단계를 열어줄 때 사용 */
   onComplete?: () => void;
 }) {
+  // 공용 브라우저에서 다른 계정이 작성한 코드가 보이지 않도록 계정별로 키를 나눈다.
+  const uid = useUserScope();
+  const cellId = `${uid}::${rawCellId}`;
   const [code, setCode] = useState(starterCode);
   const [loaded, setLoaded] = useState(false);
   const [running, setRunning] = useState(false);
@@ -56,13 +60,16 @@ export default function CodeCell({
   useEffect(() => {
     let cancelled = false;
     loadCellCode(cellId).then((saved) => {
-      if (!cancelled && saved !== undefined) setCode(saved);
-      if (!cancelled) setLoaded(true);
+      if (cancelled) return;
+      // 저장된 코드가 없으면 예제 코드로 되돌린다 — 계정이 바뀌었을 때
+      // 이전 계정이 작성하던 코드가 화면에 남아있지 않도록.
+      setCode(saved ?? starterCode);
+      setLoaded(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [cellId]);
+  }, [cellId, starterCode]);
 
   // 코드 셀이 화면에 보이면 Pyodide를 미리 준비시켜, 사용자가 실행 버튼을
   // 눌렀을 때 로딩을 기다리는 시간을 줄인다.

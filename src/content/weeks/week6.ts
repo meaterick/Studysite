@@ -6,8 +6,6 @@ const week6: WeekMeta = {
   phase: "Phase 3 · 현대 AI",
   title: "LLM 원리: 사전학습 · 스케일링 · 정렬 · 디코딩",
   subtitle: "Next-token prediction, Scaling Law, SFT, RLHF, DPO, Temperature, Hallucination",
-  selfHours: "개인 12h",
-  sessionHours: "세션 2h",
   difficulty: 5,
   keywords: [
     "Next-token",

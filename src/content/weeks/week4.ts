@@ -6,8 +6,6 @@ const week4: WeekMeta = {
   phase: "Phase 2 · 딥러닝",
   title: "딥러닝 실전: CNN · 정규화 · 학습 진단",
   subtitle: "합성곱, ResNet, BatchNorm, Dropout, 데이터 증강, 전이학습",
-  selfHours: "개인 12h",
-  sessionHours: "세션 2h",
   difficulty: 4,
   keywords: [
     "합성곱",

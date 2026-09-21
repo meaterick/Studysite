@@ -7,8 +7,6 @@ const week7: WeekMeta = {
   title: "LLM 활용: 프롬프트 · RAG · 에이전트 · 평가",
   subtitle:
     "Prompt Engineering(CoT·Self-Consistency), 검색(BM25·Hybrid·Rerank), RAG, 에이전트(Memory·MCP), 멀티모달(CLIP), 평가",
-  selfHours: "개인 13h",
-  sessionHours: "세션 2h",
   difficulty: 5,
   keywords: [
     "프롬프트",
