@@ -6,22 +6,44 @@ const week4: WeekMeta = {
   phase: "Phase 2 · 딥러닝",
   title: "딥러닝 실전: CNN · 정규화 · 학습 진단",
   subtitle: "합성곱, ResNet, BatchNorm, Dropout, 데이터 증강, 전이학습",
-  selfHours: "개인 8h",
+  selfHours: "개인 12h",
   sessionHours: "세션 2h",
   difficulty: 4,
-  keywords: ["합성곱", "ResNet", "BatchNorm", "Dropout", "전이학습", "학습 진단"],
+  keywords: [
+    "합성곱",
+    "LeNet",
+    "AlexNet",
+    "VGG",
+    "ResNet",
+    "BatchNorm",
+    "Dropout",
+    "전이학습",
+    "Object Detection",
+    "Semantic Segmentation",
+    "ViT",
+    "Autoencoder",
+    "VAE",
+    "GAN",
+    "Diffusion Model",
+    "학습 진단",
+  ],
   objectives: [
     "합성곱의 파라미터 공유·국소성 귀납편향을 설명하고 출력 크기를 계산한다.",
     "ResNet의 잔차연결이 왜 깊은 망 학습을 가능케 하는지 기울기 관점에서 설명한다.",
     "BatchNorm·Dropout이 학습/평가 모드에서 왜 다르게 동작해야 하는지 설명한다.",
     "Karpathy의 '학습 레시피'에 따라 학습 실패를 진단한다.",
     "전이학습으로 적은 데이터에서 성능을 끌어올린다.",
+    "LeNet → AlexNet → VGG → ResNet의 계보를 통해 CNN 설계가 어떤 문제의식으로 진화해왔는지 설명한다.",
+    "Object Detection · Semantic Segmentation · ViT가 Image Classification과 어떻게 다른 문제를 푸는지 구분하고, ViT의 패치 임베딩 아이디어를 설명한다.",
+    "판별적(discriminative) 모델과 생성적(generative) 모델의 차이를 설명하고, Autoencoder·VAE·GAN·Diffusion Model 각각이 '생성'을 가능케 하는 메커니즘을 정확한 용어로 설명한다.",
   ],
   learningOrder: [
     "CS231n Notes: Convolutional Networks, Neural Networks Part 2/3 (cs231n.github.io)",
     "d2l.ai 7~8장(CNN, 현대 CNN)",
     'He et al. "Deep Residual Learning for Image Recognition" (arXiv 1512.03385) — 1~3절 정독',
     'Karpathy "A Recipe for Training Neural Networks" (karpathy.github.io/2019/04/25/recipe)',
+    "생성모델 개념 지도(수식 유도까지는 아니고 큰 그림만): Goodfellow et al. GAN(2014) intro, Kingma & Welling VAE(2013) intro, Ho et al. DDPM(2020) intro",
+    'Dosovitskiy et al. "An Image is Worth 16x16 Words" (ViT, arXiv 2010.11929) — abstract·intro만',
     "본 문서 개념 정리 → 실습 코드 → 퀴즈 → 백지공부 → 과제",
   ],
   conceptsMd: `
@@ -133,7 +155,62 @@ stride 1인 합성곱만 계속 쌓는 가장 단순한 경우를 보면, j는 �
 
 이 "+1" 항이 핵심이다. F'(x)가 아무리 작아지더라도(층이 깊어지며 기울기가 옅어지는 현상, gradient vanishing) 최소한 1만큼의 기울기는 identity shortcut을 타고 곧장 앞쪽 층까지 그대로 전달된다. F 경로의 기울기가 0에 가깝게 소실되더라도 이 +1 항이 상수 기울기를 계속 공급하므로, 전체 기울기가 완전히 0이 되어 학습이 멈추는 상황을 막아준다. 이후 거의 모든 현대 아키텍처(5주차에 배울 Transformer 포함)가 이 skip connection을 기본 구성 요소로 채택하고 있다.
 
-### 2.4 정규화 & 일반화 기법
+### 2.4 CNN 아키텍처의 계보: LeNet → AlexNet → VGG → ResNet
+
+지금까지 살펴본 합성곱과 풀링, 그리고 방금 배운 잔차 연결은 하늘에서 뚝 떨어진 아이디어가 아니라 수십 년에 걸쳐 하나씩 쌓여온 계보의 결과물이다. CNN이 실제로 어떤 순서로 다듬어져 왔는지를 알아두면, 앞으로 새로운 아키텍처를 마주칠 때마다 "이게 어느 문제를 해결하려는 시도인가"를 훨씬 빠르게 짚어낼 수 있다.
+
+**LeNet(1998)** — Yann LeCun이 손글씨 숫자(우편번호, 수표의 숫자) 인식을 위해 설계한 LeNet-5는 합성곱층과 풀링층을 교대로 쌓고 마지막에 완전연결층을 붙이는, 오늘날까지 이어지는 CNN의 기본 골격을 처음으로 실용적인 수준까지 완성한 모델이다. MNIST 손글씨 숫자 데이터셋에서 당시 최고 수준의 인식률을 보였지만, 다루는 이미지 자체가 $32\\times32$ 크기의 흑백 숫자 정도로 작고 단순한 문제였고, 당시의 컴퓨팅 자원으로는 더 크고 복잡한 이미지에 이 구조를 그대로 확장하기 어려웠다.
+
+**AlexNet(2012)** — 그로부터 14년이 지나서야 LeNet의 골격이 진짜 위력을 드러낸다. Krizhevsky, Sutskever, Hinton이 만든 AlexNet은 ImageNet 대규모 이미지 인식 대회(ILSVRC) 2012년 대회에서 top-5 오류율 $15.3\\%$를 기록하며 2위(오류율 $26.2\\%$)를 압도적인 차이로 따돌리고 우승했다. 이 한 번의 대회 결과가 지금 우리가 배우고 있는 딥러닝 붐 전체의 기폭제가 되었다. AlexNet 자체의 구조는 LeNet과 크게 다르지 않지만, 세 가지 요소를 성공적으로 결합해 "깊고 큰 CNN이 실제로 학습된다"는 것을 처음 증명했다. 첫째는 ReLU 활성화 함수로, 3주차에서 배운 sigmoid·tanh보다 기울기 소실이 훨씬 덜해 더 깊은 망도 학습이 가능해졌다. 둘째는 Dropout으로, 2.6절에서 다룰 이 정규화 기법이 당시 기준으로 매우 큰 모델(파라미터 약 6천만 개)의 과적합을 억제하는 데 결정적이었다. 셋째는 GPU 학습으로, 대규모 병렬 연산이 가능한 GPU 두 장에 모델을 나눠 올림으로써 그 이전까지 CPU로는 몇 달이 걸렸을 학습을 현실적인 시간 안에 끝낼 수 있었다. ReLU·Dropout·GPU 학습 셋 다 AlexNet이 처음 발명한 요소는 아니었지만, 이 셋을 한데 묶어 "실전에서 통한다"는 것을 증명해 이후 모든 딥러닝 연구의 표준 도구상자로 대중화시킨 것이 AlexNet의 진짜 기여다.
+
+**VGG(2014)** — AlexNet 이후 "그럼 더 깊게 쌓으면 더 좋아질까"라는 질문에 답하려던 시도 중 하나가 Oxford VGG 그룹의 VGGNet이다. VGG의 설계 철학은 단순하다 — 크기가 큰 커널(예: $11\\times11$, $7\\times7$) 하나 대신 $3\\times3$짜리 작은 커널만 여러 개 깊게 쌓는다. 이게 왜 더 나은 선택인지는 2.2절에서 다룬 수용영역 계산과 파라미터 수, 두 관점에서 정확히 설명할 수 있다.
+
+먼저 수용영역 관점. $3\\times3$ conv를 두 번 연속으로 쌓으면(둘 다 stride 1) 2.2절의 표에서 확인했듯 수용영역이 $5\\times5$가 된다 — $5\\times5$ conv 한 번의 수용영역과 정확히 같다. $3\\times3$ conv 세 번을 쌓으면 수용영역은 $7\\times7$이 되어, 이번엔 $7\\times7$ conv 한 번과 동일한 범위를 커버한다. 즉 작은 커널을 여러 번 쌓아도 큰 커널 하나와 같은 크기의 영역을 볼 수 있다.
+
+그런데 파라미터 수는 이야기가 다르다. 입력·출력 채널이 모두 $C$라고 하면 $7\\times7$ conv 한 층의 파라미터 수는 $7\\times7\\times C\\times C = 49C^2$이다. 반면 $3\\times3$ conv 세 층을 쌓으면 $3\\times(3\\times3\\times C\\times C) = 27C^2$로, 같은 수용영역을 얻으면서도 파라미터는 오히려 훨씬 더 적다.
+
+:::example 예제 — $3\\times3$ 세 번 vs $7\\times7$ 한 번, 직접 계산해보기
+채널 수 $C=64$라고 하자.
+
+- $7\\times7$ conv 한 층: $49 \\times 64 \\times 64 = 200{,}704$개
+- $3\\times3$ conv 세 층: $3 \\times (9 \\times 64 \\times 64) = 3 \\times 36{,}864 = 110{,}592$개
+
+같은 $7\\times7$ 수용영역을 얻는 데 필요한 파라미터가 약 45% 줄어든다. 게다가 세 층을 거치는 동안 ReLU 같은 비선형 활성화 함수를 세 번 통과시킬 수 있는 반면(층마다 하나씩), $7\\times7$ conv 한 층은 활성화 함수를 딱 한 번만 거친다. 파라미터는 더 적으면서 비선형 표현력은 더 높아지는 셈이니, "작은 커널을 깊게 쌓는" 쪽이 여러모로 유리하다.
+:::
+
+이 원칙에 따라 VGGNet은 $3\\times3$ conv와 $2\\times2$ max pooling만으로 16층(VGG-16) 혹은 19층(VGG-19)까지 쌓아 올렸고, ILSVRC 2014에서 상위권 성적을 거두며 "깊이가 성능에 기여한다"는 것과 "단순하고 규칙적인 설계만으로도 충분히 깊게 쌓을 수 있다"는 것을 동시에 보여주었다.
+
+**그리고 ResNet** — 하지만 VGG가 보여준 것처럼 무작정 층만 계속 늘리면 앞서 2.3절에서 다룬 degradation 문제에 곧 부딪힌다. VGG-19 정도까지는 그럭저럭 학습이 됐지만, 이보다 훨씬 깊은(예: 100층 이상) 네트워크는 잔차 연결 없이는 학습 자체가 무너졌다. ResNet은 바로 이 지점에서 등판해, identity shortcut 하나로 "층을 깊게 쌓을수록 무조건 손해는 아니게" 만들면서 152층까지 쌓은 모델로 ILSVRC 2015 우승을 차지했다. LeNet의 골격 → AlexNet의 실증 → VGG의 깊이 실험 → ResNet의 깊이 문제 해결, 이 네 모델을 시간순으로 놓고 보면 CNN의 역사가 "어떻게 하면 더 깊고 안정적으로 학습시킬 것인가"라는 하나의 질문에 대한 연속적인 답변이었다는 것이 뚜렷하게 보인다.
+
+| 모델 | 연도 | 핵심 기여 |
+| --- | --- | --- |
+| LeNet | 1998 | conv+pooling+FC의 기본 골격을 실용 수준까지 완성(MNIST) |
+| AlexNet | 2012 | ReLU·Dropout·GPU 학습을 결합해 딥러닝 붐 촉발(ImageNet 우승) |
+| VGG | 2014 | 작은 $3\\times3$ 커널을 깊게 쌓는 설계 철학 정립 |
+| ResNet | 2015 | 잔차 연결로 degradation 문제 해결, 100층 이상도 학습 가능 |
+
+### 2.5 CNN 응용의 확장: Detection · Segmentation · ViT
+
+지금까지 다룬 CNN은 전부 이미지 분류(image classification) 문제, 즉 "사진 한 장에 클래스 하나를 붙이는" 과제에 맞춰져 있었다. 하지만 실제로 CNN이 쓰이는 컴퓨터 비전 문제는 이보다 훨씬 다양하다. 대표적인 두 가지를 개념 수준에서 짚어보고, 최근 CNN의 자리를 일부 대체하고 있는 새로운 구조 하나를 소개한다.
+
+**Object Detection(객체 탐지)**은 사진 안에 있는 여러 물체 각각에 대해 "어디에 있는가(위치, bounding box)"와 "무엇인가(클래스)"를 동시에 예측하는 과제다. Image Classification이 사진 전체에 클래스 하나만 내놓는 반면, Object Detection은 한 장의 사진 안에 고양이 두 마리와 강아지 한 마리가 있다면 세 개의 bounding box와 각각의 클래스 레이블을 함께 출력해야 한다. "무엇인가"만 답하면 되던 문제에 "어디에"라는 위치 회귀(regression) 문제가 추가로 얹히는 셈이다.
+
+**Semantic Segmentation(의미론적 분할)**은 한 걸음 더 나아가, bounding box라는 네모 상자 대신 이미지의 픽셀 하나하나에 클래스 레이블을 매기는 과제다 — "이 픽셀은 도로, 저 픽셀은 사람, 그 옆 픽셀은 하늘"이라는 식으로 전체 이미지를 픽셀 단위로 색칠하는 분류 문제라고 이해하면 된다. Object Detection이 물체 하나를 사각형으로 대충 감싸는 정도라면, Semantic Segmentation은 그 물체의 정확한 윤곽까지 픽셀 단위로 구분해낸다. 다만 Semantic Segmentation은 "같은 클래스"에 속하는 서로 다른 개체(예: 사람 두 명)를 구분하지는 않는다 — 그 둘을 구분하는 것은 Instance Segmentation이라는 별도의 과제다.
+
+**Vision Transformer(ViT)** — 5주차에서는 Self-Attention과 Transformer를 자세히 다루게 되는데, 여기서 CNN과 잠깐 연결고리를 만들어 두자. Transformer는 원래 문장을 이루는 단어(토큰) 시퀀스를 입력으로 받아 각 토큰이 서로 얼마나 관련 있는지를 계산하는 자연어처리용 구조로 설계되었다. Vision Transformer는 여기에 "이미지도 결국 작은 조각(패치, patch)들의 나열로 볼 수 있지 않을까"라는 질문을 던진다. 실제로 ViT는 이미지를 예컨대 $16\\times16$ 픽셀짜리 정사각형 패치 여러 개로 균일하게 잘라낸 뒤, 각 패치를 마치 문장의 단어 토큰 하나처럼 취급해 Transformer 인코더에 그대로 입력한다.
+
+\`\`\`image
+src: /images/week4/vit-patches.png
+alt: 이미지를 여러 개의 정사각형 패치로 분할한 뒤 각 패치를 토큰처럼 임베딩하여 Transformer 인코더에 입력하는 Vision Transformer(ViT) 구조도
+caption: 이미지를 고정 크기의 패치들로 잘라 선형 임베딩한 다음 위치 정보를 더해 표준 Transformer 인코더에 그대로 통과시킨다. 합성곱은 전혀 쓰이지 않는다.
+credit: Zhang, Lipton, Li & Smola (Dive into Deep Learning), CC BY-SA 4.0, Wikimedia Commons
+width: 480
+height: 456
+\`\`\`
+
+CNN의 합성곱 연산은 애초에 "가까운 픽셀끼리만 본다"는 지역성 귀납편향을 구조 자체에 박아 넣은 것이었다(2.1절). ViT는 이 귀납편향을 아예 없애버리고, 패치들 사이의 관계를 5주차에서 배울 Self-Attention이 전부 데이터로부터 학습하도록 맡긴다. 그 대가로 ViT는 CNN보다 훨씬 많은 데이터로 사전학습해야 비슷하거나 더 나은 성능을 낼 수 있지만(귀납편향이 적을수록 그 편향이 주던 지름길을 데이터 양으로 메꿔야 한다는 것을 6주차 스케일링 법칙에서 다시 만나게 될 것이다), 일단 그 벽을 넘고 나면 이미지·텍스트를 가리지 않고 같은 Self-Attention 메커니즘 하나로 다룰 수 있다는 강력한 장점을 얻는다. 지금은 "이미지도 패치로 잘라 Transformer에 넣을 수 있다"는 아이디어만 기억해 두고, 그 Self-Attention이 정확히 어떻게 계산되는지는 다음 주에 손으로 직접 굴려본다.
+
+### 2.6 정규화 & 일반화 기법
 
 지금까지 만든 CNN이 학습 데이터를 잘 맞히는 것까지는 어렵지 않다. 진짜 어려운 건 처음 보는 데이터에도 잘 통하게 만드는 것, 즉 일반화(generalization)다. 이번 절에서 소개하는 다섯 가지 기법은 전부 "모델이 학습 데이터를 통째로 외워버리지 못하게 방해한다"는 공통점을 가지고 있다.
 
@@ -151,7 +228,7 @@ Dropout은 학습 단계에서 각 뉴런의 출력을 확률 p로 무작위로 
 
 표에서 특히 주의할 항목은 BatchNorm과 Dropout의 "주의" 칸이다. 두 기법 모두 학습(train) 때와 평가(eval) 때 서로 다르게 동작하도록 설계되어 있다. BatchNorm은 학습 중에는 그때그때의 배치 통계를 쓰지만, 평가할 때는 배치 하나(심지어 이미지 한 장)에 대해서도 안정적인 결과를 내야 하므로 학습 내내 누적해온 이동평균(running mean, running variance)을 사용한다. Dropout은 평가 때 뉴런을 끄지 않고 전부 사용한다(다만 학습 때와 스케일을 맞추기 위한 보정이 내부적으로 들어간다). 파이토치에서는 이 전환이 \`net.train()\`과 \`net.eval()\` 호출 하나로 자동 처리되는데, 이걸 깜빡하면 어떤 일이 벌어지는지는 이번 주 실습에서 직접 확인해볼 것이다.
 
-### 2.5 전이학습
+### 2.7 전이학습
 
 전이학습(transfer learning)은 대규모 데이터셋에서 미리 학습된 모델의 가중치를 그대로, 혹은 일부만 추가로 조정해서 다른(대개 데이터가 적은) 문제에 재사용하는 방법이다. ImageNet처럼 수백만 장의 이미지로 이미 학습된 CNN은, 앞쪽 층에서 가장자리·질감·색 대비처럼 특정 클래스에 국한되지 않는 저수준 시각 특징을 검출하도록 이미 학습되어 있다. 우리가 가진 데이터(예를 들어 CIFAR-10의 클래스당 수백 장)로 이런 저수준 특징 추출 층들을 무작위 초기화 상태부터 다시 학습시키는 것은 연산 낭비일 뿐 아니라, 데이터 수가 적어 오히려 과적합만 심해질 위험이 크다.
 
@@ -159,7 +236,7 @@ Dropout은 학습 단계에서 각 뉴런의 출력을 확률 p로 무작위로 
 
 [[diagram:transfer-learning]]
 
-### 2.6 학습 진단 체크리스트 (Karpathy Recipe 요약)
+### 2.8 학습 진단 체크리스트 (Karpathy Recipe 요약)
 
 모델이 학습되지 않을 때 원인을 특정하지 않은 채 하이퍼파라미터를 무작위로 바꿔가며 재시도하는 방식은 원인 규명에 비효율적이다. Andrej Karpathy가 정리한 이 체크리스트는 확인 비용이 가장 낮고 실패 원인일 확률이 가장 높은 항목부터 순서대로 점검하도록 구성되어 있다. 순서를 건너뛰고 싶은 유혹이 들겠지만, 실제로 실무에서 발생하는 학습 실패의 대다수는 이 앞 순서 어딘가에서 발견된다.
 
@@ -168,6 +245,63 @@ Dropout은 학습 단계에서 각 뉴런의 출력을 확률 p로 무작위로 
 3. 배치 하나에 일부러 **과적합**시켜본다 — 데이터 몇 개짜리 미니배치 하나조차 외우지 못한다면, 이는 데이터가 부족해서가 아니라 파이프라인 어딘가(기울기가 안 흐른다거나, 레이블이 밀렸다거나)에 버그가 있다는 강력한 신호다.
 4. train/val 곡선으로 과·소적합을 진단하고 그에 맞춰 모델 용량이나 정규화 강도를 조절한다.
 5. 한 번에 하나만 바꾼다(ablation) — 여러 요소를 동시에 바꾸면 무엇이 효과를 냈는지 알 수 없게 되므로, 원인과 결과를 명확히 추적하려면 반드시 지켜야 하는 원칙이다.
+
+### 2.9 생성형 AI: 판별모델에서 생성모델로
+
+지금까지 이번 주에 다룬 CNN은 전부 판별적(discriminative) 모델이었다 — 입력 이미지 $x$가 주어졌을 때 정답 클래스 $y$를 예측하는 조건부 확률 $p(y\\mid x)$를 직접 추정하는 모델이라는 뜻이다(1주차에서 다룬 판별적·생성적 모델의 구분을 떠올려보자). 지금부터 다룰 모델들은 방향이 정반대다. 이들은 정답 레이블을 맞히는 대신 데이터 자체의 분포 $p(x)$를 학습해서, 그 분포를 따르는 새로운 데이터를 직접 만들어내는 것을 목표로 한다 — 그래서 생성적(generative) 모델이라 부른다. 고양이 사진 수만 장을 보여주면 "이건 고양이인가 아닌가"를 답하는 게 아니라, 그 수만 장이 공유하는 통계적 패턴을 학습해서 세상에 없던 새로운 고양이 사진을 그려내는 것이 목표가 된다.
+
+#### 2.9.1 Autoencoder
+
+Autoencoder(오토인코더)는 인코더(encoder)와 디코더(decoder) 두 부분으로 이루어진 신경망으로, 입력 $x$를 인코더에 통과시켜 원본보다 훨씬 차원이 낮은 잠재 벡터(latent vector) $z$로 압축한 다음, 디코더가 그 $z$만 보고 원래 입력을 최대한 그대로 복원(reconstruction)하도록 학습한다. 학습 목표는 복원 손실(reconstruction loss), 즉 원본 $x$와 복원된 $\\hat x$의 차이를 최소화하는 것이다 — 흔히 픽셀별 평균제곱오차(MSE)를 사용한다.
+
+\`\`\`math
+\\mathcal{L}_{recon} = \\lVert x - \\hat x \\rVert^2, \\qquad \\hat x = \\text{decoder}(\\text{encoder}(x))
+\`\`\`
+
+레이블이 전혀 없는 데이터만으로 학습할 수 있다는(비지도학습, unsupervised learning) 점이 Autoencoder의 실용적인 장점이다. 다만 일반적인 Autoencoder는 "압축했다가 복원하는 능력"만 배울 뿐, 잠재공간 $z$의 특정 좌표에 어떤 의미가 있는지, 혹은 그 공간에서 임의의 점을 하나 골랐을 때 그럴듯한 새 데이터가 나오는지는 전혀 보장하지 않는다. 잠재공간 여기저기에 학습 데이터들이 제멋대로 흩어져 있어서, 학습 데이터가 없는 빈 틈에서 샘플링하면 디코더가 무엇을 내놓을지 알 수 없다. 그래서 순수한 Autoencoder는 "압축·복원"에는 유용하지만 "생성"에는 그대로 쓰기 어렵다.
+
+#### 2.9.2 Variational Autoencoder (VAE)
+
+Variational Autoencoder(VAE, 변분 오토인코더)는 바로 이 문제, 즉 "잠재공간에서 마음대로 샘플링해도 그럴듯한 데이터가 나오게 하려면 어떻게 해야 하는가"를 해결하기 위해 잠재공간을 설계하는 방식 자체를 바꾼다. 일반 Autoencoder의 인코더는 입력 $x$를 잠재공간의 점 하나($z$라는 정확한 좌표값)로 매핑하지만, VAE의 인코더는 $x$를 점 하나가 아니라 확률분포(대개 평균 $\\mu$와 표준편차 $\\sigma$로 정의되는 정규분포)로 매핑한다. 즉 "이 입력은 잠재공간의 이 근방 어딘가에 해당한다"는 확률적인 위치를 학습하는 것이다. 디코더에 넣을 $z$는 이 분포에서 실제로 하나를 샘플링해서 얻는다.
+
+\`\`\`math
+z \\sim \\mathcal{N}(\\mu(x), \\sigma(x)^2)
+\`\`\`
+
+이 확률분포 모델링이 왜 "생성"을 가능하게 하는가? 학습 과정에서 VAE는 복원 손실뿐 아니라, 각 입력이 만들어내는 분포 $\\mathcal{N}(\\mu, \\sigma^2)$가 표준정규분포 $\\mathcal{N}(0, 1)$에 가깝게 유지되도록 만드는 페널티(KL divergence 항)를 함께 최소화한다. 이 페널티 덕분에 서로 다른 입력들이 만들어내는 분포들이 잠재공간 원점 근처에 서로 겹치도록 촘촘하게 모이고, 그 결과 잠재공간 전체가 특정 학습 데이터 없이도 매끄럽게 이어진 하나의 연속적인 공간이 된다. 그래서 학습이 끝난 뒤에는 인코더 없이 표준정규분포 $\\mathcal{N}(0,1)$에서 $z$를 아무렇게나 하나 샘플링해 디코더에 넣기만 해도 그럴듯한 새로운 데이터를 만들어낼 수 있다 — 잠재공간에서 샘플링한 뒤 디코더를 통과시키는 이 절차가 곧 VAE의 생성 과정이다.
+
+#### 2.9.3 GAN (생성적 적대 신경망)
+
+GAN(Generative Adversarial Network, 생성적 적대 신경망)은 완전히 다른 방식으로 생성을 학습한다. GAN은 두 개의 신경망 — Generator(생성자) $G$와 Discriminator(감별자) $D$ — 를 동시에, 그러나 서로 반대되는 목표로 학습시킨다. $G$는 무작위 노이즈 벡터 $z$를 입력받아 가짜 데이터 $G(z)$를 만들어내고, $D$는 자신에게 들어온 데이터가 진짜 학습 데이터 $x$인지 $G$가 만든 가짜 $G(z)$인지를 구별하는 이진 분류기다. 정확히는 다음과 같은 게임이론적 구조로 정의된다. $D$는 자신의 손실함수, 즉 진짜 데이터에는 1(진짜)에 가까운 확률을, 가짜 데이터에는 0(가짜)에 가까운 확률을 내놓도록 만드는 분류 손실을 최소화하도록 학습된다. $G$는 반대로, 자신이 만든 가짜 데이터를 $D$가 "진짜"라고(1에 가깝게) 판정하게 만들어 $D$의 판별을 실패시키는 방향, 즉 $D$를 속이는 방향으로 자신의 손실을 최소화하도록 학습된다. 두 네트워크는 서로의 손실을 놓고 경쟁하며, 이를 하나의 식으로 합쳐 쓰면 다음과 같은 minimax 목적함수가 된다.
+
+\`\`\`math
+\\min_{G} \\max_{D} \\; \\mathbb{E}_{x \\sim p_{data}}[\\log D(x)] + \\mathbb{E}_{z \\sim p_z}[\\log(1 - D(G(z)))]
+\`\`\`
+
+$D$ 입장에서는 이 식의 값을 최대화하려 한다 — 진짜 $x$에는 $D(x)$를 1에 가깝게, 가짜 $G(z)$에는 $D(G(z))$를 0에 가깝게 만들수록 $\\log D(x)$와 $\\log(1-D(G(z)))$ 둘 다 커진다. $G$ 입장에서는 정반대로 이 식을 최소화하려 한다 — $D$가 자신이 만든 가짜를 진짜로 착각하게 만들수록(즉 $D(G(z))$를 1에 가깝게 만들수록) $\\log(1-D(G(z)))$ 항이 작아지기 때문이다. $G$는 $x\\sim p_{data}$ 항에는 아예 관여할 수 없으므로 오직 두 번째 항만 신경 쓰면 된다. 이 둘을 번갈아 학습시키다 보면 이론적으로는 $G$가 만들어내는 분포가 실제 데이터 분포 $p_{data}$에 점점 가까워지고, 종국에는 $D$가 진짜와 가짜를 구별할 확률이 $1/2$(순전히 찍는 수준)까지 떨어지는 평형 상태에 도달한다. 학습이 잘 이루어졌다는 것은 결국 $D$가 더 이상 $G$를 이길 수 없을 만큼 $G$의 결과물이 실제 데이터와 통계적으로 구분되지 않게 되었다는 뜻이다.
+
+\`\`\`image
+src: /images/week4/gan-architecture.png
+alt: 노이즈 벡터를 입력받는 Generator와, 진짜/가짜 데이터를 구별하는 Discriminator가 서로 경쟁하며 학습하는 GAN 구조도
+caption: Generator는 노이즈 $z$로부터 가짜 데이터를 만들어 Discriminator를 속이려 하고, Discriminator는 진짜 데이터와 Generator가 만든 가짜 데이터를 구별하려 한다. 두 네트워크는 minimax 목적함수를 사이에 두고 함께 학습된다.
+credit: Zhang, Lipton, Li & Smola (Dive into Deep Learning), CC BY-SA 4.0, Wikimedia Commons
+width: 480
+height: 560
+\`\`\`
+
+#### 2.9.4 Diffusion Model
+
+Diffusion Model(디퓨전 모델)은 최근 이미지 생성 분야를 사실상 평정한 접근으로, GAN과는 또 다른 방식으로 생성 문제를 푼다. 핵심 아이디어는 두 개의 반대 방향 과정으로 이루어진다. Forward Diffusion(순확산 과정)은 원본 이미지 $x_0$에 아주 작은 가우시안 노이즈를 여러 단계(수백~수천 스텝)에 걸쳐 조금씩 계속 더해가서, 마지막 단계 $x_T$에서는 원본의 흔적이 전혀 남지 않은 완전한 무작위 노이즈가 되게 만드는 과정이다. 이 과정 자체에는 학습되는 파라미터가 없다 — 그냥 정해진 규칙대로 노이즈를 더해나가는 고정된 절차다.
+
+진짜 학습이 필요한 부분은 Reverse Diffusion(역확산 과정)이다. 노이즈투성이 $x_T$에서 시작해, 각 스텝에서 "지금 이 상태에서 노이즈를 아주 조금만 제거하면 어떤 모습이었을까"를 예측해나가며 조금씩 원본에 가까운 이미지로 되돌리는 과정이다. 여기서 신경망이 실제로 학습하는 대상이 미묘한데, 모델은 "원본 이미지가 무엇인가"를 직접 예측하도록 학습되는 게 아니라 현재 시점 $x_t$에 섞여 있는 노이즈 성분 $\\epsilon$ 자체를 예측하도록 학습된다(Noise Prediction). 노이즈가 정확히 얼마나, 어떤 패턴으로 섞여 있는지만 알아내면 그 노이즈를 $x_t$에서 빼주는 것만으로 한 단계 전의 $x_{t-1}$을 복원할 수 있기 때문에, "원본을 직접 그려라"보다 "지금 섞인 노이즈가 뭔지 맞혀라"가 훨씬 안정적으로 학습되는 더 쉬운 문제로 알려져 있다.
+
+이 Noise Prediction을 수행하는 신경망 구조로 흔히 쓰이는 것이 U-Net이다. U-Net은 입력을 점점 작은 해상도로 압축해나가는 인코더 경로와, 다시 원래 해상도로 확장해나가는 디코더 경로로 이루어져 있고, 인코더의 각 해상도 단계에서 나온 특징 지도를 대응하는 디코더의 같은 해상도 단계로 직접 이어붙이는 스킵 연결(skip connection)을 가지고 있다. 이 스킵 연결은 2.3절에서 배운 ResNet의 잔차 연결과 문제의식이 맞닿아 있다 — 인코더가 압축하는 과정에서 손실되기 쉬운 세밀한 공간 정보(가장자리, 질감 같은 저수준 디테일)를 디코더 쪽으로 곧장 흘려보내, 깊은 인코더-디코더 구조를 거치고도 이미지의 세부 정보가 뭉개지지 않도록 지켜주는 역할을 한다.
+
+다만 Forward/Reverse Diffusion을 원본 이미지와 같은 해상도의 픽셀 공간에서 그대로 수행하면 계산량이 막대하다 — 예컨대 $512\\times512$ 크기 이미지의 모든 픽셀에 대해 수백 번의 노이즈 제거 스텝을 반복해야 하기 때문이다. Latent Diffusion(잠재 확산)은 이 문제를 우회하는 기법으로, 이미지를 먼저 (VAE와 비슷한 방식의) 인코더로 훨씬 작은 압축된 잠재공간으로 줄인 다음, 그 좁은 잠재공간 안에서만 Forward/Reverse Diffusion을 수행하고, 마지막에 디코더로 다시 원래 해상도의 이미지로 복원한다. 픽셀 공간이 아니라 압축된 잠재공간에서 확산을 진행하는 것만으로 계산량이 크게 줄어들어, 일반 소비자용 GPU에서도 고해상도 이미지 생성이 가능해졌다. 널리 쓰이는 Stable Diffusion이 바로 이 Latent Diffusion 방식을 채택한 모델이다.
+
+#### 2.9.5 Text-to-Image / Image-to-Image: 조건 없는 생성에서 조건부 생성으로
+
+지금까지 설명한 VAE·GAN·Diffusion Model은 전부 "어떤 그럴듯한 데이터를 만들어내라"는 조건 없는(unconditional) 생성이었다. 실제로 우리가 접하는 이미지 생성 서비스는 대부분 "고양이가 우주복을 입고 있는 그림을 그려줘"처럼 텍스트로 원하는 결과를 지정한다. 이렇게 원하는 조건(condition)을 함께 입력해 그 조건에 맞는 데이터를 생성하도록 만드는 것을 조건부 생성(conditional generation)이라 부른다. Text-to-Image 모델은 앞서 설명한 Diffusion Model의 Reverse Diffusion 과정에 문장을 벡터로 바꾼 텍스트 임베딩을 각 노이즈 제거 단계마다 함께 넣어주어, 모델이 "지금 이 텍스트 조건에 맞는 노이즈를 예측하라"는 조건부 Noise Prediction을 학습하게 만든 것이다. Image-to-Image는 조건이 텍스트 대신(혹은 텍스트와 함께) 원본 이미지 자체가 되는 경우로, 이미 있는 이미지의 스타일을 바꾸거나 일부를 수정하는 데 같은 원리가 쓰인다. 텍스트와 이미지를 함께 다루는 이 조건부 생성의 메커니즘은 7주차 멀티모달 절에서 텍스트·이미지 임베딩을 어떻게 하나의 공간에 정렬시키는지를 배우면서 좀 더 구체적으로 다시 다루게 된다.
 `,
   practiceMd: `
 Colab GPU 런타임에서 실행한다. 아래 코드는 한 번에 다 붙여넣기보다, 앞서 개념 절에서 설명한 내용과 하나씩 대응시키며 조각별로 실행해보는 것을 권한다.
@@ -219,7 +353,7 @@ net = nn.Sequential(block(3,32), block(32,64), block(64,128), nn.Flatten(),
 opt = torch.optim.AdamW(net.parameters(), 1e-3, weight_decay=5e-4)
 \`\`\`
 
-학습 루프에서 가장 먼저 나오는 \`net.train()\`과, 평가 직전의 \`net.eval()\`을 놓치지 말자. 이 두 줄이 하는 일은 앞서 2.4절에서 설명한 BatchNorm·Dropout의 학습/평가 모드 전환 그 자체다. \`train()\` 모드에서는 BatchNorm이 지금 들어온 배치의 평균·분산을 쓰면서 동시에 그 값을 누적 이동평균(running mean/var)에 계속 반영하고, Dropout은 실제로 일부 뉴런을 꺼버린다. \`eval()\` 모드로 바뀌면 BatchNorm은 학습 내내 누적해온 이동평균을 그대로 사용하고, Dropout은 아무것도 끄지 않는다.
+학습 루프에서 가장 먼저 나오는 \`net.train()\`과, 평가 직전의 \`net.eval()\`을 놓치지 말자. 이 두 줄이 하는 일은 앞서 2.6절에서 설명한 BatchNorm·Dropout의 학습/평가 모드 전환 그 자체다. \`train()\` 모드에서는 BatchNorm이 지금 들어온 배치의 평균·분산을 쓰면서 동시에 그 값을 누적 이동평균(running mean/var)에 계속 반영하고, Dropout은 실제로 일부 뉴런을 꺼버린다. \`eval()\` 모드로 바뀌면 BatchNorm은 학습 내내 누적해온 이동평균을 그대로 사용하고, Dropout은 아무것도 끄지 않는다.
 
 \`\`\`python
 for ep in range(10):
@@ -239,7 +373,7 @@ for ep in range(10):
 \`net.eval()\`을 부르지 않고 그대로 평가하면 두 가지 문제가 동시에 생긴다. 첫째, BatchNorm이 테스트 배치(심지어 이미지 한 장짜리 배치)의 통계로 정규화를 시도하면서 배치 크기가 작을수록 평균·분산 추정이 불안정해지고, 같은 이미지를 넣어도 배치 구성에 따라 다른 예측이 나올 수 있다. 둘째, Dropout이 여전히 뉴런을 무작위로 꺼버리므로 같은 입력을 두 번 넣어도 답이 달라지는, 재현 불가능한 모델이 되어버린다. 정확도가 이상하게 들쭉날쭉하거나 학습 때보다 뚜렷이 낮게 나온다면, 가장 먼저 \`net.eval()\`을 잊지 않았는지 확인하는 습관을 들이자.
 :::
 
-마지막은 전이학습이다. \`tv.models.resnet18(weights="IMAGENET1K_V1")\`로 이미 ImageNet 130만 장으로 학습된 가중치를 통째로 불러온 다음, \`for p in m.parameters(): p.requires_grad = False\`로 모든 층의 가중치를 얼린다. \`requires_grad\`를 False로 두면 역전파 때 이 파라미터들에 대한 기울기를 아예 계산하지 않으므로, 사전학습된 특징 추출 층의 가중치는 그대로 고정한 채 마지막 분류층 \`m.fc\`만 새로 교체해서(2.5절에서 설명한 특징 추출 방식) 우리 문제(10개 클래스)에 맞게 학습시킬 수 있다. 다만 실전에서 주의할 점이 하나 있다. ResNet18은 원래 $224\\times224$ 크기의 ImageNet 이미지로 학습되었기 때문에 $32\\times32$짜리 CIFAR-10 이미지를 그대로 넣으면 앞쪽 층에서 이미지가 지나치게 빨리 작아져 정보가 소실된다. 그래서 아래 주석에 적힌 대로 입력을 $128\\times128$ 정도로 리사이즈한 뒤 넣어주는 전처리가 함께 필요하다.
+마지막은 전이학습이다. \`tv.models.resnet18(weights="IMAGENET1K_V1")\`로 이미 ImageNet 130만 장으로 학습된 가중치를 통째로 불러온 다음, \`for p in m.parameters(): p.requires_grad = False\`로 모든 층의 가중치를 얼린다. \`requires_grad\`를 False로 두면 역전파 때 이 파라미터들에 대한 기울기를 아예 계산하지 않으므로, 사전학습된 특징 추출 층의 가중치는 그대로 고정한 채 마지막 분류층 \`m.fc\`만 새로 교체해서(2.7절에서 설명한 특징 추출 방식) 우리 문제(10개 클래스)에 맞게 학습시킬 수 있다. 다만 실전에서 주의할 점이 하나 있다. ResNet18은 원래 $224\\times224$ 크기의 ImageNet 이미지로 학습되었기 때문에 $32\\times32$짜리 CIFAR-10 이미지를 그대로 넣으면 앞쪽 층에서 이미지가 지나치게 빨리 작아져 정보가 소실된다. 그래서 아래 주석에 적힌 대로 입력을 $128\\times128$ 정도로 리사이즈한 뒤 넣어주는 전처리가 함께 필요하다.
 
 \`\`\`python
 # 전이학습
@@ -259,6 +393,16 @@ m.fc = nn.Linear(512, 10)   # 이후 32x32를 128x128로 리사이즈하여 fc�
     { id: "w4-q8", question: "BatchNorm을 사용하는 모델을 eval()로 바꾸지 않으면 생기는 일은?" },
     { id: "w4-q9", question: "Dropout이 학습 때만 뉴런을 끄고 평가 때는 전부 켜는 이유를 앙상블 관점에서 설명하라." },
     { id: "w4-q10", question: "10클래스 분류 초기 손실이 5.0이라면 무엇을 의심하는가?" },
+    { id: "w4-q11", question: "LeNet이 오늘날의 CNN과 이미 공유하고 있는 기본 골격은 무엇이며, LeNet 당시에는 왜 이 구조를 더 크고 복잡한 이미지로 확장하기 어려웠는가?" },
+    { id: "w4-q12", question: "AlexNet이 2012년 ImageNet 대회에서 딥러닝 붐을 촉발할 수 있었던 세 가지 요소는 무엇이며, 각각이 어떤 문제를 해결했는가?" },
+    { id: "w4-q13", question: "채널 수 $C=64$일 때 $7\\times7$ conv 한 층과 $3\\times3$ conv 세 층의 파라미터 수를 각각 계산하고, 두 경우의 수용영역이 왜 같은지, 그런데도 왜 작은 커널을 깊게 쌓는 쪽이 유리한지 설명하라." },
+    { id: "w4-q14", question: "Object Detection은 Image Classification과 비교했을 때 어떤 추가적인 예측을 더 해야 하는가?" },
+    { id: "w4-q15", question: "Semantic Segmentation을 '픽셀 단위 분류'로 정의하고, 이것이 Object Detection과 근본적으로 어떻게 다른지 설명하라." },
+    { id: "w4-q16", question: "Vision Transformer(ViT)는 이미지를 어떻게 Transformer의 입력 형태로 바꾸는가? 이 과정에서 CNN의 어떤 귀납편향이 사라지는가?" },
+    { id: "w4-q17", question: "일반 Autoencoder와 Variational Autoencoder(VAE)는 인코더가 입력을 잠재공간의 무엇으로 매핑하는지에서 갈린다. 그 차이를 설명하고, 이 차이가 왜 VAE에서는 '새 데이터 생성'을 가능하게 하는지 설명하라." },
+    { id: "w4-q18", question: "GAN의 minimax 목적함수 $\\min_{G}\\max_{D}\\;\\mathbb{E}_{x\\sim p_{data}}[\\log D(x)] + \\mathbb{E}_{z\\sim p_z}[\\log(1-D(G(z)))]$에서 Discriminator와 Generator는 각각 이 값을 최대화/최소화하기 위해 무엇을 하려고 하는가?" },
+    { id: "w4-q19", question: "Diffusion Model의 Forward Diffusion과 Reverse Diffusion을 각각 정의하고, Reverse Diffusion에서 신경망이 실제로 예측하도록 학습되는 대상(Noise Prediction)이 무엇인지 설명하라." },
+    { id: "w4-q20", question: "U-Net의 스킵 연결이 4주차에서 배운 ResNet의 잔차 연결과 어떤 문제의식을 공유하는지 설명하고, Latent Diffusion이 픽셀 공간 대신 잠재공간에서 확산을 수행함으로써 무엇을 얻는지 설명하라." },
   ],
   worksheet: [
     { label: '① 오늘의 질문 — "왜 이미지엔 FC 대신 합성곱인가?"', hint: "FC층과 합성곱층의 파라미터 수 차이를 예로 들어 설명해보세요." },
@@ -276,7 +420,7 @@ m.fc = nn.Linear(512, 10)   # 이후 32x32를 128x128로 리사이즈하여 fc�
 3. 각 실험의 결과를 (val 정확도, train-val gap, 학습시간)으로 요약하고 왜 그런 결과가 나왔는지 가설과 근거를 서술.
 4. ResNet18 전이학습(특징추출 vs 파인튜닝)과 기준선을 비교. 소량 데이터(클래스당 500장) 조건에서도 비교.
 5. 오분류 이미지 16장을 시각화하고 오류 패턴을 분석.
-6. 실습에서 다룬 block 함수의 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU}$ 순서를 $\\text{conv} \\to \\text{ReLU} \\to \\text{BatchNorm}$으로 바꿔서 같은 조건으로 재학습하고, 학습 곡선이 어떻게 달라지는지 관찰한 뒤 2.4절의 설명(BatchNorm이 ReLU보다 먼저 와야 하는 이유)에 비추어 그 차이를 해석하라.
+6. 실습에서 다룬 block 함수의 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU}$ 순서를 $\\text{conv} \\to \\text{ReLU} \\to \\text{BatchNorm}$으로 바꿔서 같은 조건으로 재학습하고, 학습 곡선이 어떻게 달라지는지 관찰한 뒤 2.6절의 설명(BatchNorm이 ReLU보다 먼저 와야 하는 이유)에 비추어 그 차이를 해석하라.
 
 ### 심화
 
@@ -295,10 +439,17 @@ m.fc = nn.Linear(512, 10)   # 이후 32x32를 128x128로 리사이즈하여 fc�
 `,
   dueNote: "제출: 일요일 23:59",
   furtherReading: [
+    "LeCun et al., Gradient-Based Learning Applied to Document Recognition (LeNet-5, 1998)",
     "Krizhevsky et al., AlexNet (2012)",
+    "Simonyan & Zisserman, Very Deep Convolutional Networks (VGG, 2014)",
     "Ioffe & Szegedy, Batch Normalization (2015)",
     'Zhang et al., "Understanding deep learning requires rethinking generalization" (2017)',
     "CS231n Notes: Transfer Learning (cs231n.github.io) — 특징추출 vs 파인튜닝 선택 기준을 더 자세히 보고 싶다면",
+    "Goodfellow et al., Generative Adversarial Networks (2014)",
+    "Kingma & Welling, Auto-Encoding Variational Bayes (VAE, 2013)",
+    "Ho et al., Denoising Diffusion Probabilistic Models (DDPM, 2020)",
+    "Rombach et al., High-Resolution Image Synthesis with Latent Diffusion Models (Stable Diffusion, 2022)",
+    "Dosovitskiy et al., An Image is Worth 16x16 Words (Vision Transformer, 2020)",
   ],
 };
 

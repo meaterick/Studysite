@@ -5,17 +5,19 @@ const week3: WeekMeta = {
   number: 3,
   phase: "Phase 2 · 딥러닝",
   title: "신경망과 역전파 (Backpropagation)",
-  subtitle: "MLP, 활성화, 연쇄법칙, 계산 그래프, SGD/Adam",
-  selfHours: "개인 8h",
+  subtitle: "MLP, 활성화, 연쇄법칙, 계산 그래프, SGD/Adam, PyTorch",
+  selfHours: "개인 10h",
   sessionHours: "세션 2h",
   difficulty: 4,
-  keywords: ["MLP", "활성화", "연쇄법칙", "계산 그래프", "SGD/Adam"],
+  keywords: ["MLP", "활성화", "연쇄법칙", "계산 그래프", "SGD/Adam", "PyTorch", "Autograd", "GPU/CUDA"],
   objectives: [
     "MLP의 순전파를 행렬식으로 쓰고 차원을 추적한다.",
     "연쇄법칙으로 역전파를 유도하고 계산 그래프로 설명한다.",
     "자동미분 엔진(micrograd)을 직접 구현한다.",
     "SGD, Momentum, Adam의 차이를 설명한다.",
     "수치미분(gradient check)으로 역전파 구현의 정확성을 검증한다.",
+    "PyTorch의 Tensor/Autograd/nn.Module/optimizer가 지금까지 손으로 구현한 backprop·경사하강법의 어느 부분을 대신하는지 정확히 대응시켜 설명한다.",
+    "GPU/CUDA가 신경망 학습을 병렬화로 가속하는 원리와 mixed precision의 이점을 설명한다.",
   ],
   learningOrder: [
     '필수 — Karpathy "The spelled-out intro to neural networks and backpropagation: building micrograd" (약 2.5h, 따라 코딩)',
@@ -49,6 +51,20 @@ credit: Cburnett, CC BY-SA 3.0, Wikimedia Commons
 width: 560
 height: 500
 \`\`\`
+
+φ 자리에 넣을 수 있는 함수는 ReLU 하나만이 아니다. 최근 Transformer 계열 모델(5~7주차에서 BERT, GPT를 다룰 때 다시 만난다)에서 기본값으로 자주 쓰이는 활성화 함수가 GELU(Gaussian Error Linear Unit)다. GELU는 입력 x에 "표준정규분포를 따르는 확률변수가 x보다 작을 확률" $\\Phi(x)$를 곱한 값으로 정의된다.
+
+\`\`\`math
+\\text{GELU}(x) = x\\,\\Phi(x) = x\\cdot \\dfrac{1}{2}\\left[1+\\text{erf}\\!\\left(\\dfrac{x}{\\sqrt{2}}\\right)\\right]
+\`\`\`
+
+오차함수 erf를 직접 계산하기 번거로우므로 실무에서는 다음과 같은 tanh 근사식을 대신 쓰는 경우가 많다(PyTorch의 \`nn.GELU(approximate="tanh")\`가 바로 이 근사식을 계산한다).
+
+\`\`\`math
+\\text{GELU}(x) \\approx 0.5x\\left(1+\\tanh\\!\\left[\\sqrt{2/\\pi}\\,(x+0.044715x^3)\\right]\\right)
+\`\`\`
+
+ReLU $=\\max(0,x)$와 비교하면 차이가 뚜렷하다. ReLU는 x=0에서 미분이 불연속(왼쪽 미분 0, 오른쪽 미분 1)이고, 음수 구간에서는 출력과 미분이 정확히 0이라서 입력이 아주 살짝만 음수여도 그 뉴런은 통째로 죽어버린다(2.4절의 죽은 ReLU 문제). 반면 GELU는 모든 구간에서 매끄럽게(무한히 미분 가능하게) 이어지고, 입력이 음수라도 완전히 0으로 끊어버리지 않고 $\\Phi(x)$라는 확률만큼 깎아서 조금씩 흘려보낸다 — "이 뉴런의 값을 얼마나 통과시킬지"를 0 또는 1의 이진 선택이 아니라 연속적인 확률적 가중치로 결정하는 셈이다. 이 매끄러움 덕분에 아주 깊은 Transformer를 학습시킬 때 ReLU보다 기울기가 더 안정적으로 흐른다는 것이 실험적으로 널리 보고되어 있다.
 
 :::info 보편 근사 정리
 충분히 넓은 1개 은닉층 MLP는 임의의 연속함수를 근사할 수 있다(단, 학습 가능성을 보장하진 않는다). 즉 "표현할 수 있다"는 것과 "경사하강법으로 실제로 찾아낼 수 있다"는 것은 전혀 다른 문제다 — 층을 더 깊게 쌓는 이유 중 하나는, 넓지만 얕은 망보다 깊은 망이 실제로 학습이 더 잘 되는 경우가 많기 때문이다.
@@ -156,6 +172,132 @@ height: 606
 \`\`\`
 
 결국 두 초기화가 서로 다른 공식을 쓰는 건 경쟁하는 두 유파가 있어서가 아니라, "어떤 활성화 함수 뒤에 어떤 분산 보정이 필요한가"라는 질문의 답이 다르기 때문이다. 실무에서는 ReLU 계열이면 He, tanh/sigmoid 계열이면 Xavier를 기본값으로 쓰면 된다.
+
+### 2.6 정규화: Batch Normalization과 Layer Normalization
+
+깊은 네트워크를 학습시킬 때 층을 통과할 때마다 활성화 값의 분포(평균과 분산)가 스텝마다 계속 흔들리면, 뒤쪽 층은 매번 달라지는 입력 분포에 다시 적응해야 해서 학습이 느려지고 불안정해진다. 정규화(normalization) 층은 이 문제를 완화하려고, 활성화 값 z를 평균 0·분산 1로 표준화한 뒤 학습 가능한 스케일 γ와 이동 β를 다시 곱하고 더해 $\\hat{z}=\\gamma\\cdot\\text{표준화}(z)+\\beta$ 형태로 되돌려준다. 그런데 "평균과 분산을 어떤 축을 따라 계산하느냐"에 따라 전혀 다른 정규화 기법이 만들어진다.
+
+Batch Normalization(BN)은 미니배치 축을 따라 정규화한다. 미니배치에 m개의 샘플이 있고 어떤 특징(뉴런) j의 pre-activation을 $z_j^{(1)}, \\dots, z_j^{(m)}$이라 하면, BN은 이 m개 값(같은 특징, 서로 다른 샘플들)에 대해 평균과 분산을 계산한다.
+
+\`\`\`math
+\\mu_j = \\dfrac{1}{m}\\sum_{i=1}^m z_j^{(i)}, \\qquad \\sigma_j^2 = \\dfrac{1}{m}\\sum_{i=1}^m (z_j^{(i)}-\\mu_j)^2, \\qquad \\hat{z}_j^{(i)} = \\dfrac{z_j^{(i)}-\\mu_j}{\\sqrt{\\sigma_j^2+\\epsilon}}
+\`\`\`
+
+즉 "이 뉴런의 값이 배치 전체에서 평균적으로 어느 정도인가"를 기준으로 정규화한다. 문제는 이 통계치가 배치 구성에 따라 달라진다는 점이다. 배치 크기가 작으면 $\\mu_j, \\sigma_j^2$의 추정이 불안정해지고, 추론(inference) 시점에는 배치가 하나(m=1)일 수도 있으므로 학습 중 관찰해 둔 이동평균(running mean/var)을 대신 써야 하는 번거로움도 있다(뒤에서 다룰 \`model.eval()\`이 정확히 이 전환을 담당한다).
+
+Layer Normalization(LN)은 정규화 축을 완전히 바꾼다. 배치가 아니라 한 샘플이 가진 모든 특징(feature) 축을 따라 평균과 분산을 계산한다. 샘플 i 하나가 d개의 특징 $z_1^{(i)}, \\dots, z_d^{(i)}$을 가진다면,
+
+\`\`\`math
+\\mu_i = \\dfrac{1}{d}\\sum_{k=1}^d z_k^{(i)}, \\qquad \\sigma_i^2 = \\dfrac{1}{d}\\sum_{k=1}^d (z_k^{(i)}-\\mu_i)^2, \\qquad \\hat{z}_k^{(i)} = \\dfrac{z_k^{(i)}-\\mu_i}{\\sqrt{\\sigma_i^2+\\epsilon}}
+\`\`\`
+
+이 계산은 오직 샘플 i 자기 자신의 특징들만 사용하므로, 배치 안에 다른 샘플이 몇 개나 같이 들어있는지와 완전히 무관하다 — 배치 크기가 1이어도, 길이가 서로 다른 시퀀스가 섞여 있어도 그대로 적용된다. 이것이 정확히 5주차에서 배울 Transformer가 BatchNorm 대신 LayerNorm을 쓰는 이유다. 자연어 문장은 배치마다 길이도 다르고 문장 수(배치 크기)도 학습 상황에 따라 들쭉날쭉하므로, "같은 배치 안의 서로 다른 문장들"을 기준으로 통계를 내는 BN보다 "같은 문장 안의 서로 다른 토큰들"을 기준으로 통계를 내는 LN이 훨씬 안정적이다.
+
+| | 정규화 축 | 배치 크기 의존성 | 대표 사용처 |
+| --- | --- | --- | --- |
+| BatchNorm | 배치 축(같은 특징, 다른 샘플들) | 큼 — 배치가 작으면 불안정, 추론 시 이동평균 필요 | CNN(4주차) |
+| LayerNorm | 특징 축(같은 샘플, 다른 특징들) | 없음 — 샘플 하나만으로도 계산 가능 | Transformer(5~7주차) |
+
+두 기법 모두 학습 가능한 파라미터 γ, β는 그대로 유지한다 — 정규화가 표현력을 해치지 않도록, 표준화한 뒤 다시 원하는 스케일과 위치로 되돌릴 여지를 남겨두는 것이다.
+
+### 2.7 이제 실전에서는: PyTorch가 대신 해주는 것들
+
+3.1절(실습)에서 우리는 Value라는 아주 작은 자동미분 엔진을 직접 만들어, 계산 그래프를 만들고 그 그래프를 거슬러 올라가며 기울기를 계산하는 과정을 한 줄씩 눈으로 확인했다. PyTorch 같은 딥러닝 프레임워크가 실전에서 하는 일은 정확히 이것과 같다 — 다만 숫자 하나(스칼라)가 아니라 수백만 개의 숫자를 담은 텐서(tensor) 단위로, 그것도 CPU가 아닌 GPU에서 대량 병렬로 처리한다는 점이 다를 뿐이다. 이 절에서는 우리가 손으로 짠 코드의 각 부분이 PyTorch의 어떤 개념에 대응하는지 하나씩 짝지어본다.
+
+- **Tensor**: PyTorch의 \`torch.Tensor\`는 NumPy의 \`ndarray\`와 데이터 구조 자체는 동일하다 — 둘 다 같은 타입의 숫자를 다차원 배열로 담고, 인덱싱·브로드캐스팅·행렬 곱 같은 연산도 거의 그대로 대응된다(실제로 \`torch.from_numpy()\`로 메모리 복사 없이 서로 변환할 수 있다). 다른 점은 두 가지다. 첫째, 텐서는 \`.to("cuda")\`로 GPU 메모리로 옮겨 대량 병렬 연산을 시킬 수 있지만 NumPy 배열은 CPU에서만 동작한다. 둘째, 텐서는 \`requires_grad=True\`를 켜면 자신이 어떤 연산을 거쳐 만들어졌는지 계산 그래프를 계속 기록해 나중에 역전파에 쓸 수 있지만, NumPy 배열에는 이런 기록 기능이 아예 없다.
+
+- **Autograd**: \`requires_grad=True\`인 텐서에 연산을 적용할 때마다, PyTorch는 3.1절의 Value가 \`_prev\`와 \`_backward\`를 저장했던 것과 똑같이 결과 텐서에 \`grad_fn\`이라는 이름으로 "이 텐서가 어떤 연산과 어떤 입력들로부터 만들어졌는지"를 기록한다. \`loss.backward()\`를 호출하면 이 grad_fn들을 따라 위상정렬의 역순으로 그래프를 순회하며 연쇄법칙을 적용하는데, 이것이 정확히 우리가 만든 \`Value.backward()\`가 topo 리스트를 뒤집어 순회하며 \`_backward()\`를 실행하던 것과 동일한 알고리즘이다. 계산이 끝나면 각 리프(leaf) 텐서, 즉 \`requires_grad=True\`로 직접 만든 파라미터 텐서의 \`.grad\` 속성에 $\\partial L/\\partial\\theta$가 채워진다(3.1절 Value의 \`.grad\` 필드와 완전히 같은 역할). \`optimizer.step()\`은 이렇게 채워진 \`.grad\`를 읽어 2.3절의 갱신식(SGD, Adam)대로 파라미터를 갱신하고, \`optimizer.zero_grad()\`는 \`+=\`로 누적되는 성질(3.1절 :::info 참고) 때문에 다음 스텝을 위해 \`.grad\`를 0으로 되돌리는 역할을 한다.
+
+\`\`\`image
+src: /images/week3/reverse-mode-autodiff.png
+alt: 함수 f(x1,x2)=x1*x2+sin(x1)의 계산 그래프를 손실 쪽에서 입력 쪽으로 거슬러 올라가며 각 노드의 국소 미분을 곱해 전달하는 역방향 자동미분 과정을 보여주는 다이어그램
+caption: 역방향 자동미분(reverse-mode automatic differentiation) — f(x1,x2)=x1x2+sin(x1)의 계산 그래프를 출력(오른쪽)에서 입력(왼쪽) 방향으로 한 번만 훑으면서 연쇄법칙으로 모든 편미분을 동시에 얻는다. PyTorch의 loss.backward()가 grad_fn을 따라 수행하는 것이 바로 이 알고리즘이다.
+credit: Berland (en.wikipedia), Public Domain, Wikimedia Commons
+width: 960
+height: 560
+\`\`\`
+
+- **nn.Module**: 파라미터를 가진 레이어(예: Wx+b를 계산하는 완전연결층)를 재사용 가능한 단위로 묶는 클래스다. \`__init__\`에서 그 층이 가질 파라미터(가중치, 편향)를 \`nn.Linear\`, \`nn.Conv2d\` 같은 하위 모듈로 선언하고, \`forward\`에서는 입력이 그 파라미터들을 거쳐 출력으로 바뀌는 순전파 계산만 정의한다. 신기하게도 backward는 따로 작성하지 않는다 — forward 안에서 사용한 텐서 연산 하나하나가 이미 autograd에 기록되므로, \`loss.backward()\`를 부르는 순간 이 모듈 내부의 모든 파라미터에 대한 기울기가 자동으로 계산된다.
+
+\`\`\`python
+import torch, torch.nn as nn
+
+class TwoLayerMLP(nn.Module):
+    def __init__(self, d_in, d_hidden, d_out):
+        super().__init__()
+        self.fc1 = nn.Linear(d_in, d_hidden)
+        self.fc2 = nn.Linear(d_hidden, d_out)
+
+    def forward(self, x):
+        h = torch.relu(self.fc1(x))
+        return self.fc2(h)
+
+model = TwoLayerMLP(3, 4, 1)
+\`\`\`
+
+- **Optimizer (torch.optim)**: 2.3절에서 손으로 유도한 Adam의 갱신식(m_t, v_t의 지수이동평균과 편향 보정, $\\theta \\leftarrow \\theta - \\eta\\,\\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon)$까지 전부)을 한 줄로 대신해주는 것이 \`torch.optim.Adam\`이다.
+
+\`\`\`python
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, betas=(0.9, 0.999), eps=1e-8)
+\`\`\`
+
+\`model.parameters()\`가 \`__init__\`에서 선언한 모든 층의 파라미터를 하나로 모아 넘겨주고, 옵티마이저는 매 \`step()\`마다 각 파라미터의 \`.grad\`를 읽어 자신이 관리하는 $m, v$ 버퍼를 갱신한 뒤 파라미터 값을 직접 수정한다.
+
+- **Dataset / DataLoader**: 학습 데이터를 미니배치 단위로 잘라 순전파에 넣어주는 역할을 담당한다. \`Dataset\`은 \`__len__\`(전체 샘플 개수)과 \`__getitem__\`(인덱스로 샘플 하나를 꺼내는 방법)이라는 두 메서드만 정의하면 되는 간단한 인터페이스이고, \`DataLoader\`가 그 위에서 셔플·배치 묶기·병렬 로딩을 대신해준다.
+
+\`\`\`python
+from torch.utils.data import Dataset, DataLoader
+
+class MoonsDataset(Dataset):
+    def __init__(self, X, y):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y = torch.tensor(y)
+    def __len__(self):
+        return len(self.X)
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+loader = DataLoader(MoonsDataset(X, y), batch_size=32, shuffle=True)
+\`\`\`
+
+- **Training / Validation Loop**: 표준적인 학습 루프는 "에폭을 반복 → 그 안에서 배치를 반복 → 순전파(forward) → 손실 계산(loss) → 역전파(backward) → 파라미터 갱신(step) → 기울기 초기화(zero_grad)"라는 여섯 단계를 그대로 되풀이하는 구조다.
+
+\`\`\`python
+for epoch in range(num_epochs):
+    model.train()
+    for xb, yb in train_loader:
+        pred = model(xb)
+        loss = loss_fn(pred, yb)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    model.eval()
+    with torch.no_grad():
+        val_loss = sum(loss_fn(model(xb), yb).item() for xb, yb in val_loader)
+    print(epoch, val_loss)
+\`\`\`
+
+검증(validation) 루프에서는 두 가지가 달라진다. \`model.eval()\`은 2.6절에서 배운 BatchNorm이 미니배치 통계 대신 학습 중 누적해온 이동평균을 쓰도록 모드를 바꾸고, \`torch.no_grad()\`는 이 블록 안에서는 계산 그래프를 아예 기록하지 않도록 지시한다. 검증 시점에는 backward를 부를 일이 없으므로 그래프를 기록해봐야 메모리와 연산만 낭비되기 때문이다.
+
+- **Checkpoint**: \`torch.save(model.state_dict(), "ckpt.pt")\`로 그 시점의 모든 파라미터 값을 파일로 저장하고, \`model.load_state_dict(torch.load("ckpt.pt"))\`로 복원한다. 학습이 길게는 며칠씩 걸리는 큰 모델에서는 중간에 서버가 죽거나 재시작해야 할 때를 대비해 정기적으로 체크포인트를 저장해두고, 검증 손실이 가장 낮았던 시점의 체크포인트를 따로 보관해두면 마지막 에폭이 아니라 "가장 성능이 좋았던 순간"의 모델을 최종 결과물로 쓸 수 있다.
+
+- **CPU / GPU / CUDA**: 신경망 학습의 대부분은 행렬 곱과 원소별 연산으로 이뤄지는데, 이 연산들은 수십만 개의 독립적인 곱셈-덧셈으로 쪼갤 수 있어 병렬화에 매우 유리하다. CPU는 코어 수가 적은 대신 코어 하나하나의 성능이 강력해 복잡한 분기와 순차 로직에 강하고, GPU(그래픽 처리 장치)는 코어 하나하나는 단순하지만 수천 개를 동시에 돌릴 수 있어 "똑같은 연산을 아주 많은 데이터에 동시에 적용하는" 행렬 연산에 압도적으로 유리하다. CUDA는 NVIDIA GPU에서 이런 범용 병렬 연산을 수행할 수 있게 해주는 프로그래밍 인터페이스로, PyTorch는 텐서를 \`.to("cuda")\`로 옮기기만 하면 이후의 모든 연산을 내부적으로 CUDA 커널 호출로 바꿔 GPU에서 병렬 실행해준다.
+
+- **Mixed Precision**: 기본적으로 텐서의 숫자는 32비트 부동소수점(FP32)으로 저장되는데, 딥러닝 연산 대부분은 그렇게까지 높은 정밀도가 필요하지 않다는 점에 착안해 일부 연산을 16비트(FP16 또는 BF16)로 대신 계산하는 기법이 혼합 정밀도(mixed precision) 학습이다. 숫자를 절반 크기로 저장하므로 GPU 메모리를 적게 쓰고, 한 번에 메모리에 실을 수 있는 데이터가 늘어나는 데다 최신 GPU는 16비트 연산 전용 회로를 따로 갖추고 있어 속도도 훨씬 빨라진다. 다만 표현 범위가 좁아진 만큼 작은 기울기 값이 0으로 반올림돼버리는 문제가 생길 수 있어, PyTorch의 \`torch.cuda.amp\`는 손실 값을 일부러 키워뒀다가(loss scaling) 나중에 다시 축소하는 방식으로 이 문제를 보완한다.
+
+- **Hugging Face**: \`transformers\` 라이브러리는 BERT, GPT 계열처럼 이미 대규모 데이터로 사전학습(pretrained)된 모델의 가중치와 구조를 단 몇 줄로 불러와 바로 쓸 수 있게 해준다. 지금까지 배운 nn.Module, optimizer, training loop는 이런 사전학습 모델을 가져와 우리 데이터에 맞게 미세조정(fine-tuning)할 때도 그대로 재사용된다 — 5~7주차에서 Transformer, LLM, RAG를 다룰 때는 모델을 처음부터 새로 학습시키는 대신 Hugging Face 생태계에서 이미 학습된 모델을 가져와 그 위에 쌓아 올리는 방식을 계속 쓰게 될 것이므로, 지금 이 절에서 짝지어본 대응 관계를 기억해두면 그때 훨씬 수월하게 이해할 수 있다.
+
+이 대응 관계를 표로 한 번에 정리하면 다음과 같다.
+
+| 우리가 3.1절에서 손으로 짠 것 | PyTorch가 대신 해주는 것 |
+| --- | --- |
+| Value.data | tensor의 값 |
+| Value.grad | tensor.grad |
+| Value._prev, _op | tensor.grad_fn (계산 그래프 기록) |
+| Value.backward()의 topo 정렬 + 역순회 | loss.backward() |
+| 2.3절에서 손으로 쓴 Adam 갱신식 | torch.optim.Adam.step() |
+| 갱신 후 grad를 0으로 되돌리는 코드 | optimizer.zero_grad() |
 `,
   practiceMd: `
 이제 지금까지 배운 역전파를 실제로 동작하는 코드로 만들어볼 차례다. Andrej Karpathy가 만든 micrograd라는 아주 작은 자동미분 엔진을 그대로 따라 구현해본다. 겨우 백 줄 남짓한 이 코드 안에 PyTorch의 autograd가 하는 일의 핵심 원리가 전부 들어있다.
@@ -259,6 +401,54 @@ for name, scale in [("He(적정)", he_scale), ("과도(x1.5)", too_big), ("과�
 \`\`\`
 
 He 스케일을 그대로 쓰면 층을 지나도 표준편차가 거의 일정하게 유지되는 반면, 과도(x1.5)/과소(x0.8) 버전은 층을 지날수록 출력의 표준편차가 본문에서 계산한 것과 거의 같은 비율로(대략 1.5배씩, 0.8배씩) 커지거나 작아지는 것을 출력에서 직접 확인할 수 있다. \`n_layers\`를 20으로 늘려서 다시 돌려보면, 2.5절 표에서 계산했던 3325배·0.0115배에 근접한 극단적인 숫자가 실제 코드에서도 똑같이 재현된다.
+
+### 3.4 같은 선형회귀를 두 번 풀어보기 — NumPy 수동 구현 vs PyTorch
+
+1주차의 선형회귀를 다시 가져와, 완전히 같은 데이터에 완전히 같은 경사하강법 스텝 수·학습률을 적용해서 두 가지 방식으로 풀어보자. 하나는 지금까지처럼 미분 공식을 손으로 유도해 코드로 옮긴 NumPy 버전이고, 다른 하나는 2.7절에서 배운 PyTorch의 autograd와 optimizer에 그 계산을 통째로 맡기는 버전이다. 같은 X, y로 학습하므로 두 버전의 최종 w, b는 (참값 w=3, b=2 근처로) 거의 같은 값에 수렴해야 한다 — 이것이 "PyTorch가 우리가 손으로 한 것과 수학적으로 동일한 일을 하고 있다"는 가장 직접적인 증거다.
+
+\`\`\`python
+# (1) NumPy 수동 구현 — dL/dw, dL/db를 직접 유도해서 코드로 옮긴다
+import numpy as np
+
+rng = np.random.default_rng(0)
+X = rng.uniform(-3, 3, size=200)
+y_true = 3.0 * X + 2.0 + rng.normal(0, 0.5, size=200)
+
+w, b, lr = 0.0, 0.0, 0.05
+for step in range(500):
+    y_pred = w * X + b
+    error = y_pred - y_true
+    loss = (error ** 2).mean()
+    grad_w = (2 * error * X).mean()     # dL/dw = (2/n) Σ(wx+b−y)x  ← 손으로 유도
+    grad_b = (2 * error).mean()         # dL/db = (2/n) Σ(wx+b−y)  ← 손으로 유도
+    w -= lr * grad_w                    # 파라미터 갱신도 직접 작성
+    b -= lr * grad_b
+
+print(f"NumPy 수동  : w={w:.4f}, b={b:.4f}, loss={loss:.4f}")
+\`\`\`
+
+\`\`\`python
+# (2) 완전히 같은 X, y_true를 PyTorch로 — 미분 공식은 단 한 줄도 등장하지 않는다
+import torch
+
+Xt = torch.tensor(X, dtype=torch.float32).unsqueeze(1)
+yt = torch.tensor(y_true, dtype=torch.float32).unsqueeze(1)
+
+model = torch.nn.Linear(1, 1)                          # w, b를 파라미터로 갖는 선형층 하나
+opt = torch.optim.SGD(model.parameters(), lr=0.05)
+
+for step in range(500):
+    pred = model(Xt)
+    loss = torch.nn.functional.mse_loss(pred, yt)
+    opt.zero_grad()
+    loss.backward()                                     # dL/dw, dL/db를 autograd가 자동 계산
+    opt.step()                                           # w, b 갱신도 optimizer가 자동 수행
+
+w_t, b_t = model.weight.item(), model.bias.item()
+print(f"PyTorch     : w={w_t:.4f}, b={b_t:.4f}, loss={loss.item():.4f}")
+\`\`\`
+
+두 print 문을 나란히 실행해보면 w, b, loss가 소수점 셋째 자리 안팎에서 거의 일치한다(둘 다 참값 w=3, b=2에 수렴하고, np.isclose(w, w_t, atol=1e-2)가 참이 될 것이다). 그런데 정작 눈여겨봐야 할 것은 최종 숫자의 일치보다 "학습 루프 안에 무엇이 남아있고 무엇이 사라졌는가"다. NumPy 버전의 루프 7줄 중 두 줄(grad_w, grad_b)은 이 문제(선형회귀 + MSE)에 대해서만 유효한, 손으로 유도한 미분 공식이다 — 모델을 2층 MLP로 바꾸면 이 두 줄은 완전히 새로 유도해서 다시 써야 한다. 반면 PyTorch 버전의 루프 5줄 중에는 w나 b를 직접 언급하는 코드가 단 한 줄도 없다. \`loss.backward()\`가 미분 공식이 있던 자리를 대신하고, \`opt.step()\`이 파라미터 갱신 두 줄을 대신한다. 그래서 \`model = torch.nn.Linear(1, 1)\`을 3.2절의 \`nn.Sequential(nn.Linear(2,16), nn.ReLU(), ...)\`처럼 훨씬 복잡한 네트워크로 바꿔도, 학습 루프의 나머지 5줄은 단 한 글자도 손댈 필요가 없다 — 이것이 "코드 줄 수가 줄었다"는 것보다 훨씬 중요한, autograd와 optimizer가 만들어주는 진짜 자동화다.
 `,
   quiz: [
     { id: "w3-q1", question: "L = (wx − y)², x=2, w=1, y=5 일 때 $\\dfrac{dL}{dw}$는? 계산 과정을 노드별로 나눠서 보여라." },
@@ -271,6 +461,14 @@ He 스케일을 그대로 쓰면 층을 지나도 표준편차가 거의 일정�
     { id: "w3-q8", question: "ReLU 노드에서 순전파 입력이 음수였을 때 역전파로 전달되는 기울기 값은 얼마인가? 이 사실이 '죽은 ReLU(dead ReLU)' 문제와 어떻게 연결되는가?" },
     { id: "w3-q9", question: "한 뉴런의 출력 z가 fan_in개의 항을 더한 것이라는 사실과 1주차의 '분산은 더할수록 커진다'는 원리를 연결해, 왜 가중치의 분산을 fan_in에 반비례하게 잡아야 하는지 설명하라." },
     { id: "w3-q10", question: "어떤 네트워크에서 층마다 활성화의 표준편차가 1.2배씩 커진다면, 15개 층을 통과했을 때 표준편차는 원래의 약 몇 배가 되는가? (1.2^15을 직접 계산하고, 그 결과가 왜 '깊은 네트워크일수록 초기화에 민감하다'는 주장의 근거가 되는지도 함께 설명하라.)" },
+    { id: "w3-q11", question: "PyTorch에서 requires_grad=True로 만든 텐서 w에 대해 loss.backward()를 호출하면 w.grad에 어떤 값이 채워지는가? 이것이 3.1절 Value 클래스의 grad 필드와 정확히 같은 역할을 하는 이유를 설명하라." },
+    { id: "w3-q12", question: "학습 루프에서 optimizer.zero_grad()를 빼먹으면 어떤 문제가 생기는가? .grad가 '=' 대신 '+='로 누적된다는 사실과 연결해 설명하라." },
+    { id: "w3-q13", question: "nn.Module 서브클래스를 정의할 때 __init__과 forward는 각각 어떤 역할을 맡는가? backward 메서드를 직접 작성하지 않아도 그레디언트가 자동으로 계산되는 이유는 무엇인가?" },
+    { id: "w3-q14", question: "똑같은 행렬 곱 연산이 CPU보다 GPU에서 훨씬 빠르게 수행되는 이유를, 두 장치의 코어 수와 코어당 성능의 차이 관점에서 설명하라." },
+    { id: "w3-q15", question: "혼합 정밀도(mixed precision) 학습이 메모리 사용량과 학습 속도 면에서 유리한 이유는 무엇인가? FP16을 그대로 쓸 때 생길 수 있는 문제와, PyTorch가 이를 보완하는 방법(loss scaling)을 함께 설명하라." },
+    { id: "w3-q16", question: "PyTorch의 Dataset 클래스가 반드시 정의해야 하는 두 메서드는 무엇이며, DataLoader는 그 위에서 각각 어떤 일을 대신 해주는가?" },
+    { id: "w3-q17", question: "GELU와 ReLU를 입력이 음수인 구간에서의 동작을 중심으로 비교하라. GELU가 ReLU에 비해 '죽은 뉴런' 문제를 완화하는 이유는 무엇인가?" },
+    { id: "w3-q18", question: "Batch Normalization과 Layer Normalization은 각각 어떤 축(배치 축 vs 특징 축)을 따라 평균·분산을 계산하는가? Transformer 계열 모델이 BatchNorm 대신 LayerNorm을 쓰는 이유를 배치 크기·시퀀스 길이 관점에서 설명하라." },
   ],
   worksheet: [
     { label: '① 오늘의 질문 — "신경망은 실수로부터 어떻게 배우는가?"', hint: "오늘 배운 내용을 한 문장 질문으로 바꿔 적어보세요. 예: '역전파는 왜 순전파 한 번 값으로 모든 기울기를 구할 수 있을까?'" },
