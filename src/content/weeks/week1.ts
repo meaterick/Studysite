@@ -61,6 +61,133 @@ const week1: WeekMeta = {
 
 여기에 최근 몇 년 사이 굳어진 용어 하나를 추가로 짚어두자. 파운데이션 모델(foundation model)이란 방대한 양의 범용 데이터로 사전학습(pre-training)되어, 이후 다양한 하위 작업(downstream task)에 미세조정(fine-tuning)이나 프롬프트만으로 재사용될 수 있는 대규모 범용 모델을 가리키는 이름이다. 핵심은 "하나의 모델을 한 번 크게 학습시켜 놓으면, 그 위에 여러 응용을 쌓아올릴 수 있다"는 재사용성에 있다. LLM은 파운데이션 모델 중에서도 텍스트 데이터로 학습되어 언어를 다루는 하위 범주이고, 이미지로 학습된 CLIP이나 여러 형태의 데이터를 동시에 다루는 멀티모달 모델도 모두 파운데이션 모델에 속한다. 즉 생성형 AI/LLM ⊂ 파운데이션 모델이라는 포함관계가 하나 더 추가되는 셈이다 — 다만 이 관계는 완전히 깔끔하지는 않다. 파운데이션 모델이라도 생성 능력 없이 표현(representation)만 추출하도록 학습된 모델(예: 이미지 인코더)은 생성형 AI로 분류되지 않기 때문이다. 그래도 "대규모·범용·사전학습·재사용"이라는 네 가지 키워드만 기억해두면 이 용어가 뉴스에 등장할 때 헷갈리지 않을 것이다.
 
+본격적인 개념을 배우기 전에, 먼저 이 모든 실습에 쓰일 Python 기초를 다지고 가자. 아래 코드는 Google Colab에서 별도 설치 없이 그대로 실행할 수 있다. 한 셀씩 실행하면서 출력을 직접 눈으로 확인하는 것을 권한다.
+
+이 스터디는 "파이썬 기초는 이미 안다"고 가정하지 않는다. 이미 익숙하다면 아래 절은 훑어보고 2.2절부터 이어지는 개념 설명으로 바로 넘어가도 좋다. 처음 접한다면, 뒤에 나올 넘파이·경사하강법 등의 코드를 읽어내는 데 필요한 최소한의 문법을 여기서 빠르게 잡고 가자.
+
+### Python·개발 환경 기초
+
+### 변수·자료형과 제어문
+
+\`\`\`python
+# 변수와 기본 자료형
+name = "Aegis"        # str
+weeks = 8              # int
+gpa = 3.75             # float
+is_active = True       # bool
+
+# 조건문
+if weeks >= 8:
+    print("8주 완주까지 도달")
+elif weeks >= 4:
+    print("절반 이상 진행")
+else:
+    print("이제 시작")
+
+# 반복문
+for week in range(1, 9):
+    print(f"{week}주차 진행 중")
+
+total, i = 0, 1
+while i <= 10:
+    total += i
+    i += 1
+print(total)  # 55
+\`\`\`
+
+### 함수 정의
+
+\`\`\`python
+def cosine_similarity(a, b):
+    """두 벡터의 코사인 유사도를 계산한다."""
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = sum(x ** 2 for x in a) ** 0.5
+    norm_b = sum(y ** 2 for y in b) ** 0.5
+    return dot / (norm_a * norm_b)
+
+print(cosine_similarity([1, 0], [0, 1]))  # 0.0 — 서로 직교하는 두 벡터
+\`\`\`
+
+### 자료구조 넷: List·Tuple·Set·Dictionary
+
+| 자료구조 | 순서 | 중복 | 변경 가능 | 언제 쓰나 |
+| --- | --- | --- | --- | --- |
+| List | O | 허용 | O | 순서가 있는 값들을 계속 추가·수정할 때 |
+| Tuple | O | 허용 | X | 좌표처럼 "묶음 그대로" 보호하고 싶을 때 |
+| Set | X | 불허 | O | 중복 제거, 멤버십(포함 여부) 검사 |
+| Dictionary | 삽입순 유지 | 키 중복 불허 | O | 이름(키)으로 값을 즉시 찾고 싶을 때 |
+
+\`\`\`python
+scores = [90, 85, 90]              # List
+point = (37.5, 127.0)              # Tuple — 위도·경도 묶음을 실수로 바꾸지 못하게
+unique_tags = {"AI", "ML", "AI"}   # Set — 중복이 자동으로 제거된다
+student = {"name": "김철수", "score": 90}  # Dictionary
+
+print(unique_tags)       # {'AI', 'ML'}
+print(student["score"])  # 90
+\`\`\`
+
+### 클래스와 객체
+
+\`\`\`python
+class Perceptron:
+    def __init__(self, w, b):
+        self.w = w   # 인스턴스 변수(속성)
+        self.b = b
+
+    def predict(self, x):
+        return self.w * x + self.b
+
+p = Perceptron(w=2, b=1)
+print(p.predict(3))  # 2*3 + 1 = 7
+\`\`\`
+
+### 예외 처리
+
+\`\`\`python
+def safe_divide(a, b):
+    try:
+        return a / b
+    except ZeroDivisionError:
+        print("0으로 나눌 수 없습니다.")
+        return None
+
+print(safe_divide(10, 2))  # 5.0
+print(safe_divide(10, 0))  # 경고 출력 후 None
+\`\`\`
+
+### 모듈·패키지·가상환경(venv)
+
+모듈(module)은 재사용 가능한 코드를 담은 파이썬 파일 하나이고, 패키지(package)는 그런 모듈들을 모아놓은 묶음이다(\`import numpy\`가 바로 numpy라는 패키지를 불러오는 것이다). pip은 이런 패키지를 설치하는 도구고, 가상환경(virtual environment, venv)은 프로젝트마다 독립된 패키지 설치 공간을 만들어, 프로젝트 A가 필요한 라이브러리 버전과 프로젝트 B가 필요한 버전이 서로 충돌하지 않도록 격리해준다.
+
+\`\`\`bash
+python -m venv .venv          # 가상환경 생성
+source .venv/bin/activate     # 활성화 (Windows는 .venv\\Scripts\\activate)
+pip install numpy pandas matplotlib
+\`\`\`
+
+### Jupyter Notebook과 Google Colab
+
+Jupyter Notebook은 코드를 "셀" 단위로 나눠 하나씩 실행하고 결과를 바로 확인할 수 있는 대화형 개발 환경이다. Google Colab은 이 Jupyter Notebook을 구글 클라우드에서 무료로 제공하는 서비스로, 별도 설치 없이 브라우저만으로 실행할 수 있고 무료 GPU까지 쓸 수 있다. 이번 스터디의 모든 실습 코드는 Colab에서 바로 실행되도록 작성되어 있다 — 지금 이 페이지의 파이썬 코드 블록을 그대로 복사해 Colab 셀에 붙여넣으면 된다.
+
+### Git·GitHub 기초
+
+Git은 코드의 변경 이력을 시간순으로 저장해두는 버전관리 시스템이고, GitHub은 그 Git 저장소를 온라인에 올려 다른 사람과 함께 작업할 수 있게 해주는 서비스다. 지금 당장 전부 외울 필요는 없지만, 아래 명령어들은 앞으로 과제를 제출하거나 협업할 때 계속 쓰게 된다.
+
+| 명령 | 의미 |
+| --- | --- |
+| \`git init\` | 현재 폴더를 Git 저장소로 초기화 |
+| \`git add <file>\` | 변경사항을 커밋 대상으로 등록(스테이징) |
+| \`git commit -m "메시지"\` | 스테이징된 변경사항을 하나의 기록으로 저장 |
+| \`git push\` | 로컬의 커밋을 원격 저장소(GitHub)로 올리기 |
+| \`git pull\` | 원격 저장소의 변경사항을 로컬로 받아오기 |
+| \`git clone <url>\` | 원격 저장소를 통째로 복제해오기 |
+| \`git status\` | 지금 무엇이 바뀌었는지 확인 |
+
+### NumPy·Pandas·Matplotlib, 언제 무엇을 쓰나
+
+NumPy는 벡터·행렬 같은 배열 연산을 빠르게 처리하는 도구다 — 사실 지금까지 이 페이지의 모든 실습 코드에서 \`np.array\`, \`np.random\`으로 이미 계속 써온 바로 그 라이브러리다. Pandas는 표(행과 열로 이루어진 데이터, 스프레드시트를 떠올리면 된다)를 다루는 도구로, CSV 파일을 읽거나 조건에 맞는 행만 골라내거나 그룹별 통계를 낼 때 쓴다. Matplotlib은 그래프를 그리는 도구로, 이 역시 \`plt.plot\`, \`plt.hist\`로 앞으로도 계속 사용하게 될 것이다. 세 도구의 관계를 요약하면 "NumPy로 숫자를 계산하고, Pandas로 표를 정리하고, Matplotlib으로 눈에 보이게 그린다"는 것이다.
+
 ### 2.2 AI 핵심 용어와 4대 학습 패러다임
 
 앞으로 8주 내내 반복해서 마주칠 용어들을 이번 주에 한 번에 정리해두자. 정의를 정확히 잡아두지 않으면 뒤로 갈수록 같은 단어가 문맥마다 다른 뜻으로 쓰이는 것처럼 느껴져 헷갈리게 된다.
@@ -107,6 +234,25 @@ const week1: WeekMeta = {
 여기서 크기(벡터의 길이)의 영향을 없애고 순수하게 "방향이 얼마나 비슷한가"만 보고 싶을 때 쓰는 것이 코사인 유사도다. 공식은 $\\cos\\theta = \\dfrac{a \\cdot b}{|a||b|}$ 이고, 값의 범위는 -1(완전히 반대)부터 1(완전히 같은 방향)까지다. 이 코사인 유사도가 바로 7주차에 배울 RAG(검색 증강 생성)의 핵심 연산이다. "사용자의 질문과 가장 비슷한 문서를 찾아라"라는 문제는, 결국 질문을 벡터로 바꾸고 문서들도 벡터로 바꾼 다음 코사인 유사도가 가장 큰 문서를 고르는 문제로 환원된다.
 
 마지막으로 행렬과 벡터의 곱(Wx)도 알아두어야 한다. 이것을 어렵게 생각할 필요 없이 "입력 벡터를 새로운 좌표계로 옮겨주는 변환"이라고 이해하면 충분하다. 신경망의 한 층이 하는 일이 정확히 이것이다 — 입력을 받아서 행렬을 곱하고, 그 결과를 다음 층으로 넘긴다. 3주차에서 신경망을 직접 만들 때 이 곱셈이 왜 중요한지 다시 만나게 될 것이다. 지금까지는 벡터 하나, 벡터 두 개 사이의 관계만 봤다. 이제 여러 벡터들이 모여 만드는 공간 자체의 구조 — 기저와 선형독립 — 로 넘어가 보자.
+
+이제 이번 주 핵심 실습으로 들어가 보자. 방금 배운 코사인 유사도를 코드로 확인해보자. "king"과 "queen"은 의미적으로 가까우니 유사도가 높게, "king"과 "apple"은 관계가 없으니 낮게 나와야 한다.
+
+\`\`\`python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# (1) 코사인 유사도 — 단어를 숫자 벡터로 흉내낸 장난감 예시
+def cos_sim(a, b):
+    return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
+
+king  = np.array([0.9, 0.8, 0.1])
+queen = np.array([0.85, 0.75, 0.9])
+apple = np.array([0.1, 0.05, 0.5])
+print("king·queen 유사도:", cos_sim(king, queen))
+print("king·apple 유사도:", cos_sim(king, apple))
+\`\`\`
+
+예상대로 king-queen 쪽의 유사도가 king-apple보다 훨씬 높게 나올 것이다. 실제 단어 임베딩(word2vec, GPT의 내부 표현 등)은 이 세 개가 아니라 수백 개의 숫자로 이루어져 있지만 원리는 똑같다 — 의미가 비슷한 단어일수록 벡터가 비슷한 방향을 향하도록 학습된다.
 
 ### 2.5 벡터공간과 기저: 왜 기저가 "좌표계"의 역할을 하는가
 
@@ -296,6 +442,28 @@ f(x) = \\dfrac{1}{\\sigma\\sqrt{2\\pi}}\\, e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}
 
 이제 왜 이게 오늘 실습과 바로 연결되는지 이야기해보자. 과제에서 여러분은 \`y = 2x + 1 + 노이즈\` 형태의 데이터를 만들게 되는데, 이 노이즈를 만들 때 \`rng.normal(...)\`이라는 함수를 쓴다. 함수 이름에 이미 답이 있다 — 정규분포(normal distribution)에서 난수를 뽑아낸다는 뜻이다. 현실의 측정값에는 항상 이런저런 작은 오차 요인들이 섞여 있기 때문에(센서 오차, 반올림, 환경 변화 등), 그걸 흉내내는 가장 현실적인 방법이 바로 정규분포를 따르는 노이즈를 더하는 것이다. 만약 노이즈를 균등분포로 만들었다면 "오차가 극단적으로 클 확률과 0에 가까울 확률이 똑같다"는, 현실과는 잘 맞지 않는 가정을 한 셈이 된다. 정규분포 노이즈는 "작은 오차는 흔하고, 큰 오차는 드물다"는 훨씬 더 자연스러운 가정을 표현한다. 아래 실습 코드에서 σ 값을 바꿔가며 이 모양이 실제로 어떻게 달라지는지 직접 눈으로 확인해보자.
 
+표준편차 σ를 다르게 주고 표본을 뽑아 히스토그램을 그리면, σ가 클수록 종 모양이 옆으로 넓게 퍼진다는 것을 바로 확인할 수 있다. 이 σ가 바로 과제에서 \`rng.normal(0, sigma, ...)\`으로 노이즈를 만들 때 직접 조절하게 될 그 값이다.
+
+\`\`\`python
+# (2) 정규분포 노이즈: 표준편차(σ)가 다르면 퍼진 모양도 달라진다
+rng = np.random.default_rng(0)
+noise_small = rng.normal(loc=0, scale=0.2, size=5000)   # σ=0.2: 좁고 뾰족
+noise_large = rng.normal(loc=0, scale=1.5, size=5000)   # σ=1.5: 넓고 완만
+
+plt.hist(noise_small, bins=50, alpha=0.6, label="σ=0.2")
+plt.hist(noise_large, bins=50, alpha=0.6, label="σ=1.5")
+plt.legend()
+plt.xlabel("값")
+plt.ylabel("빈도")
+plt.title("표준편차(σ)가 정규분포 모양에 미치는 영향")
+plt.show()
+
+print("noise_small 표준편차 추정치:", noise_small.std())
+print("noise_large 표준편차 추정치:", noise_large.std())
+\`\`\`
+
+표본으로 추정한 표준편차가 우리가 지정한 σ(0.2, 1.5)에 가깝게 나오는 것도 확인해보자 — 표본 수(size)를 늘릴수록 이 추정치는 실제 σ에 점점 더 가까워진다.
+
 ### 2.12 엔트로피, 교차 엔트로피, KL 발산: 불확실성을 재는 법
 
 지금까지는 확률분포의 "모양"(균등, 정규, 베르누이)을 다뤘다. 이제 그 분포가 "얼마나 불확실한가"를 숫자 하나로 요약하는 도구, 엔트로피(entropy)를 살펴보자. 이는 2주차 이후 계속 마주치게 될 교차 엔트로피 손실함수를 이해하기 위한 사전 준비이기도 하다.
@@ -378,180 +546,7 @@ height: 478
 
 3주차에서 배울 역전파(backpropagation)는, 결국 이 $\\nabla L$을 수백만 개의 파라미터에 대해 효율적으로 계산해내는 알고리즘일 뿐이다.
 
-### 2.14 왜 처음부터 직접 만들어보는가
-
-이번 학기의 실습은 처음부터 끝까지 "라이브러리 뒤에 숨지 말고 직접 만들어보자"는 원칙을 따른다. 사이킷런이나 파이토치를 쓰면 몇 줄만으로 모델을 학습시킬 수 있는데 왜 굳이 넘파이(NumPy)만으로 경사하강법을 처음부터 구현하냐고 물을 수 있다. 이유는 간단하다. 도구를 편하게 쓰는 능력과, 그 도구 안에서 실제로 무슨 일이 벌어지는지 설명할 수 있는 능력은 완전히 다른 종류의 실력이기 때문이다. 후자를 갖추고 나면 모델이 이상하게 동작할 때 "왜" 그런지 추측할 수 있고, 논문을 읽을 때 수식이 낯설지 않고, 새로운 아이디어가 떠올랐을 때 직접 구현해볼 수 있다. 오늘 여러분이 손으로 미분을 계산하고 넘파이로 경사하강법을 짜보는 이 작은 실습이, 8주 뒤 Transformer의 학습 과정을 이해하는 데 그대로 이어진다.
-`,
-  practiceMd: `
-아래 코드는 Google Colab에서 별도 설치 없이 그대로 실행할 수 있다. 한 셀씩 실행하면서 출력을 직접 눈으로 확인하는 것을 권한다.
-
-이 스터디는 지금까지 "파이썬 기초는 이미 안다"고 암묵적으로 가정해왔다. 이미 익숙하다면 아래 절은 훑어보고 바로 코사인 유사도 실습으로 건너뛰어도 좋다. 처음 접한다면, 뒤에 나올 넘파이·경사하강법 코드를 읽어내는 데 필요한 최소한의 문법을 여기서 빠르게 잡고 가자.
-
-## Python·개발 환경 기초
-
-### 변수·자료형과 제어문
-
-\`\`\`python
-# 변수와 기본 자료형
-name = "Aegis"        # str
-weeks = 8              # int
-gpa = 3.75             # float
-is_active = True       # bool
-
-# 조건문
-if weeks >= 8:
-    print("8주 완주까지 도달")
-elif weeks >= 4:
-    print("절반 이상 진행")
-else:
-    print("이제 시작")
-
-# 반복문
-for week in range(1, 9):
-    print(f"{week}주차 진행 중")
-
-total, i = 0, 1
-while i <= 10:
-    total += i
-    i += 1
-print(total)  # 55
-\`\`\`
-
-### 함수 정의
-
-\`\`\`python
-def cosine_similarity(a, b):
-    """두 벡터의 코사인 유사도를 계산한다."""
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = sum(x ** 2 for x in a) ** 0.5
-    norm_b = sum(y ** 2 for y in b) ** 0.5
-    return dot / (norm_a * norm_b)
-
-print(cosine_similarity([1, 0], [0, 1]))  # 0.0 — 서로 직교하는 두 벡터
-\`\`\`
-
-### 자료구조 넷: List·Tuple·Set·Dictionary
-
-| 자료구조 | 순서 | 중복 | 변경 가능 | 언제 쓰나 |
-| --- | --- | --- | --- | --- |
-| List | O | 허용 | O | 순서가 있는 값들을 계속 추가·수정할 때 |
-| Tuple | O | 허용 | X | 좌표처럼 "묶음 그대로" 보호하고 싶을 때 |
-| Set | X | 불허 | O | 중복 제거, 멤버십(포함 여부) 검사 |
-| Dictionary | 삽입순 유지 | 키 중복 불허 | O | 이름(키)으로 값을 즉시 찾고 싶을 때 |
-
-\`\`\`python
-scores = [90, 85, 90]              # List
-point = (37.5, 127.0)              # Tuple — 위도·경도 묶음을 실수로 바꾸지 못하게
-unique_tags = {"AI", "ML", "AI"}   # Set — 중복이 자동으로 제거된다
-student = {"name": "김철수", "score": 90}  # Dictionary
-
-print(unique_tags)       # {'AI', 'ML'}
-print(student["score"])  # 90
-\`\`\`
-
-### 클래스와 객체
-
-\`\`\`python
-class Perceptron:
-    def __init__(self, w, b):
-        self.w = w   # 인스턴스 변수(속성)
-        self.b = b
-
-    def predict(self, x):
-        return self.w * x + self.b
-
-p = Perceptron(w=2, b=1)
-print(p.predict(3))  # 2*3 + 1 = 7
-\`\`\`
-
-### 예외 처리
-
-\`\`\`python
-def safe_divide(a, b):
-    try:
-        return a / b
-    except ZeroDivisionError:
-        print("0으로 나눌 수 없습니다.")
-        return None
-
-print(safe_divide(10, 2))  # 5.0
-print(safe_divide(10, 0))  # 경고 출력 후 None
-\`\`\`
-
-### 모듈·패키지·가상환경(venv)
-
-모듈(module)은 재사용 가능한 코드를 담은 파이썬 파일 하나이고, 패키지(package)는 그런 모듈들을 모아놓은 묶음이다(\`import numpy\`가 바로 numpy라는 패키지를 불러오는 것이다). pip은 이런 패키지를 설치하는 도구고, 가상환경(virtual environment, venv)은 프로젝트마다 독립된 패키지 설치 공간을 만들어, 프로젝트 A가 필요한 라이브러리 버전과 프로젝트 B가 필요한 버전이 서로 충돌하지 않도록 격리해준다.
-
-\`\`\`bash
-python -m venv .venv          # 가상환경 생성
-source .venv/bin/activate     # 활성화 (Windows는 .venv\\Scripts\\activate)
-pip install numpy pandas matplotlib
-\`\`\`
-
-### Jupyter Notebook과 Google Colab
-
-Jupyter Notebook은 코드를 "셀" 단위로 나눠 하나씩 실행하고 결과를 바로 확인할 수 있는 대화형 개발 환경이다. Google Colab은 이 Jupyter Notebook을 구글 클라우드에서 무료로 제공하는 서비스로, 별도 설치 없이 브라우저만으로 실행할 수 있고 무료 GPU까지 쓸 수 있다. 이번 스터디의 모든 실습 코드는 Colab에서 바로 실행되도록 작성되어 있다 — 지금 이 페이지의 파이썬 코드 블록을 그대로 복사해 Colab 셀에 붙여넣으면 된다.
-
-### Git·GitHub 기초
-
-Git은 코드의 변경 이력을 시간순으로 저장해두는 버전관리 시스템이고, GitHub은 그 Git 저장소를 온라인에 올려 다른 사람과 함께 작업할 수 있게 해주는 서비스다. 지금 당장 전부 외울 필요는 없지만, 아래 명령어들은 앞으로 과제를 제출하거나 협업할 때 계속 쓰게 된다.
-
-| 명령 | 의미 |
-| --- | --- |
-| \`git init\` | 현재 폴더를 Git 저장소로 초기화 |
-| \`git add <file>\` | 변경사항을 커밋 대상으로 등록(스테이징) |
-| \`git commit -m "메시지"\` | 스테이징된 변경사항을 하나의 기록으로 저장 |
-| \`git push\` | 로컬의 커밋을 원격 저장소(GitHub)로 올리기 |
-| \`git pull\` | 원격 저장소의 변경사항을 로컬로 받아오기 |
-| \`git clone <url>\` | 원격 저장소를 통째로 복제해오기 |
-| \`git status\` | 지금 무엇이 바뀌었는지 확인 |
-
-### NumPy·Pandas·Matplotlib, 언제 무엇을 쓰나
-
-NumPy는 벡터·행렬 같은 배열 연산을 빠르게 처리하는 도구다 — 사실 지금까지 이 페이지의 모든 실습 코드에서 \`np.array\`, \`np.random\`으로 이미 계속 써온 바로 그 라이브러리다. Pandas는 표(행과 열로 이루어진 데이터, 스프레드시트를 떠올리면 된다)를 다루는 도구로, CSV 파일을 읽거나 조건에 맞는 행만 골라내거나 그룹별 통계를 낼 때 쓴다. Matplotlib은 그래프를 그리는 도구로, 이 역시 \`plt.plot\`, \`plt.hist\`로 앞으로도 계속 사용하게 될 것이다. 세 도구의 관계를 요약하면 "NumPy로 숫자를 계산하고, Pandas로 표를 정리하고, Matplotlib으로 눈에 보이게 그린다"는 것이다.
-
-이제 이번 주 핵심 실습으로 들어가 보자. 먼저 2.4절에서 배운 코사인 유사도를 코드로 확인해보자. "king"과 "queen"은 의미적으로 가까우니 유사도가 높게, "king"과 "apple"은 관계가 없으니 낮게 나와야 한다.
-
-\`\`\`python
-import numpy as np
-import matplotlib.pyplot as plt
-
-# (1) 코사인 유사도 — 단어를 숫자 벡터로 흉내낸 장난감 예시
-def cos_sim(a, b):
-    return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))
-
-king  = np.array([0.9, 0.8, 0.1])
-queen = np.array([0.85, 0.75, 0.9])
-apple = np.array([0.1, 0.05, 0.5])
-print("king·queen 유사도:", cos_sim(king, queen))
-print("king·apple 유사도:", cos_sim(king, apple))
-\`\`\`
-
-예상대로 king-queen 쪽의 유사도가 king-apple보다 훨씬 높게 나올 것이다. 실제 단어 임베딩(word2vec, GPT의 내부 표현 등)은 이 세 개가 아니라 수백 개의 숫자로 이루어져 있지만 원리는 똑같다 — 의미가 비슷한 단어일수록 벡터가 비슷한 방향을 향하도록 학습된다.
-
-다음은 2.11절에서 배운 정규분포를 직접 눈으로 확인해보자. 표준편차 σ를 다르게 주고 표본을 뽑아 히스토그램을 그리면, σ가 클수록 종 모양이 옆으로 넓게 퍼진다는 것을 바로 확인할 수 있다. 이 σ가 바로 과제에서 \`rng.normal(0, sigma, ...)\`으로 노이즈를 만들 때 직접 조절하게 될 그 값이다.
-
-\`\`\`python
-# (2) 정규분포 노이즈: 표준편차(σ)가 다르면 퍼진 모양도 달라진다
-rng = np.random.default_rng(0)
-noise_small = rng.normal(loc=0, scale=0.2, size=5000)   # σ=0.2: 좁고 뾰족
-noise_large = rng.normal(loc=0, scale=1.5, size=5000)   # σ=1.5: 넓고 완만
-
-plt.hist(noise_small, bins=50, alpha=0.6, label="σ=0.2")
-plt.hist(noise_large, bins=50, alpha=0.6, label="σ=1.5")
-plt.legend()
-plt.xlabel("값")
-plt.ylabel("빈도")
-plt.title("표준편차(σ)가 정규분포 모양에 미치는 영향")
-plt.show()
-
-print("noise_small 표준편차 추정치:", noise_small.std())
-print("noise_large 표준편차 추정치:", noise_large.std())
-\`\`\`
-
-표본으로 추정한 표준편차가 우리가 지정한 σ(0.2, 1.5)에 가깝게 나오는 것도 확인해보자 — 표본 수(size)를 늘릴수록 이 추정치는 실제 σ에 점점 더 가까워진다.
-
-이제 이번 주의 핵심인 경사하강법을 직접 구현할 차례다. 2.13절에서 손으로 계산했던 L(w) = (w−3)² 예제를 코드로 그대로 옮긴다.
+이제 이번 주의 핵심인 경사하강법을 직접 구현할 차례다. 위에서 손으로 계산했던 L(w) = (w−3)² 예제를 코드로 그대로 옮긴다.
 
 \`\`\`python
 # (3) 경사하강법: L(w) = (w-3)^2 을 최소화
@@ -587,8 +582,12 @@ for lr_test in [0.01, 0.1, 0.9, 1.1]:
 \`\`\`
 
 :::warn 관찰 과제
-위 (4)번 코드를 실행해서 lr=1.1일 때 w 값이 어떻게 널뛰는지 직접 확인하라. 왜 발산하는지 수식으로도 설명할 수 있는가? (힌트: 2.13절 마지막 문단에서 다룬 "w−3은 매 스텝마다 (1−2η)배가 된다"는 사실을 이용해, η=1.1일 때 이 배율이 얼마인지 계산해보라.)
+위 (4)번 코드를 실행해서 lr=1.1일 때 w 값이 어떻게 널뛰는지 직접 확인하라. 왜 발산하는지 수식으로도 설명할 수 있는가? (힌트: 위에서 다룬 "w−3은 매 스텝마다 (1−2η)배가 된다"는 사실을 이용해, η=1.1일 때 이 배율이 얼마인지 계산해보라.)
 :::
+
+### 2.14 왜 처음부터 직접 만들어보는가
+
+이번 학기의 실습은 처음부터 끝까지 "라이브러리 뒤에 숨지 말고 직접 만들어보자"는 원칙을 따른다. 사이킷런이나 파이토치를 쓰면 몇 줄만으로 모델을 학습시킬 수 있는데 왜 굳이 넘파이(NumPy)만으로 경사하강법을 처음부터 구현하냐고 물을 수 있다. 이유는 간단하다. 도구를 편하게 쓰는 능력과, 그 도구 안에서 실제로 무슨 일이 벌어지는지 설명할 수 있는 능력은 완전히 다른 종류의 실력이기 때문이다. 후자를 갖추고 나면 모델이 이상하게 동작할 때 "왜" 그런지 추측할 수 있고, 논문을 읽을 때 수식이 낯설지 않고, 새로운 아이디어가 떠올랐을 때 직접 구현해볼 수 있다. 오늘 여러분이 손으로 미분을 계산하고 넘파이로 경사하강법을 짜보는 이 작은 실습이, 8주 뒤 Transformer의 학습 과정을 이해하는 데 그대로 이어진다.
 `,
   quiz: [
     { id: "w1-q1", question: "$a=[1,2]$, $b=[2,1]$의 내적과 코사인 유사도는?" },

@@ -98,6 +98,62 @@ w=2, x=3, c=1이라는 작은 숫자로 시작해서 순전파와 역전파를 �
 
 가 된다. 처음 보면 전치(transpose)가 왜 여기저기 붙는지 헷갈리기 쉬운데, 가장 믿을 만한 검증법은 차원(shape)이 맞는지 확인하는 것이다. W가 $4\\times 3$이면 x는 $3\\times 1$, z는 $4\\times 1$이어야 하고 δ도 $4\\times 1$이어야 하니, $\\dfrac{dL}{dW}$($4\\times 3$)를 만들려면 δ($4\\times 1$)와 $x^\\top$($1\\times 3$)를 곱해야 한다는 식으로 형태만 보고도 공식을 거꾸로 유추할 수 있다. 실제로 현업에서도 shape이 안 맞아서 나는 에러가 역전파 디버깅의 8할을 차지한다. 형태가 항상 일치하는지 확인하는 습관이 최고의 디버깅 습관이다.
 
+이제 지금까지 배운 역전파를 실제로 동작하는 코드로 만들어볼 차례다. Andrej Karpathy가 만든 micrograd라는 아주 작은 자동미분 엔진을 그대로 따라 구현해본다. 겨우 백 줄 남짓한 이 코드 안에 PyTorch의 autograd가 하는 일의 핵심 원리가 전부 들어있다.
+
+### 미니 자동미분 엔진 직접 구현하기
+
+Value 클래스가 하는 일을 한 문장으로 요약하면, "숫자 하나(data)에 그 숫자가 어떻게 만들어졌는지에 대한 기억(_prev, _op)과, 자신에게 기울기가 도착했을 때 그것을 부모에게 어떻게 나눠줄지에 대한 지침서(_backward)를 함께 들고 다니는 객체"다. 여기서 눈여겨봐야 할 설계 포인트가 하나 있다. \`__add__\`나 \`__mul__\` 안에서 _backward를 지금 당장 실행하지 않고 나중에 실행할 함수로만 저장해둔다는 점이다(파이썬의 클로저 기능을 쓴 것이다). 왜 이렇게 할까? 순전파를 하는 시점에는 아직 이 노드의 출력이 최종 손실에 얼마나 기여할지(out.grad)를 알 수 없기 때문이다. 그 값은 순전파가 전부 끝나고 손실 L이 나온 뒤, 역전파가 거꾸로 이 노드까지 도달했을 때야 비로소 정해진다. 그래서 "어떻게 나눠줄지에 대한 계산 방법"만 미리 클로저로 포장해 저장해두고, 실제 계산은 그 정보(out.grad)가 준비된 나중 시점에 실행하는 것이다. 이것이 지연 계산(lazy evaluation)이고, PyTorch가 모든 텐서 연산 뒤에서 grad_fn을 저장해뒀다가 loss.backward() 호출 시점에야 순서대로 실행하는 것과 똑같은 아이디어다.
+
+\`\`\`python
+class Value:
+    def __init__(self, data, _children=(), _op=""):
+        self.data, self.grad = data, 0.0
+        self._prev, self._backward = set(_children), lambda: None
+    def __add__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data + o.data, (self, o), "+")
+        def _backward():
+            self.grad += out.grad
+            o.grad    += out.grad
+        out._backward = _backward
+        return out
+    def __mul__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data * o.data, (self, o), "*")
+        def _backward():
+            self.grad += o.data * out.grad
+            o.grad    += self.data * out.grad
+        out._backward = _backward
+        return out
+    def relu(self):
+        out = Value(max(0, self.data), (self,), "relu")
+        def _backward(): self.grad += (out.data > 0) * out.grad
+        out._backward = _backward
+        return out
+    def backward(self):
+        topo, seen = [], set()
+        def build(v):
+            if v not in seen:
+                seen.add(v)
+                for c in v._prev: build(c)
+                topo.append(v)
+        build(self)
+        self.grad = 1.0
+        for v in reversed(topo): v._backward()
+
+a, b = Value(2.0), Value(-3.0)
+L = (a*b + 10).relu()
+L.backward(); print(a.grad, b.grad)   # 기대값: -3.0, 2.0
+\`\`\`
+
+backward() 메서드 안에서 topo 리스트를 만드는 부분이 왜 필요한지 짚고 넘어가자. 어떤 노드의 grad를 확정하려면, 그 노드를 입력으로 사용하는 모든 하류(downstream) 노드의 _backward()가 먼저 실행되어 out.grad가 전부 채워진 뒤여야 한다. grad는 한 노드가 여러 경로에 쓰였을 때 그 기여분이 +=로 누적되는 값이므로(아래 :::info 블록 참고), 하류 노드 중 하나라도 먼저 처리되지 않은 채로 값을 읽어버리면 아직 더해지지 않은 기여분이 누락된다. 위상정렬(topological sort)은 정확히 이 조건, 즉 그래프의 모든 간선 $(u \\rightarrow v)$에 대해 u가 v보다 먼저 나오도록 노드 전체를 한 줄로 정렬하는 알고리즘이다. build() 함수가 재귀로 자식(자신을 만드는 데 쓰인 부모 노드들)을 먼저 방문하고 나서야 자기 자신을 topo 리스트에 추가하는 것이 후위순회(post-order traversal)이며, 이것이 위상정렬 순서를 만들어내는 표준적인 구현 방법이다. 그 결과를 reversed()로 뒤집어 손실 L(topo의 맨 끝, 즉 그래프에서 가장 나중에 만들어진 노드)부터 시작해 입력 쪽(topo의 맨 앞)으로 순회하며 _backward()를 실행하면, 각 노드가 자신의 grad를 확정하는 시점에는 그 노드를 사용하는 모든 하류 노드의 _backward()가 이미 실행되어 out.grad 기여분이 전부 반영되어 있음이 보장된다.
+
+위 코드의 a, b = Value(2.0), Value(-3.0) 예제를 직접 손으로 따라가 보자. a*b = -6, 여기에 10을 더하면 4, relu(4) = 4이므로 L.data = 4다. backward()를 부르면 L.grad = 1에서 시작해서, relu 노드는 out.data(=4)가 양수이므로 기울기 1을 그대로 통과시켜 (a*b+10)의 기울기도 1이 된다. 덧셈 노드는 기울기를 그대로 나눠주므로 a*b의 기울기도 1, 10의 기울기도 1이다. 곱셈 노드에서는 a.grad += b.data $\\times$ 1 = -3, b.grad += a.data $\\times$ 1 = 2가 되어, 코드 주석에 적힌 기대값 -3.0, 2.0과 정확히 일치한다.
+
+:::info 주의
+\`+=\` 로 기울기를 누적하는 이유 — 한 변수가 여러 경로에 쓰이면 기울기가 합산된다(다변수 연쇄법칙, fan-out gradient accumulation). 이를 \`=\`로 쓰면 어떤 버그가 생기는지 직접 실험해보라. 힌트: 같은 Value를 두 번 이상 재사용하는 식, 예를 들어 y = x*x + x 같은 식을 만들어 dy/dx를 계산해보면 차이가 바로 드러난다.
+:::
+
 ### 2.3 최적화기
 
 1주차에서 정의한 SGD(확률적 경사하강법)는 매 스텝 미니배치로 추정한 기울기 g의 반대 방향으로 $\\theta \\leftarrow \\theta - \\eta g$만큼 이동하는 갱신 규칙이다. 그런데 미니배치마다 g의 추정값이 조금씩 달라지므로 스텝마다 기울기의 방향이 흔들리고, 손실 지형이 방향에 따라 곡률 차이가 큰(ill-conditioned) 좁고 긴 협곡 모양이면 SGD는 협곡의 좁은 축 방향으로는 스텝마다 부호가 바뀌며 진동하고 긴 축 방향으로는 느리게만 진행해 전체적으로 수렴이 비효율적이다. Momentum과 Adam은 이 문제를 서로 다른 방식으로 완화한다. Momentum은 현재 기울기 g뿐 아니라 이전 스텝들의 갱신 방향을 지수이동평균 v로 누적해서 사용한다($v \\leftarrow \\beta v + g,\\ \\theta \\leftarrow \\theta - \\eta v$). 그 결과 기울기의 방향이 스텝마다 일관되게 유지되는 축에서는 v가 계속 커져 이동량이 누적되고, 스텝마다 부호가 뒤바뀌는 축에서는 양(+)과 음(−) 성분이 서로 상쇄되어 v가 작게 유지되므로 진동이 줄어든다. Adam은 여기에 파라미터별 적응적 학습률(adaptive learning rate)을 추가한다. 각 파라미터마다 그동안의 기울기 제곱의 지수이동평균 v를 따로 추적해서, 기울기 제곱 평균이 큰(값이 자주 크게 변하는) 파라미터는 유효 학습률 $\\eta/\\sqrt{v}$가 작아지도록, 제곱 평균이 작은(거의 변하지 않는) 파라미터는 유효 학습률이 커지도록 파라미터마다 서로 다른 실질 보폭으로 갱신한다.
@@ -173,6 +229,33 @@ height: 606
 
 결국 두 초기화가 서로 다른 공식을 쓰는 건 경쟁하는 두 유파가 있어서가 아니라, "어떤 활성화 함수 뒤에 어떤 분산 보정이 필요한가"라는 질문의 답이 다르기 때문이다. 실무에서는 ReLU 계열이면 He, tanh/sigmoid 계열이면 Xavier를 기본값으로 쓰면 된다.
 
+### 초기화 스케일과 분산 폭발/소실을 눈으로 확인하기
+
+위에서 손으로 계산했던 1.5^10 $\\approx$ 57.7배, 0.8^10 $\\approx$ 0.107배가 실제 코드에서도 그대로 재현되는지 직접 확인해보자. 10층짜리 네트워크를 흉내내면서, 매 층 출력의 표준편차가 초기화 스케일에 따라 어떻게 변하는지만 순수하게 관찰한다(학습은 전혀 하지 않고 순전파만 반복한다).
+
+\`\`\`python
+import numpy as np
+
+def forward_stds(scale, n_layers=10, width=256, n_samples=1000):
+    x = np.random.randn(n_samples, width)     # 표준편차 1로 시작
+    stds = [x.std()]
+    for _ in range(n_layers):
+        W = np.random.randn(width, width) * scale
+        x = np.maximum(0, x @ W)                # ReLU
+        stds.append(x.std())
+    return stds
+
+he_scale  = np.sqrt(2 / 256)     # He 초기화: Var(W) = 2/fan_in
+too_big   = he_scale * 1.5       # 표준편차를 일부러 1.5배 키운 경우
+too_small = he_scale * 0.8       # 표준편차를 일부러 0.8배로 줄인 경우
+
+for name, scale in [("He(적정)", he_scale), ("과도(x1.5)", too_big), ("과소(x0.8)", too_small)]:
+    stds = forward_stds(scale)
+    print(name, [f"{s:.4f}" for s in stds])
+\`\`\`
+
+He 스케일을 그대로 쓰면 층을 지나도 표준편차가 거의 일정하게 유지되는 반면, 과도(x1.5)/과소(x0.8) 버전은 층을 지날수록 출력의 표준편차가 본문에서 계산한 것과 거의 같은 비율로(대략 1.5배씩, 0.8배씩) 커지거나 작아지는 것을 출력에서 직접 확인할 수 있다. \`n_layers\`를 20으로 늘려서 다시 돌려보면, 위 표에서 계산했던 3325배·0.0115배에 근접한 극단적인 숫자가 실제 코드에서도 똑같이 재현된다.
+
 ### 2.6 정규화: Batch Normalization과 Layer Normalization
 
 깊은 네트워크를 학습시킬 때 층을 통과할 때마다 활성화 값의 분포(평균과 분산)가 스텝마다 계속 흔들리면, 뒤쪽 층은 매번 달라지는 입력 분포에 다시 적응해야 해서 학습이 느려지고 불안정해진다. 정규화(normalization) 층은 이 문제를 완화하려고, 활성화 값 z를 평균 0·분산 1로 표준화한 뒤 학습 가능한 스케일 γ와 이동 β를 다시 곱하고 더해 $\\hat{z}=\\gamma\\cdot\\text{표준화}(z)+\\beta$ 형태로 되돌려준다. 그런데 "평균과 분산을 어떤 축을 따라 계산하느냐"에 따라 전혀 다른 정규화 기법이 만들어진다.
@@ -202,11 +285,11 @@ Layer Normalization(LN)은 정규화 축을 완전히 바꾼다. 배치가 아�
 
 ### 2.7 이제 실전에서는: PyTorch가 대신 해주는 것들
 
-3.1절(실습)에서 우리는 Value라는 아주 작은 자동미분 엔진을 직접 만들어, 계산 그래프를 만들고 그 그래프를 거슬러 올라가며 기울기를 계산하는 과정을 한 줄씩 눈으로 확인했다. PyTorch 같은 딥러닝 프레임워크가 실전에서 하는 일은 정확히 이것과 같다 — 다만 숫자 하나(스칼라)가 아니라 수백만 개의 숫자를 담은 텐서(tensor) 단위로, 그것도 CPU가 아닌 GPU에서 대량 병렬로 처리한다는 점이 다를 뿐이다. 이 절에서는 우리가 손으로 짠 코드의 각 부분이 PyTorch의 어떤 개념에 대응하는지 하나씩 짝지어본다.
+앞서 우리는 Value라는 아주 작은 자동미분 엔진을 직접 만들어, 계산 그래프를 만들고 그 그래프를 거슬러 올라가며 기울기를 계산하는 과정을 한 줄씩 눈으로 확인했다. PyTorch 같은 딥러닝 프레임워크가 실전에서 하는 일은 정확히 이것과 같다 — 다만 숫자 하나(스칼라)가 아니라 수백만 개의 숫자를 담은 텐서(tensor) 단위로, 그것도 CPU가 아닌 GPU에서 대량 병렬로 처리한다는 점이 다를 뿐이다. 이 절에서는 우리가 손으로 짠 코드의 각 부분이 PyTorch의 어떤 개념에 대응하는지 하나씩 짝지어본다.
 
 - **Tensor**: PyTorch의 \`torch.Tensor\`는 NumPy의 \`ndarray\`와 데이터 구조 자체는 동일하다 — 둘 다 같은 타입의 숫자를 다차원 배열로 담고, 인덱싱·브로드캐스팅·행렬 곱 같은 연산도 거의 그대로 대응된다(실제로 \`torch.from_numpy()\`로 메모리 복사 없이 서로 변환할 수 있다). 다른 점은 두 가지다. 첫째, 텐서는 \`.to("cuda")\`로 GPU 메모리로 옮겨 대량 병렬 연산을 시킬 수 있지만 NumPy 배열은 CPU에서만 동작한다. 둘째, 텐서는 \`requires_grad=True\`를 켜면 자신이 어떤 연산을 거쳐 만들어졌는지 계산 그래프를 계속 기록해 나중에 역전파에 쓸 수 있지만, NumPy 배열에는 이런 기록 기능이 아예 없다.
 
-- **Autograd**: \`requires_grad=True\`인 텐서에 연산을 적용할 때마다, PyTorch는 3.1절의 Value가 \`_prev\`와 \`_backward\`를 저장했던 것과 똑같이 결과 텐서에 \`grad_fn\`이라는 이름으로 "이 텐서가 어떤 연산과 어떤 입력들로부터 만들어졌는지"를 기록한다. \`loss.backward()\`를 호출하면 이 grad_fn들을 따라 위상정렬의 역순으로 그래프를 순회하며 연쇄법칙을 적용하는데, 이것이 정확히 우리가 만든 \`Value.backward()\`가 topo 리스트를 뒤집어 순회하며 \`_backward()\`를 실행하던 것과 동일한 알고리즘이다. 계산이 끝나면 각 리프(leaf) 텐서, 즉 \`requires_grad=True\`로 직접 만든 파라미터 텐서의 \`.grad\` 속성에 $\\partial L/\\partial\\theta$가 채워진다(3.1절 Value의 \`.grad\` 필드와 완전히 같은 역할). \`optimizer.step()\`은 이렇게 채워진 \`.grad\`를 읽어 2.3절의 갱신식(SGD, Adam)대로 파라미터를 갱신하고, \`optimizer.zero_grad()\`는 \`+=\`로 누적되는 성질(3.1절 :::info 참고) 때문에 다음 스텝을 위해 \`.grad\`를 0으로 되돌리는 역할을 한다.
+- **Autograd**: \`requires_grad=True\`인 텐서에 연산을 적용할 때마다, PyTorch는 앞서 만든 Value가 \`_prev\`와 \`_backward\`를 저장했던 것과 똑같이 결과 텐서에 \`grad_fn\`이라는 이름으로 "이 텐서가 어떤 연산과 어떤 입력들로부터 만들어졌는지"를 기록한다. \`loss.backward()\`를 호출하면 이 grad_fn들을 따라 위상정렬의 역순으로 그래프를 순회하며 연쇄법칙을 적용하는데, 이것이 정확히 우리가 만든 \`Value.backward()\`가 topo 리스트를 뒤집어 순회하며 \`_backward()\`를 실행하던 것과 동일한 알고리즘이다. 계산이 끝나면 각 리프(leaf) 텐서, 즉 \`requires_grad=True\`로 직접 만든 파라미터 텐서의 \`.grad\` 속성에 $\\partial L/\\partial\\theta$가 채워진다(앞서 살펴본 Value의 \`.grad\` 필드와 완전히 같은 역할). \`optimizer.step()\`은 이렇게 채워진 \`.grad\`를 읽어 2.3절의 갱신식(SGD, Adam)대로 파라미터를 갱신하고, \`optimizer.zero_grad()\`는 \`+=\`로 누적되는 성질(앞서 :::info 참고) 때문에 다음 스텝을 위해 \`.grad\`를 0으로 되돌리는 역할을 한다.
 
 \`\`\`image
 src: /images/week3/reverse-mode-autodiff.png
@@ -290,7 +373,7 @@ for epoch in range(num_epochs):
 
 이 대응 관계를 표로 한 번에 정리하면 다음과 같다.
 
-| 우리가 3.1절에서 손으로 짠 것 | PyTorch가 대신 해주는 것 |
+| 우리가 앞서 손으로 짠 것 | PyTorch가 대신 해주는 것 |
 | --- | --- |
 | Value.data | tensor의 값 |
 | Value.grad | tensor.grad |
@@ -298,67 +381,10 @@ for epoch in range(num_epochs):
 | Value.backward()의 topo 정렬 + 역순회 | loss.backward() |
 | 2.3절에서 손으로 쓴 Adam 갱신식 | torch.optim.Adam.step() |
 | 갱신 후 grad를 0으로 되돌리는 코드 | optimizer.zero_grad() |
-`,
-  practiceMd: `
-이제 지금까지 배운 역전파를 실제로 동작하는 코드로 만들어볼 차례다. Andrej Karpathy가 만든 micrograd라는 아주 작은 자동미분 엔진을 그대로 따라 구현해본다. 겨우 백 줄 남짓한 이 코드 안에 PyTorch의 autograd가 하는 일의 핵심 원리가 전부 들어있다.
 
-### 3.1 미니 자동미분 엔진 (핵심 구조)
+### PyTorch로 make_moons 분류해보기
 
-Value 클래스가 하는 일을 한 문장으로 요약하면, "숫자 하나(data)에 그 숫자가 어떻게 만들어졌는지에 대한 기억(_prev, _op)과, 자신에게 기울기가 도착했을 때 그것을 부모에게 어떻게 나눠줄지에 대한 지침서(_backward)를 함께 들고 다니는 객체"다. 여기서 눈여겨봐야 할 설계 포인트가 하나 있다. \`__add__\`나 \`__mul__\` 안에서 _backward를 지금 당장 실행하지 않고 나중에 실행할 함수로만 저장해둔다는 점이다(파이썬의 클로저 기능을 쓴 것이다). 왜 이렇게 할까? 순전파를 하는 시점에는 아직 이 노드의 출력이 최종 손실에 얼마나 기여할지(out.grad)를 알 수 없기 때문이다. 그 값은 순전파가 전부 끝나고 손실 L이 나온 뒤, 역전파가 거꾸로 이 노드까지 도달했을 때야 비로소 정해진다. 그래서 "어떻게 나눠줄지에 대한 계산 방법"만 미리 클로저로 포장해 저장해두고, 실제 계산은 그 정보(out.grad)가 준비된 나중 시점에 실행하는 것이다. 이것이 지연 계산(lazy evaluation)이고, PyTorch가 모든 텐서 연산 뒤에서 grad_fn을 저장해뒀다가 loss.backward() 호출 시점에야 순서대로 실행하는 것과 똑같은 아이디어다.
-
-\`\`\`python
-class Value:
-    def __init__(self, data, _children=(), _op=""):
-        self.data, self.grad = data, 0.0
-        self._prev, self._backward = set(_children), lambda: None
-    def __add__(self, o):
-        o = o if isinstance(o, Value) else Value(o)
-        out = Value(self.data + o.data, (self, o), "+")
-        def _backward():
-            self.grad += out.grad
-            o.grad    += out.grad
-        out._backward = _backward
-        return out
-    def __mul__(self, o):
-        o = o if isinstance(o, Value) else Value(o)
-        out = Value(self.data * o.data, (self, o), "*")
-        def _backward():
-            self.grad += o.data * out.grad
-            o.grad    += self.data * out.grad
-        out._backward = _backward
-        return out
-    def relu(self):
-        out = Value(max(0, self.data), (self,), "relu")
-        def _backward(): self.grad += (out.data > 0) * out.grad
-        out._backward = _backward
-        return out
-    def backward(self):
-        topo, seen = [], set()
-        def build(v):
-            if v not in seen:
-                seen.add(v)
-                for c in v._prev: build(c)
-                topo.append(v)
-        build(self)
-        self.grad = 1.0
-        for v in reversed(topo): v._backward()
-
-a, b = Value(2.0), Value(-3.0)
-L = (a*b + 10).relu()
-L.backward(); print(a.grad, b.grad)   # 기대값: -3.0, 2.0
-\`\`\`
-
-backward() 메서드 안에서 topo 리스트를 만드는 부분이 왜 필요한지 짚고 넘어가자. 어떤 노드의 grad를 확정하려면, 그 노드를 입력으로 사용하는 모든 하류(downstream) 노드의 _backward()가 먼저 실행되어 out.grad가 전부 채워진 뒤여야 한다. grad는 한 노드가 여러 경로에 쓰였을 때 그 기여분이 +=로 누적되는 값이므로(아래 :::info 블록 참고), 하류 노드 중 하나라도 먼저 처리되지 않은 채로 값을 읽어버리면 아직 더해지지 않은 기여분이 누락된다. 위상정렬(topological sort)은 정확히 이 조건, 즉 그래프의 모든 간선 $(u \\rightarrow v)$에 대해 u가 v보다 먼저 나오도록 노드 전체를 한 줄로 정렬하는 알고리즘이다. build() 함수가 재귀로 자식(자신을 만드는 데 쓰인 부모 노드들)을 먼저 방문하고 나서야 자기 자신을 topo 리스트에 추가하는 것이 후위순회(post-order traversal)이며, 이것이 위상정렬 순서를 만들어내는 표준적인 구현 방법이다. 그 결과를 reversed()로 뒤집어 손실 L(topo의 맨 끝, 즉 그래프에서 가장 나중에 만들어진 노드)부터 시작해 입력 쪽(topo의 맨 앞)으로 순회하며 _backward()를 실행하면, 각 노드가 자신의 grad를 확정하는 시점에는 그 노드를 사용하는 모든 하류 노드의 _backward()가 이미 실행되어 out.grad 기여분이 전부 반영되어 있음이 보장된다.
-
-위 코드의 a, b = Value(2.0), Value(-3.0) 예제를 직접 손으로 따라가 보자. a*b = -6, 여기에 10을 더하면 4, relu(4) = 4이므로 L.data = 4다. backward()를 부르면 L.grad = 1에서 시작해서, relu 노드는 out.data(=4)가 양수이므로 기울기 1을 그대로 통과시켜 (a*b+10)의 기울기도 1이 된다. 덧셈 노드는 기울기를 그대로 나눠주므로 a*b의 기울기도 1, 10의 기울기도 1이다. 곱셈 노드에서는 a.grad += b.data $\\times$ 1 = -3, b.grad += a.data $\\times$ 1 = 2가 되어, 코드 주석에 적힌 기대값 -3.0, 2.0과 정확히 일치한다.
-
-:::info 주의
-\`+=\` 로 기울기를 누적하는 이유 — 한 변수가 여러 경로에 쓰이면 기울기가 합산된다(다변수 연쇄법칙, fan-out gradient accumulation). 이를 \`=\`로 쓰면 어떤 버그가 생기는지 직접 실험해보라. 힌트: 같은 Value를 두 번 이상 재사용하는 식, 예를 들어 y = x*x + x 같은 식을 만들어 dy/dx를 계산해보면 차이가 바로 드러난다.
-:::
-
-### 3.2 PyTorch로 make_moons 분류
-
-PyTorch로 넘어가면 겉모습은 확 달라지지만 원리는 방금 만든 Value 클래스와 한 치도 다르지 않다. 텐서 하나하나가 Value처럼 자신이 어떻게 만들어졌는지를 grad_fn이라는 이름으로 기억하고 있고, loss.backward()를 호출하면 우리가 직접 짠 backward()와 똑같이 계산 그래프를 위상정렬 순서로 거슬러 올라가며 기울기를 채워 넣는다. 다를 뿐인 것은 숫자 하나(스칼라)가 아니라 수천~수백만 개의 숫자를 담은 텐서 단위로, 그것도 GPU에서 대량으로 병렬 처리한다는 점이다.
+PyTorch로 넘어가면 겉모습은 확 달라지지만 원리는 앞서 만든 Value 클래스와 한 치도 다르지 않다. 텐서 하나하나가 Value처럼 자신이 어떻게 만들어졌는지를 grad_fn이라는 이름으로 기억하고 있고, loss.backward()를 호출하면 우리가 직접 짠 backward()와 똑같이 계산 그래프를 위상정렬 순서로 거슬러 올라가며 기울기를 채워 넣는다. 다를 뿐인 것은 숫자 하나(스칼라)가 아니라 수천~수백만 개의 숫자를 담은 텐서 단위로, 그것도 GPU에서 대량으로 병렬 처리한다는 점이다.
 
 \`\`\`python
 import torch, torch.nn as nn
@@ -373,38 +399,11 @@ for ep in range(300):
     if ep % 50 == 0: print(ep, loss.item())
 \`\`\`
 
-opt.zero_grad()를 빼먹으면 어떤 일이 벌어질지 예측해보자. 3.1절에서 Value의 _backward가 grad에 값을 대입(=)하지 않고 누적(+=)한다고 했던 것을 그대로 떠올리면 된다. PyTorch의 텐서도 정확히 같은 규칙을 따른다. zero_grad()로 이전 스텝의 기울기를 0으로 리셋해주지 않으면, 새로 계산된 기울기가 이전 스텝의 기울기 위에 계속 쌓여서 실제보다 훨씬 크고 스텝을 반복할수록 계속 불어나는 기울기로 파라미터를 갱신하게 되고, 결국 학습이 이상하게 발산하거나 망가진다. 은닉 유닛 수를 1, 2, 4, 64로 바꿔가며 실행해보면, 표현력이 부족한(유닛이 1~2개인) 네트워크는 make_moons의 초승달 모양 경계를 곧게 하나의 직선으로 뭉개버리는 반면, 유닛이 충분히 많아지면(64개) 결정경계가 실제 데이터의 곡선 모양을 정교하게 따라가는 것을 눈으로 확인할 수 있을 것이다.
+opt.zero_grad()를 빼먹으면 어떤 일이 벌어질지 예측해보자. 앞서 Value의 _backward가 grad에 값을 대입(=)하지 않고 누적(+=)한다고 했던 것을 그대로 떠올리면 된다. PyTorch의 텐서도 정확히 같은 규칙을 따른다. zero_grad()로 이전 스텝의 기울기를 0으로 리셋해주지 않으면, 새로 계산된 기울기가 이전 스텝의 기울기 위에 계속 쌓여서 실제보다 훨씬 크고 스텝을 반복할수록 계속 불어나는 기울기로 파라미터를 갱신하게 되고, 결국 학습이 이상하게 발산하거나 망가진다. 은닉 유닛 수를 1, 2, 4, 64로 바꿔가며 실행해보면, 표현력이 부족한(유닛이 1~2개인) 네트워크는 make_moons의 초승달 모양 경계를 곧게 하나의 직선으로 뭉개버리는 반면, 유닛이 충분히 많아지면(64개) 결정경계가 실제 데이터의 곡선 모양을 정교하게 따라가는 것을 눈으로 확인할 수 있을 것이다.
 
-### 3.3 초기화 스케일과 분산 폭발/소실을 눈으로 확인하기
+### 같은 선형회귀를 두 번 풀어보기 — NumPy 수동 구현 vs PyTorch
 
-2.5절에서 손으로 계산했던 1.5^10 $\\approx$ 57.7배, 0.8^10 $\\approx$ 0.107배가 실제 코드에서도 그대로 재현되는지 직접 확인해보자. 10층짜리 네트워크를 흉내내면서, 매 층 출력의 표준편차가 초기화 스케일에 따라 어떻게 변하는지만 순수하게 관찰한다(학습은 전혀 하지 않고 순전파만 반복한다).
-
-\`\`\`python
-import numpy as np
-
-def forward_stds(scale, n_layers=10, width=256, n_samples=1000):
-    x = np.random.randn(n_samples, width)     # 표준편차 1로 시작
-    stds = [x.std()]
-    for _ in range(n_layers):
-        W = np.random.randn(width, width) * scale
-        x = np.maximum(0, x @ W)                # ReLU
-        stds.append(x.std())
-    return stds
-
-he_scale  = np.sqrt(2 / 256)     # He 초기화: Var(W) = 2/fan_in
-too_big   = he_scale * 1.5       # 표준편차를 일부러 1.5배 키운 경우
-too_small = he_scale * 0.8       # 표준편차를 일부러 0.8배로 줄인 경우
-
-for name, scale in [("He(적정)", he_scale), ("과도(x1.5)", too_big), ("과소(x0.8)", too_small)]:
-    stds = forward_stds(scale)
-    print(name, [f"{s:.4f}" for s in stds])
-\`\`\`
-
-He 스케일을 그대로 쓰면 층을 지나도 표준편차가 거의 일정하게 유지되는 반면, 과도(x1.5)/과소(x0.8) 버전은 층을 지날수록 출력의 표준편차가 본문에서 계산한 것과 거의 같은 비율로(대략 1.5배씩, 0.8배씩) 커지거나 작아지는 것을 출력에서 직접 확인할 수 있다. \`n_layers\`를 20으로 늘려서 다시 돌려보면, 2.5절 표에서 계산했던 3325배·0.0115배에 근접한 극단적인 숫자가 실제 코드에서도 똑같이 재현된다.
-
-### 3.4 같은 선형회귀를 두 번 풀어보기 — NumPy 수동 구현 vs PyTorch
-
-1주차의 선형회귀를 다시 가져와, 완전히 같은 데이터에 완전히 같은 경사하강법 스텝 수·학습률을 적용해서 두 가지 방식으로 풀어보자. 하나는 지금까지처럼 미분 공식을 손으로 유도해 코드로 옮긴 NumPy 버전이고, 다른 하나는 2.7절에서 배운 PyTorch의 autograd와 optimizer에 그 계산을 통째로 맡기는 버전이다. 같은 X, y로 학습하므로 두 버전의 최종 w, b는 (참값 w=3, b=2 근처로) 거의 같은 값에 수렴해야 한다 — 이것이 "PyTorch가 우리가 손으로 한 것과 수학적으로 동일한 일을 하고 있다"는 가장 직접적인 증거다.
+1주차의 선형회귀를 다시 가져와, 완전히 같은 데이터에 완전히 같은 경사하강법 스텝 수·학습률을 적용해서 두 가지 방식으로 풀어보자. 하나는 지금까지처럼 미분 공식을 손으로 유도해 코드로 옮긴 NumPy 버전이고, 다른 하나는 앞서 배운 PyTorch의 autograd와 optimizer에 그 계산을 통째로 맡기는 버전이다. 같은 X, y로 학습하므로 두 버전의 최종 w, b는 (참값 w=3, b=2 근처로) 거의 같은 값에 수렴해야 한다 — 이것이 "PyTorch가 우리가 손으로 한 것과 수학적으로 동일한 일을 하고 있다"는 가장 직접적인 증거다.
 
 \`\`\`python
 # (1) NumPy 수동 구현 — dL/dw, dL/db를 직접 유도해서 코드로 옮긴다
@@ -448,7 +447,7 @@ w_t, b_t = model.weight.item(), model.bias.item()
 print(f"PyTorch     : w={w_t:.4f}, b={b_t:.4f}, loss={loss.item():.4f}")
 \`\`\`
 
-두 print 문을 나란히 실행해보면 w, b, loss가 소수점 셋째 자리 안팎에서 거의 일치한다(둘 다 참값 w=3, b=2에 수렴하고, np.isclose(w, w_t, atol=1e-2)가 참이 될 것이다). 그런데 정작 눈여겨봐야 할 것은 최종 숫자의 일치보다 "학습 루프 안에 무엇이 남아있고 무엇이 사라졌는가"다. NumPy 버전의 루프 7줄 중 두 줄(grad_w, grad_b)은 이 문제(선형회귀 + MSE)에 대해서만 유효한, 손으로 유도한 미분 공식이다 — 모델을 2층 MLP로 바꾸면 이 두 줄은 완전히 새로 유도해서 다시 써야 한다. 반면 PyTorch 버전의 루프 5줄 중에는 w나 b를 직접 언급하는 코드가 단 한 줄도 없다. \`loss.backward()\`가 미분 공식이 있던 자리를 대신하고, \`opt.step()\`이 파라미터 갱신 두 줄을 대신한다. 그래서 \`model = torch.nn.Linear(1, 1)\`을 3.2절의 \`nn.Sequential(nn.Linear(2,16), nn.ReLU(), ...)\`처럼 훨씬 복잡한 네트워크로 바꿔도, 학습 루프의 나머지 5줄은 단 한 글자도 손댈 필요가 없다 — 이것이 "코드 줄 수가 줄었다"는 것보다 훨씬 중요한, autograd와 optimizer가 만들어주는 진짜 자동화다.
+두 print 문을 나란히 실행해보면 w, b, loss가 소수점 셋째 자리 안팎에서 거의 일치한다(둘 다 참값 w=3, b=2에 수렴하고, np.isclose(w, w_t, atol=1e-2)가 참이 될 것이다). 그런데 정작 눈여겨봐야 할 것은 최종 숫자의 일치보다 "학습 루프 안에 무엇이 남아있고 무엇이 사라졌는가"다. NumPy 버전의 루프 7줄 중 두 줄(grad_w, grad_b)은 이 문제(선형회귀 + MSE)에 대해서만 유효한, 손으로 유도한 미분 공식이다 — 모델을 2층 MLP로 바꾸면 이 두 줄은 완전히 새로 유도해서 다시 써야 한다. 반면 PyTorch 버전의 루프 5줄 중에는 w나 b를 직접 언급하는 코드가 단 한 줄도 없다. \`loss.backward()\`가 미분 공식이 있던 자리를 대신하고, \`opt.step()\`이 파라미터 갱신 두 줄을 대신한다. 그래서 \`model = torch.nn.Linear(1, 1)\`을 앞서 만든 \`nn.Sequential(nn.Linear(2,16), nn.ReLU(), ...)\`처럼 훨씬 복잡한 네트워크로 바꿔도, 학습 루프의 나머지 5줄은 단 한 글자도 손댈 필요가 없다 — 이것이 "코드 줄 수가 줄었다"는 것보다 훨씬 중요한, autograd와 optimizer가 만들어주는 진짜 자동화다.
 `,
   quiz: [
     { id: "w3-q1", question: "L = (wx − y)², x=2, w=1, y=5 일 때 $\\dfrac{dL}{dw}$는? 계산 과정을 노드별로 나눠서 보여라." },
