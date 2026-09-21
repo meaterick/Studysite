@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { WEEKS, getWeek, getAdjacentWeeks } from "@/content/weeks";
-import Markdown from "@/components/MarkdownBlocks";
+import Markdown, { Inline } from "@/components/MarkdownBlocks";
 import Checklist from "@/components/Checklist";
 import Worksheet from "@/components/Worksheet";
 
@@ -89,8 +89,8 @@ export default async function WeekPage({ params }: { params: Promise<{ slug: str
               정답은 공개하지 않습니다 — 스스로 답을 적어보고, 세션에서 함께 확인하세요.
             </p>
             <ol className="list-decimal space-y-2 pl-5 text-[15px] text-ink-secondary">
-              {week.quiz.map((q, i) => (
-                <li key={i}>{q}</li>
+              {week.quiz.map((q) => (
+                <li key={q.id}><Inline text={q.question} /></li>
               ))}
             </ol>
           </section>

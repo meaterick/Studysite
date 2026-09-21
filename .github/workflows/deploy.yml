@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate content (quiz/answers 정합성, LaTeX, 이미지)
+        run: npm run validate:content
+
       - name: Build
         run: npm run build
 

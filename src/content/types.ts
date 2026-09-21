@@ -26,7 +26,7 @@ export interface WeekMeta {
   conceptsMd: string;
   /** raw markdown for the "실습" section */
   practiceMd: string;
-  quiz: string[];
+  quiz: { id: string; question: string }[];
   worksheet: { label: string; hint?: string }[];
   /** raw markdown for the "과제" section (required / advanced / rubric) */
   assignmentMd: string;

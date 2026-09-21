@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:content": "tsx scripts/validate-content.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -26,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

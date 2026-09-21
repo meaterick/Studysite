@@ -5,7 +5,7 @@ import { DIAGRAMS } from "@/components/diagrams";
 import CodeBlock from "@/components/CodeBlock";
 import { renderMath } from "@/lib/katex";
 
-function Inline({ text }: { text: string }) {
+export function Inline({ text }: { text: string }) {
   const parts = renderInline(text);
   return (
     <>
@@ -59,7 +59,7 @@ export function BlocksRenderer({ blocks }: { blocks: Block[] }) {
                     : "scroll-mt-24 pt-2 text-base font-bold text-ink"
                 }
               >
-                {b.text}
+                <Inline text={b.text} />
               </Tag>
             );
           }

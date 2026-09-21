@@ -1,6 +1,7 @@
 import { quizAnswers } from "@/content/operator/quizAnswers";
 import { WEEKS } from "@/content/weeks";
 import { requireAdmin } from "@/lib/dal";
+import { Inline } from "@/components/MarkdownBlocks";
 
 export const metadata = { title: "퀴즈 정답·해설" };
 
@@ -20,16 +21,16 @@ export default async function QuizAnswersPage() {
                 W{set.week} · {week.title}
               </h2>
               <ol className="mb-4 list-decimal space-y-3 pl-5 text-sm">
-                {week.quiz.map((q, i) => (
-                  <li key={i}>
-                    <p className="text-ink-secondary">{q}</p>
-                    <p className="mt-1 font-medium text-[var(--status-good)]">{set.answers[i]}</p>
+                {week.quiz.map((q) => (
+                  <li key={q.id}>
+                    <p className="text-ink-secondary"><Inline text={q.question} /></p>
+                    <p className="mt-1 font-medium text-[var(--status-good)]"><Inline text={set.answers[q.id] ?? "(정답 누락 — quizAnswers.ts 확인 필요)"} /></p>
                   </li>
                 ))}
               </ol>
               <div className="rounded-lg border-l-4 px-3 py-2 text-sm text-ink-secondary" style={{ borderColor: "var(--series-blue)", background: "color-mix(in srgb, var(--series-blue) 8%, transparent)" }}>
                 <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--series-blue)]">과제 모범 방향</p>
-                {set.sampleDirection}
+                <Inline text={set.sampleDirection} />
               </div>
             </section>
           );
