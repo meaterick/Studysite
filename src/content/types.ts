@@ -22,10 +22,8 @@ export interface WeekMeta {
   keywords: string[];
   objectives: string[];
   learningOrder: string[];
-  /** raw markdown for the "핵심 개념" section */
+  /** raw markdown for the "핵심 개념" section — 실습(코드 실습)은 관련 개념 직후에 바로 이어지도록 이 안에 함께 배치된다 */
   conceptsMd: string;
-  /** raw markdown for the "실습" section */
-  practiceMd: string;
   quiz: { id: string; question: string }[];
   worksheet: { label: string; hint?: string }[];
   /** raw markdown for the "과제" section (required / advanced / rubric) */

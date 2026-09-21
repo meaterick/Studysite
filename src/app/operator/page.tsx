@@ -5,7 +5,7 @@ export const metadata = { title: "운영자 대시보드" };
 
 const LINKS = [
   { href: "/operator/guide", title: "운영 가이드", desc: "운영 원칙, 준비 체크리스트, 세션 시나리오, 채점 루브릭, 위기 대응 매뉴얼" },
-  { href: "/operator/quiz-answers", title: "퀴즈 정답·해설", desc: "W1~W8 퀴즈 정답과 과제 모범 방향 — 절대 스터디원과 공유하지 마세요" },
+  { href: "/operator/quiz-answers", title: "과제 모범 방향", desc: "W1~W8 과제 채점 시 참고할 모범 방향 — 퀴즈 정답은 이제 학습자료 사이트의 퀴즈 페이지에서 학생에게 직접 공개됩니다" },
   { href: "/operator/quality-log", title: "품질 검토·개선 로그", desc: "자체 검토 결과, 알려진 한계, 매주 개선 절차, 변경 기록" },
   { href: "/operator/members", title: "스터디원 관리", desc: "가입한 계정 목록 확인, 관리자 권한 부여/회수, 계정 삭제" },
 ];
@@ -26,7 +26,7 @@ export default async function OperatorHome() {
         </form>
       </div>
       <div className="mb-8 rounded-lg border-l-4 px-4 py-3 text-sm" style={{ borderColor: "var(--status-serious)", background: "color-mix(in srgb, var(--status-serious) 12%, transparent)" }}>
-        이 구역의 내용(퀴즈 정답, 채점 기준 원본, 운영 노하우)은 스터디원에게 공개하지 않는 것을 원칙으로 합니다.
+        이 구역의 내용(채점 기준 원본, 운영 노하우)은 스터디원에게 공개하지 않는 것을 원칙으로 합니다. (퀴즈 정답은 이제 학생용 퀴즈 페이지에서 직접 공개되므로 이 구역에서는 다루지 않습니다.)
       </div>
       <div className="grid gap-4 sm:grid-cols-1">
         {LINKS.map((l) => (

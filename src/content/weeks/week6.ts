@@ -219,6 +219,29 @@ J(\\theta) = \\mathbb{E}\\left[r(x,y)\\right] - \\lambda \\cdot D_{KL}\\left(\\p
 
 엄밀한 유도까지 따라갈 필요는 없고, "채점관이 매기는 보상은 최대한 높이되, 그러다 기준 모델에서 너무 멀어지면 벌점을 받는다"는 직관만 가져가면 충분하다. DPO 손실 하나는 결국 이 보상 극대화와 KL 억제라는 두 힘을, 별도의 보상모델과 강화학습 없이 로그확률 비율 하나의 계산으로 압축해낸 것이라고 보면 된다.
 
+이제 방금 손으로 계산했던 DPO 손실을 코드로 그대로 재현해본다. 로그확률 몇 개를 임의로 만들어 손실을 계산하고, β를 바꿔가며 손실이 얼마나 민감하게 반응하는지도 함께 살펴보자.
+
+\`\`\`python
+# (1) DPO 손실 직접 계산
+import numpy as np
+
+def dpo_loss(logp_theta_w, logp_ref_w, logp_theta_l, logp_ref_l, beta=0.1):
+    diff = beta * (logp_theta_w - logp_ref_w) - beta * (logp_theta_l - logp_ref_l)
+    sigmoid = 1 / (1 + np.exp(-diff))
+    return -np.log(sigmoid)
+
+# 본문 예제와 동일한 값 (β=0.1)
+loss = dpo_loss(logp_theta_w=-2.0, logp_ref_w=-3.0, logp_theta_l=-2.5, logp_ref_l=-2.0, beta=0.1)
+print(f"loss = {loss:.4f}")  # 본문에서 손으로 계산한 값(~0.62)과 같아야 한다
+
+# beta를 바꿔가며 같은 로그확률 차이가 손실에 얼마나 다르게 반영되는지 비교
+for beta in (0.01, 0.1, 0.5, 1.0):
+    l = dpo_loss(-2.0, -3.0, -2.5, -2.0, beta=beta)
+    print(f"beta={beta}: loss={l:.4f}")
+\`\`\`
+
+β가 커질수록 같은 로그확률 차이라도 시그모이드 안의 값이 더 크게 증폭되어 손실이 빠르게 0에 가까워지는 것을 확인할 수 있다 — 본문에서 설명한 "β가 크면 기준 모델에서 벗어나는 것에 관대해진다"는 말이 숫자로도 그대로 드러난다.
+
 ### 2.4 디코딩
 
 모델이 다음 토큰의 확률분포 $P(x_t \\mid x_{<t})$를 계산해 놓았다고 해도, 이 분포에서 실제로 어떤 토큰을 출력으로 선택할지는 별도의 샘플링 절차가 결정한다. 이 선택 절차를 디코딩(decoding)이라 부르고, 그중 확률분포 자체의 형태를 직접 변형하는 하이퍼파라미터가 temperature다. Temperature가 낮으면 확률질량이 최상위 후보 쪽으로 더 집중되어 출력의 분산(variance)이 작아지고, temperature가 높으면 확률질량이 하위 순위 후보들에게까지 더 고르게 재분배되어 출력의 분산이 커진다.
@@ -256,6 +279,44 @@ Temperature 말고도 실제 서비스에서 함께 쓰는 디코딩 전략이 �
 
 실무에서는 이 방법들을 단독으로 쓰기보다 top-p와 temperature를 함께 걸어두는 경우가 많다. 지나치게 확률이 낮은 "잡음" 후보들은 top-p로 아예 후보군에서 잘라내고, 남은 후보들 사이에서만 temperature로 다양성을 조절하는 식이다.
 
+아래 실습은 이론으로만 배운 softmax(z/T)와 top-p 샘플링을 직접 코드로 돌려서 눈으로 확인해보는 시간이다. Colab에서 한 셀씩 실행하면서, 위 예제에서 손으로 계산했던 확률 값이 실제 코드 출력과 맞아떨어지는지 대조해보길 권한다.
+
+먼저 temperature와 top-p 샘플링을 직접 구현한다. 아래 \`logits\`는 위 예제의 사과/바나나/포도/수박/딸기와 정확히 같은 값이다. T=1.0으로 놓고 실행한 결과가 앞서 계산한 63.6% / 23.4% / 8.6% / 3.2% / 1.2%에 가까운 비율로 나오는지 직접 맞춰보자.
+
+\`\`\`python
+# (2) Temperature / Top-p 이해: 직접 구현
+import numpy as np
+def sample(logits, T=1.0, top_p=1.0, rng=np.random.default_rng(0)):
+    p = np.exp((logits - logits.max()) / T); p /= p.sum()
+    idx = np.argsort(-p); cs = np.cumsum(p[idx])
+    keep = idx[: np.searchsorted(cs, top_p) + 1]
+    q = np.zeros_like(p); q[keep] = p[keep]; q /= q.sum()
+    return rng.choice(len(p), p=q)
+logits = np.array([3.0, 2.0, 1.0, 0.0, -1.0])
+for T in (0.2, 1.0, 2.0):
+    print(T, np.bincount([sample(logits, T) for _ in range(2000)], minlength=5) / 2000)
+\`\`\`
+
+T=0.2를 넣으면 거의 항상 인덱스 0(가장 높은 logit, "사과")만 뽑히고, T=2.0을 넣으면 훨씬 고르게 퍼지는 것을 실행 결과에서 바로 확인할 수 있다. 이게 바로 위 예제에서 손으로 계산했던 현상이 코드로 그대로 재현된 것이다 — 표로 눈으로만 보던 확률이 실제 시뮬레이션 빈도로 다시 확인되는 순간이다.
+
+이번엔 장난감 숫자가 아니라 실제로 존재하는 소형 언어모델(GPT-2)에 같은 질문을 던져 다음 토큰 확률을 직접 들여다본다. 실제 모델의 logit은 문맥에 따라 매 순간 달라지지만, 그 점수를 확률로 바꾸는 수학적 절차 자체는 방금 손으로 계산한 것과 완전히 동일하다.
+
+\`\`\`python
+# (3) 실제 소형 LLM 관찰 (Colab)  !pip install transformers
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
+tok = AutoTokenizer.from_pretrained("gpt2"); lm = AutoModelForCausalLM.from_pretrained("gpt2")
+ids = tok("The capital of France is", return_tensors="pt")
+with torch.no_grad(): logits = lm(**ids).logits[0, -1]
+top = torch.topk(torch.softmax(logits, -1), 5)
+print([(tok.decode(i), round(p.item(), 3)) for p, i in zip(top.values, top.indices)])
+for T in (0.3, 1.0, 1.5):
+    out = lm.generate(**ids, do_sample=True, temperature=T, top_p=0.95, max_new_tokens=20)
+    print(T, tok.decode(out[0]))
+\`\`\`
+
+temperature를 낮춰서 생성하면 여러 번 돌려도 매번 거의 같은 문장이 나오고, 높여서 생성하면 실행할 때마다 결과가 눈에 띄게 달라지는 것을 확인할 수 있을 것이다 — 다양성과 안정성은 결국 이 손잡이 하나를 어느 쪽으로 돌리느냐의 트레이드오프라는 사실이 실제 모델에서도 그대로 성립한다.
+
 ### 2.4.1 디코딩 전략 자세히 보기
 
 위 표에 압축된 각 방법을 하나씩 풀어보자. 그리디 디코딩(Greedy Decoding)은 매 스텝 확률이 가장 높은 토큰 하나만($\\arg\\max_i P(i)$) 선택하는, 디코딩 중 가장 단순한 방법이다. 별도의 샘플링도, 후보 여러 개를 동시에 추적할 필요도 없어 구현이 쉽고 계산도 빠르지만, 같은 입력에는 항상 같은 출력이 나오는 완전한 결정론적(deterministic) 방식이라는 한계가 있다. 이 결정론성 자체가 문제를 낳기도 하는데, 한 번 선택한 토큰이 다음 스텝의 확률분포에도 영향을 주는 자기회귀 구조 특성상 그리디가 국소적으로 최선인 토큰만 계속 골라도 전체 시퀀스로는 부자연스럽거나 같은 구절이 반복되는 출력에 쉽게 빠진다("the the the..." 같은 반복 루프가 그리디 디코딩에서 특히 잘 관찰되는 현상이다).
@@ -280,74 +341,12 @@ Top-p(Nucleus) Sampling은 이 문제를 "몇 개"가 아니라 "얼마만큼의
 
 원인은 여러 겹으로 쌓여 있다. 우선 학습 데이터에 없던 지식의 빈틈을 만나면, 모델은 "모른다"고 멈추는 대신 통계적으로 가장 그럴듯해 보이는 말을 채워 넣어 공백을 메운다. 게다가 모델은 자기가 지금 하는 말이 얼마나 확실한지를 스스로 잘 가늠하지 못한다 — 확신에 찬 말투와 실제 정확도가 따로 노는, 이른바 보정(calibration) 부족 문제다. 여기에 컨텍스트 창이라는 물리적 한계도 있다. 아무리 긴 대화라도 모델이 한 번에 참조할 수 있는 토큰 수는 정해져 있어서, 그 너머의 정보는 통째로 사라져 버린다. 마지막으로 지식 시점 컷오프 문제가 있다 — 모델은 학습이 끝난 시점 이후의 세상 일을 원천적으로 알 수 없으니, 그 이후를 묻는 질문에는 최선을 다해 지어낼 수밖에 없다. 완화책으로는 검색 증강(RAG, 다음 주에 다룬다), 답변에 근거 인용을 요구하기, 계산기·검색 같은 외부 도구 사용, 그리고 모델 스스로 불확실성을 표현하도록 학습시키는 방법 등이 쓰인다.
 
-:::info In-context learning
-가중치 갱신 없이 프롬프트 안에 넣어준 예시 몇 개만으로 새로운 과제를 수행하는 것 — LLM의 가장 특이한 성질 중 하나다. 모델은 프롬프트를 읽는 동안 "지금 이 학습 없이도, 문맥 안의 패턴만 보고 즉석에서 규칙을 흉내 낸다." 사전학습 규모가 커질수록 이 능력이 두드러지게 강해진다는 점이 스케일링의 또 다른 흥미로운 부산물이다.
-:::
-`,
-  practiceMd: `
-아래 실습은 이론으로만 배운 softmax(z/T)와 top-p 샘플링을 직접 코드로 돌려서 눈으로 확인해보는 시간이다. Colab에서 한 셀씩 실행하면서, 위 예제에서 손으로 계산했던 확률 값이 실제 코드 출력과 맞아떨어지는지 대조해보길 권한다.
-
-먼저 temperature와 top-p 샘플링을 직접 구현한다. 아래 \`logits\`는 위 예제의 사과/바나나/포도/수박/딸기와 정확히 같은 값이다. T=1.0으로 놓고 실행한 결과가 앞서 계산한 63.6% / 23.4% / 8.6% / 3.2% / 1.2%에 가까운 비율로 나오는지 직접 맞춰보자.
-
-\`\`\`python
-# (1) Temperature / Top-p 이해: 직접 구현
-import numpy as np
-def sample(logits, T=1.0, top_p=1.0, rng=np.random.default_rng(0)):
-    p = np.exp((logits - logits.max()) / T); p /= p.sum()
-    idx = np.argsort(-p); cs = np.cumsum(p[idx])
-    keep = idx[: np.searchsorted(cs, top_p) + 1]
-    q = np.zeros_like(p); q[keep] = p[keep]; q /= q.sum()
-    return rng.choice(len(p), p=q)
-logits = np.array([3.0, 2.0, 1.0, 0.0, -1.0])
-for T in (0.2, 1.0, 2.0):
-    print(T, np.bincount([sample(logits, T) for _ in range(2000)], minlength=5) / 2000)
-\`\`\`
-
-T=0.2를 넣으면 거의 항상 인덱스 0(가장 높은 logit, "사과")만 뽑히고, T=2.0을 넣으면 훨씬 고르게 퍼지는 것을 실행 결과에서 바로 확인할 수 있다. 이게 바로 위 예제에서 손으로 계산했던 현상이 코드로 그대로 재현된 것이다 — 표로 눈으로만 보던 확률이 실제 시뮬레이션 빈도로 다시 확인되는 순간이다.
-
-이번엔 장난감 숫자가 아니라 실제로 존재하는 소형 언어모델(GPT-2)에 같은 질문을 던져 다음 토큰 확률을 직접 들여다본다. 실제 모델의 logit은 문맥에 따라 매 순간 달라지지만, 그 점수를 확률로 바꾸는 수학적 절차 자체는 방금 손으로 계산한 것과 완전히 동일하다.
-
-\`\`\`python
-# (2) 실제 소형 LLM 관찰 (Colab)  !pip install transformers
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
-tok = AutoTokenizer.from_pretrained("gpt2"); lm = AutoModelForCausalLM.from_pretrained("gpt2")
-ids = tok("The capital of France is", return_tensors="pt")
-with torch.no_grad(): logits = lm(**ids).logits[0, -1]
-top = torch.topk(torch.softmax(logits, -1), 5)
-print([(tok.decode(i), round(p.item(), 3)) for p, i in zip(top.values, top.indices)])
-for T in (0.3, 1.0, 1.5):
-    out = lm.generate(**ids, do_sample=True, temperature=T, top_p=0.95, max_new_tokens=20)
-    print(T, tok.decode(out[0]))
-\`\`\`
-
-temperature를 낮춰서 생성하면 여러 번 돌려도 매번 거의 같은 문장이 나오고, 높여서 생성하면 실행할 때마다 결과가 눈에 띄게 달라지는 것을 확인할 수 있을 것이다 — 다양성과 안정성은 결국 이 손잡이 하나를 어느 쪽으로 돌리느냐의 트레이드오프라는 사실이 실제 모델에서도 그대로 성립한다.
-
-이번엔 2.3.4절에서 손으로 계산했던 DPO 손실을 코드로 그대로 재현해본다. 로그확률 몇 개를 임의로 만들어 손실을 계산하고, β를 바꿔가며 손실이 얼마나 민감하게 반응하는지도 함께 살펴보자.
-
-\`\`\`python
-# (3) DPO 손실 직접 계산
-import numpy as np
-
-def dpo_loss(logp_theta_w, logp_ref_w, logp_theta_l, logp_ref_l, beta=0.1):
-    diff = beta * (logp_theta_w - logp_ref_w) - beta * (logp_theta_l - logp_ref_l)
-    sigmoid = 1 / (1 + np.exp(-diff))
-    return -np.log(sigmoid)
-
-# 본문 예제와 동일한 값 (β=0.1)
-loss = dpo_loss(logp_theta_w=-2.0, logp_ref_w=-3.0, logp_theta_l=-2.5, logp_ref_l=-2.0, beta=0.1)
-print(f"loss = {loss:.4f}")  # 본문에서 손으로 계산한 값(~0.62)과 같아야 한다
-
-# beta를 바꿔가며 같은 로그확률 차이가 손실에 얼마나 다르게 반영되는지 비교
-for beta in (0.01, 0.1, 0.5, 1.0):
-    l = dpo_loss(-2.0, -3.0, -2.5, -2.0, beta=beta)
-    print(f"beta={beta}: loss={l:.4f}")
-\`\`\`
-
-β가 커질수록 같은 로그확률 차이라도 시그모이드 안의 값이 더 크게 증폭되어 손실이 빠르게 0에 가까워지는 것을 확인할 수 있다 — 본문에서 설명한 "β가 크면 기준 모델에서 벗어나는 것에 관대해진다"는 말이 숫자로도 그대로 드러난다.
-
 :::warn 윤리 유의
 사용 가능한 API/웹 챗 모델에 같은 질문을 temperature 0과 1로 각 5번 물어 출력의 변동을 기록한다. 실제 존재하지 않는 논문/인물에 대해 물어 환각 양상을 수집하되, 그 결과를 사실인 것처럼 다른 사람에게 유포하지 말 것. 환각을 "유도"하는 실험은 어디까지나 이 모델의 한계를 이해하기 위한 것이지, 결과물 자체를 인용 가능한 정보로 쓰기 위한 것이 아니다.
+:::
+
+:::info In-context learning
+가중치 갱신 없이 프롬프트 안에 넣어준 예시 몇 개만으로 새로운 과제를 수행하는 것 — LLM의 가장 특이한 성질 중 하나다. 모델은 프롬프트를 읽는 동안 "지금 이 학습 없이도, 문맥 안의 패턴만 보고 즉석에서 규칙을 흉내 낸다." 사전학습 규모가 커질수록 이 능력이 두드러지게 강해진다는 점이 스케일링의 또 다른 흥미로운 부산물이다.
 :::
 `,
   quiz: [

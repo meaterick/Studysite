@@ -32,16 +32,11 @@ export default async function WeekConceptsPage({ params }: { params: Promise<{ s
       </section>
 
       <section id="concepts" className="scroll-mt-24">
-        <h2 className="mb-3 text-xl font-black text-ink">핵심 개념</h2>
-        <Markdown source={week.conceptsMd} docKey={`${slug}:concepts`} interactiveCode />
-      </section>
-
-      <section id="practice" className="scroll-mt-24">
-        <h2 className="mb-3 text-xl font-black text-ink">실습</h2>
+        <h2 className="mb-3 text-xl font-black text-ink">핵심 개념 · 실습</h2>
         <p className="mb-3 text-sm text-ink-muted">
-          아래 코드는 이 브라우저에서 직접 실행할 수 있습니다 — 서버가 아니라 여러분의 브라우저 안에서 Python이 돌아갑니다. 작성한 코드는 자동으로 저장됩니다.
+          각 개념 설명 바로 뒤에 관련 실습 코드가 이어집니다. 코드는 이 브라우저에서 직접 실행할 수 있습니다 — 서버가 아니라 여러분의 브라우저 안에서 Python이 돌아가며, 작성한 코드는 자동으로 저장됩니다.
         </p>
-        <Markdown source={week.practiceMd} docKey={`${slug}:practice`} interactiveCode />
+        <Markdown source={week.conceptsMd} docKey={`${slug}:concepts`} interactiveCode />
       </section>
     </div>
   );

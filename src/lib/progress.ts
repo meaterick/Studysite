@@ -9,7 +9,6 @@ export const CHECKLIST_ITEMS = [
 export type ChecklistId = (typeof CHECKLIST_ITEMS)[number]["id"];
 type WeekProgress = Partial<Record<ChecklistId, boolean>>;
 type ProgressStore = Record<string, WeekProgress>;
-type WorksheetStore = Record<string, Record<string, string>>;
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
@@ -69,27 +68,8 @@ export function weekCompletionRatio(progress: WeekProgress): number {
   return done / CHECKLIST_ITEMS.length;
 }
 
-const EMPTY_WORKSHEETS: WorksheetStore = {};
-export const worksheetStore = createLocalStore<WorksheetStore>("aegis-worksheet:v1", EMPTY_WORKSHEETS);
-
-export function readWorksheet(store: WorksheetStore, slug: string): Record<string, string> {
-  return store[slug] ?? {};
-}
-
-export function writeWorksheetField(slug: string, label: string, value: string) {
-  const current = worksheetStore.getSnapshot();
-  worksheetStore.write({ ...current, [slug]: { ...current[slug], [label]: value } });
-}
-
-export function clearWorksheet(slug: string) {
-  const current = worksheetStore.getSnapshot();
-  const next = { ...current };
-  delete next[slug];
-  worksheetStore.write(next);
-}
-
 // 퀴즈: 한 번에 한 문항씩 진행하며(진도 저장) 스스로 답을 적어보는 자기 점검용.
-// 정답은 이 스토어에 없다 — quizAnswers.ts는 운영자 전용으로 계속 비공개.
+// 정답 텍스트 자체는 서버에서 내려주고, 여기엔 진행 상태와 초안만 저장한다.
 interface QuizWeekState {
   index: number;
   drafts: Record<string, string>;

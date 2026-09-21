@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import katex from "katex";
 import { WEEKS } from "../src/content/weeks";
-import { quizAnswers } from "../src/content/operator/quizAnswers";
+import { quizAnswers } from "../src/content/quizAnswers";
 import { parseMarkdown } from "../src/content/markdown";
 import type { Block } from "../src/content/types";
 
@@ -125,7 +125,6 @@ for (const week of WEEKS) {
 
   week.quiz.forEach((q) => checkInlineMath(q.question, `${label} quiz(${q.id})`));
   checkBlocks(parseMarkdown(week.conceptsMd), `${label} conceptsMd`);
-  checkBlocks(parseMarkdown(week.practiceMd), `${label} practiceMd`);
   checkBlocks(parseMarkdown(week.assignmentMd), `${label} assignmentMd`);
 }
 

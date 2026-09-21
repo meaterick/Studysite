@@ -353,6 +353,41 @@ height: 352
 모델 B와 모델 C의 평균제곱오차(대략 $\\text{bias}^2+\\text{variance}$)는 우연히 비슷하게 나올 수 있지만(각각 약 14, 8.4), 원인은 정반대다. 처방도 정반대여야 한다 — B에는 정규화나 더 많은 데이터를 줘야 하고, C에는 더 복잡한 모델이나 더 많은 특징을 줘야 한다. 같은 "오차가 크다"는 증상이라도 진단이 다르면 처방도 완전히 달라진다는 게 이번 주의 핵심이다.
 :::
 
+아래 코드는 Colab에서 별도 설치 없이 그대로 실행할 수 있다. 코드를 실행만 하고 넘어가지 말고, 각 블록 뒤에 붙은 설명과 질문에 스스로 답해보면서 따라가자. 먼저 방금 살펴본 과적합·과소적합을 직접 눈으로 확인해보자. sin 곡선에 약간의 노이즈를 섞은 가짜 데이터를 만든 다음, 다항식의 차수를 1부터 12까지 늘려가며 같은 데이터에 억지로 끼워 맞춰본다. 차수가 낮으면 모델이 너무 단순해서 곡선의 굴곡을 따라가지 못하고(과소적합), 차수가 너무 높으면 데이터의 노이즈까지 통째로 외워버린다(과적합).
+
+\`\`\`python
+import numpy as np, matplotlib.pyplot as plt
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.metrics import classification_report, confusion_matrix, precision_score, recall_score, roc_curve, roc_auc_score, RocCurveDisplay
+
+# (1) 과적합 시각화를 위한 가짜 데이터: sin 곡선 + 노이즈
+rng = np.random.default_rng(0)
+x = np.sort(rng.uniform(0, 1, 30))[:, None]
+y = np.sin(2*np.pi*x[:,0]) + rng.normal(0, 0.2, 30)
+xtr, xva, ytr, yva = train_test_split(x, y, test_size=0.4, random_state=0)
+\`\`\`
+
+훈련 데이터(xtr, ytr) 60%와 검증 데이터(xva, yva) 40%로 나눴다. 이제 다항식 차수 d를 1부터 12까지 바꿔가며 매번 모델을 새로 학습시키고, 훈련 오차와 검증 오차를 각각 기록해보자.
+
+\`\`\`python
+tr_err, va_err = [], []
+for d in range(1, 13):
+    m = make_pipeline(PolynomialFeatures(d), StandardScaler(), LinearRegression()).fit(xtr, ytr)
+    tr_err.append(np.mean((m.predict(xtr)-ytr)**2))
+    va_err.append(np.mean((m.predict(xva)-yva)**2))
+plt.plot(tr_err, label="train"); plt.plot(va_err, label="val"); plt.yscale("log"); plt.legend(); plt.show()
+\`\`\`
+
+그래프를 보면 훈련 오차(train)는 차수가 올라갈수록 거의 단조롭게 계속 줄어든다 — 모델이 유연해질수록 훈련 데이터 자체는 더 잘 외울 수 있기 때문이다. 하지만 검증 오차(val)는 다르게 움직인다. 어느 지점까지는 같이 줄어들다가, 그 이후로는 다시 커지기 시작한다. 이 U자 모양 바닥이 정확히 방금 설명한 "편향과 분산의 균형점"이다. 바닥보다 왼쪽은 과소적합 구간(모델이 너무 단순해 두 오차 모두 큼)이고, 오른쪽은 과적합 구간(훈련 오차는 계속 낮아지지만 검증 오차는 도리어 치솟는다)이다.
+
+:::warn 관찰
+차수 몇에서 검증 오차가 최소인가?
+:::
+
 ### 2.17 정규화: 파라미터에 벌금 매기기
 
 과적합을 막는 직접적인 방법 하나는 손실함수에 가중치 크기에 비례하는 벌점 항(penalty term)을 더하는 것이다. 원래 손실 $L$에 가중치 크기를 나타내는 항을 더한 $L_{reg} = L + \\lambda R(w)$를 최소화하면, 최적화 과정은 훈련 데이터에 대한 손실을 낮추는 것과 가중치 크기를 작게 유지하는 것 사이에서 균형을 맞추게 된다. $\\lambda$는 이 두 목표 사이의 상대적 비중을 조절하는 하이퍼파라미터다.
@@ -371,7 +406,25 @@ L2 정규화(Ridge)는 \`L + λ‖w‖²\`처럼 가중치 제곱의 합을 벌�
 ① 전체 데이터로 표준화 후 분할 ② 미래 정보가 특징에 포함(시계열) ③ 동일 환자의 샘플이 train/test 양쪽에 존재 ④ 타깃에서 파생된 열 사용.
 :::
 
-이 네 가지 사례를 관통하는 문제는 사실 하나다 — 모델을 평가할 때만 사용해야 할 정보(테스트셋 또는 예측 시점 이후의 정보)가 학습 과정에 미리 유입된 것이다. 예를 들어 ①번처럼 전체 데이터(훈련+테스트)를 합쳐서 평균·표준편차를 계산한 뒤 표준화를 하면, 테스트셋의 통계 정보가 훈련 과정에 슬쩍 새어 들어간다. 이렇게 얻은 성능 점수는 실제 운영 환경에서는 결코 재현되지 않는, 가짜로 부풀려진 점수다. 그래서 뒤에 나올 실습 코드에서 스케일러(StandardScaler)를 반드시 파이프라인 안에, 교차검증 루프 안쪽에 넣어야 한다 — 그래야 매 fold마다 훈련 부분만 보고 통계를 계산하게 된다.
+이 네 가지 사례를 관통하는 문제는 사실 하나다 — 모델을 평가할 때만 사용해야 할 정보(테스트셋 또는 예측 시점 이후의 정보)가 학습 과정에 미리 유입된 것이다. 예를 들어 ①번처럼 전체 데이터(훈련+테스트)를 합쳐서 평균·표준편차를 계산한 뒤 표준화를 하면, 테스트셋의 통계 정보가 훈련 과정에 슬쩍 새어 들어간다. 이렇게 얻은 성능 점수는 실제 운영 환경에서는 결코 재현되지 않는, 가짜로 부풀려진 점수다. 그래서 바로 아래 실습 코드에서 스케일러(StandardScaler)를 반드시 파이프라인 안에, 교차검증 루프 안쪽에 넣어야 한다 — 그래야 매 fold마다 훈련 부분만 보고 통계를 계산하게 된다.
+
+이제 실제 이진분류 데이터(유방암 진단 데이터셋)로 넘어가자. 여기서 확인해야 할 핵심은 모델의 정확도가 아니라 "검증 방식 자체가 올바른가"다. 위에서 다룬 데이터 누수를 실제로 피해가는 코드가 어떻게 생겼는지 눈여겨보자 — StandardScaler를 make_pipeline 안에 넣어서, 교차검증의 매 fold마다 훈련 부분에서만 평균·표준편차를 계산하도록 강제한다. 만약 스케일러를 파이프라인 밖에 두고 Xtr 전체에 미리 fit해버리면, 각 fold의 검증 부분 정보가 스케일링 과정에 슬쩍 섞여 들어가 버린다.
+
+\`\`\`python
+# (2) 분류 + 교차검증 (누수 방지: 스케일러를 파이프라인 안에!)
+X, y = load_breast_cancer(return_X_y=True)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
+clf = make_pipeline(StandardScaler(), LogisticRegression(C=1.0, max_iter=1000))
+print(cross_val_score(clf, Xtr, ytr, cv=5, scoring="f1").mean())
+clf.fit(Xtr, ytr)
+print(classification_report(yte, clf.predict(Xte)))
+\`\`\`
+
+stratify=y로 나눈 이유도 짚고 넘어가자. 그냥 무작위로 나누면 훈련셋과 테스트셋의 양성·음성 비율이 우연히 서로 달라질 수 있는데, stratify는 원래 데이터의 클래스 비율을 훈련셋과 테스트셋 양쪽에 그대로 유지시켜준다. cross_val_score의 결과는 5번의 fold에서 나온 F1 점수의 평균이다 — 한 번의 분할로 얻은 점수보다 훨씬 믿을 만한 추정치라는 걸 기억해두자.
+
+:::warn 관찰
+스케일러를 파이프라인 밖에서 Xtr 전체에 미리 fit한 뒤 같은 교차검증을 돌리면 F1 점수가 어떻게, 얼마나 달라지는가 — 그 차이가 바로 데이터 누수가 만들어낸 "가짜 성능"이다.
+:::
 
 ### 2.19 평가지표: 정확도만 보면 안 되는 이유
 
@@ -407,6 +460,23 @@ Precision과 Recall 중 무엇을 더 중시할지는 문제마다 다르다. �
 \`\`\`
 
 위 스팸 필터 예제의 숫자를 그대로 대입하면 $\\text{Specificity}=\\dfrac{65}{65+5}=\\dfrac{65}{70}\\approx92.9\\%$다. Recall(민감도)이 "진짜 스팸을 얼마나 놓치지 않는가"를 재는 것과 대칭적으로, Specificity는 "진짜 정상 메일을 얼마나 억울하게 스팸 처리하지 않는가"를 잰다. 이 둘은 서로 트레이드오프 관계에 있다 — 2.20절에서 다룰 ROC 곡선의 세로축(TPR)이 사실 Recall이고, 가로축(FPR)은 $1-\\text{Specificity}$와 정확히 같다는 점도 미리 짚어두자.
+
+이제 방금 손으로 계산했던 Precision·Recall을 코드로도 재현해서 검산해보자. sklearn의 confusion_matrix가 뱉어내는 TP/FP/FN/TN 숫자를 공식에 직접 대입한 값과, sklearn이 제공하는 precision_score/recall_score 함수의 결과가 정확히 일치하는지 확인하는 것이 목적이다.
+
+\`\`\`python
+# (3) 혼동행렬을 직접 손으로도 계산해서 검산
+yte_pred = clf.predict(Xte)
+tn, fp, fn, tp = confusion_matrix(yte, yte_pred).ravel()
+precision_by_hand = tp / (tp + fp)
+recall_by_hand = tp / (tp + fn)
+print(f"TP={tp}, FP={fp}, FN={fn}, TN={tn}")
+print(f"손으로 계산: precision={precision_by_hand:.3f}, recall={recall_by_hand:.3f}")
+print(f"sklearn 함수: precision={precision_score(yte, yte_pred):.3f}, recall={recall_score(yte, yte_pred):.3f}")
+\`\`\`
+
+:::warn 관찰
+위 코드에서 손으로 계산한 precision/recall과 sklearn 함수의 결과가 소수점까지 정확히 일치하는가?
+:::
 
 ### 2.20 ROC 곡선과 AUC: 분류기를 점이 아니라 곡선으로 보기
 

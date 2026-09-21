@@ -1,24 +1,27 @@
 "use client";
 
-import { useRef, useSyncExternalStore, type ReactNode } from "react";
+import { useState, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { quizStore, readQuizState, writeQuizDraft, writeQuizIndex, resetQuiz } from "@/lib/progress";
 
 export default function QuizRunner({
   slug,
   quiz,
   renderedQuestions,
+  renderedAnswers,
 }: {
   slug: string;
   quiz: { id: string; question: string }[];
-  /** 문항 텍스트를 서버에서 미리 렌더링한 결과(수식 포함) — KaTeX 렌더러가
+  /** 문항/정답 텍스트를 서버에서 미리 렌더링한 결과(수식 포함) — KaTeX 렌더러가
    * server-only라 클라이언트 컴포넌트인 이 파일에서 직접 import할 수 없다. */
   renderedQuestions: Record<string, ReactNode>;
+  renderedAnswers: Record<string, ReactNode>;
 }) {
   const store = useSyncExternalStore(quizStore.subscribe, quizStore.getSnapshot, quizStore.getServerSnapshot);
   const state = readQuizState(store, slug);
   const index = Math.min(state.index, quiz.length - 1);
   const current = quiz[index];
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
 
   const onDraftChange = (value: string) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -31,8 +34,11 @@ export default function QuizRunner({
   const goPrev = () => {
     if (index > 0) writeQuizIndex(slug, index - 1);
   };
+  const reveal = () => setRevealed((prev) => new Set(prev).add(current.id));
 
-  const done = index >= quiz.length - 1 && (state.drafts[current.id]?.trim().length ?? 0) > 0;
+  const hasDraft = (state.drafts[current.id]?.trim().length ?? 0) > 0;
+  const isRevealed = revealed.has(current.id);
+  const isLast = index === quiz.length - 1;
 
   return (
     <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
@@ -42,7 +48,10 @@ export default function QuizRunner({
         </span>
         <button
           onClick={() => {
-            if (confirm("퀴즈 진행 상황과 작성한 답을 모두 초기화할까요?")) resetQuiz(slug);
+            if (confirm("퀴즈 진행 상황과 작성한 답을 모두 초기화할까요?")) {
+              resetQuiz(slug);
+              setRevealed(new Set());
+            }
           }}
           className="text-xs font-medium text-ink-muted hover:text-ink-secondary"
         >
@@ -64,9 +73,25 @@ export default function QuizRunner({
         defaultValue={state.drafts[current.id] ?? ""}
         onChange={(e) => onDraftChange(e.target.value)}
         rows={5}
-        placeholder="여기에 직접 답을 적어보세요. 정답은 세션에서 함께 확인합니다."
+        placeholder="여기에 직접 답을 적어본 뒤 정답을 확인해보세요."
         className="w-full rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-2 text-sm text-ink outline-none focus:border-[var(--series-blue)]"
       />
+
+      {isRevealed ? (
+        <div className="mt-3 rounded-lg border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-3 py-2.5 text-sm">
+          <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--status-good)]">정답</p>
+          <div className="text-ink-secondary">{renderedAnswers[current.id]}</div>
+        </div>
+      ) : (
+        <button
+          onClick={reveal}
+          disabled={!hasDraft}
+          title={hasDraft ? undefined : "먼저 위에 답을 적어보세요"}
+          className="mt-3 w-full rounded-lg border border-dashed border-[var(--border-strong)] py-2 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          정답 확인
+        </button>
+      )}
 
       <div className="mt-4 flex items-center justify-between">
         <button
@@ -76,12 +101,12 @@ export default function QuizRunner({
         >
           ← 이전 문항
         </button>
-        {done ? (
-          <span className="text-xs font-bold text-[var(--status-good)]">마지막 문항까지 작성했습니다 🎉</span>
+        {isLast && isRevealed ? (
+          <span className="text-xs font-bold text-[var(--status-good)]">마지막 문항까지 확인했습니다 🎉</span>
         ) : (
           <button
             onClick={goNext}
-            disabled={index === quiz.length - 1}
+            disabled={isLast}
             className="rounded-md bg-[var(--series-blue)] px-4 py-1.5 text-xs font-bold text-white hover:opacity-90 disabled:opacity-40"
           >
             다음 문항 →

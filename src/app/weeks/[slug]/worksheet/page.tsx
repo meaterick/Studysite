@@ -14,7 +14,7 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
   return (
     <section id="worksheet" className="scroll-mt-24">
       <h2 className="mb-3 text-xl font-black text-ink">백지공부 시트</h2>
-      <Worksheet slug={slug} fields={week.worksheet} />
+      <Worksheet fields={week.worksheet} />
     </section>
   );
 }

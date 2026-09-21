@@ -139,6 +139,29 @@ stride 1인 합성곱만 계속 쌓는 가장 단순한 경우를 보면, j는 �
 
 여기에 stride 2인 pooling이나 strided convolution이 한 번이라도 끼어들면 이야기가 달라진다. 그 층을 통과하는 순간 점프 j가 그대로 2배로 뛰어오르므로($j_{out} = j_{in} \\times s$), 그 이후에 쌓이는 모든 층의 수용영역 증가폭도 함께 2배로 커진다. 다운샘플링 층 하나는 단순히 특징 지도 한 장의 크기를 줄이는 데서 그치지 않고, 그 지점에서 점프 값을 배가시켜 그 뒤에 올 모든 층의 수용영역 증가폭까지 함께 확대시킨다. VGG나 ResNet 같은 실제 네트워크가 $3\\times3$처럼 작은 커널만 반복해서 쌓았을 뿐인데도 수용영역이 이미지 전체를 뒤덮을 만큼 커지는 것은, 커널 자체가 커서가 아니라 중간중간의 다운샘플링이 점프를 계속 누적시켜주기 때문이다.
 
+Colab GPU 런타임에서, 방금 손으로 계산했던 Max Pooling과 Average Pooling의 차이를 \`nn.MaxPool2d\`와 \`nn.AvgPool2d\`로 직접 확인해보자. 입력 텐서를 위 예제와 똑같은 숫자([[1,3],[2,4]])로 채워서 두 함수에 그대로 통과시키면, 손 계산과 정확히 같은 값이 나오는지 눈으로 검증할 수 있다.
+
+\`\`\`python
+import torch, torch.nn as nn
+
+# 위 예제와 동일한 2x2 영역: [[1,3],[2,4]]
+x = torch.tensor([[[[1., 3.], [2., 4.]]]])  # shape: (batch=1, channel=1, H=2, W=2)
+max_pool = nn.MaxPool2d(kernel_size=2)
+avg_pool = nn.AvgPool2d(kernel_size=2)
+print("MaxPool2d 결과:", max_pool(x).item())  # -> 4.0
+print("AvgPool2d 결과:", avg_pool(x).item())  # -> 2.5
+
+# 조금 더 큰 4x4 특징 지도에서, 한쪽 구석에만 강한 반응(9)이 튀는 경우를 비교해보자.
+y = torch.tensor([[[[1., 1., 2., 1.],
+                     [1., 9., 1., 1.],
+                     [1., 1., 1., 2.],
+                     [1., 1., 1., 1.]]]])
+print("MaxPool2d(2):\\n", nn.MaxPool2d(2)(y))
+print("AvgPool2d(2):\\n", nn.AvgPool2d(2)(y))
+\`\`\`
+
+두 번째 예시에서 강한 반응(9)이 들어있는 왼쪽 위 $2\\times2$ 영역만 놓고 보면, Max Pooling은 그 반응을 그대로 9로 살려서 다음 층에 넘기지만 Average Pooling은 $(1+1+1+9)/4 = 3$으로 완만하게 눌러버린다. "이 영역에 강한 반응이 있었는지"가 중요한 경우와 "이 영역이 전반적으로 얼마나 활성화되어 있는지"가 중요한 경우, 두 풀링이 서로 다른 정보를 남긴다는 것을 코드로도 확인할 수 있다.
+
 ### 2.3 ResNet: 잔차 연결
 
 층을 무작정 깊게 쌓으면 신경망이 항상 더 똑똑해질 것 같지만 실제로는 그렇지 않다. 56층짜리 "민짜" 신경망이 20층짜리보다 오히려 학습 데이터에 대한 오차조차 더 높게 나오는 현상이 관찰됐는데, 이걸 degradation(성능 저하) 문제라 부른다. 흥미로운 점은 이게 과적합이 아니라는 것이다 — 과적합이라면 학습 오차는 낮은데 검증 오차만 높아야 하는데, 여기서는 학습 오차 자체가 더 높다. 즉 층을 늘렸더니 모델이 오히려 학습 자체를 제대로 못 하게 된 것이다. 원인은 역전파 과정에서 신호(기울기)가 수십 개의 층을 통과하며 점점 옅어지거나 뒤틀리기 때문으로 알려져 있다.
@@ -226,7 +249,50 @@ Dropout은 학습 단계에서 각 뉴런의 출력을 확률 p로 무작위로 
 | 데이터 증강 | 뒤집기·크롭·컬러지터로 데이터 다양화 | 라벨 보존 변환만 |
 | Early Stopping | 검증 손실 상승 시 중단 | 검증셋 필요 |
 
-표에서 특히 주의할 항목은 BatchNorm과 Dropout의 "주의" 칸이다. 두 기법 모두 학습(train) 때와 평가(eval) 때 서로 다르게 동작하도록 설계되어 있다. BatchNorm은 학습 중에는 그때그때의 배치 통계를 쓰지만, 평가할 때는 배치 하나(심지어 이미지 한 장)에 대해서도 안정적인 결과를 내야 하므로 학습 내내 누적해온 이동평균(running mean, running variance)을 사용한다. Dropout은 평가 때 뉴런을 끄지 않고 전부 사용한다(다만 학습 때와 스케일을 맞추기 위한 보정이 내부적으로 들어간다). 파이토치에서는 이 전환이 \`net.train()\`과 \`net.eval()\` 호출 하나로 자동 처리되는데, 이걸 깜빡하면 어떤 일이 벌어지는지는 이번 주 실습에서 직접 확인해볼 것이다.
+표에서 특히 주의할 항목은 BatchNorm과 Dropout의 "주의" 칸이다. 두 기법 모두 학습(train) 때와 평가(eval) 때 서로 다르게 동작하도록 설계되어 있다. BatchNorm은 학습 중에는 그때그때의 배치 통계를 쓰지만, 평가할 때는 배치 하나(심지어 이미지 한 장)에 대해서도 안정적인 결과를 내야 하므로 학습 내내 누적해온 이동평균(running mean, running variance)을 사용한다. Dropout은 평가 때 뉴런을 끄지 않고 전부 사용한다(다만 학습 때와 스케일을 맞추기 위한 보정이 내부적으로 들어간다). 파이토치에서는 이 전환이 \`net.train()\`과 \`net.eval()\` 호출 하나로 자동 처리되는데, 이걸 깜빡하면 어떤 일이 벌어지는지는 바로 아래 실습에서 직접 확인해본다.
+
+먼저 데이터를 준비하는 부분이다. 학습용 변환(tf_tr)에는 RandomCrop과 RandomHorizontalFlip이라는 데이터 증강이 들어가 있는 반면, 평가용 변환(tf_te)에는 이런 무작위 변형이 전혀 없다는 점을 눈여겨보자. 증강은 모델이 "같은 물체를 여러 각도·위치에서 봐도 같은 답을 내야 한다"는 걸 배우게 하려는 장치이므로 학습 데이터에만 적용하고, 실력을 재는 평가 데이터는 있는 그대로 정직하게 채점해야 한다. 만약 평가 데이터에도 크롭이나 뒤집기를 적용한다면 매번 답이 흔들려서 모델의 진짜 실력을 잴 수 없게 된다.
+
+\`\`\`python
+import torch, torch.nn as nn, torchvision as tv, torchvision.transforms as T
+dev = "cuda" if torch.cuda.is_available() else "cpu"
+tf_tr = T.Compose([T.RandomCrop(32, padding=4), T.RandomHorizontalFlip(), T.ToTensor(),
+                   T.Normalize((0.49,0.48,0.45),(0.25,0.24,0.26))])
+tf_te = T.Compose([T.ToTensor(), T.Normalize((0.49,0.48,0.45),(0.25,0.24,0.26))])
+tr = tv.datasets.CIFAR10("data", True,  tf_tr, download=True)
+te = tv.datasets.CIFAR10("data", False, tf_te, download=True)
+trl = torch.utils.data.DataLoader(tr, 128, shuffle=True, num_workers=2)
+tel = torch.utils.data.DataLoader(te, 256)
+\`\`\`
+
+다음은 모델 구조다. \`block\` 함수 하나가 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU} \\to \\text{MaxPool}$ 순서로 쌓여 있는데, 이 순서 자체가 의미를 담고 있다. BatchNorm은 합성곱이 막 뱉어낸, 아직 활성화를 통과하기 전의 "날것" 값들의 분포를 정규화해서 평균 0, 분산 1 근처로 맞춰주는 역할을 한다. 이 정규화를 ReLU보다 먼저 적용하는 이유는, ReLU가 0보다 작은 값을 전부 0으로 뭉개버리는 함수이기 때문이다. 만약 정규화되지 않은 값 분포가 한쪽으로 심하게 치우쳐 있다면(예컨대 대부분 음수라면) ReLU를 통과하는 순간 뉴런 대부분이 죽어버릴 위험이 있다. BatchNorm이 먼저 분포를 가지런히 정리해준 다음 ReLU에 넘겨야, ReLU가 "살아있는 값"과 "죽이는 값"을 균형 있게 골라낼 수 있다. 그리고 맨 마지막 Flatten 이후에 Dropout(0.3)을 넣어, 완전연결층으로 넘어가기 직전에 과적합을 한 번 더 억제한다.
+
+\`\`\`python
+def block(i, o): return nn.Sequential(nn.Conv2d(i,o,3,padding=1), nn.BatchNorm2d(o), nn.ReLU(), nn.MaxPool2d(2))
+net = nn.Sequential(block(3,32), block(32,64), block(64,128), nn.Flatten(),
+                    nn.Dropout(0.3), nn.Linear(128*4*4, 10)).to(dev)
+opt = torch.optim.AdamW(net.parameters(), 1e-3, weight_decay=5e-4)
+\`\`\`
+
+학습 루프에서 가장 먼저 나오는 \`net.train()\`과, 평가 직전의 \`net.eval()\`을 놓치지 말자. 이 두 줄이 하는 일은 위에서 설명한 BatchNorm·Dropout의 학습/평가 모드 전환 그 자체다. \`train()\` 모드에서는 BatchNorm이 지금 들어온 배치의 평균·분산을 쓰면서 동시에 그 값을 누적 이동평균(running mean/var)에 계속 반영하고, Dropout은 실제로 일부 뉴런을 꺼버린다. \`eval()\` 모드로 바뀌면 BatchNorm은 학습 내내 누적해온 이동평균을 그대로 사용하고, Dropout은 아무것도 끄지 않는다.
+
+\`\`\`python
+for ep in range(10):
+    net.train()
+    for x, y in trl:
+        x, y = x.to(dev), y.to(dev)
+        loss = nn.functional.cross_entropy(net(x), y)
+        opt.zero_grad(); loss.backward(); opt.step()
+    net.eval(); ok = n = 0
+    with torch.no_grad():
+        for x, y in tel:
+            ok += (net(x.to(dev)).argmax(1).cpu() == y).sum().item(); n += len(y)
+    print(ep, loss.item(), ok / n)
+\`\`\`
+
+:::warn eval()을 빼먹으면 생기는 일
+\`net.eval()\`을 부르지 않고 그대로 평가하면 두 가지 문제가 동시에 생긴다. 첫째, BatchNorm이 테스트 배치(심지어 이미지 한 장짜리 배치)의 통계로 정규화를 시도하면서 배치 크기가 작을수록 평균·분산 추정이 불안정해지고, 같은 이미지를 넣어도 배치 구성에 따라 다른 예측이 나올 수 있다. 둘째, Dropout이 여전히 뉴런을 무작위로 꺼버리므로 같은 입력을 두 번 넣어도 답이 달라지는, 재현 불가능한 모델이 되어버린다. 정확도가 이상하게 들쭉날쭉하거나 학습 때보다 뚜렷이 낮게 나온다면, 가장 먼저 \`net.eval()\`을 잊지 않았는지 확인하는 습관을 들이자.
+:::
 
 ### 2.7 전이학습
 
@@ -235,6 +301,15 @@ Dropout은 학습 단계에서 각 뉴런의 출력을 확률 p로 무작위로 
 전이학습에는 크게 두 가지 방식이 있다. 특징 추출(feature extraction)은 사전학습된 층들을 통째로 얼려버리고(가중치를 고정하고, requires_grad=False로 두어 역전파 시 그 층들의 기울기를 계산하지 않고) 마지막 분류층만 새로 붙여서 우리 문제에 맞게 학습시키는 방식이다. 파인튜닝(fine-tuning)은 여기서 한 걸음 더 나아가, 마지막 층뿐 아니라 사전학습된 층들의 가중치도 아주 작은 학습률로 함께 조금씩 조정하는 방식이다. 데이터가 아주 적을 땐 특징 추출이 안전하고, 데이터가 어느 정도 있고 우리 문제가 원래 학습 데이터(ImageNet)와 다소 다르다면 파인튜닝으로 더 끌어올릴 여지가 있다.
 
 [[diagram:transfer-learning]]
+
+전이학습도 코드로 직접 확인해보자. \`tv.models.resnet18(weights="IMAGENET1K_V1")\`로 이미 ImageNet 130만 장으로 학습된 가중치를 통째로 불러온 다음, \`for p in m.parameters(): p.requires_grad = False\`로 모든 층의 가중치를 얼린다. \`requires_grad\`를 False로 두면 역전파 때 이 파라미터들에 대한 기울기를 아예 계산하지 않으므로, 사전학습된 특징 추출 층의 가중치는 그대로 고정한 채 마지막 분류층 \`m.fc\`만 새로 교체해서(위에서 설명한 특징 추출 방식) 우리 문제(10개 클래스)에 맞게 학습시킬 수 있다. 다만 실전에서 주의할 점이 하나 있다. ResNet18은 원래 $224\\times224$ 크기의 ImageNet 이미지로 학습되었기 때문에 $32\\times32$짜리 CIFAR-10 이미지를 그대로 넣으면 앞쪽 층에서 이미지가 지나치게 빨리 작아져 정보가 소실된다. 그래서 아래 주석에 적힌 대로 입력을 $128\\times128$ 정도로 리사이즈한 뒤 넣어주는 전처리가 함께 필요하다.
+
+\`\`\`python
+# 전이학습
+m = tv.models.resnet18(weights="IMAGENET1K_V1")
+for p in m.parameters(): p.requires_grad = False
+m.fc = nn.Linear(512, 10)   # 이후 32x32를 128x128로 리사이즈하여 fc만 학습
+\`\`\`
 
 ### 2.8 학습 진단 체크리스트 (Karpathy Recipe 요약)
 
@@ -302,85 +377,6 @@ Diffusion Model(디퓨전 모델)은 최근 이미지 생성 분야를 사실상
 #### 2.9.5 Text-to-Image / Image-to-Image: 조건 없는 생성에서 조건부 생성으로
 
 지금까지 설명한 VAE·GAN·Diffusion Model은 전부 "어떤 그럴듯한 데이터를 만들어내라"는 조건 없는(unconditional) 생성이었다. 실제로 우리가 접하는 이미지 생성 서비스는 대부분 "고양이가 우주복을 입고 있는 그림을 그려줘"처럼 텍스트로 원하는 결과를 지정한다. 이렇게 원하는 조건(condition)을 함께 입력해 그 조건에 맞는 데이터를 생성하도록 만드는 것을 조건부 생성(conditional generation)이라 부른다. Text-to-Image 모델은 앞서 설명한 Diffusion Model의 Reverse Diffusion 과정에 문장을 벡터로 바꾼 텍스트 임베딩을 각 노이즈 제거 단계마다 함께 넣어주어, 모델이 "지금 이 텍스트 조건에 맞는 노이즈를 예측하라"는 조건부 Noise Prediction을 학습하게 만든 것이다. Image-to-Image는 조건이 텍스트 대신(혹은 텍스트와 함께) 원본 이미지 자체가 되는 경우로, 이미 있는 이미지의 스타일을 바꾸거나 일부를 수정하는 데 같은 원리가 쓰인다. 텍스트와 이미지를 함께 다루는 이 조건부 생성의 메커니즘은 7주차 멀티모달 절에서 텍스트·이미지 임베딩을 어떻게 하나의 공간에 정렬시키는지를 배우면서 좀 더 구체적으로 다시 다루게 된다.
-`,
-  practiceMd: `
-Colab GPU 런타임에서 실행한다. 아래 코드는 한 번에 다 붙여넣기보다, 앞서 개념 절에서 설명한 내용과 하나씩 대응시키며 조각별로 실행해보는 것을 권한다.
-
-가장 먼저 2.2절에서 손으로 계산했던 Max Pooling과 Average Pooling의 차이를, \`nn.MaxPool2d\`와 \`nn.AvgPool2d\`로 직접 확인해보자. 입력 텐서를 개념 절의 예제와 똑같은 숫자([[1,3],[2,4]])로 채워서 두 함수에 그대로 통과시키면, 손 계산과 정확히 같은 값이 나오는지 눈으로 검증할 수 있다.
-
-\`\`\`python
-import torch, torch.nn as nn
-
-# 2.2절 예제와 동일한 2x2 영역: [[1,3],[2,4]]
-x = torch.tensor([[[[1., 3.], [2., 4.]]]])  # shape: (batch=1, channel=1, H=2, W=2)
-
-max_pool = nn.MaxPool2d(kernel_size=2)
-avg_pool = nn.AvgPool2d(kernel_size=2)
-print("MaxPool2d 결과:", max_pool(x).item())  # -> 4.0
-print("AvgPool2d 결과:", avg_pool(x).item())  # -> 2.5
-
-# 조금 더 큰 4x4 특징 지도에서, 한쪽 구석에만 강한 반응(9)이 튀는 경우를 비교해보자.
-y = torch.tensor([[[[1., 1., 2., 1.],
-                     [1., 9., 1., 1.],
-                     [1., 1., 1., 2.],
-                     [1., 1., 1., 1.]]]])
-print("MaxPool2d(2):\\n", nn.MaxPool2d(2)(y))
-print("AvgPool2d(2):\\n", nn.AvgPool2d(2)(y))
-\`\`\`
-
-두 번째 예시에서 강한 반응(9)이 들어있는 왼쪽 위 $2\\times2$ 영역만 놓고 보면, Max Pooling은 그 반응을 그대로 9로 살려서 다음 층에 넘기지만 Average Pooling은 $(1+1+1+9)/4 = 3$으로 완만하게 눌러버린다. "이 영역에 강한 반응이 있었는지"가 중요한 경우와 "이 영역이 전반적으로 얼마나 활성화되어 있는지"가 중요한 경우, 두 풀링이 서로 다른 정보를 남긴다는 것을 코드로도 확인할 수 있다.
-
-먼저 데이터를 준비하는 부분이다. 학습용 변환(tf_tr)에는 RandomCrop과 RandomHorizontalFlip이라는 데이터 증강이 들어가 있는 반면, 평가용 변환(tf_te)에는 이런 무작위 변형이 전혀 없다는 점을 눈여겨보자. 증강은 모델이 "같은 물체를 여러 각도·위치에서 봐도 같은 답을 내야 한다"는 걸 배우게 하려는 장치이므로 학습 데이터에만 적용하고, 실력을 재는 평가 데이터는 있는 그대로 정직하게 채점해야 한다. 만약 평가 데이터에도 크롭이나 뒤집기를 적용한다면 매번 답이 흔들려서 모델의 진짜 실력을 잴 수 없게 된다.
-
-\`\`\`python
-import torch, torch.nn as nn, torchvision as tv, torchvision.transforms as T
-dev = "cuda" if torch.cuda.is_available() else "cpu"
-tf_tr = T.Compose([T.RandomCrop(32, padding=4), T.RandomHorizontalFlip(), T.ToTensor(),
-                   T.Normalize((0.49,0.48,0.45),(0.25,0.24,0.26))])
-tf_te = T.Compose([T.ToTensor(), T.Normalize((0.49,0.48,0.45),(0.25,0.24,0.26))])
-tr = tv.datasets.CIFAR10("data", True,  tf_tr, download=True)
-te = tv.datasets.CIFAR10("data", False, tf_te, download=True)
-trl = torch.utils.data.DataLoader(tr, 128, shuffle=True, num_workers=2)
-tel = torch.utils.data.DataLoader(te, 256)
-\`\`\`
-
-다음은 모델 구조다. \`block\` 함수 하나가 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU} \\to \\text{MaxPool}$ 순서로 쌓여 있는데, 이 순서 자체가 의미를 담고 있다. BatchNorm은 합성곱이 막 뱉어낸, 아직 활성화를 통과하기 전의 "날것" 값들의 분포를 정규화해서 평균 0, 분산 1 근처로 맞춰주는 역할을 한다. 이 정규화를 ReLU보다 먼저 적용하는 이유는, ReLU가 0보다 작은 값을 전부 0으로 뭉개버리는 함수이기 때문이다. 만약 정규화되지 않은 값 분포가 한쪽으로 심하게 치우쳐 있다면(예컨대 대부분 음수라면) ReLU를 통과하는 순간 뉴런 대부분이 죽어버릴 위험이 있다. BatchNorm이 먼저 분포를 가지런히 정리해준 다음 ReLU에 넘겨야, ReLU가 "살아있는 값"과 "죽이는 값"을 균형 있게 골라낼 수 있다. 그리고 맨 마지막 Flatten 이후에 Dropout(0.3)을 넣어, 완전연결층으로 넘어가기 직전에 과적합을 한 번 더 억제한다.
-
-\`\`\`python
-def block(i, o): return nn.Sequential(nn.Conv2d(i,o,3,padding=1), nn.BatchNorm2d(o), nn.ReLU(), nn.MaxPool2d(2))
-net = nn.Sequential(block(3,32), block(32,64), block(64,128), nn.Flatten(),
-                    nn.Dropout(0.3), nn.Linear(128*4*4, 10)).to(dev)
-opt = torch.optim.AdamW(net.parameters(), 1e-3, weight_decay=5e-4)
-\`\`\`
-
-학습 루프에서 가장 먼저 나오는 \`net.train()\`과, 평가 직전의 \`net.eval()\`을 놓치지 말자. 이 두 줄이 하는 일은 앞서 2.6절에서 설명한 BatchNorm·Dropout의 학습/평가 모드 전환 그 자체다. \`train()\` 모드에서는 BatchNorm이 지금 들어온 배치의 평균·분산을 쓰면서 동시에 그 값을 누적 이동평균(running mean/var)에 계속 반영하고, Dropout은 실제로 일부 뉴런을 꺼버린다. \`eval()\` 모드로 바뀌면 BatchNorm은 학습 내내 누적해온 이동평균을 그대로 사용하고, Dropout은 아무것도 끄지 않는다.
-
-\`\`\`python
-for ep in range(10):
-    net.train()
-    for x, y in trl:
-        x, y = x.to(dev), y.to(dev)
-        loss = nn.functional.cross_entropy(net(x), y)
-        opt.zero_grad(); loss.backward(); opt.step()
-    net.eval(); ok = n = 0
-    with torch.no_grad():
-        for x, y in tel:
-            ok += (net(x.to(dev)).argmax(1).cpu() == y).sum().item(); n += len(y)
-    print(ep, loss.item(), ok / n)
-\`\`\`
-
-:::warn eval()을 빼먹으면 생기는 일
-\`net.eval()\`을 부르지 않고 그대로 평가하면 두 가지 문제가 동시에 생긴다. 첫째, BatchNorm이 테스트 배치(심지어 이미지 한 장짜리 배치)의 통계로 정규화를 시도하면서 배치 크기가 작을수록 평균·분산 추정이 불안정해지고, 같은 이미지를 넣어도 배치 구성에 따라 다른 예측이 나올 수 있다. 둘째, Dropout이 여전히 뉴런을 무작위로 꺼버리므로 같은 입력을 두 번 넣어도 답이 달라지는, 재현 불가능한 모델이 되어버린다. 정확도가 이상하게 들쭉날쭉하거나 학습 때보다 뚜렷이 낮게 나온다면, 가장 먼저 \`net.eval()\`을 잊지 않았는지 확인하는 습관을 들이자.
-:::
-
-마지막은 전이학습이다. \`tv.models.resnet18(weights="IMAGENET1K_V1")\`로 이미 ImageNet 130만 장으로 학습된 가중치를 통째로 불러온 다음, \`for p in m.parameters(): p.requires_grad = False\`로 모든 층의 가중치를 얼린다. \`requires_grad\`를 False로 두면 역전파 때 이 파라미터들에 대한 기울기를 아예 계산하지 않으므로, 사전학습된 특징 추출 층의 가중치는 그대로 고정한 채 마지막 분류층 \`m.fc\`만 새로 교체해서(2.7절에서 설명한 특징 추출 방식) 우리 문제(10개 클래스)에 맞게 학습시킬 수 있다. 다만 실전에서 주의할 점이 하나 있다. ResNet18은 원래 $224\\times224$ 크기의 ImageNet 이미지로 학습되었기 때문에 $32\\times32$짜리 CIFAR-10 이미지를 그대로 넣으면 앞쪽 층에서 이미지가 지나치게 빨리 작아져 정보가 소실된다. 그래서 아래 주석에 적힌 대로 입력을 $128\\times128$ 정도로 리사이즈한 뒤 넣어주는 전처리가 함께 필요하다.
-
-\`\`\`python
-# 전이학습
-m = tv.models.resnet18(weights="IMAGENET1K_V1")
-for p in m.parameters(): p.requires_grad = False
-m.fc = nn.Linear(512, 10)   # 이후 32x32를 128x128로 리사이즈하여 fc만 학습
-\`\`\`
 `,
   quiz: [
     { id: "w4-q1", question: "입력 $32\\times32$, 커널 $5\\times5$, padding 2, stride 1의 출력 크기는? stride 2이면?" },
