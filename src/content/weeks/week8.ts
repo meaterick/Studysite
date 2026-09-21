@@ -547,16 +547,6 @@ gap이 0이 됐다고 해서 이 모델이 "공정해졌다"고 안심할 수 �
 | 정책·윤리 | Stanford HAI 자료, AI 거버넌스 과정 |
 `,
   dueNote: "제출: D-day 세션 전 (코드·리포트·모델카드·슬라이드·성찰문)",
-  furtherReading: [
-    'Mitchell et al., "Model Cards for Model Reporting" (1810.03993)',
-    'Bender et al., "On the Dangers of Stochastic Parrots" (2021)',
-    'Buolamwini & Gebru, "Gender Shades" (2018)',
-    'Dastin, "Amazon scraps secret AI recruiting tool that showed bias against women" (Reuters, 2018)',
-    "NIST AI Risk Management Framework 1.0 (nist.gov/itl/ai-risk-management-framework)",
-    'Sculley et al., "Hidden Technical Debt in Machine Learning Systems" (NeurIPS 2015) — MLOps 문제의식의 원조 격인 논문',
-    'Kwon et al., "Efficient Memory Management for Large Language Model Serving with PagedAttention" (2309.06180) — vLLM의 핵심 아이디어',
-    "Google, Rules of Machine Learning (developers.google.com/machine-learning/guides/rules-of-ml) — 실무 MLOps 체크리스트",
-  ],
 };
 
 export default week8;

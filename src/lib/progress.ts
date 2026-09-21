@@ -87,3 +87,54 @@ export function clearWorksheet(slug: string) {
   delete next[slug];
   worksheetStore.write(next);
 }
+
+// 퀴즈: 한 번에 한 문항씩 진행하며(진도 저장) 스스로 답을 적어보는 자기 점검용.
+// 정답은 이 스토어에 없다 — quizAnswers.ts는 운영자 전용으로 계속 비공개.
+interface QuizWeekState {
+  index: number;
+  drafts: Record<string, string>;
+}
+type QuizStore = Record<string, QuizWeekState>;
+
+const EMPTY_QUIZ: QuizStore = {};
+export const quizStore = createLocalStore<QuizStore>("aegis-quiz:v1", EMPTY_QUIZ);
+
+export function readQuizState(store: QuizStore, slug: string): QuizWeekState {
+  return store[slug] ?? { index: 0, drafts: {} };
+}
+
+export function writeQuizDraft(slug: string, questionId: string, value: string) {
+  const current = quizStore.getSnapshot();
+  const week = readQuizState(current, slug);
+  quizStore.write({ ...current, [slug]: { ...week, drafts: { ...week.drafts, [questionId]: value } } });
+}
+
+export function writeQuizIndex(slug: string, index: number) {
+  const current = quizStore.getSnapshot();
+  const week = readQuizState(current, slug);
+  quizStore.write({ ...current, [slug]: { ...week, index } });
+}
+
+export function resetQuiz(slug: string) {
+  const current = quizStore.getSnapshot();
+  const next = { ...current };
+  delete next[slug];
+  quizStore.write(next);
+}
+
+// 과제: 코드 실습을 한 번에 하나씩만 공개하기 위한 "여기까지 열림" 카운트.
+type AssignmentGateStore = Record<string, number>;
+const EMPTY_GATES: AssignmentGateStore = {};
+export const assignmentGateStore = createLocalStore<AssignmentGateStore>("aegis-assignment-gate:v1", EMPTY_GATES);
+
+export function readUnlockedCodeCount(store: AssignmentGateStore, slug: string): number {
+  return store[slug] ?? 0;
+}
+
+export function unlockNextCode(slug: string, completedIndex: number) {
+  const current = assignmentGateStore.getSnapshot();
+  const unlocked = readUnlockedCodeCount(current, slug);
+  if (completedIndex >= unlocked) {
+    assignmentGateStore.write({ ...current, [slug]: completedIndex + 1 });
+  }
+}

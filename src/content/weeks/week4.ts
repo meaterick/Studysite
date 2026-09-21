@@ -438,19 +438,6 @@ m.fc = nn.Linear(512, 10)   # 이후 32x32를 128x128로 리사이즈하여 fc�
 | 시각화·재현성(시드 고정) | 1 |
 `,
   dueNote: "제출: 일요일 23:59",
-  furtherReading: [
-    "LeCun et al., Gradient-Based Learning Applied to Document Recognition (LeNet-5, 1998)",
-    "Krizhevsky et al., AlexNet (2012)",
-    "Simonyan & Zisserman, Very Deep Convolutional Networks (VGG, 2014)",
-    "Ioffe & Szegedy, Batch Normalization (2015)",
-    'Zhang et al., "Understanding deep learning requires rethinking generalization" (2017)',
-    "CS231n Notes: Transfer Learning (cs231n.github.io) — 특징추출 vs 파인튜닝 선택 기준을 더 자세히 보고 싶다면",
-    "Goodfellow et al., Generative Adversarial Networks (2014)",
-    "Kingma & Welling, Auto-Encoding Variational Bayes (VAE, 2013)",
-    "Ho et al., Denoising Diffusion Probabilistic Models (DDPM, 2020)",
-    "Rombach et al., High-Resolution Image Synthesis with Latent Diffusion Models (Stable Diffusion, 2022)",
-    "Dosovitskiy et al., An Image is Worth 16x16 Words (Vision Transformer, 2020)",
-  ],
 };
 
 export default week4;

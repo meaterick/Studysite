@@ -412,12 +412,6 @@ for beta in (0.01, 0.1, 0.5, 1.0):
 | 논문 이해 | 1 |
 `,
   dueNote: "제출: 일요일 23:59",
-  furtherReading: [
-    'Bommasani et al., "On the Opportunities and Risks of Foundation Models"',
-    'Wei et al., "Chain-of-Thought Prompting" (2201.11903)',
-    'Schaeffer et al., "Are Emergent Abilities of LLMs a Mirage?" (2304.15004)',
-    'Holtzman et al., "The Curious Case of Neural Text Degeneration" (1904.09751) — top-p 샘플링을 처음 제안한 논문',
-  ],
 };
 
 export default week6;

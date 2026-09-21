@@ -3,7 +3,11 @@ import type { Block } from "@/content/types";
 import { parseMarkdown, renderInline } from "@/content/markdown";
 import { DIAGRAMS } from "@/components/diagrams";
 import CodeBlock from "@/components/CodeBlock";
+import LazyCodeCell from "@/components/LazyCodeCell";
+import GatedCodeSlot from "@/components/GatedCodeSlot";
 import { renderMath } from "@/lib/katex";
+
+const RUNNABLE_LANGS = new Set(["python", "py"]);
 
 export function Inline({ text }: { text: string }) {
   const parts = renderInline(text);
@@ -41,7 +45,24 @@ const CALLOUT_STYLE: Record<string, { border: string; bg: string; icon: string }
   quote: { border: "var(--border-strong)", bg: "var(--surface-card-2)", icon: "" },
 };
 
-export function BlocksRenderer({ blocks }: { blocks: Block[] }) {
+export function BlocksRenderer({
+  blocks,
+  docKey,
+  interactiveCode = false,
+  gateCode = false,
+  gateSlug,
+}: {
+  blocks: Block[];
+  /** 코드 셀 저장 키(IndexedDB)를 만드는 데 쓰이는 이 문서의 고유 식별자 */
+  docKey?: string;
+  /** true면 python 코드 블록을 정적 텍스트가 아니라 실행 가능한 셀로 렌더링 */
+  interactiveCode?: boolean;
+  /** true면 코드 셀을 순서대로 하나씩만 공개한다(과제용) — gateSlug 필요 */
+  gateCode?: boolean;
+  /** gateCode일 때 진행 상태(localStorage)를 구분하는 주차 slug */
+  gateSlug?: string;
+}) {
+  let codeOrdinal = -1;
   return (
     <div className="prose-week max-w-none space-y-4 leading-relaxed text-ink-secondary">
       {blocks.map((b, i) => {
@@ -114,8 +135,18 @@ export function BlocksRenderer({ blocks }: { blocks: Block[] }) {
                 </table>
               </div>
             );
-          case "code":
-            return <CodeBlock key={i} lang={b.lang} code={b.code} />;
+          case "code": {
+            const runnable = interactiveCode && b.lang && RUNNABLE_LANGS.has(b.lang.toLowerCase());
+            if (!runnable) return <CodeBlock key={i} lang={b.lang} code={b.code} />;
+
+            codeOrdinal++;
+            const idx = codeOrdinal;
+            const cellId = `${docKey ?? "doc"}:${idx}`;
+            if (gateCode && gateSlug) {
+              return <GatedCodeSlot key={i} slug={gateSlug} index={idx} cellId={cellId} starterCode={b.code} />;
+            }
+            return <LazyCodeCell key={i} cellId={cellId} starterCode={b.code} />;
+          }
           case "formula":
             return (
               <div
@@ -186,7 +217,15 @@ export function BlocksRenderer({ blocks }: { blocks: Block[] }) {
   );
 }
 
-export default function Markdown({ source }: { source: string }) {
+export default function Markdown({
+  source,
+  docKey,
+  interactiveCode,
+}: {
+  source: string;
+  docKey?: string;
+  interactiveCode?: boolean;
+}) {
   const blocks = parseMarkdown(source);
-  return <BlocksRenderer blocks={blocks} />;
+  return <BlocksRenderer blocks={blocks} docKey={docKey} interactiveCode={interactiveCode} />;
 }

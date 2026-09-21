@@ -394,11 +394,6 @@ Karpathy nanoGPT 스타일: tiny Shakespeare 또는 한국어 텍스트로 문�
 | 논문 리포트 | 2 |
 `,
   dueNote: "제출: 일요일 23:59",
-  furtherReading: [
-    'Elhage et al., "A Mathematical Framework for Transformer Circuits" (Anthropic)',
-    "Su et al., RoFormer(RoPE) 2104.09864",
-    "Radford et al., GPT-2 논문",
-  ],
 };
 
 export default week5;

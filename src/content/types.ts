@@ -31,5 +31,4 @@ export interface WeekMeta {
   /** raw markdown for the "과제" section (required / advanced / rubric) */
   assignmentMd: string;
   dueNote: string;
-  furtherReading: string[];
 }

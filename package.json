@@ -11,7 +11,9 @@
     "validate:content": "tsx scripts/validate-content.ts"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "bcryptjs": "^3.0.3",
+    "idb": "^8.0.3",
     "jose": "^6.2.12",
     "katex": "^0.18.7",
     "next": "16.3.5",

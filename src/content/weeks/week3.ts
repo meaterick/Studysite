@@ -503,12 +503,6 @@ print(f"PyTorch     : w={w_t:.4f}, b={b_t:.4f}, loss={loss.item():.4f}")
 | 코드 품질 | 1 |
 `,
   dueNote: "제출: 일요일 23:59",
-  furtherReading: [
-    'Rumelhart, Hinton, Williams (1986) "Learning representations by back-propagating errors"',
-    'Karpathy "Yes you should understand backprop" (Medium)',
-    "Goodfellow et al., Deep Learning 6장, 8장",
-    "Karpathy, micrograd GitHub 저장소 (소스 코드를 직접 읽어보기)",
-  ],
 };
 
 export default week3;

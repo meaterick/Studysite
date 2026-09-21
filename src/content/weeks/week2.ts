@@ -687,13 +687,6 @@ print("K-Means가 찾은 군집과 실제 진단 레이블(y)의 일치 정도(�
 | 시각화·서술 | 2 |
 `,
   dueNote: "제출: 일요일 23:59",
-  furtherReading: [
-    "Hastie et al., Elements of Statistical Learning 7장 (모델 평가), 9장(트리·부스팅), 14장(비지도학습)",
-    'Kaufman et al., "Leakage in Data Mining" (2012)',
-    'Andrew Ng, "Machine Learning Yearning" (진단 전략)',
-    "scikit-learn 공식 문서: Supervised/Unsupervised learning 알고리즘 가이드 (scikit-learn.org)",
-    'Chawla et al., "SMOTE: Synthetic Minority Over-sampling Technique" (2002)',
-  ],
 };
 
 export default week2;

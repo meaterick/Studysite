@@ -407,17 +407,6 @@ def agent(goal, llm, max_steps=5):
 | 재현성·문서화 | 1 |
 `,
   dueNote: "제출: 일요일 23:59",
-  furtherReading: [
-    'Anthropic, "Building effective agents" (블로그)',
-    'Zheng et al., "Judging LLM-as-a-Judge with MT-Bench" (2306.05685)',
-    'Greshake et al., "Indirect Prompt Injection" (2302.12173)',
-    'Anthropic, "Contextual Retrieval" (블로그) — 청킹으로 잃어버리는 맥락을 보강하는 실전 기법',
-    'Wei et al., "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models" (2201.11903)',
-    'Wang et al., "Self-Consistency Improves Chain of Thought Reasoning" (2203.11171)',
-    'Radford et al., "Learning Transferable Visual Models From Natural Language Supervision" (CLIP, 2103.00020)',
-    'Anthropic, "Introducing the Model Context Protocol" (블로그, 2024)',
-    'Shinn et al., "Reflexion: Language Agents with Verbal Reinforcement Learning" (2303.11366)',
-  ],
 };
 
 export default week7;

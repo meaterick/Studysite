@@ -652,13 +652,6 @@ for lr_test in [0.01, 0.1, 0.9, 1.1]:
 | 가독성 | 1 |
 `,
   dueNote: "제출: 일요일 23:59, Colab 링크 + 1쪽 리포트",
-  furtherReading: [
-    "CS229 Lecture Notes: Supervised Learning 앞부분 (cs229.stanford.edu)",
-    'Sutton의 "The Bitter Lesson" 에세이 (AI 역사 관점)',
-    "Karpathy, micrograd 영상 (다음 주 예습)",
-    "3Blue1Brown, Bayes theorem 영상 — 베이즈 정리를 시각적으로 다시 확인하고 싶다면",
-    "3Blue1Brown, Eigenvectors and eigenvalues 영상 — 2.8절 고유값/고유벡터를 시각적으로 다시 보고 싶다면",
-  ],
 };
 
 export default week1;
