@@ -71,6 +71,77 @@ $5 \\times 5$ 입력에 $3 \\times 3$ 커널을 적용한다고 하자.
 숫자를 직접 공식에 넣어보면 역할 분담이 뚜렷하게 보인다. padding은 "크기를 유지할지 줄일지"를 조절하고, stride는 "얼마나 빠르게 줄일지"를 조절한다.
 :::
 
+공식으로 크기만 맞혀보는 데서 그치지 말고, 합성곱 연산 자체를 파이썬으로 직접 짜서 눈으로 확인해보자. 그러려면 먼저 이번 주 실습에서 계속 쓰게 될 문법 몇 가지를 짚고 넘어가야 한다.
+
+:::info 새로 나온 문법 — 2차원 배열, shape, 슬라이싱, 중첩 for문
+지금까지는 \`[1, 2, 3]\`처럼 숫자가 한 줄로 늘어선 1차원 배열만 다뤘다. 그런데 이미지는 세로·가로 두 방향으로 숫자가 격자 모양으로 늘어선 데이터다. numpy에서는 이런 격자를 리스트의 리스트로 만들어 2차원 배열로 표현한다.
+
+\`\`\`python
+import numpy as np
+
+x = np.array([[1, 2, 3],
+              [4, 5, 6]])
+print(x)
+print("shape:", x.shape)   # (2, 3) -> 세로(행) 2개, 가로(열) 3개
+print("x[0]:", x[0])       # 0번째 행 전체: [1 2 3]
+print("x[0, 1]:", x[0, 1]) # 0번째 행, 1번째 열의 값: 2
+print("x[0:2, 0:2]:\\n", x[0:2, 0:2])  # 행 0~1, 열 0~1로 잘라낸 부분(슬라이싱)
+\`\`\`
+
+\`x.shape\`는 배열의 크기를 (행, 열) 튜플로 알려준다. \`x[0:2, 0:2]\`처럼 콤마로 구분된 두 개의 \`시작:끝\` 범위를 넣으면 배열의 일부 사각형 영역만 잘라낼 수 있는데, 이를 슬라이싱(slicing)이라 부른다. 합성곱은 결국 "입력 배열에서 커널 크기만큼의 작은 사각형을 계속 잘라내며 계산을 반복하는" 연산이므로, 이 슬라이싱 문법이 핵심 도구가 된다. 그리고 "행마다, 그 안에서 다시 열마다" 처럼 반복문 안에 반복문을 겹쳐 쓰는 것을 중첩 for문이라 부르는데, 합성곱 출력의 각 칸(행, 열)을 하나씩 채우려면 바로 이 중첩 for문으로 출력의 모든 위치를 순회해야 한다.
+:::
+
+이제 위에서 손으로 계산한 출력 크기 공식이 실제로 맞는지, $5\\times5$ 입력에 $3\\times3$ 커널을 직접 합성곱시켜서 확인해보자. 커널은 세로선에 강하게 반응하도록 왼쪽 열은 $+1$, 가운데 열은 $0$, 오른쪽 열은 $-1$로 채운 값을 쓴다.
+
+\`\`\`python
+import numpy as np
+
+# 5x5 입력: 가운데로 갈수록 1이 몰려 있는 대각선 무늬
+x = np.array([
+    [1, 1, 1, 0, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 1, 1, 1],
+    [0, 0, 1, 1, 0],
+    [0, 1, 1, 0, 0],
+], dtype=float)
+print("입력 x의 shape:", x.shape)  # (5, 5)
+
+# 3x3 커널: 왼쪽 열 +1, 가운데 열 0, 오른쪽 열 -1 -> 세로 방향 가장자리 검출기
+k = np.array([
+    [1, 0, -1],
+    [1, 0, -1],
+    [1, 0, -1],
+], dtype=float)
+
+def conv2d(x, k, stride=1, padding=0):
+    if padding > 0:
+        x = np.pad(x, padding)  # 가장자리를 0으로 padding만큼 감싼다
+    H, W = x.shape
+    K = k.shape[0]
+    out_h = (H - K) // stride + 1   # 위에서 배운 출력 크기 공식과 동일
+    out_w = (W - K) // stride + 1
+    out = np.zeros((out_h, out_w))
+    for i in range(out_h):          # 출력의 행을 하나씩
+        for j in range(out_w):      # 그 행 안에서 열을 하나씩 (중첩 for문)
+            window = x[i*stride:i*stride+K, j*stride:j*stride+K]  # 커널 크기만큼 슬라이싱
+            out[i, j] = np.sum(window * k)  # 원소별 곱의 합 = 내적
+    return out
+
+out1 = conv2d(x, k, stride=1, padding=0)
+print("\\npadding=0, stride=1 출력 shape:", out1.shape)  # 공식대로 3x3 이어야 한다
+print(out1)
+
+out2 = conv2d(x, k, stride=1, padding=1)
+print("\\npadding=1, stride=1 출력 shape:", out2.shape)  # 공식대로 5x5(입력과 동일) 이어야 한다
+print(out2)
+
+out3 = conv2d(x, k, stride=2, padding=0)
+print("\\npadding=0, stride=2 출력 shape:", out3.shape)  # 공식대로 2x2 이어야 한다
+print(out3)
+\`\`\`
+
+\`conv2d\` 함수를 한 줄씩 뜯어보면 이렇다. \`window = x[i*stride:i*stride+K, j*stride:j*stride+K]\`가 바로 "커널이 지금 이 위치를 보고 있다"는 것을 슬라이싱으로 표현한 줄이다. \`i*stride\`는 커널이 stride만큼씩 건너뛰며 이동한 결과 지금 몇 번째 행에 와 있는지를 계산한 것이고, 거기서부터 커널 크기 \`K\`만큼을 잘라낸다. \`window * k\`는 잘라낸 영역과 커널을 같은 위치끼리 곱하는 원소별 곱셈(elementwise multiplication)이고, \`np.sum(...)\`으로 그 결과를 전부 더하면 2.1절 첫머리에서 정의한 "원소별 곱의 합(내적)"이 정확히 계산된다. 코드를 실행해서 나온 세 출력의 shape이 각각 (3,3), (5,5), (2,2)로, 앞서 예제에서 공식으로 손 계산했던 값과 정확히 일치하는지 직접 확인해보자.
+
 합성곱이라는 구조 자체에는 세 가지 가정이 이미 녹아 있는데, 이걸 귀납편향(inductive bias)이라 부른다. 하나는 지역성(locality)이다 — 이미지의 한 픽셀이 의미를 가지려면 대개 바로 주변 픽셀들과의 관계만 보면 충분하다는 가정이다. 반대편 모서리 픽셀까지 한꺼번에 봐야만 알 수 있는 패턴은 드물다. 둘은 평행이동 등변성(translation equivariance)이다 — 고양이 귀가 사진 왼쪽에 있든 오른쪽에 있든 "귀"라는 사실은 변하지 않으므로, 같은 커널이 어느 위치에서나 똑같이 작동해야 한다는 가정이다. 셋은 이 둘의 자연스러운 귀결인 파라미터 공유다 — 위치마다 서로 다른 가중치를 두는 대신 커널 하나를 사진 전체에서 재사용하기 때문에, FC층과는 비교가 안 될 만큼 파라미터 수가 줄어든다.
 
 지금까지는 합성곱 연산 하나만 확대해서 봤는데, 한 걸음 물러나 전체 그림을 보자. 실제 CNN은 이런 합성곱(+활성화, +풀링) 블록을 여러 번 반복해 쌓은 뒤, 마지막에 완전연결(FC)층을 붙여 최종 분류 결과를 내놓는 구조를 하고 있다.
@@ -137,28 +208,64 @@ stride 1인 합성곱만 계속 쌓는 가장 단순한 경우를 보면, j는 �
 
 여기에 stride 2인 pooling이나 strided convolution이 한 번이라도 끼어들면 이야기가 달라진다. 그 층을 통과하는 순간 점프 j가 그대로 2배로 뛰어오르므로($j_{out} = j_{in} \\times s$), 그 이후에 쌓이는 모든 층의 수용영역 증가폭도 함께 2배로 커진다. 다운샘플링 층 하나는 단순히 특징 지도 한 장의 크기를 줄이는 데서 그치지 않고, 그 지점에서 점프 값을 배가시켜 그 뒤에 올 모든 층의 수용영역 증가폭까지 함께 확대시킨다. VGG나 ResNet 같은 실제 네트워크가 $3\\times3$처럼 작은 커널만 반복해서 쌓았을 뿐인데도 수용영역이 이미지 전체를 뒤덮을 만큼 커지는 것은, 커널 자체가 커서가 아니라 중간중간의 다운샘플링이 점프를 계속 누적시켜주기 때문이다.
 
-Colab GPU 런타임에서, 방금 손으로 계산했던 Max Pooling과 Average Pooling의 차이를 \`nn.MaxPool2d\`와 \`nn.AvgPool2d\`로 직접 확인해보자. 입력 텐서를 위 예제와 똑같은 숫자([[1,3],[2,4]])로 채워서 두 함수에 그대로 통과시키면, 손 계산과 정확히 같은 값이 나오는지 눈으로 검증할 수 있다.
+방금 손으로 계산했던 Max Pooling과 Average Pooling의 차이를 이번엔 직접 함수로 짜서 확인해보자. 2.1절에서 만든 \`conv2d\`와 마찬가지로, 입력을 $2\\times2$ 영역 단위로 슬라이싱해서 잘라낸 뒤 그 영역에 \`np.max\`(최댓값) 또는 \`np.mean\`(평균)을 적용하면 된다.
 
 \`\`\`python
-import torch, torch.nn as nn
+import numpy as np
 
 # 위 예제와 동일한 2x2 영역: [[1,3],[2,4]]
-x = torch.tensor([[[[1., 3.], [2., 4.]]]])  # shape: (batch=1, channel=1, H=2, W=2)
-max_pool = nn.MaxPool2d(kernel_size=2)
-avg_pool = nn.AvgPool2d(kernel_size=2)
-print("MaxPool2d 결과:", max_pool(x).item())  # -> 4.0
-print("AvgPool2d 결과:", avg_pool(x).item())  # -> 2.5
+x = np.array([[1., 3.],
+              [2., 4.]])
+print("MaxPool 결과:", np.max(x))   # -> 4.0
+print("AvgPool 결과:", np.mean(x))  # -> 2.5
+
+def max_pool2x2(a):
+    H, W = a.shape
+    out = np.zeros((H // 2, W // 2))
+    for i in range(0, H, 2):        # 2칸씩 건너뛰며 세로 위치를 고른다
+        for j in range(0, W, 2):    # 2칸씩 건너뛰며 가로 위치를 고른다
+            window = a[i:i+2, j:j+2]        # 2x2 영역 슬라이싱
+            out[i // 2, j // 2] = np.max(window)
+    return out
+
+def avg_pool2x2(a):
+    H, W = a.shape
+    out = np.zeros((H // 2, W // 2))
+    for i in range(0, H, 2):
+        for j in range(0, W, 2):
+            window = a[i:i+2, j:j+2]
+            out[i // 2, j // 2] = np.mean(window)
+    return out
 
 # 조금 더 큰 4x4 특징 지도에서, 한쪽 구석에만 강한 반응(9)이 튀는 경우를 비교해보자.
-y = torch.tensor([[[[1., 1., 2., 1.],
-                     [1., 9., 1., 1.],
-                     [1., 1., 1., 2.],
-                     [1., 1., 1., 1.]]]])
-print("MaxPool2d(2):\\n", nn.MaxPool2d(2)(y))
-print("AvgPool2d(2):\\n", nn.AvgPool2d(2)(y))
+y = np.array([[1., 1., 2., 1.],
+              [1., 9., 1., 1.],
+              [1., 1., 1., 2.],
+              [1., 1., 1., 1.]])
+print("\\nMaxPool2x2(y):\\n", max_pool2x2(y))
+print("\\nAvgPool2x2(y):\\n", avg_pool2x2(y))
 \`\`\`
 
 두 번째 예시에서 강한 반응(9)이 들어있는 왼쪽 위 $2\\times2$ 영역만 놓고 보면, Max Pooling은 그 반응을 그대로 9로 살려서 다음 층에 넘기지만 Average Pooling은 $(1+1+1+9)/4 = 3$으로 완만하게 눌러버린다. "이 영역에 강한 반응이 있었는지"가 중요한 경우와 "이 영역이 전반적으로 얼마나 활성화되어 있는지"가 중요한 경우, 두 풀링이 서로 다른 정보를 남긴다는 것을 코드로도 확인할 수 있다.
+
+:::info 새로 나온 문법 — axis 인자와 reshape
+\`np.mean(window)\`처럼 배열 전체를 하나의 숫자로 뭉뚱그리지 않고, "행 방향으로만 평균" 또는 "열 방향으로만 평균"을 내고 싶을 때가 있다. 이때 쓰는 것이 \`axis\` 인자다. 2차원 배열에서 \`axis=0\`은 "행끼리(세로 방향으로) 계산하라"는 뜻이고 \`axis=1\`은 "열끼리(가로 방향으로) 계산하라"는 뜻이다. 예를 들어 \`y.max(axis=0)\`은 각 열에서 가장 큰 값들을 모아 1차원 배열로 돌려준다. 그리고 \`reshape\`는 배열에 들어 있는 숫자의 개수는 그대로 둔 채 shape(행·열 구성)만 바꿔주는 함수다. 예컨대 \`y.reshape(2, 2, 2, 2)\`는 $4\\times4$ 배열을 "세로 블록 2개 $\\times$ 블록 안 세로칸 2개 $\\times$ 가로 블록 2개 $\\times$ 블록 안 가로칸 2개"라는 4차원 구조로 다시 쪼개 보는 것이다. 이 둘을 합치면 반복문 없이도 풀링을 한 번에 계산할 수 있다.
+
+\`\`\`python
+import numpy as np
+
+y = np.array([[1., 1., 2., 1.],
+              [1., 9., 1., 1.],
+              [1., 1., 1., 2.],
+              [1., 1., 1., 1.]])
+
+blocks = y.reshape(2, 2, 2, 2)   # (세로블록, 블록 내 세로칸, 가로블록, 블록 내 가로칸)
+print("reshape 후 shape:", blocks.shape)  # (2, 2, 2, 2)
+print("axis=(1, 3) 최댓값:\\n", blocks.max(axis=(1, 3)))  # 블록 내부(1, 3번 축)만 골라 최댓값
+\`\`\`
+
+\`axis=(1, 3)\`은 "1번 축과 3번 축, 즉 각 블록 내부의 세로·가로 두 칸만 남기고 그 안에서 최댓값을 구하라"는 뜻이다. 그 결과 앞서 반복문으로 만든 \`max_pool2x2(y)\`와 정확히 같은 $2\\times2\\times$ 결과가 한 줄로 나온다. 참고로 이미지를 배열로 다룰 때는 (높이, 너비, 채널) 순서(예: \`(H, W, 3)\`)로 저장하는 경우와, 파이토치처럼 (채널, 높이, 너비) 순서(\`(3, H, W)\`)로 저장하는 경우가 둘 다 흔히 쓰이는데, 두 순서를 서로 바꿔야 할 때는 \`arr.transpose(2, 0, 1)\`처럼 축의 순서 자체를 바꿔주는 \`transpose\`를 사용한다.
+:::
 
 ### 2.3 ResNet: 잔차 연결
 
@@ -176,7 +283,32 @@ print("AvgPool2d(2):\\n", nn.AvgPool2d(2)(y))
 
 이 "+1" 항이 핵심이다. F'(x)가 아무리 작아지더라도(층이 깊어지며 기울기가 옅어지는 현상, gradient vanishing) 최소한 1만큼의 기울기는 identity shortcut을 타고 곧장 앞쪽 층까지 그대로 전달된다. F 경로의 기울기가 0에 가깝게 소실되더라도 이 +1 항이 상수 기울기를 계속 공급하므로, 전체 기울기가 완전히 0이 되어 학습이 멈추는 상황을 막아준다. 이후 거의 모든 현대 아키텍처(5주차에 배울 Transformer 포함)가 이 skip connection을 기본 구성 요소로 채택하고 있다.
 
-### 2.4 CNN 아키텍처의 계보: LeNet → AlexNet → VGG → ResNet
+말로만 하면 추상적이니, F'(x)가 실제로 아주 작은 값이 되는 상황을 하나 만들어 dy/dx가 정말로 1 근처에 머무는지 숫자로 확인해보자. 미분을 손으로 계산하는 대신, x를 아주 조금(h만큼) 움직였을 때 y가 얼마나 바뀌는지를 직접 재는 수치미분(numerical derivative)이라는 방법을 쓴다 — $\\frac{dy}{dx} \\approx \\frac{y(x+h) - y(x-h)}{2h}$, 즉 그래프 위에서 x 바로 좌우 두 점을 잇는 선분의 기울기로 미분값을 근사하는 것이다.
+
+\`\`\`python
+# F(x)를 아주 작은 기울기를 갖는 함수로 두어, 층이 깊어져 기울기가 옅어진 상황을 흉내 낸다.
+def F(x):
+    return 0.001 * x**3
+
+def F_prime(x):          # F를 손으로 미분한 식: d/dx(0.001*x^3) = 0.003*x^2
+    return 0.003 * x**2
+
+def y_residual(x):       # 잔차 연결: y = F(x) + x
+    return F(x) + x
+
+def numerical_derivative(f, x, h=1e-5):
+    return (f(x + h) - f(x - h)) / (2 * h)   # x 좌우로 아주 조금씩 움직여 기울기를 근사
+
+for x in [0.0, 1.0, 2.0, 5.0]:
+    dydx_numeric = numerical_derivative(y_residual, x)
+    dydx_formula = F_prime(x) + 1            # 손으로 미분한 dy/dx = F'(x) + 1
+    print(f"x={x}: F'(x)={F_prime(x):.6f}, 수치미분={dydx_numeric:.6f}, "
+          f"공식 F'(x)+1={dydx_formula:.6f}")
+\`\`\`
+
+$x=5$에서도 \`F_prime(x)\`는 $0.075$ 밖에 안 될 만큼 작지만, \`dydx_numeric\`과 \`dydx_formula\`는 둘 다 $1.075$로 정확히 일치하며 항상 1보다 크다. F 경로의 기울기가 거의 0으로 죽어 있어도 identity shortcut이 더해주는 "+1" 덕분에 전체 기울기가 결코 0 밑으로 떨어지지 않는다는 것을, 수식이 아니라 실제로 찍힌 숫자로 확인한 셈이다.
+
+### 2.4 CNN 아키텍처의 계보: LeNet $\\to$ AlexNet $\\to$ VGG $\\to$ ResNet
 
 지금까지 살펴본 합성곱과 풀링, 그리고 방금 배운 잔차 연결은 하늘에서 뚝 떨어진 아이디어가 아니라 수십 년에 걸쳐 하나씩 쌓여온 계보의 결과물이다. CNN이 실제로 어떤 순서로 다듬어져 왔는지를 알아두면, 앞으로 새로운 아키텍처를 마주칠 때마다 "이게 어느 문제를 해결하려는 시도인가"를 훨씬 빠르게 짚어낼 수 있다.
 
@@ -201,7 +333,7 @@ print("AvgPool2d(2):\\n", nn.AvgPool2d(2)(y))
 
 이 원칙에 따라 VGGNet은 $3\\times3$ conv와 $2\\times2$ max pooling만으로 16층(VGG-16) 혹은 19층(VGG-19)까지 쌓아 올렸고, ILSVRC 2014에서 상위권 성적을 거두며 "깊이가 성능에 기여한다"는 것과 "단순하고 규칙적인 설계만으로도 충분히 깊게 쌓을 수 있다"는 것을 동시에 보여주었다.
 
-**그리고 ResNet** — 하지만 VGG가 보여준 것처럼 무작정 층만 계속 늘리면 앞서 2.3절에서 다룬 degradation 문제에 곧 부딪힌다. VGG-19 정도까지는 그럭저럭 학습이 됐지만, 이보다 훨씬 깊은(예: 100층 이상) 네트워크는 잔차 연결 없이는 학습 자체가 무너졌다. ResNet은 바로 이 지점에서 등판해, identity shortcut 하나로 "층을 깊게 쌓을수록 무조건 손해는 아니게" 만들면서 152층까지 쌓은 모델로 ILSVRC 2015 우승을 차지했다. LeNet의 골격 → AlexNet의 실증 → VGG의 깊이 실험 → ResNet의 깊이 문제 해결, 이 네 모델을 시간순으로 놓고 보면 CNN의 역사가 "어떻게 하면 더 깊고 안정적으로 학습시킬 것인가"라는 하나의 질문에 대한 연속적인 답변이었다는 것이 뚜렷하게 보인다.
+**그리고 ResNet** — 하지만 VGG가 보여준 것처럼 무작정 층만 계속 늘리면 앞서 2.3절에서 다룬 degradation 문제에 곧 부딪힌다. VGG-19 정도까지는 그럭저럭 학습이 됐지만, 이보다 훨씬 깊은(예: 100층 이상) 네트워크는 잔차 연결 없이는 학습 자체가 무너졌다. ResNet은 바로 이 지점에서 등판해, identity shortcut 하나로 "층을 깊게 쌓을수록 무조건 손해는 아니게" 만들면서 152층까지 쌓은 모델로 ILSVRC 2015 우승을 차지했다. LeNet의 골격 $\\to$ AlexNet의 실증 $\\to$ VGG의 깊이 실험 $\\to$ ResNet의 깊이 문제 해결, 이 네 모델을 시간순으로 놓고 보면 CNN의 역사가 "어떻게 하면 더 깊고 안정적으로 학습시킬 것인가"라는 하나의 질문에 대한 연속적인 답변이었다는 것이 뚜렷하게 보인다.
 
 | 모델 | 연도 | 핵심 기여 |
 | --- | --- | --- |
@@ -239,6 +371,53 @@ BatchNorm(배치 정규화)은 한 층에 들어오는 활성화 값을 채널(�
 
 Dropout은 학습 단계에서 각 뉴런의 출력을 확률 p로 무작위로 0으로 만들고(끄고), 꺼지지 않은 나머지 뉴런의 출력은 1/(1−p)만큼 스케일을 보정하는 연산이다(inverted dropout). 특정 뉴런이 다음 순전파에서도 계속 켜져 있으리라는 보장이 없으므로, 다른 특정 뉴런의 출력에만 강하게 의존하는 가중치 조합(co-adaptation)은 학습 과정에서 살아남기 어렵고, 그 결과 각 뉴런이 비교적 독립적으로도 유의미한 패턴을 검출하도록 가중치가 여러 뉴런에 걸쳐 중복 학습된다. 매 순전파마다 서로 다른 뉴런 부분집합만 활성화된 부분망(sub-network)이 학습되는 셈이므로, 평가 시 전체 뉴런을 켜고 사용하는 것은 학습 중 만들어진 이 다수의 부분망들의 예측을 근사적으로 평균 낸 것과 같은 효과를 낸다(모델 앙상블 근사).
 
+말로 설명한 두 공식 — BatchNorm의 $\\hat x = (x-\\mu)/\\sigma$, $\\gamma\\hat x+\\beta$와 Dropout의 "끄고 $1/(1-p)$로 보정" — 을 아주 작은 숫자 배열에 직접 적용해서 눈으로 확인해보자. 먼저 BatchNorm이다. 배치 크기 4, 채널 3개짜리 활성화 값이 있다고 하자(행이 배치, 열이 채널).
+
+\`\`\`python
+import numpy as np
+
+x = np.array([
+    [10.0, 1.0, 100.0],
+    [12.0, 3.0, 120.0],
+    [ 8.0, -1.0, 90.0],
+    [14.0, 5.0, 130.0],
+])
+print("입력 x의 shape:", x.shape, "-> (배치=4, 채널=3)")
+
+mu = x.mean(axis=0)     # axis=0: 배치 방향(세로)으로 평균 -> 채널별 평균 하나씩
+sigma = x.std(axis=0)   # axis=0: 배치 방향으로 표준편차 -> 채널별 표준편차
+print("채널별 평균 mu:", mu)
+print("채널별 표준편차 sigma:", sigma)
+
+x_hat = (x - mu) / sigma   # 각 채널을 자기 평균·표준편차로 정규화
+print("\\n정규화 결과 x_hat:\\n", x_hat)
+print("정규화 후 채널별 평균:", x_hat.mean(axis=0).round(6))     # -> 0에 가까워야 한다
+print("정규화 후 채널별 표준편차:", x_hat.std(axis=0).round(6))  # -> 1에 가까워야 한다
+
+gamma = np.array([1.0, 2.0, 0.5])   # 채널마다 다른 스케일
+beta = np.array([0.0, 1.0, -1.0])   # 채널마다 다른 이동
+y = gamma * x_hat + beta
+print("\\ngamma*x_hat+beta 결과:\\n", y)
+\`\`\`
+
+세 번째 채널(100, 120, 90, 130)은 원래 값 자체가 크고 퍼져 있었지만, \`x_hat\`으로 정규화하고 나면 세 채널 모두 평균 0, 표준편차 1인 같은 눈금 위에 놓인다. 그 뒤에 \`gamma\`, \`beta\`를 곱하고 더해 다시 채널마다 다른 스케일·위치로 되돌리는데, 이 \`gamma\`, \`beta\`가 바로 역전파로 학습되는 값이다. 이제 Dropout도 직접 만들어보자.
+
+\`\`\`python
+import numpy as np
+
+np.random.seed(0)   # 항상 같은 난수가 나오도록 씨앗값 고정(재현성)
+p = 0.5              # 뉴런을 끌 확률
+h = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])  # 어떤 층의 출력(뉴런 6개)
+
+mask = (np.random.rand(*h.shape) > p).astype(float)  # p보다 크면 1(생존), 작으면 0(제거)
+print("dropout mask:", mask)
+
+h_dropped = h * mask / (1 - p)   # 꺼진 자리는 0, 살아남은 자리는 1/(1-p)배로 보정
+print("dropout 적용 후:", h_dropped)
+\`\`\`
+
+\`np.random.rand(*h.shape)\`는 0~1 사이의 난수를 \`h\`와 같은 shape으로 만들어내고, \`> p\` 비교를 거치면 참(1)·거짓(0)으로 이루어진 \`mask\`가 된다. \`h * mask\`로 꺼질 자리를 0으로 만든 다음 \`/ (1-p)\`로 살아남은 값들을 키워서 평균적인 크기를 학습 전과 비슷하게 맞춰주는 것이 inverted dropout의 핵심이다. \`p=0.5\`이므로 대략 절반의 뉴런이 꺼지고, 살아남은 뉴런은 2배로 보정된다.
+
 | 기법 | 원리 | 주의 |
 | --- | --- | --- |
 | BatchNorm | 배치 통계로 정규화 후 γ,β 학습 $\\to$ 학습 안정·속도↑ | train/eval 모드 차이(running mean) |
@@ -251,7 +430,9 @@ Dropout은 학습 단계에서 각 뉴런의 출력을 확률 p로 무작위로 
 
 먼저 데이터를 준비하는 부분이다. 학습용 변환(tf_tr)에는 RandomCrop과 RandomHorizontalFlip이라는 데이터 증강이 들어가 있는 반면, 평가용 변환(tf_te)에는 이런 무작위 변형이 전혀 없다는 점을 눈여겨보자. 증강은 모델이 "같은 물체를 여러 각도·위치에서 봐도 같은 답을 내야 한다"는 걸 배우게 하려는 장치이므로 학습 데이터에만 적용하고, 실력을 재는 평가 데이터는 있는 그대로 정직하게 채점해야 한다. 만약 평가 데이터에도 크롭이나 뒤집기를 적용한다면 매번 답이 흔들려서 모델의 진짜 실력을 잴 수 없게 된다.
 
-\`\`\`python
+아래 데이터 준비·모델 정의·학습 루프 세 코드는 실제 CIFAR-10 데이터셋을 인터넷에서 내려받고 \`torch\`·\`torchvision\`으로 진짜 CNN을 학습시키는 코드다. 이 사이트의 실행 환경(브라우저 안 Pyodide)에는 \`torch\`·\`torchvision\`이 설치되어 있지 않고 네트워크 다운로드도 할 수 없어 여기서는 실행되지 않는다 — 이 코드는 브라우저에서는 실행되지 않습니다, Google Colab에 붙여넣어 실행해보세요.
+
+\`\`\`python-colab
 import torch, torch.nn as nn, torchvision as tv, torchvision.transforms as T
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 tf_tr = T.Compose([T.RandomCrop(32, padding=4), T.RandomHorizontalFlip(), T.ToTensor(),
@@ -263,18 +444,18 @@ trl = torch.utils.data.DataLoader(tr, 128, shuffle=True, num_workers=2)
 tel = torch.utils.data.DataLoader(te, 256)
 \`\`\`
 
-다음은 모델 구조다. \`block\` 함수 하나가 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU} \\to \\text{MaxPool}$ 순서로 쌓여 있는데, 이 순서 자체가 의미를 담고 있다. BatchNorm은 합성곱이 막 뱉어낸, 아직 활성화를 통과하기 전의 "날것" 값들의 분포를 정규화해서 평균 0, 분산 1 근처로 맞춰주는 역할을 한다. 이 정규화를 ReLU보다 먼저 적용하는 이유는, ReLU가 0보다 작은 값을 전부 0으로 뭉개버리는 함수이기 때문이다. 만약 정규화되지 않은 값 분포가 한쪽으로 심하게 치우쳐 있다면(예컨대 대부분 음수라면) ReLU를 통과하는 순간 뉴런 대부분이 죽어버릴 위험이 있다. BatchNorm이 먼저 분포를 가지런히 정리해준 다음 ReLU에 넘겨야, ReLU가 "살아있는 값"과 "죽이는 값"을 균형 있게 골라낼 수 있다. 그리고 맨 마지막 Flatten 이후에 Dropout(0.3)을 넣어, 완전연결층으로 넘어가기 직전에 과적합을 한 번 더 억제한다.
+다음은 모델 구조다. \`block\` 함수 하나가 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU} \\to \\text{MaxPool}$ 순서로 쌓여 있는데, 이 순서 자체가 의미를 담고 있다. BatchNorm은 합성곱이 막 뱉어낸, 아직 활성화를 통과하기 전의 "날것" 값들의 분포를 정규화해서 평균 0, 분산 1 근처로 맞춰주는 역할을 한다. 이 정규화를 ReLU보다 먼저 적용하는 이유는, ReLU가 0보다 작은 값을 전부 0으로 뭉개버리는 함수이기 때문이다. 만약 정규화되지 않은 값 분포가 한쪽으로 심하게 치우쳐 있다면(예컨대 대부분 음수라면) ReLU를 통과하는 순간 뉴런 대부분이 죽어버릴 위험이 있다. BatchNorm이 먼저 분포를 가지런히 정리해준 다음 ReLU에 넘겨야, ReLU가 "살아있는 값"과 "죽이는 값"을 균형 있게 골라낼 수 있다. 그리고 맨 마지막 Flatten 이후에 Dropout(0.3)을 넣어, 완전연결층으로 넘어가기 직전에 과적합을 한 번 더 억제한다. (이 코드도 바로 위 셀에서 정의한 \`dev\`를 그대로 쓰는 이어지는 코드이므로 위 셀과 마찬가지로 Colab에서만 실행된다.)
 
-\`\`\`python
+\`\`\`python-colab
 def block(i, o): return nn.Sequential(nn.Conv2d(i,o,3,padding=1), nn.BatchNorm2d(o), nn.ReLU(), nn.MaxPool2d(2))
 net = nn.Sequential(block(3,32), block(32,64), block(64,128), nn.Flatten(),
                     nn.Dropout(0.3), nn.Linear(128*4*4, 10)).to(dev)
 opt = torch.optim.AdamW(net.parameters(), 1e-3, weight_decay=5e-4)
 \`\`\`
 
-학습 루프에서 가장 먼저 나오는 \`net.train()\`과, 평가 직전의 \`net.eval()\`을 놓치지 말자. 이 두 줄이 하는 일은 위에서 설명한 BatchNorm·Dropout의 학습/평가 모드 전환 그 자체다. \`train()\` 모드에서는 BatchNorm이 지금 들어온 배치의 평균·분산을 쓰면서 동시에 그 값을 누적 이동평균(running mean/var)에 계속 반영하고, Dropout은 실제로 일부 뉴런을 꺼버린다. \`eval()\` 모드로 바뀌면 BatchNorm은 학습 내내 누적해온 이동평균을 그대로 사용하고, Dropout은 아무것도 끄지 않는다.
+학습 루프에서 가장 먼저 나오는 \`net.train()\`과, 평가 직전의 \`net.eval()\`을 놓치지 말자. 이 두 줄이 하는 일은 위에서 설명한 BatchNorm·Dropout의 학습/평가 모드 전환 그 자체다. \`train()\` 모드에서는 BatchNorm이 지금 들어온 배치의 평균·분산을 쓰면서 동시에 그 값을 누적 이동평균(running mean/var)에 계속 반영하고, Dropout은 실제로 일부 뉴런을 꺼버린다. \`eval()\` 모드로 바뀌면 BatchNorm은 학습 내내 누적해온 이동평균을 그대로 사용하고, Dropout은 아무것도 끄지 않는다. 이 학습 루프 역시 위 두 셀의 \`trl\`, \`tel\`, \`net\`, \`opt\`를 이어받아 실행되는 Colab 전용 코드다.
 
-\`\`\`python
+\`\`\`python-colab
 for ep in range(10):
     net.train()
     for x, y in trl:
@@ -302,7 +483,9 @@ for ep in range(10):
 
 전이학습도 코드로 직접 확인해보자. \`tv.models.resnet18(weights="IMAGENET1K_V1")\`로 이미 ImageNet 130만 장으로 학습된 가중치를 통째로 불러온 다음, \`for p in m.parameters(): p.requires_grad = False\`로 모든 층의 가중치를 얼린다. \`requires_grad\`를 False로 두면 역전파 때 이 파라미터들에 대한 기울기를 아예 계산하지 않으므로, 사전학습된 특징 추출 층의 가중치는 그대로 고정한 채 마지막 분류층 \`m.fc\`만 새로 교체해서(위에서 설명한 특징 추출 방식) 우리 문제(10개 클래스)에 맞게 학습시킬 수 있다. 다만 실전에서 주의할 점이 하나 있다. ResNet18은 원래 $224\\times224$ 크기의 ImageNet 이미지로 학습되었기 때문에 $32\\times32$짜리 CIFAR-10 이미지를 그대로 넣으면 앞쪽 층에서 이미지가 지나치게 빨리 작아져 정보가 소실된다. 그래서 아래 주석에 적힌 대로 입력을 $128\\times128$ 정도로 리사이즈한 뒤 넣어주는 전처리가 함께 필요하다.
 
-\`\`\`python
+\`tv.models.resnet18\`은 \`torchvision\`에 미리 담겨 있는 ResNet18 구현과, 인터넷에서 내려받는 ImageNet 사전학습 가중치를 함께 사용하므로 이 사이트의 브라우저 실행 환경(Pyodide)에서는 실행되지 않는다 — 이 코드는 브라우저에서는 실행되지 않습니다, Google Colab에 붙여넣어 실행해보세요.
+
+\`\`\`python-colab
 # 전이학습
 m = tv.models.resnet18(weights="IMAGENET1K_V1")
 for p in m.parameters(): p.requires_grad = False
