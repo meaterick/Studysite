@@ -36,9 +36,9 @@ export default function CurriculumPage() {
                   {w.keywords.join(" · ")}
                 </td>
                 <td className="border-b border-[var(--border-hairline)] px-3 py-2">{"★".repeat(w.difficulty)}</td>
-                <td className="border-b border-[var(--border-hairline)] px-3 py-2">
-                  <Link href={`/weeks/${w.slug}`} className="font-bold text-[var(--series-blue)]">
-                    보기 →
+                <td className="w-[72px] border-b border-[var(--border-hairline)] px-3 py-2">
+                  <Link href={`/weeks/${w.slug}`} className="inline-flex whitespace-nowrap font-bold text-[var(--series-blue)]">
+                    보기 <span aria-hidden="true">→</span>
                   </Link>
                 </td>
               </tr>

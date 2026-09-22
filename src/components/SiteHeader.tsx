@@ -25,11 +25,11 @@ export default function SiteHeader() {
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
         <Link href="/" className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Image
-            src="/images/aegis-oauth-logo.png"
+            src="/images/aegis-logo-refined.png"
             alt="Aegis AI 스터디"
             width={32}
             height={32}
-            className="h-8 w-8 rounded-lg"
+            className="h-9 w-9 rounded-xl border border-[var(--border-hairline)] bg-card p-0.5 shadow-sm"
             priority
           />
           <span className="text-xs font-bold leading-tight sm:text-base">
