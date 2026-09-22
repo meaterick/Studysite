@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { clearAuthAttempts, consumeAuthAttempt } from "@/lib/authRateLimit";
+import { safeReturnPath } from "@/lib/returnPath";
 import { createSession } from "@/lib/session";
 import { findUserByEmail } from "@/lib/userStore";
 
 export const metadata = { title: "로그인" };
+
+// Cost 10, matching account hashes. Comparing against this for unknown users
+// prevents account-existence timing from bypassing the rate limiter.
+const DUMMY_PASSWORD_HASH = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
 export default async function LoginPage({
   searchParams,
@@ -17,15 +23,19 @@ export default async function LoginPage({
     "use server";
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
-    const from = String(formData.get("from") ?? "");
+    const from = safeReturnPath(String(formData.get("from") ?? ""));
     const back = () =>
       `/login?error=1&email=${encodeURIComponent(email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`;
 
-    const user = findUserByEmail(email);
-    if (!user) redirect(back());
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) redirect(back());
+    if (!(await consumeAuthAttempt("login", email))) {
+      redirect(`/login?error=rate&email=${encodeURIComponent(email)}`);
+    }
 
+    const user = findUserByEmail(email);
+    const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !ok) redirect(back());
+
+    await clearAuthAttempts("login", email);
     await createSession(user.id, user.role);
     redirect(from || "/account");
   }
@@ -60,7 +70,7 @@ export default async function LoginPage({
         </div>
         {error && (
           <p className="text-sm font-medium text-[var(--status-critical)]">
-            이메일 또는 비밀번호가 올바르지 않습니다.
+            {error === "rate" ? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." : "이메일 또는 비밀번호가 올바르지 않습니다."}
           </p>
         )}
         <button

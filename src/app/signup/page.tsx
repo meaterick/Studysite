@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { clearAuthAttempts, consumeAuthAttempt } from "@/lib/authRateLimit";
+import { safeReturnPath } from "@/lib/returnPath";
 import { createSession } from "@/lib/session";
 import { createUser, findUserByEmail } from "@/lib/userStore";
 import { isValidEmail, isValidName, isValidPassword } from "@/lib/validate";
@@ -13,6 +15,7 @@ const ERRORS: Record<string, string> = {
   password: "비밀번호는 8자 이상이어야 합니다.",
   mismatch: "비밀번호가 서로 일치하지 않습니다.",
   taken: "이미 가입된 이메일입니다. 로그인해 주세요.",
+  rate: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
   unknown: "가입 중 문제가 발생했습니다. 다시 시도해 주세요.",
 };
 
@@ -29,7 +32,7 @@ export default async function SignupPage({
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
     const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
-    const from = String(formData.get("from") ?? "");
+    const from = safeReturnPath(String(formData.get("from") ?? ""));
     const back = (code: string) =>
       `/signup?error=${code}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}${
         from ? `&from=${encodeURIComponent(from)}` : ""
@@ -39,11 +42,13 @@ export default async function SignupPage({
     if (!isValidEmail(email)) redirect(back("email"));
     if (!isValidPassword(password)) redirect(back("password"));
     if (password !== passwordConfirm) redirect(back("mismatch"));
+    if (!(await consumeAuthAttempt("signup", email))) redirect(back("rate"));
     if (findUserByEmail(email)) redirect(back("taken"));
 
     try {
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await createUser({ name, email, passwordHash });
+      await clearAuthAttempts("signup", email);
       await createSession(user.id, user.role);
     } catch {
       redirect(back("unknown"));
