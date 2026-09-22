@@ -600,11 +600,10 @@ L2 정규화(Ridge)는 \`L + λ‖w‖²\`처럼 가중치 제곱의 합을 벌�
 
 이제 실제 이진분류 데이터(유방암 진단 데이터셋)로 넘어가자. 여기서 확인해야 할 핵심은 모델의 정확도가 아니라 "검증 방식 자체가 올바른가"다. 위에서 다룬 데이터 누수를 실제로 피해가는 코드가 어떻게 생겼는지 눈여겨보자 — StandardScaler를 make_pipeline 안에 넣어서, 교차검증의 매 fold마다 훈련 부분에서만 평균·표준편차를 계산하도록 강제한다. 만약 스케일러를 파이프라인 밖에 두고 Xtr 전체에 미리 fit해버리면, 각 fold의 검증 부분 정보가 스케일링 과정에 슬쩍 섞여 들어가 버린다.
 
-아래 셀은 이번 절 이후로 2.19~2.20절까지 계속 재사용할 \`clf\`(학습된 파이프라인), \`Xtr/Xte/ytr/yte\`(분할된 데이터), \`X/y\`(전체 데이터)를 만든다. 뒤에 나오는 셀들은 이 변수들을 그대로 이어서 쓰므로, **아래 셀을 먼저 실행한 뒤에 순서대로** 다음 셀들을 실행해야 한다.
+아래 셀은 이번 절 이후로 2.19~2.20절까지 계속 등장할 \`clf\`(학습된 파이프라인), \`Xtr/Xte/ytr/yte\`(분할된 데이터), \`X/y\`(전체 데이터)를 만든다. 뒤에 나오는 셀들도 매번 같은 데이터 분할·모델을 그 자리에서 다시 만들어 쓰므로(브라우저를 새로고침하거나 이 셀을 건너뛰고 다른 셀만 실행해도 문제없다), 코드가 조금씩 겹치더라도 각 셀을 원하는 순서로, 몇 번이든 독립적으로 실행할 수 있다.
 
 \`\`\`python
 # (2) 분류 + 교차검증 (누수 방지: 스케일러를 파이프라인 안에!)
-# ↓ 아래 (3)~(5)번 코드 셀은 여기서 만든 clf, Xtr, Xte, ytr, yte, X, y를 이어서 사용한다. 반드시 이 셀부터 실행하자.
 import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -664,11 +663,21 @@ Precision과 Recall 중 무엇을 더 중시할지는 문제마다 다르다. �
 
 위 스팸 필터 예제의 숫자를 그대로 대입하면 $\\text{Specificity}=\\dfrac{65}{65+5}=\\dfrac{65}{70}\\approx92.9\\%$다. Recall(민감도)이 "진짜 스팸을 얼마나 놓치지 않는가"를 재는 것과 대칭적으로, Specificity는 "진짜 정상 메일을 얼마나 억울하게 스팸 처리하지 않는가"를 잰다. 이 둘은 서로 트레이드오프 관계에 있다 — 2.20절에서 다룰 ROC 곡선의 세로축(TPR)이 사실 Recall이고, 가로축(FPR)은 $1-\\text{Specificity}$와 정확히 같다는 점도 미리 짚어두자.
 
-이제 방금 손으로 계산했던 Precision·Recall을 코드로도 재현해서 검산해보자. sklearn의 confusion_matrix가 뱉어내는 TP/FP/FN/TN 숫자를 공식에 직접 대입한 값과, sklearn이 제공하는 precision_score/recall_score 함수의 결과가 정확히 일치하는지 확인하는 것이 목적이다. 이 셀은 2.18절 (2)번 셀에서 만든 \`clf\`, \`Xte\`, \`yte\`를 이어서 사용하므로, (2)번 셀을 먼저 실행해야 한다.
+이제 방금 손으로 계산했던 Precision·Recall을 코드로도 재현해서 검산해보자. sklearn의 confusion_matrix가 뱉어내는 TP/FP/FN/TN 숫자를 공식에 직접 대입한 값과, sklearn이 제공하는 precision_score/recall_score 함수의 결과가 정확히 일치하는지 확인하는 것이 목적이다. 이 셀은 2.18절 (2)번 셀과 똑같은 데이터 분할·모델을 그 자리에서 다시 만들어 쓰므로, (2)번 셀을 먼저 실행하지 않고 이 셀만 따로 실행해도 된다.
 
 \`\`\`python
-# (3) 혼동행렬을 직접 손으로도 계산해서 검산 — (2)번 셀의 clf, Xte, yte를 이어서 사용
+# (3) 혼동행렬을 직접 손으로도 계산해서 검산
+# (2)번 셀과 동일한 데이터 분할·모델을 이 셀 안에서 다시 만든다 — 어떤 순서로 실행해도 되도록.
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix, precision_score, recall_score
+
+X, y = load_breast_cancer(return_X_y=True)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
+clf = make_pipeline(StandardScaler(), LogisticRegression(C=1.0, max_iter=1000)).fit(Xtr, ytr)
 
 yte_pred = clf.predict(Xte)
 tn, fp, fn, tp = confusion_matrix(yte, yte_pred).ravel()  # .ravel(): 2x2 표를 1차원 배열 [tn,fp,fn,tp]로 펼침
@@ -742,12 +751,21 @@ AUC는 "데이터에서 양성 샘플 하나와 음성 샘플 하나를 각각 �
 
 ROC-AUC는 이렇게 임계값을 아예 고정하지 않고 모델의 변별력 자체를 재기 때문에, 클래스 비율이 어느 정도 기울어져 있어도 Precision·Recall처럼 쉽게 왜곡되지는 않는다. 다만 이것이 "클래스 불균형에 완전히 무적"이라는 뜻은 아니다 — 양성이 극단적으로 희귀한 문제(예: 사기 탐지처럼 양성이 0.1% 미만인 경우)에서는 음성 샘플이 워낙 많아 FPR의 분모(FP+TN)가 항상 크게 나오는 탓에 ROC-AUC가 실제 체감 성능보다 낙관적으로 보일 수 있어서, 이런 경우엔 Precision과 Recall만으로 그린 PR-AUC를 함께, 혹은 더 우선해서 보는 쪽을 권하기도 한다.
 
-이제 방금 손으로 그려본 ROC 곡선을 sklearn으로도 그대로 재현해보자. \`predict\`가 뱉는 0/1 라벨이 아니라 \`predict_proba\`가 뱉는 확률(양성 클래스 쪽 두 번째 열)을 넘겨야 한다는 점이 핵심이다 — ROC 곡선 자체가 "임계값을 바꿔가며" 그리는 그림이므로, 이미 0.5로 잘려버린 예측값으로는 곡선을 그릴 수 없다. 이 셀도 2.18절 (2)번 셀의 \`clf\`, \`Xte\`, \`yte\`를 이어서 사용한다.
+이제 방금 손으로 그려본 ROC 곡선을 sklearn으로도 그대로 재현해보자. \`predict\`가 뱉는 0/1 라벨이 아니라 \`predict_proba\`가 뱉는 확률(양성 클래스 쪽 두 번째 열)을 넘겨야 한다는 점이 핵심이다 — ROC 곡선 자체가 "임계값을 바꿔가며" 그리는 그림이므로, 이미 0.5로 잘려버린 예측값으로는 곡선을 그릴 수 없다. 이 셀도 (2)번 셀과 동일한 데이터 분할·모델을 이 자리에서 다시 만들어 쓴다.
 
 \`\`\`python
-# (4) ROC 곡선과 AUC — (2)번 셀의 clf, Xte, yte를 이어서 사용
+# (4) ROC 곡선과 AUC
 import numpy as np
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, roc_auc_score
+
+X, y = load_breast_cancer(return_X_y=True)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
+clf = make_pipeline(StandardScaler(), LogisticRegression(C=1.0, max_iter=1000)).fit(Xtr, ytr)
 
 yte_score = clf.predict_proba(Xte)[:, 1]  # 양성(클래스 1)일 확률만 뽑음: [:, 1]은 "모든 행, 1번(두 번째) 열"
 fpr, tpr, thresholds = roc_curve(yte, yte_score)
@@ -767,11 +785,12 @@ for i in sample_idx:
 위 코드에서 나온 AUC 값이 1.0에 아주 가까운가? 유방암 데이터셋처럼 두 클래스가 비교적 잘 갈라지는 문제에서는 AUC가 0.99 이상으로 나오는 일이 흔한데, 그렇다면 왜 여전히 Precision·Recall도 함께 봐야 하는지 바로 위 마지막 문단을 참고해 설명해보라.
 :::
 
-이제 2.9~2.15절에서 다룬 다른 알고리즘들도 같은 데이터로 비교해보자. 여기서 핵심은 "어느 알고리즘이 제일 좋은가"가 아니라, 서로 다른 원리로 동작하는 모델들이 같은 교차검증·같은 지표 위에서 얼마나 다르게(혹은 비슷하게) 나오는지를 직접 보는 것이다. 이 셀도 2.18절 (2)번 셀의 \`Xtr\`, \`ytr\`을 이어서 사용한다. 결정트리는 일부러 깊이를 제한하지 않아(과적합되기 쉬운 상태로 둔다) 랜덤포레스트와의 차이가 잘 드러나게 했다.
+이제 2.9~2.15절에서 다룬 다른 알고리즘들도 같은 데이터로 비교해보자. 여기서 핵심은 "어느 알고리즘이 제일 좋은가"가 아니라, 서로 다른 원리로 동작하는 모델들이 같은 교차검증·같은 지표 위에서 얼마나 다르게(혹은 비슷하게) 나오는지를 직접 보는 것이다. 이 셀도 (2)번 셀과 동일한 데이터 분할을 이 자리에서 다시 만들어 \`Xtr\`, \`ytr\`을 얻는다. 결정트리는 일부러 깊이를 제한하지 않아(과적합되기 쉬운 상태로 둔다) 랜덤포레스트와의 차이가 잘 드러나게 했다.
 
 \`\`\`python
-# (5) 여러 알고리즘을 같은 교차검증으로 한눈에 비교 — (2)번 셀의 Xtr, ytr을 이어서 사용
-from sklearn.model_selection import cross_val_score
+# (5) 여러 알고리즘을 같은 교차검증으로 한눈에 비교
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
@@ -779,6 +798,9 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
+
+X, y = load_breast_cancer(return_X_y=True)
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
 
 models = {
     "KNN(k=5)": make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5)),
@@ -799,14 +821,16 @@ for name, model in models.items():
 여섯 모델 중 F1 평균이 가장 높은 모델과 표준편차가 가장 작은 모델은 각각 무엇인가? 둘이 같은 모델인가, 다른 모델인가?
 :::
 
-마지막으로 2.15절의 K-Means·PCA를 비지도학습으로 직접 돌려보자. 여기서는 정답 레이블 \`y\`를 학습 과정에 전혀 넣지 않는다는 점이 지금까지의 코드와 근본적으로 다르다. 이 셀은 2.18절 (2)번 셀의 \`X\`, \`y\`(전체 유방암 데이터셋)를 이어서 사용한다.
+마지막으로 2.15절의 K-Means·PCA를 비지도학습으로 직접 돌려보자. 여기서는 정답 레이블 \`y\`를 학습 과정에 전혀 넣지 않는다는 점이 지금까지의 코드와 근본적으로 다르다. 이 셀은 2.18절 (2)번 셀의 \`X\`, \`y\`(전체 유방암 데이터셋)를 이 자리에서 다시 불러와 쓴다.
 
 \`\`\`python
-# (6) 비지도학습: PCA로 2차원 투영 후 K-Means로 군집화 — (2)번 셀의 X, y를 이어서 사용
+# (6) 비지도학습: PCA로 2차원 투영 후 K-Means로 군집화
+from sklearn.datasets import load_breast_cancer
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
+X, y = load_breast_cancer(return_X_y=True)
 Xs = StandardScaler().fit_transform(X)
 pca = PCA(n_components=2).fit(Xs)                    # 2.15절: 분산이 가장 큰 두 축을 찾는다
 X2d = pca.transform(Xs)
