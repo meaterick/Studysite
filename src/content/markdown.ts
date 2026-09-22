@@ -67,7 +67,7 @@ function parseMarkdownUncached(source: string): Block[] {
     }
 
     // Fenced blocks: ```lang, ```formula
-    const fenceMatch = trimmed.match(/^```(\w*)$/);
+    const fenceMatch = trimmed.match(/^```([\w-]*)$/);
     if (fenceMatch) {
       flushParagraph();
       const lang = fenceMatch[1];

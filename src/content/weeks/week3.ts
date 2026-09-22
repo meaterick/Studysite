@@ -442,7 +442,7 @@ class MoonsDataset(Dataset):
 loader = DataLoader(MoonsDataset(X, y), batch_size=32, shuffle=True)
 \`\`\`
 
-- **Training / Validation Loop**: 표준적인 학습 루프는 "에폭을 반복 → 그 안에서 배치를 반복 → 순전파(forward) → 손실 계산(loss) → 역전파(backward) → 파라미터 갱신(step) → 기울기 초기화(zero_grad)"라는 여섯 단계를 그대로 되풀이하는 구조다. 아래도 같은 이유로 브라우저에서는 실행되지 않는다.
+- **Training / Validation Loop**: 표준적인 학습 루프는 "에폭을 반복 $\\to$ 그 안에서 배치를 반복 $\\to$ 순전파(forward) $\\to$ 손실 계산(loss) $\\to$ 역전파(backward) $\\to$ 파라미터 갱신(step) $\\to$ 기울기 초기화(zero_grad)"라는 여섯 단계를 그대로 되풀이하는 구조다. 아래도 같은 이유로 브라우저에서는 실행되지 않는다.
 
 \`\`\`python-colab
 for epoch in range(num_epochs):
@@ -562,7 +562,7 @@ print(f"PyTorch     : w={w_t:.4f}, b={b_t:.4f}, loss={loss.item():.4f}")
     { id: "w3-q8", question: "ReLU 노드에서 순전파 입력이 음수였을 때 역전파로 전달되는 기울기 값은 얼마인가? 이 사실이 '죽은 ReLU(dead ReLU)' 문제와 어떻게 연결되는가?" },
     { id: "w3-q9", question: "한 뉴런의 출력 z가 fan_in개의 항을 더한 것이라는 사실과 1주차의 '분산은 더할수록 커진다'는 원리를 연결해, 왜 가중치의 분산을 fan_in에 반비례하게 잡아야 하는지 설명하라." },
     { id: "w3-q10", question: "어떤 네트워크에서 층마다 활성화의 표준편차가 1.2배씩 커진다면, 15개 층을 통과했을 때 표준편차는 원래의 약 몇 배가 되는가? (1.2^15을 직접 계산하고, 그 결과가 왜 '깊은 네트워크일수록 초기화에 민감하다'는 주장의 근거가 되는지도 함께 설명하라.)" },
-    { id: "w3-q11", question: "PyTorch에서 requires_grad=True로 만든 텐서 w에 대해 loss.backward()를 호출하면 w.grad에 어떤 값이 채워지는가? 이것이 3.1절 Value 클래스의 grad 필드와 정확히 같은 역할을 하는 이유를 설명하라." },
+    { id: "w3-q11", question: "PyTorch에서 requires_grad=True로 만든 텐서 w에 대해 loss.backward()를 호출하면 w.grad에 어떤 값이 채워지는가? 이것이 앞서 직접 만든 Value 클래스의 grad 필드와 정확히 같은 역할을 하는 이유를 설명하라." },
     { id: "w3-q12", question: "학습 루프에서 optimizer.zero_grad()를 빼먹으면 어떤 문제가 생기는가? .grad가 '=' 대신 '+='로 누적된다는 사실과 연결해 설명하라." },
     { id: "w3-q13", question: "nn.Module 서브클래스를 정의할 때 __init__과 forward는 각각 어떤 역할을 맡는가? backward 메서드를 직접 작성하지 않아도 그레디언트가 자동으로 계산되는 이유는 무엇인가?" },
     { id: "w3-q14", question: "똑같은 행렬 곱 연산이 CPU보다 GPU에서 훨씬 빠르게 수행되는 이유를, 두 장치의 코어 수와 코어당 성능의 차이 관점에서 설명하라." },
