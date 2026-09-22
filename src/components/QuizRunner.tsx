@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useSyncExternalStore, type ReactNode } from "react";
-import { getQuizStore, readQuizState, writeQuizDraft, writeQuizIndex, resetQuiz } from "@/lib/progress";
+import { getQuizStore, readQuizState, writeQuizDraft, writeQuizIndex, resetQuiz, writeQuizReview } from "@/lib/progress";
 import { useUserScope } from "./UserScope";
 
 export default function QuizRunner({
@@ -25,6 +25,7 @@ export default function QuizRunner({
   const current = quiz[index];
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [showIncorrectOnly, setShowIncorrectOnly] = useState(false);
 
   const onDraftChange = (value: string) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -40,8 +41,10 @@ export default function QuizRunner({
   const reveal = () => setRevealed((prev) => new Set(prev).add(current.id));
 
   const hasDraft = (state.drafts[current.id]?.trim().length ?? 0) > 0;
-  const isRevealed = revealed.has(current.id);
+  const review = state.reviews[current.id];
+  const isRevealed = revealed.has(current.id) || !!review;
   const isLast = index === quiz.length - 1;
+  const incorrectQuestions = quiz.filter((question) => state.reviews[question.id] === "incorrect");
 
   return (
     <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
@@ -81,9 +84,28 @@ export default function QuizRunner({
       />
 
       {isRevealed ? (
-        <div className="mt-3 rounded-lg border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-3 py-2.5 text-sm">
-          <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--status-good)]">정답</p>
-          <div className="text-ink-secondary">{renderedAnswers[current.id]}</div>
+        <div className="mt-3 space-y-3">
+          <div className="rounded-lg border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-3 py-2.5 text-sm">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--status-good)]">정답</p>
+            <div className="text-ink-secondary">{renderedAnswers[current.id]}</div>
+          </div>
+          <div className="rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-3">
+            <p className="mb-2 text-xs font-bold text-ink-secondary">정답을 확인한 뒤 직접 평가해 주세요.</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => writeQuizReview(uid, slug, current.id, "correct")}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${review === "correct" ? "bg-[var(--status-good)] text-white" : "border border-[var(--border-hairline)] text-ink-secondary hover:bg-[var(--surface-card-2)]"}`}
+              >
+                맞았어요
+              </button>
+              <button
+                onClick={() => writeQuizReview(uid, slug, current.id, "incorrect")}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${review === "incorrect" ? "bg-[var(--status-critical)] text-white" : "border border-[var(--border-hairline)] text-ink-secondary hover:bg-[var(--surface-card-2)]"}`}
+              >
+                오답이에요
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         <button
@@ -114,6 +136,30 @@ export default function QuizRunner({
           >
             다음 문항 →
           </button>
+        )}
+      </div>
+
+      <div className="mt-6 border-t border-[var(--border-hairline)] pt-4">
+        <button
+          onClick={() => setShowIncorrectOnly((visible) => !visible)}
+          className="text-sm font-bold text-[var(--status-critical)] hover:underline"
+        >
+          {showIncorrectOnly ? "오답 노트 닫기" : `오답만 보기${incorrectQuestions.length ? ` (${incorrectQuestions.length})` : ""}`}
+        </button>
+        {showIncorrectOnly && (
+          <div className="mt-3 space-y-3">
+            {incorrectQuestions.length === 0 ? (
+              <p className="rounded-lg bg-[var(--surface-card-2)] px-3 py-3 text-sm text-ink-muted">표시한 오답이 아직 없습니다.</p>
+            ) : (
+              incorrectQuestions.map((question, incorrectIndex) => (
+                <div key={question.id} className="rounded-lg border border-[var(--status-critical)]/40 bg-[color-mix(in_srgb,var(--status-critical)_6%,transparent)] px-3 py-3 text-sm">
+                  <p className="mb-2 font-bold text-ink">오답 {incorrectIndex + 1}. {renderedQuestions[question.id]}</p>
+                  {state.drafts[question.id] && <p className="mb-2 text-ink-muted">내 답: {state.drafts[question.id]}</p>}
+                  <div className="text-ink-secondary">정답: {renderedAnswers[question.id]}</div>
+                </div>
+              ))
+            )}
+          </div>
         )}
       </div>
     </div>

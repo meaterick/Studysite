@@ -9,6 +9,7 @@ export const CHECKLIST_ITEMS = [
 export type ChecklistId = (typeof CHECKLIST_ITEMS)[number]["id"];
 type WeekProgress = Partial<Record<ChecklistId, boolean>>;
 type ProgressStore = Record<string, WeekProgress>;
+export type QuizReviewStatus = "correct" | "incorrect";
 
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
@@ -83,7 +84,9 @@ export function getWeekProgress(store: ProgressStore, slug: string): WeekProgres
 export function setChecklistItem(uid: string, slug: string, id: ChecklistId, done: boolean) {
   const store = getProgressStore(uid);
   const current = store.getSnapshot();
-  store.write({ ...current, [slug]: { ...current[slug], [id]: done } });
+  const next = { ...current, [slug]: { ...current[slug], [id]: done } };
+  store.write(next);
+  syncLearning(uid, { type: "progress", progress: next });
 }
 
 export function weekCompletionRatio(progress: WeekProgress): number {
@@ -96,6 +99,7 @@ export function weekCompletionRatio(progress: WeekProgress): number {
 interface QuizWeekState {
   index: number;
   drafts: Record<string, string>;
+  reviews: Record<string, QuizReviewStatus>;
 }
 type QuizStore = Record<string, QuizWeekState>;
 
@@ -103,7 +107,8 @@ const EMPTY_QUIZ: QuizStore = {};
 export const getQuizStore = (uid: string) => scopedStore("aegis-quiz:v1", uid, EMPTY_QUIZ);
 
 export function readQuizState(store: QuizStore, slug: string): QuizWeekState {
-  return store[slug] ?? { index: 0, drafts: {} };
+  const saved = store[slug];
+  return { index: saved?.index ?? 0, drafts: saved?.drafts ?? {}, reviews: saved?.reviews ?? {} };
 }
 
 export function writeQuizDraft(uid: string, slug: string, questionId: string, value: string) {
@@ -125,6 +130,28 @@ export function resetQuiz(uid: string, slug: string) {
   const next = { ...store.getSnapshot() };
   delete next[slug];
   store.write(next);
+  syncLearning(uid, { type: "quiz_reviews", slug, reviews: {} });
+}
+
+export function writeQuizReview(uid: string, slug: string, questionId: string, status: QuizReviewStatus) {
+  const store = getQuizStore(uid);
+  const current = store.getSnapshot();
+  const week = readQuizState(current, slug);
+  const reviews = { ...week.reviews, [questionId]: status };
+  store.write({ ...current, [slug]: { ...week, reviews } });
+  syncLearning(uid, { type: "quiz_reviews", slug, reviews });
+}
+
+function syncLearning(uid: string, payload: Record<string, unknown>) {
+  if (typeof window === "undefined" || uid === "guest") return;
+  void fetch("/api/learning", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(payload),
+  }).catch(() => {
+    // Keep local progress usable when the network is temporarily unavailable.
+  });
 }
 
 // 과제: 코드 실습을 한 번에 하나씩만 공개하기 위한 "여기까지 열림" 카운트.

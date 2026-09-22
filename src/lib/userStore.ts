@@ -2,6 +2,7 @@ import "server-only";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { deleteLearningRecord } from "./learningStore";
 
 // 배포 환경(OCI)에서는 DATA_DIR이 `.next`(매 배포마다 삭제됨) 바깥의 안정적인
 // 디렉터리(DEPLOY_DIR/data)를 가리키도록 설정되어, 재배포해도 회원 정보가
@@ -141,11 +142,7 @@ export async function findOrCreateGoogleUser(input: {
 export async function deleteUser(id: string): Promise<void> {
   const users = readAll();
   await writeAll(users.filter((u) => u.id !== id));
-}
-
-export async function setUserRole(id: string, role: Role): Promise<void> {
-  const users = readAll();
-  await writeAll(users.map((u) => (u.id === id ? { ...u, role } : u)));
+  await deleteLearningRecord(id);
 }
 
 export { toPublic };

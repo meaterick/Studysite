@@ -54,7 +54,7 @@ export default async function AccountPage({
         </p>
         {error === "lastadmin" && (
           <p className="mb-3 text-xs font-medium text-[var(--status-critical)]">
-            마지막 관리자 계정은 탈퇴할 수 없습니다. 다른 계정을 관리자로 지정한 뒤 다시 시도하세요.
+            마지막 관리자 계정은 탈퇴할 수 없습니다. 다른 관리자 계정이 남아 있어야 탈퇴할 수 있습니다.
           </p>
         )}
         <a

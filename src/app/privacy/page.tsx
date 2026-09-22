@@ -54,6 +54,12 @@ export default function PrivacyPage() {
                   <td className="px-4 py-3">회원 탈퇴 시까지</td>
                 </tr>
                 <tr className="border-t border-[var(--border-hairline)]">
+                  <td className="px-4 py-3">학습 현황</td>
+                  <td className="px-4 py-3">주차별 체크리스트, 퀴즈 정답·오답 자기평가, 마지막 기록 시각</td>
+                  <td className="px-4 py-3">학습 진도 확인 및 스터디 운영</td>
+                  <td className="px-4 py-3">회원 탈퇴 시까지</td>
+                </tr>
+                <tr className="border-t border-[var(--border-hairline)]">
                   <td className="px-4 py-3">보안 로그</td>
                   <td className="px-4 py-3">로그인 시도 시각, 이메일 식별값, IP 주소</td>
                   <td className="px-4 py-3">무차별 대입 등 인증 공격 방지</td>
@@ -67,9 +73,9 @@ export default function PrivacyPage() {
 
         <Section title="2. 브라우저에만 저장되는 학습 정보">
           <p>
-            체크리스트, 퀴즈 임시 답안, 백지공부 작성 내용은 브라우저의 localStorage에 저장됩니다. 실습 코드
-            편집 내용은 브라우저의 IndexedDB에 저장됩니다. 이 정보는 서비스 서버로 전송하거나 서버에 보관하지
-            않으며, 브라우저 데이터 삭제·기기 변경·브라우저 초기화 시 사라질 수 있습니다.
+            체크리스트와 퀴즈의 정답·오답 자기평가 결과는 운영자가 학습 현황을 확인할 수 있도록 서버에도
+            동기화합니다. 퀴즈 임시 답안, 백지공부 작성 내용, 실습 코드 편집 내용은 브라우저에만 저장되며,
+            브라우저 데이터 삭제·기기 변경·브라우저 초기화 시 사라질 수 있습니다.
           </p>
         </Section>
 
