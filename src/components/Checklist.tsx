@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import ProgressRing from "./ProgressRing";
 import {
   CHECKLIST_ITEMS,
@@ -20,7 +20,15 @@ export function WeekProgressBadge({ slug }: { slug: string }) {
   return <ProgressRing ratio={ratio} size={44} />;
 }
 
-export default function Checklist({ slug, embedded = false }: { slug: string; embedded?: boolean }) {
+export default function Checklist({
+  slug,
+  embedded = false,
+  action,
+}: {
+  slug: string;
+  embedded?: boolean;
+  action?: ReactNode;
+}) {
   const uid = useUserScope();
   const store = getProgressStore(uid);
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
@@ -31,7 +39,10 @@ export default function Checklist({ slug, embedded = false }: { slug: string; em
     <div className={embedded ? "" : "rounded-xl border border-[var(--border-hairline)] bg-card p-4"}>
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold text-ink">이번 주 진도 체크</h3>
-        <ProgressRing ratio={ratio} />
+        <div className="flex shrink-0 items-center gap-2">
+          <ProgressRing ratio={ratio} />
+          {action}
+        </div>
       </div>
       <ul className="mt-3 space-y-2">
         {CHECKLIST_ITEMS.map((item) => (

@@ -22,9 +22,11 @@ function PanelToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => vo
       aria-label={label}
       aria-expanded={isOpen}
       title={label}
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-card-2)] text-xl font-medium leading-none text-[var(--series-blue)] transition hover:border-[var(--series-blue)] hover:bg-[var(--surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--series-blue)] focus:ring-offset-2 focus:ring-offset-[var(--surface-page)]"
+      className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-[var(--series-blue)] transition hover:bg-[var(--surface-card-2)] focus:outline-none focus:ring-2 focus:ring-[var(--series-blue)] focus:ring-offset-2 focus:ring-offset-[var(--surface-page)]"
     >
-      <span aria-hidden="true">{isOpen ? "›" : "‹"}</span>
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d={isOpen ? "m9 18 6-6-6-6" : "m15 18-6-6 6-6"} />
+      </svg>
     </button>
   );
 }
@@ -52,17 +54,13 @@ export default function WeekLearningShell({ slug, chapters, children, navigation
         <div className="hidden lg:sticky lg:top-20 lg:block">
           {isPanelOpen ? (
             <section className="rounded-xl border border-[var(--border-hairline)] bg-card p-4" aria-label="학습 탐색 패널">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">학습 탐색</p>
-                <PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(false)} />
-              </div>
-
-              <div className="mt-3">
-                <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
-              </div>
-
+              <Checklist
+                slug={slug}
+                embedded
+                action={<PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(false)} />}
+              />
               <div className="my-4 border-t border-[var(--border-hairline)]" />
-              <Checklist slug={slug} embedded />
+              <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
             </section>
           ) : (
             <div className="flex justify-center">
