@@ -59,9 +59,6 @@ export default function Checklist({
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[11px] text-ink-muted">
-        내 기기에도 저장되며, 로그인한 경우 운영자의 학습 현황 화면에 진행 요약이 동기화됩니다.
-      </p>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Checklist from "./Checklist";
 import WeekStudyToc, { type StudyChapter } from "./WeekStudyToc";
 import WeekTabs from "./WeekTabs";
@@ -33,9 +33,38 @@ function PanelToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => vo
 
 export default function WeekLearningShell({ slug, chapters, children, navigation }: WeekLearningShellProps) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const panelRef = useRef<HTMLElement>(null);
   const gridColumns = isPanelOpen
     ? "lg:grid-cols-[minmax(0,1fr)_300px]"
     : "lg:grid-cols-[minmax(0,1fr)_42px]";
+
+  useEffect(() => {
+    let animationFrame = 0;
+
+    const updatePanelHeight = () => {
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(() => {
+        const panel = panelRef.current;
+        if (!panel) return;
+
+        const stickyTop = 80;
+        const viewportGap = 16;
+        const visibleTop = Math.max(panel.getBoundingClientRect().top, stickyTop);
+        const availableHeight = Math.max(96, window.innerHeight - visibleTop - viewportGap);
+        panel.style.setProperty("--study-panel-height", `${availableHeight}px`);
+      });
+    };
+
+    updatePanelHeight();
+    window.addEventListener("resize", updatePanelHeight);
+    window.addEventListener("scroll", updatePanelHeight, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", updatePanelHeight);
+      window.removeEventListener("scroll", updatePanelHeight);
+    };
+  }, [isPanelOpen]);
 
   return (
     <div className={`grid gap-6 lg:gap-8 ${gridColumns}`}>
@@ -54,20 +83,18 @@ export default function WeekLearningShell({ slug, chapters, children, navigation
         <div className="hidden lg:sticky lg:top-20 lg:block">
           {isPanelOpen ? (
             <section
-              className="flex max-h-[calc(100dvh-6rem)] flex-col overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card p-4"
+              ref={panelRef}
+              className="overflow-y-auto overscroll-contain rounded-xl border border-[var(--border-hairline)] bg-card p-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               aria-label="학습 탐색 패널"
+              style={{ maxHeight: "var(--study-panel-height, calc(100dvh - 6rem))" }}
             >
-              <div className="shrink-0">
-                <Checklist
-                  slug={slug}
-                  embedded
-                  action={<PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(false)} />}
-                />
-              </div>
-              <div className="my-4 shrink-0 border-t border-[var(--border-hairline)]" />
-              <div className="min-h-0 flex-1 overflow-hidden">
-                <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
-              </div>
+              <Checklist
+                slug={slug}
+                embedded
+                action={<PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(false)} />}
+              />
+              <div className="my-4 border-t border-[var(--border-hairline)]" />
+              <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
             </section>
           ) : (
             <div className="flex justify-center">
