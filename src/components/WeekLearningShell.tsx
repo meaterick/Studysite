@@ -53,14 +53,21 @@ export default function WeekLearningShell({ slug, chapters, children, navigation
 
         <div className="hidden lg:sticky lg:top-20 lg:block">
           {isPanelOpen ? (
-            <section className="rounded-xl border border-[var(--border-hairline)] bg-card p-4" aria-label="학습 탐색 패널">
-              <Checklist
-                slug={slug}
-                embedded
-                action={<PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(false)} />}
-              />
-              <div className="my-4 border-t border-[var(--border-hairline)]" />
-              <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
+            <section
+              className="flex max-h-[calc(100dvh-6rem)] flex-col overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card p-4"
+              aria-label="학습 탐색 패널"
+            >
+              <div className="shrink-0">
+                <Checklist
+                  slug={slug}
+                  embedded
+                  action={<PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(false)} />}
+                />
+              </div>
+              <div className="my-4 shrink-0 border-t border-[var(--border-hairline)]" />
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
+              </div>
             </section>
           ) : (
             <div className="flex justify-center">

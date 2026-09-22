@@ -56,11 +56,11 @@ export default function WeekStudyToc({
   }
 
   return (
-    <nav aria-label="학습 자료 목차" className="hidden lg:block">
-      <div className="flex items-center gap-3">
+    <nav aria-label="학습 자료 목차" className="hidden h-full min-h-0 flex-col lg:flex">
+      <div className="flex shrink-0 items-center gap-3">
         <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">이 주차의 목차</p>
       </div>
-      <ol className="mt-3 max-h-[calc(100vh-10rem)] space-y-1.5 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ol className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {chapters.map((chapter) => (
           <li key={chapter.id} className={chapter.level === 3 ? "pl-3" : ""}>
             <a
