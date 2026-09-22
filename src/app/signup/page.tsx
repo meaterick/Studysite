@@ -56,8 +56,7 @@ export default async function SignupPage({
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">Aegis AI 스터디</p>
       <h1 className="mb-2 text-2xl font-black text-ink">회원가입</h1>
       <p className="mb-8 text-sm text-ink-secondary">
-        스터디원으로 가입하면 커리큘럼과 주차별 자료를 함께 볼 수 있어요. 가장 먼저 가입하는 계정이
-        자동으로 관리자 권한을 받습니다.
+        스터디원으로 가입하면 커리큘럼과 주차별 자료를 함께 볼 수 있어요.
       </p>
       <form action={signup} className="space-y-4">
         <input type="hidden" name="from" value={from ?? ""} />
