@@ -12,18 +12,8 @@ type WeekLearningShellProps = {
   navigation: ReactNode;
 };
 
-function SideToggle({
-  side,
-  isOpen,
-  onToggle,
-}: {
-  side: "left" | "right";
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
-  const isLeft = side === "left";
-  const symbol = isLeft ? (isOpen ? "‹" : "›") : isOpen ? "›" : "‹";
-  const label = `${isLeft ? "목차" : "진도 체크"} ${isOpen ? "접기" : "펼치기"}`;
+function PanelToggle({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
+  const label = isOpen ? "학습 패널 접기" : "학습 패널 펼치기";
 
   return (
     <button
@@ -32,37 +22,21 @@ function SideToggle({
       aria-label={label}
       aria-expanded={isOpen}
       title={label}
-      className="hidden h-10 w-10 place-items-center rounded-lg border border-[var(--border-hairline)] bg-card text-xl font-medium leading-none text-[var(--series-blue)] shadow-sm transition hover:border-[var(--series-blue)] hover:bg-[var(--surface-card-2)] focus:outline-none focus:ring-2 focus:ring-[var(--series-blue)] focus:ring-offset-2 focus:ring-offset-[var(--surface-page)] lg:grid"
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-card-2)] text-xl font-medium leading-none text-[var(--series-blue)] transition hover:border-[var(--series-blue)] hover:bg-[var(--surface-page)] focus:outline-none focus:ring-2 focus:ring-[var(--series-blue)] focus:ring-offset-2 focus:ring-offset-[var(--surface-page)]"
     >
-      <span aria-hidden="true">{symbol}</span>
+      <span aria-hidden="true">{isOpen ? "›" : "‹"}</span>
     </button>
   );
 }
 
 export default function WeekLearningShell({ slug, chapters, children, navigation }: WeekLearningShellProps) {
-  const [isTocOpen, setIsTocOpen] = useState(true);
-  const [isChecklistOpen, setIsChecklistOpen] = useState(true);
-  const gridColumns = isTocOpen
-    ? isChecklistOpen
-      ? "lg:grid-cols-[220px_minmax(0,1fr)_260px]"
-      : "lg:grid-cols-[220px_minmax(0,1fr)_42px]"
-    : isChecklistOpen
-      ? "lg:grid-cols-[42px_minmax(0,1fr)_260px]"
-      : "lg:grid-cols-[42px_minmax(0,1fr)_42px]";
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const gridColumns = isPanelOpen
+    ? "lg:grid-cols-[minmax(0,1fr)_300px]"
+    : "lg:grid-cols-[minmax(0,1fr)_42px]";
 
   return (
     <div className={`grid gap-6 lg:gap-8 ${gridColumns}`}>
-      <aside className="order-2 hidden min-w-0 print:hidden lg:order-none lg:block">
-        <div className="lg:sticky lg:top-20">
-          <div className={isTocOpen ? "relative" : "flex justify-center"}>
-            {isTocOpen && <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />}
-            <div className={isTocOpen ? "absolute -right-5 top-4 z-10" : ""}>
-              <SideToggle side="left" isOpen={isTocOpen} onToggle={() => setIsTocOpen((open) => !open)} />
-            </div>
-          </div>
-        </div>
-      </aside>
-
       <div className="min-w-0">
         <WeekTabs slug={slug} />
         <WeekStudyToc slug={slug} chapters={chapters} variant="mobile" />
@@ -70,17 +44,31 @@ export default function WeekLearningShell({ slug, chapters, children, navigation
         {navigation}
       </div>
 
-      <aside className="order-3 min-w-0 print:hidden">
+      <aside className="order-3 min-w-0 print:hidden lg:order-none">
         <div className="lg:hidden">
           <Checklist slug={slug} />
         </div>
+
         <div className="hidden lg:sticky lg:top-20 lg:block">
-          <div className={isChecklistOpen ? "relative" : "flex justify-center"}>
-            {isChecklistOpen && <Checklist slug={slug} />}
-            <div className={isChecklistOpen ? "absolute -left-5 top-4 z-10" : ""}>
-              <SideToggle side="right" isOpen={isChecklistOpen} onToggle={() => setIsChecklistOpen((open) => !open)} />
+          {isPanelOpen ? (
+            <section className="rounded-xl border border-[var(--border-hairline)] bg-card p-4" aria-label="학습 탐색 패널">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">학습 탐색</p>
+                <PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(false)} />
+              </div>
+
+              <div className="mt-3">
+                <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
+              </div>
+
+              <div className="my-4 border-t border-[var(--border-hairline)]" />
+              <Checklist slug={slug} embedded />
+            </section>
+          ) : (
+            <div className="flex justify-center">
+              <PanelToggle isOpen={isPanelOpen} onToggle={() => setIsPanelOpen(true)} />
             </div>
-          </div>
+          )}
         </div>
       </aside>
     </div>

@@ -20,7 +20,7 @@ export function WeekProgressBadge({ slug }: { slug: string }) {
   return <ProgressRing ratio={ratio} size={44} />;
 }
 
-export default function Checklist({ slug }: { slug: string }) {
+export default function Checklist({ slug, embedded = false }: { slug: string; embedded?: boolean }) {
   const uid = useUserScope();
   const store = getProgressStore(uid);
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
@@ -28,7 +28,7 @@ export default function Checklist({ slug }: { slug: string }) {
   const ratio = weekCompletionRatio(progress);
 
   return (
-    <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+    <div className={embedded ? "" : "rounded-xl border border-[var(--border-hairline)] bg-card p-4"}>
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold text-ink">이번 주 진도 체크</h3>
         <ProgressRing ratio={ratio} />

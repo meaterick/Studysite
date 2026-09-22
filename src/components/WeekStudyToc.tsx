@@ -56,7 +56,7 @@ export default function WeekStudyToc({
   }
 
   return (
-    <nav aria-label="학습 자료 목차" className="hidden rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:block">
+    <nav aria-label="학습 자료 목차" className="hidden lg:block">
       <div className="flex items-center gap-3">
         <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">이 주차의 목차</p>
       </div>
