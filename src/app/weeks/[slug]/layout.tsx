@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { WEEKS, getWeek, getAdjacentWeeks } from "@/content/weeks";
 import { parseMarkdown } from "@/content/markdown";
-import Checklist from "@/components/Checklist";
 import { slugify } from "@/components/MarkdownBlocks";
-import WeekTabs from "@/components/WeekTabs";
-import WeekStudyToc, { type StudyChapter } from "@/components/WeekStudyToc";
+import WeekLearningShell from "@/components/WeekLearningShell";
+import { type StudyChapter } from "@/components/WeekStudyToc";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -62,18 +61,10 @@ export default async function WeekLayout({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:gap-8 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
-        <aside className="order-2 print:hidden lg:order-none">
-          <div className="lg:sticky lg:top-20">
-            <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
-          </div>
-        </aside>
-
-        <div className="min-w-0">
-          <WeekTabs slug={slug} />
-          <WeekStudyToc slug={slug} chapters={chapters} variant="mobile" />
-          {children}
-
+      <WeekLearningShell
+        slug={slug}
+        chapters={chapters}
+        navigation={
           <nav className="mt-10 flex items-center justify-between gap-4 border-t border-[var(--border-hairline)] pt-6 text-center sm:mt-12">
             {prev ? (
               <Link href={`/weeks/${prev.slug}`} className="min-w-0 text-sm font-bold text-ink-secondary hover:text-[var(--series-blue)]">
@@ -92,14 +83,10 @@ export default async function WeekLayout({
               </Link>
             )}
           </nav>
-        </div>
-
-        <aside className="order-3 print:hidden">
-          <div className="lg:sticky lg:top-20">
-            <Checklist slug={slug} />
-          </div>
-        </aside>
-      </div>
+        }
+      >
+        {children}
+      </WeekLearningShell>
     </div>
   );
 }

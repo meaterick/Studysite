@@ -31,9 +31,11 @@ export default function WeekStudyToc({
             type="button"
             onClick={() => setIsOpen((open) => !open)}
             aria-expanded={isOpen}
-            className="rounded-md px-2 py-1 text-[11px] font-bold text-[var(--series-blue)] hover:bg-[var(--surface-card-2)]"
+            aria-label={isOpen ? "목차 접기" : "목차 펼치기"}
+            title={isOpen ? "목차 접기" : "목차 펼치기"}
+            className="grid h-7 w-7 place-items-center rounded-md text-lg font-semibold leading-none text-[var(--series-blue)] hover:bg-[var(--surface-card-2)]"
           >
-            {isOpen ? "접기" : "펼치기"}
+            <span aria-hidden="true">{isOpen ? "‹" : "›"}</span>
           </button>
         </div>
         {isOpen && (
@@ -55,31 +57,21 @@ export default function WeekStudyToc({
 
   return (
     <nav aria-label="학습 자료 목차" className="hidden rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:block">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
         <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">이 주차의 목차</p>
-        <button
-          type="button"
-          onClick={() => setIsOpen((open) => !open)}
-          aria-expanded={isOpen}
-          className="rounded-md px-2 py-1 text-[11px] font-bold text-[var(--series-blue)] hover:bg-[var(--surface-card-2)]"
-        >
-          {isOpen ? "접기" : "펼치기"}
-        </button>
       </div>
-      {isOpen && (
-        <ol className="mt-3 max-h-[calc(100vh-10rem)] space-y-1.5 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {chapters.map((chapter) => (
-            <li key={chapter.id} className={chapter.level === 3 ? "pl-3" : ""}>
-              <a
-                href={`#${chapter.id}`}
-                className="block rounded-md px-2 py-1.5 text-sm text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-[var(--series-blue)]"
-              >
-                {chapter.label}
-              </a>
-            </li>
-          ))}
-        </ol>
-      )}
+      <ol className="mt-3 max-h-[calc(100vh-10rem)] space-y-1.5 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {chapters.map((chapter) => (
+          <li key={chapter.id} className={chapter.level === 3 ? "pl-3" : ""}>
+            <a
+              href={`#${chapter.id}`}
+              className="block rounded-md px-2 py-1.5 text-sm text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-[var(--series-blue)]"
+            >
+              {chapter.label}
+            </a>
+          </li>
+        ))}
+      </ol>
     </nav>
   );
 }
