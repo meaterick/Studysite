@@ -6,12 +6,12 @@ export default function WeekCard({ week }: { week: WeekMeta }) {
   return (
     <Link
       href={`/weeks/${week.slug}`}
-      className="group flex flex-col gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-5 transition hover:border-[var(--series-blue)] hover:shadow-sm"
+      className="group flex flex-col gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)] hover:shadow-sm sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">{week.phase}</p>
-          <h3 className="mt-0.5 text-lg font-black text-ink group-hover:text-[var(--series-blue)]">
+          <h3 className="mt-0.5 text-base font-black text-ink group-hover:text-[var(--series-blue)] sm:text-lg">
             Week {week.number} · {week.title}
           </h3>
         </div>

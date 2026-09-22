@@ -44,7 +44,7 @@ export default function QuizRunner({
   const isLast = index === quiz.length - 1;
 
   return (
-    <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
+    <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-wide text-ink-muted">
           문항 {index + 1} / {quiz.length}
@@ -96,7 +96,7 @@ export default function QuizRunner({
         </button>
       )}
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
         <button
           onClick={goPrev}
           disabled={index === 0}

@@ -12,7 +12,7 @@ export default async function WeekConceptsPage({ params }: { params: Promise<{ s
   if (!week) notFound();
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-12">
       <section id="goals" className="scroll-mt-24">
         <h2 className="mb-3 text-xl font-black text-ink">학습 목표</h2>
         <ul className="list-disc space-y-1.5 pl-5 text-[15px] text-ink-secondary">

@@ -88,9 +88,16 @@
 }
 
 body {
+  overflow-x: hidden;
   background: var(--surface-page);
   color: var(--text-primary);
   font-family: var(--font-sans-kr), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 ::selection {

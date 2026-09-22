@@ -15,7 +15,7 @@ export default function WeekTabs({ slug }: { slug: string }) {
   const base = `/weeks/${slug}`;
 
   return (
-    <nav className="mb-8 flex gap-1 border-b border-[var(--border-hairline)] print:hidden">
+    <nav className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-[var(--border-hairline)] px-4 pb-px [scrollbar-width:none] sm:mx-0 sm:mb-8 sm:px-0 print:hidden">
       {TABS.map((tab) => {
         const href = tab.seg ? `${base}/${tab.seg}` : base;
         const active = pathname === href;
@@ -23,7 +23,7 @@ export default function WeekTabs({ slug }: { slug: string }) {
           <Link
             key={tab.seg}
             href={href}
-            className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-bold transition-colors ${
+            className={`-mb-px shrink-0 border-b-2 px-3 py-2.5 text-sm font-bold transition-colors sm:px-4 ${
               active
                 ? "border-[var(--series-blue)] text-[var(--series-blue)]"
                 : "border-transparent text-ink-muted hover:text-ink-secondary"

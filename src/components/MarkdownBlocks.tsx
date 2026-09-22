@@ -30,7 +30,7 @@ export function Inline({ text }: { text: string }) {
   );
 }
 
-function slugify(text: string) {
+export function slugify(text: string) {
   return text
     .toLowerCase()
     .replace(/[^\w\s가-힣-]/g, "")
