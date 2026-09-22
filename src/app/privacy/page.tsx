@@ -54,12 +54,6 @@ export default function PrivacyPage() {
                   <td className="px-4 py-3">회원 탈퇴 시까지</td>
                 </tr>
                 <tr className="border-t border-[var(--border-hairline)]">
-                  <td className="px-4 py-3">기존 비밀번호 계정</td>
-                  <td className="px-4 py-3">비밀번호 해시</td>
-                  <td className="px-4 py-3">비밀번호 인증</td>
-                  <td className="px-4 py-3">회원 탈퇴 시까지</td>
-                </tr>
-                <tr className="border-t border-[var(--border-hairline)]">
                   <td className="px-4 py-3">보안 로그</td>
                   <td className="px-4 py-3">로그인 시도 시각, 이메일 식별값, IP 주소</td>
                   <td className="px-4 py-3">무차별 대입 등 인증 공격 방지</td>
@@ -68,7 +62,7 @@ export default function PrivacyPage() {
               </tbody>
             </table>
           </div>
-          <p>비밀번호 원문은 저장하지 않으며, 기존 비밀번호 계정에는 복원할 수 없는 해시값만 보관합니다.</p>
+          <p>서비스는 이메일·비밀번호 로그인을 제공하지 않으며, Google이 확인한 계정 정보만 사용합니다.</p>
         </Section>
 
         <Section title="2. 브라우저에만 저장되는 학습 정보">

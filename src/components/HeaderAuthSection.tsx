@@ -31,7 +31,7 @@ export default async function HeaderAuthSection() {
           className="whitespace-nowrap rounded-md px-3 py-2 font-bold text-white transition hover:opacity-90"
           style={{ background: "var(--series-blue)" }}
         >
-          Google 로그인
+          로그인
         </Link>
       )}
     </>

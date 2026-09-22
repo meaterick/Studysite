@@ -17,8 +17,6 @@ export interface UserRecord {
   id: string;
   email: string;
   name: string;
-  /** 기존 비밀번호 가입 계정에만 존재합니다. */
-  passwordHash?: string;
   /** Google OAuth의 안정적인 사용자 식별자(subject)입니다. */
   googleSubject?: string;
   role: Role;
@@ -31,7 +29,6 @@ export interface PublicUser {
   name: string;
   role: Role;
   createdAt: string;
-  authProvider: "google" | "password";
 }
 
 function toPublic(user: UserRecord): PublicUser {
@@ -41,7 +38,6 @@ function toPublic(user: UserRecord): PublicUser {
     name: user.name,
     role: user.role,
     createdAt: user.createdAt,
-    authProvider: user.googleSubject ? "google" : "password",
   };
 }
 
@@ -103,28 +99,6 @@ function resolveRole(email: string, isFirstUser: boolean): Role {
   // 최초 가입자(=사이트를 처음 배포/방문한 운영자 본인)를 관리자로 지정합니다.
   if (isFirstUser) return "admin";
   return "member";
-}
-
-export async function createUser(input: {
-  name: string;
-  email: string;
-  passwordHash: string;
-}): Promise<UserRecord> {
-  const users = readAll();
-  const email = input.email.trim().toLowerCase();
-  if (users.some((u) => u.email === email)) {
-    throw new Error("EMAIL_TAKEN");
-  }
-  const user: UserRecord = {
-    id: crypto.randomUUID(),
-    email,
-    name: input.name.trim(),
-    passwordHash: input.passwordHash,
-    role: resolveRole(email, users.length === 0),
-    createdAt: new Date().toISOString(),
-  };
-  await writeAll([...users, user]);
-  return user;
 }
 
 /**

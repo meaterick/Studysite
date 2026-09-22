@@ -50,8 +50,7 @@ npm run start
 
 별도 회원가입 화면은 없습니다. Google 로그인 시 Google이 확인한 이메일과 사용자 식별자를
 서버의 `data/users.json`(배포 시에는 `DATA_DIR`, 아래 참고)에 저장하며, 처음 로그인한
-사용자의 스터디원 계정을 자동 생성합니다. 기존 비밀번호 계정은 계속 로그인할 수 있으며,
-비밀번호는 bcrypt 해시로만 보관됩니다.
+사용자의 스터디원 계정을 자동 생성합니다. 이메일·비밀번호 로그인은 제공하지 않습니다.
 세션은 서명된(JWT, `SESSION_SECRET`) httpOnly 쿠키로 관리합니다
 (`src/lib/session.ts`, `src/lib/dal.ts`).
 
@@ -63,9 +62,8 @@ npm run start
   역할(role)로만 접근할 수 있습니다(`src/proxy.ts`에서 1차 확인, 각 페이지에서
   `requireAdmin()`으로 재확인). 이 폴더의 내용(퀴즈 정답, 채점 기준 원본,
   운영 노하우)은 스터디원에게 공개하지 않는 것이 원칙입니다.
-- `/account`에서 본인 정보를 확인하고 인증 방식에 맞게 재확인한 뒤 회원 탈퇴(계정 삭제)를
-  할 수 있습니다. Google 계정은 Google 재인증을, 기존 비밀번호 계정은 비밀번호 확인을
-  사용합니다. 마지막 남은 관리자 계정은 탈퇴/강등할 수 없습니다.
+- `/account`에서 본인 정보를 확인하고 Google 재인증 후 회원 탈퇴(계정 삭제)를 할 수
+  있습니다. 마지막 남은 관리자 계정은 탈퇴/강등할 수 없습니다.
 - `/operator/members`에서 관리자가 가입자 목록을 보고 권한을 부여/회수하거나
   계정을 삭제할 수 있습니다.
 
@@ -148,5 +146,5 @@ Google 자격 증명을 GitHub Actions Secrets로 등록하면 다음 `main` 배
 
 - Next.js 16 (App Router, Server Actions, Turbopack)
 - TypeScript, Tailwind CSS 4
-- 계정 정보만 서버(`data/users.json`, Google OAuth 식별자 또는 기존 bcrypt 해시)에 저장 —
+- 계정 정보만 서버(`data/users.json`, Google OAuth 식별자)에 저장 —
   개인 진도/백지공부는 여전히 각자 브라우저의 localStorage에만 저장됩니다

@@ -127,6 +127,15 @@ jobs:
             echo "::warning::SESSION_SECRET secret is not set — falling back to the built-in dev secret, which means anyone who reads the source code could forge login cookies. Add it under repo Settings > Secrets and variables > Actions (openssl rand -base64 32)."
           fi
 
+      # One-time production data reset requested by the site owner. The exact
+      # commit message below is used only for this deployment, then this step
+      # is removed in the immediately following cleanup commit.
+      - name: Reset all user data
+        if: github.event.head_commit.message == 'chore: reset all user data'
+        run: |
+          rm -f "$DEPLOY_DIR/data/users.json"
+          echo "All server-side user data has been deleted."
+
       - name: Install and configure nginx
         # Idempotent: safe to run on every deploy. Installs nginx if it
         # isn't there yet, writes a plain-HTTP reverse-proxy site pointing

@@ -1,8 +1,4 @@
-import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
 import { requireUser } from "@/lib/dal";
-import { deleteSession } from "@/lib/session";
-import { deleteUser, findUserById, listUsers } from "@/lib/userStore";
 
 export const metadata = { title: "내 계정" };
 
@@ -15,27 +11,6 @@ export default async function AccountPage({
 }) {
   const user = await requireUser("/account");
   const { error } = await searchParams;
-
-  async function withdraw(formData: FormData) {
-    "use server";
-    const current = await requireUser("/account");
-    const password = String(formData.get("password") ?? "");
-
-    const record = findUserById(current.id);
-    if (!record) redirect("/logout");
-
-    if (!record.passwordHash) redirect("/account");
-    const ok = await bcrypt.compare(password, record.passwordHash);
-    if (!ok) redirect("/account?error=1");
-
-    if (record.role === "admin" && listUsers().filter((u) => u.role === "admin").length <= 1) {
-      redirect("/account?error=lastadmin");
-    }
-
-    await deleteUser(current.id);
-    await deleteSession();
-    redirect("/");
-  }
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
@@ -61,7 +36,7 @@ export default async function AccountPage({
         </div>
         <div className="flex justify-between">
           <dt className="text-ink-muted">로그인 방식</dt>
-          <dd className="font-bold text-ink">{user.authProvider === "google" ? "Google" : "비밀번호"}</dd>
+          <dd className="font-bold text-ink">Google</dd>
         </div>
       </dl>
 
@@ -82,35 +57,13 @@ export default async function AccountPage({
             마지막 관리자 계정은 탈퇴할 수 없습니다. 다른 계정을 관리자로 지정한 뒤 다시 시도하세요.
           </p>
         )}
-        {user.authProvider === "google" ? (
-          <a
-            href="/api/auth/google?intent=delete_account"
-            className="block w-full rounded-lg px-4 py-3 text-center text-sm font-bold text-white transition hover:opacity-90"
-            style={{ background: "var(--status-critical)" }}
-          >
-            Google로 본인 확인 후 탈퇴
-          </a>
-        ) : (
-          <form action={withdraw} className="space-y-3">
-            <input
-              type="password"
-              name="password"
-              required
-              placeholder="비밀번호 확인"
-              className="w-full rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-3 text-sm text-ink outline-none focus:border-[var(--status-critical)]"
-            />
-            {error === "1" && (
-              <p className="text-xs font-medium text-[var(--status-critical)]">비밀번호가 올바르지 않습니다.</p>
-            )}
-            <button
-              type="submit"
-              className="w-full rounded-lg px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
-              style={{ background: "var(--status-critical)" }}
-            >
-              회원 탈퇴
-            </button>
-          </form>
-        )}
+        <a
+          href="/api/auth/google?intent=delete_account"
+          className="block w-full rounded-lg px-4 py-3 text-center text-sm font-bold text-white transition hover:opacity-90"
+          style={{ background: "var(--status-critical)" }}
+        >
+          Google로 본인 확인 후 탈퇴
+        </a>
       </div>
     </div>
   );
