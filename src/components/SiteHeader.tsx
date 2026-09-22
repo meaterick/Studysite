@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense } from "react";
 import ThemeToggle from "./ThemeToggle";
 import HeaderAuthSection from "./HeaderAuthSection";
@@ -23,12 +24,14 @@ export default function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-[var(--border-hairline)] bg-page/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
         <Link href="/" className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black text-white"
-            style={{ background: "var(--series-blue)" }}
-          >
-            A
-          </span>
+          <Image
+            src="/images/aegis-oauth-logo.png"
+            alt="Aegis AI 스터디"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-lg"
+            priority
+          />
           <span className="text-xs font-bold leading-tight sm:text-base">
             Aegis AI 스터디
             <span className="hidden text-[11px] font-medium text-ink-muted sm:block">

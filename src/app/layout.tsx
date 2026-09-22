@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   },
   description:
     "Aegis 동아리 「AI 기초부터 활용까지」 8주 스터디 — 세계 최상위 대학 강의 구조를 참고한 커리큘럼, 주차별 학습자료, 실습, 퀴즈, 백지공부 시트, 과제.",
+  icons: {
+    icon: "/images/aegis-oauth-logo.png",
+    apple: "/images/aegis-oauth-logo.png",
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
