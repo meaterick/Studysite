@@ -8,6 +8,12 @@ import { findUserByEmail } from "@/lib/userStore";
 
 export const metadata = { title: "로그인" };
 
+const OAUTH_ERRORS: Record<string, string> = {
+  oauth_config: "Google 로그인 설정이 아직 완료되지 않았습니다. 운영자에게 문의해 주세요.",
+  oauth_cancelled: "Google 로그인이 취소되었습니다. 다시 시도해 주세요.",
+  oauth_failed: "Google 로그인 중 문제가 발생했습니다. 다시 시도해 주세요.",
+};
+
 // Cost 10, matching account hashes. Comparing against this for unknown users
 // prevents account-existence timing from bypassing the rate limiter.
 const DUMMY_PASSWORD_HASH = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
@@ -46,7 +52,7 @@ export default async function LoginPage({
     <div className="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">Aegis AI 스터디</p>
       <h1 className="mb-2 text-2xl font-black text-ink">로그인</h1>
-      <p className="mb-8 text-sm text-ink-secondary">스터디원 계정으로 로그인하세요.</p>
+      <p className="mb-8 text-sm text-ink-secondary">Google 계정으로 로그인하면 처음 방문한 스터디원 계정이 자동으로 만들어집니다.</p>
       <Link
         href={googleHref}
         className="mb-5 flex w-full items-center justify-center gap-3 rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-3 text-sm font-bold text-ink transition hover:bg-[var(--surface-card-2)]"
@@ -82,7 +88,9 @@ export default async function LoginPage({
         </div>
         {error && (
           <p className="text-sm font-medium text-[var(--status-critical)]">
-            {error === "rate" ? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." : "이메일 또는 비밀번호가 올바르지 않습니다."}
+            {error === "rate"
+              ? "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."
+              : OAUTH_ERRORS[error] ?? "이메일 또는 비밀번호가 올바르지 않습니다."}
           </p>
         )}
         <button
@@ -93,12 +101,6 @@ export default async function LoginPage({
           로그인
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-ink-secondary">
-        아직 계정이 없나요?{" "}
-        <Link href={`/signup${from ? `?from=${encodeURIComponent(from)}` : ""}`} className="font-bold text-[var(--series-blue)]">
-          회원가입
-        </Link>
-      </p>
     </div>
   );
 }

@@ -26,21 +26,13 @@ export default async function HeaderAuthSection() {
           {user.name}님
         </Link>
       ) : (
-        <>
-          <Link
-            href="/login"
-            className="whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
-          >
-            로그인
-          </Link>
-          <Link
-            href="/signup"
-            className="whitespace-nowrap rounded-md px-3 py-2 font-bold text-white transition hover:opacity-90"
-            style={{ background: "var(--series-blue)" }}
-          >
-            회원가입
-          </Link>
-        </>
+        <Link
+          href="/login"
+          className="whitespace-nowrap rounded-md px-3 py-2 font-bold text-white transition hover:opacity-90"
+          style={{ background: "var(--series-blue)" }}
+        >
+          Google 로그인
+        </Link>
       )}
     </>
   );

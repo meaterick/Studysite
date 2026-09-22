@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     deleteUserId = user.id;
   }
   if (!config) {
-    const url = new URL("/signup", publicOrigin(request));
+    const url = new URL("/login", publicOrigin(request));
     url.searchParams.set("error", "oauth_config");
     if (returnPath !== "/account") url.searchParams.set("from", returnPath);
     return NextResponse.redirect(url);

@@ -21,7 +21,7 @@ type GoogleProfile = {
 };
 
 function fail(request: NextRequest, code: string, from = "/account") {
-  const url = new URL("/signup", publicOrigin(request));
+  const url = new URL("/login", publicOrigin(request));
   url.searchParams.set("error", code);
   if (from !== "/account") url.searchParams.set("from", from);
   const response = NextResponse.redirect(url);

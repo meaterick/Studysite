@@ -6,10 +6,10 @@ export default async function SignupCta() {
   if (user) return null;
   return (
     <Link
-      href="/signup"
+      href="/login"
       className="rounded-lg border border-dashed border-[var(--series-blue)] px-5 py-3 text-sm font-bold text-[var(--series-blue)] transition hover:bg-[var(--surface-card-2)]"
     >
-      스터디원으로 가입하기
+      Google로 시작하기
     </Link>
   );
 }
