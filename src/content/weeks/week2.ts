@@ -99,11 +99,11 @@ print(f"평균={mu:.2f}, 표준편차={sigma:.2f}, 95의 Z-score={z95:.2f}")
 print("95는 이상치인가 (|z|>3 기준)?", abs(z95) > 3)
 \`\`\`
 
-출력된 Q1=13.0, Q3=15.5, Z-score≈2.64가 위 예제에서 손으로 구한 값과 정확히 일치하는지 확인하자. 그리고 두 마지막 print문의 결과(True/False)가 서로 반대로 나온다는 사실 자체가 이 절의 핵심이었다는 것도 다시 한번 기억해두자 — 같은 데이터를 같은 "이상치 판정"이라는 목적으로 살펴봤는데도, 어떤 통계량을 쓰느냐에 따라 결론이 뒤집힐 수 있다.
+출력된 Q1=13.0, Q3=15.5, Z-score(약 2.64)가 위 예제에서 손으로 구한 값과 정확히 일치하는지 확인하자. 그리고 두 마지막 print문의 결과(True/False)가 서로 반대로 나온다는 사실 자체가 이 절의 핵심이었다는 것도 다시 한번 기억해두자 — 같은 데이터를 같은 "이상치 판정"이라는 목적으로 살펴봤는데도, 어떤 통계량을 쓰느냐에 따라 결론이 뒤집힐 수 있다.
 
 ### 2.3 Feature Engineering과 인코딩: 원본 데이터를 모델이 쓸 수 있는 형태로
 
-Feature Engineering(특징 공학)은 원본 데이터를 그대로 모델에 넣는 대신, 도메인 지식을 이용해 그 안에서 더 유용한 특징을 새로 뽑아내거나 조합하는 작업이다. 예를 들어 "주문 날짜"라는 하나의 timestamp 열은 그 자체로는 모델이 별 의미를 찾기 어렵지만, 여기서 요일·월·주말 여부·공휴일 여부 같은 특징을 뽑아내면 "주말에 주문량이 늘어난다"처럼 모델이 실제로 활용할 수 있는 패턴이 드러난다. 가격과 면적이 각각 열로 있다면 "평당 가격 = 가격 ÷ 면적"처럼 두 열을 조합한 파생 특징을 만드는 것도 흔한 예다. 실무에서는 종종 어떤 알고리즘을 쓰느냐보다 어떤 특징을 만들어 넣느냐가 최종 성능을 더 크게 좌우한다.
+Feature Engineering(특징 공학)은 원본 데이터를 그대로 모델에 넣는 대신, 도메인 지식을 이용해 그 안에서 더 유용한 특징을 새로 뽑아내거나 조합하는 작업이다. 예를 들어 "주문 날짜"라는 하나의 timestamp 열은 그 자체로는 모델이 별 의미를 찾기 어렵지만, 여기서 요일·월·주말 여부·공휴일 여부 같은 특징을 뽑아내면 "주말에 주문량이 늘어난다"처럼 모델이 실제로 활용할 수 있는 패턴이 드러난다. 가격과 면적이 각각 열로 있다면 "평당 가격 = 가격 / 면적"처럼 두 열을 조합한 파생 특징을 만드는 것도 흔한 예다. 실무에서는 종종 어떤 알고리즘을 쓰느냐보다 어떤 특징을 만들어 넣느냐가 최종 성능을 더 크게 좌우한다.
 
 범주형(categorical) 데이터는 숫자가 아니므로 대부분의 알고리즘에 넣기 전에 숫자로 바꿔야 한다. 이때 쓰는 대표적인 두 방법은 서로 다른 상황에 맞게 쓰인다.
 
@@ -124,7 +124,7 @@ Min-Max 정규화는 모든 값을 $[0,1]$ 구간으로 밀어 넣는다 — 범
 
 스케일링이 왜 필요한지는 1주차의 경사하강법과 바로 연결된다. 특징 하나("면적", 값이 수백 단위)와 다른 특징("방 개수", 값이 한 자릿수)의 스케일이 백 배 이상 차이 나면, 손실함수 $L(w)$의 등고선은 한쪽으로 심하게 길쭉한 타원이 된다. 경사하강법의 업데이트 방향은 등고선에 수직이므로, 이런 길쭉한 등고선 위에서는 최솟값을 향해 곧장 나아가지 못하고 좌우로 지그재그를 그리며 느리게 수렴한다. 두 특징을 같은 스케일로 맞춰주면 등고선이 원에 가까워지고, 경사하강법이 최솟값을 향해 훨씬 직선에 가깝게, 더 적은 반복으로 수렴한다. 결국 스케일링은 모델의 "정답"을 바꾸는 것이 아니라, 그 정답을 찾아가는 최적화 과정의 속도와 안정성을 바꾸는 작업이다.
 
-두 스케일링을 실제 숫자로 직접 비교해보자. 이 코드에서 sklearn을 처음 쓰는데, sklearn의 거의 모든 전처리·모델 도구는 "① 데이터로부터 규칙을 배운다(\`fit\`) → ② 그 규칙을 데이터에 적용한다(\`transform\`)"는 똑같은 두 단계 패턴을 따른다. 이 패턴은 뒤에 나올 모든 sklearn 코드에서 형태만 바뀌어 계속 반복되므로 지금 확실히 잡고 가는 것이 중요하다.
+두 스케일링을 실제 숫자로 직접 비교해보자. 이 코드에서 sklearn을 처음 쓰는데, sklearn의 거의 모든 전처리·모델 도구는 "① 데이터로부터 규칙을 배운다(\`fit\`), 그다음 ② 그 규칙을 데이터에 적용한다(\`transform\`)"는 똑같은 두 단계 패턴을 따른다. 이 패턴은 뒤에 나올 모든 sklearn 코드에서 형태만 바뀌어 계속 반복되므로 지금 확실히 잡고 가는 것이 중요하다.
 
 :::info 파이썬 문법 — sklearn의 fit/transform 패턴
 \`MinMaxScaler().fit_transform(X)\`는 사실 두 단계가 합쳐진 표현이다. \`fit(X)\`는 "X를 보고 최소·최대(또는 평균·표준편차) 같은 통계치를 계산해서 기억해두는" 단계이고, \`transform(X)\`는 "기억해둔 통계치를 이용해 X를 실제로 변환하는" 단계다. \`fit_transform\`은 이 둘을 한 번에 실행해주는 편의 함수일 뿐이다. 왜 두 단계로 나눠놓았는지는 2.18절의 교차검증에서 정확히 그 이유가 드러난다 — 훈련 데이터로만 \`fit\`하고, 그 결과를 검증·테스트 데이터에는 \`transform\`만 해야 정보 누수를 막을 수 있기 때문이다.
@@ -230,6 +230,35 @@ K-최근접 이웃(K-Nearest Neighbors)은 지금까지의 회귀·로지스틱 
 거리가 가장 짧은 3개는 $B,C,A$로 모두 클래스 0이므로 $X$는 클래스 0으로 분류된다. $K$값 자체가 하이퍼파라미터라는 점도 중요하다 — $K$가 작으면(예: $K=1$) 이웃 하나의 잡음에도 예측이 크게 흔들려 분산이 큰 모델이 되고, $K$를 지나치게 크게 잡으면(예: 전체 데이터 개수만큼) 모든 예측이 전체 데이터의 다수 클래스로 뭉개져버려 편향이 큰 모델이 된다. 이는 2.16절에서 다룰 편향-분산 트레이드오프가 KNN이라는 구체적인 알고리즘 위에서 나타나는 모습이다.
 :::
 
+방금 손으로 짚어본 거리 계산과 다수결을, 이번에는 (1) numpy로 직접 구현한 버전과 (2) sklearn이 제공하는 완성된 KNN 분류기 두 가지로 재현해보자. 두 결과가 똑같이 나오는지 확인하는 것이 목적이다.
+
+\`\`\`python
+import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+
+# 2.9절 표와 완전히 같은 데이터
+X_train = np.array([[1, 1], [2, 1], [1, 2], [5, 5], [6, 5], [5, 6]])
+y_train = np.array([0, 0, 0, 1, 1, 1])
+x_new = np.array([2, 2])
+
+# 방법 1: 거리를 직접 계산한다
+dists = np.sqrt(((X_train - x_new) ** 2).sum(axis=1))  # axis=1: 각 행(샘플)의 좌표(열) 방향으로 합산 → 샘플마다 거리 하나씩
+for i in range(len(X_train)):
+    print(f"점 ({X_train[i, 0]}, {X_train[i, 1]}): 거리={dists[i]:.3f}, 클래스={y_train[i]}")
+
+k = 3
+nearest_idx = np.argsort(dists)[:k]           # 거리를 기준으로 정렬했을 때의 인덱스, 앞 k개만
+nearest_classes = y_train[nearest_idx]        # 그 인덱스 위치의 클래스만 골라내는 "팬시 인덱싱"
+pred_by_hand = np.bincount(nearest_classes).argmax()  # 가장 많이 등장한 값(다수결)
+print(f"\\nK={k} 최근접 이웃의 클래스: {[int(c) for c in nearest_classes]} → 다수결 예측 = {pred_by_hand}")
+
+# 방법 2: sklearn의 KNeighborsClassifier로 같은 예측을 재현
+clf = KNeighborsClassifier(n_neighbors=k).fit(X_train, y_train)
+print("sklearn 예측:", clf.predict([x_new])[0])
+\`\`\`
+
+\`np.argsort(dists)\`는 값을 직접 정렬하는 대신 "정렬했을 때의 원래 인덱스 순서"를 돌려준다. 그래서 \`y_train[nearest_idx]\`처럼 이 인덱스 배열을 다른 배열에 그대로 넣으면, 정렬 순서대로 원하는 원소들만 쏙쏙 뽑아낼 수 있다 — 이런 인덱싱 방식을 팬시 인덱싱(fancy indexing)이라 부른다. 마지막 두 줄에서 "손으로" 만든 예측과 sklearn의 \`clf.fit(X_train, y_train).predict(...)\` 예측이 똑같이 나온다면, sklearn 내부에서도 결국 우리가 손으로 한 것과 같은 계산(거리를 재고, 그다음 다수결로 정하는 것)이 일어난다는 뜻이다.
+
 ### 2.10 나이브 베이즈(Naive Bayes): 베이즈 정리로 분류하기
 
 1주차에서 배운 베이즈 정리 $P(A|B)=\\dfrac{P(B|A)P(A)}{P(B)}$를 분류 문제에 그대로 적용한 것이 나이브 베이즈다. 어떤 샘플이 특징 $x_1,x_2,\\dots,x_n$을 가질 때 클래스 $c$일 확률은 베이즈 정리로 $P(c|x_1,\\dots,x_n)\\propto P(c)\\,P(x_1,\\dots,x_n|c)$로 쓸 수 있는데, 특징이 여러 개면 $P(x_1,\\dots,x_n|c)$를 직접 계산하기가 매우 어렵다. 그래서 나이브 베이즈는 "클래스가 주어졌을 때 특징들이 서로 조건부 독립이다"라는, 현실에서는 대체로 정확히 성립하지 않는 과감한(naive) 가정을 세운다. 이 가정 덕분에 결합확률이 개별 확률의 곱으로 쪼개진다.
@@ -250,6 +279,26 @@ P(c \\mid x_1,\\dots,x_n) \\;\\propto\\; P(c)\\prod_{i=1}^n P(x_i \\mid c)
 
 두 값을 더해 1이 되도록 정규화하면 $P(\\text{스팸}\\mid\\text{무료, 당첨}) = \\dfrac{0.072}{0.072+0.0007} \\approx 99.0\\%$다. "무료"와 "당첨"이라는 두 단어만으로도 스팸일 확률이 99%까지 치솟는다는 걸 확인할 수 있다.
 :::
+
+이 계산 전체를 코드 몇 줄로 그대로 옮겨보자. 새로운 문법은 없고, 지금까지 배운 변수·연산자만으로 충분하다 — 오히려 "복잡한 수식도 결국 코드로는 이렇게 짧게 끝난다"는 걸 확인하는 것이 이 셀의 목적이다.
+
+\`\`\`python
+# 2.10절 스팸 필터 예시를 코드로 검산
+p_spam, p_normal = 0.3, 0.7
+p_free_given_spam, p_free_given_normal = 0.6, 0.05
+p_win_given_spam, p_win_given_normal = 0.4, 0.02
+
+# 조건부 독립 가정: P(스팸)×P(무료|스팸)×P(당첨|스팸)
+score_spam = p_spam * p_free_given_spam * p_win_given_spam
+score_normal = p_normal * p_free_given_normal * p_win_given_normal
+p_spam_given_words = score_spam / (score_spam + score_normal)  # 두 점수를 더해 1이 되도록 정규화
+
+print(f"스팸 쪽 점수 = {score_spam:.4f}")
+print(f"정상 쪽 점수 = {score_normal:.6f}")
+print(f"P(스팸 | 무료, 당첨) = {p_spam_given_words:.4f} ({p_spam_given_words * 100:.1f}%)")
+\`\`\`
+
+\`p_spam, p_normal = 0.3, 0.7\`처럼 쉼표로 나열한 값을 쉼표로 나열한 변수에 한 줄로 나눠 담는 것을 다중 할당(multiple assignment)이라 부른다. 왼쪽 개수와 오른쪽 개수가 정확히 같아야 하며, 왼쪽부터 순서대로 하나씩 짝지어 대입된다 — 관련 있는 변수 여러 개를 선언할 때 한 줄로 줄여 쓰는 흔한 방법이다.
 
 ### 2.11 결정트리(Decision Tree): 질문을 반복해서 데이터를 쪼개기
 
@@ -272,6 +321,33 @@ P(c \\mid x_1,\\dots,x_n) \\;\\propto\\; P(c)\\prod_{i=1}^n P(x_i \\mid c)
 
 정보이득(지니 감소량) $=0.469-0.4375\\approx0.031$이다. 결정트리는 가능한 모든 특징·기준값 조합에 대해 이 계산을 반복해, 정보이득이 가장 큰 분할을 각 노드에서 반복적으로 선택하며 트리를 키워나간다. 트리 깊이를 제한하지 않으면 훈련 데이터를 완벽히 분류할 때까지 계속 쪼개다가 결국 노이즈까지 암기해버리는데, 이 또한 2.16절의 과적합이 결정트리 위에서 나타나는 구체적인 모습이다.
 :::
+
+같은 계산을 함수로 한 번 묶어두면, 다른 분할 후보가 나타났을 때도 매번 손으로 다시 적을 필요 없이 함수만 다시 호출하면 된다. 위 표의 네 지니 값 전부를 함수 하나로 검산해보자.
+
+\`\`\`python
+import numpy as np
+
+def gini(class_counts):
+    """각 클래스의 샘플 개수 리스트를 받아 지니 불순도를 계산한다."""
+    counts = np.array(class_counts, dtype=float)
+    p = counts / counts.sum()   # 각 클래스의 비율 p_i
+    return 1 - np.sum(p ** 2)   # G = 1 - Σ p_i²
+
+g_parent = gini([5, 3])   # 부모 노드: 함 5, 안함 3
+g_sunny = gini([3, 1])    # Sunny: 함 3, 안함 1
+g_rainy = gini([2, 2])    # Rainy: 함 2, 안함 2
+
+n_parent, n_sunny, n_rainy = 8, 4, 4
+g_split = (n_sunny / n_parent) * g_sunny + (n_rainy / n_parent) * g_rainy
+info_gain = g_parent - g_split
+
+print(f"부모 지니 불순도 = {g_parent:.3f}")
+print(f"Sunny 지니 = {g_sunny:.3f}, Rainy 지니 = {g_rainy:.3f}")
+print(f"분할 후 가중평균 지니 = {g_split:.4f}")
+print(f"정보이득 = {info_gain:.4f}")
+\`\`\`
+
+\`def gini(class_counts):\` 처럼 콜론 뒤에 들여쓰기된 코드 블록으로 계산 과정을 묶고 이름을 붙인 것이 함수(function)다. 함수 안에서 \`return\`으로 계산 결과를 돌려주면, 그 함수를 호출한 자리에 그 값이 그대로 나타난다. 여기서는 \`gini([5, 3])\`, \`gini([3, 1])\`, \`gini([2, 2])\`처럼 같은 계산 로직을 값만 바꿔가며 세 번 재사용했다 — 로직을 함수로 한 번만 정확히 적어두면, 이후에는 실수할 걱정 없이 값만 바꿔 호출하면 된다는 것이 함수를 쓰는 핵심 이유다. 출력이 표에서 손으로 계산했던 0.469, 0.375, 0.5, 0.4375, 0.031과 (반올림 오차 범위 내에서) 같은지 확인하자.
 
 \`\`\`image
 src: /images/week2/decision-tree.svg
@@ -322,6 +398,24 @@ XGBoost와 LightGBM은 이 그래디언트 부스팅 아이디어를 실무에�
 클래스 $+1$인 점 $A=(3,1)$과 클래스 $-1$인 점 $B=(1,3)$이 있고, 이 둘이 정확히 경계선에서 같은 거리에 있는 서포트벡터라 하자. 경계선의 방향을 $w=(1,-1)$로 두면 $w\\cdot A=3-1=2$, $w\\cdot B=1-3=-2$다. 서포트벡터에서는 관례상 $|w^Tx+b|=1$이 되도록 $w$를 스케일하므로, $w$를 절반으로 줄인 $w'=(0.5,-0.5)$를 쓰면 $w'\\cdot A=1$, $w'\\cdot B=-1$이 정확히 맞아떨어진다. 이때 마진의 폭은 $\\dfrac{2}{\\lVert w'\\rVert}=\\dfrac{2}{\\sqrt{0.5^2+0.5^2}}=\\dfrac{2}{0.7071}\\approx2.83$이다. $A$와 $B$ 두 점이 이 마진의 양쪽 경계를 결정짓는 서포트벡터이고, SVM의 학습은 이 폭을 가능한 한 크게 만드는 $w,b$를 찾는 과정이다.
 :::
 
+\`\\lVert w \\rVert\`(벡터의 크기, norm)는 1주차에서 다룬 \`np.linalg.norm\`으로 바로 계산할 수 있다. 벡터의 내적(dot product) 역시 1주차에서 \`@\` 연산자로 다뤘던 것을 그대로 재사용한다.
+
+\`\`\`python
+import numpy as np
+
+A = np.array([3, 1])          # 클래스 +1
+B = np.array([1, 3])          # 클래스 -1
+w = np.array([0.5, -0.5])     # 2.14절에서 스케일까지 맞춘 w'
+
+print("w·A =", w @ A)         # @ : 벡터 내적 연산자 (1주차 참고)
+print("w·B =", w @ B)
+
+margin = 2 / np.linalg.norm(w)
+print(f"마진 폭 = 2 / ||w|| = {margin:.3f}")
+\`\`\`
+
+\`w @ A\`와 \`w @ B\`가 정확히 $1$과 $-1$로 나오고, 마진 폭이 손으로 계산한 $2.83$과 일치하는지 확인하자.
+
 데이터가 직선으로 깔끔하게 갈라지지 않는 경우, SVM은 커널 트릭(kernel trick)이라는 방법으로 원래 특징 공간을 더 높은 차원으로 매핑해 그 공간에서는 직선으로 갈라지도록 만든다(대표적으로 RBF 커널). 이 부분은 이번 주 범위를 넘어서므로 "선형으로 안 갈라지는 데이터도 SVM으로 다룰 방법이 있다"는 정도만 기억해두자.
 
 \`\`\`image
@@ -356,6 +450,27 @@ height: 360
 실제 데이터에서는 보통 여러 번 반복해야 하고, 초기 centroid를 어디에 두는지에 따라 최종 결과가 달라질 수 있어(지역 최솟값에 빠지는 문제) 서로 다른 초기값으로 여러 번 돌려 그중 가장 좋은 결과를 택하는 방식(k-means++ 초기화 등)이 실무에서 흔히 쓰인다. $K$ 자체도 미리 정해야 하는 하이퍼파라미터이며, 군집 내 거리 합이 완만해지는 지점을 찾는 엘보우(elbow) 방법 등으로 정하는 경우가 많다.
 :::
 
+sklearn의 \`KMeans\`로 방금 손으로 돌려본 1회차 갱신을 그대로 재현해보자. \`init\` 인자에 우리가 정한 초기 centroid를 직접 넣고 \`max_iter=1\`로 "딱 1번만 갱신"하도록 제한하면 손 계산과 정확히 같은 상황을 만들 수 있다.
+
+\`\`\`python
+import numpy as np
+from sklearn.cluster import KMeans
+
+pts = np.array([[1, 1], [1, 2], [4, 4], [5, 4], [1, 0], [4, 5]])  # 2.15절의 P1~P6과 동일한 순서
+
+# 손으로 계산한 것과 똑같이 초기 centroid를 P1, P4로 주고 딱 1번만 갱신
+km_1step = KMeans(n_clusters=2, init=np.array([[1, 1], [5, 4]]), n_init=1, max_iter=1).fit(pts)
+print("1회 갱신 후 centroid:\\n", np.round(km_1step.cluster_centers_, 2))
+print("1회 갱신 후 배정:", km_1step.labels_)
+
+# 실무에서는 초기 centroid를 미리 알 수 없으므로, 무작위로 여러 번(n_init=10) 시도해 가장 좋은 결과를 택한다
+km = KMeans(n_clusters=2, n_init=10, random_state=0).fit(pts)
+print("\\n무작위 초기화(n_init=10) 최종 centroid:\\n", np.round(km.cluster_centers_, 2))
+print("무작위 초기화 최종 배정:", km.labels_)
+\`\`\`
+
+첫 번째 결과의 centroid $(1,1)$과 $(4.33,4.33)$이 손으로 계산한 값과 정확히 같은지 확인하자. 두 번째 결과는 군집 번호(0과 1 어느 쪽이 어느 군집인지)가 첫 번째와 뒤바뀌어 나올 수도 있는데, K-Means에서 군집 "번호" 자체는 의미가 없고(어차피 레이블 없이 비슷한 것끼리 묶기만 하므로) 어떤 점들이 같은 군집으로 묶였는지만 중요하다는 점도 함께 기억해두자.
+
 **PCA(주성분분석)**는 1주차에서 배운 고유벡터·고윳값, 그리고 SVD($X=U\\Sigma V^T$)를 데이터의 차원을 줄이는 데 직접 활용하는 방법이다. 아이디어는 단순하다 — 데이터가 가장 넓게 퍼져 있는(분산이 가장 큰) 방향을 찾아 그 방향으로 데이터를 투영하면, 원래 차원보다 적은 수의 축만으로도 데이터의 정보를 최대한 보존할 수 있다는 것이다. 이 "분산이 가장 큰 방향"은 정확히 데이터의 공분산 행렬 $\\Sigma_{cov}$의 고유벡터 중 가장 큰 고윳값에 대응하는 벡터이며(즉 $\\Sigma_{cov}v=\\lambda v$를 만족하는 $v$), 동시에 중심화된 데이터 행렬 $X$를 SVD로 분해했을 때 가장 큰 특이값에 대응하는 오른쪽 특이벡터($V$의 첫 번째 열)와도 같다.
 
 :::example 완벽한 직선 데이터로 확인하는 PCA
@@ -363,6 +478,23 @@ height: 360
 
 데이터가 정확히 $y=x$라는 직선 위에 있으니 당연히 모든 변동은 그 직선 방향($v_1$, $(1,1)$ 방향)으로만 존재하고, 그와 수직인 방향($v_2$, $(1,-1)$ 방향)으로는 변동이 전혀 없다. 계산된 고윳값 $4$와 $0$이 정확히 이 사실과 일치한다 — 첫 번째 주성분 $v_1$ 하나에만 데이터를 투영해도(2차원을 1차원으로 줄여도) 정보 손실이 전혀 없다는 뜻이다. 실제 데이터는 이렇게 완벽한 직선 위에 있는 경우가 드물지만, 두 고윳값의 크기 차이가 클수록(하나는 크고 나머지는 작을수록) 적은 수의 주성분으로도 데이터의 분산 대부분을 설명할 수 있다는 원리는 그대로 적용된다.
 :::
+
+sklearn의 \`PCA\`도 같은 데이터로 검산해보자. sklearn은 공분산 행렬을 표본 크기가 아니라 표본 크기에서 1을 뺀 값(n−1)으로 나누는 관례(불편추정량)를 쓰기 때문에 고윳값 자체의 크기는 손 계산과 조금 다르게 나올 수 있지만, "각 주성분이 전체 분산 중 몇 %를 차지하는가"라는 비율은 나누는 값과 무관하게 항상 똑같이 나온다 — 그래서 아래 코드는 고윳값 대신 이 비율(\`explained_variance_ratio_\`)을 확인한다.
+
+\`\`\`python
+import numpy as np
+from sklearn.decomposition import PCA
+
+pts = np.array([[0, 0], [1, 1], [2, 2], [3, 3], [-1, -1]])  # 2.15절 예시와 동일, 정확히 y=x 위의 점들
+
+pca = PCA(n_components=2).fit(pts)
+print("주성분 방향(고유벡터, 부호는 반대로 나올 수도 있음):\\n", np.round(pca.components_, 3))
+print("분산 설명 비율 (PC1, PC2):", np.round(pca.explained_variance_ratio_, 4))
+\`\`\`
+
+첫 번째 주성분의 방향이 $(1,1)$을 정규화한 $(\\pm0.707, \\pm0.707)$과 같은 방향이고, 분산 설명 비율이 (1.0, 0.0)으로 나오는지(즉 PC1 혼자 분산의 100%를 설명하는지) 확인하자. 고유벡터의 부호(+인지 −인지)는 계산 라이브러리마다 다르게 나올 수 있는데, 방향 자체(그 직선 위에 있다는 사실)만 같으면 결과가 같은 것으로 봐도 된다 — 바로 위 예제에서 구한 $v_1=(1,1)$ 방향과 부호만 반대인 $-v_1=(-1,-1)$이 사실은 같은 직선을 가리키는 것과 같은 이치다.
+
+여기까지 2.6~2.15절에서 다룬 것을 한번 정리하고 넘어가자. 회귀 알고리즘 2가지(선형·다항회귀), 분류 알고리즘 6가지(로지스틱회귀·KNN·나이브베이즈·결정트리·앙상블(랜덤포레스트·부스팅)·SVM), 비지도학습 2가지(K-Means·PCA), 총 10가지 알고리즘의 원리와 사용 시점을 훑었다. 지금부터 2.22절까지는 새로운 알고리즘이 등장하지 않는다. 대신 질문이 바뀐다 — 지금까지는 "어떤 모델을 쓸 것인가"였다면, 이제부터는 "그 모델이 정말 좋은 모델인지 어떻게 확인할 것인가"다. 구체적으로는 손실을 무작정 줄이기만 하면 정말 좋은 모델이 되는지(2.16~2.18절: 편향-분산, 정규화, 교차검증), 그리고 "좋다"는 걸 숫자로 어떻게 표현할지(2.19~2.22절: 분류·회귀 평가지표와 베이스라인)를 차례로 다룬다.
 
 ### 2.16 편향-분산 트레이드오프: 오차의 두 가지 원인
 
@@ -406,39 +538,44 @@ height: 352
 모델 B와 모델 C의 평균제곱오차(대략 $\\text{bias}^2+\\text{variance}$)는 우연히 비슷하게 나올 수 있지만(각각 약 14, 8.4), 원인은 정반대다. 처방도 정반대여야 한다 — B에는 정규화나 더 많은 데이터를 줘야 하고, C에는 더 복잡한 모델이나 더 많은 특징을 줘야 한다. 같은 "오차가 크다"는 증상이라도 진단이 다르면 처방도 완전히 달라진다는 게 이번 주의 핵심이다.
 :::
 
-아래 코드는 Colab에서 별도 설치 없이 그대로 실행할 수 있다. 코드를 실행만 하고 넘어가지 말고, 각 블록 뒤에 붙은 설명과 질문에 스스로 답해보면서 따라가자. 먼저 방금 살펴본 과적합·과소적합을 직접 눈으로 확인해보자. sin 곡선에 약간의 노이즈를 섞은 가짜 데이터를 만든 다음, 다항식의 차수를 1부터 12까지 늘려가며 같은 데이터에 억지로 끼워 맞춰본다. 차수가 낮으면 모델이 너무 단순해서 곡선의 굴곡을 따라가지 못하고(과소적합), 차수가 너무 높으면 데이터의 노이즈까지 통째로 외워버린다(과적합).
+아래 코드부터는 이 페이지 안에서 ▶ 실행 버튼을 눌러 바로 돌려볼 수 있다 — 브라우저 안에서 파이썬이 진짜로 실행된다. 다만 화면이 없는 환경이라 \`plt.show()\`로 그래프를 그리는 것은 불가능하므로, 이 페이지의 모든 실행 코드는 그래프 대신 숫자를 표로 \`print\`하는 방식을 쓴다. 코드를 실행만 하고 넘어가지 말고, 각 블록 뒤에 붙은 설명과 질문에 스스로 답해보면서 따라가자. 먼저 방금 살펴본 과적합·과소적합을 직접 숫자로 확인해보자. sin 곡선에 약간의 노이즈를 섞은 가짜 데이터를 만든 다음, 다항식의 차수를 1부터 12까지 늘려가며 같은 데이터에 억지로 끼워 맞춰본다. 차수가 낮으면 모델이 너무 단순해서 곡선의 굴곡을 따라가지 못하고(과소적합), 차수가 너무 높으면 데이터의 노이즈까지 통째로 외워버린다(과적합).
+
+:::info 파이썬 문법 — train_test_split과 튜플 언패킹
+\`xtr, xva, ytr, yva = train_test_split(x, y, test_size=0.4, random_state=0)\`처럼 함수 하나가 값 여러 개를 한꺼번에 돌려주고, 그걸 쉼표로 나열한 변수 여러 개에 순서대로 나눠 담는 것을 튜플 언패킹(unpacking)이라 부른다. \`train_test_split\`은 항상 "(입력의 훈련 부분, 입력의 검증 부분, 정답의 훈련 부분, 정답의 검증 부분)" 순서로 4개를 돌려주므로, 왼쪽 변수 순서를 이 순서와 다르게 적으면 \`x\`와 \`y\`가 뒤바뀌어 들어가는 조용한 버그가 생긴다. \`test_size=0.4\`는 "전체 중 40%를 검증용으로 뗀다"는 뜻이고, \`random_state=0\`은 무작위로 나누는 기준(난수 시드)을 고정해 코드를 다시 실행해도 항상 같은 방식으로 나뉘게 해준다.
+:::
 
 \`\`\`python
-import numpy as np, matplotlib.pyplot as plt
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split, cross_val_score
+import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.metrics import classification_report, confusion_matrix, precision_score, recall_score, roc_curve, roc_auc_score, RocCurveDisplay
+from sklearn.linear_model import LinearRegression
 
-# (1) 과적합 시각화를 위한 가짜 데이터: sin 곡선 + 노이즈
+# (1) 과적합·과소적합 관찰용 가짜 데이터: sin 곡선 + 약간의 노이즈
 rng = np.random.default_rng(0)
-x = np.sort(rng.uniform(0, 1, 30))[:, None]
-y = np.sin(2*np.pi*x[:,0]) + rng.normal(0, 0.2, 30)
+x = np.sort(rng.uniform(0, 1, 30))[:, None]  # (30,) 1차원 배열을 (30,1) 2차원 배열로: sklearn의 입력 X는 항상 2차원이어야 한다
+y = np.sin(2 * np.pi * x[:, 0]) + rng.normal(0, 0.2, 30)
 xtr, xva, ytr, yva = train_test_split(x, y, test_size=0.4, random_state=0)
-\`\`\`
 
-훈련 데이터(xtr, ytr) 60%와 검증 데이터(xva, yva) 40%로 나눴다. 이제 다항식 차수 d를 1부터 12까지 바꿔가며 매번 모델을 새로 학습시키고, 훈련 오차와 검증 오차를 각각 기록해보자.
-
-\`\`\`python
+# (2) 다항식 차수 1~12를 바꿔가며 훈련오차·검증오차를 기록
 tr_err, va_err = [], []
 for d in range(1, 13):
-    m = make_pipeline(PolynomialFeatures(d), StandardScaler(), LinearRegression()).fit(xtr, ytr)
-    tr_err.append(np.mean((m.predict(xtr)-ytr)**2))
-    va_err.append(np.mean((m.predict(xva)-yva)**2))
-plt.plot(tr_err, label="train"); plt.plot(va_err, label="val"); plt.yscale("log"); plt.legend(); plt.show()
+    # make_pipeline: 여러 전처리·모델 단계를 하나로 묶어, fit 한 번으로 순서대로 다 실행되게 한다
+    model = make_pipeline(PolynomialFeatures(d), StandardScaler(), LinearRegression()).fit(xtr, ytr)
+    tr_err.append(np.mean((model.predict(xtr) - ytr) ** 2))
+    va_err.append(np.mean((model.predict(xva) - yva) ** 2))
+
+print(f"{'차수':>4} {'훈련오차':>10} {'검증오차':>10}")
+for d in range(1, 13):
+    print(f"{d:4d} {tr_err[d - 1]:10.4f} {va_err[d - 1]:10.4f}")
 \`\`\`
 
-그래프를 보면 훈련 오차(train)는 차수가 올라갈수록 거의 단조롭게 계속 줄어든다 — 모델이 유연해질수록 훈련 데이터 자체는 더 잘 외울 수 있기 때문이다. 하지만 검증 오차(val)는 다르게 움직인다. 어느 지점까지는 같이 줄어들다가, 그 이후로는 다시 커지기 시작한다. 이 U자 모양 바닥이 정확히 방금 설명한 "편향과 분산의 균형점"이다. 바닥보다 왼쪽은 과소적합 구간(모델이 너무 단순해 두 오차 모두 큼)이고, 오른쪽은 과적합 구간(훈련 오차는 계속 낮아지지만 검증 오차는 도리어 치솟는다)이다.
+\`make_pipeline(PolynomialFeatures(d), StandardScaler(), LinearRegression())\`은 "차수 d까지 거듭제곱 특징을 만들고, 그 특징들을 표준화한 뒤, 선형회귀로 학습한다"는 세 단계를 하나의 파이프라인(pipeline)으로 묶은 것이다. 파이프라인에 \`.fit(xtr, ytr)\`을 한 번 호출하면 내부적으로 이 세 단계가 순서대로 실행되고, \`.predict(...)\`를 호출하면 새 데이터에도 같은 세 단계가 그대로 적용된다 — 여러 줄에 걸쳐 각 단계를 따로 호출하고 결과를 다음 단계에 넘기는 번거로움을 줄여준다. \`{'차수':>4}\`처럼 f-string 안에서 콜론 뒤에 \`>4\`를 붙이면 "오른쪽 정렬로 4칸을 차지하게" 표시하라는 뜻이다 — 표처럼 열을 맞춰 출력할 때 자주 쓰는 서식이다.
+
+훈련오차(tr_err) 열은 차수가 올라갈수록 거의 단조롭게 계속 줄어드는 것을 볼 수 있다 — 모델이 유연해질수록 훈련 데이터 자체는 더 잘 외울 수 있기 때문이다. 하지만 검증오차(va_err) 열은 다르게 움직인다. 어느 지점까지는 같이 줄어들다가, 그 이후로는 다시 커지기 시작한다. 이 U자 모양 바닥이 정확히 방금 설명한 "편향과 분산의 균형점"이다. 바닥보다 왼쪽은 과소적합 구간(모델이 너무 단순해 두 오차 모두 큼)이고, 오른쪽은 과적합 구간(훈련 오차는 계속 낮아지지만 검증 오차는 도리어 치솟는다)이다.
 
 :::warn 관찰
-차수 몇에서 검증 오차가 최소인가?
+출력된 표에서 검증오차가 가장 작은 차수는 몇인가? 그 차수보다 작을 때와 클 때, 각각 과소적합·과적합 중 어느 쪽에 해당하는가?
 :::
 
 ### 2.17 정규화: 파라미터에 벌금 매기기
@@ -463,20 +600,33 @@ L2 정규화(Ridge)는 \`L + λ‖w‖²\`처럼 가중치 제곱의 합을 벌�
 
 이제 실제 이진분류 데이터(유방암 진단 데이터셋)로 넘어가자. 여기서 확인해야 할 핵심은 모델의 정확도가 아니라 "검증 방식 자체가 올바른가"다. 위에서 다룬 데이터 누수를 실제로 피해가는 코드가 어떻게 생겼는지 눈여겨보자 — StandardScaler를 make_pipeline 안에 넣어서, 교차검증의 매 fold마다 훈련 부분에서만 평균·표준편차를 계산하도록 강제한다. 만약 스케일러를 파이프라인 밖에 두고 Xtr 전체에 미리 fit해버리면, 각 fold의 검증 부분 정보가 스케일링 과정에 슬쩍 섞여 들어가 버린다.
 
+아래 셀은 이번 절 이후로 2.19~2.20절까지 계속 재사용할 \`clf\`(학습된 파이프라인), \`Xtr/Xte/ytr/yte\`(분할된 데이터), \`X/y\`(전체 데이터)를 만든다. 뒤에 나오는 셀들은 이 변수들을 그대로 이어서 쓰므로, **아래 셀을 먼저 실행한 뒤에 순서대로** 다음 셀들을 실행해야 한다.
+
 \`\`\`python
 # (2) 분류 + 교차검증 (누수 방지: 스케일러를 파이프라인 안에!)
+# ↓ 아래 (3)~(5)번 코드 셀은 여기서 만든 clf, Xtr, Xte, ytr, yte, X, y를 이어서 사용한다. 반드시 이 셀부터 실행하자.
+import numpy as np
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
 X, y = load_breast_cancer(return_X_y=True)
 Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
 clf = make_pipeline(StandardScaler(), LogisticRegression(C=1.0, max_iter=1000))
-print(cross_val_score(clf, Xtr, ytr, cv=5, scoring="f1").mean())
+cv_f1 = cross_val_score(clf, Xtr, ytr, cv=5, scoring="f1")
+print(f"5-Fold 교차검증 F1 평균 = {cv_f1.mean():.4f} (fold별 점수: {np.round(cv_f1, 3)})")
+
 clf.fit(Xtr, ytr)
 print(classification_report(yte, clf.predict(Xte)))
 \`\`\`
 
-stratify=y로 나눈 이유도 짚고 넘어가자. 그냥 무작위로 나누면 훈련셋과 테스트셋의 양성·음성 비율이 우연히 서로 달라질 수 있는데, stratify는 원래 데이터의 클래스 비율을 훈련셋과 테스트셋 양쪽에 그대로 유지시켜준다. cross_val_score의 결과는 5번의 fold에서 나온 F1 점수의 평균이다 — 한 번의 분할로 얻은 점수보다 훨씬 믿을 만한 추정치라는 걸 기억해두자.
+stratify=y로 나눈 이유도 짚고 넘어가자. 그냥 무작위로 나누면 훈련셋과 테스트셋의 양성·음성 비율이 우연히 서로 달라질 수 있는데, stratify는 원래 데이터의 클래스 비율을 훈련셋과 테스트셋 양쪽에 그대로 유지시켜준다. \`cross_val_score\`는 5번의 fold 각각에서 계산된 F1 점수 5개를 배열로 돌려주므로, 그 평균(\`cv_f1.mean()\`)이 한 번의 분할로 얻은 점수보다 훨씬 믿을 만한 추정치라는 걸 기억해두자.
 
 :::warn 관찰
-스케일러를 파이프라인 밖에서 Xtr 전체에 미리 fit한 뒤 같은 교차검증을 돌리면 F1 점수가 어떻게, 얼마나 달라지는가 — 그 차이가 바로 데이터 누수가 만들어낸 "가짜 성능"이다.
+아래처럼 스케일러를 파이프라인 밖으로 빼내 \`Xtr\` 전체에 미리 \`fit\`한 뒤(\`Xtr_scaled = StandardScaler().fit_transform(Xtr)\`) 로지스틱 회귀만으로 같은 5-Fold 교차검증을 돌리면 F1 점수가 어떻게, 얼마나 달라지는가? 그 차이가 바로 데이터 누수가 만들어낸 "가짜 성능"이다. (직접 코드를 고쳐 실행해보자.)
 :::
 
 ### 2.19 평가지표: 정확도만 보면 안 되는 이유
@@ -514,18 +664,22 @@ Precision과 Recall 중 무엇을 더 중시할지는 문제마다 다르다. �
 
 위 스팸 필터 예제의 숫자를 그대로 대입하면 $\\text{Specificity}=\\dfrac{65}{65+5}=\\dfrac{65}{70}\\approx92.9\\%$다. Recall(민감도)이 "진짜 스팸을 얼마나 놓치지 않는가"를 재는 것과 대칭적으로, Specificity는 "진짜 정상 메일을 얼마나 억울하게 스팸 처리하지 않는가"를 잰다. 이 둘은 서로 트레이드오프 관계에 있다 — 2.20절에서 다룰 ROC 곡선의 세로축(TPR)이 사실 Recall이고, 가로축(FPR)은 $1-\\text{Specificity}$와 정확히 같다는 점도 미리 짚어두자.
 
-이제 방금 손으로 계산했던 Precision·Recall을 코드로도 재현해서 검산해보자. sklearn의 confusion_matrix가 뱉어내는 TP/FP/FN/TN 숫자를 공식에 직접 대입한 값과, sklearn이 제공하는 precision_score/recall_score 함수의 결과가 정확히 일치하는지 확인하는 것이 목적이다.
+이제 방금 손으로 계산했던 Precision·Recall을 코드로도 재현해서 검산해보자. sklearn의 confusion_matrix가 뱉어내는 TP/FP/FN/TN 숫자를 공식에 직접 대입한 값과, sklearn이 제공하는 precision_score/recall_score 함수의 결과가 정확히 일치하는지 확인하는 것이 목적이다. 이 셀은 2.18절 (2)번 셀에서 만든 \`clf\`, \`Xte\`, \`yte\`를 이어서 사용하므로, (2)번 셀을 먼저 실행해야 한다.
 
 \`\`\`python
-# (3) 혼동행렬을 직접 손으로도 계산해서 검산
+# (3) 혼동행렬을 직접 손으로도 계산해서 검산 — (2)번 셀의 clf, Xte, yte를 이어서 사용
+from sklearn.metrics import confusion_matrix, precision_score, recall_score
+
 yte_pred = clf.predict(Xte)
-tn, fp, fn, tp = confusion_matrix(yte, yte_pred).ravel()
+tn, fp, fn, tp = confusion_matrix(yte, yte_pred).ravel()  # .ravel(): 2x2 표를 1차원 배열 [tn,fp,fn,tp]로 펼침
 precision_by_hand = tp / (tp + fp)
 recall_by_hand = tp / (tp + fn)
 print(f"TP={tp}, FP={fp}, FN={fn}, TN={tn}")
 print(f"손으로 계산: precision={precision_by_hand:.3f}, recall={recall_by_hand:.3f}")
 print(f"sklearn 함수: precision={precision_score(yte, yte_pred):.3f}, recall={recall_score(yte, yte_pred):.3f}")
 \`\`\`
+
+\`confusion_matrix(...)\`는 원래 2행 2열의 표(2차원 배열)를 돌려주는데, \`.ravel()\`은 이 표를 한 줄로 펼쳐 \`[tn, fp, fn, tp]\` 순서의 1차원 배열로 만들어준다. 그래서 \`tn, fp, fn, tp = confusion_matrix(...).ravel()\`이라는 한 줄로 네 칸의 숫자를 각각의 변수에 바로 담을 수 있다.
 
 :::warn 관찰
 위 코드에서 손으로 계산한 precision/recall과 sklearn 함수의 결과가 소수점까지 정확히 일치하는가?
@@ -588,30 +742,38 @@ AUC는 "데이터에서 양성 샘플 하나와 음성 샘플 하나를 각각 �
 
 ROC-AUC는 이렇게 임계값을 아예 고정하지 않고 모델의 변별력 자체를 재기 때문에, 클래스 비율이 어느 정도 기울어져 있어도 Precision·Recall처럼 쉽게 왜곡되지는 않는다. 다만 이것이 "클래스 불균형에 완전히 무적"이라는 뜻은 아니다 — 양성이 극단적으로 희귀한 문제(예: 사기 탐지처럼 양성이 0.1% 미만인 경우)에서는 음성 샘플이 워낙 많아 FPR의 분모(FP+TN)가 항상 크게 나오는 탓에 ROC-AUC가 실제 체감 성능보다 낙관적으로 보일 수 있어서, 이런 경우엔 Precision과 Recall만으로 그린 PR-AUC를 함께, 혹은 더 우선해서 보는 쪽을 권하기도 한다.
 
-이제 방금 손으로 그려본 ROC 곡선을 sklearn으로도 그대로 재현해보자. \`predict\`가 뱉는 0/1 라벨이 아니라 \`predict_proba\`가 뱉는 확률(양성 클래스 쪽 두 번째 열)을 넘겨야 한다는 점이 핵심이다 — ROC 곡선 자체가 "임계값을 바꿔가며" 그리는 그림이므로, 이미 0.5로 잘려버린 예측값으로는 곡선을 그릴 수 없다.
+이제 방금 손으로 그려본 ROC 곡선을 sklearn으로도 그대로 재현해보자. \`predict\`가 뱉는 0/1 라벨이 아니라 \`predict_proba\`가 뱉는 확률(양성 클래스 쪽 두 번째 열)을 넘겨야 한다는 점이 핵심이다 — ROC 곡선 자체가 "임계값을 바꿔가며" 그리는 그림이므로, 이미 0.5로 잘려버린 예측값으로는 곡선을 그릴 수 없다. 이 셀도 2.18절 (2)번 셀의 \`clf\`, \`Xte\`, \`yte\`를 이어서 사용한다.
 
 \`\`\`python
-# (4) ROC 곡선과 AUC
-yte_score = clf.predict_proba(Xte)[:, 1]  # 양성(클래스 1)일 확률
+# (4) ROC 곡선과 AUC — (2)번 셀의 clf, Xte, yte를 이어서 사용
+import numpy as np
+from sklearn.metrics import roc_curve, roc_auc_score
+
+yte_score = clf.predict_proba(Xte)[:, 1]  # 양성(클래스 1)일 확률만 뽑음: [:, 1]은 "모든 행, 1번(두 번째) 열"
 fpr, tpr, thresholds = roc_curve(yte, yte_score)
 auc = roc_auc_score(yte, yte_score)
-print(f"AUC = {auc:.4f}, 계산에 쓰인 임계값 개수 = {len(thresholds)}")
+print(f"AUC = {auc:.4f}  (계산에 쓰인 임계값 개수 = {len(thresholds)})")
 
-RocCurveDisplay.from_predictions(yte, yte_score)
-plt.plot([0, 1], [0, 1], "--", color="gray", label="random (AUC=0.5)")
-plt.legend(); plt.show()
+# 그래프 대신, 임계값을 훑어가는 대표 지점 6개를 표로 확인한다
+sample_idx = np.linspace(0, len(thresholds) - 1, 6).astype(int)  # 0~len-1 사이를 6등분한 정수 인덱스
+print(f"\\n{'threshold':>10} {'FPR':>8} {'TPR':>8}")
+for i in sample_idx:
+    print(f"{thresholds[i]:10.3f} {fpr[i]:8.3f} {tpr[i]:8.3f}")
 \`\`\`
 
-\`roc_curve\`는 데이터에 등장하는 점수들을 기준으로 가능한 모든 임계값을 자동으로 훑어서 (fpr, tpr, thresholds) 세 배열을 돌려준다 — 바로 위 표를 손으로 만든 과정을 그대로 자동화한 것이다. 점선으로 그린 대각선은 "무작위로 찍는" 기준선(AUC=0.5)이고, 우리 모델의 곡선이 이 대각선보다 왼쪽 위로 얼마나 멀리 부풀어 있는지가 곧 AUC가 0.5보다 얼마나 큰지에 대응한다.
+\`predict_proba(Xte)\`는 (샘플 수, 클래스 수) 모양의 표를 돌려주는데, 열 0은 "클래스 0일 확률", 열 1은 "클래스 1일 확률"이다. \`[:, 1]\`은 "모든 행에서 1번 열만" 뽑아내는 2차원 인덱싱으로, 2.4절에서 본 \`axis\`와 짝을 이루는 개념이다 — \`axis\`가 "어느 방향으로 계산할지"를 정한다면, \`[:, 1]\`은 "어느 방향에서 몇 번째만 꺼낼지"를 정한다. \`roc_curve\`는 데이터에 등장하는 점수들을 기준으로 가능한 모든 임계값을 자동으로 훑어서 (fpr, tpr, thresholds) 세 배열을 돌려준다 — 바로 위 표를 손으로 만든 과정을 그대로 자동화한 것이다. 임계값 개수가 많아 전부 출력하면 표가 너무 길어지므로, \`np.linspace\`로 그중 6개 지점만 골라 threshold가 커질수록(1에 가까울수록) FPR·TPR이 함께 0에 가까워지고, threshold가 작아질수록(0에 가까울수록) 둘 다 1에 가까워지는 흐름을 확인해보자.
 
 :::warn 관찰
 위 코드에서 나온 AUC 값이 1.0에 아주 가까운가? 유방암 데이터셋처럼 두 클래스가 비교적 잘 갈라지는 문제에서는 AUC가 0.99 이상으로 나오는 일이 흔한데, 그렇다면 왜 여전히 Precision·Recall도 함께 봐야 하는지 바로 위 마지막 문단을 참고해 설명해보라.
 :::
 
-이제 2.9~2.15절에서 다룬 다른 알고리즘들도 같은 데이터로 비교해보자. 여기서 핵심은 "어느 알고리즘이 제일 좋은가"가 아니라, 서로 다른 원리로 동작하는 모델들이 같은 교차검증·같은 지표 위에서 얼마나 다르게(혹은 비슷하게) 나오는지를 직접 보는 것이다.
+이제 2.9~2.15절에서 다룬 다른 알고리즘들도 같은 데이터로 비교해보자. 여기서 핵심은 "어느 알고리즘이 제일 좋은가"가 아니라, 서로 다른 원리로 동작하는 모델들이 같은 교차검증·같은 지표 위에서 얼마나 다르게(혹은 비슷하게) 나오는지를 직접 보는 것이다. 이 셀도 2.18절 (2)번 셀의 \`Xtr\`, \`ytr\`을 이어서 사용한다. 결정트리는 일부러 깊이를 제한하지 않아(과적합되기 쉬운 상태로 둔다) 랜덤포레스트와의 차이가 잘 드러나게 했다.
 
 \`\`\`python
-# (5) 여러 알고리즘을 같은 교차검증으로 한눈에 비교
+# (5) 여러 알고리즘을 같은 교차검증으로 한눈에 비교 — (2)번 셀의 Xtr, ytr을 이어서 사용
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
@@ -621,40 +783,50 @@ from sklearn.svm import SVC
 models = {
     "KNN(k=5)": make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5)),
     "NaiveBayes": GaussianNB(),
-    "DecisionTree": DecisionTreeClassifier(max_depth=4, random_state=0),
+    "DecisionTree": DecisionTreeClassifier(random_state=0),  # 깊이 제한 없음 → 과적합되기 쉬운 상태
     "RandomForest": RandomForestClassifier(n_estimators=200, random_state=0),
     "GradientBoosting": GradientBoostingClassifier(random_state=0),
-    "SVM(RBF)": make_pipeline(StandardScaler(), SVC(kernel="rbf", probability=True)),
+    "SVM(RBF)": make_pipeline(StandardScaler(), SVC(kernel="rbf")),
 }
 for name, model in models.items():
     scores = cross_val_score(model, Xtr, ytr, cv=5, scoring="f1")
-    print(f"{name:16s} F1 = {scores.mean():.3f} ± {scores.std():.3f}")
+    print(f"{name:16s} F1 = {scores.mean():.3f} +- {scores.std():.3f}")
 \`\`\`
 
-각 모델의 F1 평균과 표준편차를 나란히 놓고 비교해보자. 결정트리(DecisionTree) 하나만의 점수와 랜덤포레스트(RandomForest)의 점수, 특히 표준편차(±로 표시된 값)의 차이를 눈여겨보라 — 2.12절에서 말한 "배깅이 분산을 줄인다"는 주장이 숫자로 확인되는 지점이다.
-
-마지막으로 2.15절의 K-Means·PCA를 비지도학습으로 직접 돌려보자. 여기서는 정답 레이블 \`y\`를 학습 과정에 전혀 넣지 않는다는 점이 지금까지의 코드와 근본적으로 다르다.
-
-\`\`\`python
-# (6) 비지도학습: PCA로 2차원 투영 후 K-Means로 군집화
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-
-Xs = StandardScaler().fit_transform(X)
-X2d = PCA(n_components=2).fit_transform(Xs)          # 2.15절: 분산이 가장 큰 두 축으로 투영
-labels = KMeans(n_clusters=2, n_init=10, random_state=0).fit_predict(X2d)  # 2.15절: y 없이 군집만 찾기
-
-plt.scatter(X2d[:, 0], X2d[:, 1], c=labels, cmap="coolwarm", alpha=0.6)
-plt.xlabel("PC1"); plt.ylabel("PC2"); plt.title("PCA(2D) + K-Means 군집")
-plt.show()
-print("K-Means가 찾은 군집과 실제 진단 레이블(y)의 일치 정도(참고용):",
-      max((labels == y).mean(), (labels != y).mean()))
-\`\`\`
-
-마지막 줄에서 K-Means가 찾은 군집을 실제 레이블과 비교해본 이유는, K-Means는 애초에 레이블을 본 적이 없는데도 데이터의 구조만으로 실제 진단 결과와 얼마나 비슷하게 갈라놓는지를 확인해보기 위해서다 — 일치도가 높다면 이 데이터의 두 클래스가 애초에 특징 공간에서 꽤 잘 분리되어 있다는 뜻이고, 이는 2.20절에서 확인한 높은 AUC와도 같은 이야기를 하고 있는 셈이다.
+\`models = {...}\`는 "모델 이름(문자열)"을 키로, "그 모델 객체"를 값으로 담은 딕셔너리다. \`for name, model in models.items():\`처럼 딕셔너리에 \`.items()\`를 붙이면 (키, 값) 쌍을 하나씩 순서대로 꺼낼 수 있다 — 이름과 모델을 따로 관리할 필요 없이 한 번의 반복문으로 여섯 개 모델을 전부 훈련·평가할 수 있는 이유다. 각 모델의 F1 평균과 표준편차를 나란히 놓고 비교해보자. 결정트리(DecisionTree) 하나만의 점수와 랜덤포레스트(RandomForest)의 점수, 특히 표준편차(+-로 표시된 값)의 차이를 눈여겨보라 — 2.12절에서 말한 "배깅이 분산을 줄인다"는 주장이 숫자로 확인되는 지점이다.
 
 :::warn 관찰
-여섯 모델 중 F1 평균이 가장 높은 모델과 표준편차가 가장 작은 모델은 각각 무엇인가? 둘이 같은 모델인가, 다른 모델인가? PCA로 30개 특징을 2개로 줄였는데도 K-Means 군집이 실제 진단 레이블과 꽤 비슷하게 갈라지는가? 그렇다면 2.15절의 "분산이 가장 큰 방향에 클래스를 구분하는 정보도 함께 담겨 있을 수 있다"는 설명과 어떻게 연결되는가?
+여섯 모델 중 F1 평균이 가장 높은 모델과 표준편차가 가장 작은 모델은 각각 무엇인가? 둘이 같은 모델인가, 다른 모델인가?
+:::
+
+마지막으로 2.15절의 K-Means·PCA를 비지도학습으로 직접 돌려보자. 여기서는 정답 레이블 \`y\`를 학습 과정에 전혀 넣지 않는다는 점이 지금까지의 코드와 근본적으로 다르다. 이 셀은 2.18절 (2)번 셀의 \`X\`, \`y\`(전체 유방암 데이터셋)를 이어서 사용한다.
+
+\`\`\`python
+# (6) 비지도학습: PCA로 2차원 투영 후 K-Means로 군집화 — (2)번 셀의 X, y를 이어서 사용
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+Xs = StandardScaler().fit_transform(X)
+pca = PCA(n_components=2).fit(Xs)                    # 2.15절: 분산이 가장 큰 두 축을 찾는다
+X2d = pca.transform(Xs)
+print(f"PC1, PC2가 설명하는 분산 비율: {pca.explained_variance_ratio_[0]:.3f}, "
+      f"{pca.explained_variance_ratio_[1]:.3f} (합 {pca.explained_variance_ratio_.sum():.3f})")
+
+labels = KMeans(n_clusters=2, n_init=10, random_state=0).fit_predict(X2d)  # 2.15절: y 없이 군집만 찾는다
+agreement = max((labels == y).mean(), (labels != y).mean())
+print(f"K-Means 군집과 실제 진단 레이블의 일치도(참고용) = {agreement:.3f}")
+
+for cluster_id in [0, 1]:
+    mask = labels == cluster_id                       # 불리언 배열: True인 자리(그 군집에 속한 샘플)만 표시
+    n_pos, n_neg = (y[mask] == 1).sum(), (y[mask] == 0).sum()
+    print(f"군집 {cluster_id}: 총 {mask.sum()}개 (양성={n_pos}, 음성={n_neg})")
+\`\`\`
+
+\`mask = labels == cluster_id\`는 각 원소가 True/False인 배열(불리언 배열)을 만든다. \`y[mask]\`처럼 이 불리언 배열을 인덱스 자리에 넣으면 True인 위치의 값만 걸러낸다 — 앞서 KNN에서 쓴 정수 인덱싱(\`y_train[nearest_idx]\`)이 "몇 번째를 꺼낼지"를 지정했다면, 불리언 인덱싱은 "조건을 만족하는 것만 꺼내라"는 방식이라는 차이가 있다. 이 코드에서 K-Means가 찾은 군집을 실제 레이블과 비교해본 이유는, K-Means는 애초에 레이블을 본 적이 없는데도 데이터의 구조만으로 실제 진단 결과와 얼마나 비슷하게 갈라놓는지를 확인해보기 위해서다 — 일치도가 높다면 이 데이터의 두 클래스가 애초에 특징 공간에서 꽤 잘 분리되어 있다는 뜻이고, 이는 2.20절에서 확인한 높은 AUC와도 같은 이야기를 하고 있는 셈이다.
+
+:::warn 관찰
+PCA로 30개였던 특징을 2개로 줄였는데도 K-Means 군집이 실제 진단 레이블과 꽤 비슷하게 갈라지는가? 그렇다면 2.15절의 "분산이 가장 큰 방향에 클래스를 구분하는 정보도 함께 담겨 있을 수 있다"는 설명과 이 결과가 어떻게 연결되는가?
 :::
 
 ### 2.21 회귀 평가지표: MAE, MSE, RMSE, R²
