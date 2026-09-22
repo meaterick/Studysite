@@ -17,17 +17,32 @@ export interface UserRecord {
   id: string;
   email: string;
   name: string;
-  passwordHash: string;
+  /** 기존 비밀번호 가입 계정에만 존재합니다. */
+  passwordHash?: string;
+  /** Google OAuth의 안정적인 사용자 식별자(subject)입니다. */
+  googleSubject?: string;
   role: Role;
   createdAt: string;
 }
 
-export type PublicUser = Omit<UserRecord, "passwordHash">;
+export interface PublicUser {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+  createdAt: string;
+  authProvider: "google" | "password";
+}
 
 function toPublic(user: UserRecord): PublicUser {
-  const rest: Partial<UserRecord> = { ...user };
-  delete rest.passwordHash;
-  return rest as PublicUser;
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    createdAt: user.createdAt,
+    authProvider: user.googleSubject ? "google" : "password",
+  };
 }
 
 function readAll(): UserRecord[] {
@@ -105,6 +120,43 @@ export async function createUser(input: {
     email,
     name: input.name.trim(),
     passwordHash: input.passwordHash,
+    role: resolveRole(email, users.length === 0),
+    createdAt: new Date().toISOString(),
+  };
+  await writeAll([...users, user]);
+  return user;
+}
+
+/**
+ * Google이 확인한 이메일을 기준으로 기존 계정을 연결하거나 신규 계정을 만듭니다.
+ * subject를 같이 저장해 이후 이메일 표시명이 바뀌어도 같은 Google 계정을 식별합니다.
+ */
+export async function findOrCreateGoogleUser(input: {
+  email: string;
+  name: string;
+  subject: string;
+}): Promise<UserRecord> {
+  const users = readAll();
+  const email = input.email.trim().toLowerCase();
+  const bySubject = users.find((user) => user.googleSubject === input.subject);
+  if (bySubject) return bySubject;
+
+  const byEmail = users.find((user) => user.email === email);
+  if (byEmail) {
+    // 이미 다른 Google 계정에 연결된 이메일은 조용히 덮어쓰지 않습니다.
+    if (byEmail.googleSubject && byEmail.googleSubject !== input.subject) {
+      throw new Error("GOOGLE_ACCOUNT_MISMATCH");
+    }
+    const linked = { ...byEmail, googleSubject: input.subject };
+    await writeAll(users.map((user) => (user.id === linked.id ? linked : user)));
+    return linked;
+  }
+
+  const user: UserRecord = {
+    id: crypto.randomUUID(),
+    email,
+    name: input.name.trim().slice(0, 40) || "Google 사용자",
+    googleSubject: input.subject,
     role: resolveRole(email, users.length === 0),
     createdAt: new Date().toISOString(),
   };

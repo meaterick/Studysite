@@ -113,10 +113,14 @@ jobs:
         env:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           {
             echo "SESSION_SECRET=${SESSION_SECRET}"
             echo "ADMIN_EMAILS=${ADMIN_EMAILS}"
+            echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
+            echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}"
             echo "DATA_DIR=${DEPLOY_DIR}/data"
           } > "$DEPLOY_DIR/.env.production.local"
           if [ -z "${SESSION_SECRET}" ]; then

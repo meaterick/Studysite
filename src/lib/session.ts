@@ -19,6 +19,16 @@ export interface SessionPayload {
   [key: string]: unknown;
 }
 
+export function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: SESSION_TTL_SECONDS,
+  };
+}
+
 export async function encryptSession(payload: SessionPayload): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
@@ -41,13 +51,7 @@ export async function decryptSession(token: string | undefined): Promise<Session
 export async function createSession(uid: string, role: Role) {
   const token = await encryptSession({ uid, role });
   const store = await cookies();
-  store.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS,
-  });
+  store.set(SESSION_COOKIE, token, sessionCookieOptions());
 }
 
 export async function deleteSession() {

@@ -62,7 +62,13 @@ export default async function WeekLayout({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:gap-10 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <div className="grid gap-6 lg:gap-8 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
+        <aside className="order-2 print:hidden lg:order-none">
+          <div className="lg:sticky lg:top-20">
+            <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
+          </div>
+        </aside>
+
         <div className="min-w-0">
           <WeekTabs slug={slug} />
           <WeekStudyToc slug={slug} chapters={chapters} variant="mobile" />
@@ -88,9 +94,8 @@ export default async function WeekLayout({
           </nav>
         </div>
 
-        <aside className="print:hidden">
-          <div className="space-y-5 lg:sticky lg:top-20">
-            <WeekStudyToc slug={slug} chapters={chapters} variant="desktop" />
+        <aside className="order-3 print:hidden">
+          <div className="lg:sticky lg:top-20">
             <Checklist slug={slug} />
           </div>
         </aside>

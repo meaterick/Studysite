@@ -48,11 +48,13 @@ npm run start
 
 ## 회원가입·로그인·관리자 구역
 
-계정은 서버의 `data/users.json`(배포 시에는 `DATA_DIR`, 아래 참고)에 저장되고
-비밀번호는 bcrypt로 해시되어 저장됩니다. 세션은 서명된(JWT, `SESSION_SECRET`)
-httpOnly 쿠키로 관리합니다 (`src/lib/session.ts`, `src/lib/dal.ts`).
+신규 회원가입은 Google OAuth로 진행합니다. Google이 확인한 이메일과 사용자 식별자만
+서버의 `data/users.json`(배포 시에는 `DATA_DIR`, 아래 참고)에 저장됩니다. 기존
+비밀번호 계정은 계속 로그인할 수 있으며, 비밀번호는 bcrypt 해시로만 보관됩니다.
+세션은 서명된(JWT, `SESSION_SECRET`) httpOnly 쿠키로 관리합니다
+(`src/lib/session.ts`, `src/lib/dal.ts`).
 
-- 누구나 `/signup`에서 가입할 수 있고, **가장 먼저 가입하는 계정이 자동으로
+- 누구나 `/signup`에서 Google 계정으로 가입할 수 있고, **가장 먼저 가입하는 계정이 자동으로
   관리자**가 됩니다 — 배포 직후 운영자 본인이 제일 먼저 가입하면 됩니다.
   (`ADMIN_EMAILS` 환경변수로 특정 이메일을 항상 관리자로 지정할 수도
   있습니다.)
@@ -60,8 +62,9 @@ httpOnly 쿠키로 관리합니다 (`src/lib/session.ts`, `src/lib/dal.ts`).
   역할(role)로만 접근할 수 있습니다(`src/proxy.ts`에서 1차 확인, 각 페이지에서
   `requireAdmin()`으로 재확인). 이 폴더의 내용(퀴즈 정답, 채점 기준 원본,
   운영 노하우)은 스터디원에게 공개하지 않는 것이 원칙입니다.
-- `/account`에서 본인 정보를 확인하고 비밀번호 확인 후 회원 탈퇴(계정 삭제)를
-  할 수 있습니다. 마지막 남은 관리자 계정은 탈퇴/강등할 수 없습니다.
+- `/account`에서 본인 정보를 확인하고 인증 방식에 맞게 재확인한 뒤 회원 탈퇴(계정 삭제)를
+  할 수 있습니다. Google 계정은 Google 재인증을, 기존 비밀번호 계정은 비밀번호 확인을
+  사용합니다. 마지막 남은 관리자 계정은 탈퇴/강등할 수 없습니다.
 - `/operator/members`에서 관리자가 가입자 목록을 보고 권한을 부여/회수하거나
   계정을 삭제할 수 있습니다.
 
@@ -111,12 +114,19 @@ variables → Actions → New repository secret**:
 | --- | --- |
 | `SESSION_SECRET` | `openssl rand -base64 32`로 생성한 임의의 문자열 |
 | `ADMIN_EMAILS` | (선택) 항상 관리자로 지정할 이메일, 쉼표로 구분. 비워두면 최초 가입자가 자동으로 관리자가 됩니다 |
+| `GOOGLE_CLIENT_ID` | Google Cloud Console OAuth 웹 클라이언트 ID |
+| `GOOGLE_CLIENT_SECRET` | 위 OAuth 클라이언트의 보안 비밀 |
 
 `SESSION_SECRET`을 등록하지 않으면 `src/lib/session.ts`의 개발용 기본값이
 그대로 쓰이고, 배포 로그에 경고가 남습니다 — 동작은 하지만 누구나 아는
 값이라 로그인 쿠키를 위조당할 수 있으니 꼭 등록해 주세요. 나중에 값을
 바꾸면 기존에 로그인해 있던 모든 사람이 로그아웃됩니다(피해 없음, 다시
 로그인하면 됩니다).
+
+Google Cloud Console에서 OAuth 동의 화면과 **웹 애플리케이션** 클라이언트를 만든 뒤,
+승인된 리디렉션 URI에 `https://meaterickedu.kro.kr/api/auth/google/callback`을 등록하세요.
+로컬 테스트에는 `http://localhost:3000/api/auth/google/callback`도 추가합니다. 위 두
+Google 자격 증명을 GitHub Actions Secrets로 등록하면 다음 `main` 배포부터 적용됩니다.
 
 도메인을 나중에 바꾸게 되면 `.github/workflows/deploy.yml` 맨 위의
 `env.DOMAIN` 한 줄만 고치면 됩니다.
@@ -137,5 +147,5 @@ variables → Actions → New repository secret**:
 
 - Next.js 16 (App Router, Server Actions, Turbopack)
 - TypeScript, Tailwind CSS 4
-- 계정 정보만 서버(`data/users.json`, bcrypt 해시)에 저장 — 개인 진도/백지공부는
-  여전히 각자 브라우저의 localStorage에만 저장됩니다
+- 계정 정보만 서버(`data/users.json`, Google OAuth 식별자 또는 기존 bcrypt 해시)에 저장 —
+  개인 진도/백지공부는 여전히 각자 브라우저의 localStorage에만 저장됩니다

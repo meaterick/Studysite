@@ -24,6 +24,7 @@ export default async function AccountPage({
     const record = findUserById(current.id);
     if (!record) redirect("/logout");
 
+    if (!record.passwordHash) redirect("/account");
     const ok = await bcrypt.compare(password, record.passwordHash);
     if (!ok) redirect("/account?error=1");
 
@@ -58,6 +59,10 @@ export default async function AccountPage({
           <dt className="text-ink-muted">가입일</dt>
           <dd className="font-bold text-ink">{new Date(user.createdAt).toLocaleDateString("ko-KR")}</dd>
         </div>
+        <div className="flex justify-between">
+          <dt className="text-ink-muted">로그인 방식</dt>
+          <dd className="font-bold text-ink">{user.authProvider === "google" ? "Google" : "비밀번호"}</dd>
+        </div>
       </dl>
 
       <form action="/logout" method="post" className="mb-10">
@@ -72,30 +77,40 @@ export default async function AccountPage({
           탈퇴하면 계정 정보가 즉시 삭제되며 되돌릴 수 없습니다. (개인 학습 진도·백지공부는 이
           브라우저에만 저장되어 있어 별도로 지워지지 않습니다.)
         </p>
-        <form action={withdraw} className="space-y-3">
-          <input
-            type="password"
-            name="password"
-            required
-            placeholder="비밀번호 확인"
-            className="w-full rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-3 text-sm text-ink outline-none focus:border-[var(--status-critical)]"
-          />
-          {error === "1" && (
-            <p className="text-xs font-medium text-[var(--status-critical)]">비밀번호가 올바르지 않습니다.</p>
-          )}
-          {error === "lastadmin" && (
-            <p className="text-xs font-medium text-[var(--status-critical)]">
-              마지막 관리자 계정은 탈퇴할 수 없습니다. 다른 계정을 관리자로 지정한 뒤 다시 시도하세요.
-            </p>
-          )}
-          <button
-            type="submit"
-            className="w-full rounded-lg px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
+        {error === "lastadmin" && (
+          <p className="mb-3 text-xs font-medium text-[var(--status-critical)]">
+            마지막 관리자 계정은 탈퇴할 수 없습니다. 다른 계정을 관리자로 지정한 뒤 다시 시도하세요.
+          </p>
+        )}
+        {user.authProvider === "google" ? (
+          <a
+            href="/api/auth/google?intent=delete_account"
+            className="block w-full rounded-lg px-4 py-3 text-center text-sm font-bold text-white transition hover:opacity-90"
             style={{ background: "var(--status-critical)" }}
           >
-            회원 탈퇴
-          </button>
-        </form>
+            Google로 본인 확인 후 탈퇴
+          </a>
+        ) : (
+          <form action={withdraw} className="space-y-3">
+            <input
+              type="password"
+              name="password"
+              required
+              placeholder="비밀번호 확인"
+              className="w-full rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-3 text-sm text-ink outline-none focus:border-[var(--status-critical)]"
+            />
+            {error === "1" && (
+              <p className="text-xs font-medium text-[var(--status-critical)]">비밀번호가 올바르지 않습니다.</p>
+            )}
+            <button
+              type="submit"
+              className="w-full rounded-lg px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
+              style={{ background: "var(--status-critical)" }}
+            >
+              회원 탈퇴
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

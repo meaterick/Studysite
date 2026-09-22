@@ -18,6 +18,8 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; from?: string; email?: string }>;
 }) {
   const { error, from, email } = await searchParams;
+  const returnPath = safeReturnPath(from ?? "");
+  const googleHref = `/api/auth/google${returnPath !== "/account" ? `?from=${encodeURIComponent(returnPath)}` : ""}`;
 
   async function login(formData: FormData) {
     "use server";
@@ -45,6 +47,16 @@ export default async function LoginPage({
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">Aegis AI 스터디</p>
       <h1 className="mb-2 text-2xl font-black text-ink">로그인</h1>
       <p className="mb-8 text-sm text-ink-secondary">스터디원 계정으로 로그인하세요.</p>
+      <Link
+        href={googleHref}
+        className="mb-5 flex w-full items-center justify-center gap-3 rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-3 text-sm font-bold text-ink transition hover:bg-[var(--surface-card-2)]"
+      >
+        <span className="text-lg leading-none" aria-hidden="true">G</span>
+        Google로 계속하기
+      </Link>
+      <div className="mb-5 flex items-center gap-3 text-xs text-ink-muted before:h-px before:flex-1 before:bg-[var(--border-hairline)] after:h-px after:flex-1 after:bg-[var(--border-hairline)]">
+        기존 비밀번호 계정
+      </div>
       <form action={login} className="space-y-4">
         <input type="hidden" name="from" value={from ?? ""} />
         <div>
