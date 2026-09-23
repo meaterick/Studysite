@@ -4,6 +4,7 @@ import Link from "next/link";
 import { WEEKS, getWeek, getAdjacentWeeks } from "@/content/weeks";
 import { parseMarkdown } from "@/content/markdown";
 import { slugify } from "@/components/MarkdownBlocks";
+import { requireUser } from "@/lib/dal";
 import WeekLearningShell from "@/components/WeekLearningShell";
 import { type StudyChapter } from "@/components/WeekStudyToc";
 
@@ -42,6 +43,7 @@ export default async function WeekLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  await requireUser(`/weeks/${slug}`);
   const week = getWeek(slug);
   if (!week) notFound();
   const { prev, next } = getAdjacentWeeks(week.number);

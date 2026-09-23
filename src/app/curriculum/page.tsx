@@ -3,10 +3,12 @@ import { syllabus } from "@/content/syllabus";
 import { WEEKS } from "@/content/weeks";
 import Markdown from "@/components/MarkdownBlocks";
 import Link from "next/link";
+import { requireUser } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "커리큘럼" };
 
-export default function CurriculumPage() {
+export default async function CurriculumPage() {
+  await requireUser("/curriculum");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">8주 커리큘럼</p>
