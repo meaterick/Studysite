@@ -20,6 +20,17 @@ export async function proxy(req: NextRequest) {
   const isAccountArea = pathname === "/account" || pathname.startsWith("/account/");
   const isOperatorArea = pathname.startsWith("/operator");
 
+  // 학습자료(커리큘럼·주차별 자료·진도·주차별 이미지)는 로그인한 사용자만 볼 수 있습니다.
+  // 로그인하지 않은 방문자에게는 메인 화면만 공개합니다.
+  if (isLearningArea(pathname) && !session) {
+    if (pathname.startsWith("/images/")) {
+      return new NextResponse(null, { status: 401 });
+    }
+    const url = new URL("/login", publicOrigin(req));
+    url.searchParams.set("from", pathname);
+    return NextResponse.redirect(url);
+  }
+
   if ((isAccountArea || isOperatorArea) && !session) {
     const url = new URL("/login", publicOrigin(req));
     url.searchParams.set("from", pathname);
@@ -33,6 +44,27 @@ export async function proxy(req: NextRequest) {
   return NextResponse.next();
 }
 
+function isLearningArea(pathname: string): boolean {
+  return (
+    pathname === "/curriculum" ||
+    pathname === "/progress" ||
+    pathname === "/weeks" ||
+    pathname.startsWith("/weeks/") ||
+    /^\/images\/week\d+\//.test(pathname)
+  );
+}
+
 export const config = {
-  matcher: ["/operator/:path*", "/account", "/account/:path*", "/login", "/signup"],
+  matcher: [
+    "/operator/:path*",
+    "/account",
+    "/account/:path*",
+    "/login",
+    "/signup",
+    "/curriculum",
+    "/progress",
+    "/weeks",
+    "/weeks/:path*",
+    "/images/:path*",
+  ],
 };

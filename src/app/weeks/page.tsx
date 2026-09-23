@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { WEEKS } from "@/content/weeks";
 import WeekCard from "@/components/WeekCard";
+import { requireUser } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "주차별 자료" };
 
-export default function WeeksIndexPage() {
+export default async function WeeksIndexPage() {
+  await requireUser("/weeks");
   const phases = Array.from(new Set(WEEKS.map((w) => w.phase)));
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
