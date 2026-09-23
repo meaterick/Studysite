@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 import ThemeToggle from "./ThemeToggle";
 import HeaderAuthSection from "./HeaderAuthSection";
+import HeaderMobileMenu from "./HeaderMobileMenu";
 
 const NAV = [
   { href: "/curriculum", label: "커리큘럼" },
@@ -39,12 +40,13 @@ export default function SiteHeader() {
             </span>
           </span>
         </Link>
-        <nav className="flex min-w-0 flex-1 items-center justify-end gap-0.5 overflow-x-auto text-xs [scrollbar-width:none] sm:gap-1 sm:text-sm">
+        {/* sm 이상: 한 줄 가로 네비게이션. 이 너비부터는 항목이 전부 잘리지 않고 들어간다. */}
+        <nav className="hidden min-w-0 flex-1 items-center justify-end gap-1 text-sm sm:flex">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap rounded-md px-2 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink sm:px-3"
+              className="whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
             >
               {item.label}
             </Link>
@@ -54,6 +56,32 @@ export default function SiteHeader() {
           </Suspense>
           <ThemeToggle />
         </nav>
+
+        {/* sm 미만: 항목을 한 줄에 다 넣으면 오른쪽 정렬+가로 스크롤 조합 때문에
+            앞쪽 항목(커리큘럼 등)이 스크롤 없이는 안 보여 "잘린" 것처럼 보이는
+            문제가 있었다. 좁은 화면에서는 햄버거 메뉴 뒤로 감춰 전부 보이게 한다. */}
+        <HeaderMobileMenu>
+          <div className="flex flex-col gap-0.5">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <div className="my-1 border-t border-[var(--border-hairline)]" />
+            <div className="flex items-center justify-between gap-2 px-1">
+              <div className="flex flex-wrap items-center gap-1">
+                <Suspense fallback={<AuthSkeleton />}>
+                  <HeaderAuthSection />
+                </Suspense>
+              </div>
+              <ThemeToggle />
+            </div>
+          </div>
+        </HeaderMobileMenu>
       </div>
     </header>
   );
