@@ -1,7 +1,7 @@
 import DiagramFrame, { colors, ink, inkSecondary } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box } from "./primitives";
 
-const PHASES = [
+export const PHASES = [
   { name: "Phase 1 · 기초", weeks: ["W1", "W2"], color: colors.blue },
   { name: "Phase 2 · 딥러닝", weeks: ["W3", "W4"], color: colors.aqua },
   { name: "Phase 3 · 현대 AI", weeks: ["W5", "W6"], color: colors.violet },
