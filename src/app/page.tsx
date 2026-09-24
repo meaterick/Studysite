@@ -1,24 +1,23 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { WEEKS } from "@/content/weeks";
-import { syllabus } from "@/content/syllabus";
 import WeekCard from "@/components/WeekCard";
 import HomeCta from "@/components/HomeCta";
 import HomeRoadmap from "@/components/HomeRoadmap";
 import LearningCycle from "@/components/LearningCycle";
 
 const SECTIONS = [
-  { id: "cycle", label: "이렇게 배워요" },
+  { id: "cycle", label: "공부 방법" },
   { id: "roadmap", label: "8주 로드맵" },
-  { id: "weeks", label: "주차별 학습자료" },
-  { id: "outcomes", label: "수료 후 할 수 있는 것" },
+  { id: "weeks", label: "주차별 자료" },
+  { id: "outcomes", label: "수료 목표" },
 ];
 
 const OUTCOMES = [
-  "AI/ML/DL/LLM의 수학적·구조적 원리를 백지에 그려가며 설명할 수 있다.",
-  "선형회귀·MLP·CNN·Self-Attention을 라이브러리 없이 직접 구현할 수 있다.",
-  "LLM이 어떻게 학습되고(사전학습→SFT→정렬) 왜 환각을 일으키는지 설명할 수 있다.",
-  "프롬프트·RAG·에이전트로 실제 문제를 해결하고, 평가셋으로 성능을 측정할 수 있다.",
+  "AI, 머신러닝, 딥러닝, LLM이 어떤 원리로 돌아가는지 빈 종이에 그려 가며 설명할 수 있어요.",
+  "선형회귀, MLP, CNN, Self-Attention을 라이브러리 없이 직접 짤 수 있어요.",
+  "LLM이 사전학습, SFT, 정렬을 거쳐 어떻게 만들어지는지, 왜 없는 사실을 지어내는지(환각) 설명할 수 있어요.",
+  "프롬프트, RAG, 에이전트로 실제 문제를 풀고, 평가셋을 만들어 성능을 잴 수 있어요.",
 ];
 
 function SectionHeading({ id, title, children }: { id: string; title: string; children?: React.ReactNode }) {
@@ -36,12 +35,12 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
       <section className="mb-12">
-        <p className="mb-2 text-sm font-bold text-ink-muted">Aegis 동아리 · 8주 AI 스터디</p>
+        <p className="mb-2 text-sm font-bold text-ink-muted">Aegis 동아리 AI 스터디</p>
         <h1 className="text-4xl font-black leading-tight text-[var(--series-blue)] sm:text-6xl">
           AI 기초부터 활용까지
         </h1>
         <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed text-ink sm:text-xl">
-          수학부터 LLM 에이전트까지, 8주 동안 직접 만들며 배우는 스터디입니다.
+          수학 기초부터 LLM 에이전트까지, 8주 동안 코드를 직접 짜 보면서 배워요.
         </p>
         <div className="mt-8">
           <Suspense fallback={<div className="h-14 w-full rounded-xl bg-[var(--surface-card-2)] sm:max-w-md" />}>
@@ -49,8 +48,8 @@ export default function Home() {
           </Suspense>
         </div>
 
-        <nav aria-label="이 페이지의 내용" className="mt-10">
-          <p className="mb-2 text-xs font-bold text-ink-muted">이 페이지에서 볼 수 있는 내용</p>
+        <nav aria-label="바로 가기" className="mt-10">
+          <p className="mb-2 text-xs font-bold text-ink-muted">바로 가기</p>
           <div className="flex flex-wrap gap-2">
             {SECTIONS.map((s) => (
               <a
@@ -66,9 +65,9 @@ export default function Home() {
       </section>
 
       <section className="mb-14">
-        <SectionHeading id="cycle" title="이렇게 배워요" />
+        <SectionHeading id="cycle" title="이렇게 공부해요" />
         <p className="-mt-3 mb-5 text-sm text-ink-secondary">
-          모든 주차는 <strong className="text-ink">이해 → 직접 구현 → 설명 → 활용</strong> 네 단계를 한 바퀴 도는 구조로 짜여 있습니다.
+          매주 <strong className="text-ink">이해, 구현, 설명, 활용</strong> 순서로 진행해요.
         </p>
         <LearningCycle />
       </section>
@@ -76,13 +75,13 @@ export default function Home() {
       <section className="mb-14">
         <SectionHeading id="roadmap" title="8주 로드맵" />
         <p className="-mt-3 mb-5 text-sm text-ink-secondary">
-          4단계로 나눠, 단계가 올라갈수록 난이도와 스스로 해보는 비중이 함께 높아집니다.
+          8주를 네 단계로 나눴어요. 뒤로 갈수록 어려워지고, 스스로 해결해야 하는 부분도 늘어나요.
         </p>
         <HomeRoadmap />
       </section>
 
       <section className="mb-14">
-        <SectionHeading id="weeks" title="주차별 학습자료">
+        <SectionHeading id="weeks" title="주차별 자료">
           <Link href="/weeks" className="shrink-0 text-sm font-bold text-[var(--series-blue)]">
             전체 보기 →
           </Link>
@@ -95,7 +94,7 @@ export default function Home() {
       </section>
 
       <section className="mb-14">
-        <SectionHeading id="outcomes" title="수료 후 할 수 있는 것" />
+        <SectionHeading id="outcomes" title="수료하면 이런 걸 할 수 있어요" />
         <div className="grid gap-3 sm:grid-cols-2">
           {OUTCOMES.map((g, i) => (
             <div key={i} className="flex gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4">
@@ -112,7 +111,7 @@ export default function Home() {
       </section>
 
       <p className="border-t border-[var(--border-hairline)] pt-4 text-xs leading-relaxed text-ink-muted">
-        ※ {syllabus.designNote}
+        ※ 커리큘럼은 Stanford CS229·CS231n·CS224n·CS336, MIT 6.S191, Berkeley CS188, CMU 10-601의 강의 구성을 참고해서 짰어요.
       </p>
     </div>
   );

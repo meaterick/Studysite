@@ -17,7 +17,7 @@ export default function HomeRoadmap() {
               style={{ borderColor: phase.color }}
             >
               <p className="text-xs font-bold" style={{ color: phase.color }}>
-                STEP {i + 1}
+                {i + 1}단계
               </p>
               <p className="text-base font-black text-ink">{phase.name}</p>
               <ul className="flex flex-col gap-1 text-sm text-ink-secondary">

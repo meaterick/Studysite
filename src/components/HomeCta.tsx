@@ -15,10 +15,10 @@ export default async function HomeCta() {
           className="flex w-full items-center justify-center gap-2 rounded-xl px-5 py-4 text-base font-bold text-white shadow-sm transition hover:opacity-90"
           style={{ background: "var(--series-blue)" }}
         >
-          Google 계정으로 로그인하고 시작하기 →
+          Google 계정으로 시작하기
         </Link>
         <p className="text-center text-xs text-ink-muted sm:text-left">
-          로그인하면 8주치 학습자료·실습·퀴즈를 모두 볼 수 있어요. 처음이라면 계정이 자동으로 만들어집니다.
+          로그인하면 주차별 자료와 실습, 퀴즈를 볼 수 있어요. 처음 로그인할 때 계정이 만들어져요.
         </p>
       </div>
     );
@@ -26,19 +26,19 @@ export default async function HomeCta() {
 
   return (
     <div className="flex flex-col gap-2 sm:max-w-md">
-      <p className="text-sm font-medium text-ink-secondary">{user.name}님, 반가워요!</p>
+      <p className="text-sm font-medium text-ink-secondary">{user.name}님, 어서 오세요.</p>
       <Link
         href="/weeks/week-1"
         className="flex w-full items-center justify-center rounded-xl px-5 py-4 text-base font-bold text-white shadow-sm transition hover:opacity-90"
         style={{ background: "var(--series-blue)" }}
       >
-        Week 1부터 학습 시작하기 →
+        Week 1부터 시작하기
       </Link>
       <Link
         href="/curriculum"
         className="flex w-full items-center justify-center rounded-xl border border-[var(--border-hairline)] bg-card px-5 py-3 text-sm font-bold text-ink transition hover:bg-[var(--surface-card-2)]"
       >
-        8주 전체 커리큘럼 먼저 살펴보기
+        커리큘럼 보기
       </Link>
     </div>
   );

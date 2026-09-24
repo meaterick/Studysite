@@ -24,14 +24,14 @@ export default function WeekCard({ week }: { week: WeekMeta }) {
       </div>
       {week.objectives[0] && (
         <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-2">
-          <p className="text-[11px] font-bold text-[var(--series-blue)]">이번 주 학습 목표</p>
+          <p className="text-[11px] font-bold text-[var(--series-blue)]">이번 주 목표</p>
           <p className="mt-0.5 text-sm text-ink-secondary">{politeObjective(week.objectives[0])}</p>
           {week.objectives.length > 1 && (
-            <p className="mt-1 text-xs text-ink-muted">외 {week.objectives.length - 1}개 목표</p>
+            <p className="mt-1 text-xs text-ink-muted">목표 {week.objectives.length - 1}개 더</p>
           )}
         </div>
       )}
-      <p className="text-xs text-ink-muted">배우는 내용 · {week.subtitle}</p>
+      <p className="text-xs text-ink-muted">다루는 내용: {week.subtitle}</p>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
         <span>{"★".repeat(week.difficulty)}{"☆".repeat(5 - week.difficulty)}</span>
       </div>

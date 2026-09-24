@@ -6,25 +6,25 @@ import { colors } from "@/components/diagrams/DiagramFrame";
 const STEPS = [
   {
     name: "이해",
-    desc: "핵심 개념과 도식으로 원리를 먼저 이해합니다.",
+    desc: "개념 설명과 그림을 보면서 원리부터 잡아요.",
     where: "학습 자료",
     color: colors.blue,
   },
   {
     name: "직접 구현",
-    desc: "라이브러리에 기대지 않고 브라우저에서 코드를 직접 짜고 실행해 봅니다.",
+    desc: "핵심 부분을 라이브러리 없이 짜 보고, 브라우저에서 바로 돌려 봐요.",
     where: "코드 실습",
     color: colors.aqua,
   },
   {
     name: "설명",
-    desc: "빈 종이에 다시 그려 보고 퀴즈에 답하며 내 말로 설명합니다.",
+    desc: "빈 종이에 다시 정리하고 퀴즈를 풀면서, 내 말로 설명할 수 있는지 확인해요.",
     where: "백지공부 · 퀴즈",
     color: colors.violet,
   },
   {
     name: "활용",
-    desc: "배운 것을 실제 문제에 적용하는 과제로 마무리합니다.",
+    desc: "과제에서 배운 내용을 실제 문제에 써 봐요.",
     where: "과제",
     color: colors.orange,
   },
@@ -65,7 +65,7 @@ export default function LearningCycle() {
       <p className="mt-3 flex items-center gap-2 rounded-lg bg-[var(--surface-card-2)] px-4 py-3 text-sm text-ink-secondary">
         <span aria-hidden className="text-lg">↻</span>
         <span>
-          매주 이 네 단계를 한 바퀴 돌고, 다음 주에는 한 단계 더 어려운 주제로 다시 순환합니다.
+          한 주가 끝나면 다음 주제로 넘어가서 같은 순서를 다시 밟아요.
         </span>
       </p>
     </div>
