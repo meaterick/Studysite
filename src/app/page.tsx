@@ -5,8 +5,10 @@ import { syllabus } from "@/content/syllabus";
 import WeekCard from "@/components/WeekCard";
 import HomeCta from "@/components/HomeCta";
 import HomeRoadmap from "@/components/HomeRoadmap";
+import LearningCycle from "@/components/LearningCycle";
 
 const SECTIONS = [
+  { id: "cycle", label: "이렇게 배워요" },
   { id: "roadmap", label: "8주 로드맵" },
   { id: "weeks", label: "주차별 학습자료" },
   { id: "outcomes", label: "수료 후 할 수 있는 것" },
@@ -61,6 +63,14 @@ export default function Home() {
             ))}
           </div>
         </nav>
+      </section>
+
+      <section className="mb-14">
+        <SectionHeading id="cycle" title="이렇게 배워요" />
+        <p className="-mt-3 mb-5 text-sm text-ink-secondary">
+          모든 주차는 <strong className="text-ink">이해 → 직접 구현 → 설명 → 활용</strong> 네 단계를 한 바퀴 도는 구조로 짜여 있습니다.
+        </p>
+        <LearningCycle />
       </section>
 
       <section className="mb-14">
