@@ -4,6 +4,7 @@ import { WEEKS } from "@/content/weeks";
 import Markdown from "@/components/MarkdownBlocks";
 import Link from "next/link";
 import { requireUser } from "@/lib/dal";
+import LearningCycle from "@/components/LearningCycle";
 
 export const metadata: Metadata = { title: "커리큘럼" };
 
@@ -13,7 +14,15 @@ export default async function CurriculumPage() {
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">8주 커리큘럼</p>
       <h1 className="mb-3 text-3xl font-black text-ink">{syllabus.title}</h1>
-      <p className="mb-10 text-sm italic text-ink-secondary">{syllabus.designNote}</p>
+      <p className="mb-8 text-sm italic text-ink-secondary">{syllabus.designNote}</p>
+
+      <section className="not-prose mb-10">
+        <h2 className="mb-1 text-xl font-black text-ink">매주 도는 학습 순환</h2>
+        <p className="mb-4 text-sm text-ink-secondary">
+          각 주차는 아래 네 단계를 차례로 거치도록 구성되어 있습니다. 주차 페이지의 탭도 이 순서를 따릅니다.
+        </p>
+        <LearningCycle />
+      </section>
 
       <Markdown source={syllabus.goalsMd} />
 
