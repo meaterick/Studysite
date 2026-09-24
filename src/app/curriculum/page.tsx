@@ -19,7 +19,7 @@ export default async function CurriculumPage() {
       <section className="not-prose mb-10">
         <h2 className="mb-1 text-xl font-black text-ink">매주 도는 학습 순환</h2>
         <p className="mb-4 text-sm text-ink-secondary">
-          각 주차는 아래 네 단계를 차례로 거치도록 구성되어 있습니다. 주차 페이지의 탭도 이 순서를 따릅니다.
+          매주 아래 네 단계를 차례로 거쳐요. 주차 페이지의 탭도 이 순서대로 되어 있어요.
         </p>
         <LearningCycle />
       </section>
