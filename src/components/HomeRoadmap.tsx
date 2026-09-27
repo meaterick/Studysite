@@ -1,6 +1,7 @@
 import { WEEKS } from "@/content/weeks";
 import { PHASES } from "@/components/diagrams/shared";
 import TiltCard from "@/components/home/TiltCard";
+import Scroll3D from "@/components/home/Scroll3D";
 
 // 메인 화면용 로드맵. 가로로 긴 SVG 도식은 휴대폰에서 글씨만 작게 보이고
 // 오른쪽이 잘려 한눈에 들어오지 않아서, 좁은 화면에서는 위→아래 세로 흐름으로,
@@ -15,25 +16,36 @@ export default function HomeRoadmap() {
           .filter((w) => w !== undefined);
         return (
           <li key={phase.name} className="relative">
-            <TiltCard glow={phase.color} className="h-full">
-              <div
-                className="flex h-full flex-col gap-2 rounded-xl border-l-4 bg-card p-4 shadow-sm"
-                style={{ borderColor: phase.color }}
-              >
-                <p className="text-xs font-bold" style={{ color: phase.color }}>
-                  {i + 1}부
-                </p>
-                <p className="text-base font-black text-ink">{phase.name}</p>
-                <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
-                  {weeks.map((w) => (
-                    <li key={w.slug}>
-                      <span className="font-bold text-ink">{w.number}주차</span>{" "}
-                      · {w.title}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </TiltCard>
+            <Scroll3D
+              variant={i % 2 === 0 ? "left" : "right"}
+              offset={i * 0.07}
+              className="h-full"
+            >
+              <TiltCard glow={phase.color} className="h-full">
+                <div
+                  className="flex h-full flex-col gap-2 rounded-xl border-l-4 bg-card p-4 shadow-sm"
+                  style={{ borderColor: phase.color }}
+                >
+                  <p
+                    className="text-xs font-bold"
+                    style={{ color: phase.color }}
+                  >
+                    {i + 1}부
+                  </p>
+                  <p className="text-base font-black text-ink">{phase.name}</p>
+                  <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
+                    {weeks.map((w) => (
+                      <li key={w.slug}>
+                        <span className="font-bold text-ink">
+                          {w.number}주차
+                        </span>{" "}
+                        · {w.title}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </TiltCard>
+            </Scroll3D>
             {i < PHASES.length - 1 && (
               <span
                 aria-hidden
