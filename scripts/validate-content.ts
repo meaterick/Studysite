@@ -6,6 +6,9 @@
  *   2. 본문에 등장하는 모든 $...$ 인라인 수식과 ```math 블록이 실제로 유효한 LaTeX인가
  *   3. 본문 안에 $...$로 감싸이지 않은 "날것" 수학 표현이 남아있지 않은가 (KaTeX 렌더링 누락 방지)
  *   4. image 블록이 가리키는 파일이 실제로 존재하고, 선언된 width/height가 실제 픽셀 크기와 맞는가
+ *   5. 섹션 구조: 모든 `##` 섹션에 고유한 {#id}가 있고, sections/weekN.ts의 메타(목표·확인 문제·서술형
+ *      배정)와 1:1로 대응하는가. 확인 문제의 정답 번호가 유효한가, 서술형 퀴즈가 정확히 한 섹션에만
+ *      배정되었는가, 외부 자료 링크가 https인가
  *
  * 사용법: npm run validate:content
  * 실패 시 0이 아닌 코드로 종료하므로 CI(build 이전 단계)에 그대로 연결할 수 있다.
@@ -16,6 +19,7 @@ import katex from "katex";
 import { WEEKS } from "../src/content/weeks";
 import { quizAnswers } from "../src/content/quizAnswers";
 import { parseMarkdown } from "../src/content/markdown";
+import { getWeekOutline } from "../src/content/sections";
 import type { Block } from "../src/content/types";
 
 const ROOT = path.join(__dirname, "..");
@@ -44,7 +48,7 @@ function checkTex(tex: string, context: string) {
 // 수학 기호(적분/편미분/그리스 문자 아래첨자 등)가 있으면 경고한다 — 100% 정확한
 // 판별은 불가능하므로 오탐은 있을 수 있지만, 새 콘텐츠에서 이번에 실제로 발견됐던
 // "P(A|B) = P(A∩B) / P(B)" 같은 패턴을 잡아내는 것이 목적이다.
-const RAW_MATH_HINT = /[∂∇√∑×÷≈≥≤∈∩∪→←]|\b[a-zA-Z]\([a-zA-Z]\|[a-zA-Z]\)|dL\/d[a-zA-Z]|[a-zA-Z]_[0-9]|[a-zA-Z][₀-₉]/u;
+const RAW_MATH_HINT = /[∂∇√∑×÷≈≥≤∈∩∪²³αβγδεηθλμπσφωΣ]|\b[a-zA-Z]\([a-zA-Z]\|[a-zA-Z]\)|dL\/d[a-zA-Z]|[a-zA-Z]_[0-9]|[a-zA-Z][₀-₉]/u;
 
 function checkInlineMath(text: string, context: string) {
   const mathRe = /\$([^$\n]+)\$/g;
@@ -125,7 +129,59 @@ for (const week of WEEKS) {
 
   week.quiz.forEach((q) => checkInlineMath(q.question, `${label} quiz(${q.id})`));
   checkBlocks(parseMarkdown(week.conceptsMd), `${label} conceptsMd`);
+  checkSections(week, label);
   checkBlocks(parseMarkdown(week.assignmentMd), `${label} assignmentMd`);
+}
+
+function checkSections(week: (typeof WEEKS)[number], label: string) {
+  if (!(week.assignmentMaxScore > 0)) fail(`${label}: assignmentMaxScore가 0보다 커야 함`);
+  const headings = parseMarkdown(week.conceptsMd).filter(
+    (b): b is Extract<Block, { type: "heading" }> => b.type === "heading" && b.level === 2
+  );
+  if (headings.length === 0) fail(`${label}: \`## 제목 {#id}\` 섹션이 하나도 없음`);
+  const ids = new Set<string>();
+  for (const h of headings) {
+    if (!h.id) fail(`${label}: 섹션 "${h.text}"에 {#id}가 없음 — 진도 저장 키로 쓰이므로 반드시 지정`);
+    else if (ids.has(h.id)) fail(`${label}: 섹션 id "${h.id}" 중복`);
+    else ids.add(h.id);
+  }
+  for (const key of Object.keys(week.sections)) {
+    if (!ids.has(key)) fail(`${label}: sections/week${week.number}.ts의 "${key}"에 대응하는 ## 섹션이 없음 (유령 항목)`);
+  }
+  const quizIds = new Set(week.quiz.map((q) => q.id));
+  const assigned = new Map<string, string>();
+  const checkIds = new Set<string>();
+  for (const section of getWeekOutline(week).sections) {
+    const ctx = `${label} 섹션 ${section.id}`;
+    const meta = week.sections[section.id];
+    if (!meta) {
+      fail(`${ctx}: sections/week${week.number}.ts에 메타(목표·확인 문제)가 없음`);
+      continue;
+    }
+    if (!meta.goal.trim()) fail(`${ctx}: goal이 비어 있음`);
+    checkInlineMath(meta.goal, `${ctx} goal`);
+    if (meta.checks.length < 2) fail(`${ctx}: 확인 문제가 2개 미만`);
+    for (const c of meta.checks) {
+      if (checkIds.has(c.id)) fail(`${ctx}: 확인 문제 id "${c.id}" 중복`);
+      checkIds.add(c.id);
+      if (c.choices.length < 3) fail(`${ctx} ${c.id}: 선택지가 3개 미만`);
+      if (!Number.isInteger(c.answer) || c.answer < 0 || c.answer >= c.choices.length) fail(`${ctx} ${c.id}: 정답 번호가 범위를 벗어남`);
+      if (new Set(c.choices).size !== c.choices.length) fail(`${ctx} ${c.id}: 선택지 중복`);
+      if (!c.explanation.trim()) fail(`${ctx} ${c.id}: 해설이 비어 있음`);
+      [c.question, c.explanation, ...c.choices].forEach((t) => checkInlineMath(t, `${ctx} ${c.id}`));
+    }
+    for (const q of meta.quizIds) {
+      if (!quizIds.has(q)) fail(`${ctx}: 서술형 "${q}"가 week.quiz에 없음`);
+      if (assigned.has(q)) fail(`${ctx}: 서술형 "${q}"가 "${assigned.get(q)}" 섹션에도 배정됨`);
+      assigned.set(q, section.id);
+    }
+    for (const r of meta.references ?? []) {
+      if (!/^https:\/\//.test(r.url)) fail(`${ctx}: 외부 자료 링크가 https가 아님 — ${r.url}`);
+    }
+    if (section.practice.length === 0) warn(`${ctx}: [[practice]] 실습 단계가 없음`);
+    if (section.learn.filter((b) => b.type === "practice").length > 0) fail(`${ctx}: [[practice]]가 두 번 이상 있음`);
+  }
+  for (const q of quizIds) if (!assigned.has(q)) fail(`${label}: 서술형 "${q}"가 어떤 섹션에도 배정되지 않음`);
 }
 
 console.log(`\n검증 완료: 오류 ${errorCount}건, 경고 ${warnCount}건`);
