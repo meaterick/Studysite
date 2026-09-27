@@ -241,14 +241,6 @@ code {
   .pulse-dot {
     animation: pulse-dot 2s ease-out infinite;
   }
-  /* 스크롤하면 아래에서 떠오르며 나타난다(지원하는 브라우저에서만, 나머지는 그대로 보인다). */
-  @supports (animation-timeline: view()) {
-    .reveal {
-      animation: reveal-up linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 40%;
-    }
-  }
 }
 
 @keyframes gradient-pan {
@@ -279,19 +271,17 @@ code {
     box-shadow: 0 0 0 10px rgba(95, 240, 189, 0);
   }
 }
-@keyframes reveal-up {
-  from {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+
+/* 스크롤 3D: 변환은 Scroll3D.tsx가 스크롤 위치에 따라 직접 계산해 넣는다. */
+.scroll3d {
+  transform-origin: 50% 60%;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 @media print {
-  .reveal {
-    animation: none !important;
+  .scroll3d {
+    transform: none !important;
+    opacity: 1 !important;
   }
 }

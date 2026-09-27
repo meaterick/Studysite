@@ -80,6 +80,7 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
     let raf = 0;
     let lastTime = performance.now();
     let spawnTimer = 0;
+    let lastScroll = window.scrollY;
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -103,7 +104,9 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
       const y2 = p.y * cx - z1 * sx;
       const z2 = p.y * sx + z1 * cx;
       const camera = 6.2;
-      const scale = (Math.min(width, height) * 0.42 * camera) / (camera + z2) / 2.4;
+      // 아래로 스크롤할수록 신경망이 멀어진다(작아진다).
+      const recede = 1 - Math.min(lastScroll / 1400, 0.45);
+      const scale = ((Math.min(width, height) * 0.42 * camera) / (camera + z2) / 2.4) * recede;
       return { x: width / 2 + x1 * scale, y: height / 2 + y2 * scale, z: z2, s: scale };
     };
 
@@ -249,7 +252,7 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
       // 끌지 않을 때는 포인터 위치에 따라 살짝 기울인다(화면 전체 기준).
       const nx = (e.clientX - (rect.left + rect.width / 2)) / window.innerWidth;
       const ny = (e.clientY - (rect.top + rect.height / 2)) / window.innerHeight;
-      targetTiltX = -0.25 + ny * 0.6;
+      targetTiltX = -0.25 + Math.min(window.scrollY / 900, 0.6) + ny * 0.6;
       targetTiltY = nx * 2;
     };
     const onPointerDown = (e: PointerEvent) => {
@@ -260,6 +263,17 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
     };
     const onPointerUp = () => {
       dragging = false;
+    };
+
+    // 스크롤한 만큼 신경망이 회전하고 앞으로 기운다.
+    const onScroll = () => {
+      const y = window.scrollY;
+      const dy = y - lastScroll;
+      lastScroll = y;
+      if (reduced) return;
+      rotY += dy * 0.004;
+      targetTiltX = -0.25 + Math.min(y / 900, 0.6);
+      if (!running) draw(0);
     };
 
     const io = new IntersectionObserver(([entry]) => {
@@ -275,6 +289,7 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
     io.observe(canvas);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     canvas.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointerup", onPointerUp);
     if (reduced) {
@@ -289,6 +304,7 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("scroll", onScroll);
       canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
     };

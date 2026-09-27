@@ -1,5 +1,6 @@
 import { colors } from "@/components/diagrams/DiagramFrame";
 import TiltCard from "@/components/home/TiltCard";
+import Scroll3D from "@/components/home/Scroll3D";
 
 // 이 스터디의 설계 원칙인 "이해 → 직접 구현 → 설명 → 활용" 순환을 한눈에 보여준다.
 // 단계마다 사이트의 어느 부분(학습 자료/실습/백지공부·퀴즈/과제)에서 그 단계를
@@ -37,30 +38,32 @@ export default function LearningCycle() {
       <ol className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-stretch">
         {STEPS.map((step, i) => (
           <li key={step.name} className="contents">
-            <TiltCard glow={step.color}>
-              <div className="flex h-full gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:flex-col lg:gap-2">
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black text-white"
-                  style={{ background: step.color }}
-                >
-                  {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <p
-                    className="text-lg font-black"
-                    style={{ color: step.color }}
+            <Scroll3D variant="rise" offset={i * 0.08} depth={1.3}>
+              <TiltCard glow={step.color} className="h-full">
+                <div className="flex h-full gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:flex-col lg:gap-2">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black text-white"
+                    style={{ background: step.color }}
                   >
-                    {step.name}
-                  </p>
-                  <p className="mt-0.5 text-sm text-ink-secondary">
-                    {step.desc}
-                  </p>
-                  <p className="mt-2 inline-block rounded-full bg-[var(--surface-card-2)] px-2.5 py-0.5 text-[11px] font-bold text-ink-muted">
-                    {step.where}
-                  </p>
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p
+                      className="text-lg font-black"
+                      style={{ color: step.color }}
+                    >
+                      {step.name}
+                    </p>
+                    <p className="mt-0.5 text-sm text-ink-secondary">
+                      {step.desc}
+                    </p>
+                    <p className="mt-2 inline-block rounded-full bg-[var(--surface-card-2)] px-2.5 py-0.5 text-[11px] font-bold text-ink-muted">
+                      {step.where}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </TiltCard>
+              </TiltCard>
+            </Scroll3D>
             {i < STEPS.length - 1 && (
               <span
                 aria-hidden
