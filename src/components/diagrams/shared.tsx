@@ -2,10 +2,10 @@ import DiagramFrame, { colors, ink, inkSecondary } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box } from "./primitives";
 
 export const PHASES = [
-  { name: "Phase 1 · 기초", weeks: ["W1", "W2"], color: colors.blue },
-  { name: "Phase 2 · 딥러닝", weeks: ["W3", "W4"], color: colors.aqua },
-  { name: "Phase 3 · 현대 AI", weeks: ["W5", "W6"], color: colors.violet },
-  { name: "Phase 4 · 활용·책임", weeks: ["W7", "W8"], color: colors.orange },
+  { name: "1부 · 기초", weeks: ["W1", "W2"], color: colors.blue },
+  { name: "2부 · 딥러닝", weeks: ["W3", "W4"], color: colors.aqua },
+  { name: "3부 · 현대 AI", weeks: ["W5", "W6"], color: colors.violet },
+  { name: "4부 · 활용·책임", weeks: ["W7", "W8"], color: colors.orange },
 ];
 
 export function PhaseRoadmap() {

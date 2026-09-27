@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 5 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 5 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -307,7 +307,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "3Blue1Brown — Attention in transformers, visually explained",
         "url": "https://www.3blue1brown.com/lessons/attention",
-        "note": "약 25분 영상. 이 섹션 전후로 보면 좋다"
+        "note": "약 25분 영상. 이 단계 전후로 보면 좋다"
       },
       {
         "title": "Vaswani et al. (2017) — Attention Is All You Need",

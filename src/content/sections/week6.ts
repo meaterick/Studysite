@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 6 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 6 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 

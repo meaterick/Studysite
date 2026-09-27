@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 8 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 8 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -124,7 +124,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Barocas, Hardt & Narayanan — Fairness and Machine Learning",
         "url": "https://fairmlbook.org/",
-        "note": "무료 교과서 — 3장 Classification이 이 섹션의 세 기준을 다룬다"
+        "note": "무료 교과서 — 3장 Classification이 이 단계의 세 기준을 다룬다"
       },
       {
         "title": "Kleinberg et al. (2016) — Inherent Trade-Offs in the Fair Determination of Risk Scores",
@@ -397,7 +397,7 @@ const sections: Record<string, SectionMeta> = {
           "둘 다 CNN 논문이다"
         ],
         "answer": 1,
-        "explanation": "5주차 섹션 4~5의 흐름 그대로다."
+        "explanation": "5주차 4~5단계의 흐름 그대로다."
       },
       {
         "id": "w8-capstone-c2",
@@ -416,7 +416,7 @@ const sections: Record<string, SectionMeta> = {
         "question": "이 캡스톤에서 어떤 유형을 고르든 공통으로 요구되는 것은?",
         "choices": [
           "GPU 사용",
-          "\"한계와 실패 사례\" 섹션",
+          "\"한계와 실패 사례\" 항목",
           "논문 출판",
           "정확도 90% 이상"
         ],

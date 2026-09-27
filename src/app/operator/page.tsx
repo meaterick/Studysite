@@ -9,7 +9,7 @@ const LINKS = [
   { href: "/operator/guide", title: "운영 가이드", desc: "운영 원칙, 준비 체크리스트, 세션 시나리오, 채점 루브릭, 위기 대응 매뉴얼" },
   { href: "/operator/quiz-answers", title: "과제 모범 방향", desc: "W1~W8 과제 채점 시 참고할 모범 방향과 서술형 문항 모범답안 전체 (채점 화면에도 함께 표시됩니다)" },
   { href: "/operator/quality-log", title: "품질 검토·개선 로그", desc: "자체 검토 결과, 알려진 한계, 매주 개선 절차, 변경 기록" },
-  { href: "/operator/members", title: "스터디원 현황", desc: "가입 계정, 섹션별 진도·확인 문제 오답·서술형 답·백지공부·과제 상태를 확인하고 계정을 삭제" },
+  { href: "/operator/members", title: "스터디원 현황", desc: "가입 계정, 단계별 진도·확인 문제 오답·서술형 답·백지공부·과제 상태를 확인하고 계정을 삭제" },
 ];
 
 export default async function OperatorHome() {

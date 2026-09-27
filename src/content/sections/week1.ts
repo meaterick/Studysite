@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 1 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 1 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -170,7 +170,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "점프 투 파이썬 (위키독스)",
         "url": "https://wikidocs.net/book/1",
-        "note": "한국어로 된 가장 널리 쓰이는 무료 파이썬 입문서 — 2~5장이 이 섹션 범위"
+        "note": "한국어로 된 가장 널리 쓰이는 무료 파이썬 입문서 — 2~5장이 이 단계 범위"
       },
       {
         "title": "Python 공식 자습서 (한국어)",

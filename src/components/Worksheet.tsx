@@ -67,9 +67,9 @@ export default function Worksheet({
         try {
           localStorage.removeItem(draftKey);
         } catch {}
-        setMessage({ tone: "ok", text: submit ? "제출했습니다. 아래 비교 자료로 스스로 점검해보세요." : "임시 저장했습니다." });
+        setMessage({ tone: "ok", text: submit ? "제출했습니다. 아래 비교 자료로 스스로 점검해 보십시오." : "임시 저장했습니다." });
       } catch {
-        setMessage({ tone: "error", text: "저장에 실패했습니다. 잠시 뒤 다시 시도해주세요." });
+        setMessage({ tone: "error", text: "저장에 실패했습니다. 잠시 후 다시 시도해 주십시오." });
       }
     });
   };
@@ -87,7 +87,7 @@ export default function Worksheet({
       <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
         {draftIsNewer && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--surface-card-2)] px-3 py-2 text-sm print:hidden">
-            <span className="text-ink-secondary">이 브라우저에 저장하지 않은 작성 내용이 남아 있습니다.</span>
+            <span className="text-ink-secondary">저장하지 않은 작성 내용이 이 브라우저에 남아 있습니다.</span>
             <button
               type="button"
               onClick={() => setValues(draft!.values)}
@@ -101,7 +101,7 @@ export default function Worksheet({
           <div>
             <h3 className="text-base font-bold text-ink">백지공부 시트</h3>
             <p className="text-xs text-ink-muted">
-              다른 탭의 자료를 닫고, 기억나는 대로만 채워보세요. 막힌 곳을 정직하게 적는 것이 핵심입니다. ({filled}/{fields.length}칸 작성)
+              학습 자료를 닫고 기억나는 내용만 적어 보십시오. 막힌 부분을 솔직하게 기록하는 것이 핵심입니다. ({fields.length}칸 중 {filled}칸 작성)
             </p>
           </div>
           <button
@@ -109,7 +109,7 @@ export default function Worksheet({
             onClick={() => window.print()}
             className="print:hidden rounded-md border border-[var(--border-hairline)] px-3 py-1.5 text-xs font-medium text-ink-secondary hover:bg-[var(--surface-card-2)]"
           >
-            인쇄 / PDF 저장
+            인쇄·PDF 저장
           </button>
         </div>
         <div className="space-y-4">
@@ -131,7 +131,7 @@ export default function Worksheet({
                 />
                 {submittedAt && (
                   <div className="mt-2 flex flex-wrap items-center gap-2 print:hidden">
-                    <span className="text-xs text-ink-muted">비교해보니:</span>
+                    <span className="text-xs text-ink-muted">비교 결과:</span>
                     {(["ok", "weak"] as const).map((m) => (
                       <button
                         key={m}
@@ -147,7 +147,7 @@ export default function Worksheet({
                             : "border border-[var(--border-hairline)] text-ink-secondary hover:bg-[var(--surface-card-2)]"
                         }`}
                       >
-                        {m === "ok" ? "잘 떠올렸어요" : "부족했어요"}
+                        {m === "ok" ? "충분히 떠올림" : "보완 필요"}
                       </button>
                     ))}
                   </div>
@@ -163,7 +163,7 @@ export default function Worksheet({
             disabled={pending}
             className="rounded-lg bg-[var(--series-blue)] px-5 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
           >
-            {pending ? "저장 중…" : submittedAt ? "수정 내용 저장" : "제출하고 비교 자료 열기"}
+            {pending ? "저장 중…" : submittedAt ? "수정 내용 저장" : "제출 후 비교 자료 보기"}
           </button>
           {!submittedAt && (
             <button

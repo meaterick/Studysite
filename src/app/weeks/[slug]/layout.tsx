@@ -16,7 +16,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const week = getWeek(slug);
   if (!week) return {};
-  return { title: `Week ${week.number} · ${week.title}` };
+  return { title: `${week.number}주차 · ${week.title}` };
 }
 
 export default async function WeekLayout({
@@ -41,18 +41,18 @@ export default async function WeekLayout({
       >
         {prev ? (
           <Link href={`/weeks/${prev.slug}`} className="min-w-0 text-sm font-bold text-ink-secondary hover:text-[var(--series-blue)]">
-            ← Week {prev.number} · {prev.title}
+            ← {prev.number}주차 · {prev.title}
           </Link>
         ) : (
           <span />
         )}
         {next ? (
           <Link href={`/weeks/${next.slug}`} className="min-w-0 text-sm font-bold text-ink-secondary hover:text-[var(--series-blue)]">
-            Week {next.number} · {next.title} →
+            {next.number}주차 · {next.title} →
           </Link>
         ) : (
           <Link href="/curriculum" className="text-sm font-bold text-ink-secondary hover:text-[var(--series-blue)]">
-            커리큘럼으로 →
+            커리큘럼 보기 →
           </Link>
         )}
       </nav>

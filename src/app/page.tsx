@@ -11,17 +11,17 @@ import { findUserSubmission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
 
 const SECTIONS = [
-  { id: "cycle", label: "공부 방법" },
+  { id: "cycle", label: "학습 방법" },
   { id: "roadmap", label: "8주 로드맵" },
   { id: "weeks", label: "주차별 자료" },
   { id: "outcomes", label: "수료 목표" },
 ];
 
 const OUTCOMES = [
-  "AI, 머신러닝, 딥러닝, LLM이 어떤 원리로 돌아가는지 빈 종이에 그려 가며 설명할 수 있어요.",
-  "선형회귀, MLP, CNN, Self-Attention을 라이브러리 없이 직접 짤 수 있어요.",
-  "LLM이 사전학습, SFT, 정렬을 거쳐 어떻게 만들어지는지, 왜 없는 사실을 지어내는지(환각) 설명할 수 있어요.",
-  "프롬프트, RAG, 에이전트로 실제 문제를 풀고, 평가셋을 만들어 성능을 잴 수 있어요.",
+  "AI, 머신러닝, 딥러닝, LLM의 작동 원리를 백지에 그려 가며 설명할 수 있습니다.",
+  "선형 회귀, MLP, CNN, Self-Attention을 라이브러리 없이 직접 구현할 수 있습니다.",
+  "LLM이 사전학습, SFT, 정렬을 거쳐 만들어지는 과정과 사실이 아닌 내용을 생성하는 이유(환각)를 설명할 수 있습니다.",
+  "프롬프트, RAG, 에이전트로 실제 문제를 해결하고, 평가 데이터셋을 구성해 성능을 측정할 수 있습니다.",
 ];
 
 function SectionHeading({ id, title, children }: { id: string; title: string; children?: React.ReactNode }) {
@@ -50,7 +50,7 @@ export default async function Home() {
           AI 기초부터 활용까지
         </h1>
         <p className="mt-4 max-w-2xl text-lg font-bold leading-relaxed text-ink sm:text-xl">
-          수학 기초부터 LLM 에이전트까지, 8주 동안 코드를 직접 짜 보면서 배워요.
+          수학 기초부터 LLM 에이전트까지, 8주 동안 직접 코드를 작성하며 배웁니다.
         </p>
         <div className="mt-8">
           <Suspense fallback={<div className="h-14 w-full rounded-xl bg-[var(--surface-card-2)] sm:max-w-md" />}>
@@ -75,9 +75,9 @@ export default async function Home() {
       </section>
 
       <section className="mb-14">
-        <SectionHeading id="cycle" title="이렇게 공부해요" />
+        <SectionHeading id="cycle" title="학습 방법" />
         <p className="-mt-3 mb-5 text-sm text-ink-secondary">
-          매주 <strong className="text-ink">이해, 구현, 설명, 활용</strong> 순서로 진행해요. 주차는 여러 섹션으로 나뉘고, 섹션마다 학습 → 실습 → 확인 퀴즈를 통과해야 다음 섹션이 열려요.
+          매주 <strong className="text-ink">이해, 구현, 설명, 활용</strong> 순서로 진행합니다. 각 주차는 여러 단계로 나뉘며, 단계마다 학습 → 실습 → 확인 문제를 마쳐야 다음 단계가 열립니다.
         </p>
         <LearningCycle />
       </section>
@@ -85,7 +85,7 @@ export default async function Home() {
       <section className="mb-14">
         <SectionHeading id="roadmap" title="8주 로드맵" />
         <p className="-mt-3 mb-5 text-sm text-ink-secondary">
-          8주를 네 단계로 나눴어요. 뒤로 갈수록 어려워지고, 스스로 해결해야 하는 부분도 늘어나요.
+          8주 과정은 네 부분으로 구성됩니다. 뒤로 갈수록 난도가 높아지고, 스스로 해결해야 하는 부분도 늘어납니다.
         </p>
         <HomeRoadmap />
       </section>
@@ -110,7 +110,7 @@ export default async function Home() {
       </section>
 
       <section className="mb-14">
-        <SectionHeading id="outcomes" title="수료하면 이런 걸 할 수 있어요" />
+        <SectionHeading id="outcomes" title="수료 후 할 수 있는 것" />
         <div className="grid gap-3 sm:grid-cols-2">
           {OUTCOMES.map((g, i) => (
             <div key={i} className="flex gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4">
@@ -127,7 +127,7 @@ export default async function Home() {
       </section>
 
       <p className="border-t border-[var(--border-hairline)] pt-4 text-xs leading-relaxed text-ink-muted">
-        ※ 커리큘럼은 Stanford CS229·CS231n·CS224n·CS336, MIT 6.S191, Berkeley CS188, CMU 10-601의 강의 구성을 참고해서 짰어요.
+        ※ 이 커리큘럼은 Stanford CS229·CS231n·CS224n·CS336, MIT 6.S191, Berkeley CS188, CMU 10-601의 강의 구성을 참고해 설계했습니다.
       </p>
     </div>
   );

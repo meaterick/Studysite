@@ -6,25 +6,25 @@ import { colors } from "@/components/diagrams/DiagramFrame";
 const STEPS = [
   {
     name: "이해",
-    desc: "섹션 하나씩, 개념 설명과 그림을 보면서 원리부터 잡아요.",
-    where: "섹션 학습",
+    desc: "단계별로 개념 설명과 그림을 보며 원리를 이해합니다.",
+    where: "단계 학습",
     color: colors.blue,
   },
   {
     name: "직접 구현",
-    desc: "핵심 부분을 라이브러리 없이 짜 보고, 브라우저에서 바로 돌려 봐요.",
-    where: "섹션 실습",
+    desc: "핵심 부분을 라이브러리 없이 직접 구현하고, 브라우저에서 바로 실행합니다.",
+    where: "단계 실습",
     color: colors.aqua,
   },
   {
     name: "설명",
-    desc: "섹션마다 확인 퀴즈를 통과하고, 주차 끝에 빈 종이에 다시 정리하며 내 말로 설명할 수 있는지 확인해요.",
-    where: "확인 퀴즈 · 백지공부",
+    desc: "단계마다 확인 문제를 풀고, 주차를 마칠 때 백지에 다시 정리하며 자신의 말로 설명할 수 있는지 점검합니다.",
+    where: "확인 문제 · 백지공부",
     color: colors.violet,
   },
   {
     name: "활용",
-    desc: "과제에서 배운 내용을 실제 문제에 써 보고 제출하면, 운영자가 채점하고 피드백을 줘요.",
+    desc: "과제에서 배운 내용을 실제 문제에 적용해 제출하면, 운영자가 채점하고 피드백을 남깁니다.",
     where: "과제 · 운영자 채점",
     color: colors.orange,
   },
@@ -65,7 +65,7 @@ export default function LearningCycle() {
       <p className="mt-3 flex items-center gap-2 rounded-lg bg-[var(--surface-card-2)] px-4 py-3 text-sm text-ink-secondary">
         <span aria-hidden className="text-lg">↻</span>
         <span>
-          모든 섹션을 마치면 그 주의 백지공부와 과제가 열리고, 한 주가 끝나면 다음 주제로 넘어가 같은 순서를 다시 밟아요.
+          모든 단계를 마치면 그 주의 백지공부와 과제가 열리며, 한 주를 마치면 다음 주제에서 같은 과정을 반복합니다.
         </span>
       </p>
     </div>

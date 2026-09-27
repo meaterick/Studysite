@@ -22,7 +22,7 @@ import {
 import { canOpenSection, sectionProgress, weekStatus } from "./study";
 
 // 모든 액션은 브라우저에서 임의로 호출될 수 있으므로, 화면에서 이미 막았더라도
-// 여기서 로그인·섹션 잠금·입력값을 다시 검증한다.
+// 여기서 로그인·단계 잠금·입력값을 다시 검증한다.
 
 const ANSWER_MAX = 4000;
 
@@ -92,29 +92,19 @@ export async function reviewQuizAnswer(slug: string, sectionId: string, quizId: 
   refresh();
 }
 
-export async function setPracticeDone(slug: string, sectionId: string, done: boolean) {
-  const { user } = await loadSectionContext(slug, sectionId);
-  await updateLearningRecord(user.id, (record) => {
-    const state = ensureSectionState(record, slug, sectionId);
-    state.startedAt ??= new Date().toISOString();
-    state.practiceDone = !!done;
-  });
-  refresh();
-}
-
 export async function completeSection(slug: string, sectionId: string) {
   const { user, week, section } = await loadSectionContext(slug, sectionId);
   const record = getLearningRecord(user.id);
   const state = ensureSectionState(record, slug, sectionId);
   if (!sectionProgress(section, state).ready) {
-    return { ok: false as const, error: "실습 확인과 모든 확인 문제를 먼저 끝내주세요." };
+    return { ok: false as const, error: "확인 문제와 서술형 문항을 모두 마친 뒤에 단계를 완료할 수 있습니다." };
   }
   await updateLearningRecord(user.id, (r) => {
     const s = ensureSectionState(r, slug, sectionId);
     s.completedAt ??= new Date().toISOString();
   });
   const { sections } = getWeekOutline(week);
-  const next = sections[section.number]; // number는 1부터 시작하므로 다음 섹션의 인덱스와 같다
+  const next = sections[section.number]; // number는 1부터 시작하므로 다음 단계의 인덱스와 같다
   redirect(next ? `/weeks/${slug}/sections/${next.id}` : `/weeks/${slug}?finished=1`);
 }
 

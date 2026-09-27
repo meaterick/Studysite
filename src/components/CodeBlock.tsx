@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { highlightCode, type TokenKind } from "@/lib/highlight";
 import CopyButton from "./CopyButton";
 
@@ -15,7 +16,7 @@ const TOKEN_CLASS: Record<TokenKind, string> = {
 const LANG_LABEL: Record<string, string> = {
   python: "Python",
   py: "Python",
-  "python-colab": "Python · 읽기용 (Colab에서 실행)",
+  "python-colab": "Python · 참고 코드 (Colab 등 외부 환경에서 실행)",
   bash: "Bash",
   sh: "Shell",
   shell: "Shell",
@@ -26,7 +27,7 @@ const LANG_LABEL: Record<string, string> = {
   text: "Text",
 };
 
-export default function CodeBlock({ lang, code }: { lang?: string; code: string }) {
+export default function CodeBlock({ lang, code, action }: { lang?: string; code: string; action?: ReactNode }) {
   const lines = highlightCode(code, lang);
   const showLineNumbers = lines.length > 3;
 
@@ -36,7 +37,10 @@ export default function CodeBlock({ lang, code }: { lang?: string; code: string 
         <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">
           {lang ? LANG_LABEL[lang.toLowerCase()] ?? lang : "Code"}
         </span>
-        <CopyButton text={code} />
+        <div className="flex items-center gap-1.5">
+          <CopyButton text={code} />
+          {action}
+        </div>
       </div>
       <pre className="overflow-x-auto bg-[var(--surface-card)] py-3 text-[12.5px] leading-relaxed">
         <code className="font-mono text-ink">

@@ -6,8 +6,8 @@
  *   2. 본문에 등장하는 모든 $...$ 인라인 수식과 ```math 블록이 실제로 유효한 LaTeX인가
  *   3. 본문 안에 $...$로 감싸이지 않은 "날것" 수학 표현이 남아있지 않은가 (KaTeX 렌더링 누락 방지)
  *   4. image 블록이 가리키는 파일이 실제로 존재하고, 선언된 width/height가 실제 픽셀 크기와 맞는가
- *   5. 섹션 구조: 모든 `##` 섹션에 고유한 {#id}가 있고, sections/weekN.ts의 메타(목표·확인 문제·서술형
- *      배정)와 1:1로 대응하는가. 확인 문제의 정답 번호가 유효한가, 서술형 퀴즈가 정확히 한 섹션에만
+ *   5. 단계 구조: 모든 `##` 단계에 고유한 {#id}가 있고, sections/weekN.ts의 메타(목표·확인 문제·서술형
+ *      배정)와 1:1로 대응하는가. 확인 문제의 정답 번호가 유효한가, 서술형 퀴즈가 정확히 한 단계에만
  *      배정되었는가, 외부 자료 링크가 https인가
  *
  * 사용법: npm run validate:content
@@ -138,21 +138,21 @@ function checkSections(week: (typeof WEEKS)[number], label: string) {
   const headings = parseMarkdown(week.conceptsMd).filter(
     (b): b is Extract<Block, { type: "heading" }> => b.type === "heading" && b.level === 2
   );
-  if (headings.length === 0) fail(`${label}: \`## 제목 {#id}\` 섹션이 하나도 없음`);
+  if (headings.length === 0) fail(`${label}: \`## 제목 {#id}\` 단계가 하나도 없음`);
   const ids = new Set<string>();
   for (const h of headings) {
-    if (!h.id) fail(`${label}: 섹션 "${h.text}"에 {#id}가 없음 — 진도 저장 키로 쓰이므로 반드시 지정`);
-    else if (ids.has(h.id)) fail(`${label}: 섹션 id "${h.id}" 중복`);
+    if (!h.id) fail(`${label}: 단계 "${h.text}"에 {#id}가 없음 — 진도 저장 키로 쓰이므로 반드시 지정`);
+    else if (ids.has(h.id)) fail(`${label}: 단계 id "${h.id}" 중복`);
     else ids.add(h.id);
   }
   for (const key of Object.keys(week.sections)) {
-    if (!ids.has(key)) fail(`${label}: sections/week${week.number}.ts의 "${key}"에 대응하는 ## 섹션이 없음 (유령 항목)`);
+    if (!ids.has(key)) fail(`${label}: sections/week${week.number}.ts의 "${key}"에 대응하는 ## 단계가 없음 (유령 항목)`);
   }
   const quizIds = new Set(week.quiz.map((q) => q.id));
   const assigned = new Map<string, string>();
   const checkIds = new Set<string>();
   for (const section of getWeekOutline(week).sections) {
-    const ctx = `${label} 섹션 ${section.id}`;
+    const ctx = `${label} 단계 ${section.id}`;
     const meta = week.sections[section.id];
     if (!meta) {
       fail(`${ctx}: sections/week${week.number}.ts에 메타(목표·확인 문제)가 없음`);
@@ -172,7 +172,7 @@ function checkSections(week: (typeof WEEKS)[number], label: string) {
     }
     for (const q of meta.quizIds) {
       if (!quizIds.has(q)) fail(`${ctx}: 서술형 "${q}"가 week.quiz에 없음`);
-      if (assigned.has(q)) fail(`${ctx}: 서술형 "${q}"가 "${assigned.get(q)}" 섹션에도 배정됨`);
+      if (assigned.has(q)) fail(`${ctx}: 서술형 "${q}"가 "${assigned.get(q)}" 단계에도 배정됨`);
       assigned.set(q, section.id);
     }
     for (const r of meta.references ?? []) {
@@ -181,7 +181,7 @@ function checkSections(week: (typeof WEEKS)[number], label: string) {
     if (section.practice.length === 0) warn(`${ctx}: [[practice]] 실습 단계가 없음`);
     if (section.learn.filter((b) => b.type === "practice").length > 0) fail(`${ctx}: [[practice]]가 두 번 이상 있음`);
   }
-  for (const q of quizIds) if (!assigned.has(q)) fail(`${label}: 서술형 "${q}"가 어떤 섹션에도 배정되지 않음`);
+  for (const q of quizIds) if (!assigned.has(q)) fail(`${label}: 서술형 "${q}"가 어떤 단계에도 배정되지 않음`);
 }
 
 console.log(`\n검증 완료: 오류 ${errorCount}건, 경고 ${warnCount}건`);

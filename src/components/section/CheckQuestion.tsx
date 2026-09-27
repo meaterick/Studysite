@@ -49,7 +49,7 @@ export default function CheckQuestion({
       try {
         await answerCheck(slug, sectionId, checkId, selected);
       } catch {
-        setError("채점 요청이 실패했습니다. 새로고침한 뒤 다시 시도해주세요.");
+        setError("채점 요청에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도해 주십시오.");
       }
     });
   };
@@ -61,7 +61,7 @@ export default function CheckQuestion({
       <legend className="sr-only">확인 문제 {index + 1}</legend>
       <div className="mb-3 flex items-start gap-2">
         <span className="mt-0.5 shrink-0 rounded-md bg-[var(--surface-card-2)] px-2 py-0.5 text-xs font-black text-ink-secondary">
-          Q{index + 1}
+          문제 {index + 1}
         </span>
         <div className="text-[15px] font-medium text-ink">{question}</div>
       </div>
@@ -114,8 +114,8 @@ export default function CheckQuestion({
           </button>
           {wrong.size > 0 && (
             <p className="text-sm font-medium text-[var(--status-critical)]" aria-live="polite">
-              아쉽지만 오답입니다. 다른 답을 골라보세요.
-              {wrong.size < 2 && " (한 번 더 틀리면 해설이 열립니다)"}
+              오답입니다. 다른 보기를 선택해 보십시오.
+              {wrong.size < 2 && " 한 번 더 틀리면 해설이 공개됩니다."}
             </p>
           )}
           {error && <p className="text-sm text-[var(--status-critical)]">{error}</p>}

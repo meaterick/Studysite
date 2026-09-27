@@ -18,7 +18,7 @@ export default async function HomeCta() {
           Google 계정으로 시작하기
         </Link>
         <p className="text-center text-xs text-ink-muted sm:text-left">
-          로그인하면 주차별 자료와 실습, 퀴즈를 볼 수 있어요. 처음 로그인할 때 계정이 만들어져요.
+          로그인하면 주차별 학습 자료와 실습, 확인 문제를 이용할 수 있습니다. 처음 로그인할 때 계정이 자동으로 생성됩니다.
         </p>
       </div>
     );
@@ -26,13 +26,13 @@ export default async function HomeCta() {
 
   return (
     <div className="flex flex-col gap-2 sm:max-w-md">
-      <p className="text-sm font-medium text-ink-secondary">{user.name}님, 어서 오세요.</p>
+      <p className="text-sm font-medium text-ink-secondary">{user.name}님, 환영합니다.</p>
       <Link
         href="/weeks/week-1"
         className="flex w-full items-center justify-center rounded-xl px-5 py-4 text-base font-bold text-white shadow-sm transition hover:opacity-90"
         style={{ background: "var(--series-blue)" }}
       >
-        Week 1부터 시작하기
+        1주차부터 시작하기
       </Link>
       <Link
         href="/curriculum"

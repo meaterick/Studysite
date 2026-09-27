@@ -12,7 +12,7 @@ export function generateStaticParams() {
 
 const ACCESS_STYLE = {
   completed: { icon: "✓", label: "완료", ring: "var(--status-good)" },
-  current: { icon: "▶", label: "학습할 차례", ring: "var(--series-blue)" },
+  current: { icon: "▶", label: "진행할 차례", ring: "var(--series-blue)" },
   locked: { icon: "🔒", label: "잠김", ring: "var(--border-strong)" },
 } as const;
 
@@ -35,29 +35,29 @@ export default async function WeekOverviewPage({
       <div className="space-y-10">
         {finished && status.allSectionsDone && (
           <div className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
-            <p className="font-black text-ink">🎉 이번 주 섹션을 모두 마쳤습니다!</p>
+            <p className="font-black text-ink">이번 주의 모든 단계를 마쳤습니다.</p>
             <p className="mt-1 text-sm text-ink-secondary">
-              이제 책을 덮고 <strong>백지공부</strong>로 기억을 꺼내본 뒤, <strong>과제</strong>를 제출하세요. 과제는 운영자가 채점하고 피드백을 남깁니다.
+              자료를 닫고 <strong>백지공부</strong>로 배운 내용을 떠올려 본 뒤, <strong>과제</strong>를 이 사이트에서 작성해 제출하십시오. 제출한 과제는 운영자가 채점하고 피드백을 남깁니다.
             </p>
           </div>
         )}
         {locked && (
           <div className="rounded-xl border-l-4 border-[var(--status-serious)] bg-[color-mix(in_srgb,var(--status-serious)_12%,transparent)] px-5 py-3 text-sm text-ink-secondary">
             {locked === "finale"
-              ? "백지공부와 과제는 이번 주의 모든 섹션을 마친 뒤에 열립니다."
-              : "아직 열리지 않은 섹션입니다. 앞 섹션을 먼저 마쳐주세요."}
+              ? "백지공부와 과제는 이번 주의 모든 단계를 마친 뒤에 열립니다."
+              : "아직 열리지 않은 단계입니다. 앞 단계를 먼저 마쳐 주십시오."}
           </div>
         )}
 
         <section aria-labelledby="continue-heading" className="rounded-xl border border-[var(--border-hairline)] bg-card p-5 sm:p-6">
           <h2 id="continue-heading" className="text-sm font-bold text-ink-muted">
-            {current ? "이어서 학습하기" : "마무리 단계"}
+            {current ? "이어서 학습하기" : "주차 마무리"}
           </h2>
           {current ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-lg font-black text-ink">
-                  섹션 {current.number}. {current.title}
+                  {current.number}단계 · {current.title}
                 </p>
                 <p className="mt-1 text-sm text-ink-secondary">
                   <Inline text={current.meta.goal} /> · 약 {current.minutes}분
@@ -67,16 +67,16 @@ export default async function WeekOverviewPage({
                 href={`/weeks/${slug}/sections/${current.id}`}
                 className="shrink-0 rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
               >
-                {status.sectionsDone === 0 ? "1번 섹션부터 시작" : "이어서 학습"} →
+                {status.sectionsDone === 0 ? "1단계부터 시작" : "이어서 학습"} →
               </Link>
             </div>
           ) : (
             <div className="mt-2 flex flex-wrap gap-3">
               <Link href={`/weeks/${slug}/worksheet`} className="rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
-                백지공부 하기 →
+                백지공부 작성 →
               </Link>
               <Link href={`/weeks/${slug}/assignment`} className="rounded-lg border border-[var(--border-hairline)] px-5 py-2.5 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]">
-                과제 제출하기 →
+                과제 작성 →
               </Link>
             </div>
           )}
@@ -113,14 +113,14 @@ export default async function WeekOverviewPage({
 
         <section aria-labelledby="roadmap-heading">
           <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="roadmap-heading" className="text-xl font-black text-ink">섹션 로드맵</h2>
+            <h2 id="roadmap-heading" className="text-xl font-black text-ink">학습 단계</h2>
             <p className="text-sm text-ink-muted">
-              {status.sectionsTotal}개 섹션 · 예상 {Math.round(totalMinutes / 60 * 10) / 10}시간
+              {status.sectionsTotal}단계 · 예상 학습 시간 약 {Math.round(totalMinutes / 60 * 10) / 10}시간
             </p>
           </div>
           <p className="mb-4 text-sm text-ink-muted">
-            각 섹션은 <strong>학습 → 실습 → 확인 퀴즈</strong> 순서로 진행하고, 확인 퀴즈를 모두 통과하면 다음 섹션이 열립니다.
-            {isAdmin && " (운영자는 잠금과 관계없이 모든 섹션을 열람할 수 있습니다.)"}
+            각 단계는 <strong>학습 → 실습 → 확인 문제</strong> 순서로 진행하며, 확인 문제를 모두 마치면 다음 단계가 열립니다.
+            {isAdmin && " 운영자는 잠금과 관계없이 모든 단계를 열람할 수 있습니다."}
           </p>
           <ol className="space-y-2">
             {status.sections.map(({ section, access, progress }) => {
@@ -145,7 +145,7 @@ export default async function WeekOverviewPage({
                     <p className="mt-1 text-xs text-ink-muted">
                       <span className="sr-only">{style.label} · </span>약 {section.minutes}분 · 확인 문제 {progress.checksTotal}개
                       {progress.quizTotal > 0 && ` · 서술형 ${progress.quizTotal}개`}
-                      {progress.practiceRequired && " · 실습"}
+                      {progress.hasPractice && " · 실습 포함"}
                       {access === "current" && (progress.checksDone > 0 || progress.quizDone > 0) &&
                         ` · 진행 ${progress.checksDone + progress.quizDone}/${progress.checksTotal + progress.quizTotal}`}
                     </p>
@@ -177,13 +177,13 @@ export default async function WeekOverviewPage({
 
         <section aria-labelledby="finale-heading">
           <h2 id="finale-heading" className="mb-1 text-xl font-black text-ink">마무리: 백지공부 · 과제</h2>
-          <p className="mb-4 text-sm text-ink-muted">모든 섹션을 마치면 열립니다.</p>
+          <p className="mb-4 text-sm text-ink-muted">이번 주의 모든 단계를 마치면 열립니다.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <FinaleCard
               href={`/weeks/${slug}/worksheet`}
               locked={!status.allSectionsDone && !isAdmin}
               title="백지공부"
-              desc="자료를 보지 않고 핵심을 기억나는 대로 써본 뒤, 섹션 내용과 비교해 약한 곳을 찾습니다."
+              desc="자료를 보지 않고 핵심 내용을 떠올려 적은 뒤, 학습 자료와 비교해 부족한 부분을 찾습니다."
               state={status.worksheetSubmitted ? "제출 완료" : "미작성"}
               done={status.worksheetSubmitted}
             />
@@ -191,7 +191,7 @@ export default async function WeekOverviewPage({
               href={`/weeks/${slug}/assignment`}
               locked={!status.allSectionsDone && !isAdmin}
               title="과제"
-              desc={`${week.dueNote} — 제출하면 운영자가 채점하고 피드백을 남깁니다.`}
+              desc={`${week.dueNote}. 코드 실행부터 보고서 작성, 제출까지 이 사이트에서 모두 진행하며, 운영자가 채점하고 피드백을 남깁니다.`}
               state={
                 status.assignment.status === "graded"
                   ? `채점 완료 · ${status.assignment.score ?? "-"}/${status.assignment.maxScore}점`
