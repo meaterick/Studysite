@@ -16,6 +16,19 @@ export function Inline({ text }: { text: string }) {
       {parts.map((p, i) => {
         if (typeof p === "string") return <span key={i}>{p}</span>;
         if ("bold" in p) return <strong key={i} className="font-bold text-ink">{p.bold}</strong>;
+        if ("italic" in p) return <em key={i}>{p.italic}</em>;
+        if ("link" in p)
+          return (
+            <a
+              key={i}
+              href={p.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[var(--series-blue)] underline decoration-[var(--series-blue)]/40 underline-offset-2 hover:decoration-[var(--series-blue)]"
+            >
+              {p.link}
+            </a>
+          );
         if ("math" in p) return <span key={i} dangerouslySetInnerHTML={{ __html: renderMath(p.math, false) }} />;
         return (
           <code
@@ -43,6 +56,8 @@ const CALLOUT_STYLE: Record<string, { border: string; bg: string; icon: string }
   warn: { border: "var(--status-serious)", bg: "color-mix(in srgb, var(--status-serious) 12%, transparent)", icon: "주의" },
   example: { border: "var(--series-aqua)", bg: "color-mix(in srgb, var(--series-aqua) 10%, transparent)", icon: "예제" },
   quote: { border: "var(--border-strong)", bg: "var(--surface-card-2)", icon: "" },
+  tip: { border: "var(--status-good)", bg: "color-mix(in srgb, var(--status-good) 10%, transparent)", icon: "팁" },
+  task: { border: "var(--series-orange)", bg: "color-mix(in srgb, var(--series-orange) 10%, transparent)", icon: "직접 해보기" },
 };
 
 export function BlocksRenderer({
@@ -68,7 +83,7 @@ export function BlocksRenderer({
       {blocks.map((b, i) => {
         switch (b.type) {
           case "heading": {
-            const id = slugify(b.text);
+            const id = b.id ?? slugify(b.text);
             const Tag = b.level === 2 ? "h2" : "h3";
             return (
               <Tag
@@ -204,6 +219,8 @@ export function BlocksRenderer({
               </div>
             );
           }
+          case "practice":
+            return null;
           case "diagram": {
             const Diagram = DIAGRAMS[b.id];
             if (!Diagram) return null;

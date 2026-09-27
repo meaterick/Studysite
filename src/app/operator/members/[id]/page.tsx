@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/dal";
-import { getLearningRecord } from "@/lib/learningStore";
+import { getLearningRecord, readSectionState, readWorksheetState } from "@/lib/learningStore";
 import { findUserById } from "@/lib/userStore";
-import { CHECKLIST_ITEMS, weekCompletionRatio } from "@/lib/progress";
+import { listUserSubmissions } from "@/lib/submissionStore";
+import { ASSIGNMENT_STATUS_LABEL, weekStatus } from "@/lib/study";
 import { WEEKS } from "@/content/weeks";
+import { Inline } from "@/components/MarkdownBlocks";
 import ProgressRing from "@/components/ProgressRing";
 
 export const metadata = { title: "스터디원 학습 현황" };
@@ -15,10 +17,13 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
   const member = findUserById(id);
   if (!member) notFound();
   const learning = getLearningRecord(id);
-
-  const reviews = Object.values(learning.quizReviews).flatMap((week) => Object.values(week));
-  const correct = reviews.filter((status) => status === "correct").length;
-  const incorrect = reviews.filter((status) => status === "incorrect").length;
+  const submissions = listUserSubmissions(id);
+  const rows = WEEKS.map((week) => {
+    const submission = submissions.find((s) => s.weekSlug === week.slug);
+    return { week, submission, status: weekStatus(week, learning, submission) };
+  });
+  const sectionsDone = rows.reduce((sum, r) => sum + r.status.sectionsDone, 0);
+  const sectionsTotal = rows.reduce((sum, r) => sum + r.status.sectionsTotal, 0);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
@@ -28,35 +33,109 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
       <p className="mt-2 text-sm text-ink-secondary">{member.email} · 가입일 {new Date(member.createdAt).toLocaleDateString("ko-KR")}</p>
 
       <div className="my-8 grid gap-3 sm:grid-cols-3">
-        <Stat label="체크리스트 완료" value={`${Object.values(learning.progress).reduce((total, week) => total + Object.values(week).filter(Boolean).length, 0)} / ${WEEKS.length * CHECKLIST_ITEMS.length}`} />
-        <Stat label="퀴즈 자기평가" value={`정답 ${correct} · 오답 ${incorrect}`} />
+        <Stat label="완료한 섹션" value={`${sectionsDone} / ${sectionsTotal}`} />
+        <Stat label="과제 제출" value={`${submissions.length} / ${WEEKS.length}주차`} />
         <Stat label="마지막 학습 기록" value={learning.updatedAt ? new Date(learning.updatedAt).toLocaleString("ko-KR") : "아직 없음"} />
       </div>
 
       <div className="space-y-3">
-        {WEEKS.map((week) => {
-          const progress = learning.progress[week.slug] ?? {};
-          const weekReviews = learning.quizReviews[week.slug] ?? {};
-          const wrongQuestions = week.quiz.filter((question) => weekReviews[question.id] === "incorrect");
-          const correctCount = Object.values(weekReviews).filter((status) => status === "correct").length;
+        {rows.map(({ week, submission, status }) => {
+          const worksheet = readWorksheetState(learning, week.slug);
+          const weakMarks = week.worksheet.filter((_, i) => worksheet.marks[String(i)] === "weak");
           return (
-            <section key={week.slug} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
-              <div className="flex items-start gap-4">
-                <ProgressRing ratio={weekCompletionRatio(progress)} size={44} />
+            <details key={week.slug} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
+              <summary className="flex cursor-pointer items-start gap-4">
+                <ProgressRing ratio={status.ratio} size={44} />
                 <div className="min-w-0 flex-1">
                   <h2 className="font-black text-ink">Week {week.number} · {week.title}</h2>
-                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-secondary">
-                    {CHECKLIST_ITEMS.map((item) => <span key={item.id}>{progress[item.id] ? "✓" : "○"} {item.label}</span>)}
-                  </div>
-                  <p className="mt-3 text-xs text-ink-secondary">퀴즈 자기평가: 정답 {correctCount} · 오답 {wrongQuestions.length}</p>
-                  {wrongQuestions.length > 0 && (
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-[var(--status-critical)]">
-                      {wrongQuestions.map((question) => <li key={question.id}>{question.question}</li>)}
-                    </ul>
-                  )}
+                  <p className="mt-1 text-xs text-ink-secondary">
+                    섹션 {status.sectionsDone}/{status.sectionsTotal} · 백지공부 {status.worksheetSubmitted ? "제출" : "미제출"} · 과제{" "}
+                    {ASSIGNMENT_STATUS_LABEL[status.assignment.status]}
+                    {status.assignment.status === "graded" && ` ${status.assignment.score}/${status.assignment.maxScore}점`}
+                  </p>
                 </div>
+                {submission && (
+                  <Link href={`/operator/submissions/${submission.id}`} className="shrink-0 text-xs font-bold text-[var(--series-orange)] hover:underline">
+                    과제 보기 →
+                  </Link>
+                )}
+              </summary>
+
+              <div className="mt-4 space-y-4 text-sm">
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="text-left text-ink-muted">
+                      <th className="py-1 pr-2">섹션</th>
+                      <th className="py-1 pr-2">상태</th>
+                      <th className="py-1 pr-2">객관식 (오답 시도)</th>
+                      <th className="py-1">서술형 자기평가</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {status.sections.map(({ section, access, progress }) => {
+                      const state = readSectionState(learning, week.slug, section.id);
+                      const wrongTries = Object.values(state.checks).reduce((sum, c) => sum + c.wrong.length, 0);
+                      const weak = section.meta.quizIds.filter((q) => state.answers[q]?.review === "incorrect").length;
+                      return (
+                        <tr key={section.id} className="border-t border-[var(--border-hairline)] text-ink-secondary">
+                          <td className="py-1.5 pr-2">{section.number}. {section.title}</td>
+                          <td className="py-1.5 pr-2">{access === "completed" ? "✓ 완료" : access === "current" ? "진행 중" : "—"}</td>
+                          <td className="py-1.5 pr-2">
+                            {progress.checksDone}/{progress.checksTotal}
+                            {wrongTries > 0 && <span className="text-[var(--status-critical)]"> ({wrongTries})</span>}
+                          </td>
+                          <td className="py-1.5">
+                            {progress.quizDone}/{progress.quizTotal}
+                            {weak > 0 && <span className="text-[var(--status-critical)]"> · 부족 {weak}</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {worksheet.submittedAt && (
+                  <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-3">
+                    <p className="text-xs font-bold text-ink-muted">백지공부 ({new Date(worksheet.submittedAt).toLocaleString("ko-KR")})</p>
+                    <dl className="mt-2 space-y-2">
+                      {week.worksheet.map((field, i) => (
+                        <div key={field.label}>
+                          <dt className="text-xs font-bold text-ink">
+                            {field.label}
+                            {worksheet.marks[String(i)] === "weak" && <span className="ml-1 text-[var(--status-critical)]">(부족)</span>}
+                          </dt>
+                          <dd className="whitespace-pre-wrap text-xs text-ink-secondary">{worksheet.answers[String(i)] || "—"}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {weakMarks.length > 0 && (
+                      <p className="mt-2 text-xs text-[var(--status-critical)]">스스로 부족하다고 표시: {weakMarks.map((f) => f.label).join(", ")}</p>
+                    )}
+                  </div>
+                )}
+
+                {status.sections.some(({ section }) =>
+                  section.meta.quizIds.some((q) => readSectionState(learning, week.slug, section.id).answers[q]?.review === "incorrect")
+                ) && (
+                  <div>
+                    <p className="text-xs font-bold text-[var(--status-critical)]">부족하다고 표시한 서술형 문항</p>
+                    <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-ink-secondary">
+                      {status.sections.flatMap(({ section }) => {
+                        const state = readSectionState(learning, week.slug, section.id);
+                        return section.meta.quizIds
+                          .filter((q) => state.answers[q]?.review === "incorrect")
+                          .map((q) => (
+                            <li key={q}>
+                              <Inline text={week.quiz.find((x) => x.id === q)?.question ?? q} />
+                              <span className="block whitespace-pre-wrap text-ink-muted">답: {state.answers[q]?.text}</span>
+                            </li>
+                          ));
+                      })}
+                    </ul>
+                  </div>
+                )}
               </div>
-            </section>
+            </details>
           );
         })}
       </div>

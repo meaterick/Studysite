@@ -559,6 +559,7 @@ Diffusion Model(디퓨전 모델)은 최근 이미지 생성 분야를 사실상
 
 지금까지 설명한 VAE·GAN·Diffusion Model은 전부 "어떤 그럴듯한 데이터를 만들어내라"는 조건 없는(unconditional) 생성이었다. 실제로 우리가 접하는 이미지 생성 서비스는 대부분 "고양이가 우주복을 입고 있는 그림을 그려줘"처럼 텍스트로 원하는 결과를 지정한다. 이렇게 원하는 조건(condition)을 함께 입력해 그 조건에 맞는 데이터를 생성하도록 만드는 것을 조건부 생성(conditional generation)이라 부른다. Text-to-Image 모델은 앞서 설명한 Diffusion Model의 Reverse Diffusion 과정에 문장을 벡터로 바꾼 텍스트 임베딩을 각 노이즈 제거 단계마다 함께 넣어주어, 모델이 "지금 이 텍스트 조건에 맞는 노이즈를 예측하라"는 조건부 Noise Prediction을 학습하게 만든 것이다. Image-to-Image는 조건이 텍스트 대신(혹은 텍스트와 함께) 원본 이미지 자체가 되는 경우로, 이미 있는 이미지의 스타일을 바꾸거나 일부를 수정하는 데 같은 원리가 쓰인다. 텍스트와 이미지를 함께 다루는 이 조건부 생성의 메커니즘은 7주차 멀티모달 절에서 텍스트·이미지 임베딩을 어떻게 하나의 공간에 정렬시키는지를 배우면서 좀 더 구체적으로 다시 다루게 된다.
 `,
+  sections: {},
   quiz: [
     { id: "w4-q1", question: "입력 $32\\times32$, 커널 $5\\times5$, padding 2, stride 1의 출력 크기는? stride 2이면?" },
     { id: "w4-q2", question: "$5\\times5$ 입력에 $3\\times3$ 커널을 padding 0으로 적용할 때와 padding 1로 적용할 때 출력 크기 차이를 계산하고, padding이 왜 'same' 크기를 만드는지 설명하라." },
@@ -614,6 +615,7 @@ Diffusion Model(디퓨전 모델)은 최근 이미지 생성 분야를 사실상
 | BatchNorm 순서 실험·해석 | 1 |
 | 시각화·재현성(시드 고정) | 1 |
 `,
+  assignmentMaxScore: 10,
   dueNote: "제출: 일요일 23:59",
 };
 

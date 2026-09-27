@@ -551,6 +551,7 @@ print(f"PyTorch     : w={w_t:.4f}, b={b_t:.4f}, loss={loss.item():.4f}")
 
 두 print 문을 나란히 실행해보면 w, b, loss가 소수점 셋째 자리 안팎에서 거의 일치한다(둘 다 참값 w=3, b=2에 수렴하고, np.isclose(w, w_t, atol=1e-2)가 참이 될 것이다). 그런데 정작 눈여겨봐야 할 것은 최종 숫자의 일치보다 "학습 루프 안에 무엇이 남아있고 무엇이 사라졌는가"다. NumPy 버전의 루프 7줄 중 두 줄(grad_w, grad_b)은 이 문제(선형회귀 + MSE)에 대해서만 유효한, 손으로 유도한 미분 공식이다 — 모델을 2층 MLP로 바꾸면 이 두 줄은 완전히 새로 유도해서 다시 써야 한다. 반면 PyTorch 버전의 루프 5줄 중에는 w나 b를 직접 언급하는 코드가 단 한 줄도 없다. \`loss.backward()\`가 미분 공식이 있던 자리를 대신하고, \`opt.step()\`이 파라미터 갱신 두 줄을 대신한다. 그래서 \`model = torch.nn.Linear(1, 1)\`을 앞서 만든 \`nn.Sequential(nn.Linear(2,16), nn.ReLU(), ...)\`처럼 훨씬 복잡한 네트워크로 바꿔도, 학습 루프의 나머지 5줄은 단 한 글자도 손댈 필요가 없다 — 이것이 "코드 줄 수가 줄었다"는 것보다 훨씬 중요한, autograd와 optimizer가 만들어주는 진짜 자동화다.
 `,
+  sections: {},
   quiz: [
     { id: "w3-q1", question: "L = (wx − y)², x=2, w=1, y=5 일 때 $\\dfrac{dL}{dw}$는? 계산 과정을 노드별로 나눠서 보여라." },
     { id: "w3-q2", question: "곱셈 노드 z=a·b에서 상류 기울기가 g로 내려왔을 때 $\\dfrac{dL}{da}$를 구하는 식은? 이 식이 왜 'b가 클수록 a의 책임도 커진다'는 직관과 맞아떨어지는지 설명하라." },
@@ -603,6 +604,7 @@ print(f"PyTorch     : w={w_t:.4f}, b={b_t:.4f}, loss={loss.item():.4f}")
 | 실험·해석 | 2 |
 | 코드 품질 | 1 |
 `,
+  assignmentMaxScore: 10,
   dueNote: "제출: 일요일 23:59",
 };
 

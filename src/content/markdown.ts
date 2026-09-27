@@ -1,4 +1,4 @@
-import type { Block } from "./types";
+import type { Block, CalloutTone } from "./types";
 
 // A small, purpose-built markdown parser for this site's content files.
 // It supports exactly the subset the content authors use: headings (## and ###),
@@ -44,6 +44,14 @@ function parseMarkdownUncached(source: string): Block[] {
       continue;
     }
 
+    // Practice marker — 섹션을 "설명"과 "실습" 단계로 나누는 경계
+    if (/^\[\[practice\]\]$/i.test(trimmed)) {
+      flushParagraph();
+      blocks.push({ type: "practice" });
+      i++;
+      continue;
+    }
+
     // Diagram marker
     const diagramMatch = trimmed.match(/^\[\[diagram:([a-z0-9-]+)\]\]$/i);
     if (diagramMatch) {
@@ -57,10 +65,13 @@ function parseMarkdownUncached(source: string): Block[] {
     const headingMatch = trimmed.match(/^(##|###)\s+(.*)$/);
     if (headingMatch) {
       flushParagraph();
+      // `## 제목 {#section-id}` — 명시적 id(섹션 식별자)를 붙일 수 있다
+      const idMatch = headingMatch[2].match(/^(.*?)\s*\{#([a-z0-9-]+)\}\s*$/i);
       blocks.push({
         type: "heading",
         level: headingMatch[1].length === 2 ? 2 : 3,
-        text: headingMatch[2].trim(),
+        text: (idMatch ? idMatch[1] : headingMatch[2]).trim(),
+        ...(idMatch ? { id: idMatch[2] } : {}),
       });
       i++;
       continue;
@@ -108,10 +119,10 @@ function parseMarkdownUncached(source: string): Block[] {
     }
 
     // Callout containers: :::tone Title
-    const calloutMatch = trimmed.match(/^:::(info|warn|example|quote)\s*(.*)$/);
+    const calloutMatch = trimmed.match(/^:::(info|warn|example|quote|tip|task)\s*(.*)$/);
     if (calloutMatch) {
       flushParagraph();
-      const tone = calloutMatch[1] as "info" | "warn" | "example" | "quote";
+      const tone = calloutMatch[1] as CalloutTone;
       const title = calloutMatch[2].trim() || undefined;
       const bodyLines: string[] = [];
       i++;
@@ -177,20 +188,31 @@ function parseMarkdownUncached(source: string): Block[] {
   return blocks;
 }
 
-export type InlineToken = string | { bold: string } | { code: string } | { math: string };
+export type InlineToken =
+  | string
+  | { bold: string }
+  | { italic: string }
+  | { code: string }
+  | { math: string }
+  | { link: string; href: string };
 
-/** Render simple inline markdown (**bold**, `code`, $math$) into React nodes. */
+/** Render simple inline markdown (**bold**, *italic*, `code`, $math$, [text](https://…)) into tokens. */
 export function renderInline(text: string): InlineToken[] {
   const parts: InlineToken[] = [];
-  const regex = /(\*\*[^*]+\*\*|`[^`]+`|\$[^$\n]+\$)/g;
+  const regex =
+    /(\*\*[^*]+\*\*|`[^`]+`|\$[^$\n]+\$|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\)|\*(?=\S)[^*$\n]+?(?<=\S)\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
     const token = match[0];
     if (token.startsWith("**")) parts.push({ bold: token.slice(2, -2) });
+    else if (token.startsWith("*")) parts.push({ italic: token.slice(1, -1) });
     else if (token.startsWith("$")) parts.push({ math: token.slice(1, -1) });
-    else parts.push({ code: token.slice(1, -1) });
+    else if (token.startsWith("[")) {
+      const close = token.indexOf("](");
+      parts.push({ link: token.slice(1, close), href: token.slice(close + 2, -1) });
+    } else parts.push({ code: token.slice(1, -1) });
     lastIndex = match.index + token.length;
   }
   if (lastIndex < text.length) parts.push(text.slice(lastIndex));

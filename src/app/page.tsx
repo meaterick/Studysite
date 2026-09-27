@@ -5,6 +5,10 @@ import WeekCard from "@/components/WeekCard";
 import HomeCta from "@/components/HomeCta";
 import HomeRoadmap from "@/components/HomeRoadmap";
 import LearningCycle from "@/components/LearningCycle";
+import { getCurrentUser } from "@/lib/dal";
+import { getLearningRecord } from "@/lib/learningStore";
+import { findUserSubmission } from "@/lib/submissionStore";
+import { weekStatus } from "@/lib/study";
 
 const SECTIONS = [
   { id: "cycle", label: "공부 방법" },
@@ -31,7 +35,13 @@ function SectionHeading({ id, title, children }: { id: string; title: string; ch
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+  const record = user ? getLearningRecord(user.id) : { sections: {}, worksheets: {} };
+  const statusOf = (slug: string) => {
+    const week = WEEKS.find((w) => w.slug === slug)!;
+    return weekStatus(week, record, user ? findUserSubmission(user.id, slug) : undefined);
+  };
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
       <section className="mb-12">
@@ -67,7 +77,7 @@ export default function Home() {
       <section className="mb-14">
         <SectionHeading id="cycle" title="이렇게 공부해요" />
         <p className="-mt-3 mb-5 text-sm text-ink-secondary">
-          매주 <strong className="text-ink">이해, 구현, 설명, 활용</strong> 순서로 진행해요.
+          매주 <strong className="text-ink">이해, 구현, 설명, 활용</strong> 순서로 진행해요. 주차는 여러 섹션으로 나뉘고, 섹션마다 학습 → 실습 → 확인 퀴즈를 통과해야 다음 섹션이 열려요.
         </p>
         <LearningCycle />
       </section>
@@ -88,7 +98,13 @@ export default function Home() {
         </SectionHeading>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {WEEKS.slice(0, 4).map((w) => (
-            <WeekCard key={w.slug} week={w} />
+            <WeekCard
+              key={w.slug}
+              week={w}
+              ratio={statusOf(w.slug).ratio}
+              sectionsDone={statusOf(w.slug).sectionsDone}
+              sectionsTotal={statusOf(w.slug).sectionsTotal}
+            />
           ))}
         </div>
       </section>

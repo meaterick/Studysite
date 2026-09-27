@@ -1,13 +1,23 @@
 import Link from "next/link";
 import type { WeekMeta } from "@/content/types";
-import { WeekProgressBadge } from "./Checklist";
+import ProgressRing from "./ProgressRing";
 
 // 학습 목표는 "~한다." 문체로 적혀 있어 카드에서는 "~합니다."로 부드럽게 바꿔 보여준다.
 function politeObjective(text: string): string {
   return text.replace(/한다\.$/, "합니다.").replace(/는다\.$/, "습니다.");
 }
 
-export default function WeekCard({ week }: { week: WeekMeta }) {
+export default function WeekCard({
+  week,
+  ratio,
+  sectionsDone,
+  sectionsTotal,
+}: {
+  week: WeekMeta;
+  ratio: number;
+  sectionsDone: number;
+  sectionsTotal: number;
+}) {
   return (
     <Link
       href={`/weeks/${week.slug}`}
@@ -20,7 +30,7 @@ export default function WeekCard({ week }: { week: WeekMeta }) {
             Week {week.number} · {week.title}
           </h3>
         </div>
-        <WeekProgressBadge slug={week.slug} />
+        <ProgressRing ratio={ratio} size={44} />
       </div>
       {week.objectives[0] && (
         <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-2">
@@ -34,6 +44,9 @@ export default function WeekCard({ week }: { week: WeekMeta }) {
       <p className="text-xs text-ink-muted">다루는 내용: {week.subtitle}</p>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
         <span>{"★".repeat(week.difficulty)}{"☆".repeat(5 - week.difficulty)}</span>
+        <span>
+          섹션 {sectionsDone}/{sectionsTotal}
+        </span>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {week.keywords.map((k) => (

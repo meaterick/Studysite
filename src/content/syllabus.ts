@@ -21,9 +21,17 @@ export const syllabus = {
 ## 4. 주간 리듬 (학습 사이클)
 
 \`\`\`formula
-월: 자료 배포 ─▶ 화~목: 개인 학습(읽기·영상·실습 6~8h) ─▶ 금: 백지공부 + 퀴즈 제출
-─▶ 토: 정규 세션(120분) ─▶ 일: 과제 제출 ─▶ 다음 월: 피드백 + 다음 자료
+월: 자료 공개 ─▶ 화~목: 섹션 학습 (섹션마다 학습 → 실습 → 확인 퀴즈, 6~8h)
+─▶ 금: 백지공부 제출 ─▶ 토: 정규 세션(120분) ─▶ 일: 과제 제출(사이트)
+─▶ 다음 월: 운영자 채점·피드백 확인 + 다음 주차 시작
 \`\`\`
+
+### 사이트에서의 한 주 흐름
+
+1. **섹션 학습** — 주차는 6~10개의 섹션으로 나뉩니다. 섹션마다 ① 학습 자료를 읽고 ② 실습(코드 실행·손계산)을 한 뒤 ③ 확인 퀴즈(객관식은 모두 정답, 서술형은 직접 쓰고 모범답안과 비교)를 통과하면 다음 섹션이 열립니다.
+2. **백지공부** — 모든 섹션을 마치면 열립니다. 자료를 닫고 기억나는 대로 쓴 뒤 제출하면 비교 자료가 열리고, 칸마다 스스로 점검합니다.
+3. **과제** — 역시 모든 섹션을 마치면 열립니다. 리포트·링크·파일로 제출하면 운영자가 채점 기준에 따라 점수와 피드백을 남기거나 재제출을 요청합니다. 결과는 과제 탭과 진도 대시보드에서 확인합니다.
+4. **복습 노트** — 틀렸던 확인 문제와 &ldquo;부족했어요&rdquo;로 표시한 서술형 답이 모입니다. 정규 세션 전에 한 번 훑어보세요.
 
 ### 정규 세션 120분 구성
 
@@ -37,7 +45,7 @@ export const syllabus = {
 
 ## 5. 학습 방법론: 백지공부법
 
-책을 덮고 빈 종이(또는 아래 &ldquo;백지공부&rdquo; 탭)에 **제목 → 핵심 키워드 → 구조도 → 수식/코드 스케치 → 내 말로 설명** 순으로 채웁니다. 막힌 곳이 곧 학습해야 할 곳입니다. 주차별 학습자료 페이지마다 「백지공부 시트」가 포함되어 있습니다.
+책을 덮고 빈 종이(또는 주차별 &ldquo;백지공부&rdquo; 탭)에 **제목 → 핵심 키워드 → 구조도 → 수식/코드 스케치 → 내 말로 설명** 순으로 채웁니다. 막힌 곳이 곧 학습해야 할 곳입니다. 백지공부 탭은 그 주의 모든 섹션을 마치면 열리고, 제출한 뒤에야 비교 자료(키워드·섹션 목표)가 공개됩니다 — 보면서 쓰면 인출 연습이 되지 않기 때문입니다.
 `,
   evaluationMd: `
 ## 6. 평가 체계 (총 100점)
@@ -45,9 +53,9 @@ export const syllabus = {
 | 항목 | 비중 | 내용 |
 | --- | --- | --- |
 | 출석·세션 참여 | 15 | 8회, 무단결석 -3 |
-| 백지공부 시트 | 20 | 주 1회, 루브릭(정확성·구조화·자기언어) |
-| 주간 과제 | 35 | W1~W7, 코드 + 짧은 리포트 |
-| 퀴즈 | 10 | 주 5문항 (자기 점검 목적) |
+| 백지공부 시트 | 20 | 주 1회 사이트 제출, 루브릭(정확성·구조화·자기언어) |
+| 주간 과제 | 35 | W1~W7, 코드 + 짧은 리포트, 사이트 제출 후 운영자 채점 |
+| 섹션 확인 퀴즈 | 10 | 섹션 완료율 기준 (객관식 전부 통과 + 서술형 자기평가) |
 | 캡스톤 | 20 | W8 발표 + 재현 가능한 코드 |
 
 수료 기준: 70점 이상 + 캡스톤 제출.
@@ -57,29 +65,29 @@ export const syllabus = {
 
 ### 교재
 
-- Goodfellow, Bengio, Courville. *Deep Learning* — deeplearningbook.org
-- Zhang et al. *Dive into Deep Learning (d2l.ai)* — 코드 포함 무료
-- Prince. *Understanding Deep Learning* — udlbook.github.io/udlbook
-- James et al. *An Introduction to Statistical Learning (ISLP)* — statlearning.com
-- Deisenroth et al. *Mathematics for Machine Learning* — mml-book.com
+- Goodfellow, Bengio, Courville. *Deep Learning* — [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Zhang et al. *Dive into Deep Learning* — [d2l.ai](https://d2l.ai/) (코드 포함 무료, [한국어판](https://ko.d2l.ai/))
+- Prince. *Understanding Deep Learning* — [udlbook.github.io/udlbook](https://udlbook.github.io/udlbook/)
+- James et al. *An Introduction to Statistical Learning (ISLP)* — [statlearning.com](https://www.statlearning.com/)
+- Deisenroth et al. *Mathematics for Machine Learning* — [mml-book.com](https://mml-book.github.io/)
 - Russell & Norvig. *Artificial Intelligence: A Modern Approach* (전체 지형 참고)
-- Jurafsky & Martin. *Speech and Language Processing (3판 초안)* — web.stanford.edu/~jurafsky/slp3
+- Jurafsky & Martin. *Speech and Language Processing (3판 초안)* — [web.stanford.edu/~jurafsky/slp3](https://web.stanford.edu/~jurafsky/slp3/)
 - Chip Huyen. *AI Engineering* (활용 단계)
 
 ### 대학 강의
 
-- Stanford CS229 (ML), CS231n (Vision), CS224n (NLP), CS336 (LLM from Scratch)
-- MIT 6.S191 Intro to Deep Learning — introtodeeplearning.com
-- Andrej Karpathy, Neural Networks: Zero to Hero — karpathy.ai/zero-to-hero.html
-- 3Blue1Brown — Essence of Linear Algebra / Neural Networks 시리즈
+- Stanford [CS229](https://cs229.stanford.edu/) (ML), [CS231n](https://cs231n.stanford.edu/) (Vision), [CS224n](https://web.stanford.edu/class/cs224n/) (NLP), [CS336](https://stanford-cs336.github.io/) (LLM from Scratch)
+- MIT 6.S191 Intro to Deep Learning — [introtodeeplearning.com](https://introtodeeplearning.com/)
+- Andrej Karpathy, Neural Networks: Zero to Hero — [karpathy.ai/zero-to-hero.html](https://karpathy.ai/zero-to-hero.html)
+- 3Blue1Brown — [Essence of Linear Algebra](https://www.3blue1brown.com/topics/linear-algebra) / [Neural Networks](https://www.3blue1brown.com/topics/neural-networks) 시리즈
 
 ### 필수 논문 (주차별 배정)
 
-- W4 He et al., Deep Residual Learning (arXiv 1512.03385)
-- W5 Vaswani et al., Attention Is All You Need (arXiv 1706.03762)
-- W6 Kaplan et al., Scaling Laws (2001.08361); Hoffmann et al., Chinchilla (2203.15556); Ouyang et al., InstructGPT (2203.02155)
-- W7 Lewis et al., RAG (2005.11401); Yao et al., ReAct (2210.03629)
-- W8 Mitchell et al., Model Cards (1810.03993)
+- W4 He et al., Deep Residual Learning ([arXiv 1512.03385](https://arxiv.org/abs/1512.03385))
+- W5 Vaswani et al., Attention Is All You Need ([arXiv 1706.03762](https://arxiv.org/abs/1706.03762))
+- W6 Kaplan et al., Scaling Laws ([2001.08361](https://arxiv.org/abs/2001.08361)); Hoffmann et al., Chinchilla ([2203.15556](https://arxiv.org/abs/2203.15556)); Ouyang et al., InstructGPT ([2203.02155](https://arxiv.org/abs/2203.02155))
+- W7 Lewis et al., RAG ([2005.11401](https://arxiv.org/abs/2005.11401)); Yao et al., ReAct ([2210.03629](https://arxiv.org/abs/2210.03629))
+- W8 Mitchell et al., Model Cards ([1810.03993](https://arxiv.org/abs/1810.03993))
 
 :::warn 안내
 링크·판본은 변동될 수 있으므로 운영자가 학기 시작 전에 재확인합니다. (운영자 가이드 참조)
