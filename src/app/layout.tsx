@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s | Aegis AI 스터디",
   },
   description:
-    "Aegis 동아리의 8주 AI 스터디. 수학 기초부터 LLM 에이전트까지 주차별 자료, 실습, 퀴즈, 과제로 공부해요.",
+    "Aegis 동아리의 8주 AI 스터디. 수학 기초부터 LLM 에이전트까지 주차별 학습 자료, 실습, 확인 문제, 과제로 학습합니다.",
   icons: {
     icon: "/images/aegis-logo-orbit.png",
     apple: "/images/aegis-logo-orbit.png",

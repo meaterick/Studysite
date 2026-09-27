@@ -3,7 +3,7 @@ import { PHASES } from "@/components/diagrams/shared";
 
 // 메인 화면용 로드맵. 가로로 긴 SVG 도식은 휴대폰에서 글씨만 작게 보이고
 // 오른쪽이 잘려 한눈에 들어오지 않아서, 좁은 화면에서는 위→아래 세로 흐름으로,
-// 넓은 화면에서만 4칸 가로로 보여준다. 각 Phase에 속한 주차 제목까지 함께 적어
+// 넓은 화면에서만 4칸 가로로 보여준다. 각 부에 속한 주차 제목까지 함께 적어
 // 무엇을 배우는지 바로 알 수 있게 한다.
 export default function HomeRoadmap() {
   return (
@@ -17,13 +17,13 @@ export default function HomeRoadmap() {
               style={{ borderColor: phase.color }}
             >
               <p className="text-xs font-bold" style={{ color: phase.color }}>
-                {i + 1}단계
+                {i + 1}부
               </p>
               <p className="text-base font-black text-ink">{phase.name}</p>
               <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
                 {weeks.map((w) => (
                   <li key={w.slug}>
-                    <span className="font-bold text-ink">Week {w.number}</span> · {w.title}
+                    <span className="font-bold text-ink">{w.number}주차</span> · {w.title}
                   </li>
                 ))}
               </ul>

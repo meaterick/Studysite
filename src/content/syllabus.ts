@@ -1,5 +1,5 @@
 export const syllabus = {
-  title: "Aegis AI 스터디 — 「AI 기초부터 활용까지」 8주 커리큘럼",
+  title: "Aegis AI 스터디 「AI 기초부터 활용까지」 8주 커리큘럼",
   designNote:
     "설계 원칙: Stanford CS229/CS231n/CS224n/CS336, MIT 6.S191, Berkeley CS188, CMU 10-601 등 세계 최상위 대학 강의의 구조를 참고하되, \"이해 → 직접 구현 → 설명 → 활용\" 순환으로 재구성했습니다.",
   goalsMd: `
@@ -21,17 +21,17 @@ export const syllabus = {
 ## 4. 주간 리듬 (학습 사이클)
 
 \`\`\`formula
-월: 자료 공개 ─▶ 화~목: 섹션 학습 (섹션마다 학습 → 실습 → 확인 퀴즈, 6~8h)
+월: 자료 공개 ─▶ 화~목: 단계 학습 (단계마다 학습 → 실습 → 확인 문제, 6~8h)
 ─▶ 금: 백지공부 제출 ─▶ 토: 정규 세션(120분) ─▶ 일: 과제 제출(사이트)
 ─▶ 다음 월: 운영자 채점·피드백 확인 + 다음 주차 시작
 \`\`\`
 
 ### 사이트에서의 한 주 흐름
 
-1. **섹션 학습** — 주차는 7~12개의 섹션으로 나뉩니다. 섹션마다 ① 학습 자료를 읽고 ② 실습(코드 실행·손계산)을 한 뒤 ③ 확인 퀴즈(객관식은 모두 정답, 서술형은 직접 쓰고 모범답안과 비교)를 통과하면 다음 섹션이 열립니다.
-2. **백지공부** — 모든 섹션을 마치면 열립니다. 자료를 닫고 기억나는 대로 쓴 뒤 제출하면 비교 자료가 열리고, 칸마다 스스로 점검합니다.
-3. **과제** — 역시 모든 섹션을 마치면 열립니다. 리포트·링크·파일로 제출하면 운영자가 채점 기준에 따라 점수와 피드백을 남기거나 재제출을 요청합니다. 결과는 과제 탭과 진도 대시보드에서 확인합니다.
-4. **복습 노트** — 틀렸던 확인 문제와 "부족했어요"로 표시한 서술형 답이 모입니다. 정규 세션 전에 한 번 훑어보세요.
+1. **단계 학습**: 주차는 7~12개의 단계로 나뉩니다. 단계마다 ① 학습 자료를 읽고 ② 실습(코드 실행·손계산)을 한 뒤 ③ 확인 문제(객관식은 모두 정답, 서술형은 직접 쓰고 모범답안과 비교)를 통과하면 다음 단계가 열립니다.
+2. **백지공부**: 모든 단계를 마치면 열립니다. 자료를 닫고 기억나는 대로 쓴 뒤 제출하면 비교 자료가 열리고, 칸마다 스스로 점검합니다.
+3. **과제**: 역시 모든 단계를 마치면 열립니다. 과제 탭의 작업 공간에서 코드를 작성·실행하고 답안을 작성하며, 작성한 내용은 자동으로 저장됩니다. 제출하면 운영자가 채점 기준별로 점수와 피드백을 남기거나 재제출을 요청합니다. 막히는 부분은 같은 화면에서 운영자에게 질문할 수 있습니다.
+4. **복습 노트**: 틀렸던 확인 문제와 "보완이 필요합니다"로 표시한 서술형 답이 모입니다. 정규 세션 전에 한 번 훑어보십시오.
 
 ### 정규 세션 120분 구성
 
@@ -45,7 +45,7 @@ export const syllabus = {
 
 ## 5. 학습 방법론: 백지공부법
 
-책을 덮고 빈 종이(또는 주차별 "백지공부" 탭)에 **제목 → 핵심 키워드 → 구조도 → 수식/코드 스케치 → 내 말로 설명** 순으로 채웁니다. 막힌 곳이 곧 학습해야 할 곳입니다. 백지공부 탭은 그 주의 모든 섹션을 마치면 열리고, 제출한 뒤에야 비교 자료(키워드·섹션 목표)가 공개됩니다 — 보면서 쓰면 인출 연습이 되지 않기 때문입니다.
+책을 덮고 빈 종이(또는 주차별 "백지공부" 탭)에 **제목 → 핵심 키워드 → 구조도 → 수식/코드 스케치 → 내 말로 설명** 순으로 채웁니다. 막힌 곳이 곧 학습해야 할 곳입니다. 백지공부 탭은 그 주의 모든 단계를 마치면 열리고, 제출한 뒤에야 비교 자료(키워드·단계 목표)가 공개됩니다. 보면서 쓰면 인출 연습이 되지 않기 때문입니다.
 `,
   evaluationMd: `
 ## 6. 평가 체계 (총 100점)
@@ -54,9 +54,9 @@ export const syllabus = {
 | --- | --- | --- |
 | 출석·세션 참여 | 15 | 8회, 무단결석 -3 |
 | 백지공부 시트 | 20 | 주 1회 사이트 제출, 루브릭(정확성·구조화·자기언어) |
-| 주간 과제 | 35 | W1~W7, 코드 + 짧은 리포트, 사이트 제출 후 운영자 채점 |
-| 섹션 확인 퀴즈 | 10 | 섹션 완료율 기준 (객관식 전부 통과 + 서술형 자기평가) |
-| 캡스톤 | 20 | W8 발표 + 재현 가능한 코드 |
+| 주간 과제 | 35 | W1~W7, 과제 작업 공간에서 코드·답안 작성 후 제출, 운영자가 채점 기준별로 채점 |
+| 단계 확인 문제 | 10 | 단계 완료율 기준 (객관식 전부 통과 + 서술형 자기평가) |
+| 캡스톤 | 20 | W8 발표 + 재현 가능한 코드·리포트·모델카드 |
 
 수료 기준: 70점 이상 + 캡스톤 제출.
 `,
@@ -65,21 +65,21 @@ export const syllabus = {
 
 ### 교재
 
-- Goodfellow, Bengio, Courville. *Deep Learning* — [deeplearningbook.org](https://www.deeplearningbook.org/)
-- Zhang et al. *Dive into Deep Learning* — [d2l.ai](https://d2l.ai/) (코드 포함 무료, [한국어판](https://ko.d2l.ai/))
-- Prince. *Understanding Deep Learning* — [udlbook.github.io/udlbook](https://udlbook.github.io/udlbook/)
-- James et al. *An Introduction to Statistical Learning (ISLP)* — [statlearning.com](https://www.statlearning.com/)
-- Deisenroth et al. *Mathematics for Machine Learning* — [mml-book.com](https://mml-book.github.io/)
+- Goodfellow, Bengio, Courville. *Deep Learning*: [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Zhang et al. *Dive into Deep Learning*: [d2l.ai](https://d2l.ai/) (코드 포함 무료, [한국어판](https://ko.d2l.ai/))
+- Prince. *Understanding Deep Learning*: [udlbook.github.io/udlbook](https://udlbook.github.io/udlbook/)
+- James et al. *An Introduction to Statistical Learning (ISLP)*, [statlearning.com](https://www.statlearning.com/)
+- Deisenroth et al. *Mathematics for Machine Learning*: [mml-book.com](https://mml-book.github.io/)
 - Russell & Norvig. *Artificial Intelligence: A Modern Approach* (전체 지형 참고)
-- Jurafsky & Martin. *Speech and Language Processing (3판 초안)* — [web.stanford.edu/~jurafsky/slp3](https://web.stanford.edu/~jurafsky/slp3/)
+- Jurafsky & Martin. *Speech and Language Processing (3판 초안)*: [web.stanford.edu/~jurafsky/slp3](https://web.stanford.edu/~jurafsky/slp3/)
 - Chip Huyen. *AI Engineering* (활용 단계)
 
 ### 대학 강의
 
 - Stanford [CS229](https://cs229.stanford.edu/) (ML), [CS231n](https://cs231n.stanford.edu/) (Vision), [CS224n](https://web.stanford.edu/class/cs224n/) (NLP), [CS336](https://stanford-cs336.github.io/) (LLM from Scratch)
-- MIT 6.S191 Intro to Deep Learning — [introtodeeplearning.com](https://introtodeeplearning.com/)
-- Andrej Karpathy, Neural Networks: Zero to Hero — [karpathy.ai/zero-to-hero.html](https://karpathy.ai/zero-to-hero.html)
-- 3Blue1Brown — [Essence of Linear Algebra](https://www.3blue1brown.com/topics/linear-algebra) / [Neural Networks](https://www.3blue1brown.com/topics/neural-networks) 시리즈
+- MIT 6.S191 Intro to Deep Learning: [introtodeeplearning.com](https://introtodeeplearning.com/)
+- Andrej Karpathy, Neural Networks: Zero to Hero: [karpathy.ai/zero-to-hero.html](https://karpathy.ai/zero-to-hero.html)
+- 3Blue1Brown: [Essence of Linear Algebra](https://www.3blue1brown.com/topics/linear-algebra) / [Neural Networks](https://www.3blue1brown.com/topics/neural-networks) 시리즈
 
 ### 필수 논문 (주차별 배정)
 
@@ -95,7 +95,8 @@ export const syllabus = {
 
 ## 8. 사전 준비물
 
-- Google 계정 (Colab 사용, 별도 설치 불필요)
+- 최신 웹 브라우저(Chrome, Edge, Safari 등). 실습과 과제의 Python 코드는 브라우저에서 실행되므로 별도 설치가 필요하지 않습니다.
+- (선택) Google 계정: PyTorch 등 일부 참고 코드를 Colab에서 실행해 보고 싶을 때
 - Python 기초 문법(변수·함수·리스트)
 - 고등학교 수준 미적분·확률 (부족하면 W1에서 보충)
 `,

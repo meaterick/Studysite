@@ -41,18 +41,30 @@ export default function LazyCodeCell({
     return () => io.disconnect();
   }, [active]);
 
+  const [autoRun, setAutoRun] = useState(false);
+
   if (active) {
-    return <CodeCell cellId={cellId} starterCode={starterCode} onComplete={onComplete} />;
+    return <CodeCell cellId={cellId} starterCode={starterCode} onComplete={onComplete} autoRun={autoRun} />;
   }
 
   return (
-    <div ref={ref} onClick={() => setActive(true)} className="group relative cursor-pointer">
-      <CodeBlock lang="python" code={starterCode} />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-2 opacity-0 transition-opacity group-hover:opacity-100">
-        <span className="rounded-full bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white">
-          클릭하면 직접 실행할 수 있는 편집기로 바뀝니다
-        </span>
-      </div>
+    <div ref={ref}>
+      <CodeBlock
+        lang="python"
+        code={starterCode}
+        action={
+          <button
+            type="button"
+            onClick={() => {
+              setAutoRun(true);
+              setActive(true);
+            }}
+            className="rounded-md bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white hover:opacity-90"
+          >
+            ▶ 실행
+          </button>
+        }
+      />
     </div>
   );
 }

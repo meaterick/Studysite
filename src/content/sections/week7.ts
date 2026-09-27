@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 7 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 7 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -183,12 +183,12 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Lewis et al. (2020) — Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
         "url": "https://arxiv.org/abs/2005.11401",
-        "note": "RAG라는 이름을 붙인 논문 — 그림 1"
+        "note": "RAG라는 이름을 붙인 논문: 그림 1"
       },
       {
         "title": "Liu et al. (2023) — Lost in the Middle: How Language Models Use Long Contexts",
         "url": "https://arxiv.org/abs/2307.03172",
-        "note": "긴 컨텍스트의 가운데 정보를 놓치는 현상 — 청크 크기·배치 설계의 근거"
+        "note": "긴 컨텍스트의 가운데 정보를 놓치는 현상: 청크 크기·배치 설계의 근거"
       }
     ]
   },
@@ -224,7 +224,7 @@ const sections: Record<string, SectionMeta> = {
         "question": "Recall@k가 높은데도 최종 답이 틀린다면 다음으로 의심할 곳은?",
         "choices": [
           "청크 크기",
-          "생성 단계 — 프롬프트 구성·조각 순서·모델이 근거를 무시하거나 오독했는지",
+          "생성 단계: 프롬프트 구성·조각 순서·모델이 근거를 무시하거나 오독했는지",
           "임베딩 모델",
           "골든셋의 크기"
         ],
@@ -327,7 +327,7 @@ const sections: Record<string, SectionMeta> = {
         "question": "MCP(Model Context Protocol)가 해결하려는 문제는?",
         "choices": [
           "모델의 환각",
-          "프레임워크·도구마다 제각각인 연동 방식 — 도구를 MCP 서버로 한 번 구현하면 여러 에이전트에서 재사용",
+          "프레임워크·도구마다 제각각인 연동 방식: 도구를 MCP 서버로 한 번 구현하면 여러 에이전트에서 재사용",
           "GPU 부족",
           "토큰 비용"
         ],
@@ -385,7 +385,7 @@ const sections: Record<string, SectionMeta> = {
           "64"
         ],
         "answer": 2,
-        "explanation": "전체 $8 \\times 8 = 64$쌍 중 대각선 8쌍(진짜 짝)을 뺀 $64 - 8 = 56$쌍이다."
+        "explanation": "전체 $8 \\times 8 = 64$쌍 중 대각선 8쌍(정답 짝)을 뺀 $64 - 8 = 56$쌍이다."
       },
       {
         "id": "w7-multimodal-c2",

@@ -11,7 +11,7 @@ const CodeCell = dynamic(() => import("./CodeCell"), {
   ssr: false,
   loading: () => (
     <div className="not-prose flex items-center justify-center rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-card)] py-8 text-xs text-ink-muted">
-      코드 편집기를 불러오는 중…
+      코드 편집기를 불러오고 있습니다…
     </div>
   ),
 });

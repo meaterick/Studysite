@@ -3,6 +3,8 @@ import { requireAdmin } from "@/lib/dal";
 import { listSubmissions, latestGrade, latestVersion, type SubmissionStatus } from "@/lib/submissionStore";
 import { listUsers } from "@/lib/userStore";
 import { WEEKS } from "@/content/weeks";
+import { listThreads, unreadCount } from "@/lib/threadStore";
+import { formatDateTime } from "@/lib/datetime";
 
 export const metadata = { title: "과제 채점" };
 
@@ -34,6 +36,8 @@ export default async function SubmissionsPage({
   const order: Record<SubmissionStatus, number> = { submitted: 0, revision: 1, graded: 2 };
   filtered.sort((a, b) => order[a.status] - order[b.status] || a.updatedAt.localeCompare(b.updatedAt));
   const pendingCount = all.filter((s) => s.status === "submitted").length;
+  const unansweredThreads = listThreads().filter((t) => unreadCount(t, "admin") > 0);
+  const submissionByKey = new Map(all.map((s) => [`${s.userId}:${s.weekSlug}`, s]));
 
   const filterHref = (next: { week?: string; status?: string }) => {
     const params = new URLSearchParams();
@@ -51,13 +55,43 @@ export default async function SubmissionsPage({
       <p className="mt-5 text-sm font-bold text-[var(--series-orange)]">운영자 전용</p>
       <h1 className="mt-1 text-3xl font-black text-ink">과제 채점</h1>
       <p className="mt-2 text-sm text-ink-secondary">
-        전체 제출 {all.length}건 · 채점 대기 <strong className="text-ink">{pendingCount}</strong>건. 채점 대기 중인 제출물이 위에, 오래 기다린 순서로 표시됩니다.
+        전체 제출 {all.length}건 · 채점 대기 <strong className="text-ink">{pendingCount}</strong>건 · 답변을 기다리는 질문{" "}
+        <strong className="text-ink">{unansweredThreads.length}</strong>건. 채점 대기 중인 제출물이 위에, 오래 기다린 순서로 표시됩니다.
       </p>
+
+      {unansweredThreads.length > 0 && (
+        <section aria-labelledby="questions-heading" className="mt-6 rounded-xl border border-[var(--series-orange)] bg-card p-4">
+          <h2 id="questions-heading" className="text-sm font-black text-ink">답변을 기다리는 질문</h2>
+          <ul className="mt-2 space-y-2 text-sm">
+            {unansweredThreads.map((t) => {
+              const w = WEEKS.find((x) => x.slug === t.weekSlug);
+              const u = users.get(t.userId);
+              const last = t.messages[t.messages.length - 1];
+              const sub = submissionByKey.get(`${t.userId}:${t.weekSlug}`);
+              return (
+                <li key={`${t.userId}:${t.weekSlug}`} className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="min-w-0">
+                    <strong className="text-ink">{u?.name ?? "(탈퇴한 사용자)"}</strong>
+                    <span className="text-ink-muted"> · {w?.number}주차 · {formatDateTime(t.updatedAt)}</span>
+                    <span className="block truncate text-ink-secondary">{last?.text.slice(0, 120)}</span>
+                  </span>
+                  <Link
+                    href={sub ? `/operator/submissions/${sub.id}#thread-heading` : `/operator/threads/${t.userId}/${t.weekSlug}`}
+                    className="shrink-0 rounded-md bg-[var(--series-orange)] px-3 py-1 text-xs font-bold text-white hover:opacity-90"
+                  >
+                    답변하기
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <div className="mt-6 flex flex-wrap gap-2 text-xs font-bold">
         <FilterChip href={filterHref({ week: undefined })} active={!week} label="전체 주차" />
         {WEEKS.map((w) => (
-          <FilterChip key={w.slug} href={filterHref({ week: w.slug })} active={week === w.slug} label={`W${w.number}`} />
+          <FilterChip key={w.slug} href={filterHref({ week: w.slug })} active={week === w.slug} label={`${w.number}주차`} />
         ))}
       </div>
       <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
@@ -92,12 +126,12 @@ export default async function SubmissionsPage({
                   <td className="border-b border-[var(--border-hairline)] px-3 py-2">
                     <span className="text-xs font-bold" style={{ color: STATUS_COLOR[s.status] }}>{STATUS_LABEL[s.status]}</span>
                   </td>
-                  <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">W{w?.number ?? "?"}</td>
+                  <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">{w?.number ?? "?"}주차</td>
                   <td className="border-b border-[var(--border-hairline)] px-3 py-2">
                     <span className="font-medium text-ink">{user?.name ?? "(탈퇴한 사용자)"}</span>
                     <span className="block text-xs text-ink-muted">{user?.email}</span>
                   </td>
-                  <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-xs text-ink-muted">{new Date(latest.submittedAt).toLocaleString("ko-KR")}</td>
+                  <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-xs text-ink-muted">{formatDateTime(latest.submittedAt)}</td>
                   <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">v{latest.version}</td>
                   <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">
                     {grade?.decision === "graded" ? `${grade.score}/${grade.maxScore}` : "-"}

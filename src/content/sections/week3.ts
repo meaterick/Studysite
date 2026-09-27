@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 3 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 3 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -111,7 +111,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "CS231n — Backpropagation, Intuitions",
         "url": "https://cs231n.github.io/optimization-2/",
-        "note": "게이트별 기울기 흐름을 그림과 숫자로 — 본문과 같은 방식"
+        "note": "게이트별 기울기 흐름을 그림과 숫자로: 본문과 같은 방식"
       },
       {
         "title": "3Blue1Brown — Backpropagation calculus",
@@ -221,7 +221,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Andrej Karpathy — micrograd (GitHub)",
         "url": "https://github.com/karpathy/micrograd",
-        "note": "본문 Value 클래스의 원본 저장소 — engine.py가 100줄 남짓"
+        "note": "본문 Value 클래스의 원본 저장소: engine.py가 100줄 남짓"
       },
       {
         "title": "Karpathy — Neural Networks: Zero to Hero, 1강",
@@ -282,7 +282,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Kingma & Ba (2014) — Adam: A Method for Stochastic Optimization",
         "url": "https://arxiv.org/abs/1412.6980",
-        "note": "Adam 원 논문 — Algorithm 1이 본문의 갱신식"
+        "note": "Adam 원 논문: Algorithm 1이 본문의 갱신식"
       }
     ]
   },
@@ -336,7 +336,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "He et al. (2015) — Delving Deep into Rectifiers",
         "url": "https://arxiv.org/abs/1502.01852",
-        "note": "He 초기화를 제안한 논문 — 2.2절이 본문의 분산 유도"
+        "note": "He 초기화를 제안한 논문: 2.2절이 본문의 분산 유도"
       },
       {
         "title": "deeplearning.ai — Initializing neural networks",
@@ -397,7 +397,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Ba, Kiros & Hinton (2016) — Layer Normalization",
         "url": "https://arxiv.org/abs/1607.06450",
-        "note": "LayerNorm 원 논문 — 순환망·Transformer에서 배치 의존성을 없앤 이유"
+        "note": "LayerNorm 원 논문: 순환망·Transformer에서 배치 의존성을 없앤 이유"
       }
     ]
   },
@@ -513,7 +513,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Google Colab",
         "url": "https://colab.research.google.com/",
-        "note": "무료 GPU로 본문의 PyTorch 코드를 실행 — 런타임 유형을 GPU로 바꾸고 `torch.cuda.is_available()` 확인"
+        "note": "무료 GPU로 본문의 PyTorch 코드를 실행: 런타임 유형을 GPU로 바꾸고 `torch.cuda.is_available()` 확인"
       }
     ]
   },

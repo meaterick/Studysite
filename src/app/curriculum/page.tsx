@@ -17,9 +17,9 @@ export default async function CurriculumPage() {
       <p className="mb-8 text-sm italic text-ink-secondary">{syllabus.designNote}</p>
 
       <section className="not-prose mb-10">
-        <h2 className="mb-1 text-xl font-black text-ink">매주 도는 학습 순환</h2>
+        <h2 className="mb-1 text-xl font-black text-ink">주간 학습 순환</h2>
         <p className="mb-4 text-sm text-ink-secondary">
-          매주 아래 네 단계를 차례로 거쳐요. 주차 페이지의 탭도 이 순서대로 되어 있어요.
+          매주 아래 네 과정을 차례로 거칩니다. 주차 페이지의 탭도 이 순서로 구성되어 있습니다.
         </p>
         <LearningCycle />
       </section>
@@ -31,7 +31,7 @@ export default async function CurriculumPage() {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-[var(--surface-card-2)]">
-              {["주", "주제", "핵심 개념", "난이도", ""].map((h) => (
+              {["주차", "주제", "핵심 개념", "난이도", ""].map((h) => (
                 <th key={h} className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">
                   {h}
                 </th>

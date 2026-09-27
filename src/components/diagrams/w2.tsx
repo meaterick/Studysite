@@ -15,7 +15,7 @@ export function ConfusionMatrix() {
     <DiagramFrame
       title="혼동행렬과 Precision / Recall"
       viewBox="0 0 560 300"
-      caption="Precision = TP/(TP+FP) — 예측 열(세로) 기준. Recall = TP/(TP+FN) — 실제 행(가로) 기준."
+      caption="Precision = TP/(TP+FP)는 예측 열(세로) 기준, Recall = TP/(TP+FN)은 실제 행(가로) 기준이다."
     >
       <ArrowDefs />
       <Label x={x0 + cell} y={30} text="예측" color={inkMuted} weight={700} />

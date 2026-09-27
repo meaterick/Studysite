@@ -46,7 +46,7 @@ export default function InteractiveBiasVariance() {
       title="편향-분산 트레이드오프"
       viewBox={`0 0 ${width} ${height}`}
       interactive
-      caption={`슬라이더로 모델 복잡도를 움직여보세요. 복잡도 ${x.toFixed(1)}에서 편향²=${bias2(x).toFixed(2)}, 분산=${variance(x).toFixed(2)}, 총 오차=${total(x).toFixed(2)} — 지금은 "${zone}" 구간이다.`}
+      caption={`슬라이더로 모델 복잡도를 움직여 보십시오. 복잡도 ${x.toFixed(1)}에서 편향²=${bias2(x).toFixed(2)}, 분산=${variance(x).toFixed(2)}, 총 오차=${total(x).toFixed(2)}로, 지금은 "${zone}" 구간이다.`}
       controls={<Slider label="모델 복잡도" value={x} min={0} max={10} step={0.1} onChange={setX} format={(v) => v.toFixed(1)} color={zoneColor} />}
     >
       <ArrowDefs />

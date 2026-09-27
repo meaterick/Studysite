@@ -4,20 +4,19 @@ import { getWeekOutline } from "@/content/sections";
 import { readSectionState, readWorksheetState, type LearningRecord, type SectionState } from "./learningStore";
 import { latestGrade, type Submission } from "./submissionStore";
 
-// 섹션 진행 규칙을 한곳에 모아둔다 — 페이지(표시), 서버 액션(검증), 운영자 화면(요약)이
+// 단계 진행 규칙을 한곳에 모아둔다 — 페이지(표시), 서버 액션(검증), 운영자 화면(요약)이
 // 모두 같은 함수를 쓰므로 "화면에서는 완료인데 서버는 미완료" 같은 불일치가 생기지 않는다.
 //
-// 한 섹션을 끝내려면: ① 실습 단계가 있으면 실습 완료 확인 ② 객관식 확인 문제 전부 정답
-// ③ 서술형 문항 전부 직접 작성 후 모범답안과 비교해 자기평가. 앞 섹션을 끝내야 다음
-// 섹션이 열리고, 모든 섹션을 끝내면 백지공부와 과제가 열린다.
+// 한 단계를 끝내려면: ① 객관식 확인 문제 전부 정답 ② 서술형 문항 전부 직접 작성 후
+// 모범답안과 비교해 자기평가. 앞 단계를 끝내야 다음 단계가 열리고, 모든 단계를 끝내면
+// 백지공부와 과제가 열린다. 실습은 권장 활동이며 완료 조건에는 넣지 않는다.
 
 export interface SectionProgress {
   checksDone: number;
   checksTotal: number;
   quizDone: number;
   quizTotal: number;
-  practiceRequired: boolean;
-  practiceDone: boolean;
+  hasPractice: boolean;
   ready: boolean;
   completed: boolean;
 }
@@ -27,16 +26,14 @@ export function sectionProgress(section: WeekSection, state: SectionState): Sect
   const checksDone = section.meta.checks.filter((c) => state.checks[c.id]?.correct).length;
   const quizTotal = section.meta.quizIds.length;
   const quizDone = section.meta.quizIds.filter((id) => !!state.answers[id]?.review).length;
-  const practiceRequired = section.practice.length > 0;
-  const practiceDone = !practiceRequired || !!state.practiceDone;
-  const ready = checksDone === checksTotal && quizDone === quizTotal && practiceDone;
+  const hasPractice = section.practice.length > 0;
+  const ready = checksDone === checksTotal && quizDone === quizTotal;
   return {
     checksDone,
     checksTotal,
     quizDone,
     quizTotal,
-    practiceRequired,
-    practiceDone,
+    hasPractice,
     ready,
     completed: !!state.completedAt,
   };
@@ -48,7 +45,7 @@ export interface WeekStatus {
   sections: { section: WeekSection; access: SectionAccess; progress: SectionProgress }[];
   sectionsDone: number;
   sectionsTotal: number;
-  /** 다음에 학습할 섹션 (모두 끝났으면 undefined) */
+  /** 다음에 학습할 단계 (모두 끝났으면 undefined) */
   currentSection?: WeekSection;
   allSectionsDone: boolean;
   worksheetSubmitted: boolean;
@@ -57,7 +54,7 @@ export interface WeekStatus {
     score: number | null;
     maxScore: number;
   };
-  /** 섹션 N개 + 백지공부 + 과제 제출 기준 진행률 */
+  /** 단계 N개 + 백지공부 + 과제 제출 기준 진행률 */
   ratio: number;
 }
 
@@ -96,7 +93,7 @@ export function weekStatus(week: WeekMeta, record: LearningRecord, submission?: 
   };
 }
 
-/** 운영자는 콘텐츠 검수를 위해 잠금 없이 모든 섹션을 볼 수 있다. */
+/** 운영자는 콘텐츠 검수를 위해 잠금 없이 모든 단계를 볼 수 있다. */
 export function canOpenSection(status: WeekStatus, sectionId: string, isAdmin: boolean): boolean {
   if (isAdmin) return true;
   const row = status.sections.find((r) => r.section.id === sectionId);

@@ -2,10 +2,10 @@ import DiagramFrame, { colors, ink, inkSecondary } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box } from "./primitives";
 
 export const PHASES = [
-  { name: "Phase 1 · 기초", weeks: ["W1", "W2"], color: colors.blue },
-  { name: "Phase 2 · 딥러닝", weeks: ["W3", "W4"], color: colors.aqua },
-  { name: "Phase 3 · 현대 AI", weeks: ["W5", "W6"], color: colors.violet },
-  { name: "Phase 4 · 활용·책임", weeks: ["W7", "W8"], color: colors.orange },
+  { name: "1부 · 기초", weeks: ["W1", "W2"], color: colors.blue },
+  { name: "2부 · 딥러닝", weeks: ["W3", "W4"], color: colors.aqua },
+  { name: "3부 · 현대 AI", weeks: ["W5", "W6"], color: colors.violet },
+  { name: "4부 · 활용·책임", weeks: ["W7", "W8"], color: colors.orange },
 ];
 
 export function PhaseRoadmap() {
@@ -14,9 +14,9 @@ export function PhaseRoadmap() {
   const y = 20;
   return (
     <DiagramFrame
-      title="8주 로드맵: 4개 Phase"
+      title="8주 로드맵: 4부 구성"
       viewBox="0 0 660 100"
-      caption='"이해 → 직접 구현 → 설명 → 활용" 순환으로 설계 — Phase가 바뀔 때마다 난이도와 자율성이 함께 높아진다.'
+      caption='"이해 → 직접 구현 → 설명 → 활용" 순환으로 설계했다. 부가 넘어갈 때마다 난이도와 자율성이 함께 높아진다.'
     >
       <ArrowDefs />
       {PHASES.map((p, i) => {

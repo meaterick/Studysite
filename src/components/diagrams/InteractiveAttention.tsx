@@ -27,7 +27,7 @@ export default function InteractiveAttention() {
       title="Self-Attention: Query가 Key들과의 유사도로 Value를 가중합"
       viewBox="0 0 620 300"
       interactive
-      caption={`토큰을 클릭해 Query를 바꿔보세요. 지금은 "${TOKENS[query]}"이(가) Query다 — 화살표가 굵을수록 그 토큰에 더 주목(가중치가 크다)한다는 뜻이다. 실제 Transformer에서는 이 가중치를 softmax(Q·Kᵀ/√dk)로 계산한다.`}
+      caption={`토큰을 클릭해 Query를 바꿔 보십시오. 지금은 "${TOKENS[query]}"이(가) Query다. 화살표가 굵을수록 그 토큰에 더 주목(가중치가 크다)한다는 뜻이다. 실제 Transformer에서는 이 가중치를 softmax(Q·Kᵀ/√dk)로 계산한다.`}
     >
       <ArrowDefs />
       {TOKENS.map((t, i) => (

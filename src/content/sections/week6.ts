@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 6 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 6 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -18,7 +18,7 @@ const sections: Record<string, SectionMeta> = {
           "약 0.05"
         ],
         "answer": 1,
-        "explanation": "perplexity $= e^{L} = e^{\\ln 20} = 20$ — 매 스텝 평균 20개 후보 사이에서 헷갈리는 수준이다."
+        "explanation": "perplexity $= e^{L} = e^{\\ln 20} = 20$. 매 스텝 평균 20개 후보 사이에서 헷갈리는 수준이다."
       },
       {
         "id": "w6-pretraining-c2",
@@ -42,7 +42,7 @@ const sections: Record<string, SectionMeta> = {
           "평가를 하지 않기 때문에"
         ],
         "answer": 1,
-        "explanation": "원문을 한 칸 밀면 (문맥, 다음 토큰) 쌍이 자동으로 생긴다 — 자기지도학습이다."
+        "explanation": "원문을 한 칸 밀면 (문맥, 다음 토큰) 쌍이 자동으로 생긴다. 자기지도학습이다."
       }
     ],
     "quizIds": [
@@ -57,7 +57,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Stanford CS336 — Language Modeling from Scratch",
         "url": "https://stanford-cs336.github.io/",
-        "note": "LLM을 처음부터 만드는 강의 — 데이터·학습·스케일링 파트"
+        "note": "LLM을 처음부터 만드는 강의: 데이터·학습·스케일링 파트"
       }
     ]
   },
@@ -172,12 +172,12 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Hoffmann et al. (2022) — Training Compute-Optimal Large Language Models (Chinchilla)",
         "url": "https://arxiv.org/abs/2203.15556",
-        "note": "그림 1과 표 3 — D≈20N의 근거"
+        "note": "그림 1과 표 3: D≈20N의 근거"
       },
       {
         "title": "Kaplan et al. (2020) — Scaling Laws for Neural Language Models",
         "url": "https://arxiv.org/abs/2001.08361",
-        "note": "스케일링 법칙의 출발점 — 그림 1만 봐도 된다"
+        "note": "스케일링 법칙의 출발점: 그림 1만 봐도 된다"
       },
       {
         "title": "Besiroglu et al. (2024) — Chinchilla Scaling: A replication attempt",
@@ -444,7 +444,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Holtzman et al. (2019) — The Curious Case of Neural Text Degeneration",
         "url": "https://arxiv.org/abs/1904.09751",
-        "note": "top-p(nucleus) 샘플링 제안 논문 — 그림 1의 반복 예시"
+        "note": "top-p(nucleus) 샘플링 제안 논문: 그림 1의 반복 예시"
       }
     ]
   },

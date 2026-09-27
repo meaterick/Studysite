@@ -16,7 +16,7 @@ export default function DiagramFrame({
   minWidth?: number;
   /** 슬라이더·버튼 등 SVG 밖에 놓이는 조작 UI. 있으면 헤더 아래에 렌더링됩니다. */
   controls?: ReactNode;
-  /** true면 헤더에 "직접 조작해보세요" 배지를 붙여 인터랙티브 다이어그램임을 알립니다. */
+  /** true면 헤더에 "직접 조작해 보십시오" 배지를 붙여 인터랙티브 다이어그램임을 알립니다. */
   interactive?: boolean;
 }) {
   return (
@@ -32,7 +32,7 @@ export default function DiagramFrame({
               className="shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-bold text-white"
               style={{ background: "var(--series-blue)" }}
             >
-              직접 조작해보세요 ↓
+              직접 조작해 보십시오 ↓
             </span>
           )}
         </div>

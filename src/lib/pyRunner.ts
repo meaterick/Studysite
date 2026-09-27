@@ -15,6 +15,13 @@ export interface RunResult {
   ok: boolean;
   result?: string;
   error?: string;
+  /** 실행 중에 그린 matplotlib 그림(PNG, base64) */
+  images?: string[];
+}
+
+export interface RunOptions {
+  /** 이름공간 id. 같은 id로 실행한 코드끼리 변수를 공유한다(과제 노트북). 생략하면 전역 이름공간. */
+  ns?: string;
 }
 
 let worker: Worker | null = null;
@@ -31,8 +38,8 @@ function getWorker(): Worker {
     const data = event.data as
       | { id: number; type: "status"; status: RunStatus }
       | { id: number; type: "stream"; stream: "stdout" | "stderr"; text: string }
-      | { id: number; type: "result"; result?: string }
-      | { id: number; type: "error"; message: string }
+      | { id: number; type: "result"; result?: string; images?: string[] }
+      | { id: number; type: "error"; message: string; images?: string[] }
       | { id: number; type: "ready" }
       | { id: number; type: "interrupted" };
 
@@ -52,12 +59,12 @@ function getWorker(): Worker {
     }
     if (data.type === "result") {
       pending.delete(data.id);
-      entry.resolve({ ok: true, result: data.result });
+      entry.resolve({ ok: true, result: data.result, images: data.images });
       return;
     }
     if (data.type === "error") {
       pending.delete(data.id);
-      entry.resolve({ ok: false, error: data.message });
+      entry.resolve({ ok: false, error: data.message, images: data.images });
       return;
     }
   };
@@ -70,12 +77,38 @@ export function preloadPyodide() {
   getWorker().postMessage({ id: -1, type: "init" });
 }
 
-export function runPython(code: string, handlers?: RunHandlers): Promise<RunResult> {
+export function runPython(code: string, handlers?: RunHandlers, options?: RunOptions): Promise<RunResult> {
   return new Promise((resolve) => {
     const id = ++seq;
     pending.set(id, { resolve, handlers });
-    getWorker().postMessage({ id, type: "run", code });
+    getWorker().postMessage({ id, type: "run", code, ns: options?.ns });
   });
+}
+
+function request(message: Record<string, unknown>): Promise<RunResult> {
+  return new Promise((resolve) => {
+    const id = ++seq;
+    pending.set(id, { resolve });
+    getWorker().postMessage({ id, ...message });
+  });
+}
+
+/** 노트북 이름공간을 비운다(변수를 모두 지움). */
+export function resetNamespace(ns: string): Promise<RunResult> {
+  return request({ type: "reset", ns });
+}
+
+/** 코드에서 읽을 수 있도록 텍스트 파일을 실행 환경의 가상 파일 시스템에 쓴다. */
+export function writeRuntimeFiles(files: { path: string; content: string }[]): Promise<RunResult> {
+  return request({ type: "files", files });
+}
+
+const resetListeners = new Set<() => void>();
+
+/** 강제 중단 등으로 실행 환경이 새로 만들어질 때 알림을 받는다(이름공간·파일이 모두 사라진다). */
+export function onRuntimeReset(listener: () => void): () => void {
+  resetListeners.add(listener);
+  return () => resetListeners.delete(listener);
 }
 
 /**
@@ -90,7 +123,8 @@ export function forceStop() {
     worker = null;
   }
   for (const [, entry] of pending) {
-    entry.resolve({ ok: false, error: "실행이 중단되었습니다." });
+    entry.resolve({ ok: false, error: "실행을 중단했습니다." });
   }
   pending.clear();
+  resetListeners.forEach((l) => l());
 }

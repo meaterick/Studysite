@@ -19,7 +19,7 @@ export function parseMarkdown(source: string): Block[] {
   return blocks;
 }
 
-function parseMarkdownUncached(source: string): Block[] {
+export function parseMarkdownUncached(source: string): Block[] {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
 
@@ -44,7 +44,7 @@ function parseMarkdownUncached(source: string): Block[] {
       continue;
     }
 
-    // Practice marker — 섹션을 "설명"과 "실습" 단계로 나누는 경계
+    // Practice marker — 단계를 "설명"과 "실습" 단계로 나누는 경계
     if (/^\[\[practice\]\]$/i.test(trimmed)) {
       flushParagraph();
       blocks.push({ type: "practice" });
@@ -65,7 +65,7 @@ function parseMarkdownUncached(source: string): Block[] {
     const headingMatch = trimmed.match(/^(##|###)\s+(.*)$/);
     if (headingMatch) {
       flushParagraph();
-      // `## 제목 {#section-id}` — 명시적 id(섹션 식별자)를 붙일 수 있다
+      // `## 제목 {#section-id}` — 명시적 id(단계 식별자)를 붙일 수 있다
       const idMatch = headingMatch[2].match(/^(.*?)\s*\{#([a-z0-9-]+)\}\s*$/i);
       blocks.push({
         type: "heading",

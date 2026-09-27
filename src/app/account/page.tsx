@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/dal";
+import { formatDate } from "@/lib/datetime";
 
 export const metadata = { title: "내 계정" };
 
@@ -32,7 +33,7 @@ export default async function AccountPage({
         </div>
         <div className="flex justify-between">
           <dt className="text-ink-muted">가입일</dt>
-          <dd className="font-bold text-ink">{new Date(user.createdAt).toLocaleDateString("ko-KR")}</dd>
+          <dd className="font-bold text-ink">{formatDate(user.createdAt)}</dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-ink-muted">로그인 방식</dt>
@@ -49,8 +50,7 @@ export default async function AccountPage({
       <div className="rounded-xl border-l-4 px-5 py-4" style={{ borderColor: "var(--status-critical)", background: "color-mix(in srgb, var(--status-critical) 8%, transparent)" }}>
         <h2 className="mb-1 text-sm font-black text-ink">회원 탈퇴</h2>
         <p className="mb-4 text-xs text-ink-secondary">
-          탈퇴하면 계정 정보가 즉시 삭제되며 되돌릴 수 없습니다. (개인 학습 진도·백지공부는 이
-          브라우저에만 저장되어 있어 별도로 지워지지 않습니다.)
+          탈퇴하면 계정 정보와 학습 기록, 제출한 과제가 즉시 삭제되며 되돌릴 수 없습니다.
         </p>
         {error === "lastadmin" && (
           <p className="mb-3 text-xs font-medium text-[var(--status-critical)]">

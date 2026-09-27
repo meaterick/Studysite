@@ -8,10 +8,9 @@ import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import CheckQuestion from "@/components/section/CheckQuestion";
 import DescriptiveQuestion from "@/components/section/DescriptiveQuestion";
-import PracticeConfirm from "@/components/section/PracticeConfirm";
-import SectionComplete from "@/components/section/SectionComplete";
+import StageFooter from "@/components/section/StageFooter";
 import { loadWeekPage } from "@/lib/weekPage";
-import { canOpenSection, sectionProgress } from "@/lib/study";
+import { canOpenSection, sectionProgress, type WeekStatus } from "@/lib/study";
 import { readSectionState } from "@/lib/learningStore";
 
 export function generateStaticParams() {
@@ -27,14 +26,13 @@ export async function generateMetadata({
   const week = getWeek(slug);
   const section = week ? getSection(week, sectionId) : undefined;
   if (!week || !section) return {};
-  return { title: `W${week.number}-${section.number} ${section.title}` };
+  return { title: `${week.number}주차 ${section.number}단계 · ${section.title}` };
 }
 
-const STEP_LINKS = [
-  { id: "learn", label: "① 학습" },
-  { id: "practice", label: "② 실습" },
-  { id: "check", label: "③ 확인 퀴즈" },
-  { id: "finish", label: "④ 완료" },
+const PART_LINKS = [
+  { id: "learn", label: "학습" },
+  { id: "practice", label: "실습" },
+  { id: "check", label: "확인 문제" },
 ];
 
 export default async function SectionPage({ params }: { params: Promise<{ slug: string; sectionId: string }> }) {
@@ -54,11 +52,8 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const hasPractice = section.practice.length > 0;
 
   const requirements = [
-    ...(hasPractice ? [{ label: "실습 직접 해보기", done: progress.practiceDone }] : []),
-    { label: `확인 문제 ${progress.checksTotal}개 모두 정답 (${progress.checksDone}/${progress.checksTotal})`, done: progress.checksDone === progress.checksTotal },
-    ...(progress.quizTotal > 0
-      ? [{ label: `서술형 ${progress.quizTotal}개 작성·자기평가 (${progress.quizDone}/${progress.quizTotal})`, done: progress.quizDone === progress.quizTotal }]
-      : []),
+    { label: "확인 문제", done: progress.checksDone, total: progress.checksTotal },
+    ...(progress.quizTotal > 0 ? [{ label: "서술형", done: progress.quizDone, total: progress.quizTotal }] : []),
   ];
 
   let finishHref: string | undefined;
@@ -70,22 +65,23 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
         <article className="min-w-0">
           {isAdmin && status.sections.find((r) => r.section.id === sectionId)?.access === "locked" && (
             <p className="mb-4 rounded-lg bg-[var(--surface-card-2)] px-3 py-2 text-xs text-ink-muted">
-              운영자 미리보기 — 스터디원에게는 아직 잠겨 있는 섹션입니다.
+              운영자 미리보기: 스터디원에게는 아직 잠겨 있는 단계입니다.
             </p>
           )}
           <p className="text-sm font-bold text-[var(--series-blue)]">
-            섹션 {section.number} / {sections.length} · 약 {section.minutes}분
+            {sections.length}단계 중 {section.number}단계 · 약 {section.minutes}분
           </p>
           <h2 className="mt-1 text-2xl font-black leading-snug text-ink">{section.title}</h2>
           {section.meta.goal && (
             <p className="mt-3 rounded-lg border-l-4 border-[var(--series-blue)] bg-[color-mix(in_srgb,var(--series-blue)_7%,transparent)] px-4 py-2.5 text-[15px] text-ink-secondary">
-              <span className="font-bold text-ink">이 섹션을 마치면 </span>
+              <span className="font-bold text-ink">학습 목표: </span>
               <Inline text={section.meta.goal} />
             </p>
           )}
 
-          <nav aria-label="섹션 단계" className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
-            {STEP_LINKS.filter((s) => s.id !== "practice" || hasPractice).map((s) => (
+          <nav aria-label="이 단계의 구성" className="mt-5 flex flex-wrap items-center gap-2 text-xs font-bold">
+            <span className="text-ink-muted">바로 가기</span>
+            {PART_LINKS.filter((s) => s.id !== "practice" || hasPractice).map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
@@ -102,12 +98,13 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
           {hasPractice && (
             <section id="practice" aria-labelledby="practice-heading" className="mt-12 scroll-mt-24">
-              <StepHeading id="practice-heading" step="②" title="실습" desc="방금 배운 내용을 손과 코드로 직접 확인합니다." />
+              <StepHeading
+                id="practice-heading"
+                title="실습"
+                desc="방금 배운 내용을 코드와 손계산으로 직접 확인합니다. 코드는 이 페이지에서 바로 실행할 수 있습니다."
+              />
               <div className="rounded-xl border border-[var(--series-orange)]/40 p-4 sm:p-5">
                 <BlocksRenderer blocks={section.practice} docKey={`${slug}:${sectionId}:practice`} interactiveCode />
-              </div>
-              <div className="mt-4">
-                <PracticeConfirm slug={slug} sectionId={sectionId} done={!!state.practiceDone} />
               </div>
             </section>
           )}
@@ -115,9 +112,8 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
           <section id="check" aria-labelledby="check-heading" className="mt-12 scroll-mt-24">
             <StepHeading
               id="check-heading"
-              step={hasPractice ? "③" : "②"}
-              title="확인 퀴즈"
-              desc="객관식은 모두 맞혀야 다음 섹션이 열립니다(틀려도 다시 풀 수 있어요). 서술형은 먼저 내 말로 쓰고 모범답안과 비교해 스스로 평가합니다."
+              title="확인 문제"
+              desc="객관식 문제를 모두 맞히고 서술형 문항을 작성·자기평가하면 다음 단계가 열립니다. 틀린 문제는 다시 풀 수 있습니다."
             />
             <div className="space-y-4">
               {section.meta.checks.map((check, i) => {
@@ -161,7 +157,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
           {section.meta.references && section.meta.references.length > 0 && (
             <section aria-labelledby="refs-heading" className="mt-10">
-              <h3 id="refs-heading" className="mb-2 text-base font-black text-ink">더 알아보기 (외부 자료)</h3>
+              <h3 id="refs-heading" className="mb-2 text-base font-black text-ink">더 알아보기</h3>
               <ul className="space-y-2 text-sm">
                 {section.meta.references.map((ref) => (
                   <li key={ref.url} className="rounded-lg border border-[var(--border-hairline)] bg-card px-3 py-2">
@@ -175,87 +171,51 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             </section>
           )}
 
-          <section id="finish" aria-label="섹션 완료" className="mt-10 scroll-mt-24">
-            <SectionComplete
-              slug={slug}
-              sectionId={sectionId}
-              requirements={requirements}
-              ready={progress.ready}
-              completed={progress.completed}
-              isLast={!next}
-              nextHref={finishHref}
-            />
-          </section>
-
-          <div className="mt-6 flex items-center justify-between gap-4 text-sm font-bold">
+          <nav aria-label="단계 이동" className="mt-10 flex items-center justify-between gap-4 text-sm font-bold">
             {prev ? (
               <Link href={`/weeks/${slug}/sections/${prev.id}`} className="text-ink-secondary hover:text-[var(--series-blue)]">
-                ← {prev.number}. {prev.title}
+                ← {prev.number}단계 · {prev.title}
               </Link>
             ) : (
               <Link href={`/weeks/${slug}`} className="text-ink-secondary hover:text-[var(--series-blue)]">
-                ← 로드맵
+                ← 주차 개요
               </Link>
             )}
             {next && (progress.completed || isAdmin) ? (
               <Link href={`/weeks/${slug}/sections/${next.id}`} className="text-right text-ink-secondary hover:text-[var(--series-blue)]">
-                {next.number}. {next.title} →
+                {next.number}단계 · {next.title} →
               </Link>
             ) : (
               <span />
             )}
-          </div>
+          </nav>
+
+          <StageFooter
+            slug={slug}
+            sectionId={sectionId}
+            requirements={requirements}
+            ready={progress.ready}
+            completed={progress.completed}
+            isLast={!next}
+            nextHref={finishHref}
+          />
         </article>
 
-        <aside className="order-first lg:order-none print:hidden" aria-label="섹션 목록">
-          <div className="lg:sticky lg:top-20">
-            <details className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:open:block" open>
-              <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-ink-muted">
-                이번 주 섹션 ({status.sectionsDone}/{status.sectionsTotal})
-              </summary>
-              <ol className="mt-3 max-h-[60vh] space-y-1 overflow-y-auto pr-1">
-                {status.sections.map(({ section: s, access }) => {
-                  const active = s.id === sectionId;
-                  const label = (
-                    <>
-                      <span aria-hidden="true" className="w-4 shrink-0 text-center">
-                        {access === "completed" ? "✓" : access === "locked" ? "🔒" : "▶"}
-                      </span>
-                      <span className="min-w-0">
-                        {s.number}. {s.title}
-                      </span>
-                    </>
-                  );
-                  return (
-                    <li key={s.id}>
-                      {access !== "locked" || isAdmin ? (
-                        <Link
-                          href={`/weeks/${slug}/sections/${s.id}`}
-                          aria-current={active ? "page" : undefined}
-                          className={`flex gap-2 rounded-md px-2 py-1.5 text-sm transition ${
-                            active
-                              ? "bg-[color-mix(in_srgb,var(--series-blue)_10%,transparent)] font-bold text-[var(--series-blue)]"
-                              : access === "completed"
-                                ? "text-[var(--status-good)] hover:bg-[var(--surface-card-2)]"
-                                : "text-ink-secondary hover:bg-[var(--surface-card-2)]"
-                          }`}
-                        >
-                          {label}
-                        </Link>
-                      ) : (
-                        <span className="flex gap-2 px-2 py-1.5 text-sm text-ink-muted">{label}</span>
-                      )}
-                    </li>
-                  );
-                })}
-                <li className="mt-2 border-t border-[var(--border-hairline)] pt-2">
-                  <span className={`flex gap-2 px-2 py-1 text-sm ${status.allSectionsDone ? "text-ink-secondary" : "text-ink-muted"}`}>
-                    <span aria-hidden="true" className="w-4 text-center">{status.allSectionsDone ? "✎" : "🔒"}</span>
-                    백지공부 · 과제
-                  </span>
-                </li>
-              </ol>
-            </details>
+        <aside className="order-first lg:order-none print:hidden" aria-label="이번 주 단계 목록">
+          <details className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:hidden">
+            <summary className="cursor-pointer text-sm font-bold text-ink-secondary">
+              이번 주 단계 · {status.sectionsDone}/{status.sectionsTotal} 완료
+              <span className="ml-2 font-normal text-ink-muted">(목록 펼치기)</span>
+            </summary>
+            <StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />
+          </details>
+          <div className="hidden lg:sticky lg:top-20 lg:block">
+            <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+              <p className="text-xs font-bold text-ink-muted">
+                이번 주 단계 ({status.sectionsDone}/{status.sectionsTotal})
+              </p>
+              <StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />
+            </div>
           </div>
         </aside>
       </div>
@@ -263,13 +223,80 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   );
 }
 
-function StepHeading({ id, step, title, desc }: { id: string; step: string; title: string; desc: string }) {
+function StepHeading({ id, title, desc }: { id: string; title: string; desc: string }) {
   return (
     <div className="mb-4 border-b border-[var(--border-hairline)] pb-3">
       <h3 id={id} className="text-xl font-black text-ink">
-        <span className="text-[var(--series-blue)]">{step}</span> {title}
+        {title}
       </h3>
       <p className="mt-1 text-sm text-ink-muted">{desc}</p>
     </div>
+  );
+}
+
+function StageList({
+  status,
+  slug,
+  sectionId,
+  isAdmin,
+}: {
+  status: WeekStatus;
+  slug: string;
+  sectionId: string;
+  isAdmin: boolean;
+}) {
+  return (
+    <ol className="mt-3 max-h-[60vh] space-y-1 overflow-y-auto pr-1">
+      {status.sections.map(({ section: s, access }) => {
+        const active = s.id === sectionId;
+        const label = (
+          <>
+            <span aria-hidden="true" className="w-5 shrink-0 text-center">
+              {access === "completed" ? "✓" : access === "locked" ? "🔒" : "▶"}
+            </span>
+            <span className="min-w-0">
+              {s.number}. {s.title}
+            </span>
+            <span className="sr-only">
+              {access === "completed" ? " (완료)" : access === "locked" ? " (잠김)" : " (진행할 차례)"}
+            </span>
+          </>
+        );
+        return (
+          <li key={s.id}>
+            {access !== "locked" || isAdmin ? (
+              <Link
+                href={`/weeks/${slug}/sections/${s.id}`}
+                aria-current={active ? "page" : undefined}
+                className={`flex gap-2 rounded-md px-2 py-1.5 text-sm transition ${
+                  active
+                    ? "bg-[color-mix(in_srgb,var(--series-blue)_10%,transparent)] font-bold text-[var(--series-blue)]"
+                    : access === "completed"
+                      ? "text-[var(--status-good)] hover:bg-[var(--surface-card-2)]"
+                      : "text-ink-secondary hover:bg-[var(--surface-card-2)]"
+                }`}
+              >
+                {label}
+              </Link>
+            ) : (
+              <span className="flex gap-2 px-2 py-1.5 text-sm text-ink-muted">{label}</span>
+            )}
+          </li>
+        );
+      })}
+      <li className="mt-2 border-t border-[var(--border-hairline)] pt-2">
+        {status.allSectionsDone || isAdmin ? (
+          <Link href={`/weeks/${slug}/worksheet`} className="flex gap-2 rounded-md px-2 py-1 text-sm text-ink-secondary hover:bg-[var(--surface-card-2)]">
+            <span aria-hidden="true" className="w-5 text-center">✎</span>
+            백지공부 · 과제
+          </Link>
+        ) : (
+          <span className="flex gap-2 px-2 py-1 text-sm text-ink-muted">
+            <span aria-hidden="true" className="w-5 text-center">🔒</span>
+            백지공부 · 과제 (모든 단계를 마치면 열림)
+          </span>
+        )}
+      </li>
+    </ol>
   );
 }

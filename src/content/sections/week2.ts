@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 2 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 2 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -69,8 +69,8 @@ const sections: Record<string, SectionMeta> = {
         "id": "w2-features-c1",
         "question": "'도시(서울/부산/대구)' 변수에 알맞은 인코딩은?",
         "choices": [
-          "Label Encoding — 서울=0, 부산=1, 대구=2",
-          "One-hot Encoding — 도시마다 0/1 열 하나씩",
+          "Label Encoding: 서울=0, 부산=1, 대구=2",
+          "One-hot Encoding: 도시마다 0/1 열 하나씩",
           "Min-Max 정규화",
           "인코딩 없이 문자열 그대로"
         ],
@@ -171,7 +171,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "ISLP (An Introduction to Statistical Learning)",
         "url": "https://www.statlearning.com/",
-        "note": "3장 선형회귀, 4장 분류 — 무료 PDF와 Python 실습"
+        "note": "3장 선형회귀, 4장 분류: 무료 PDF와 Python 실습"
       }
     ]
   },
@@ -354,10 +354,10 @@ const sections: Record<string, SectionMeta> = {
         "id": "w2-bias-variance-c1",
         "question": "훈련 오차 0.01, 검증 오차 0.30인 모델의 진단과 알맞은 처방은?",
         "choices": [
-          "과소적합 — 더 복잡한 모델",
-          "과적합 — 정규화 강화나 데이터 추가",
-          "정상 — 그대로 사용",
-          "누수 — 테스트셋으로 다시 학습"
+          "과소적합: 더 복잡한 모델",
+          "과적합: 정규화 강화나 데이터 추가",
+          "정상: 그대로 사용",
+          "누수: 테스트셋으로 다시 학습"
         ],
         "answer": 1,
         "explanation": "훈련은 잘하지만 새 데이터에서 크게 틀리는 전형적인 과적합(분산이 큼)이다."
@@ -396,7 +396,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "MLU-Explain — The Bias Variance Tradeoff",
         "url": "https://mlu-explain.github.io/bias-variance/",
-        "note": "AWS의 인터랙티브 설명 — 복잡도 슬라이더로 직접 확인"
+        "note": "AWS의 인터랙티브 설명: 복잡도 슬라이더로 직접 확인"
       },
       {
         "title": "ISLP 6장 — Linear Model Selection and Regularization",
@@ -547,7 +547,7 @@ const sections: Record<string, SectionMeta> = {
           "음수 예측만 한다"
         ],
         "answer": 1,
-        "explanation": "$R^2 = 1 - \\text{MSE}_{\\text{model}}/\\text{MSE}_{\\text{baseline}}$이므로 0이면 베이스라인보다 나을 게 없고, 음수면 오히려 더 나쁘다."
+        "explanation": "$R^2 = 1 - \\text{MSE}_{\\text{model}}/\\text{MSE}_{\\text{baseline}}$이므로 0이면 베이스라인보다 나을 것이 없고, 음수면 오히려 더 나쁘다."
       },
       {
         "id": "w2-regression-metrics-baseline-c3",

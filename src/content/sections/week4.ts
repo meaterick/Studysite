@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 4 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 4 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -168,7 +168,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "He et al. (2015) — Deep Residual Learning for Image Recognition",
         "url": "https://arxiv.org/abs/1512.03385",
-        "note": "1~3절 정독 권장 — Figure 1(degradation)과 4.1절의 '기울기 소실이 원인이 아닐 가능성' 논의"
+        "note": "1~3절 정독 권장: Figure 1(degradation)과 4.1절의 '기울기 소실이 원인이 아닐 가능성' 논의"
       },
       {
         "title": "d2l.ai — Residual Networks (ResNet)",
@@ -286,7 +286,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Srivastava et al. (2014) — Dropout",
         "url": "https://jmlr.org/papers/v15/srivastava14a.html",
-        "note": "Dropout 원 논문 — 부분망 앙상블 해석"
+        "note": "Dropout 원 논문: 부분망 앙상블 해석"
       },
       {
         "title": "PyTorch — Training a Classifier (CIFAR-10)",
@@ -342,7 +342,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Andrej Karpathy — A Recipe for Training Neural Networks",
         "url": "https://karpathy.github.io/2019/04/25/recipe/",
-        "note": "본문 체크리스트의 원문 — 과제 전에 꼭 읽기"
+        "note": "본문 체크리스트의 원문: 과제 전에 꼭 읽기"
       },
       {
         "title": "PyTorch — Transfer Learning for Computer Vision",
@@ -406,7 +406,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Goodfellow et al. (2014) — Generative Adversarial Networks",
         "url": "https://arxiv.org/abs/1406.2661",
-        "note": "GAN 원 논문 — 1~3절만 읽어도 minimax 구조가 보인다"
+        "note": "GAN 원 논문: 1~3절만 읽어도 minimax 구조가 보인다"
       }
     ]
   },

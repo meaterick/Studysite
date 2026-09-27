@@ -11,7 +11,7 @@ export function generateStaticParams() {
 }
 
 /**
- * 복습 노트: 섹션별 확인 문제·서술형 답을 모아 보고, 틀렸거나 "부족했어요"로 표시한
+ * 복습 노트: 단계별 확인 문제·서술형 답을 모아 보고, 틀렸거나 "보완 필요"로 표시한
  * 문항을 먼저 보여준다. 아직 풀지 않은 문항의 정답은 내려보내지 않는다.
  */
 export default async function WeekReviewPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -36,15 +36,15 @@ export default async function WeekReviewPage({ params }: { params: Promise<{ slu
       <section>
         <h2 className="mb-1 text-xl font-black text-ink">복습 노트</h2>
         <p className="mb-6 text-sm text-ink-muted">
-          섹션에서 푼 확인 문제와 서술형 답이 모입니다. 한 번이라도 틀린 객관식과 &lsquo;부족했어요&rsquo;로 표시한 서술형은{" "}
-          <strong className="text-[var(--status-critical)]">다시 볼 문항</strong>으로 표시됩니다. 현재 {totalWeak}개.
+          각 단계에서 푼 확인 문제와 서술형 답안을 모아 보여 줍니다. 한 번이라도 틀린 객관식 문제와 &lsquo;보완이 필요합니다&rsquo;로 표시한 서술형 문항은{" "}
+          <strong className="text-[var(--status-critical)]">다시 볼 문항</strong>으로 표시됩니다. 현재 {totalWeak}개입니다.
         </p>
         <div className="space-y-4">
           {rows.map(({ section, access, checks, descriptive, weakCount }) => (
             <details key={section.id} open={weakCount > 0} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
               <summary className="cursor-pointer">
                 <span className="font-black text-ink">
-                  {section.number}. {section.title}
+                  {section.number}단계 · {section.title}
                 </span>
                 <span className="ml-2 text-xs text-ink-muted">
                   {access === "locked" ? "잠김" : access === "completed" ? "완료" : "진행 중"}
@@ -66,7 +66,7 @@ export default async function WeekReviewPage({ params }: { params: Promise<{ slu
                         <div className="mt-2 space-y-1 text-ink-secondary">
                           <p>
                             <span className="font-bold text-[var(--status-good)]">정답</span> <Inline text={check.choices[check.answer]} />
-                            {weak && <span className="ml-2 text-xs text-[var(--status-critical)]">({state.attempts}번 만에 맞힘)</span>}
+                            {weak && <span className="ml-2 text-xs text-[var(--status-critical)]">({state.attempts}번째 시도에서 정답)</span>}
                           </p>
                           <p className="text-ink-muted">
                             <Inline text={check.explanation} />
@@ -86,17 +86,17 @@ export default async function WeekReviewPage({ params }: { params: Promise<{ slu
                       className={`rounded-lg border px-3 py-3 text-sm ${weak ? "border-[var(--status-critical)]/40" : "border-[var(--border-hairline)]"}`}
                     >
                       <p className="font-medium text-ink">
-                        서술 {i + 1}. <Inline text={questionText.get(id) ?? ""} />
+                        서술형 {i + 1}. <Inline text={questionText.get(id) ?? ""} />
                       </p>
                       {answer ? (
                         <div className="mt-2 space-y-2">
                           <p className="whitespace-pre-wrap text-ink-secondary">
-                            <span className="font-bold">내 답</span> {answer.text}
+                            <span className="font-bold">내 답안</span> {answer.text}
                           </p>
                           <p className="text-ink-secondary">
                             <span className="font-bold text-[var(--status-good)]">모범답안</span> <Inline text={answers[id] ?? ""} />
                           </p>
-                          {weak && <p className="text-xs font-bold text-[var(--status-critical)]">부족했다고 표시한 문항</p>}
+                          {weak && <p className="text-xs font-bold text-[var(--status-critical)]">보완이 필요하다고 표시한 문항</p>}
                         </div>
                       ) : (
                         <p className="mt-1 text-xs text-ink-muted">아직 작성하지 않았습니다.</p>
@@ -106,7 +106,7 @@ export default async function WeekReviewPage({ params }: { params: Promise<{ slu
                 })}
                 {access !== "locked" && (
                   <Link href={`/weeks/${slug}/sections/${section.id}`} className="inline-block text-sm font-bold text-[var(--series-blue)] hover:underline">
-                    섹션 다시 보기 →
+                    이 단계 다시 보기 →
                   </Link>
                 )}
               </div>

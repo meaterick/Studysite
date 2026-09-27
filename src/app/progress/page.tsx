@@ -28,7 +28,7 @@ export default async function ProgressPage() {
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">내 학습 진도</p>
       <h1 className="mb-2 text-3xl font-black text-ink">진도 대시보드</h1>
       <p className="mb-8 text-sm text-ink-muted">
-        섹션 학습·확인 퀴즈·백지공부·과제 기록은 계정에 저장되어 어느 기기에서 로그인해도 이어집니다.
+        단계 학습, 확인 문제, 백지공부, 과제 기록은 계정에 저장되므로 어느 기기에서 로그인해도 이어서 학습할 수 있습니다.
       </p>
 
       <div className="mb-10 grid gap-3 sm:grid-cols-3">
@@ -39,7 +39,7 @@ export default async function ProgressPage() {
             <p className="text-xs text-ink-muted">전체 진행률</p>
           </div>
         </div>
-        <Stat label="완료한 섹션" value={`${sectionsDone} / ${sectionsTotal}`} />
+        <Stat label="완료한 단계" value={`${sectionsDone} / ${sectionsTotal}`} />
         <Stat label="채점된 과제 합계" value={graded.length ? `${scoreSum} / ${scoreMax}점 (${graded.length}개)` : "아직 없음"} />
       </div>
 
@@ -53,11 +53,11 @@ export default async function ProgressPage() {
             <ProgressRing ratio={status.ratio} size={40} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-ink">
-                Week {week.number} · {week.title}
+                {week.number}주차 · {week.title}
               </p>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ink-muted">
                 <span className={status.allSectionsDone ? "text-[var(--status-good)]" : ""}>
-                  {status.allSectionsDone ? "✓" : "○"} 섹션 {status.sectionsDone}/{status.sectionsTotal}
+                  {status.allSectionsDone ? "✓" : "○"} 단계 {status.sectionsDone}/{status.sectionsTotal}
                 </span>
                 <span className={status.worksheetSubmitted ? "text-[var(--status-good)]" : ""}>
                   {status.worksheetSubmitted ? "✓" : "○"} 백지공부
@@ -68,7 +68,7 @@ export default async function ProgressPage() {
                 </span>
               </div>
               {grade?.decision === "revision" && (
-                <p className="mt-1 text-[11px] font-bold text-[var(--status-serious)]">운영자가 재제출을 요청했습니다 — 과제 탭에서 피드백을 확인하세요.</p>
+                <p className="mt-1 text-[11px] font-bold text-[var(--status-serious)]">운영자가 재제출을 요청했습니다. 과제 탭에서 피드백을 확인해 주십시오.</p>
               )}
             </div>
             <span className="shrink-0 text-xs font-bold text-[var(--series-blue)]">

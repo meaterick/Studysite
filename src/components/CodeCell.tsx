@@ -7,8 +7,8 @@ import { forceStop, preloadPyodide, runPython, type RunStatus } from "@/lib/pyRu
 import { useUserScope } from "./UserScope";
 
 const STATUS_LABEL: Record<RunStatus, string> = {
-  "loading-runtime": "Python 실행 환경을 준비하는 중… (처음 한 번만, 몇 초 정도 걸립니다)",
-  "loading-packages": "필요한 패키지를 불러오는 중…",
+  "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 처음 한 번은 몇 초 정도 걸립니다.",
+  "loading-packages": "필요한 패키지를 불러오고 있습니다…",
   running: "실행 중…",
 };
 
@@ -38,11 +38,14 @@ export default function CodeCell({
   cellId: rawCellId,
   starterCode,
   onComplete,
+  autoRun = false,
 }: {
   cellId: string;
   starterCode: string;
-  /** 과제 등 순차 공개 흐름에서, 성공적으로 한 번 실행되면 다음 단계를 열어줄 때 사용 */
+  /** 성공적으로 한 번 실행되었을 때 호출된다 */
   onComplete?: () => void;
+  /** 편집기를 연 직후 바로 한 번 실행한다(정적 코드 블록의 ▶ 실행 버튼에서 넘어온 경우) */
+  autoRun?: boolean;
 }) {
   // 공용 브라우저에서 다른 계정이 작성한 코드가 보이지 않도록 계정별로 키를 나눈다.
   const uid = useUserScope();
@@ -121,15 +124,23 @@ export default function CodeCell({
     }
   }, [code, onComplete]);
 
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (autoRun && loaded && !autoRan.current) {
+      autoRan.current = true;
+      void handleRun();
+    }
+  }, [autoRun, loaded, handleRun]);
+
   const handleStop = useCallback(() => {
     forceStop();
     setRunning(false);
     setStatus(null);
-    setOutput((prev) => [...prev, { stream: "stderr", text: "(사용자가 실행을 중단했습니다)" }]);
+    setOutput((prev) => [...prev, { stream: "stderr", text: "(실행을 중단했습니다)" }]);
   }, []);
 
   const handleReset = useCallback(async () => {
-    if (!confirm("이 코드를 원래 예제 코드로 되돌릴까요? 작성한 내용이 사라집니다.")) return;
+    if (!confirm("코드를 처음 상태로 되돌리시겠습니까? 수정한 내용은 사라집니다.")) return;
     await resetCellCode(cellId);
     setCode(starterCode);
     setOutput([]);
@@ -146,7 +157,7 @@ export default function CodeCell({
   return (
     <div ref={containerRef} className="not-prose overflow-hidden rounded-lg border border-[var(--border-hairline)]">
       <div className="flex items-center justify-between border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1.5">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">Python · 직접 실행</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">Python · 편집·실행 가능</span>
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleReset}
@@ -192,7 +203,7 @@ export default function CodeCell({
         />
       ) : (
         <div className="flex items-center justify-center bg-[var(--surface-card)] py-8 text-xs text-ink-muted">
-          불러오는 중…
+          편집기를 불러오고 있습니다…
         </div>
       )}
       {(status || output.length > 0) && (
@@ -206,7 +217,7 @@ export default function CodeCell({
               {line.text}
             </pre>
           ))}
-          {errored && output.length === 0 && <p className="text-[var(--status-bad)]">실행 중 오류가 발생했습니다.</p>}
+          {errored && output.length === 0 && <p className="text-[var(--status-bad)]">실행 중에 오류가 발생했습니다.</p>}
         </div>
       )}
     </div>

@@ -2,10 +2,12 @@ import "server-only";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import type { AssignmentDraft } from "./notebook";
 
-// 주차별 과제 제출물과 운영자 채점 결과를 data/submissions.json에, 첨부 파일은
-// data/uploads/<제출 id>/ 아래에 저장한다. (사용자, 주차)마다 제출 기록은 하나이고,
-// 다시 제출하면 버전이 쌓인다 — 운영자는 이전 버전과 이전 채점까지 모두 볼 수 있다.
+// 주차별 과제 제출물과 운영자 채점 결과를 data/submissions.json에, 첨부 파일과 제출 시점의
+// 작업 공간 스냅숏(notebook-v<N>.json)은 data/uploads/<제출 id>/ 아래에 저장한다.
+// (사용자, 주차)마다 제출 기록은 하나이고, 다시 제출하면 버전이 쌓인다. 운영자는 이전
+// 버전과 이전 채점까지 모두 볼 수 있다.
 
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(process.cwd(), "data");
 const SUBMISSIONS_FILE = path.join(DATA_DIR, "submissions.json");
@@ -32,9 +34,12 @@ export interface SubmissionFile {
 export interface SubmissionVersion {
   version: number;
   submittedAt: string;
+  /** 제출 메모(선택) */
   text: string;
   links: string[];
   files: SubmissionFile[];
+  /** 작업 공간 스냅숏 파일 이름 (uploads/<제출 id>/ 아래) */
+  notebookFile?: string;
 }
 
 export interface SubmissionGrade {
@@ -43,6 +48,10 @@ export interface SubmissionGrade {
   decision: "graded" | "revision";
   score: number | null;
   maxScore: number;
+  /** 채점 기준 id → 점수 */
+  criteria?: Record<string, number>;
+  /** 과제(task) id → 운영자 코멘트 */
+  taskComments?: Record<string, string>;
   feedback: string;
   gradedAt: string;
   gradedBy: string;
@@ -130,6 +139,7 @@ export async function saveSubmission(input: {
   text: string;
   links: string[];
   files: IncomingFile[];
+  notebook?: AssignmentDraft;
 }): Promise<Submission> {
   return enqueue(() => {
     const all = readAll();
@@ -157,12 +167,20 @@ export async function saveSubmission(input: {
       return { id, name: safeFileName(file.name), size: file.bytes.length, type: file.type || "application/octet-stream" };
     });
 
+    const version = submission.versions.length + 1;
+    let notebookFile: string | undefined;
+    if (input.notebook) {
+      notebookFile = `notebook-v${version}.json`;
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, notebookFile), JSON.stringify(input.notebook), "utf8");
+    }
     submission.versions.push({
-      version: submission.versions.length + 1,
+      version,
       submittedAt: now,
       text: input.text,
       links: input.links,
       files,
+      notebookFile,
     });
     submission.status = "submitted";
     submission.updatedAt = now;
@@ -186,6 +204,18 @@ export async function gradeSubmission(
     writeAll(all);
     return submission;
   });
+}
+
+/** 제출 버전에 저장된 작업 공간 스냅숏을 읽는다. */
+export function readNotebook(submission: Submission, version: SubmissionVersion): AssignmentDraft | undefined {
+  if (!version.notebookFile || !/^notebook-v\d+\.json$/.test(version.notebookFile)) return undefined;
+  const file = path.join(UPLOAD_DIR, submission.id, version.notebookFile);
+  if (!fs.existsSync(file)) return undefined;
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8")) as AssignmentDraft;
+  } catch {
+    return undefined;
+  }
 }
 
 export function readSubmissionFile(submission: Submission, fileId: string): { file: SubmissionFile; bytes: Buffer } | null {

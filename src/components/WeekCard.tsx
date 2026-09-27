@@ -27,7 +27,7 @@ export default function WeekCard({
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">{week.phase}</p>
           <h3 className="mt-0.5 text-base font-black text-ink group-hover:text-[var(--series-blue)] sm:text-lg">
-            Week {week.number} · {week.title}
+            {week.number}주차 · {week.title}
           </h3>
         </div>
         <ProgressRing ratio={ratio} size={44} />
@@ -45,7 +45,7 @@ export default function WeekCard({
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
         <span>{"★".repeat(week.difficulty)}{"☆".repeat(5 - week.difficulty)}</span>
         <span>
-          섹션 {sectionsDone}/{sectionsTotal}
+          {sectionsTotal}단계 중 {sectionsDone}단계 완료
         </span>
       </div>
       <div className="flex flex-wrap gap-1.5">

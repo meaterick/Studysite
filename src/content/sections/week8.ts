@@ -1,6 +1,6 @@
 import type { SectionMeta } from "../types";
 
-// Week 8 섹션별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
+// Week 8 단계별 목표·확인 문제(객관식)·서술형 배정·외부 자료.
 // 키는 conceptsMd의 `## 제목 {#id}`와 같아야 한다 (npm run validate:content가 검사).
 // 확인 문제의 answer는 0부터 시작하는 선택지 번호다.
 
@@ -124,7 +124,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Barocas, Hardt & Narayanan — Fairness and Machine Learning",
         "url": "https://fairmlbook.org/",
-        "note": "무료 교과서 — 3장 Classification이 이 섹션의 세 기준을 다룬다"
+        "note": "무료 교과서: 3장 Classification이 이 단계의 세 기준을 다룬다"
       },
       {
         "title": "Kleinberg et al. (2016) — Inherent Trade-Offs in the Fair Determination of Risk Scores",
@@ -158,7 +158,7 @@ const sections: Record<string, SectionMeta> = {
           "Manage"
         ],
         "answer": 2,
-        "explanation": "Govern(원칙·책임), Map(맥락 파악), Measure(측정), Manage(대응) — 네 기능은 순환한다."
+        "explanation": "Govern(원칙·책임), Map(맥락 파악), Measure(측정), Manage(대응)이며, 네 기능은 순환한다."
       },
       {
         "id": "w8-governance-c3",
@@ -186,12 +186,12 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "EU AI Act 공식 법령 (EUR-Lex, Regulation (EU) 2024/1689)",
         "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
-        "note": "위험 등급과 의무의 원문 — 최신 적용 시기 확인용"
+        "note": "위험 등급과 의무의 원문: 최신 적용 시기 확인용"
       },
       {
         "title": "Mitchell et al. (2019) — Model Cards for Model Reporting",
         "url": "https://arxiv.org/abs/1810.03993",
-        "note": "모델카드 제안 논문 — 그림 2의 예시 모델카드"
+        "note": "모델카드 제안 논문: 그림 2의 예시 모델카드"
       }
     ]
   },
@@ -397,7 +397,7 @@ const sections: Record<string, SectionMeta> = {
           "둘 다 CNN 논문이다"
         ],
         "answer": 1,
-        "explanation": "5주차 섹션 4~5의 흐름 그대로다."
+        "explanation": "5주차 4~5단계의 흐름 그대로다."
       },
       {
         "id": "w8-capstone-c2",
@@ -416,7 +416,7 @@ const sections: Record<string, SectionMeta> = {
         "question": "이 캡스톤에서 어떤 유형을 고르든 공통으로 요구되는 것은?",
         "choices": [
           "GPU 사용",
-          "\"한계와 실패 사례\" 섹션",
+          "\"한계와 실패 사례\" 항목",
           "논문 출판",
           "정확도 90% 이상"
         ],
@@ -433,7 +433,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Hugging Face Papers",
         "url": "https://huggingface.co/papers",
-        "note": "매일 올라오는 주목받는 논문과 코드·모델 링크 — 캡스톤 관련 연구 찾기"
+        "note": "매일 올라오는 주목받는 논문과 코드·모델 링크: 캡스톤 관련 연구 찾기"
       },
       {
         "title": "Stanford HAI — AI Index Report",

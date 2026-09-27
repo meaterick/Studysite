@@ -8,7 +8,7 @@ export function ResNetSkip() {
     <DiagramFrame
       title="ResNet 잔차 연결(Residual Connection)"
       viewBox="0 0 560 340"
-      caption="y = F(x) + x. 역전파 시 dL/dx = dL/dy · (F′(x) + 1) — '+1' 항이 기울기가 사라지지 않도록 지름길을 만든다."
+      caption="y = F(x) + x. 역전파 시 dL/dx = dL/dy · (F′(x) + 1)이며, '+1' 항이 기울기가 사라지지 않도록 지름길을 만든다."
     >
       <ArrowDefs />
       <Box x={x} y={16} w={w} h={40} label="입력 x" fill={card2Bg} />
@@ -44,7 +44,7 @@ export function TransferLearning() {
     <DiagramFrame
       title="전이학습: 사전학습된 백본 + 새 분류 헤드"
       viewBox="0 0 620 220"
-      caption="① 특징추출: 백본을 얼리고(freeze) 마지막 층만 학습 — 데이터가 매우 적을 때. ② 파인튜닝: 작은 학습률로 전체(또는 상위층)까지 갱신."
+      caption="① 특징추출: 백본을 얼리고(freeze) 마지막 층만 학습(데이터가 매우 적을 때). ② 파인튜닝: 작은 학습률로 전체(또는 상위층)까지 갱신."
     >
       <ArrowDefs />
       {blocks.map((b, i) => {

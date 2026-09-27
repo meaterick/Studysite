@@ -92,6 +92,27 @@ body {
   background: var(--surface-page);
   color: var(--text-primary);
   font-family: var(--font-sans-kr), system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* 한국어는 어절 단위로 줄을 바꿔야 읽기 쉽다(음절 중간에서 끊기지 않도록). 아주 긴 영문·URL만 예외로 끊는다. */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+p,
+li,
+h1,
+h2,
+h3 {
+  text-wrap: pretty;
+}
+
+pre,
+code {
+  word-break: normal;
+}
+
+:focus-visible {
+  outline: 2px solid var(--series-blue);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: no-preference) {

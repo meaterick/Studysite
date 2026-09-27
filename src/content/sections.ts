@@ -1,10 +1,10 @@
 import type { Block, WeekMeta, WeekSection } from "./types";
 import { parseMarkdown } from "./markdown";
 
-// 한 주차의 학습 자료(conceptsMd)를 "섹션" 단위로 나눈다.
-//   - `## 제목 {#id}` 하나가 섹션 하나다. id는 진도 저장 키이므로 한 번 정하면 바꾸지 않는다.
+// 한 주차의 학습 자료(conceptsMd)를 "단계" 단위로 나눈다.
+//   - `## 제목 {#id}` 하나가 단계 하나다. id는 진도 저장 키이므로 한 번 정하면 바꾸지 않는다.
 //   - 첫 `##` 앞의 블록은 주차 도입부(intro)로 개요 화면에 보여준다.
-//   - 섹션 안의 `[[practice]]` 뒤 블록은 "실습" 단계, 앞은 "학습" 단계다.
+//   - 단계 안의 `[[practice]]` 뒤 블록은 "실습" 단계, 앞은 "학습" 단계다.
 // 콘텐츠는 빌드에 포함된 상수라 결과를 프로세스 수명 동안 캐시한다.
 
 export interface WeekOutline {

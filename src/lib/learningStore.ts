@@ -2,7 +2,7 @@ import "server-only";
 import fs from "fs";
 import path from "path";
 
-// 스터디원 한 명의 학습 기록(섹션 진행·확인 문제·서술형 답·백지공부)을 서버의
+// 스터디원 한 명의 학습 기록(단계 진행·확인 문제·서술형 답·백지공부)을 서버의
 // data/learning.json에 저장한다. 과제 제출물은 용량이 커서 submissionStore가 따로 관리한다.
 // 로그인한 사용자만 학습 구역에 들어올 수 있으므로 서버 기록을 진도의 "원본"으로 쓰고,
 // 덕분에 다른 기기에서 로그인해도 이어서 학습할 수 있다.
@@ -29,6 +29,7 @@ export interface QuizAnswerState {
 export interface SectionState {
   checks: Record<string, CheckState>;
   answers: Record<string, QuizAnswerState>;
+  /** 예전 버전의 "실습 완료" 체크 기록. 더 이상 완료 조건에 쓰지 않는다. */
   practiceDone?: boolean;
   startedAt?: string;
   completedAt?: string;
@@ -46,7 +47,7 @@ export interface WorksheetState {
 }
 
 export interface LearningRecord {
-  /** 주차 slug → 섹션 id → 진행 상태 */
+  /** 주차 slug → 단계 id → 진행 상태 */
   sections: Record<string, Record<string, SectionState>>;
   /** 주차 slug → 백지공부 */
   worksheets: Record<string, WorksheetState>;
@@ -122,7 +123,7 @@ function emptySectionState(): SectionState {
   return { checks: {}, answers: {} };
 }
 
-/** 기록에서 섹션 상태를 꺼내되, 없으면 만들어서 연결해 둔다(수정용). */
+/** 기록에서 단계 상태를 꺼내되, 없으면 만들어서 연결해 둔다(수정용). */
 export function ensureSectionState(record: LearningRecord, slug: string, sectionId: string): SectionState {
   const week = (record.sections[slug] ??= {});
   const state = (week[sectionId] ??= emptySectionState());

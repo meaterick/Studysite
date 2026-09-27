@@ -58,15 +58,15 @@ export default function InteractiveGradientDescent() {
       interactive
       caption={
         diverged
-          ? `η(학습률)=${lr}처럼 너무 크면 한 걸음이 최솟값을 훌쩍 지나쳐버려 점점 더 멀어진다 — "발산".`
+          ? `η(학습률)=${lr}처럼 너무 크면 한 걸음이 최솟값을 지나쳐 점점 더 멀어진다. 이것이 "발산"이다.`
           : converged
             ? `η=${lr}일 때 w=0에서 시작해 ${steps.length - 1}번 만에 최솟값 w=3 근처로 수렴했다. 점 사이 간격이 점점 좁아지는 것에 주목.`
-            : `η=${lr}은 너무 작아서 ${MAX_STEPS}번을 움직여도 아직 w=3에 도달하지 못했다 — 더 많은 스텝이 필요하다.`
+            : `η=${lr}은 너무 작아서 ${MAX_STEPS}번을 움직여도 아직 w=3에 도달하지 못했다. 더 많은 스텝이 필요하다.`
       }
       controls={
         <ControlRow>
           <PresetButtons
-            label="학습률 η(eta)를 눌러 바꿔보세요"
+            label="학습률 η(eta)를 눌러 바꿔 보십시오"
             options={LR_OPTIONS}
             value={lr}
             onChange={setLr}
