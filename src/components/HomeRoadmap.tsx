@@ -18,7 +18,7 @@ export default function HomeRoadmap() {
           <li key={phase.name} className="relative">
             <Scroll3D
               variant={i % 2 === 0 ? "left" : "right"}
-              offset={i * 0.07}
+              offset={(i - 1.5) * 0.07}
               className="h-full"
             >
               <TiltCard glow={phase.color} className="h-full">
@@ -26,33 +26,39 @@ export default function HomeRoadmap() {
                   className="flex h-full flex-col gap-2 rounded-xl border-l-4 bg-card p-4 shadow-sm"
                   style={{ borderColor: phase.color }}
                 >
-                  <p
-                    className="text-xs font-bold"
-                    style={{ color: phase.color }}
-                  >
-                    {i + 1}부
-                  </p>
-                  <p className="text-base font-black text-ink">{phase.name}</p>
+                  <Scroll3D variant="parallax" depth={0.6}>
+                    <p
+                      className="text-xs font-bold"
+                      style={{ color: phase.color }}
+                    >
+                      {i + 1}부
+                    </p>
+                    <p className="text-base font-black text-ink">
+                      {phase.name}
+                    </p>
+                  </Scroll3D>
                   <ul className="flex flex-col gap-1 text-sm text-ink-secondary">
-                    {weeks.map((w) => (
-                      <li key={w.slug}>
+                    {weeks.map((w, k) => (
+                      <Scroll3D
+                        as="li"
+                        key={w.slug}
+                        variant="parallax"
+                        depth={0.3 - k * 0.3}
+                      >
                         <span className="font-bold text-ink">
                           {w.number}주차
                         </span>{" "}
                         · {w.title}
-                      </li>
+                      </Scroll3D>
                     ))}
                   </ul>
                 </div>
               </TiltCard>
             </Scroll3D>
             {i < PHASES.length - 1 && (
-              <span
-                aria-hidden
-                className="flex justify-center py-1 text-ink-muted lg:hidden"
-              >
-                ↓
-              </span>
+              <Scroll3D variant="orbit" depth={1.5} className="flex justify-center py-1 text-ink-muted lg:hidden">
+                <span aria-hidden>↓</span>
+              </Scroll3D>
             )}
           </li>
         );

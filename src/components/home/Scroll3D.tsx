@@ -1,83 +1,143 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 
-// 스크롤에 따라 요소를 3D로 움직이는 틀.
-// - 화면 아래에서 들어올 때: 기울어진 채 뒤쪽(깊이)에서 앞으로 나오며 제자리에 선다.
-// - 화면 위로 빠져나갈 때: 반대쪽으로 살짝 젖혀지며 작아지고 흐려진다.
-// - 제자리(화면 가운데 부근)에서는 변환이 없어 글자가 선명하게 읽힌다.
-// 모든 요소가 스크롤 리스너 하나와 requestAnimationFrame 하나를 함께 쓰고, React 렌더링 없이 style만 바꾼다.
-// "동작 줄이기" 설정이거나 JavaScript가 없으면 아무 변환 없이 그대로 보인다.
+// 메인 화면의 모든 요소를 스크롤 위치에 따라 계속 3D로 움직이는 틀.
+//
+// 요소마다 "화면 가운데에서 얼마나 떨어져 있는가"(d: 화면 아래 끝 +1 … 가운데 0 … 위 끝 -1)를 구하고,
+// d에 비례해 기울기·회전·깊이·위치·투명도를 바꾼다. 스크롤하는 동안 모든 요소가 멈추지 않고 움직이며,
+// 화면 가운데 띠(|d| < 0.18)에서는 변환이 0이 되어 글자가 선명하게 읽힌다.
+//
+// - 위치는 변환의 영향을 받지 않는 레이아웃 좌표(offsetTop 체인)로 계산해, 변환이 측정값을 바꾸는 되먹임이 없다.
+// - 스크롤 리스너 하나, requestAnimationFrame 하나를 모든 요소가 함께 쓰고 React 렌더링 없이 style만 바꾼다.
+// - "동작 줄이기" 설정이거나 JavaScript가 없으면 아무 변환 없이 그대로 보인다.
 
-export type Scroll3DVariant = "rise" | "left" | "right" | "flip" | "zoom" | "hero";
+export type Scroll3DVariant =
+  | "barrel" // 원통 위를 지나가듯 앞뒤로 기울며 깊이가 바뀜
+  | "left" // 왼쪽에서 회전하며 들어와 왼쪽으로 돌아 나감
+  | "right"
+  | "flip" // 크게 뒤집힘(제목)
+  | "zoom" // 깊이 방향으로 멀어졌다 가까워짐
+  | "orbit" // 비스듬히 궤도를 돌듯 회전
+  | "parallax" // 회전 없이 깊이에 따라 다른 속도로 미끄러짐(카드 안 요소 등)
+  | "hero"; // 첫 화면: 스크롤을 시작하면 뒤로 젖혀지며 멀어짐
 
-type Entry = { el: HTMLElement; variant: Scroll3DVariant; offset: number; depth: number };
+type Entry = {
+  el: HTMLElement;
+  variant: Scroll3DVariant;
+  depth: number;
+  offset: number;
+  top: number;
+  height: number;
+};
 
 const entries = new Set<Entry>();
 let rafId = 0;
 let listening = false;
-let reduced = false;
+let resizeObserver: ResizeObserver | null = null;
 
-const clamp = (v: number) => Math.max(0, Math.min(1, v));
-const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+const clamp = (v: number, lo = -1, hi = 1) => Math.max(lo, Math.min(hi, v));
+// 가운데 띠에서는 0, 바깥으로 갈수록 부드럽게 커지는 값
+const shaped = (d: number) => {
+  const a = Math.max(0, Math.abs(d) - 0.18) / 0.82;
+  return Math.sign(d) * a * a * (3 - 2 * a);
+};
 
-function apply(entry: Entry, vh: number) {
-  const { el, variant, offset, depth } = entry;
-  const rect = el.getBoundingClientRect();
+function layoutTop(el: HTMLElement) {
+  let y = 0;
+  let node: HTMLElement | null = el;
+  while (node) {
+    y += node.offsetTop;
+    node = node.offsetParent as HTMLElement | null;
+  }
+  return y;
+}
+
+function measure(entry: Entry) {
+  entry.top = layoutTop(entry.el);
+  entry.height = entry.el.offsetHeight;
+}
+
+function apply(entry: Entry, scrollY: number, vh: number, amp: number) {
+  const { el, variant, depth } = entry;
   if (variant === "hero") {
-    // 첫 화면 글자: 스크롤할수록 느리게 올라가며(패럴랙스) 뒤로 젖혀지고 흐려진다.
-    const p = clamp(-rect.top / Math.max(1, rect.height));
-    el.style.transform = p > 0 ? `perspective(1200px) translate3d(0, ${p * 90}px, ${-p * 160}px) rotateX(${p * 18}deg)` : "";
-    el.style.opacity = p > 0 ? String(1 - p * 0.9) : "";
+    const p = clamp(scrollY / (vh * 0.85), 0, 1);
+    if (p <= 0) {
+      el.style.transform = "";
+      el.style.opacity = "";
+      return;
+    }
+    el.style.transform = `perspective(1200px) translate3d(0, ${p * 110 * depth}px, ${-p * 260 * depth}px) rotateX(${p * 22 * depth}deg)`;
+    el.style.opacity = String(Math.max(0, 1 - p * (0.6 + 0.4 * depth)));
     return;
   }
-  // 들어오는 진행도: 요소 윗변이 화면 맨 아래(0)에서 화면 높이의 62% 지점(1)에 올 때까지
-  const enter = ease(clamp((vh - rect.top) / (vh * 0.38) - offset));
-  // 나가는 진행도: 요소 아랫변이 화면 높이의 30% 지점에서 맨 위(0)로 갈 때까지
-  const exit = clamp((vh * 0.3 - rect.bottom) / (vh * 0.3));
-  const k = 1 - enter; // 남은 이동량
+  const center = entry.top + entry.height / 2 - scrollY;
+  const d0 = clamp((center - vh / 2) / (vh / 2 + entry.height / 2) + entry.offset);
+  const d = shaped(d0) * amp;
+  const a = Math.abs(d);
+  if (a < 0.001) {
+    el.style.transform = "";
+    el.style.opacity = "";
+    return;
+  }
   let t = "";
   switch (variant) {
-    case "rise":
-      t = `translate3d(0, ${k * 110}px, ${-k * 220 * depth}px) rotateX(${k * 38}deg)`;
+    case "barrel":
+      t = `translate3d(0, ${d * 70 * depth}px, ${-a * 260 * depth}px) rotateX(${d * 42}deg)`;
       break;
     case "left":
-      t = `translate3d(${-k * 140}px, ${k * 30}px, ${-k * 200 * depth}px) rotateY(${-k * 42}deg)`;
+      t = `translate3d(${-a * 150 * depth}px, ${d * 40}px, ${-a * 240 * depth}px) rotateY(${-d * 48}deg) rotateZ(${d * 3}deg)`;
       break;
     case "right":
-      t = `translate3d(${k * 140}px, ${k * 30}px, ${-k * 200 * depth}px) rotateY(${k * 42}deg)`;
+      t = `translate3d(${a * 150 * depth}px, ${d * 40}px, ${-a * 240 * depth}px) rotateY(${d * 48}deg) rotateZ(${-d * 3}deg)`;
       break;
     case "flip":
-      t = `translate3d(0, ${k * 60}px, ${-k * 120 * depth}px) rotateX(${-k * 80}deg)`;
+      t = `translate3d(0, ${d * 40}px, ${-a * 160 * depth}px) rotateX(${d * 75}deg)`;
       break;
     case "zoom":
-      t = `translate3d(0, ${k * 50}px, ${-k * 420 * depth}px)`;
+      t = `translate3d(0, ${d * 50}px, ${-a * 480 * depth}px)`;
+      break;
+    case "orbit":
+      t = `translate3d(${d * 60 * depth}px, ${d * 30}px, ${-a * 300 * depth}px) rotateY(${d * 40}deg) rotateX(${d * 20}deg)`;
+      break;
+    case "parallax":
+      t = `translate3d(0, ${d * 46 * depth}px, ${-a * 60 * depth}px)`;
       break;
   }
-  if (exit > 0) t += ` translate3d(0, ${-exit * 30}px, ${-exit * 140}px) rotateX(${-exit * 24}deg)`;
-  el.style.transform = enter >= 0.999 && exit <= 0 ? "" : `perspective(1100px) ${t}`;
-  el.style.opacity = String(Math.min(0.15 + enter * 0.85, 1 - exit * 0.7));
+  el.style.transform = `perspective(1100px) ${t}`;
+  el.style.opacity = variant === "parallax" ? String(1 - a * 0.35) : String(Math.max(0.12, 1 - a * a * 0.95));
 }
 
 function frame() {
   rafId = 0;
   const vh = window.innerHeight;
-  for (const entry of entries) apply(entry, vh);
+  const amp = window.innerWidth < 640 ? 0.7 : 1;
+  const y = window.scrollY;
+  for (const entry of entries) apply(entry, y, vh, amp);
 }
 
 function schedule() {
   if (!rafId) rafId = requestAnimationFrame(frame);
 }
 
+function remeasure() {
+  for (const entry of entries) measure(entry);
+  schedule();
+}
+
 function register(entry: Entry) {
+  measure(entry);
   entries.add(entry);
   if (!listening) {
     listening = true;
-    reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
+    window.addEventListener("resize", remeasure);
+    // 글꼴·이미지 로딩이나 내용 변화로 레이아웃이 바뀌면 위치를 다시 잰다.
+    resizeObserver = new ResizeObserver(remeasure);
+    resizeObserver.observe(document.body);
+    document.fonts?.ready.then(remeasure).catch(() => undefined);
   }
-  if (!reduced) apply(entry, window.innerHeight);
+  schedule();
   return () => {
     entries.delete(entry);
     entry.el.style.transform = "";
@@ -85,37 +145,42 @@ function register(entry: Entry) {
     if (entries.size === 0 && listening) {
       listening = false;
       window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
+      window.removeEventListener("resize", remeasure);
+      resizeObserver?.disconnect();
+      resizeObserver = null;
     }
   };
 }
 
 export default function Scroll3D({
   children,
-  variant = "rise",
-  offset = 0,
+  variant = "barrel",
   depth = 1,
+  offset = 0,
+  as: Tag = "div",
   className = "",
   style,
 }: {
-  children: ReactNode;
+  children?: ReactNode;
   variant?: Scroll3DVariant;
-  /** 0~0.5: 같은 줄의 카드가 차례로 들어오도록 진행도를 늦춘다 */
-  offset?: number;
-  /** 깊이(앞뒤 이동) 배율 */
+  /** 움직임 크기 배율 */
   depth?: number;
+  /** -0.3~0.3: 같은 줄의 요소가 서로 조금씩 다르게 움직이도록 위치 기준을 비튼다 */
+  offset?: number;
+  /** 감쌀 태그(목록 항목이면 "li" 등) */
+  as?: ElementType;
   className?: string;
   style?: CSSProperties;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    return register({ el, variant, offset, depth });
-  }, [variant, offset, depth]);
+    return register({ el, variant, depth, offset, top: 0, height: 0 });
+  }, [variant, depth, offset]);
   return (
-    <div ref={ref} className={`scroll3d ${className}`} style={style}>
+    <Tag ref={ref} className={`scroll3d ${className}`} style={style}>
       {children}
-    </div>
+    </Tag>
   );
 }
