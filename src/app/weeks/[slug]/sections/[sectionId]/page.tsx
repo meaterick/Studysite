@@ -1,3 +1,4 @@
+import StageLayout from "@/components/section/StageLayout";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -61,7 +62,11 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
   return (
     <WeekFrame week={week} status={status}>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <StageLayout
+        done={status.sectionsDone}
+        total={status.sectionsTotal}
+        list={<StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />}
+      >
         <article className="min-w-0">
           {isAdmin && status.sections.find((r) => r.section.id === sectionId)?.access === "locked" && (
             <p className="mb-4 rounded-lg bg-[var(--surface-card-2)] px-3 py-2 text-xs text-ink-muted">
@@ -200,25 +205,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             nextHref={finishHref}
           />
         </article>
-
-        <aside className="order-first lg:order-none print:hidden" aria-label="이번 주 단계 목록">
-          <details className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:hidden">
-            <summary className="cursor-pointer text-sm font-bold text-ink-secondary">
-              이번 주 단계 · {status.sectionsDone}/{status.sectionsTotal} 완료
-              <span className="ml-2 font-normal text-ink-muted">(목록 펼치기)</span>
-            </summary>
-            <StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />
-          </details>
-          <div className="hidden lg:sticky lg:top-20 lg:block">
-            <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
-              <p className="text-xs font-bold text-ink-muted">
-                이번 주 단계 ({status.sectionsDone}/{status.sectionsTotal})
-              </p>
-              <StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />
-            </div>
-          </div>
-        </aside>
-      </div>
+      </StageLayout>
     </WeekFrame>
   );
 }

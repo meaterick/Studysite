@@ -21,7 +21,7 @@ export default function WeekCard({
   return (
     <Link
       href={`/weeks/${week.slug}`}
-      className="group flex flex-col gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)] hover:shadow-sm sm:p-5"
+      className="group flex h-full flex-col gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)] hover:shadow-sm sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
