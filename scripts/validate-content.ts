@@ -130,7 +130,51 @@ for (const week of WEEKS) {
   week.quiz.forEach((q) => checkInlineMath(q.question, `${label} quiz(${q.id})`));
   checkBlocks(parseMarkdown(week.conceptsMd), `${label} conceptsMd`);
   checkSections(week, label);
-  checkBlocks(parseMarkdown(week.assignmentMd), `${label} assignmentMd`);
+  checkAssignment(week, label);
+}
+
+function checkAssignment(week: (typeof WEEKS)[number], label: string) {
+  const spec = week.assignment;
+  const ctx = `${label} 과제`;
+  if (!spec.title.trim()) fail(`${ctx}: title이 비어 있음`);
+  checkBlocks(parseMarkdown(spec.summary), `${ctx} summary`);
+  if (spec.tasks.length === 0) fail(`${ctx}: 과제 항목(tasks)이 없음`);
+  if (!spec.tasks.some((t) => !t.optional)) fail(`${ctx}: 필수 과제 항목이 하나도 없음`);
+  const ID = /^[A-Za-z0-9_-]{1,64}$/;
+  const taskIds = new Set<string>();
+  const cellIds = new Set<string>();
+  for (const task of spec.tasks) {
+    const tctx = `${ctx} ${task.id}`;
+    if (!ID.test(task.id)) fail(`${tctx}: task id 형식이 잘못됨`);
+    if (taskIds.has(task.id)) fail(`${tctx}: task id 중복`);
+    taskIds.add(task.id);
+    if (!task.title.trim()) fail(`${tctx}: title이 비어 있음`);
+    checkBlocks(parseMarkdown(task.instructions), `${tctx} instructions`);
+    if (task.cells.length === 0) fail(`${tctx}: 셀이 없음`);
+    for (const cell of task.cells) {
+      if (!ID.test(cell.id)) fail(`${tctx}: 셀 id "${cell.id}" 형식이 잘못됨`);
+      if (cellIds.has(cell.id)) fail(`${tctx}: 셀 id "${cell.id}" 중복 (과제 전체에서 유일해야 함)`);
+      cellIds.add(cell.id);
+      if (cell.kind === "code") {
+        if (!cell.starter.trim()) fail(`${tctx} ${cell.id}: 시작 코드가 비어 있음`);
+      } else {
+        if (!cell.prompt.trim()) fail(`${tctx} ${cell.id}: 답안 안내(prompt)가 비어 있음`);
+        checkInlineMath(cell.prompt, `${tctx} ${cell.id}`);
+        if (cell.template && cell.minChars !== undefined && cell.minChars <= cell.template.trim().length)
+          fail(`${tctx} ${cell.id}: minChars(${cell.minChars})가 답안 틀 길이(${cell.template.trim().length}) 이하 — 틀만으로 조건을 채웁니다.`);
+      }
+    }
+  }
+  const rubricIds = new Set<string>();
+  let sum = 0;
+  for (const c of spec.rubric) {
+    if (!ID.test(c.id) || rubricIds.has(c.id)) fail(`${ctx}: 채점 기준 id "${c.id}"가 잘못되었거나 중복`);
+    rubricIds.add(c.id);
+    if (!(c.points > 0) || Math.round(c.points * 2) !== c.points * 2) fail(`${ctx}: 채점 기준 "${c.id}"의 배점은 0.5점 단위 양수여야 함`);
+    checkInlineMath(c.guide, `${ctx} 채점 기준(${c.id})`);
+    sum += c.points;
+  }
+  if (Math.abs(sum - week.assignmentMaxScore) > 1e-9) fail(`${ctx}: 채점 기준 배점 합(${sum})이 assignmentMaxScore(${week.assignmentMaxScore})와 다름`);
 }
 
 function checkSections(week: (typeof WEEKS)[number], label: string) {

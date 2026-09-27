@@ -3,6 +3,8 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { deleteLearningRecord } from "./learningStore";
+import { deleteUserDrafts } from "./assignmentDraftStore";
+import { deleteUserThreads } from "./threadStore";
 import { deleteUserSubmissions } from "./submissionStore";
 
 // 배포 환경(OCI)에서는 DATA_DIR이 `.next`(매 배포마다 삭제됨) 바깥의 안정적인
@@ -145,6 +147,8 @@ export async function deleteUser(id: string): Promise<void> {
   await writeAll(users.filter((u) => u.id !== id));
   await deleteLearningRecord(id);
   await deleteUserSubmissions(id);
+  deleteUserDrafts(id);
+  await deleteUserThreads(id);
 }
 
 export { toPublic };

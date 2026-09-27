@@ -63,11 +63,63 @@ export interface WeekMeta {
   sections: Record<string, SectionMeta>;
   quiz: { id: string; question: string }[];
   worksheet: { label: string; hint?: string }[];
-  /** raw markdown for the "과제" section (required / advanced / rubric) */
-  assignmentMd: string;
-  /** 과제 만점 — 운영자 채점 화면의 점수 상한 */
+  /** 사이트 안에서 작성·실행·제출하는 과제 명세 */
+  assignment: AssignmentSpec;
+  /** 과제 만점. 채점 기준(rubric) 배점의 합과 같아야 한다(검증 스크립트가 확인). */
   assignmentMaxScore: number;
+  /** 제출 기한 안내 (예: "제출 기한: 일요일 23:59") */
   dueNote: string;
+}
+
+/** 과제 작업 공간의 셀. 코드 셀은 브라우저(Pyodide)에서 실행되고, 답안 셀은 마크다운으로 작성한다. */
+export type AssignmentCellSpec =
+  | {
+      kind: "code";
+      /** 과제 안에서 고유한 셀 id (초안 저장 키) */
+      id: string;
+      /** 처음 열었을 때 채워지는 코드 */
+      starter: string;
+      /** 셀 위에 표시할 짧은 설명 */
+      label?: string;
+    }
+  | {
+      kind: "text";
+      id: string;
+      /** 무엇을 적어야 하는지 안내하는 문장 */
+      prompt: string;
+      placeholder?: string;
+      /** 제출하려면 채워야 하는 최소 글자 수 (선택 과제에서는 강제하지 않는다) */
+      minChars?: number;
+      /** 처음 열었을 때 채워지는 틀(표 머리글 등) */
+      template?: string;
+    };
+
+export interface AssignmentTaskSpec {
+  id: string;
+  title: string;
+  /** 선택(심화) 과제면 true — 제출 필수 조건에서 제외된다 */
+  optional?: boolean;
+  /** 과제 설명(마크다운) */
+  instructions: string;
+  cells: AssignmentCellSpec[];
+}
+
+export interface RubricCriterion {
+  id: string;
+  label: string;
+  points: number;
+  /** 운영자에게 보여 줄 채점 기준(학습자에게도 공개) */
+  guide: string;
+}
+
+export interface AssignmentSpec {
+  title: string;
+  /** 과제 개요(마크다운 한두 문단) */
+  summary: string;
+  tasks: AssignmentTaskSpec[];
+  rubric: RubricCriterion[];
+  /** 코드 셀에서 /course/weekN.md 경로로 이 사이트의 학습 자료 본문을 읽을 수 있게 한다(7주차 RAG 과제) */
+  provideCourseDocs?: boolean;
 }
 
 export interface WeekSection {

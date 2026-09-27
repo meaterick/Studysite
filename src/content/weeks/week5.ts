@@ -1,5 +1,6 @@
 import type { WeekMeta } from "../types";
 import sections from "../sections/week5";
+import week5Assignment from "../assignments/week5";
 
 const week5: WeekMeta = {
   slug: "week-5",
@@ -979,35 +980,9 @@ for m, p in [(5, 3), (12, 10), (102, 100), (3, 5), (10, 5)]:
     { label: "⑤ 설명하기 — 도서관 사서 비유로 Q, K, V를 설명 (7문장)", hint: "Query=찾는 주제, Key=책등 색인표, Value=책 내용이라는 대응을 문장 안에 자연스럽게 녹여보세요." },
     { label: "⑥ 막힌 곳 / 보완", hint: "책이나 강의를 다시 펼쳐 확인한 뒤, 다른 색 펜으로 보완한 내용을 적어보세요." },
   ],
-  assignmentMd: `
-### 필수 「나만의 미니 GPT 블록」 (브라우저 실습 코드 + Colab)
-
-1. **멀티헤드 causal self-attention 구현 (NumPy)**: 「멀티헤드 Attention과 Causal Mask」 단계의 코드를 참고해 $W^O$까지 포함한 함수를 직접 작성하라. 모든 중간 텐서(Q, K, V, head 분할 후, 점수, 가중치, concat, 출력) 옆에 shape을 주석으로 적는다.
-2. **정확성 검증 3종**: (a) head를 하나씩 따로 계산해 이어붙인 결과와 \`np.allclose\`로 일치, (b) 마지막 토큰을 바꿔도 앞 토큰들의 출력이 변하지 않음(causal 테스트), (c) Colab에서 PyTorch로 같은 계산을 직접 작성(\`F.scaled_dot_product_attention\` 없이 softmax를 직접)하고, 같은 가중치를 넣었을 때 NumPy 결과와 \`allclose\`임을 보여라.
-3. **숫자 예제 재현과 변형**: 「Self-Attention」 단계의 숫자 예제(Query $=[1,1,0,1]$, $d_k=4$)를 코드로 재현한 뒤, Query를 최소 2가지 다른 값(예: "맛있게"의 Key와 같은 $[0,0,1,0]$)으로 바꿔 가중치와 출력이 어떻게 달라지는지 표로 정리하고 이유를 설명하라.
-4. **관찰 실험**: 토큰 6개 이상의 입력으로 attention 가중치 행렬을 (i) 마스크 유무, (ii) $\\sqrt{d_k}$ 스케일링 유무의 네 조합으로 출력하거나 히트맵으로 그리고, 차이를 3문장 이상으로 서술하라. $d_k$를 키울 때 (ii)의 차이가 어떻게 커지는지도 보여라.
-5. **논문 리포트 (1쪽)**: "Attention Is All You Need"(특히 3장)를 읽고 (a) 가장 놀라웠던 설계 선택과 그 이유, (b) 2017년 이후 바뀐 부분 두 가지 이상(RoPE, Pre-LN, GQA, SwiGLU 등 중 선택)을 조사해 "무엇이, 왜" 바뀌었는지 정리하라.
-
-**제출물:** 노트북(.ipynb) 또는 Colab 공유 링크 + 리포트(PDF/Markdown). 과제 페이지에서 파일을 올리거나 링크를 붙여 넣는다.
-
-### 심화 (선택)
-
-- 완성한 블록을 2층으로 쌓아 문자 단위 언어모델을 학습하고(Karpathy "Let's build GPT" 참고), loss 곡선과 학습 전후 생성 샘플 5개를 비교하라.
-- BPE를 직접 구현(50줄 내외)해 한국어·영어 문장의 토큰 수를 tiktoken 결과와 비교하라.
-- KV 캐시가 있는 생성 루프를 구현해 토큰 수에 따른 생성 시간을 캐시 유무로 측정하라.
-
-### 채점 기준 (10점)
-
-| 항목 | 점수 |
-| --- | --- |
-| 구현 정확성 (검증 3종: head 분할 allclose, causal 테스트, PyTorch 일치) | 3 |
-| shape 추적과 설명 | 2 |
-| 숫자 예제 재현·변형 비교 | 2 |
-| 관찰 실험 (마스크·스케일링) | 1 |
-| 논문 리포트 | 2 |
-`,
+  assignment: week5Assignment,
   assignmentMaxScore: 10,
-  dueNote: "제출: 일요일 23:59 · 노트북(.ipynb/Colab 링크) + 논문 리포트",
+  dueNote: "제출 기한: 일요일 23:59",
 };
 
 export default week5;

@@ -19,7 +19,7 @@ export function parseMarkdown(source: string): Block[] {
   return blocks;
 }
 
-function parseMarkdownUncached(source: string): Block[] {
+export function parseMarkdownUncached(source: string): Block[] {
   const lines = source.replace(/\r\n/g, "\n").split("\n");
   const blocks: Block[] = [];
 

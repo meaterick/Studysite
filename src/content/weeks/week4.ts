@@ -1,5 +1,6 @@
 import type { WeekMeta } from "../types";
 import sections from "../sections/week4";
+import week4Assignment from "../assignments/week4";
 
 const week4: WeekMeta = {
   slug: "week-4",
@@ -860,33 +861,9 @@ for t in range(10):
     { label: '⑤ 설명하기 — "학습이 안 될 때 나는 어떤 순서로 원인을 찾을 것인가?" (Recipe 기반)', hint: "비유를 하나 이상 사용해보세요. (예: 의사의 문진 순서)" },
     { label: "⑥ 막힌 곳 / 보완", hint: "책을 펴서 확인한 뒤, 다른 색으로 보완한 내용을 적어보세요." },
   ],
-  assignmentMd: `
-### 필수 「CIFAR-10 Ablation 실험 노트」 (Colab, GPU 런타임)
-
-1. **기준선**: 「정규화·일반화 기법」 단계의 CNN 코드를 시드를 고정해 10 epoch 학습하고, train/val 손실·정확도 곡선을 제출하라. 학습 전에 Karpathy 레시피 2번(초기 손실 $\\approx \\ln 10$)을 확인한 출력도 함께 붙인다.
-2. **Ablation 2개**: 다음 중 **2개**를 골라 기준선에서 **한 번에 하나씩만** 바꿔 재학습하라 — BatchNorm 제거 / Dropout 제거 / 데이터 증강 제거 / 학습률 10배 또는 0.1배 / weight decay 0 / block 순서를 conv → ReLU → BatchNorm으로 변경. 결과를 (변경 항목, val 정확도, train-val gap, 학습 시간) 네 열의 표로 정리한다.
-3. **가설과 해석**: 각 ablation마다 실행 **전**에 세운 가설 한 줄과, 결과가 가설과 맞았는지·틀렸다면 왜 그런지를 단계에서 배운 개념으로 설명하라.
-4. **오류 분석**: 기준선 모델이 틀린 테스트 이미지 16장을 (정답, 예측)과 함께 시각화하고, 공통 패턴을 2가지 이상 찾아 적어라(예: 비슷한 배경, 작은 물체).
-5. **체크리스트**: 데이터 증강이 훈련 데이터에만 적용되었는지, 평가 전에 \`net.eval()\`을 호출했는지 코드 줄 번호와 함께 확인하라.
-
-### 심화 (가산점)
-
-- ResNet18 전이학습(특징 추출 vs 파인튜닝)을 기준선과 비교하고, 클래스당 500장만 쓰는 소량 데이터 조건에서도 비교하라.
-- Ablation을 4개 이상으로 늘리고, 두 번 이상 반복해 평균·표준편차로 보고하라.
-- Grad-CAM으로 모델이 이미지의 어디를 보는지 시각화하라.
-
-### 채점 기준 (10점)
-
-| 항목 | 점수 |
-| --- | --- |
-| 실험 통제(기준선·한 번에 하나·시드 고정) | 3 |
-| 가설과 해석의 깊이 | 3 |
-| 오류 분석 | 2 |
-| 체크리스트·재현성(초기 손실 확인, eval 모드) | 1 |
-| 가독성(표·그림) | 1 |
-`,
+  assignment: week4Assignment,
   assignmentMaxScore: 10,
-  dueNote: "제출: 일요일 23:59 · Colab 링크 + 실험 노트",
+  dueNote: "제출 기한: 일요일 23:59",
 };
 
 export default week4;
