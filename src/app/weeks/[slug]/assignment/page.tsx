@@ -18,6 +18,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
   const { week, submission, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}/assignment`);
   if (!status.allSectionsDone && !isAdmin) redirect(`/weeks/${slug}?locked=finale`);
   const blocks = parseMarkdown(week.assignmentMd);
+  const hasRunnableCode = blocks.some((b) => b.type === "code" && (b.lang === "python" || b.lang === "py"));
   const latest = submission ? latestVersion(submission) : undefined;
   const grade = submission ? latestGrade(submission) : undefined;
   const gradeIsCurrent = !!grade && !!latest && grade.version === latest.version;
@@ -57,7 +58,8 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
         <section id="assignment" className="scroll-mt-24">
           <h2 className="mb-1 text-xl font-black text-ink">과제 안내</h2>
           <p className="mb-4 text-sm text-ink-muted">
-            코드가 있는 실습은 한 번에 하나씩 공개됩니다 — 지금 것을 실행해보면 다음 실습이 열립니다. 채점 기준을 먼저 읽고 시작하세요.
+            {hasRunnableCode && "코드가 있는 실습은 한 번에 하나씩 공개됩니다 — 지금 것을 실행해보면 다음 실습이 열립니다. "}
+            채점 기준을 먼저 읽고 시작하세요.
           </p>
           <BlocksRenderer blocks={blocks} docKey={`${slug}:assignment`} interactiveCode gateCode gateSlug={slug} />
         </section>
