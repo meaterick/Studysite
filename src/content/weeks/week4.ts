@@ -598,7 +598,7 @@ trl = torch.utils.data.DataLoader(tr, 128, shuffle=True, num_workers=2)
 tel = torch.utils.data.DataLoader(te, 256)
 \`\`\`
 
-다음은 모델 구조다. \`block\` 함수 하나가 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU} \\to \\text{MaxPool}$ 순서로 쌓여 있는데, 이 순서 자체가 의미를 담고 있다. BatchNorm은 합성곱이 막 뱉어낸, 아직 활성화를 통과하기 전의 "날것" 값들의 분포를 정규화해서 평균 0, 분산 1 근처로 맞춰주는 역할을 한다. 이 정규화를 ReLU보다 먼저 적용하는 이유는, ReLU가 0보다 작은 값을 전부 0으로 뭉개버리는 함수이기 때문이다. 만약 정규화되지 않은 값 분포가 한쪽으로 심하게 치우쳐 있다면(예컨대 대부분 음수라면) ReLU를 통과하는 순간 뉴런 대부분이 죽어버릴 위험이 있다. BatchNorm이 먼저 분포를 가지런히 정리해준 다음 ReLU에 넘겨야, ReLU가 "살아있는 값"과 "죽이는 값"을 균형 있게 골라낼 수 있다. 그리고 맨 마지막 Flatten 이후에 Dropout(0.3)을 넣어, 완전연결층으로 넘어가기 직전에 과적합을 한 번 더 억제한다. (이 코드도 바로 위 셀에서 정의한 \`dev\`를 그대로 쓰는 이어지는 코드이므로 위 셀과 마찬가지로 Colab에서만 실행된다.)
+다음은 모델 구조다. \`block\` 함수 하나가 $\\text{conv} \\to \\text{BatchNorm} \\to \\text{ReLU} \\to \\text{MaxPool}$ 순서로 쌓여 있는데, 이 순서 자체가 의미를 담고 있다. BatchNorm은 합성곱이 막 뱉어낸, 아직 활성화를 통과하기 전의 "날것" 값들의 분포를 정규화해서 평균 0, 분산 1 근처로 맞춰주는 역할을 한다. 이 정규화를 ReLU보다 먼저 적용하는 이유는, ReLU가 0보다 작은 값을 전부 0으로 뭉개버리는 함수이기 때문이다. 만약 정규화되지 않은 값 분포가 한쪽으로 심하게 치우쳐 있다면(예컨대 대부분 음수라면) ReLU를 통과하는 순간 뉴런 대부분이 비활성화될 위험이 있다. BatchNorm이 먼저 분포를 가지런히 정리해준 다음 ReLU에 넘겨야, ReLU가 "살아있는 값"과 "죽이는 값"을 균형 있게 골라낼 수 있다. 그리고 맨 마지막 Flatten 이후에 Dropout(0.3)을 넣어, 완전연결층으로 넘어가기 직전에 과적합을 한 번 더 억제한다. (이 코드도 바로 위 셀에서 정의한 \`dev\`를 그대로 쓰는 이어지는 코드이므로 위 셀과 마찬가지로 Colab에서만 실행된다.)
 
 \`\`\`python-colab
 def block(i, o): return nn.Sequential(nn.Conv2d(i,o,3,padding=1), nn.BatchNorm2d(o), nn.ReLU(), nn.MaxPool2d(2))
