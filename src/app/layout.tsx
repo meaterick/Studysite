@@ -44,7 +44,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script
           // Avoid a flash of the wrong theme: read the stored preference before paint.
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}`,
+            // data-motion="full": JavaScript가 켜져 있고 "동작 줄이기"가 아닐 때만 메인 화면의 3D 여정 모드를 쓴다(그리기 전에 정해 깜빡임 방지).
+            __html: `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-motion','full');}}catch(e){}`,
           }}
         />
       </head>

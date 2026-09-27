@@ -1,6 +1,5 @@
 import { colors } from "@/components/diagrams/DiagramFrame";
 import TiltCard from "@/components/home/TiltCard";
-import Scroll3D from "@/components/home/Scroll3D";
 
 // 이 스터디의 설계 원칙인 "이해 → 직접 구현 → 설명 → 활용" 순환을 한눈에 보여준다.
 // 단계마다 사이트의 어느 부분(학습 자료/실습/백지공부·퀴즈/과제)에서 그 단계를
@@ -38,66 +37,51 @@ export default function LearningCycle() {
       <ol className="grid gap-2 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-stretch">
         {STEPS.map((step, i) => (
           <li key={step.name} className="contents">
-            <Scroll3D
-              variant={i % 2 === 0 ? "barrel" : "flip"}
-              offset={(i - 1.5) * 0.08}
-              depth={1.2}
-            >
-              <TiltCard glow={step.color} className="h-full">
-                <div className="flex h-full gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:flex-col lg:gap-2">
-                  <Scroll3D variant="orbit" depth={0.7} className="shrink-0">
-                    <span
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-black text-white"
-                      style={{ background: step.color }}
-                    >
-                      {i + 1}
-                    </span>
-                  </Scroll3D>
-                  <Scroll3D variant="parallax" depth={0.5} className="min-w-0">
-                    <p
-                      className="text-lg font-black"
-                      style={{ color: step.color }}
-                    >
-                      {step.name}
-                    </p>
-                    <p className="mt-0.5 text-sm text-ink-secondary">
-                      {step.desc}
-                    </p>
-                    <p className="mt-2 inline-block rounded-full bg-[var(--surface-card-2)] px-2.5 py-0.5 text-[11px] font-bold text-ink-muted">
-                      {step.where}
-                    </p>
-                  </Scroll3D>
+            <TiltCard glow={step.color}>
+              <div className="flex h-full gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:flex-col lg:gap-2">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black text-white"
+                  style={{ background: step.color }}
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p
+                    className="text-lg font-black"
+                    style={{ color: step.color }}
+                  >
+                    {step.name}
+                  </p>
+                  <p className="mt-0.5 text-sm text-ink-secondary">
+                    {step.desc}
+                  </p>
+                  <p className="mt-2 inline-block rounded-full bg-[var(--surface-card-2)] px-2.5 py-0.5 text-[11px] font-bold text-ink-muted">
+                    {step.where}
+                  </p>
                 </div>
-              </TiltCard>
-            </Scroll3D>
+              </div>
+            </TiltCard>
             {i < STEPS.length - 1 && (
-              <Scroll3D
-                variant="orbit"
-                depth={1.5}
+              <span
+                aria-hidden
                 className="flex items-center justify-center text-lg font-bold text-ink-muted"
               >
-                <span aria-hidden className="lg:hidden">
-                  ↓
-                </span>
-                <span aria-hidden className="hidden lg:inline">
-                  →
-                </span>
-              </Scroll3D>
+                <span className="lg:hidden">↓</span>
+                <span className="hidden lg:inline">→</span>
+              </span>
             )}
           </li>
         ))}
       </ol>
-      <Scroll3D variant="zoom" depth={0.8} className="mt-3">
-        <p className="flex items-center gap-2 rounded-lg bg-[var(--surface-card-2)] px-4 py-3 text-sm text-ink-secondary">
-          <span aria-hidden className="text-lg">
-            ↻
-          </span>
-          <span>
-            모든 단계를 마치면 그 주의 백지공부와 과제가 열리며, 한 주를 마치면
-            다음 주제에서 같은 과정을 반복합니다.
-          </span>
-        </p>
-      </Scroll3D>
+      <p className="mt-3 flex items-center gap-2 rounded-lg bg-[var(--surface-card-2)] px-4 py-3 text-sm text-ink-secondary">
+        <span aria-hidden className="text-lg">
+          ↻
+        </span>
+        <span>
+          모든 단계를 마치면 그 주의 백지공부와 과제가 열리며, 한 주를 마치면
+          다음 주제에서 같은 과정을 반복합니다.
+        </span>
+      </p>
     </div>
   );
 }

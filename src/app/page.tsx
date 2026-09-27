@@ -1,26 +1,41 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { WEEKS } from "@/content/weeks";
 import { getWeekOutline } from "@/content/sections";
-import WeekCard from "@/components/WeekCard";
 import HomeCta from "@/components/HomeCta";
-import HomeRoadmap from "@/components/HomeRoadmap";
-import LearningCycle from "@/components/LearningCycle";
+import ProgressRing from "@/components/ProgressRing";
 import NeuralScene from "@/components/home/NeuralScene";
-import TiltCard from "@/components/home/TiltCard";
 import TypeLine from "@/components/home/TypeLine";
 import CountUp from "@/components/home/CountUp";
-import Scroll3D from "@/components/home/Scroll3D";
+import Journey, { type JourneyScene } from "@/components/journey/Journey";
 import { getCurrentUser } from "@/lib/dal";
 import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
 
-const SECTIONS = [
-  { id: "cycle", label: "학습 방법" },
-  { id: "roadmap", label: "8주 로드맵" },
-  { id: "weeks", label: "주차별 자료" },
-  { id: "outcomes", label: "수료 목표" },
+// 메인 화면: 처음부터 끝까지 하나로 이어지는 "8주 여정".
+// 시작 → 숫자로 보는 스터디 → 학습 방법 → 8주 로드맵 → 1~8주차 → 수료 목표 순서의 장면을
+// Journey가 3D 공간의 한 경로 위에 놓고, 스크롤로 카메라가 그 경로를 따라 전진한다.
+
+// 부(phase)별 대표 색(배경 입자에도 쓰므로 16진수로 둔다)
+const PHASE_TINT: Record<string, string> = {
+  "1부": "#4c9bff",
+  "2부": "#2fd6a0",
+  "3부": "#a399ff",
+  "4부": "#ff8a5b",
+};
+const PHASES = [
+  { key: "1부", name: "기초", weeks: [1, 2] },
+  { key: "2부", name: "딥러닝", weeks: [3, 4] },
+  { key: "3부", name: "현대 AI", weeks: [5, 6] },
+  { key: "4부", name: "활용·책임", weeks: [7, 8] },
+];
+
+const STEPS = [
+  { name: "이해", desc: "단계별로 개념 설명과 그림을 보며 원리를 이해합니다.", where: "단계 학습", tint: "#4c9bff" },
+  { name: "직접 구현", desc: "핵심 부분을 라이브러리 없이 직접 구현하고, 브라우저에서 바로 실행합니다.", where: "단계 실습", tint: "#2fd6a0" },
+  { name: "설명", desc: "단계마다 확인 문제를 풀고, 주차를 마칠 때 백지에 다시 정리하며 자신의 말로 설명합니다.", where: "확인 문제 · 백지공부", tint: "#a399ff" },
+  { name: "활용", desc: "과제에서 배운 내용을 실제 문제에 적용해 제출하면, 운영자가 채점하고 피드백을 남깁니다.", where: "과제 · 운영자 채점", tint: "#ff8a5b" },
 ];
 
 const OUTCOMES = [
@@ -30,360 +45,294 @@ const OUTCOMES = [
   "프롬프트, RAG, 에이전트로 실제 문제를 해결하고, 평가 데이터셋을 구성해 성능을 측정할 수 있습니다.",
 ];
 
-// 첫 화면에 떠다니는 수식 조각(장식용)
-const FLOATING = [
-  { text: "θ ← θ − η∇L", className: "left-[4%] top-[14%]", delay: "0s" },
-  { text: "softmax(QKᵀ/√d)", className: "right-[6%] top-[8%]", delay: "1.2s" },
-  { text: "P(A|B)", className: "left-[10%] bottom-[16%]", delay: "2.1s" },
-  { text: "C ≈ 6ND", className: "right-[10%] bottom-[10%]", delay: "0.6s" },
-];
-
-function SectionHeading({
-  id,
-  index,
-  title,
-  children,
-}: {
-  id: string;
-  index: string;
-  title: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="mb-5 flex items-end justify-between gap-3">
-      <div>
-        <Scroll3D variant="parallax" depth={0.6}>
-          <p className="section-index text-sm font-bold tracking-widest">
-            {index}
-          </p>
-        </Scroll3D>
-        <Scroll3D variant="flip">
-          <h2
-            id={id}
-            className="scroll-mt-24 text-2xl font-black text-ink sm:text-3xl"
-          >
-            {title}
-          </h2>
-        </Scroll3D>
-      </div>
-      {children && (
-        <Scroll3D variant="orbit" depth={0.6}>
-          {children}
-        </Scroll3D>
-      )}
-    </div>
-  );
+function politeObjective(text: string): string {
+  return text.replace(/한다\.$/, "합니다.").replace(/는다\.$/, "습니다.");
 }
 
-function Lead({ children }: { children: React.ReactNode }) {
+function Kicker({ index, children, tint = "#7cc4ff" }: { index: string; children: ReactNode; tint?: string }) {
   return (
-    <Scroll3D variant="barrel" depth={0.8} className="-mt-2 mb-6">
-      <p className="text-sm text-ink-secondary">{children}</p>
-    </Scroll3D>
+    <p className="font-mono text-xs font-bold tracking-[0.25em] sm:text-sm" style={{ color: tint }}>
+      {index} <span className="text-ink-muted">/</span> {children}
+    </p>
   );
 }
 
 export default async function Home() {
   const user = await getCurrentUser();
-  const record = user
-    ? getLearningRecord(user.id)
-    : { sections: {}, worksheets: {} };
+  const record = user ? getLearningRecord(user.id) : { sections: {}, worksheets: {} };
   const statusOf = (slug: string) => {
     const week = WEEKS.find((w) => w.slug === slug)!;
-    return weekStatus(
-      week,
-      record,
-      user ? findUserSubmission(user.id, slug) : undefined,
-    );
+    return weekStatus(week, record, user ? findUserSubmission(user.id, slug) : undefined);
   };
 
-  const totalStages = WEEKS.reduce(
-    (n, w) => n + getWeekOutline(w).sections.length,
-    0,
-  );
-  const codeCells = WEEKS.reduce(
-    (n, w) => n + (w.conceptsMd.match(/^```python\s*$/gm)?.length ?? 0),
-    0,
-  );
-  const stats = [
-    { value: WEEKS.length, unit: "주", label: "커리큘럼" },
-    { value: totalStages, unit: "단계", label: "학습 → 실습 → 확인 문제" },
-    { value: codeCells, unit: "개", label: "브라우저에서 실행하는 코드" },
-    { value: WEEKS.length, unit: "개", label: "사이트 안에서 끝나는 과제" },
-  ];
+  const totalStages = WEEKS.reduce((n, w) => n + getWeekOutline(w).sections.length, 0);
+  const codeCells = WEEKS.reduce((n, w) => n + (w.conceptsMd.match(/^```python\s*$/gm)?.length ?? 0), 0);
   const typeLines = WEEKS.map((w) => `study(week=${w.number})  # ${w.title}`);
+  const phaseOf = (n: number) => PHASES.find((p) => p.weeks.includes(n))!;
 
-  return (
-    // 옆으로 회전하며 움직이는 요소가 가로 스크롤을 만들지 않도록 잘라 낸다.
-    <div className="overflow-x-clip">
-      {/* ── 첫 화면: 3D 신경망 ───────────────────────────── */}
-      <section
-        aria-labelledby="hero-title"
-        className="hero-dark relative isolate overflow-hidden"
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[70%] overflow-hidden"
-        >
-          <Scroll3D variant="hero" depth={0.4} className="absolute inset-0">
-            <div className="hero-grid absolute inset-0" />
-          </Scroll3D>
-        </div>
+  const scenes: JourneyScene[] = [];
 
-        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-4">
-          <div className="relative z-10">
-            <Scroll3D variant="hero" depth={1.6}>
-              <p className="glass inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-ink-secondary">
-                <span className="pulse-dot h-2 w-2 rounded-full bg-[#5ff0bd]" />
-                Aegis 동아리 AI 스터디
-              </p>
-            </Scroll3D>
-            <h1
-              id="hero-title"
-              className="mt-4 text-4xl font-black leading-[1.1] sm:text-6xl"
-            >
-              <Scroll3D as="span" variant="hero" depth={1.35} className="block">
-                <span className="text-gradient">AI 기초부터</span>
-              </Scroll3D>
-              <Scroll3D as="span" variant="hero" depth={1.1} className="block">
-                <span className="text-white">활용까지</span>
-              </Scroll3D>
-            </h1>
-            <Scroll3D variant="hero" depth={0.95}>
-              <p className="mt-4 max-w-xl text-lg font-bold leading-relaxed text-ink-secondary sm:text-xl">
-                수학 기초부터 LLM 에이전트까지, 8주 동안 직접 코드를 작성하며
-                배웁니다.
-              </p>
-            </Scroll3D>
-            <Scroll3D variant="hero" depth={0.8}>
-              <p
-                className="glass mt-5 max-w-xl overflow-hidden rounded-lg px-4 py-2.5 text-xs text-[#dbe7ff] sm:text-sm"
-                aria-label="주차별 학습 주제"
-              >
-                <TypeLine lines={typeLines} />
-              </p>
-            </Scroll3D>
-
-            <Scroll3D variant="hero" depth={0.65} className="mt-7">
-              <Suspense
-                fallback={
-                  <div className="h-14 w-full rounded-xl bg-[var(--surface-card-2)] sm:max-w-md" />
-                }
-              >
-                <HomeCta />
-              </Suspense>
-            </Scroll3D>
-
-            <nav aria-label="바로 가기" className="mt-8">
-              <div className="flex flex-wrap gap-2">
-                {SECTIONS.map((s, i) => (
-                  <Scroll3D
-                    key={s.id}
-                    as="span"
-                    variant="hero"
-                    depth={0.5 + i * 0.25}
-                    className="inline-block"
-                  >
-                    <a
-                      href={`#${s.id}`}
-                      className="glass inline-block rounded-full px-3.5 py-1.5 text-sm font-medium text-ink-secondary transition hover:border-[#7cc4ff] hover:text-white"
-                    >
-                      <span className="mr-1 font-mono text-xs text-[#7cc4ff]">
-                        0{i + 1}
-                      </span>
-                      {s.label}
-                    </a>
-                  </Scroll3D>
-                ))}
-              </div>
-            </nav>
+  // ── 장면 1: 시작 ─────────────────────────────────────────────
+  scenes.push({
+    id: "start",
+    label: "시작",
+    group: "시작",
+    tint: "#4c9bff",
+    content: (
+      <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+        <div>
+          <p className="glass inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold text-ink-secondary">
+            <span className="pulse-dot h-2 w-2 rounded-full bg-[#5ff0bd]" />
+            Aegis 동아리 AI 스터디
+          </p>
+          <h1 className="mt-4 text-5xl font-black leading-[1.05] sm:text-7xl">
+            <span className="text-gradient">AI 기초부터</span>
+            <br />
+            <span className="text-white">활용까지</span>
+          </h1>
+          <p className="mt-4 max-w-xl text-lg font-bold leading-relaxed text-ink-secondary sm:text-xl">
+            수학 기초부터 LLM 에이전트까지, 8주 동안 직접 코드를 작성하며 배웁니다.
+          </p>
+          <p className="glass mt-5 max-w-xl overflow-hidden rounded-lg px-4 py-2.5 text-xs text-[#dbe7ff] sm:text-sm" aria-label="주차별 학습 주제">
+            <TypeLine lines={typeLines} />
+          </p>
+          <div className="mt-6">
+            <Suspense fallback={<div className="h-14 w-full rounded-xl bg-[var(--surface-card-2)] sm:max-w-md" />}>
+              <HomeCta />
+            </Suspense>
           </div>
-
-          <div className="relative -mx-4 h-[300px] sm:mx-0 sm:h-[420px] lg:h-[520px]">
-            <NeuralScene />
-            {FLOATING.map((f, i) => (
-              <Scroll3D
-                key={f.text}
-                variant="hero"
-                depth={0.6 + i * 0.35}
-                className={`pointer-events-none absolute hidden sm:block ${f.className}`}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{ animationDelay: f.delay }}
-                  className="float-slow glass block rounded-md px-2.5 py-1 font-mono text-xs text-[#c9d4e6]"
-                >
-                  {f.text}
-                </span>
-              </Scroll3D>
-            ))}
-            <p className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium text-ink-muted">
-              끌어서 회전해 보십시오
-            </p>
-          </div>
+          <p className="journey-hint mt-6 text-xs font-bold text-ink-muted">
+            <span aria-hidden="true">↓</span> 스크롤하면 8주 여정이 시작됩니다
+          </p>
         </div>
-
-        <div className="border-t border-[var(--border-hairline)] bg-black/20">
-          <dl className="mx-auto grid max-w-6xl grid-cols-2 px-4 sm:px-6 lg:grid-cols-4">
-            {stats.map((s, i) => (
-              <Scroll3D
-                key={s.label}
-                variant="orbit"
-                offset={(i - 1.5) * 0.08}
-                depth={0.9}
-                className="px-2 py-5 sm:px-4"
-              >
-                <dt className="text-xs font-medium text-ink-muted">
-                  {s.label}
-                </dt>
-                <dd className="mt-1 text-3xl font-black text-white sm:text-4xl">
-                  <CountUp value={s.value} />
-                  <span className="ml-1 text-base font-bold text-ink-secondary">
-                    {s.unit}
-                  </span>
-                </dd>
-              </Scroll3D>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      {/* ── 본문 ─────────────────────────────────────────── */}
-      <div className="relative isolate">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        >
-          <Scroll3D
-            variant="parallax"
-            depth={6}
-            className="absolute -left-40 top-20"
-          >
-            <div className="h-96 w-96 rounded-full bg-[var(--series-blue)] opacity-[0.08] blur-3xl" />
-          </Scroll3D>
-          <Scroll3D
-            variant="parallax"
-            depth={-5}
-            className="absolute -right-40 top-[40%]"
-          >
-            <div className="h-96 w-96 rounded-full bg-[var(--series-violet)] opacity-[0.08] blur-3xl" />
-          </Scroll3D>
-          <Scroll3D
-            variant="parallax"
-            depth={4}
-            className="absolute bottom-0 left-1/3"
-          >
-            <div className="h-80 w-80 rounded-full bg-[var(--series-aqua)] opacity-[0.07] blur-3xl" />
-          </Scroll3D>
-        </div>
-
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <section className="mb-20">
-            <SectionHeading id="cycle" index="01 / HOW" title="학습 방법" />
-            <Lead>
-              매주 <strong className="text-ink">이해, 구현, 설명, 활용</strong>{" "}
-              순서로 진행합니다. 각 주차는 여러 단계로 나뉘며, 단계마다 학습 →
-              실습 → 확인 문제를 마쳐야 다음 단계가 열립니다.
-            </Lead>
-            <LearningCycle />
-          </section>
-
-          <section className="mb-20">
-            <SectionHeading
-              id="roadmap"
-              index="02 / ROADMAP"
-              title="8주 로드맵"
-            />
-            <Lead>
-              8주 과정은 네 부분으로 구성됩니다. 뒤로 갈수록 난도가 높아지고,
-              스스로 해결해야 하는 부분도 늘어납니다.
-            </Lead>
-            <HomeRoadmap />
-          </section>
-
-          <section className="mb-20">
-            <SectionHeading id="weeks" index="03 / WEEKS" title="주차별 자료">
-              <Link
-                href="/weeks"
-                className="shrink-0 text-sm font-bold text-[var(--series-blue)] hover:underline"
-              >
-                전체 보기 →
-              </Link>
-            </SectionHeading>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {WEEKS.map((w) => {
-                const st = statusOf(w.slug);
-                const col = (w.number - 1) % 4;
-                return (
-                  <Scroll3D
-                    key={w.slug}
-                    variant={
-                      col === 0 ? "left" : col === 3 ? "right" : "barrel"
-                    }
-                    offset={(col - 1.5) * 0.07}
-                    depth={1.1}
-                  >
-                    <TiltCard max={7} className="h-full">
-                      <WeekCard
-                        week={w}
-                        ratio={st.ratio}
-                        sectionsDone={st.sectionsDone}
-                        sectionsTotal={st.sectionsTotal}
-                        layered
-                      />
-                    </TiltCard>
-                  </Scroll3D>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="mb-14">
-            <SectionHeading
-              id="outcomes"
-              index="04 / OUTCOMES"
-              title="수료 후 할 수 있는 것"
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              {OUTCOMES.map((g, i) => (
-                <Scroll3D
-                  key={i}
-                  variant={i % 2 === 0 ? "left" : "right"}
-                  offset={(Math.floor(i / 2) - 0.5) * 0.08}
-                >
-                  <TiltCard
-                    max={5}
-                    glow="var(--series-violet)"
-                    className="h-full"
-                  >
-                    <div className="flex h-full gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4">
-                      <Scroll3D
-                        variant="orbit"
-                        depth={0.5}
-                        className="shrink-0"
-                      >
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--series-blue)] to-[var(--series-violet)] font-mono text-xs font-bold text-white">
-                          0{i + 1}
-                        </span>
-                      </Scroll3D>
-                      <Scroll3D variant="parallax" depth={0.4}>
-                        <p className="text-sm text-ink-secondary">{g}</p>
-                      </Scroll3D>
-                    </div>
-                  </TiltCard>
-                </Scroll3D>
-              ))}
-            </div>
-          </section>
-
-          <Scroll3D variant="zoom" depth={0.7}>
-            <p className="border-t border-[var(--border-hairline)] pt-4 text-xs leading-relaxed text-ink-muted">
-              ※ 이 커리큘럼은 Stanford CS229·CS231n·CS224n·CS336, MIT 6.S191,
-              Berkeley CS188, CMU 10-601의 강의 구성을 참고해 설계했습니다.
-            </p>
-          </Scroll3D>
+        <div className="relative hidden h-[440px] lg:block">
+          <NeuralScene scene={0} />
+          <p className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium text-ink-muted">
+            끌어서 회전해 보십시오
+          </p>
         </div>
       </div>
+    ),
+  });
+
+  // ── 장면 2: 숫자로 보는 스터디 ───────────────────────────────
+  const stats = [
+    { value: WEEKS.length, unit: "주", label: "기초부터 활용까지 이어지는 커리큘럼" },
+    { value: totalStages, unit: "단계", label: "학습 → 실습 → 확인 문제로 나뉜 단계" },
+    { value: codeCells, unit: "개", label: "설치 없이 브라우저에서 실행하는 코드" },
+    { value: WEEKS.length, unit: "개", label: "사이트 안에서 작성·실행·제출하는 과제" },
+  ];
+  scenes.push({
+    id: "numbers",
+    label: "숫자로 보는 스터디",
+    group: "개요",
+    tint: "#5ff0bd",
+    content: (
+      <div>
+        <Kicker index="01" tint="#5ff0bd">
+          OVERVIEW
+        </Kicker>
+        <h2 className="mt-2 text-3xl font-black text-white sm:text-5xl">숫자로 보는 스터디</h2>
+        <dl className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {stats.map((s) => (
+            <div key={s.label} className="glass flex flex-col-reverse rounded-2xl p-4 sm:p-6">
+              <dt className="mt-2 text-xs text-ink-secondary sm:text-sm">{s.label}</dt>
+              <dd className="text-4xl font-black text-white sm:text-6xl">
+                <CountUp value={s.value} scene={1} />
+                <span className="ml-1 text-base font-bold text-ink-secondary sm:text-xl">{s.unit}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    ),
+  });
+
+  // ── 장면 3: 학습 방법 ────────────────────────────────────────
+  scenes.push({
+    id: "cycle",
+    label: "학습 방법",
+    group: "학습 방법",
+    tint: "#a399ff",
+    content: (
+      <div>
+        <Kicker index="02" tint="#c0b8ff">
+          HOW
+        </Kicker>
+        <h2 className="mt-2 text-3xl font-black text-white sm:text-5xl">학습 방법</h2>
+        <p className="mt-3 max-w-3xl text-sm text-ink-secondary sm:text-base">
+          매주 <strong className="text-white">이해, 구현, 설명, 활용</strong> 순서로 진행합니다. 각 주차는 여러 단계로 나뉘며, 단계마다 학습 → 실습 → 확인 문제를 마쳐야 다음 단계가 열립니다.
+        </p>
+        <ol className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {STEPS.map((step, i) => (
+            <li key={step.name} className="glass relative rounded-2xl p-4" style={{ borderColor: `${step.tint}66` }}>
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-full font-mono text-sm font-black text-[#060912]"
+                style={{ background: step.tint }}
+              >
+                {i + 1}
+              </span>
+              <p className="mt-2 text-lg font-black sm:text-xl" style={{ color: step.tint }}>
+                {step.name}
+              </p>
+              <p className="mt-1 text-xs text-ink-secondary sm:text-sm">{step.desc}</p>
+              <p className="mt-2 inline-block rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-ink-secondary">{step.where}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-4 text-xs text-ink-muted sm:text-sm">
+          <span aria-hidden="true">↻ </span>모든 단계를 마치면 그 주의 백지공부와 과제가 열리며, 한 주를 마치면 다음 주제에서 같은 과정을 반복합니다.
+        </p>
+      </div>
+    ),
+  });
+
+  // ── 장면 4: 8주 로드맵 ───────────────────────────────────────
+  scenes.push({
+    id: "roadmap",
+    label: "8주 로드맵",
+    group: "로드맵",
+    tint: "#ff8a5b",
+    content: (
+      <div>
+        <Kicker index="03" tint="#ffb088">
+          ROADMAP
+        </Kicker>
+        <h2 className="mt-2 text-3xl font-black text-white sm:text-5xl">8주 로드맵</h2>
+        <p className="mt-3 max-w-3xl text-sm text-ink-secondary sm:text-base">
+          8주 과정은 네 부분으로 구성됩니다. 뒤로 갈수록 난도가 높아지고, 스스로 해결해야 하는 부분도 늘어납니다. 이어지는 장면에서 한 주씩 살펴봅니다.
+        </p>
+        <ol className="mt-6 grid gap-3 lg:grid-cols-4">
+          {PHASES.map((p) => (
+            <li key={p.key} className="glass rounded-2xl border-l-4 p-4" style={{ borderLeftColor: PHASE_TINT[p.key] }}>
+              <p className="font-mono text-xs font-bold" style={{ color: PHASE_TINT[p.key] }}>
+                {p.key}
+              </p>
+              <p className="text-lg font-black text-white">{p.name}</p>
+              <ul className="mt-1 space-y-0.5 text-xs text-ink-secondary sm:text-sm">
+                {p.weeks.map((n) => {
+                  const w = WEEKS.find((x) => x.number === n)!;
+                  return (
+                    <li key={n}>
+                      <span className="font-bold text-white">{n}주차</span> · {w.title}
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      </div>
+    ),
+  });
+
+  // ── 장면 5~12: 1~8주차 ───────────────────────────────────────
+  WEEKS.forEach((w, idx) => {
+    const st = statusOf(w.slug);
+    const phase = phaseOf(w.number);
+    const tint = PHASE_TINT[phase.key];
+    scenes.push({
+      id: idx === 0 ? "weeks" : `week-${w.number}`,
+      label: `${w.number}주차 · ${w.title}`,
+      group: "주차별 자료",
+      tint,
+      content: (
+        <div className="grid items-center gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-10">
+          <div>
+            <Kicker index={`04.${w.number}`} tint={tint}>
+              {phase.key} · {phase.name}
+            </Kicker>
+            <p aria-hidden="true" className="journey-week-number mt-1 font-black leading-none" style={{ WebkitTextStrokeColor: tint }}>
+              W{w.number}
+            </p>
+            <h2 className="mt-1 text-2xl font-black text-white sm:text-4xl">
+              {w.number}주차 · {w.title}
+            </h2>
+            <p className="mt-2 text-xs text-ink-secondary sm:text-sm">{w.subtitle}</p>
+          </div>
+          <div className="glass rounded-2xl p-4 sm:p-6" style={{ borderColor: `${tint}55` }}>
+            <div className="flex items-center gap-4">
+              <ProgressRing ratio={st.ratio} size={56} />
+              <div className="text-xs text-ink-secondary sm:text-sm">
+                <p className="font-bold text-white">
+                  {st.sectionsTotal}단계 중 {st.sectionsDone}단계 완료
+                </p>
+                <p>
+                  난이도 {"★".repeat(w.difficulty)}
+                  {"☆".repeat(5 - w.difficulty)}
+                </p>
+              </div>
+            </div>
+            {w.objectives[0] && (
+              <div className="mt-4 rounded-xl bg-white/5 px-4 py-3">
+                <p className="text-[11px] font-bold" style={{ color: tint }}>
+                  이번 주 목표
+                </p>
+                <p className="mt-0.5 text-sm text-white sm:text-base">{politeObjective(w.objectives[0])}</p>
+                {w.objectives.length > 1 && <p className="mt-1 text-xs text-ink-muted">목표 {w.objectives.length - 1}개 더</p>}
+              </div>
+            )}
+            <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="주요 키워드">
+              {w.keywords.slice(0, 10).map((k) => (
+                <li key={k} className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-ink-secondary">
+                  {k}
+                </li>
+              ))}
+              {w.keywords.length > 10 && <li className="px-1 text-[11px] text-ink-muted">외 {w.keywords.length - 10}개</li>}
+            </ul>
+            <Link
+              href={`/weeks/${w.slug}`}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-[#060912] transition hover:opacity-90"
+              style={{ background: tint }}
+            >
+              {w.number}주차 학습하기 <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
+      ),
+    });
+  });
+
+  // ── 장면 13: 수료 목표 ───────────────────────────────────────
+  scenes.push({
+    id: "outcomes",
+    label: "수료 목표",
+    group: "수료",
+    tint: "#5ff0bd",
+    content: (
+      <div>
+        <Kicker index="05" tint="#5ff0bd">
+          OUTCOMES
+        </Kicker>
+        <h2 className="mt-2 text-3xl font-black text-white sm:text-5xl">8주 뒤에 할 수 있는 것</h2>
+        <ol className="mt-6 grid gap-3 sm:grid-cols-2">
+          {OUTCOMES.map((g, i) => (
+            <li key={i} className="glass flex gap-3 rounded-2xl p-4">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#4c9bff] to-[#a399ff] font-mono text-xs font-bold text-white">
+                0{i + 1}
+              </span>
+              <p className="text-xs text-ink-secondary sm:text-sm">{g}</p>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-6 grid items-end gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <Suspense fallback={<div className="h-14 w-full rounded-xl bg-[var(--surface-card-2)] sm:max-w-md" />}>
+            <HomeCta />
+          </Suspense>
+          <Link href="/weeks" className="text-sm font-bold text-[#7cc4ff] hover:underline">
+            주차별 자료 전체 보기 →
+          </Link>
+        </div>
+        <p className="mt-5 text-[11px] leading-relaxed text-ink-muted">
+          ※ 이 커리큘럼은 Stanford CS229·CS231n·CS224n·CS336, MIT 6.S191, Berkeley CS188, CMU 10-601의 강의 구성을 참고해 설계했습니다.
+        </p>
+      </div>
+    ),
+  });
+
+  return (
+    <div className="hero-dark">
+      <Journey scenes={scenes} />
     </div>
   );
 }
