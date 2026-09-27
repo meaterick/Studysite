@@ -27,17 +27,17 @@ export default function InteractiveDecodingTemperature() {
   const barColor = temp < 0.6 ? colors.blue : temp < 1.4 ? colors.aqua : colors.orange;
   const mood =
     temp < 0.5
-      ? "낮은 온도 — 거의 항상 1등 토큰만 고른다 (결정적, 지루하지만 안전)"
+      ? "낮은 온도: 거의 항상 1등 토큰만 고른다 (결정적, 지루하지만 안전)"
       : temp < 1.3
-        ? "적당한 온도 — 그럴듯한 후보들 사이에서 적당히 다양하게 고른다"
-        : "높은 온도 — 분포가 평평해져 낮은 확률의 토큰도 자주 뽑힌다 (다양하지만 엉뚱해질 위험)";
+        ? "적당한 온도: 그럴듯한 후보들 사이에서 적당히 다양하게 고른다"
+        : "높은 온도: 분포가 평평해져 낮은 확률의 토큰도 자주 뽑힌다 (다양하지만 엉뚱해질 위험)";
 
   return (
     <DiagramFrame
       title="Temperature가 다음 토큰 확률분포에 미치는 영향"
       viewBox={`0 0 ${width} ${height}`}
       interactive
-      caption={`"나는 __를 먹었다"의 다음 단어 후보 5개에 대한 모델의 원점수(logit)는 고정되어 있다. Temperature(T)는 이 점수를 확률로 바꾸는 softmax(zᵢ/T)의 나눗셈 값 — ${mood}`}
+      caption={`"나는 __를 먹었다"의 다음 단어 후보 5개에 대한 모델의 원점수(logit)는 고정되어 있다. Temperature(T)는 이 점수를 확률로 바꾸는 softmax(zᵢ/T)에서 나누는 값이다. ${mood}`}
       controls={
         <Slider label="Temperature (T)" value={temp} min={0.1} max={2.5} step={0.05} onChange={setTemp} format={(v) => v.toFixed(2)} color={barColor} />
       }

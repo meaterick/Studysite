@@ -70,10 +70,10 @@ const sections: Record<string, SectionMeta> = {
         "id": "w1-ai-terms-c1",
         "question": "인터넷 문장에서 \"다음 단어\"를 정답으로 삼아 LLM을 사전학습하는 방식은 어떤 학습 패러다임인가?",
         "choices": [
-          "지도학습 — 사람이 정답을 붙였으므로",
-          "비지도학습 — 정답이 전혀 없으므로",
-          "자기지도학습 — 데이터 자체에서 정답을 만들어내므로",
-          "강화학습 — 보상을 받으므로"
+          "지도학습: 사람이 정답을 붙였으므로",
+          "비지도학습: 정답이 전혀 없으므로",
+          "자기지도학습: 데이터 자체에서 정답을 만들어내므로",
+          "강화학습: 보상을 받으므로"
         ],
         "answer": 2,
         "explanation": "레이블(다음 단어)은 사람이 붙인 것이 아니라 원래 텍스트 안에 이미 있던 것을 가려서 맞히게 만든 것이다. 그래서 데이터 양에 사실상 제한이 없다."
@@ -119,7 +119,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Stanford CS229 Lecture Notes",
         "url": "https://cs229.stanford.edu/main_notes.pdf",
-        "note": "1장 지도학습 도입부 — 같은 용어를 수학적으로 정의 (영문, 심화)"
+        "note": "1장 지도학습 도입부: 같은 용어를 수학적으로 정의 (영문, 심화)"
       }
     ]
   },
@@ -170,7 +170,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "점프 투 파이썬 (위키독스)",
         "url": "https://wikidocs.net/book/1",
-        "note": "한국어로 된 가장 널리 쓰이는 무료 파이썬 입문서 — 2~5장이 이 단계 범위"
+        "note": "한국어로 된 가장 널리 쓰이는 무료 파이썬 입문서: 2~5장이 이 단계 범위"
       },
       {
         "title": "Python 공식 자습서 (한국어)",
@@ -229,7 +229,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "NumPy Broadcasting",
         "url": "https://numpy.org/doc/stable/user/basics.broadcasting.html",
-        "note": "브로드캐스팅 규칙을 그림으로 설명 — 실습의 오류 원인을 확인할 때"
+        "note": "브로드캐스팅 규칙을 그림으로 설명: 실습의 오류 원인을 확인할 때"
       },
       {
         "title": "Pro Git (한국어판)",
@@ -291,7 +291,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Mathematics for Machine Learning (무료 PDF)",
         "url": "https://mml-book.github.io/",
-        "note": "3장 해석기하 — 내적·노름·각도의 정식 정의"
+        "note": "3장 해석기하: 내적·노름·각도의 정식 정의"
       }
     ]
   },
@@ -424,13 +424,13 @@ const sections: Record<string, SectionMeta> = {
           "1%"
         ],
         "answer": 2,
-        "explanation": "$0.99\\times0.01 / (0.99\\times0.01 + 0.05\\times0.99) = 0.0099/0.0594 \\approx 16.7\\%$. 환자가 드물어 위양성의 절대 수가 진짜 환자 수보다 훨씬 많기 때문이다(기저율 무시)."
+        "explanation": "$0.99\\times0.01 / (0.99\\times0.01 + 0.05\\times0.99) = 0.0099/0.0594 \\approx 16.7\\%$. 환자가 드물어 위양성의 절대 수가 실제 환자 수보다 훨씬 많기 때문이다(기저율 무시)."
       },
       {
         "id": "w1-probability-c2",
         "question": "다른 조건은 그대로 두고 유병률만 1%에서 10%로 올리면 $P(\\text{병}|\\text{양성})$은?",
         "choices": [
-          "그대로다 — 검사 정확도가 같으므로",
+          "그대로다. 검사 정확도가 같으므로",
           "크게 올라간다",
           "오히려 내려간다",
           "정확히 10배가 된다"
@@ -458,7 +458,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "3Blue1Brown — Bayes theorem, the geometry of changing beliefs",
         "url": "https://www.3blue1brown.com/lessons/bayes-theorem",
-        "note": "넓이로 보는 베이즈 정리 — 본문 예제와 같은 구조의 의료 검사 사례"
+        "note": "넓이로 보는 베이즈 정리: 본문 예제와 같은 구조의 의료 검사 사례"
       },
       {
         "title": "Seeing Theory — Compound Probability & Bayesian Inference",
@@ -504,7 +504,7 @@ const sections: Record<string, SectionMeta> = {
           "$0.5$"
         ],
         "answer": 0,
-        "explanation": "사후 로그밀도는 $15\\log p + 7\\log(1-p)$가 되어 $\\hat p_{\\text{MAP}} = 15/22 \\approx 0.682$. MLE보다 0.5 쪽으로 살짝 당겨지고, 데이터가 많아질수록 그 차이는 줄어든다."
+        "explanation": "사후 로그밀도는 $15\\log p + 7\\log(1-p)$가 되어 $\\hat p_{\\text{MAP}} = 15/22 \\approx 0.682$. MLE보다 0.5 쪽으로 조금 당겨지고, 데이터가 많아질수록 그 차이는 줄어든다."
       }
     ],
     "quizIds": [

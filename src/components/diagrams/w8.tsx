@@ -19,7 +19,7 @@ export function NistFramework() {
     <DiagramFrame
       title="NIST AI 위험관리 프레임워크(RMF) 4단계"
       viewBox="0 0 560 300"
-      caption="네 단계를 한 번만 도는 것이 아니라 지속적으로 순환한다 — 새 위험이 발견되면 다시 MAP로 돌아간다."
+      caption="네 단계를 한 번만 도는 것이 아니라 지속적으로 순환한다. 새 위험이 발견되면 다시 MAP로 돌아간다."
     >
       <ArrowDefs />
       {steps.map((s, i) => {

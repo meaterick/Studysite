@@ -124,7 +124,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Barocas, Hardt & Narayanan — Fairness and Machine Learning",
         "url": "https://fairmlbook.org/",
-        "note": "무료 교과서 — 3장 Classification이 이 단계의 세 기준을 다룬다"
+        "note": "무료 교과서: 3장 Classification이 이 단계의 세 기준을 다룬다"
       },
       {
         "title": "Kleinberg et al. (2016) — Inherent Trade-Offs in the Fair Determination of Risk Scores",
@@ -158,7 +158,7 @@ const sections: Record<string, SectionMeta> = {
           "Manage"
         ],
         "answer": 2,
-        "explanation": "Govern(원칙·책임), Map(맥락 파악), Measure(측정), Manage(대응) — 네 기능은 순환한다."
+        "explanation": "Govern(원칙·책임), Map(맥락 파악), Measure(측정), Manage(대응)이며, 네 기능은 순환한다."
       },
       {
         "id": "w8-governance-c3",
@@ -186,12 +186,12 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "EU AI Act 공식 법령 (EUR-Lex, Regulation (EU) 2024/1689)",
         "url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
-        "note": "위험 등급과 의무의 원문 — 최신 적용 시기 확인용"
+        "note": "위험 등급과 의무의 원문: 최신 적용 시기 확인용"
       },
       {
         "title": "Mitchell et al. (2019) — Model Cards for Model Reporting",
         "url": "https://arxiv.org/abs/1810.03993",
-        "note": "모델카드 제안 논문 — 그림 2의 예시 모델카드"
+        "note": "모델카드 제안 논문: 그림 2의 예시 모델카드"
       }
     ]
   },
@@ -433,7 +433,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Hugging Face Papers",
         "url": "https://huggingface.co/papers",
-        "note": "매일 올라오는 주목받는 논문과 코드·모델 링크 — 캡스톤 관련 연구 찾기"
+        "note": "매일 올라오는 주목받는 논문과 코드·모델 링크: 캡스톤 관련 연구 찾기"
       },
       {
         "title": "Stanford HAI — AI Index Report",

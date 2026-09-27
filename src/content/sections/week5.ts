@@ -58,7 +58,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Mikolov et al. (2013) — Efficient Estimation of Word Representations in Vector Space",
         "url": "https://arxiv.org/abs/1301.3781",
-        "note": "Word2Vec 원 논문 — 1~3절만 읽어도 충분하다"
+        "note": "Word2Vec 원 논문: 1~3절만 읽어도 충분하다"
       }
     ]
   },
@@ -237,7 +237,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Bahdanau et al. (2014) — Neural Machine Translation by Jointly Learning to Align and Translate",
         "url": "https://arxiv.org/abs/1409.0473",
-        "note": "Attention을 처음 제안한 논문 — 그림 1과 3절"
+        "note": "Attention을 처음 제안한 논문: 그림 1과 3절"
       }
     ]
   },
@@ -254,7 +254,7 @@ const sections: Record<string, SectionMeta> = {
           "$(n, 1)$"
         ],
         "answer": 2,
-        "explanation": "$(n, d_k) \\times (d_k, n) = (n, n)$ — 모든 토큰 쌍의 점수표다. 그래서 문맥이 2배가 되면 점수표 원소는 4배가 된다."
+        "explanation": "$(n, d_k) \\times (d_k, n) = (n, n)$. 모든 토큰 쌍의 점수표다. 그래서 문맥이 2배가 되면 점수표 원소는 4배가 된다."
       },
       {
         "id": "w5-self-attention-c2",
@@ -364,7 +364,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "The Annotated Transformer (Harvard NLP)",
         "url": "https://nlp.seas.harvard.edu/annotated-transformer/",
-        "note": "논문을 한 줄씩 PyTorch 코드로 옮긴 자료 — MultiHeadedAttention·subsequent_mask 부분"
+        "note": "논문을 한 줄씩 PyTorch 코드로 옮긴 자료: MultiHeadedAttention·subsequent_mask 부분"
       },
       {
         "title": "Karpathy — Let's build GPT: from scratch, in code, spelled out",
@@ -477,7 +477,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Sennrich et al. (2016) — Neural Machine Translation of Rare Words with Subword Units",
         "url": "https://arxiv.org/abs/1508.07909",
-        "note": "BPE를 NLP에 도입한 논문 — 알고리즘 1이 본문 코드와 같다"
+        "note": "BPE를 NLP에 도입한 논문: 알고리즘 1이 본문 코드와 같다"
       },
       {
         "title": "Karpathy — Let's build the GPT Tokenizer",
@@ -487,7 +487,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Tiktokenizer",
         "url": "https://tiktokenizer.vercel.app/",
-        "note": "문장을 넣으면 GPT 토크나이저의 토큰 경계를 바로 보여주는 웹 도구 — 한국어·영어를 비교해 보자"
+        "note": "문장을 넣으면 GPT 토크나이저의 토큰 경계를 바로 보여주는 웹 도구: 한국어·영어를 비교해 보자"
       }
     ]
   },

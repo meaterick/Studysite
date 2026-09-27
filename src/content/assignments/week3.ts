@@ -286,7 +286,7 @@ for i in rng_check.sample(range(len(params)), 5):
           kind: "code",
           id: "graph-code",
           label: "Value로 재현",
-          starter: `# 예시: L = (a * b + c) ** 2 — 자신의 그래프로 바꿔 작성합니다.
+          starter: `# 예시: L = (a * b + c) ** 2: 자신의 그래프로 바꿔 작성합니다.
 a, b, c = Value(2.0), Value(-1.5), Value(0.5)
 d = a * b
 e = d + c

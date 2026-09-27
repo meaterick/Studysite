@@ -48,7 +48,7 @@ export function MlpDiagram() {
     <DiagramFrame
       title="다층 퍼셉트론(MLP) 순전파"
       viewBox="0 0 640 240"
-      caption="h = φ(W1x + b1), ŷ = W2h + b2 — 비선형 활성화 φ가 없으면 여러 층을 쌓아도 한 층과 표현력이 같다."
+      caption="h = φ(W1x + b1), ŷ = W2h + b2. 비선형 활성화 φ가 없으면 여러 층을 쌓아도 한 층과 표현력이 같다."
     >
       <ArrowDefs />
       {inYs.map((y1, i) =>

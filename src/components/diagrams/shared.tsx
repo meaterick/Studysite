@@ -14,9 +14,9 @@ export function PhaseRoadmap() {
   const y = 20;
   return (
     <DiagramFrame
-      title="8주 로드맵: 4개 Phase"
+      title="8주 로드맵: 4부 구성"
       viewBox="0 0 660 100"
-      caption='"이해 → 직접 구현 → 설명 → 활용" 순환으로 설계 — Phase가 바뀔 때마다 난이도와 자율성이 함께 높아진다.'
+      caption='"이해 → 직접 구현 → 설명 → 활용" 순환으로 설계했다. 부가 넘어갈 때마다 난이도와 자율성이 함께 높아진다.'
     >
       <ArrowDefs />
       {PHASES.map((p, i) => {
