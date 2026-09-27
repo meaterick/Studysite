@@ -2,7 +2,7 @@ name: Deploy to OCI
 
 # The OCI box only has 1GB RAM, so `npm ci` / `next build` never run there —
 # a GitHub-hosted runner does the build and ships the "standalone" output
-# (next.config.ts: output: "standalone") as an artifact. The self-hosted
+# (next.config.ts: output: "standalone") through the Actions cache. The self-hosted
 # runner registered on the OCI box unpacks it into DEPLOY_DIR (a stable
 # directory *outside* the runner's own workspace -- see the "Sync app
 # files" step for why that matters), writes the runtime secret from a
@@ -62,26 +62,23 @@ jobs:
           mkdir -p .next/standalone/.next/static
           cp -r .next/static/. .next/standalone/.next/static/
 
-      - name: Upload standalone bundle
-        uses: actions/upload-artifact@v4
+      - name: Save standalone bundle to the Actions cache
+        # build → deploy 잡 사이에 번들을 넘길 때 artifact 대신 캐시를 쓴다.
+        # private 저장소 무료 플랜에서 artifact는 Packages와 합쳐 0.5GB 한도에
+        # 걸리지만(한도에 닿으면 업로드 자체가 막힌다), 캐시는 저장소당 10GB가
+        # 따로 무료다. deploy 잡 마지막 단계에서 이 캐시를 바로 지운다.
+        # (tar로 묶기 때문에 artifact와 달리 .next 같은 숨김 폴더도 그대로 담긴다.)
+        uses: actions/cache/save@v4
         with:
-          name: standalone-build
           path: .next/standalone
-          # 배포가 끝나면 deploy 잡 마지막 단계에서 바로 지운다. 이 값은 그 삭제가
-          # 실패했을 때를 대비한 안전장치다 — private 저장소 무료 플랜의 Actions
-          # 저장 공간(artifact + Packages 합계 0.5GB)을 넘기지 않기 위해 최소로 둔다.
-          retention-days: 1
-          # upload-artifact v4 drops dotfiles/dot-directories by default --
-          # silently excluding .next/standalone/.next itself (the compiled
-          # server output + the static assets just copied in above).
-          include-hidden-files: true
+          key: standalone-build-${{ github.run_id }}
 
   deploy:
     needs: build
     runs-on: self-hosted
     permissions:
       contents: read
-      # 마지막 단계에서 이번 실행의 빌드 artifact를 삭제하기 위해 필요하다.
+      # 마지막 단계에서 이번 실행의 빌드 캐시를 삭제하기 위해 필요하다.
       actions: write
     steps:
       - name: Checkout
@@ -100,14 +97,27 @@ jobs:
           # .next만 지우고 다시 받으므로 이 디렉터리는 재배포에도 살아남습니다.
           mkdir -p "$DEPLOY_DIR/data"
 
-      - name: Clear previous build
-        run: rm -rf "$DEPLOY_DIR/.next"
+      - name: Prepare to restore the bundle
+        # 캐시는 build 잡(GitHub 호스팅 러너)에서 zstd로 압축된다. 이 서버에
+        # zstd가 없으면 다른 압축 방식의 캐시를 찾게 되어 복원에 실패한다.
+        # 이전 배포가 워크스페이스에 남긴 번들이 새 번들과 섞이지 않도록 먼저 지운다.
+        run: |
+          command -v zstd >/dev/null 2>&1 || (sudo apt-get update -y && sudo apt-get install -y zstd)
+          rm -rf .next/standalone
 
-      - name: Download standalone bundle
-        uses: actions/download-artifact@v4
+      - name: Restore standalone bundle from the Actions cache
+        # path는 build 잡의 저장 단계와 글자 하나까지 같아야 같은 캐시로 인식된다.
+        uses: actions/cache/restore@v4
         with:
-          name: standalone-build
-          path: ${{ env.DEPLOY_DIR }}/.next/standalone
+          path: .next/standalone
+          key: standalone-build-${{ github.run_id }}
+          fail-on-cache-miss: true
+
+      - name: Replace the previous build
+        run: |
+          rm -rf "$DEPLOY_DIR/.next"
+          mkdir -p "$DEPLOY_DIR/.next"
+          cp -a .next/standalone "$DEPLOY_DIR/.next/standalone"
 
       - name: Write runtime secrets
         # Regenerated on every deploy from the GitHub Actions secrets, so
@@ -248,21 +258,14 @@ jobs:
           curl -m 5 -sk -H "Host: ${DOMAIN}" -o /dev/null -w "https://127.0.0.1/ -> %{http_code}\n" https://127.0.0.1/ || echo "https://127.0.0.1/ -> (connection failed)"
           curl -m 5 -s -o /dev/null -w "https://${DOMAIN}/ -> %{http_code}\n" "https://${DOMAIN}/" || echo "https://${DOMAIN}/ -> (connection failed -- check DNS / OCI Security List for 80+443, 'sudo certbot certificates', and 'pm2 logs aegis-ai-study')"
 
-      - name: Delete the build artifact (free up Actions storage)
-        # 번들(약 34MB)은 이 잡이 받아서 풀고 나면 더 쓸 일이 없다. 배포할 때마다
-        # 남겨두면 private 저장소 무료 한도(0.5GB)를 금방 채우므로 바로 지운다.
-        # 앞 단계가 실패하면 이 단계는 건너뛰어, "Re-run failed jobs"로 deploy 잡만
-        # 다시 돌릴 때 artifact가 남아 있도록 한다(그 경우에도 1일 뒤 자동 만료).
+      - name: Delete the build cache entry
+        # 번들(약 34MB)은 위에서 DEPLOY_DIR로 복사한 뒤에는 쓸 일이 없으니 바로
+        # 지운다. 앞 단계가 실패하면 이 단계는 건너뛰므로, "Re-run failed jobs"로
+        # deploy 잡만 다시 돌려도 캐시가 남아 있다(안 쓰는 캐시는 7일 뒤 자동 삭제).
         uses: actions/github-script@v7
         with:
           script: |
             const { owner, repo } = context.repo;
-            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-              owner,
-              repo,
-              run_id: context.runId,
-            });
-            for (const artifact of data.artifacts.filter((a) => a.name === "standalone-build")) {
-              await github.rest.actions.deleteArtifact({ owner, repo, artifact_id: artifact.id });
-              core.info(`Deleted artifact ${artifact.name} (${artifact.size_in_bytes} bytes)`);
-            }
+            const key = `standalone-build-${context.runId}`;
+            await github.rest.actions.deleteActionsCacheByKey({ owner, repo, key });
+            core.info(`Deleted cache ${key}`);
