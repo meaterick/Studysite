@@ -51,7 +51,7 @@ export default function StageFooter({
   const remaining = requirements.filter((r) => r.done < r.total);
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-10 border-t border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_92%,transparent)] px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-t-xl sm:border-x print:hidden">
+    <div className="sticky bottom-0 z-20 -mx-4 mt-10 border-t border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_97%,transparent)] px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur sm:mx-0 sm:rounded-t-xl sm:border-x print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" aria-label="단계 완료 조건">
           {completed ? (

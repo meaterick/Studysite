@@ -415,9 +415,9 @@ export default function Workspace({
       </aside>
 
       <div className="min-w-0 space-y-8">
-        <div className="sticky top-16 z-20 -mx-4 flex flex-wrap items-center justify-between gap-2 border-y border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_94%,transparent)] px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-xl sm:border">
+        <div className="sticky top-16 z-20 -mx-4 flex flex-wrap items-center justify-between gap-2 border-y border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_97%,transparent)] px-4 py-2 shadow-sm backdrop-blur sm:mx-0 sm:rounded-xl sm:border">
           <p
-            className={`text-xs font-bold ${saveState === "error" ? "text-[var(--status-critical)]" : saveState === "saved" ? "text-[var(--status-good)]" : "text-ink-muted"}`}
+            className={`text-xs font-bold ${saveState === "error" ? "text-[var(--status-critical)]" : saveState === "saved" && lastSaved ? "text-[var(--status-good)]" : "text-ink-muted"}`}
             aria-live="polite"
           >
             {saveLabel}
