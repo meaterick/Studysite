@@ -14,6 +14,7 @@ import { GradeView, SubmissionVersionView } from "@/components/SubmissionView";
 import NotebookView from "@/components/assignment/NotebookView";
 import GradeForm from "@/components/assignment/GradeForm";
 import AssignmentThread from "@/components/assignment/AssignmentThread";
+import { formatDateTime } from "@/lib/datetime";
 
 export const metadata = { title: "과제 채점" };
 
@@ -65,7 +66,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
           <section aria-labelledby="latest-heading">
             <h2 id="latest-heading" className="mb-3 text-lg font-black text-ink">
               최신 제출본 v{latest.version}{" "}
-              <span className="text-sm font-medium text-ink-muted">· {new Date(latest.submittedAt).toLocaleString("ko-KR")}</span>
+              <span className="text-sm font-medium text-ink-muted">· {formatDateTime(latest.submittedAt)}</span>
             </h2>
             <div className="space-y-4">
               <SubmissionVersionView submission={submission} version={latest} />
@@ -98,7 +99,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
                     return (
                       <details key={v.version} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
                         <summary className="cursor-pointer text-sm font-bold text-ink">
-                          v{v.version} · {new Date(v.submittedAt).toLocaleString("ko-KR")}
+                          v{v.version} · {formatDateTime(v.submittedAt)}
                         </summary>
                         <div className="mt-3 space-y-3">
                           {gs.map((g) => (

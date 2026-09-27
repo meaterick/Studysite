@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { markAssignmentThreadRead, sendAssignmentMessage } from "@/lib/assignmentActions";
+import { formatDateTime } from "@/lib/datetime";
 
 export interface ThreadMessageView {
   id: string;
@@ -70,7 +71,7 @@ export default function AssignmentThread({
                   }`}
                 >
                   <p className="mb-0.5 text-[11px] font-bold text-ink-muted">
-                    {m.role === "admin" ? `운영자 ${m.authorName}` : m.authorName} · {new Date(m.createdAt).toLocaleString("ko-KR")}
+                    {m.role === "admin" ? `운영자 ${m.authorName}` : m.authorName} · {formatDateTime(m.createdAt)}
                   </p>
                   <p className="whitespace-pre-wrap text-ink">{m.text}</p>
                 </div>

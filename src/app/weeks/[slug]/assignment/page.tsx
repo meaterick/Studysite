@@ -14,6 +14,7 @@ import { findThread, unreadCount } from "@/lib/threadStore";
 import { mergeDraft } from "@/lib/notebook";
 import { courseDocFiles, notebookViewTasks, workspaceTasks } from "@/lib/assignmentView";
 import { ASSIGNMENT_STATUS_LABEL } from "@/lib/study";
+import { formatDateTime } from "@/lib/datetime";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -58,7 +59,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
           </div>
           <p className="mt-1 text-sm text-ink-muted">
             {week.dueNote} · 만점 {week.assignmentMaxScore}점
-            {latest && ` · 최근 제출본 v${latest.version} (${new Date(latest.submittedAt).toLocaleString("ko-KR")})`}
+            {latest && ` · 최근 제출본 v${latest.version} (${formatDateTime(latest.submittedAt)})`}
           </p>
           {grade && (
             <div className="mt-4">
@@ -163,7 +164,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
                     className="rounded-xl border border-[var(--border-hairline)] bg-card p-4"
                   >
                     <summary className="cursor-pointer text-sm font-bold text-ink">
-                      제출본 v{version.version} · {new Date(version.submittedAt).toLocaleString("ko-KR")}
+                      제출본 v{version.version} · {formatDateTime(version.submittedAt)}
                       {lastGrade && (lastGrade.decision === "graded" ? ` · ${lastGrade.score}/${lastGrade.maxScore}점` : " · 재제출 요청")}
                     </summary>
                     <div className="mt-3 space-y-4">

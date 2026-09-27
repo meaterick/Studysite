@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { markWorksheetField, saveWorksheet } from "@/lib/studyActions";
 import { useUserScope } from "./UserScope";
+import { formatDateTime } from "@/lib/datetime";
 
 type Mark = "ok" | "weak";
 
@@ -176,7 +177,7 @@ export default function Worksheet({
             </button>
           )}
           {submittedAt && (
-            <span className="text-xs text-[var(--status-good)]">제출 완료 · {new Date(submittedAt).toLocaleString("ko-KR")}</span>
+            <span className="text-xs text-[var(--status-good)]">제출 완료 · {formatDateTime(submittedAt)}</span>
           )}
           {message && (
             <p className={`text-sm ${message.tone === "ok" ? "text-[var(--status-good)]" : "text-[var(--status-critical)]"}`} aria-live="polite">

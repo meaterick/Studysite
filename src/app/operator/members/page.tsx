@@ -6,6 +6,7 @@ import { listLearningRecords } from "@/lib/learningStore";
 import { listSubmissions, type Submission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
 import { WEEKS } from "@/content/weeks";
+import { formatDateTime, formatDate } from "@/lib/datetime";
 
 export const metadata = { title: "스터디원 관리" };
 
@@ -116,13 +117,13 @@ function MemberRow({
       </td>
       <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{member.email}</td>
       <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{ROLE_LABEL[member.role]}</td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{new Date(member.createdAt).toLocaleDateString("ko-KR")}</td>
+      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{formatDate(member.createdAt)}</td>
       <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{completed} / {totalItems}</td>
       <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">
         제출 {submissions.length} · 채점 {graded}
         {pending > 0 && <span className="ml-1 font-bold text-[var(--series-orange)]">· 대기 {pending}</span>}
       </td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-xs text-ink-muted">{learning?.updatedAt ? new Date(learning.updatedAt).toLocaleString("ko-KR") : "기록 없음"}</td>
+      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-xs text-ink-muted">{learning?.updatedAt ? formatDateTime(learning.updatedAt) : "기록 없음"}</td>
       <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top">
         <div className="flex flex-wrap gap-2">
           <Link href={`/operator/members/${member.id}`} className="rounded-md border border-[var(--border-hairline)] px-2 py-1 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]">상세 보기</Link>

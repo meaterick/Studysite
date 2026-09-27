@@ -14,6 +14,7 @@ import {
 import { saveAssignmentDraft, submitAssignmentWork } from "@/lib/assignmentActions";
 import { forceStop, onRuntimeReset, preloadPyodide, resetNamespace, runPython, writeRuntimeFiles, type RunStatus } from "@/lib/pyRunner";
 import AnswerCell from "./AnswerCell";
+import { formatTime } from "@/lib/datetime";
 
 // Monaco 편집기는 무겁기 때문에 작업 공간이 열릴 때 별도 청크로 불러온다.
 const NotebookCodeCell = dynamic(() => import("./NotebookCodeCell"), {
@@ -373,7 +374,7 @@ export default function Workspace({
         : saveState === "error"
           ? "저장 실패"
           : lastSaved
-            ? `자동 저장됨 · ${new Date(lastSaved).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`
+            ? `자동 저장됨 · ${formatTime(lastSaved)}`
             : "아직 저장한 내용 없음";
 
   return (

@@ -4,6 +4,7 @@ import { listSubmissions, latestGrade, latestVersion, type SubmissionStatus } fr
 import { listUsers } from "@/lib/userStore";
 import { WEEKS } from "@/content/weeks";
 import { listThreads, unreadCount } from "@/lib/threadStore";
+import { formatDateTime } from "@/lib/datetime";
 
 export const metadata = { title: "과제 채점" };
 
@@ -71,7 +72,7 @@ export default async function SubmissionsPage({
                 <li key={`${t.userId}:${t.weekSlug}`} className="flex flex-wrap items-baseline justify-between gap-2">
                   <span className="min-w-0">
                     <strong className="text-ink">{u?.name ?? "(탈퇴한 사용자)"}</strong>
-                    <span className="text-ink-muted"> · {w?.number}주차 · {new Date(t.updatedAt).toLocaleString("ko-KR")}</span>
+                    <span className="text-ink-muted"> · {w?.number}주차 · {formatDateTime(t.updatedAt)}</span>
                     <span className="block truncate text-ink-secondary">{last?.text.slice(0, 120)}</span>
                   </span>
                   <Link
@@ -130,7 +131,7 @@ export default async function SubmissionsPage({
                     <span className="font-medium text-ink">{user?.name ?? "(탈퇴한 사용자)"}</span>
                     <span className="block text-xs text-ink-muted">{user?.email}</span>
                   </td>
-                  <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-xs text-ink-muted">{new Date(latest.submittedAt).toLocaleString("ko-KR")}</td>
+                  <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-xs text-ink-muted">{formatDateTime(latest.submittedAt)}</td>
                   <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">v{latest.version}</td>
                   <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">
                     {grade?.decision === "graded" ? `${grade.score}/${grade.maxScore}` : "-"}

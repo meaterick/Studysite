@@ -123,7 +123,8 @@ self.onmessage = async (event) => {
       pyodide = await loadPyodideOnce();
       postMessage({ id, type: "status", status: "loading-packages" });
       try {
-        await pyodide.loadPackagesFromImports(code);
+        // "Loading numpy" 같은 패키지 로딩 메시지는 셀 출력에 섞이지 않게 버린다(진행 상황은 status로 알린다).
+        await pyodide.loadPackagesFromImports(code, { messageCallback: () => {}, errorCallback: () => {} });
       } catch {
         // 알 수 없는/미지원 패키지 import는 무시하고 실행을 시도한다.
         // 실제 오류는 실행 시 ImportError로 사용자에게 그대로 보인다.

@@ -8,6 +8,7 @@ import { ASSIGNMENT_STATUS_LABEL, weekStatus } from "@/lib/study";
 import { WEEKS } from "@/content/weeks";
 import { Inline } from "@/components/MarkdownBlocks";
 import ProgressRing from "@/components/ProgressRing";
+import { formatDateTime, formatDate } from "@/lib/datetime";
 
 export const metadata = { title: "스터디원 학습 현황" };
 
@@ -30,12 +31,12 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
       <Link href="/operator/members" className="text-sm font-bold text-[var(--series-orange)] hover:underline">← 스터디원 관리</Link>
       <p className="mt-5 text-sm font-bold text-[var(--series-orange)]">운영자 전용</p>
       <h1 className="mt-1 text-3xl font-black text-ink">{member.name}님의 학습 현황</h1>
-      <p className="mt-2 text-sm text-ink-secondary">{member.email} · 가입일 {new Date(member.createdAt).toLocaleDateString("ko-KR")}</p>
+      <p className="mt-2 text-sm text-ink-secondary">{member.email} · 가입일 {formatDate(member.createdAt)}</p>
 
       <div className="my-8 grid gap-3 sm:grid-cols-3">
         <Stat label="완료한 단계" value={`${sectionsDone} / ${sectionsTotal}`} />
         <Stat label="과제 제출" value={`${submissions.length} / ${WEEKS.length}주차`} />
-        <Stat label="마지막 학습 기록" value={learning.updatedAt ? new Date(learning.updatedAt).toLocaleString("ko-KR") : "아직 없음"} />
+        <Stat label="마지막 학습 기록" value={learning.updatedAt ? formatDateTime(learning.updatedAt) : "아직 없음"} />
       </div>
 
       <div className="space-y-3">
@@ -96,7 +97,7 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
 
                 {worksheet.submittedAt && (
                   <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-3">
-                    <p className="text-xs font-bold text-ink-muted">백지공부 ({new Date(worksheet.submittedAt).toLocaleString("ko-KR")})</p>
+                    <p className="text-xs font-bold text-ink-muted">백지공부 ({formatDateTime(worksheet.submittedAt)})</p>
                     <dl className="mt-2 space-y-2">
                       {week.worksheet.map((field, i) => (
                         <div key={field.label}>

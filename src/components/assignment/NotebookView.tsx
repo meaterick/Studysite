@@ -6,6 +6,7 @@ import type { AssignmentDraft, NotebookOutput } from "@/lib/notebook";
 import { resetNamespace, runPython, writeRuntimeFiles } from "@/lib/pyRunner";
 import CellOutputs from "./CellOutputs";
 import UserMarkdown from "./UserMarkdown";
+import { formatDateTime } from "@/lib/datetime";
 
 export interface NotebookViewTask {
   id: string;
@@ -112,7 +113,7 @@ export default function NotebookView({
                     <p className="border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1 text-xs font-bold text-ink-muted">
                       {task.labels[cell.id] ?? (cell.custom ? "추가한 코드 셀" : "코드")}
                       {cell.executedAt
-                        ? ` · ${new Date(cell.executedAt).toLocaleString("ko-KR")} 실행${cell.stale ? " (이후 수정됨)" : ""}${cell.runOk === false ? " · 오류" : ""}`
+                        ? ` · ${formatDateTime(cell.executedAt)} 실행${cell.stale ? " (이후 수정됨)" : ""}${cell.runOk === false ? " · 오류" : ""}`
                         : " · 실행하지 않음"}
                     </p>
                     <CodeBlock lang="python" code={cell.source || " "} />

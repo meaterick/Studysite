@@ -1,5 +1,6 @@
 import type { RubricCriterion } from "@/content/types";
 import type { Submission, SubmissionGrade, SubmissionVersion } from "@/lib/submissionStore";
+import { formatDateTime } from "@/lib/datetime";
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes}B`;
@@ -72,7 +73,7 @@ export function GradeView({ grade, rubric }: { grade: SubmissionGrade; rubric?: 
           {revision ? "재제출 요청" : `${grade.score ?? "-"} / ${grade.maxScore}점`}
         </p>
         <p className="text-xs text-ink-muted">
-          제출본 v{grade.version} · {new Date(grade.gradedAt).toLocaleString("ko-KR")} 채점
+          제출본 v{grade.version} · {formatDateTime(grade.gradedAt)} 채점
         </p>
       </div>
       {!revision && rubric && grade.criteria && (

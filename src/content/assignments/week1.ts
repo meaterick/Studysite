@@ -74,9 +74,11 @@ print(f"w = {w:.4f}, b = {b:.4f}, 최종 loss = {history[-1]:.4f}")
           starter: `import matplotlib.pyplot as plt
 
 plt.figure(figsize=(6, 4))
+print(f"{'학습률':>8}{'w':>12}{'b':>12}{'최종 loss':>14}")
 for lr in (0.001, 0.01, 0.1, 0.5):
     w_lr, b_lr, hist = train(lr, steps=200)
-    plt.plot(hist, label=f"lr={lr} (w={w_lr:.2f}, b={b_lr:.2f})")
+    plt.plot(hist, label=f"lr={lr}")
+    print(f"{lr:>8}{w_lr:>12.3g}{b_lr:>12.3g}{hist[-1]:>14.3g}")
 plt.yscale("log")
 plt.xlabel("step")
 plt.ylabel("MSE (log scale)")

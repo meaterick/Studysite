@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/dal";
+import { formatDate } from "@/lib/datetime";
 
 export const metadata = { title: "내 계정" };
 
@@ -32,7 +33,7 @@ export default async function AccountPage({
         </div>
         <div className="flex justify-between">
           <dt className="text-ink-muted">가입일</dt>
-          <dd className="font-bold text-ink">{new Date(user.createdAt).toLocaleDateString("ko-KR")}</dd>
+          <dd className="font-bold text-ink">{formatDate(user.createdAt)}</dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-ink-muted">로그인 방식</dt>
