@@ -43,7 +43,7 @@ function buildCloud(n: number): Vec3[] {
   return pts;
 }
 
-export default function NeuralScene({ className = "" }: { className?: string }) {
+export default function NeuralScene({ className = "", scene }: { className?: string; /** 여정 모드에서 이 장면일 때만 움직인다 */ scene?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -282,6 +282,14 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
       else stop();
     });
     const onVisibility = () => (document.hidden ? stop() : start());
+    // 여정 모드: 다른 장면으로 넘어가면 멈춘다.
+    const onActive = (e: Event) => {
+      if (scene === undefined) return;
+      visible = (e as CustomEvent<number>).detail === scene;
+      if (visible) start();
+      else stop();
+    };
+    window.addEventListener("journey:active", onActive);
     const ro = new ResizeObserver(resize);
 
     resize();
@@ -305,10 +313,11 @@ export default function NeuralScene({ className = "" }: { className?: string }) 
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("journey:active", onActive);
       canvas.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
     };
-  }, []);
+  }, [scene]);
 
   return (
     <canvas
