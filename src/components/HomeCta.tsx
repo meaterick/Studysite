@@ -4,8 +4,34 @@ import { getCurrentUser } from "@/lib/dal";
 // 학습자료는 로그인해야 볼 수 있으므로, 로그인 여부에 따라 "지금 할 수 있는 일"
 // 하나를 가장 크게 보여준다. 로그인 전에는 커리큘럼/Week 1 버튼을 눌러도 결국
 // 로그인 페이지로 가게 되니, 처음부터 로그인 버튼 하나만 안내한다.
-export default async function HomeCta() {
+export default async function HomeCta({ tone = "default" }: { tone?: "default" | "minimal" } = {}) {
   const user = await getCurrentUser();
+
+  if (tone === "minimal") {
+    // 메인 화면용: 흰색 알약 버튼 하나와 테두리 버튼 하나만 둔다.
+    const primary = "flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/85";
+    const secondary = "flex w-full items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white";
+    if (!user) {
+      return (
+        <div className="flex flex-col gap-3">
+          <Link href="/login?from=%2Fweeks%2Fweek-1" className={primary}>
+            Google 계정으로 시작하기
+          </Link>
+          <p className="text-center text-xs text-white/40">처음 로그인할 때 계정이 자동으로 만들어집니다.</p>
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col gap-2.5">
+        <Link href="/weeks/week-1" className={primary}>
+          {user.name}님, 1주차부터 시작하기
+        </Link>
+        <Link href="/curriculum" className={secondary}>
+          커리큘럼 보기
+        </Link>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

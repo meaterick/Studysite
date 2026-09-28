@@ -134,49 +134,6 @@ code {
   font-size: 0.88em;
 }
 
-/* ─── 메인 화면 ──────────────────────────────────────────────── */
-
-/* 첫 화면은 테마와 관계없이 어두운 "우주" 배경을 쓴다. 안쪽에서는 글자·카드 색 토큰을 어두운 값으로 바꿔
-   기존 컴포넌트(HomeCta 등)가 그대로 읽히게 한다. */
-.hero-dark {
-  --surface-card: rgba(255, 255, 255, 0.06);
-  --surface-card-2: rgba(255, 255, 255, 0.08);
-  --text-primary: #ffffff;
-  --text-secondary: #c9d4e6;
-  --text-muted: #8fa0bd;
-  --border-hairline: rgba(255, 255, 255, 0.14);
-  --series-blue: #4c9bff;
-  color: var(--text-primary);
-  background:
-    radial-gradient(1200px 500px at 85% 10%, rgba(76, 155, 255, 0.22), transparent 60%),
-    radial-gradient(900px 500px at 10% 100%, rgba(144, 133, 233, 0.22), transparent 60%),
-    radial-gradient(600px 300px at 55% 60%, rgba(27, 175, 122, 0.12), transparent 70%),
-    linear-gradient(160deg, #060912 0%, #0a1426 55%, #0b0f1f 100%);
-}
-
-
-.text-gradient {
-  background: linear-gradient(90deg, #7cc4ff, #5ff0bd 35%, #c0b8ff 65%, #7cc4ff);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-}
-
-.section-index {
-  font-family: var(--font-mono-code), ui-monospace, monospace;
-  background: linear-gradient(90deg, var(--series-blue), var(--series-violet));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 /* 3D 기울기 카드 */
 .tilt-card {
   --rx: 0deg;
@@ -216,55 +173,20 @@ code {
   opacity: 1;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .text-gradient {
-    animation: gradient-pan 8s linear infinite;
-  }
-  .type-caret {
-    animation: caret-blink 1s steps(1) infinite;
-  }
-  .journey-hint {
-    animation: hint-bob 1.8s ease-in-out infinite;
-  }
-  .pulse-dot {
-    animation: pulse-dot 2s ease-out infinite;
-  }
-}
-
-@keyframes gradient-pan {
-  to {
-    background-position: 200% center;
-  }
-}
-@keyframes caret-blink {
-  50% {
-    opacity: 0;
-  }
-}
-@keyframes hint-bob {
-  50% {
-    transform: translateY(6px);
-    opacity: 0.6;
-  }
-}
-@keyframes pulse-dot {
-  0% {
-    box-shadow: 0 0 0 0 rgba(95, 240, 189, 0.6);
-  }
-  100% {
-    box-shadow: 0 0 0 10px rgba(95, 240, 189, 0);
-  }
-}
-
-
-/* ─── 메인 화면 "8주 여정" ─────────────────────────────────────
+/* ─── 메인 화면 ────────────────────────────────────────────────
+   거의 검은 배경, 흰 글자의 밝기 차이, 강조색 하나, 얇은 선으로만 구성한다.
    기본(자바스크립트 없음·동작 줄이기): 장면을 세로로 차례대로 보여 준다.
-   html[data-motion="full"]: 무대를 화면에 고정하고 장면을 3D 공간의 경로 위에 놓는다(Journey.tsx). */
+   html[data-motion="full"]: 무대를 화면에 고정하고 장면을 깊이 방향으로 이어 놓는다(Journey.tsx). */
+.journey-theme {
+  --journey-accent: #9ecbff;
+  background: radial-gradient(1200px 700px at 50% 0%, #15171c 0%, #0a0a0b 60%) #0a0a0b;
+  color: #fff;
+}
 .journey-scene {
-  padding: 4.5rem 1rem;
+  padding: 6rem 1.25rem;
 }
 .journey-scene + .journey-scene {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 .journey-scene__inner {
   margin: 0 auto;
@@ -272,15 +194,9 @@ code {
 }
 .journey-field,
 .journey-rail,
-.journey-bar,
+.journey-next,
 .journey-progress {
   display: none;
-}
-.journey-week-number {
-  font-size: clamp(4.5rem, 13vw, 10rem);
-  color: transparent;
-  -webkit-text-stroke-width: 2px;
-  letter-spacing: -0.04em;
 }
 
 html[data-motion="full"] .journey {
@@ -292,7 +208,7 @@ html[data-motion="full"] .journey-stage {
   top: 0;
   height: 100vh;
   overflow: hidden;
-  perspective: 1200px;
+  perspective: 1400px;
   perspective-origin: 50% 45%;
 }
 html[data-motion="full"] .journey-field {
@@ -313,7 +229,7 @@ html[data-motion="full"] .journey-scene {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4.5rem 1rem 4.5rem;
+  padding: 5rem 1.25rem 4.5rem;
   border: 0;
   will-change: transform, opacity;
   backface-visibility: hidden;
@@ -328,152 +244,124 @@ html[data-motion="full"] .journey-progress {
   position: absolute;
   left: 0;
   top: 0;
-  height: 3px;
+  height: 1px;
   width: calc(var(--journey-progress, 0) * 100%);
-  background: linear-gradient(90deg, #4c9bff, #2fd6a0, #a399ff, #ff8a5b);
+  background: var(--journey-accent);
   z-index: 3;
 }
 
-/* 진행 표시(넓은 화면: 오른쪽 세로 목록) */
+/* 진행 표시: 왼쪽 아래의 번호 목록 */
 html[data-motion="full"] .journey-rail {
+  display: block;
   position: absolute;
-  right: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 1.5rem;
+  bottom: 1.5rem;
   z-index: 3;
-}
-@media (min-width: 1024px) {
-  html[data-motion="full"] .journey-rail {
-    display: block;
-  }
 }
 .journey-rail ol {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
+  gap: 1.1rem;
 }
 .journey-rail__item {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.25rem 0.4rem;
-  border-radius: 999px;
-  color: var(--text-muted);
+  align-items: baseline;
+  gap: 0.45rem;
+  color: rgba(255, 255, 255, 0.35);
   font-size: 0.75rem;
-  font-weight: 700;
-  transition: color 0.2s;
+  transition: color 0.3s;
 }
-.journey-rail__label {
-  opacity: 0;
-  transform: translateX(6px);
-  transition: opacity 0.2s, transform 0.2s;
-  white-space: nowrap;
-}
-.journey-rail__item:hover .journey-rail__label,
-.journey-rail__item:focus-visible .journey-rail__label,
-.journey-rail__item[aria-current] .journey-rail__label {
-  opacity: 1;
-  transform: none;
-}
+.journey-rail__item:hover,
 .journey-rail__item[aria-current] {
   color: #fff;
 }
-.journey-rail__dots {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.journey-rail__num {
+  font-family: var(--font-mono-code), ui-monospace, monospace;
+  font-size: 0.7rem;
 }
-.journey-rail__dots span {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
-  transition: background 0.2s, transform 0.2s;
+.journey-rail__item[aria-current] .journey-rail__num {
+  color: var(--journey-accent);
 }
-.journey-rail__item[aria-current] .journey-rail__dots span {
-  background: color-mix(in srgb, var(--tint) 45%, transparent);
+.journey-rail__label {
+  display: none;
 }
-.journey-rail__dots span[data-on] {
-  background: var(--tint) !important;
-  transform: scale(1.35);
-  box-shadow: 0 0 10px var(--tint);
-}
-
-/* 진행 표시(좁은 화면: 아래쪽 막대) */
-html[data-motion="full"] .journey-bar {
-  position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem;
-  border-radius: 999px;
-  background: rgba(6, 9, 18, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-}
-@media (min-width: 1024px) {
-  html[data-motion="full"] .journey-bar {
-    display: none;
+@media (min-width: 768px) {
+  .journey-rail__label {
+    display: inline;
   }
 }
-.journey-bar p {
-  flex: 1;
-  min-width: 0;
+
+/* 다음 장면으로: 오른쪽 아래의 얇은 선 */
+html[data-motion="full"] .journey-next {
+  display: none;
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 3;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition: color 0.3s;
+}
+@media (min-width: 768px) {
+  html[data-motion="full"] .journey-next {
+    display: flex;
+  }
+}
+.journey-next:hover {
+  color: #fff;
+}
+.journey-next__line {
+  position: relative;
+  width: 1px;
+  height: 40px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
 }
-.journey-bar button {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font-weight: 900;
+.journey-next__line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -40%;
+  width: 1px;
+  height: 40%;
+  background: #fff;
 }
-.journey-bar button:disabled {
-  opacity: 0.3;
+@media (prefers-reduced-motion: no-preference) {
+  .journey-next__line::after {
+    animation: scroll-line 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+}
+@keyframes scroll-line {
+  to {
+    top: 100%;
+  }
 }
 
 @media print {
   html[data-motion="full"] .journey {
-    height: auto;
+    height: auto !important;
   }
   html[data-motion="full"] .journey-stage,
   html[data-motion="full"] .journey-world,
   html[data-motion="full"] .journey-scene {
     position: static;
-    height: auto;
+    height: auto !important;
     transform: none !important;
     opacity: 1 !important;
+    filter: none !important;
     visibility: visible !important;
   }
 }
 
-/* 3D 모드에서는 여러 장면이 겹쳐 움직이므로 비싼 배경 흐림 대신 불투명에 가까운 배경을 쓴다. */
-html[data-motion="full"] .journey .glass {
-  backdrop-filter: none;
-  background: rgba(14, 22, 42, 0.78);
-}
-
-/* 메인 화면(여정)에서는 머리글도 어두운 색으로 맞춘다. */
-body:has(.journey) > * > header,
+/* 메인 화면에서는 머리글도 같은 어두운 색으로 맞춘다. */
 body:has(.journey) header {
-  --surface-page: #060912;
-  --surface-card: rgba(255, 255, 255, 0.06);
+  --surface-page: #0a0a0b;
+  --surface-card: rgba(255, 255, 255, 0.05);
   --surface-card-2: rgba(255, 255, 255, 0.08);
   --text-primary: #ffffff;
-  --text-secondary: #c9d4e6;
-  --text-muted: #8fa0bd;
-  --border-hairline: rgba(255, 255, 255, 0.12);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --border-hairline: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
