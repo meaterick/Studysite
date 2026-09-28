@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import JourneyField from "./JourneyField";
 
 // 메인 화면의 이어지는 장면 구성.
 //
 // 화면 전체를 덮는 무대(stage)를 스크롤하는 동안 고정하고, 스크롤이 카메라를 3D 공간 안쪽으로 전진시킨다.
 // 장면은 깊이 방향으로 한 줄로 놓여, 다음 장면이 멀리서 조용히 다가오고 지나간 장면은 카메라 쪽으로 흐려지며 사라진다.
-// 배경의 입자 공간(JourneyField)도 같은 카메라로 움직여 장면 사이가 끊기지 않는다.
+// 배경의 은은한 빛도 진행도에 따라 자리를 옮겨 장면 사이가 끊기지 않는다.
 //
 // - 장면마다 스크롤 한 화면 분량을 배정하고, 앞부분(HOLD)은 장면이 멈춰 있어 읽을 수 있다(이때 변환 0 → 글자 선명).
 // - 장면이 화면보다 크면 자동으로 줄여 맞춘다.
@@ -32,7 +31,6 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
   const innerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const progressRef = useRef(0);
   const [active, setActive] = useState(0);
-  const [enabled, setEnabled] = useState(false);
   const n = scenes.length;
 
   const sceneScrollTop = useCallback((i: number) => {
@@ -52,7 +50,6 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root || document.documentElement.dataset.motion !== "full") return;
-    setEnabled(true);
 
     let raf = 0;
     let lastActive = -1;
@@ -151,7 +148,8 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
   return (
     <div ref={rootRef} className="journey" style={{ "--scene-count": n } as CSSProperties}>
       <div className="journey-stage">
-        <JourneyField progressRef={progressRef} enabled={enabled} />
+        {/* 배경: 장면이 넘어갈 때마다 천천히 자리를 옮기는 부드러운 빛(점·입자 없이) */}
+        <div className="journey-glow" aria-hidden="true" />
         <div className="journey-world">
           {scenes.map((sc, i) => (
             <section

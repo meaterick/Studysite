@@ -10,14 +10,14 @@ export default async function HomeCta({ tone = "default" }: { tone?: "default" |
   if (tone === "minimal") {
     // 메인 화면용: 흰색 알약 버튼 하나와 테두리 버튼 하나만 둔다.
     const primary = "flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/85";
-    const secondary = "flex w-full items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white";
+    const secondary = "flex w-full items-center justify-center rounded-full border border-[var(--j-line-strong)] px-6 py-3 text-sm font-medium text-[var(--j-1)] transition hover:border-[var(--journey-accent)] hover:text-white";
     if (!user) {
       return (
         <div className="flex flex-col gap-3">
           <Link href="/login?from=%2Fweeks%2Fweek-1" className={primary}>
             Google 계정으로 시작하기
           </Link>
-          <p className="text-center text-xs text-white/40">처음 로그인할 때 계정이 자동으로 만들어집니다.</p>
+          <p className="text-center text-xs text-[var(--j-3)]">처음 로그인할 때 계정이 자동으로 만들어집니다.</p>
         </div>
       );
     }
