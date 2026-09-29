@@ -70,8 +70,8 @@ export default async function CurriculumPage() {
         </table>
       </div>
       <p className="-mt-7 mb-10 text-xs text-ink-muted">
-        난이도: <strong>보통</strong> 고등학교 수학과 Python 기초로 따라갈 수 있음 · <strong>어려움</strong> 수식 유도와 구현을 직접 따라가야 함 ·{" "}
-        <strong>매우 어려움</strong> 추상적인 개념과 스스로 실험·조사할 부분이 많음
+        난이도: <strong>쉬움</strong> 고등학교 수학과 Python 기초로 따라갈 수 있음 · <strong>보통</strong> 수식 유도와 구현을 직접 따라가야 함 ·{" "}
+        <strong>어려움</strong> 추상적인 개념과 스스로 실험·조사할 부분이 많음
       </p>
 
       <Markdown source={syllabus.rhythmMd} />
