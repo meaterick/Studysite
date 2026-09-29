@@ -3,6 +3,7 @@
 import { requireAdmin, requireUser } from "./dal";
 import { findUserById } from "./userStore";
 import { CHAT_LIMITS, markChatRead, postChatMessage } from "./chatStore";
+import { consumeRate, RATE_LIMIT_MESSAGE, RATE_RULES } from "./rateLimit";
 import type { ChatMessageView } from "@/components/chat/types";
 
 // 채팅 액션. 브라우저에서 임의로 호출될 수 있으므로 로그인·권한·입력값을 여기서 다시 검증한다.
@@ -31,6 +32,7 @@ export async function sendChatMessage(text: string, targetUserId?: string): Prom
     conversationUserId = user.id;
     author = { id: user.id, name: user.name, role: "member" };
   }
+  if (!consumeRate(`chat:${author.id}`, RATE_RULES.chatMessage)) return { ok: false, error: RATE_LIMIT_MESSAGE };
   const m = await postChatMessage({ userId: conversationUserId, author, text: body });
   return { ok: true, message: { id: m.id, authorName: m.authorName, role: m.role, text: m.text, createdAt: m.createdAt } };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import "@/lib/monacoSetup";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import CodeBlock from "@/components/CodeBlock";
 import type { NotebookCell } from "@/lib/notebook";

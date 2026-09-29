@@ -115,25 +115,25 @@ npm run start
    실행합니다 — OCI는 RAM이 1GB뿐이라 빌드는 항상 여기서만 합니다.
 2. `next.config.ts`의 `output: "standalone"`으로 만들어진 최소 실행 번들
    (pruned `node_modules` 포함, 약 50MB)을 아티팩트로 올립니다.
-3. OCI에 등록된 self-hosted 러너가 그 아티팩트를 러너 자신의 작업 폴더가
-   아니라 `/home/ubuntu/aegis-ai-study`(`DEPLOY_DIR`)에 풀고,
-   `.env.production.local`을 GitHub Secret에서 새로 만들고, PM2로 Next.js 앱
-   (`aegis-ai-study`, `127.0.0.1:3000`에서만 대기)을 올립니다. (러너는 job이
-   끝나면 자기 작업 폴더 안에 있는 프로세스를 전부 죽이기 때문에, 실제로
-   계속 떠 있어야 하는 서버 프로세스는 반드시 러너 작업 폴더 밖에서
-   돌려야 합니다.)
-4. nginx를 설치(없으면)하고 `meaterickedu.kro.kr`을 `127.0.0.1:3000`으로
-   리버스 프록시하는 사이트 설정을 등록합니다.
-5. `certbot`의 공식 nginx 플러그인(`certbot --nginx`)으로 인증서를
-   발급/갱신하고, nginx 설정에 TLS와 http→https 리다이렉트까지 자동으로
-   추가합니다(이미 유효하면 조용히 스킵 — 매 배포마다 실행해도 안전).
-   갱신은 certbot 패키지가 설치하는 자체 systemd 타이머가 처리합니다 —
-   따로 등록할 deploy-hook이 없습니다.
-6. 마지막으로 PM2를 systemd 서비스(`pm2-ubuntu.service`)로 완전히 넘깁니다
-   — `pm2 kill`로 러너 job에 붙어있던 데몬을 끄고 systemd가 저장된 프로세스
-   목록을 다시 띄우게 합니다. 이렇게 해야 이 배포 job 자체가 끝나도, 재부팅이
-   되어도 계속 살아있습니다. (nginx는 처음부터 systemd 서비스라 이 문제와
-   무관합니다.)
+3. OCI에 등록된 self-hosted 러너가 번들을 러너 작업 폴더가 아니라
+   `/home/ubuntu/aegis-ai-study`(`DEPLOY_DIR`)의 `releases/<실행 id>`에 풀고,
+   `.env.production.local`(권한 600)을 GitHub Secret에서 새로 만듭니다. (러너는 job이
+   끝나면 자기 작업 폴더 안에 있는 프로세스를 전부 죽이기 때문에, 계속 떠 있어야 하는
+   서버 프로세스는 반드시 러너 작업 폴더 밖에서, systemd가 관리하는 PM2 데몬
+   (`pm2-ubuntu.service`) 아래에서 돌립니다. 이 서비스는 처음 한 번만 등록·재시작합니다.)
+4. **무중단(블루·그린) 전환** — `scripts/deploy/deploy.sh`가 새 버전을 쉬고 있는 포트
+   (3000 ↔ 3001)에 띄우고 `/api/health`가 응답하면 nginx를 새 포트로 돌린 뒤(reload라 기존
+   연결이 끊기지 않음) 옛 버전을 끕니다. 새 버전이 60초 안에 응답하지 않거나 nginx 설정 검사가
+   실패하면 새 버전만 지우고 배포가 실패하며, 사이트는 옛 버전으로 계속 동작합니다.
+   release 폴더는 최근 3개만 남깁니다. 전환하는 약 10초 동안은 두 버전이 함께 떠 있습니다.
+5. nginx 설정은 `scripts/deploy/nginx-site.sh`가 매번 통째로 만듭니다. 인증서가 있으면 HTTPS
+   서버까지 직접 쓰므로 배포 중 HTTPS가 끊기지 않고, IP별 요청 빈도(초당 30, POST 초당 5)·
+   동시 연결 수 제한, 느린 요청 타임아웃, HSTS, `X-Forwarded-Host` 덮어쓰기가 들어 있습니다.
+   인증서가 없을 때(첫 배포)만 `certbot --nginx`로 발급하고, 갱신은 certbot의 systemd 타이머가
+   처리합니다.
+6. 앱 로그는 `DEPLOY_DIR/logs/app-out.log`·`app-error.log`에 모이고, `scripts/deploy/logrotate.sh`가
+   등록한 systemd 타이머(`aegis-logrotate.timer`)가 매시간 20MB 초과 또는 하루 지난 로그를
+   잘라 압축하고 14개까지만 남깁니다(PM2 로그 포함).
 
 즉 `git clone`도, `.env` 파일을 직접 만드는 것도, `npm install`도, 최초
 `pm2 start`도, **nginx 설치/설정도, `certbot` 실행도** 전부 워크플로우가
@@ -173,7 +173,7 @@ Google 자격 증명을 GitHub Actions Secrets로 등록하면 다음 `main` 배
 - DNS가 아직 전파 중이거나 OCI 보안 목록(Security List)에서 80/443 포트가
   안 열려 있으면 certbot 인증서 발급이 실패합니다 — 이 경우에도 nginx는
   계속 `:80`으로 평문 HTTP는 서빙합니다(리다이렉트만 아직 안 붙은 상태),
-  완전히 접속 불가가 되지는 않습니다. Actions 로그에서 `Obtain/renew the
+  완전히 접속 불가가 되지는 않습니다. Actions 로그에서 `Obtain the
   HTTPS certificate` 단계의 경고 메시지를 확인하세요. 오라클 클라우드는
   **보안 목록/NSG에서 80·443 인바운드를 따로 열어줘야** 하는 경우가
   많습니다 — 콘솔에서 VCN → Security Lists 확인해 주세요.
@@ -191,5 +191,9 @@ Google 자격 증명을 GitHub Actions Secrets로 등록하면 다음 `main` 배
   계정을 삭제하면 해당 사용자의 학습 기록, 초안, 대화, 제출물이 함께 삭제됩니다.
   첨부 파일은 최대 3개·각 5MB·합계 9MB이며, 제출자 본인과 관리자만 내려받을 수 있습니다.
 - 브라우저 실행 코드는 Pyodide(웹 워커)로 실행됩니다. 학습 자료의 코드 셀은 하나의 이름공간을, 과제 작업 공간은 과제마다 별도의 이름공간을 씁니다.
+  코드 편집기(Monaco)는 외부 CDN이 아니라 빌드 때 `node_modules`에서 복사한 `/vendor/monaco`에서 불러옵니다(`scripts/copy-monaco.mjs`).
+- 남용 방지: 계정별 요청 빈도 제한(채팅·작업 공간 저장·제출·확인 문제, `src/lib/rateLimit.ts`), 채팅 실시간 연결 수 제한
+  (계정당 6·전체 300), 과제당 제출 30회·계정당 첨부 합계 100MB, 디스크 여유 512MB 미만이면 큰 쓰기 거절(`src/lib/diskGuard.ts`),
+  사이트 전체 Content-Security-Policy(`next.config.ts`).
   운영자가 스터디원의 제출본을 다시 실행해도 그 코드가 운영자 권한으로 사이트에 요청하지 못하도록, 워커는 Pyodide CDN 외의 네트워크 요청·스크립트 로드·하위 워커 생성이 막혀 있습니다(`public/pyodide-worker.js`, `next.config.ts`의 워커 CSP).
   서술형 답안의 작성 중 초안 같은 개인 편의 상태만 브라우저 localStorage에 남고, 진도·과제 초안·제출은 서버에 저장됩니다.

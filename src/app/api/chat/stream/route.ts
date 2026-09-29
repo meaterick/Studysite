@@ -12,6 +12,28 @@ export const dynamic = "force-dynamic";
 // ?inbox=1(전체 목록)을 받을 수 있다. nginx가 응답을 모아 두지 않도록 X-Accel-Buffering을 끈다.
 
 const HEARTBEAT_MS = 25_000;
+// 연결을 수백 개 열어 서버·nginx 연결을 고갈시키지 못하도록 계정별·전체 동시 연결 수를 제한한다(보안 검토 P0-2).
+// 한 사람이 여러 탭을 열어 두는 정도(채팅 창 + 채점 화면 등)는 충분히 허용한다.
+const MAX_STREAMS_PER_USER = 6;
+const MAX_STREAMS_TOTAL = 300;
+
+const globalStreams = globalThis as unknown as { __aegisChatStreams?: { total: number; perUser: Map<string, number> } };
+const streams = (globalStreams.__aegisChatStreams ??= { total: 0, perUser: new Map<string, number>() });
+
+function acquireStream(userId: string): boolean {
+  const mine = streams.perUser.get(userId) ?? 0;
+  if (mine >= MAX_STREAMS_PER_USER || streams.total >= MAX_STREAMS_TOTAL) return false;
+  streams.perUser.set(userId, mine + 1);
+  streams.total++;
+  return true;
+}
+
+function releaseStream(userId: string) {
+  const mine = (streams.perUser.get(userId) ?? 1) - 1;
+  if (mine <= 0) streams.perUser.delete(userId);
+  else streams.perUser.set(userId, mine);
+  streams.total = Math.max(0, streams.total - 1);
+}
 
 export async function GET(request: NextRequest) {
   const session = await decryptSession(request.cookies.get(SESSION_COOKIE)?.value);
@@ -35,6 +57,10 @@ export async function GET(request: NextRequest) {
     relevant = (id) => id === user.id;
   } else {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  if (!acquireStream(user.id)) {
+    return NextResponse.json({ error: "too_many_connections" }, { status: 429 });
   }
 
   const encoder = new TextEncoder();
@@ -64,6 +90,7 @@ export async function GET(request: NextRequest) {
       cleanup = () => {
         if (closed) return;
         closed = true;
+        releaseStream(user.id);
         unsubscribe();
         clearInterval(heartbeat);
         if (timer) clearTimeout(timer);

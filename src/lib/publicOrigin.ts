@@ -13,8 +13,23 @@ import "server-only";
  * nginx가 원본 Host를 그대로 넘겨주므로(`proxy_set_header Host $host;`,
  * deploy.yml 참고) 여기서는 Next.js의 계산을 거치지 않고 요청 헤더에서
  * 직접 origin을 뽑아 쓴다.
+ *
+ * 운영 환경에서는 배포가 PUBLIC_ORIGIN(예: https://meaterickedu.kro.kr)을 넣어 주므로 요청 헤더를 아예
+ * 믿지 않는다. 클라이언트가 보낸 Host/X-Forwarded-Host로 리다이렉트 주소를 바꾸지 못하게 하기 위함이다.
+ * (nginx도 X-Forwarded-Host를 실제 $host로 덮어쓴다.) 설정이 없는 로컬 개발에서만 헤더를 쓴다.
  */
+const CONFIGURED_ORIGIN = (() => {
+  const raw = process.env.PUBLIC_ORIGIN?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+})();
+
 export function publicOrigin(req: Request): string {
+  if (CONFIGURED_ORIGIN) return CONFIGURED_ORIGIN;
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
   if (!host) return new URL(req.url).origin;
   const proto = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() ?? "http";

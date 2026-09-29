@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getWeek } from "@/content/weeks";
 import { getSection, getWeekOutline } from "@/content/sections";
 import { requireUser } from "./dal";
+import { consumeRate, RateLimitError, RATE_LIMIT_MESSAGE, RATE_RULES, type RateRule } from "./rateLimit";
 import {
   ensureSectionState,
   getLearningRecord,
@@ -19,6 +20,11 @@ import { canOpenSection, sectionProgress, weekStatus } from "./study";
 // 여기서 로그인·단계 잠금·입력값을 다시 검증한다.
 
 const ANSWER_MAX = 4000;
+
+/** 자동화로 진도 파일 전체를 계속 다시 쓰게 만드는 것을 막는다. 넘으면 예외(화면에는 일반 오류로 표시). */
+function limit(userId: string, name: string, rule: RateRule) {
+  if (!consumeRate(`${name}:${userId}`, rule)) throw new RateLimitError();
+}
 
 async function loadSectionContext(slug: string, sectionId: string) {
   const user = await requireUser(`/weeks/${slug}`);
@@ -38,6 +44,7 @@ export async function answerCheck(
   choice: number
 ): Promise<{ correct: boolean }> {
   const { user, section } = await loadSectionContext(slug, sectionId);
+  limit(user.id, "check", RATE_RULES.checkAnswer);
   const check = section.meta.checks.find((c) => c.id === checkId);
   if (!check || !Number.isInteger(choice) || choice < 0 || choice >= check.choices.length) {
     throw new Error("INVALID_CHOICE");
@@ -60,6 +67,7 @@ export async function answerCheck(
 
 export async function saveQuizAnswer(slug: string, sectionId: string, quizId: string, text: string) {
   const { user, section } = await loadSectionContext(slug, sectionId);
+  if (!consumeRate(`learn:${user.id}`, RATE_RULES.learningWrite)) return { ok: false as const, error: RATE_LIMIT_MESSAGE };
   if (!section.meta.quizIds.includes(quizId)) throw new Error("INVALID_QUESTION");
   const trimmed = String(text ?? "").trim().slice(0, ANSWER_MAX);
   if (!trimmed) return { ok: false as const, error: "답안을 먼저 작성해 주십시오." };
@@ -75,6 +83,7 @@ export async function saveQuizAnswer(slug: string, sectionId: string, quizId: st
 
 export async function reviewQuizAnswer(slug: string, sectionId: string, quizId: string, review: QuizReviewStatus) {
   const { user, section } = await loadSectionContext(slug, sectionId);
+  limit(user.id, "learn", RATE_RULES.learningWrite);
   if (!section.meta.quizIds.includes(quizId) || (review !== "correct" && review !== "incorrect")) {
     throw new Error("INVALID_REVIEW");
   }
@@ -115,6 +124,7 @@ async function loadFinaleContext(slug: string) {
 
 export async function saveWorksheet(slug: string, answers: Record<string, string>, submit: boolean) {
   const { user, week } = await loadFinaleContext(slug);
+  if (!consumeRate(`learn:${user.id}`, RATE_RULES.learningWrite)) return { ok: false as const, error: RATE_LIMIT_MESSAGE };
   const clean: Record<string, string> = {};
   week.worksheet.forEach((_, index) => {
     clean[String(index)] = String(answers?.[String(index)] ?? "").slice(0, ANSWER_MAX);
@@ -138,6 +148,7 @@ export async function saveWorksheet(slug: string, answers: Record<string, string
 
 export async function markWorksheetField(slug: string, field: string, mark: WorksheetMark) {
   const { user, week } = await loadFinaleContext(slug);
+  limit(user.id, "learn", RATE_RULES.learningWrite);
   const index = Number(field);
   if (!Number.isInteger(index) || index < 0 || index >= week.worksheet.length || (mark !== "ok" && mark !== "weak")) {
     throw new Error("INVALID_MARK");
