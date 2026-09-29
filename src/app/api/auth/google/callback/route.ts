@@ -9,7 +9,7 @@ import {
 import { publicOrigin } from "@/lib/publicOrigin";
 import { safeReturnPath } from "@/lib/returnPath";
 import { encryptSession, SESSION_COOKIE, sessionCookieOptions } from "@/lib/session";
-import { deleteUser, findOrCreateGoogleUser, findUserById, listUsers } from "@/lib/userStore";
+import { findOrCreateGoogleUser } from "@/lib/userStore";
 
 export const runtime = "nodejs";
 
@@ -75,22 +75,6 @@ export async function GET(request: NextRequest) {
       throw new Error("UNVERIFIED_GOOGLE_PROFILE");
     }
 
-    if (state.intent === "delete_account") {
-      const user = state.deleteUserId ? findUserById(state.deleteUserId) : undefined;
-      if (!user || user.googleSubject !== profile.sub || user.email !== profile.email.trim().toLowerCase()) {
-        throw new Error("GOOGLE_REAUTH_FAILED");
-      }
-      if (user.role === "admin" && listUsers().filter((member) => member.role === "admin").length <= 1) {
-        const response = NextResponse.redirect(new URL("/account?error=lastadmin", publicOrigin(request)));
-        response.cookies.set(GOOGLE_OAUTH_STATE_COOKIE, "", { ...googleStateCookieOptions, maxAge: 0 });
-        return response;
-      }
-      await deleteUser(user.id);
-      const response = NextResponse.redirect(new URL("/", publicOrigin(request)));
-      response.cookies.set(SESSION_COOKIE, "", { ...sessionCookieOptions(), maxAge: 0 });
-      response.cookies.set(GOOGLE_OAUTH_STATE_COOKIE, "", { ...googleStateCookieOptions, maxAge: 0 });
-      return response;
-    }
 
     const user = await findOrCreateGoogleUser({
       subject: profile.sub,

@@ -6,13 +6,8 @@ export const metadata = { title: "내 계정" };
 
 const ROLE_LABEL: Record<string, string> = { admin: "관리자", member: "스터디원" };
 
-export default async function AccountPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export default async function AccountPage() {
   const user = await requireUser("/account");
-  const { error } = await searchParams;
 
   return (
     <div className="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
@@ -53,11 +48,6 @@ export default async function AccountPage({
         <p className="mb-4 text-xs text-ink-secondary">
           탈퇴하면 계정 정보와 학습 기록, 제출한 과제가 즉시 삭제되며 되돌릴 수 없습니다.
         </p>
-        {error === "lastadmin" && (
-          <p className="mb-3 text-xs font-medium text-[var(--status-critical)]">
-            마지막 관리자 계정은 탈퇴할 수 없습니다. 다른 관리자 계정이 남아 있어야 탈퇴할 수 있습니다.
-          </p>
-        )}
         <DeleteAccountButton />
       </div>
     </div>

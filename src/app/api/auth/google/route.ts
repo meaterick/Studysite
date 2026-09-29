@@ -7,8 +7,6 @@ import {
 } from "@/lib/googleOAuth";
 import { publicOrigin } from "@/lib/publicOrigin";
 import { safeReturnPath } from "@/lib/returnPath";
-import { decryptSession, SESSION_COOKIE } from "@/lib/session";
-import { findUserById } from "@/lib/userStore";
 
 export const runtime = "nodejs";
 
@@ -16,16 +14,6 @@ export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   const config = getGoogleOAuthConfig();
   const returnPath = safeReturnPath(request.nextUrl.searchParams.get("from") ?? "");
-  const wantsDeletion = request.nextUrl.searchParams.get("intent") === "delete_account";
-  let deleteUserId: string | undefined;
-  if (wantsDeletion) {
-    const session = await decryptSession(request.cookies.get(SESSION_COOKIE)?.value);
-    const user = session ? findUserById(session.uid) : undefined;
-    if (!user?.googleSubject) {
-      return NextResponse.redirect(new URL("/account", publicOrigin(request)));
-    }
-    deleteUserId = user.id;
-  }
   if (!config) {
     const url = new URL("/login", publicOrigin(request));
     url.searchParams.set("error", "oauth_config");
@@ -33,7 +21,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const state = await createGoogleOAuthState(returnPath, wantsDeletion ? "delete_account" : "sign_in", deleteUserId);
+  const state = await createGoogleOAuthState(returnPath);
   const callbackUrl = new URL("/api/auth/google/callback", publicOrigin(request)).toString();
   const authorizeUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authorizeUrl.searchParams.set("client_id", config.clientId);
