@@ -12,6 +12,8 @@ scikit-learn의 유방암 진단 데이터(\`load_breast_cancer\`)로 세 모델
       title: "세 모델을 같은 교차검증으로 비교하기",
       instructions: `
 다수결 베이스라인(\`DummyClassifier\`), 로지스틱 회귀, 랜덤 포레스트를 **같은** 5-Fold 층화 교차검증으로 비교해 F1과 ROC-AUC를 평균 $\\pm$ 표준편차로 출력합니다. 스케일링 같은 전처리는 반드시 \`Pipeline\` 안에 넣습니다. 코드 셀의 \`TODO\`를 채워 로지스틱 회귀 파이프라인을 완성합니다.
+
+$\\pm$ 값은 fold 5개 점수가 얼마나 흩어져 있는지를 요약한 값이지 신뢰구간이 아닙니다(fold끼리 훈련 데이터가 겹쳐 서로 독립이 아닙니다). 그래서 코드는 같은 분할에서 얻은 두 모델의 **fold별 점수 차이**도 함께 출력합니다. 우열은 "평균 차이가 표준편차보다 큰가"를 눈으로 비교하기보다, 이 짝지은 차이가 fold마다 한결같은 방향인지를 근거로 판단합니다.
 `,
       cells: [
         {
@@ -41,16 +43,25 @@ models = {
 }
 
 print(f"{'모델':<22}{'F1':>18}{'ROC-AUC':>18}")
+scores = {}
 for name, model in models.items():
     s = cross_validate(model, X_train, y_train, cv=cv, scoring=["f1", "roc_auc"])
     f1, auc = s["test_f1"], s["test_roc_auc"]
+    scores[name] = {"F1": f1, "ROC-AUC": auc}
     print(f"{name:<22}{f1.mean():>10.3f} ± {f1.std():.3f}{auc.mean():>10.3f} ± {auc.std():.3f}")
+print("(± 값은 fold 5개 점수의 표준편차(np.std, ddof=0)입니다. 신뢰구간이 아닙니다.)")
+
+# 세 모델 모두 같은 cv(같은 분할)로 평가했으므로 fold별 점수를 짝지어 비교할 수 있습니다.
+for metric in ("F1", "ROC-AUC"):
+    diff = scores["Logistic Regression"][metric] - scores["Random Forest"][metric]
+    print(f"\\n{metric} fold별 차이 (로지스틱 − 랜덤 포레스트): {np.round(diff, 3)}")
+    print(f"  차이 평균 {diff.mean():+.3f}, 차이의 표준편차 {diff.std():.3f}, 로지스틱이 앞선 fold {int((diff > 0).sum())}/5")
 `,
         },
         {
           kind: "text",
           id: "compare-answer",
-          prompt: "결과를 표로 정리하고, 베이스라인 대비 두 모델의 차이가 표준편차보다 큰지 판단해 주십시오.",
+          prompt: "결과를 표로 정리하고, 베이스라인 대비 두 모델의 성능과, 두 모델 사이의 우열을 fold별 짝지은 차이를 근거로 판단해 주십시오. 이 근거로 말할 수 있는 것과 없는 것도 구분합니다.",
           template: `| 모델 | F1 (평균 ± 표준편차) | ROC-AUC (평균 ± 표준편차) |
 | --- | --- | --- |
 | Dummy |  |  |
@@ -149,7 +160,7 @@ print(f"(b) 타깃 파생 특징 추가  ROC-AUC = {leak_b:.4f}  (차이 {leak_b
       id: "biasvar",
       title: "편향과 분산을 숫자로 확인하기",
       instructions: `
-결정트리를 서로 다른 \`random_state\` 분할 10개로 학습해 테스트 정확도 10개를 얻고, \`max_depth\`를 1, 3, 5, 제한 없음으로 바꿔 가며 평균과 표준편차를 비교합니다. 깊이가 커질 때 평균과 흔들림이 어떻게 변하는지 편향·분산의 용어로 해석합니다.
+결정트리를 서로 다른 \`random_state\` 분할 10개로 학습해 테스트 정확도 10개를 얻고, \`max_depth\`를 1, 3, 5, 제한 없음으로 바꿔 가며 평균과 표준편차를 비교합니다. 깊이가 커질 때 평균과 흔들림이 어떻게 변하는지 편향·분산의 용어로 해석합니다. 이 표준편차에는 "훈련 데이터가 바뀌어 모델이 달라지는 흔들림(분산)"과 "테스트셋 표본이 바뀌어 점수가 달라지는 흔들림"이 함께 들어 있다는 점도 해석에 반영합니다.
 `,
       cells: [
         {
@@ -185,7 +196,7 @@ for depth in (1, 3, 5, None):
 다음 중 하나 이상을 골라 실험합니다.
 
 - \`learning_curve\`로 학습 곡선을 그려 과적합 여부를 판단합니다.
-- KNN, 나이브 베이즈, SVM 중 두 개 이상을 같은 교차검증으로 추가 비교하고, 평균 차이가 표준편차보다 큰지를 기준으로 우열을 판단합니다.
+- KNN, 나이브 베이즈, SVM 중 두 개 이상을 같은 교차검증으로 추가 비교하고, fold별 짝지은 차이를 근거로 우열을 판단합니다. \`RepeatedStratifiedKFold\`로 분할을 여러 번 바꿔도 결론이 유지되는지 확인하면 더 좋습니다.
 - 로지스틱 회귀를 NumPy로 직접 구현해 sklearn과 계수를 비교합니다.
 - Ridge의 $\\lambda$에 따른 계수 경로를 그립니다.
 `,

@@ -374,11 +374,11 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "transformer-block": {
-    "goal": "Self-Attention이 순서에 무관한 연산이라 위치 인코딩이 필요한 이유를 설명하고, 사인·코사인 위치 인코딩과 GPT형 디코더 블록(Attention + MLP, 잔차·정규화)의 역할 분담을 말할 수 있다.",
+    "goal": "마스크 없는 Self-Attention이 순열 등변(불변이 아니다) 연산이라 위치 인코딩이 필요한 이유와 causal mask가 이를 어떻게 바꾸는지 설명하고, 사인·코사인 위치 인코딩과 GPT형 디코더 블록(Attention + MLP, 잔차·정규화)의 역할 분담을 말할 수 있다.",
     "checks": [
       {
         "id": "w5-transformer-block-c1",
-        "question": "위치 인코딩 없이 Self-Attention에 \"고양이가 생선을 먹었다\"와 \"먹었다 생선을 고양이가\"를 넣으면?",
+        "question": "위치 인코딩 없이 마스크 없는 Self-Attention에 \"고양이가 생선을 먹었다\"와 \"먹었다 생선을 고양이가\"를 넣으면?",
         "choices": [
           "두 문장에서 각 단어의 출력 벡터가 똑같다(자리만 바뀜)",
           "항상 오류가 난다",
@@ -386,7 +386,7 @@ const sections: Record<string, SectionMeta> = {
           "첫 단어의 출력만 같다"
         ],
         "answer": 0,
-        "explanation": "attention은 순열에 대해 등변(permutation-equivariant)이라 순서 정보를 스스로 만들지 못한다. 실습에서 '고양이가'의 출력이 두 문장에서 같았다."
+        "explanation": "마스크 없는 attention은 순열 등변이다: 입력 순서를 $P$로 섞으면 출력도 $P$로 섞일 뿐 각 토큰의 출력값은 같다($\\text{Attn}(PX) = P\\,\\text{Attn}(X)$). 그래서 순서 정보를 스스로 만들지 못하고, 실습에서 '고양이가'의 출력이 두 문장에서 같았다. 출력이 통째로 같은 순열 불변과는 구별한다."
       },
       {
         "id": "w5-transformer-block-c2",
@@ -411,6 +411,18 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "GPT는 디코더 절반, BERT는 인코더 절반을 쓴다."
+      },
+      {
+        "id": "w5-transformer-block-c4",
+        "question": "위치 인코딩 없이 **causal mask**를 쓴 디코더에 \"고양이가 생선을 먹었다\"와 \"먹었다 생선을 고양이가\"를 넣으면 '고양이가'의 출력은?",
+        "choices": [
+          "마스크가 없을 때처럼 두 문장에서 똑같다",
+          "달라진다. 첫 문장에서는 자기 자신만, 둘째 문장에서는 세 단어를 모두 보기 때문이다",
+          "두 문장 모두 0이 된다",
+          "causal mask는 위치 인코딩이 있어야만 동작한다"
+        ],
+        "answer": 1,
+        "explanation": "causal mask는 각 토큰이 볼 수 있는 범위를 위치에 따라 다르게 만들어 순열 등변성을 깬다. 그래서 위치 인코딩이 없는(NoPE) 디코더도 위치 정보를 어느 정도 알아낼 수 있다. 그래도 대부분의 모델은 안정성과 긴 문맥 성능 때문에 위치 인코딩(요즘은 주로 RoPE)을 쓴다."
       }
     ],
     "quizIds": [

@@ -44,7 +44,7 @@ const WORKSHEET_HOURS = 0.5;
 const BUILDS = [
   "직접 만든 자동미분 엔진으로 학습시킨 MLP",
   "Self-Attention부터 쌓아 올린 나만의 미니 GPT 블록",
-  "RAG로 답하는 스터디 QA 봇과 그 성능 평가 리포트",
+  "학습 자료에서 근거를 찾아 답하는 RAG 방식 QA 봇과 그 평가 리포트",
   "주제를 골라 끝까지 완성하는 캡스톤 프로젝트",
 ];
 

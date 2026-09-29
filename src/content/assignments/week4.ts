@@ -1,8 +1,9 @@
 import type { AssignmentSpec } from "../types";
 
-// 4주차 과제: 정규화·일반화 기법의 효과를 통제된 ablation 실험으로 확인한다.
-// 원래 CIFAR-10 + GPU로 하던 실험을, 브라우저에서 몇 초 만에 도는 NumPy 신경망과 손글씨 숫자(8×8) 데이터로 옮겼다.
-// BatchNorm·Dropout·데이터 증강·weight decay·초기화·학습률 같은 비교 대상은 그대로다.
+// 4주차 과제: 정규화·일반화 기법의 효과를 통제된 ablation 실험으로 확인하고, 합성곱 층을 직접 구현한다.
+// 원래 CIFAR-10 + GPU로 하던 실험을, 브라우저에서 몇 초 만에 도는 NumPy 신경망(MLP)과 손글씨 숫자(8×8) 데이터로 옮겼다.
+// BatchNorm·Dropout·데이터 증강·weight decay·초기화·학습률 같은 비교 대상은 그대로다. MLP에는 CNN의 귀납편향이 없으므로
+// 합성곱의 성질(출력 크기, 파라미터 공유, 평행이동 등변성)은 별도의 필수 과제(conv)에서 확인한다.
 const ENGINE = `import numpy as np, time
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
@@ -137,9 +138,11 @@ print("엔진 준비 완료. train(**변경할_설정)으로 실험합니다.")
 `;
 
 const week4Assignment: AssignmentSpec = {
-  title: "정규화 기법 Ablation 실험 노트",
+  title: "합성곱 구현과 정규화 Ablation 실험 노트",
   summary: `
-BatchNorm, Dropout, 데이터 증강, weight decay 같은 기법이 실제로 얼마나 도움이 되는지, 기준선에서 **한 번에 하나씩만** 바꾸는 ablation 실험으로 확인합니다. GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8 \\times 8$ 픽셀) 데이터와 NumPy로 구현한 신경망을 사용합니다. 실험 대상과 방법은 CIFAR-10 CNN 실험과 같습니다.
+두 부분으로 이루어집니다. ① BatchNorm, Dropout, 데이터 증강, weight decay 같은 기법이 실제로 얼마나 도움이 되는지, 기준선에서 **한 번에 하나씩만** 바꾸는 ablation 실험으로 확인합니다. ② 합성곱 층을 NumPy로 직접 구현해 출력 크기 공식, 파라미터 공유, 평행이동 등변성을 확인합니다.
+
+GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8 \\times 8$ 픽셀) 데이터를 쓰고, ablation 실험의 모델은 속도를 위해 합성곱 대신 NumPy로 구현한 **완전연결 신경망(MLP)**을 씁니다. 그래서 ①의 결과는 "정규화 기법이 이 MLP에서 어떻게 작용하는가"이며, CIFAR-10 같은 컬러 사진과 CNN에서는 효과의 크기가 다를 수 있습니다(예: CNN의 BatchNorm은 채널마다 배치·높이·너비 전체로 통계를 냅니다). CNN 학습과 전이학습은 학습 자료의 Colab 코드로 다룹니다.
 `,
   tasks: [
     {
@@ -303,6 +306,94 @@ plt.show()
       ],
     },
     {
+      id: "conv",
+      title: "합성곱 층 직접 구현하기",
+      instructions: `
+이번 주의 주인공인 합성곱을 NumPy로 직접 구현해, 학습 자료의 네 가지 주장을 숫자로 확인합니다. 위의 ablation 실험은 속도 때문에 완전연결 신경망(MLP)을 썼으므로, CNN만의 성질은 이 과제에서 따로 다룹니다.
+
+1. **출력 크기:** \`out_size\`의 \`TODO\`에 출력 크기 공식 $N_{out} = \\lfloor (N + 2P - K)/S \\rfloor + 1$을 써 넣고, 공식을 쓰지 않고 위치를 직접 세어 슬라이딩하는 \`conv2d\`의 결과와 다섯 설정 모두 일치하는지 확인합니다.
+2. **파라미터 공유·국소성:** $3 \\times 3$ 필터 8개짜리 합성곱과, 같은 크기의 출력을 내는 완전연결층의 파라미터 수를 비교합니다.
+3. **특징 지도:** 손으로 만든 두 필터(세로·가로 경계)가 숫자 이미지의 어디에 반응하는지 봅니다.
+4. **평행이동 등변성:** 입력을 한 칸 옮겼을 때 stride 1 합성곱의 출력도 한 칸 옮겨지는지(가장자리 열 제외), stride 2에서는 어떻게 되는지 확인합니다.
+`,
+      cells: [
+        {
+          kind: "code",
+          id: "conv-code",
+          label: "합성곱 구현과 네 가지 확인",
+          starter: `import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_digits
+
+img = load_digits().images[0] / 16.0     # 8×8 숫자 0 (값 0~1)
+
+def out_size(n, k, s, p):
+    """입력 한 변 n, 커널 k, 보폭 s, 패딩 p일 때 출력 한 변의 길이"""
+    return 0  # TODO: 학습 자료의 출력 크기 공식을 직접 써 넣습니다. (정수 나눗셈은 //)
+
+def conv2d(x, w, b, stride=1, pad=0):
+    """x: (H, W) 흑백 이미지, w: (필터 수, kH, kW), b: (필터 수,) → (필터 수, H_out, W_out)
+    출력 크기 공식을 쓰지 않고, 커널이 들어갈 수 있는 위치를 직접 세어 가며 슬라이딩합니다."""
+    x = np.pad(x, pad)
+    n_f, kH, kW = w.shape
+    rows = range(0, x.shape[0] - kH + 1, stride)
+    cols = range(0, x.shape[1] - kW + 1, stride)
+    out = np.zeros((n_f, len(rows), len(cols)))
+    for f in range(n_f):
+        for i, r in enumerate(rows):
+            for j, c in enumerate(cols):
+                # 모든 위치에서 같은 필터 w[f]를 씁니다(파라미터 공유). 보는 범위는 kH×kW뿐입니다(국소성).
+                out[f, i, j] = np.sum(x[r:r + kH, c:c + kW] * w[f]) + b[f]
+    return out
+
+# 1) 출력 크기: 공식과 실제 슬라이딩 결과가 같은가?
+for n, k, s, p in [(8, 3, 1, 0), (8, 3, 1, 1), (8, 3, 2, 1), (8, 5, 1, 0), (8, 2, 2, 0)]:
+    real = conv2d(np.zeros((n, n)), np.ones((1, k, k)), np.zeros(1), stride=s, pad=p).shape[1]
+    mark = "일치" if out_size(n, k, s, p) == real else "불일치"
+    print(f"n={n} k={k} s={s} p={p}: 공식 {out_size(n, k, s, p)}, 실제 {real} → {mark}")
+
+# 2) 파라미터 수: 3×3 필터 8개(합성곱) vs 같은 크기(8×8×8)의 출력을 내는 완전연결층
+n_filters = 8
+conv_params = n_filters * (3 * 3 * 1) + n_filters
+fc_params = (8 * 8) * (n_filters * 8 * 8) + n_filters * 8 * 8
+print(f"\\n파라미터 수: 합성곱 {conv_params:,}개 vs 완전연결 {fc_params:,}개 (약 {fc_params / conv_params:,.0f}배)")
+
+# 3) 손으로 만든 필터 두 개로 특징 지도 보기
+sobel = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=float)
+filters = np.stack([sobel, sobel.T])            # 0번: 세로 경계, 1번: 가로 경계에 반응
+maps = conv2d(img, filters, np.zeros(2), pad=1)
+fig, axes = plt.subplots(1, 3, figsize=(8, 2.8))
+for ax, a, title in zip(axes, [img, maps[0], maps[1]], ["input", "filter 0 (vertical edges)", "filter 1 (horizontal edges)"]):
+    ax.imshow(a, cmap="gray_r" if title == "input" else "RdBu")
+    ax.set_title(title, fontsize=9)
+    ax.axis("off")
+plt.show()
+
+# 4) 평행이동 등변성: 입력을 오른쪽으로 한 칸 옮기면 특징 지도도 한 칸 옮겨지는가?
+def shift_right(a):
+    out = np.zeros_like(a)
+    out[..., 1:] = a[..., :-1]
+    return out
+
+fmap = conv2d(img, filters, np.zeros(2), pad=1)                 # base 등 앞 과제의 변수 이름은 덮어쓰지 않습니다.
+fmap_moved = conv2d(shift_right(img), filters, np.zeros(2), pad=1)
+print("\\nstride 1 | conv(옮긴 입력)과 옮긴(conv 출력)의 최대 차이:", np.abs(fmap_moved - shift_right(fmap))[..., 1:-1].max().round(3))
+
+fmap2 = conv2d(img, filters, np.zeros(2), stride=2, pad=1)
+fmap2_moved = conv2d(shift_right(img), filters, np.zeros(2), stride=2, pad=1)
+print("stride 2 | 옮기기 전 출력과의 차이:", np.abs(fmap2_moved - fmap2).max().round(3),
+      "/ 출력을 한 칸 옮긴 것과의 차이:", np.abs(fmap2_moved - shift_right(fmap2))[..., 1:-1].max().round(3))
+`,
+        },
+        {
+          kind: "text",
+          id: "conv-answer",
+          prompt: "네 가지 확인 결과를 정리해 주십시오. (1) n=8, k=3, s=2, p=1의 출력 크기를 공식으로 계산하는 과정, (2) 파라미터 수 차이가 생기는 이유를 파라미터 공유와 국소성으로, (3) 두 필터가 반응한 위치, (4) stride 1과 stride 2의 등변성 결과와 그 이유를 적습니다. 마지막으로, ablation 실험의 MLP는 64개 픽셀을 서로 무관한 입력으로 보므로 이런 귀납편향이 없다는 점이 ablation 결과(특히 데이터 증강의 효과)를 해석할 때 어떤 의미인지 한두 문장으로 적습니다.",
+          minChars: 250,
+        },
+      ],
+    },
+    {
       id: "advanced",
       title: "심화: 반복 실험·추가 ablation",
       optional: true,
@@ -323,6 +414,7 @@ plt.show()
     { id: "control", label: "실험 통제", points: 3, guide: "기준선을 두고 한 번에 하나만 바꾸며, 시드를 고정했습니다." },
     { id: "hypothesis", label: "가설과 해석의 깊이", points: 3, guide: "실행 전에 가설을 세우고, 결과를 단계에서 배운 개념으로 설명했습니다." },
     { id: "errors", label: "오류 분석", points: 2, guide: "틀린 사례에서 구체적인 공통 패턴을 찾고 개선 방향을 제시했습니다." },
+    { id: "conv", label: "합성곱 구현과 귀납편향 해석", points: 2, guide: "출력 크기 공식을 구현해 검증하고, 파라미터 수 차이와 등변성 결과를 파라미터 공유·국소성·stride로 정확히 설명했습니다." },
     { id: "checklist", label: "체크리스트와 재현성", points: 1, guide: "초기 손실 점검, 증강 적용 범위, 평가 모드를 코드 근거와 함께 확인했습니다." },
     { id: "clarity", label: "가독성", points: 1, guide: "표와 그래프가 정리되어 있고 서술이 간결합니다." },
   ],
