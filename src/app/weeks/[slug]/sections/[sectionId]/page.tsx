@@ -11,7 +11,9 @@ import CheckQuestion from "@/components/section/CheckQuestion";
 import DescriptiveQuestion from "@/components/section/DescriptiveQuestion";
 import StageFooter from "@/components/section/StageFooter";
 import { loadWeekPage } from "@/lib/weekPage";
-import { canOpenSection, sectionProgress, type WeekStatus } from "@/lib/study";
+import { canOpenSection, sectionProgress, unfinishedBefore, type WeekStatus } from "@/lib/study";
+import UnfinishedWarning from "@/components/UnfinishedWarning";
+import PracticeDoneButton from "@/components/section/PracticeDoneButton";
 import { readSectionState } from "@/lib/learningStore";
 
 export function generateStaticParams() {
@@ -59,6 +61,11 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
   let finishHref: string | undefined;
   if (progress.completed) finishHref = next ? `/weeks/${slug}/sections/${next.id}` : `/weeks/${slug}?finished=1`;
+  // warn 모드: 이 단계를 끝내지 않아도 다음 단계(마지막이면 백지공부)로 넘어갈 수 있다.
+  const skipHref =
+    status.mode === "warn" && !progress.completed ? (next ? `/weeks/${slug}/sections/${next.id}` : `/weeks/${slug}/worksheet`) : undefined;
+  const skipped = isAdmin ? [] : unfinishedBefore(status, sectionId);
+  const practiceDone = !!state.practiceDoneAt || !!state.practiceDone;
 
   return (
     <WeekFrame week={week} status={status}>
@@ -73,6 +80,10 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
               운영자 미리보기: 스터디원에게는 아직 잠겨 있는 단계입니다.
             </p>
           )}
+          <UnfinishedWarning
+            context="이 단계 앞에"
+            items={skipped.map((s) => ({ number: s.number, title: s.title, href: `/weeks/${slug}/sections/${s.id}` }))}
+          />
           <p className="text-sm font-bold text-[var(--series-blue)]">
             {sections.length}단계 중 {section.number}단계 · 약 {section.minutes}분
           </p>
@@ -111,6 +122,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
               <div className="rounded-xl border border-[var(--series-orange)]/40 p-4 sm:p-5">
                 <BlocksRenderer blocks={section.practice} docKey={`${slug}:${sectionId}:practice`} interactiveCode />
               </div>
+              <PracticeDoneButton slug={slug} sectionId={sectionId} done={practiceDone} />
             </section>
           )}
 
@@ -118,7 +130,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             <StepHeading
               id="check-heading"
               title="확인 문제"
-              desc="객관식 문제를 모두 맞히면 다음 단계가 열립니다. 틀린 문제는 다시 풀 수 있습니다. 서술형 문항은 선택이지만, 직접 써 보고 모범답안과 비교하면 훨씬 오래 기억됩니다."
+              desc="객관식 문제를 모두 맞히면 이 단계가 완료됩니다. 틀린 문제는 다시 풀 수 있습니다. 서술형 문항은 선택이지만, 직접 써 보고 모범답안과 비교하면 훨씬 오래 기억됩니다."
             />
             <div className="space-y-4">
               {section.meta.checks.map((check, i) => {
@@ -186,9 +198,10 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
                 ← 주차 개요
               </Link>
             )}
-            {next && (progress.completed || isAdmin) ? (
+            {next && (progress.completed || isAdmin || status.mode === "warn") ? (
               <Link href={`/weeks/${slug}/sections/${next.id}`} className="text-right text-ink-secondary hover:text-[var(--series-blue)]">
                 {next.number}단계 · {next.title} →
+                {!progress.completed && !isAdmin && <span className="block text-xs font-medium text-ink-muted">이 단계는 미완료로 남습니다</span>}
               </Link>
             ) : (
               <span />
@@ -203,6 +216,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             completed={progress.completed}
             isLast={!next}
             nextHref={finishHref}
+            skipHref={skipHref}
           />
         </article>
       </StageLayout>
@@ -239,13 +253,13 @@ function StageList({
         const label = (
           <>
             <span aria-hidden="true" className="w-5 shrink-0 text-center">
-              {access === "completed" ? "✓" : access === "locked" ? "🔒" : "▶"}
+              {access === "completed" ? "✓" : access === "locked" ? "🔒" : access === "upcoming" ? "○" : "▶"}
             </span>
             <span className="min-w-0">
               {s.number}. {s.title}
             </span>
             <span className="sr-only">
-              {access === "completed" ? " (완료)" : access === "locked" ? " (잠김)" : " (진행할 차례)"}
+              {access === "completed" ? " (완료)" : access === "locked" ? " (잠김)" : access === "upcoming" ? " (미완료)" : " (진행할 차례)"}
             </span>
           </>
         );
@@ -272,7 +286,7 @@ function StageList({
         );
       })}
       <li className="mt-2 border-t border-[var(--border-hairline)] pt-2">
-        {status.allSectionsDone || isAdmin ? (
+        {status.finaleOpen || isAdmin ? (
           <Link href={`/weeks/${slug}/worksheet`} className="flex gap-2 rounded-md px-2 py-1 text-sm text-ink-secondary hover:bg-[var(--surface-card-2)]">
             <span aria-hidden="true" className="w-5 text-center">✎</span>
             백지공부 · 과제

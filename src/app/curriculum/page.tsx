@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/dal";
 import { gatedHref } from "@/lib/returnPath";
 import LearningCycle from "@/components/LearningCycle";
+import DifficultyBadge from "@/components/DifficultyBadge";
 
 export const metadata: Metadata = { title: "커리큘럼" };
 
@@ -33,7 +34,10 @@ export default async function CurriculumPage() {
           <thead>
             <tr className="bg-[var(--surface-card-2)]">
               {["주차", "주제", "핵심 개념", "난이도", ""].map((h) => (
-                <th key={h} className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">
+                <th
+                  key={h}
+                  className={`border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink ${h === "핵심 개념" ? "hidden sm:table-cell" : ""}`}
+                >
                   {h}
                 </th>
               ))}
@@ -44,10 +48,12 @@ export default async function CurriculumPage() {
               <tr key={w.slug} className="even:bg-[var(--surface-card-2)]/40">
                 <td className="border-b border-[var(--border-hairline)] px-3 py-2 font-bold">{w.number}</td>
                 <td className="border-b border-[var(--border-hairline)] px-3 py-2">{w.title}</td>
-                <td className="border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary">
+                <td className="hidden border-b border-[var(--border-hairline)] px-3 py-2 text-ink-secondary sm:table-cell">
                   {w.keywords.join(" · ")}
                 </td>
-                <td className="border-b border-[var(--border-hairline)] px-3 py-2">{"★".repeat(w.difficulty)}</td>
+                <td className="border-b border-[var(--border-hairline)] px-3 py-2">
+                  <DifficultyBadge level={w.difficulty} compact />
+                </td>
                 <td className="w-[72px] border-b border-[var(--border-hairline)] px-3 py-2">
                   <Link
                     href={gatedHref(!!user, `/weeks/${w.slug}`)}
@@ -63,6 +69,10 @@ export default async function CurriculumPage() {
           </tbody>
         </table>
       </div>
+      <p className="-mt-7 mb-10 text-xs text-ink-muted">
+        난이도: <strong>보통</strong> 고등학교 수학과 Python 기초로 따라갈 수 있음 · <strong>어려움</strong> 수식 유도와 구현을 직접 따라가야 함 ·{" "}
+        <strong>매우 어려움</strong> 추상적인 개념과 스스로 실험·조사할 부분이 많음
+      </p>
 
       <Markdown source={syllabus.rhythmMd} />
       <Markdown source={syllabus.evaluationMd} />

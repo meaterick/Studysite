@@ -28,7 +28,7 @@ async function loadAssignmentContext(slug: string) {
   const week = getWeek(slug);
   if (!week) throw new Error("NOT_FOUND");
   const status = weekStatus(week, getLearningRecord(user.id));
-  if (!status.allSectionsDone && user.role !== "admin") throw new Error("SECTIONS_NOT_DONE");
+  if (!status.finaleOpen && user.role !== "admin") throw new Error("SECTIONS_NOT_DONE");
   return { user, week };
 }
 

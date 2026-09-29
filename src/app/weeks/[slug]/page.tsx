@@ -13,6 +13,7 @@ export function generateStaticParams() {
 const ACCESS_STYLE = {
   completed: { icon: "✓", label: "완료", ring: "var(--status-good)" },
   current: { icon: "▶", label: "진행할 차례", ring: "var(--series-blue)" },
+  upcoming: { icon: "○", label: "미완료", ring: "var(--border-strong)" },
   locked: { icon: "🔒", label: "잠김", ring: "var(--border-strong)" },
 } as const;
 
@@ -119,8 +120,11 @@ export default async function WeekOverviewPage({
             </p>
           </div>
           <p className="mb-4 text-sm text-ink-muted">
-            각 단계는 <strong>학습 → 실습 → 확인 문제</strong> 순서로 진행하며, 확인 문제를 모두 마치면 다음 단계가 열립니다.
-            {isAdmin && " 운영자는 잠금과 관계없이 모든 단계를 열람할 수 있습니다."}
+            각 단계는 <strong>학습 → 실습 → 확인 문제</strong> 순서로 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다.
+            {status.mode === "warn"
+              ? " 순서대로 학습하는 것을 권장하지만, 필요하면 끝내지 않은 단계를 건너뛰고 먼저 볼 수도 있습니다."
+              : " 앞 단계를 마쳐야 다음 단계가 열립니다."}
+            {isAdmin && status.mode === "lock" && " 운영자는 잠금과 관계없이 모든 단계를 열람할 수 있습니다."}
           </p>
           <ol className="space-y-2">
             {status.sections.map(({ section, access, progress }) => {
@@ -177,11 +181,17 @@ export default async function WeekOverviewPage({
 
         <section aria-labelledby="finale-heading">
           <h2 id="finale-heading" className="mb-1 text-xl font-black text-ink">마무리: 백지공부 · 과제</h2>
-          <p className="mb-4 text-sm text-ink-muted">이번 주의 모든 단계를 마치면 열립니다.</p>
+          <p className="mb-4 text-sm text-ink-muted">
+            {status.mode === "lock"
+              ? "이번 주의 모든 단계를 마치면 열립니다."
+              : status.allSectionsDone
+                ? "모든 단계를 마쳤습니다. 백지공부로 떠올려 본 뒤 과제를 진행하십시오."
+                : `모든 단계를 마친 뒤에 하는 것을 권장합니다. 아직 끝내지 않은 단계가 ${status.sectionsTotal - status.sectionsDone}개 있지만 지금 열어 볼 수 있습니다.`}
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <FinaleCard
               href={`/weeks/${slug}/worksheet`}
-              locked={!status.allSectionsDone && !isAdmin}
+              locked={!status.finaleOpen && !isAdmin}
               title="백지공부"
               desc="자료를 보지 않고 핵심 내용을 떠올려 적은 뒤, 학습 자료와 비교해 부족한 부분을 찾습니다."
               state={status.worksheetSubmitted ? "제출 완료" : "미작성"}
@@ -189,7 +199,7 @@ export default async function WeekOverviewPage({
             />
             <FinaleCard
               href={`/weeks/${slug}/assignment`}
-              locked={!status.allSectionsDone && !isAdmin}
+              locked={!status.finaleOpen && !isAdmin}
               title="과제"
               desc={`${week.dueNote}. 코드 실행부터 보고서 작성, 제출까지 이 사이트에서 모두 진행하며, 운영자가 채점하고 피드백을 남깁니다.`}
               state={

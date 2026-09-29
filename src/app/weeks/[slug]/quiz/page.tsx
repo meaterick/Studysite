@@ -47,7 +47,7 @@ export default async function WeekReviewPage({ params }: { params: Promise<{ slu
                   {section.number}단계 · {section.title}
                 </span>
                 <span className="ml-2 text-xs text-ink-muted">
-                  {access === "locked" ? "잠김" : access === "completed" ? "완료" : "진행 중"}
+                  {access === "locked" ? "잠김" : access === "completed" ? "완료" : access === "upcoming" ? "미완료" : "진행 중"}
                   {weakCount > 0 && <span className="ml-1 font-bold text-[var(--status-critical)]">· 다시 볼 문항 {weakCount}</span>}
                 </span>
               </summary>

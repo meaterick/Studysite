@@ -8,6 +8,7 @@ export const metadata = { title: "운영자 대시보드" };
 const LINKS = [
   { href: "/operator/submissions", title: "과제 채점", desc: "제출된 주차별 과제를 채점 기준별로 채점하고, 피드백을 남기거나 재제출을 요청합니다." },
   { href: "/operator/chat", title: "채팅", desc: "스터디원과 과제·학습에 관한 메시지를 실시간으로 주고받습니다." },
+  { href: "/operator/settings", title: "운영 설정", desc: "단계 진행 방식(미완료 경고 / 잠금)과 주차별 과제 마감일" },
   { href: "/operator/guide", title: "운영 가이드", desc: "운영 원칙, 준비 체크리스트, 세션 시나리오, 채점 루브릭, 위기 대응 매뉴얼" },
   { href: "/operator/quiz-answers", title: "과제 모범 방향", desc: "W1~W8 과제 채점 시 참고할 모범 방향과 서술형 문항 모범답안 전체 (채점 화면에도 함께 표시됩니다)" },
   { href: "/operator/quality-log", title: "품질 검토·개선 로그", desc: "자체 검토 결과, 알려진 한계, 매주 개선 절차, 변경 기록" },

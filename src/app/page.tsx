@@ -11,7 +11,8 @@ import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
 
-// 메인 화면: 네 장면(소개 → 학습 방법 → 8주 커리큘럼 → 수료)이 하나의 3D 공간 안에서 이어진다.
+// 메인 화면: 다섯 장면(소개 → 대상 → 학습 방법 → 8주 커리큘럼 → 수료)이 하나의 3D 공간 안에서 이어진다.
+// 첫 화면에는 과정을 고를 때 필요한 정보(비용·대상, 주당 시간, 선수 지식)를 요약해 둔다.
 // 색은 거의 흑백으로 두고 강조색 하나만 쓰며, 여백과 얇은 선, 글자 크기 차이로 위계를 만든다.
 
 const PHASES = [
@@ -35,6 +36,17 @@ const OUTCOMES = [
   "프롬프트, RAG, 에이전트로 문제를 해결하고, 평가 데이터셋으로 성능을 측정할 수 있습니다.",
 ];
 
+// 과제·백지공부에 드는 시간(예상). 단계 학습 시간은 콘텐츠 분량으로 계산한다.
+const ASSIGNMENT_HOURS = { min: 2, max: 3 };
+const WORKSHEET_HOURS = 0.5;
+
+const BUILDS = [
+  "직접 만든 자동미분 엔진으로 학습시킨 MLP",
+  "Self-Attention부터 쌓아 올린 나만의 미니 GPT 블록",
+  "RAG로 답하는 스터디 QA 봇과 그 성능 평가 리포트",
+  "주제를 골라 끝까지 완성하는 캡스톤 프로젝트",
+];
+
 function Label({ children }: { children: ReactNode }) {
   return <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[var(--j-3)]">{children}</p>;
 }
@@ -48,6 +60,12 @@ export default async function Home() {
   };
   const totalStages = WEEKS.reduce((n, w) => n + getWeekOutline(w).sections.length, 0);
   const codeCells = WEEKS.reduce((n, w) => n + (w.conceptsMd.match(/^```python\s*$/gm)?.length ?? 0), 0);
+  // 주당 예상 시간 = 단계 학습(콘텐츠 분량으로 계산) + 백지공부 + 과제
+  const studyHours = WEEKS.map((w) => getWeekOutline(w).sections.reduce((sum, s) => sum + s.minutes, 0) / 60);
+  const weeklyMin = Math.floor(Math.min(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.min);
+  const weeklyMax = Math.ceil(Math.max(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.max);
+  const studyMin = Math.floor(Math.min(...studyHours));
+  const studyMax = Math.ceil(Math.max(...studyHours));
 
   const scenes: JourneyScene[] = [
     // ── 01 소개 ───────────────────────────────────────────────
@@ -65,6 +83,18 @@ export default async function Home() {
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[var(--j-2)] sm:text-lg">
             수학 기초부터 LLM 에이전트까지, 8주 동안 직접 코드를 작성하며 배웁니다.
           </p>
+          <ul className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-2 text-[13px] text-[var(--j-1)] sm:text-sm">
+            {[
+              "무료 · 누구나 이용 가능",
+              `주 ${weeklyMin}~${weeklyMax}시간`,
+              "Python 기초 + 고등학교 수학",
+              "설치 없이 브라우저에서 실습",
+            ].map((t) => (
+              <li key={t} className="rounded-full border border-[var(--j-line)] bg-white/5 px-3 py-1">
+                {t}
+              </li>
+            ))}
+          </ul>
           <div className="mx-auto mt-10 max-w-sm">
             <Suspense fallback={<div className="h-14 w-full rounded-full bg-white/5" />}>
               <HomeCta tone="minimal" />
@@ -90,13 +120,65 @@ export default async function Home() {
       ),
     },
 
-    // ── 02 학습 방법 ──────────────────────────────────────────
+    // ── 02 이런 분께(선택에 필요한 정보) ─────────────────────
+    {
+      id: "fit",
+      label: "대상",
+      content: (
+        <div className="mx-auto max-w-5xl">
+          <Label>01 — Is it for me?</Label>
+          <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
+            시작하기 전에
+            <br />
+            <span className="j-gradient">확인할 것.</span>
+          </h2>
+          <dl className="mt-8 grid border-t border-[var(--j-line)] sm:mt-10 sm:grid-cols-2">
+            {[
+              {
+                q: "누구를 위한 과정인가요?",
+                a: "AI를 '쓰는 것'을 넘어 원리부터 이해하고 싶은 대학생·입문 개발자. AI를 처음 공부하거나, 라이브러리만 써 봐서 속이 궁금한 사람에게 맞춥니다.",
+              },
+              {
+                q: "무엇을 알고 시작해야 하나요?",
+                a: "Python 기초 문법(변수·함수·리스트·반복문)과 고등학교 수준의 미분·확률. 부족한 수학은 1주차에서 벡터·확률·미분부터 다시 다룹니다.",
+              },
+              {
+                q: "일주일에 얼마나 걸리나요?",
+                a: `주 ${weeklyMin}~${weeklyMax}시간: 단계 학습 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). 뒤 주차로 갈수록 과제 비중이 커집니다.`,
+              },
+              {
+                q: "비용이 드나요? 누가 이용할 수 있나요?",
+                a: "무료이며 동아리원이 아니어도 누구나 Google 계정으로 가입해 이용할 수 있습니다. 코드는 브라우저에서 실행되어 설치할 것이 없습니다.",
+              },
+            ].map((item) => (
+              <div key={item.q} className="border-b border-[var(--j-line)] py-4 sm:pr-8">
+                <dt className="text-base font-semibold text-white sm:text-lg">{item.q}</dt>
+                <dd className="mt-1.5 text-sm leading-relaxed text-[var(--j-2)] sm:text-[15px]">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-6">
+            <p className="text-base font-semibold text-white sm:text-lg">수료하면 무엇을 만들 수 있나요?</p>
+            <ul className="mt-2 grid gap-x-8 gap-y-1.5 text-sm text-[var(--j-2)] sm:grid-cols-2 sm:text-[15px]">
+              {BUILDS.map((b) => (
+                <li key={b} className="flex gap-2">
+                  <span aria-hidden="true" className="text-[var(--journey-accent)]">→</span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ),
+    },
+
+    // ── 03 학습 방법 ──────────────────────────────────────────
     {
       id: "cycle",
       label: "학습 방법",
       content: (
         <div className="mx-auto max-w-5xl">
-          <Label>01 — Method</Label>
+          <Label>02 — Method</Label>
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             한 주는 네 단계로
             <br />
@@ -113,7 +195,7 @@ export default async function Home() {
             ))}
           </ol>
           <p className="mt-6 text-sm text-[var(--j-3)]">
-            단계마다 학습 → 실습 → 확인 문제를 마치면 다음 단계가 열리고, 모든 단계를 마치면 백지공부와 과제가 열립니다.
+            단계마다 학습 → 실습 → 확인 문제 순서로 진행하고, 모든 단계를 마친 뒤 백지공부와 과제로 한 주를 마무리합니다.
           </p>
         </div>
       ),
@@ -127,7 +209,7 @@ export default async function Home() {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <Label>02 — Curriculum</Label>
+              <Label>03 — Curriculum</Label>
               <h2 className="mt-4 text-3xl font-bold tracking-[-0.02em] text-white sm:text-5xl">8주 커리큘럼</h2>
             </div>
             <Link href="/curriculum" className="text-sm text-[var(--j-2)] underline-offset-4 transition hover:text-white hover:underline">
@@ -185,7 +267,7 @@ export default async function Home() {
       label: "수료",
       content: (
         <div className="mx-auto max-w-5xl">
-          <Label>03 — Outcomes</Label>
+          <Label>04 — Outcomes</Label>
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             8주 뒤,
             <br />
