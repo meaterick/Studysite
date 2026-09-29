@@ -9,8 +9,6 @@ const OAUTH_STATE_TTL_SECONDS = 10 * 60;
 type GoogleOAuthState = {
   nonce: string;
   returnPath: string;
-  intent: "sign_in" | "delete_account";
-  deleteUserId?: string;
 };
 
 function secretKey(): Uint8Array {
@@ -26,16 +24,10 @@ export function getGoogleOAuthConfig() {
   return clientId && clientSecret ? { clientId, clientSecret } : null;
 }
 
-export async function createGoogleOAuthState(
-  returnPath: string,
-  intent: GoogleOAuthState["intent"] = "sign_in",
-  deleteUserId?: string
-): Promise<string> {
+export async function createGoogleOAuthState(returnPath: string): Promise<string> {
   const payload: GoogleOAuthState = {
     nonce: crypto.randomBytes(32).toString("base64url"),
     returnPath: safeReturnPath(returnPath),
-    intent,
-    ...(deleteUserId ? { deleteUserId } : {}),
   };
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
@@ -47,20 +39,8 @@ export async function createGoogleOAuthState(
 export async function verifyGoogleOAuthState(token: string): Promise<GoogleOAuthState | null> {
   try {
     const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
-    if (
-      typeof payload.nonce !== "string" ||
-      typeof payload.returnPath !== "string" ||
-      (payload.intent !== "sign_in" && payload.intent !== "delete_account") ||
-      (payload.deleteUserId !== undefined && typeof payload.deleteUserId !== "string")
-    ) {
-      return null;
-    }
-    return {
-      nonce: payload.nonce,
-      returnPath: safeReturnPath(payload.returnPath),
-      intent: payload.intent,
-      deleteUserId: payload.deleteUserId,
-    };
+    if (typeof payload.nonce !== "string" || typeof payload.returnPath !== "string") return null;
+    return { nonce: payload.nonce, returnPath: safeReturnPath(payload.returnPath) };
   } catch {
     return null;
   }
