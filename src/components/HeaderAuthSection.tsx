@@ -31,6 +31,14 @@ export default async function HeaderAuthSection() {
           운영자
         </Link>
       )}
+      {user && (
+        <Link
+          href="/progress"
+          className="whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
+        >
+          내 진도
+        </Link>
+      )}
       {user && user.role !== "admin" && (
         <Link
           href="/feedback"
