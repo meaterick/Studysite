@@ -5,12 +5,12 @@ import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import Workspace from "@/components/assignment/Workspace";
 import NotebookView from "@/components/assignment/NotebookView";
-import AssignmentThread from "@/components/assignment/AssignmentThread";
+import Link from "next/link";
 import { GradeView, SubmissionVersionView } from "@/components/SubmissionView";
 import { loadWeekPage } from "@/lib/weekPage";
 import { latestGrade, latestVersion, readNotebook } from "@/lib/submissionStore";
 import { readDraft } from "@/lib/assignmentDraftStore";
-import { findThread, unreadCount } from "@/lib/threadStore";
+import { findConversation, unreadCount } from "@/lib/chatStore";
 import { mergeDraft } from "@/lib/notebook";
 import { courseDocFiles, notebookViewTasks, workspaceTasks } from "@/lib/assignmentView";
 import { ASSIGNMENT_STATUS_LABEL } from "@/lib/study";
@@ -32,8 +32,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
   const savedDraft = readDraft(user.id, slug);
   const fallback = !savedDraft && submission && latest ? readNotebook(submission, latest) : undefined;
   const draft = mergeDraft(spec, savedDraft ?? fallback);
-  const thread = findThread(user.id, slug);
-  const unread = unreadCount(thread, "member");
+  const unread = unreadCount(findConversation(user.id), "member");
   const viewTasks = notebookViewTasks(spec, false);
   const courseDocs = courseDocFiles(spec);
 
@@ -72,13 +71,11 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
               )}
             </div>
           )}
-          {unread > 0 && (
-            <p className="mt-3 text-sm font-bold text-[var(--series-orange)]">
-              <a href="#thread" className="hover:underline">
-                운영자의 새 메시지가 {unread}개 있습니다 →
-              </a>
-            </p>
-          )}
+          <p className="mt-3 text-sm">
+            <Link href="/chat" className="font-bold text-[var(--series-blue)] hover:underline">
+              {unread > 0 ? `운영자의 새 메시지 ${unread}개 확인하기 →` : "과제하다 막히면 운영자에게 채팅으로 질문하기 →"}
+            </Link>
+          </p>
         </section>
 
         <section aria-labelledby="overview-heading">
@@ -134,18 +131,6 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
           />
         </section>
 
-        <section id="thread" aria-labelledby="thread-heading" className="scroll-mt-24">
-          <h2 id="thread-heading" className="mb-1 text-xl font-black text-ink">
-            질문과 피드백
-          </h2>
-          <p className="mb-4 text-sm text-ink-muted">운영자와 과제에 관한 메시지를 주고받습니다. 다른 스터디원에게는 보이지 않습니다.</p>
-          <AssignmentThread
-            slug={slug}
-            viewer="member"
-            unread={unread}
-            messages={(thread?.messages ?? []).map((m) => ({ id: m.id, authorName: m.authorName, role: m.role, text: m.text, createdAt: m.createdAt }))}
-          />
-        </section>
 
         {submission && (
           <section aria-labelledby="history-heading">

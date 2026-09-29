@@ -15,9 +15,8 @@ import {
   SUBMISSION_LIMITS,
   type IncomingFile,
 } from "./submissionStore";
-import { markThreadRead, postMessage, THREAD_LIMITS } from "./threadStore";
 
-// 과제 작업 공간·제출·질문·채점 액션. 모든 액션은 브라우저에서 임의로 호출될 수 있으므로
+// 과제 작업 공간·제출·채점 액션. 모든 액션은 브라우저에서 임의로 호출될 수 있으므로
 // 로그인, 과제 열림 여부(모든 단계 완료), 입력값을 여기서 다시 검증한다.
 
 async function loadAssignmentContext(slug: string) {
@@ -109,35 +108,6 @@ export async function submitAssignmentWork(slug: string, formData: FormData): Pr
   await saveSubmission({ userId: user.id, weekSlug: slug, text, links, files, notebook: draft });
   refresh();
   return { ok: true };
-}
-
-/** 과제 질문·피드백 대화에 메시지를 남긴다. 운영자는 targetUserId로 스터디원의 대화를 지정한다. */
-export async function sendAssignmentMessage(slug: string, text: string, targetUserId?: string): Promise<ActionResult> {
-  const body = String(text ?? "").trim();
-  if (!body) return { ok: false, error: "메시지를 입력해 주십시오." };
-  if (body.length > THREAD_LIMITS.messageMax) {
-    return { ok: false, error: `메시지는 ${THREAD_LIMITS.messageMax.toLocaleString()}자 이내로 작성해 주십시오.` };
-  }
-  if (targetUserId) {
-    const admin = await requireAdmin("/operator/submissions");
-    if (!getWeek(slug)) return { ok: false, error: "존재하지 않는 주차입니다." };
-    await postMessage({ userId: targetUserId, weekSlug: slug, author: { id: admin.id, name: admin.name, role: "admin" }, text: body });
-  } else {
-    const { user } = await loadAssignmentContext(slug);
-    await postMessage({ userId: user.id, weekSlug: slug, author: { id: user.id, name: user.name, role: "member" }, text: body });
-  }
-  refresh();
-  return { ok: true };
-}
-
-export async function markAssignmentThreadRead(slug: string, targetUserId?: string): Promise<void> {
-  if (targetUserId) {
-    await requireAdmin("/operator/submissions");
-    await markThreadRead(targetUserId, slug, "admin");
-  } else {
-    const user = await requireUser(`/weeks/${slug}/assignment`);
-    await markThreadRead(user.id, slug, "member");
-  }
 }
 
 export interface GradeInput {

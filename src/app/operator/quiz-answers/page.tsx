@@ -10,10 +10,9 @@ export default async function QuizAnswersPage() {
   await requireAdmin("/operator/quiz-answers");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <p className="mb-2 text-sm font-bold text-[var(--series-orange)]">운영자 전용 · 스터디원에게 공유 금지</p>
       <h1 className="mb-2 text-3xl font-black text-ink">정답·과제 모범 방향</h1>
       <p className="mb-8 text-sm text-ink-muted">
-        주차별 과제 모범 방향과, 단계별 확인 문제(객관식) 정답·서술형 모범답안 전체입니다. 스터디원에게는 문제를 푼 뒤에만 해당 정답이 공개됩니다.
+        주차별 과제 모범 방향과, 단계별 확인 문제(객관식) 정답·서술형 모범답안 전체입니다.
       </p>
 
       <div className="space-y-6">

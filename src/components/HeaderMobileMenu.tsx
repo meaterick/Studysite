@@ -43,7 +43,7 @@ function MobileMenuPanel({ children }: { children: ReactNode }) {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative sm:hidden">
+    <div ref={rootRef} className="relative md:hidden">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "메뉴 닫기" : "메뉴 열기"}

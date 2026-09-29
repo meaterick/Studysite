@@ -29,8 +29,7 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <Link href="/operator/members" className="text-sm font-bold text-[var(--series-orange)] hover:underline">← 스터디원 관리</Link>
-      <p className="mt-5 text-sm font-bold text-[var(--series-orange)]">운영자 전용</p>
-      <h1 className="mt-1 text-3xl font-black text-ink">{member.name}님의 학습 현황</h1>
+      <h1 className="mt-5 text-3xl font-black text-ink">{member.name}님의 학습 현황</h1>
       <p className="mt-2 text-sm text-ink-secondary">{member.email} · 가입일 {formatDate(member.createdAt)}</p>
 
       <div className="my-8 grid gap-3 sm:grid-cols-3">

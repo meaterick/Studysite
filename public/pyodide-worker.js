@@ -8,6 +8,62 @@
 const PYODIDE_VERSION = "v0.29.5";
 const PYODIDE_CDN = `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/`;
 
+// ─── 네트워크 차단 ─────────────────────────────────────────────────────
+// 이 워커는 사이트와 같은 출처에서 돌기 때문에, 막지 않으면 Python 코드가 `from js import fetch`
+// 등으로 로그인 쿠키가 실린 요청을 사이트에 보낼 수 있다. 운영자가 스터디원의 제출본을 다시 실행할 때
+// 그 코드가 운영자 권한으로 서버 액션(채점 등)을 호출하거나 운영자 화면을 읽어 가지 못하도록,
+// Pyodide CDN 말고는 어떤 네트워크 요청도, 다른 워커 생성도 할 수 없게 한다.
+// (응답 헤더의 Content-Security-Policy(next.config.ts)가 브라우저 수준에서 같은 제한을 한 번 더 건다.)
+(function lockDownNetwork() {
+  const nativeFetch = self.fetch.bind(self);
+  const nativeImportScripts = self.importScripts.bind(self);
+  const allowed = (url) => {
+    try {
+      return new URL(String(url), PYODIDE_CDN).href.startsWith(PYODIDE_CDN);
+    } catch {
+      return false;
+    }
+  };
+  const blocked = (name) =>
+    function () {
+      throw new Error(`${name} is disabled in this sandbox`);
+    };
+  const guards = {
+    fetch(input, init) {
+      const url = typeof input === "string" || input instanceof URL ? input : input && input.url;
+      if (!allowed(url)) return Promise.reject(new TypeError("Network access is disabled in this sandbox"));
+      // 인증 정보(쿠키)는 절대 싣지 않는다.
+      return nativeFetch(input, { ...(init || {}), credentials: "omit" });
+    },
+    importScripts(...urls) {
+      if (!urls.every(allowed)) throw new Error("importScripts is disabled in this sandbox");
+      return nativeImportScripts(...urls);
+    },
+    XMLHttpRequest: blocked("XMLHttpRequest"),
+    WebSocket: blocked("WebSocket"),
+    EventSource: blocked("EventSource"),
+    Worker: blocked("Worker"),
+    SharedWorker: blocked("SharedWorker"),
+    BroadcastChannel: blocked("BroadcastChannel"),
+    WebTransport: blocked("WebTransport"),
+    fetchLater: blocked("fetchLater"),
+    caches: undefined,
+    indexedDB: undefined,
+  };
+  for (const [name, value] of Object.entries(guards)) {
+    // 프로토타입 체인에 원본이 남아 있으면 Object.getPrototypeOf(self).fetch로 되찾을 수 있으므로 모두 덮는다.
+    for (let obj = self; obj; obj = Object.getPrototypeOf(obj)) {
+      if (obj === self || Object.prototype.hasOwnProperty.call(obj, name)) {
+        try {
+          Object.defineProperty(obj, name, { value, writable: false, configurable: false, enumerable: false });
+        } catch {
+          // 이미 설정할 수 없는 속성이면 건너뛴다.
+        }
+      }
+    }
+  }
+})();
+
 let pyodideReadyPromise = null;
 const namespaces = new Map();
 

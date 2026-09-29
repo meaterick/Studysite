@@ -8,7 +8,6 @@ export default async function QualityLogPage() {
   await requireAdmin("/operator/quality-log");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <p className="mb-2 text-sm font-bold text-[var(--series-orange)]">운영자 전용</p>
       <h1 className="mb-2 text-3xl font-black text-ink">{qualityLog.title}</h1>
       <p className="mb-8 text-sm italic text-ink-secondary">{qualityLog.subtitle}</p>
       <Markdown source={qualityLog.md} />
