@@ -57,7 +57,7 @@ export default function GradeForm({
         {alreadyGraded && <p className="mt-1 text-xs text-ink-muted">이미 채점한 제출본입니다. 다시 저장하면 새 채점 기록이 추가됩니다.</p>}
       </div>
 
-      <fieldset className="space-y-2">
+      <fieldset className="min-w-0 space-y-2">
         <legend className="text-sm font-bold text-ink">채점 기준별 점수 (0.5점 단위)</legend>
         {rubric.map((c) => (
           <div key={c.id} className="rounded-md border border-[var(--border-hairline)] px-3 py-2">
