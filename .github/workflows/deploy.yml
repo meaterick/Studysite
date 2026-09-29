@@ -185,9 +185,9 @@ jobs:
       - name: Obtain the HTTPS certificate (first deploy only)
         # Once a certificate exists, nginx-site.sh writes the HTTPS server block itself on every
         # deploy, so HTTPS no longer drops out while certbot re-adds it. certbot's own systemd
-        # timer keeps renewing the certificate.
+        # timer keeps renewing the certificate. (/etc/letsencrypt/live is root-only, hence `sudo test`.)
         run: |
-          if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+          if sudo test -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"; then
             echo "certificate for ${DOMAIN} already present"
             exit 0
           fi
@@ -203,7 +203,7 @@ jobs:
               || echo "::warning::certbot did not succeed — check that ${DOMAIN} really points at this server's public IP and that :80 is reachable from the internet."
           fi
           # Replace certbot's edits with our managed HTTPS config (limits, HSTS) right away.
-          if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+          if sudo test -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"; then
             bash scripts/deploy/nginx-site.sh "$(cat "$DEPLOY_DIR/active-port")"
           fi
 

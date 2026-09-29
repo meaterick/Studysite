@@ -14,6 +14,12 @@ PORT="${1:?usage: nginx-site.sh <app port>}"
 CONF=/etc/nginx/sites-available/aegis-ai-study.conf
 LIVE="/etc/letsencrypt/live/${DOMAIN}"
 
+# /etc/letsencrypt/live는 root만 읽을 수 있어서, 러너 사용자로 [ -f ]를 하면 인증서가 있어도 "없음"이 된다.
+# (그러면 HTTP 전용 설정을 써서 HTTPS가 잠시 끊긴다.) 존재 확인은 sudo로 한다.
+exists() { sudo test -f "$1"; }
+HAS_CERT=0
+if exists "${LIVE}/fullchain.pem" && exists "${LIVE}/privkey.pem"; then HAS_CERT=1; fi
+
 common_server() {
   cat <<NGINX
     server_tokens off;
@@ -90,7 +96,7 @@ limit_conn_zone \$binary_remote_addr zone=aegis_conn:10m;
 limit_conn_zone \$binary_remote_addr zone=aegis_sse:10m;
 NGINX
 
-  if [ -f "${LIVE}/fullchain.pem" ] && [ -f "${LIVE}/privkey.pem" ]; then
+  if [ "$HAS_CERT" = 1 ]; then
     cat <<NGINX
 
 server {
@@ -112,8 +118,8 @@ server {
     ssl_certificate ${LIVE}/fullchain.pem;
     ssl_certificate_key ${LIVE}/privkey.pem;
 NGINX
-    [ -f /etc/letsencrypt/options-ssl-nginx.conf ] && echo "    include /etc/letsencrypt/options-ssl-nginx.conf;"
-    [ -f /etc/letsencrypt/ssl-dhparams.pem ] && echo "    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;"
+    exists /etc/letsencrypt/options-ssl-nginx.conf && echo "    include /etc/letsencrypt/options-ssl-nginx.conf;"
+    exists /etc/letsencrypt/ssl-dhparams.pem && echo "    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;"
     cat <<NGINX
     add_header Strict-Transport-Security "max-age=31536000" always;
 
@@ -155,4 +161,4 @@ fi
 sudo systemctl enable --now nginx >/dev/null 2>&1 || true
 # reload는 기존 연결을 끊지 않고 새 설정으로 넘어간다(무중단).
 sudo systemctl reload nginx
-echo "nginx -> 127.0.0.1:${PORT} ($( [ -f "${LIVE}/fullchain.pem" ] && echo https || echo http-only))"
+echo "nginx -> 127.0.0.1:${PORT} ($( [ "$HAS_CERT" = 1 ] && echo https || echo http-only))"
