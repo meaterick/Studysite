@@ -48,6 +48,7 @@ function isLearningArea(pathname: string): boolean {
   return (
     pathname === "/curriculum" ||
     pathname === "/progress" ||
+    pathname === "/chat" ||
     pathname === "/weeks" ||
     pathname.startsWith("/weeks/") ||
     /^\/images\/week\d+\//.test(pathname)
@@ -63,6 +64,7 @@ export const config = {
     "/signup",
     "/curriculum",
     "/progress",
+    "/chat",
     "/weeks",
     "/weeks/:path*",
     "/images/:path*",

@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/dal";
 import { listSubmissions, latestGrade, latestVersion, type SubmissionStatus } from "@/lib/submissionStore";
 import { listUsers } from "@/lib/userStore";
 import { WEEKS } from "@/content/weeks";
-import { listThreads, unreadCount } from "@/lib/threadStore";
+import { listConversations, unreadCount } from "@/lib/chatStore";
 import { formatDateTime } from "@/lib/datetime";
 
 export const metadata = { title: "과제 채점" };
@@ -36,8 +36,7 @@ export default async function SubmissionsPage({
   const order: Record<SubmissionStatus, number> = { submitted: 0, revision: 1, graded: 2 };
   filtered.sort((a, b) => order[a.status] - order[b.status] || a.updatedAt.localeCompare(b.updatedAt));
   const pendingCount = all.filter((s) => s.status === "submitted").length;
-  const unansweredThreads = listThreads().filter((t) => unreadCount(t, "admin") > 0);
-  const submissionByKey = new Map(all.map((s) => [`${s.userId}:${s.weekSlug}`, s]));
+  const unansweredThreads = listConversations().filter((c) => unreadCount(c, "admin") > 0);
 
   const filterHref = (next: { week?: string; status?: string }) => {
     const params = new URLSearchParams();
@@ -52,8 +51,7 @@ export default async function SubmissionsPage({
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <Link href="/operator" className="text-sm font-bold text-[var(--series-orange)] hover:underline">← 운영자 대시보드</Link>
-      <p className="mt-5 text-sm font-bold text-[var(--series-orange)]">운영자 전용</p>
-      <h1 className="mt-1 text-3xl font-black text-ink">과제 채점</h1>
+      <h1 className="mt-5 text-3xl font-black text-ink">과제 채점</h1>
       <p className="mt-2 text-sm text-ink-secondary">
         전체 제출 {all.length}건 · 채점 대기 <strong className="text-ink">{pendingCount}</strong>건 · 답변을 기다리는 질문{" "}
         <strong className="text-ink">{unansweredThreads.length}</strong>건. 채점 대기 중인 제출물이 위에, 오래 기다린 순서로 표시됩니다.
@@ -64,19 +62,17 @@ export default async function SubmissionsPage({
           <h2 id="questions-heading" className="text-sm font-black text-ink">답변을 기다리는 질문</h2>
           <ul className="mt-2 space-y-2 text-sm">
             {unansweredThreads.map((t) => {
-              const w = WEEKS.find((x) => x.slug === t.weekSlug);
               const u = users.get(t.userId);
               const last = t.messages[t.messages.length - 1];
-              const sub = submissionByKey.get(`${t.userId}:${t.weekSlug}`);
               return (
-                <li key={`${t.userId}:${t.weekSlug}`} className="flex flex-wrap items-baseline justify-between gap-2">
+                <li key={t.userId} className="flex flex-wrap items-baseline justify-between gap-2">
                   <span className="min-w-0">
                     <strong className="text-ink">{u?.name ?? "(탈퇴한 사용자)"}</strong>
-                    <span className="text-ink-muted"> · {w?.number}주차 · {formatDateTime(t.updatedAt)}</span>
+                    <span className="text-ink-muted"> · {formatDateTime(t.updatedAt)}</span>
                     <span className="block truncate text-ink-secondary">{last?.text.slice(0, 120)}</span>
                   </span>
                   <Link
-                    href={sub ? `/operator/submissions/${sub.id}#thread-heading` : `/operator/threads/${t.userId}/${t.weekSlug}`}
+                    href={`/operator/chat/${t.userId}`}
                     className="shrink-0 rounded-md bg-[var(--series-orange)] px-3 py-1 text-xs font-bold text-white hover:opacity-90"
                   >
                     답변하기

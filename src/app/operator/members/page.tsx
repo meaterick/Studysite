@@ -41,7 +41,6 @@ export default async function MembersPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <p className="mb-2 text-sm font-bold text-[var(--series-orange)]">운영자 전용</p>
       <h1 className="mb-2 text-3xl font-black text-ink">스터디원 관리</h1>
       <p className="mb-8 text-sm text-ink-secondary">
         총 {members.length}명 가입 · 관리자 {adminCount}명. 단계 진도·과제 현황을 확인하고 계정 삭제만 할 수 있습니다.

@@ -5,7 +5,7 @@ import { findSubmission, latestGrade, latestVersion, readNotebook } from "@/lib/
 import { findUserById } from "@/lib/userStore";
 import { getLearningRecord, readWorksheetState } from "@/lib/learningStore";
 import { weekStatus } from "@/lib/study";
-import { findThread, unreadCount } from "@/lib/threadStore";
+import { findConversation, unreadCount } from "@/lib/chatStore";
 import { courseDocFiles, notebookViewTasks } from "@/lib/assignmentView";
 import { getWeek } from "@/content/weeks";
 import { quizAnswers } from "@/content/quizAnswers";
@@ -13,7 +13,8 @@ import { Inline } from "@/components/MarkdownBlocks";
 import { GradeView, SubmissionVersionView } from "@/components/SubmissionView";
 import NotebookView from "@/components/assignment/NotebookView";
 import GradeForm from "@/components/assignment/GradeForm";
-import AssignmentThread from "@/components/assignment/AssignmentThread";
+import ChatPanel from "@/components/chat/ChatPanel";
+import { conversationView } from "@/lib/chatView";
 import { formatDateTime } from "@/lib/datetime";
 
 export const metadata = { title: "과제 채점" };
@@ -34,7 +35,8 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
   const grade = latestGrade(submission);
   const sampleDirection = quizAnswers.find((a) => a.week === week.number)?.sampleDirection;
   const notebook = readNotebook(submission, latest);
-  const thread = findThread(submission.userId, week.slug);
+  const conversation = findConversation(submission.userId);
+  const unread = unreadCount(conversation, "admin");
   const viewTasks = notebookViewTasks(spec, true);
   const courseDocs = courseDocFiles(spec);
   const currentGrade = grade && grade.version === latest.version ? grade : undefined;
@@ -45,7 +47,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
         ← 과제 채점 목록
       </Link>
       <p className="mt-5 text-sm font-bold text-[var(--series-orange)]">
-        운영자 전용 · {week.number}주차 {spec.title}
+        {week.number}주차 {spec.title}
       </p>
       <h1 className="mt-1 text-3xl font-black text-ink">{student?.name ?? "(탈퇴한 사용자)"}님의 과제</h1>
       <p className="mt-2 text-sm text-ink-secondary">
@@ -57,6 +59,10 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
             <Link href={`/operator/members/${student.id}`} className="font-bold text-[var(--series-orange)] hover:underline">
               학습 현황 보기
             </Link>
+            {" · "}
+            <a href="#chat-heading" className="font-bold text-[var(--series-orange)] hover:underline">
+              채팅{unread > 0 ? ` (새 메시지 ${unread})` : ""}
+            </a>
           </>
         )}
       </p>
@@ -124,23 +130,31 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
 
           {sampleDirection && (
             <section className="rounded-xl border border-dashed border-[var(--series-orange)] p-4 text-sm text-ink-secondary">
-              <p className="mb-1 text-xs font-bold text-[var(--series-orange)]">채점 참고: 모범 답안 방향 (운영자 전용)</p>
+              <p className="mb-1 text-xs font-bold text-[var(--series-orange)]">채점 참고: 모범 답안 방향</p>
               <Inline text={sampleDirection} />
             </section>
           )}
 
-          <section aria-labelledby="thread-heading">
-            <h2 id="thread-heading" className="mb-3 text-lg font-black text-ink">
-              질문과 피드백
-            </h2>
-            <AssignmentThread
-              slug={week.slug}
-              viewer="admin"
-              targetUserId={submission.userId}
-              unread={unreadCount(thread, "admin")}
-              messages={(thread?.messages ?? []).map((m) => ({ id: m.id, authorName: m.authorName, role: m.role, text: m.text, createdAt: m.createdAt }))}
-            />
-          </section>
+          {student && (
+            <section aria-labelledby="chat-heading">
+              <div className="mb-3 flex items-baseline justify-between gap-2">
+                <h2 id="chat-heading" className="text-lg font-black text-ink">
+                  {student.name}님과의 채팅
+                </h2>
+                <Link href={`/operator/chat/${student.id}`} className="text-xs font-bold text-[var(--series-orange)] hover:underline">
+                  채팅 화면에서 크게 보기 →
+                </Link>
+              </div>
+              <ChatPanel
+                viewer="admin"
+                targetUserId={student.id}
+                initial={conversationView(student.id, "admin", conversation)}
+                placeholder={`${student.name}님에게 보낼 메시지`}
+                className="h-[480px]"
+              />
+            </section>
+          )}
+
         </div>
 
         <aside className="lg:sticky lg:top-20 lg:self-start">
