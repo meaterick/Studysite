@@ -144,10 +144,10 @@ export default async function WeekOverviewPage({
                     </p>
                     <p className="mt-1 text-xs text-ink-muted">
                       <span className="sr-only">{style.label} · </span>약 {section.minutes}분 · 확인 문제 {progress.checksTotal}개
-                      {progress.quizTotal > 0 && ` · 서술형 ${progress.quizTotal}개`}
+                      {progress.quizTotal > 0 && ` · 서술형 ${progress.quizTotal}개(선택)`}
                       {progress.hasPractice && " · 실습 포함"}
-                      {access === "current" && (progress.checksDone > 0 || progress.quizDone > 0) &&
-                        ` · 진행 ${progress.checksDone + progress.quizDone}/${progress.checksTotal + progress.quizTotal}`}
+                      {access === "current" && progress.checksDone > 0 &&
+                        ` · 확인 문제 ${progress.checksDone}/${progress.checksTotal}`}
                     </p>
                   </div>
                   <span className="shrink-0 text-xs font-bold" style={{ color: access === "locked" ? "var(--text-muted)" : style.ring }}>

@@ -54,7 +54,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
   const requirements = [
     { label: "확인 문제", done: progress.checksDone, total: progress.checksTotal },
-    ...(progress.quizTotal > 0 ? [{ label: "서술형", done: progress.quizDone, total: progress.quizTotal }] : []),
+    ...(progress.quizTotal > 0 ? [{ label: "서술형", done: progress.quizDone, total: progress.quizTotal, optional: true }] : []),
   ];
 
   let finishHref: string | undefined;
@@ -118,7 +118,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             <StepHeading
               id="check-heading"
               title="확인 문제"
-              desc="객관식 문제를 모두 맞히고 서술형 문항을 작성·자기평가하면 다음 단계가 열립니다. 틀린 문제는 다시 풀 수 있습니다."
+              desc="객관식 문제를 모두 맞히면 다음 단계가 열립니다. 틀린 문제는 다시 풀 수 있습니다. 서술형 문항은 선택이지만, 직접 써 보고 모범답안과 비교하면 훨씬 오래 기억됩니다."
             />
             <div className="space-y-4">
               {section.meta.checks.map((check, i) => {

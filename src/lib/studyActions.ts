@@ -100,7 +100,7 @@ export async function completeSection(slug: string, sectionId: string) {
   const record = getLearningRecord(user.id);
   const state = ensureSectionState(record, slug, sectionId);
   if (!sectionProgress(section, state).ready) {
-    return { ok: false as const, error: "확인 문제와 서술형 문항을 모두 마친 뒤에 단계를 완료할 수 있습니다." };
+    return { ok: false as const, error: "확인 문제를 모두 맞힌 뒤에 단계를 완료할 수 있습니다." };
   }
   await updateLearningRecord(user.id, (r) => {
     const s = ensureSectionState(r, slug, sectionId);
