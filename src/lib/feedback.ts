@@ -12,6 +12,17 @@ import { findConversation, unreadCount } from "./chatStore";
 
 export type FeedbackKind = "grade" | "revision" | "chat";
 
+/** 채점 하나를 가리키는 키(과제 화면에서 확인한 채점을 기록할 때 쓴다) */
+export function gradeKey(submissionId: string, gradedAt: string): string {
+  return `${submissionId}:${gradedAt}`;
+}
+
+/** 아직 확인하지 않은 채점인지: 피드백함을 마지막으로 연 뒤에 나왔고, 과제 화면에서도 보지 않은 것 */
+export function isGradeUnseen(record: LearningRecord, submissionId: string, gradedAt: string): boolean {
+  if (gradedAt <= (record.feedbackSeenAt ?? "")) return false;
+  return !(record.seenGrades ?? []).includes(gradeKey(submissionId, gradedAt));
+}
+
 export interface FeedbackItem {
   id: string;
   kind: FeedbackKind;
@@ -50,7 +61,6 @@ export interface MemberFeedback {
 }
 
 export function memberFeedback(userId: string, record: LearningRecord): MemberFeedback {
-  const seenAt = record.feedbackSeenAt ?? "";
   const items: FeedbackItem[] = [];
   const weekBySlug = new Map(WEEKS.map((w) => [w.slug, w]));
 
@@ -61,7 +71,7 @@ export function memberFeedback(userId: string, record: LearningRecord): MemberFe
     if (!week) continue;
     for (const g of sub.grades) {
       gradesTotal++;
-      const isNew = g.gradedAt > seenAt;
+      const isNew = isGradeUnseen(record, sub.id, g.gradedAt);
       if (!isNew) gradesSeen++;
       const comments = Object.keys(g.taskComments ?? {}).length;
       items.push({

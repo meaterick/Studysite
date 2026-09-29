@@ -17,6 +17,8 @@ import { ASSIGNMENT_STATUS_LABEL } from "@/lib/study";
 import { formatDate, formatDateTime } from "@/lib/datetime";
 import { dueDateEnd, getSettings } from "@/lib/settingsStore";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
+import MarkFeedbackSeen from "@/components/feedback/MarkFeedbackSeen";
+import { isGradeUnseen } from "@/lib/feedback";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -24,13 +26,15 @@ export function generateStaticParams() {
 
 export default async function WeekAssignmentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { user, week, submission, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}/assignment`);
+  const { user, week, record, submission, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}/assignment`);
   if (!status.finaleOpen && !isAdmin) redirect(`/weeks/${slug}?locked=finale`);
 
   const spec = week.assignment;
   const dueDate = getSettings().dueDates[slug];
   const latest = submission ? latestVersion(submission) : undefined;
   const grade = submission ? latestGrade(submission) : undefined;
+  // 이 화면에서 채점 결과를 보면 피드백함 배지에서도 확인한 것으로 처리한다.
+  const hasUnseenGrade = !!submission && submission.grades.some((g) => isGradeUnseen(record, submission.id, g.gradedAt));
   const gradeIsCurrent = !!grade && !!latest && grade.version === latest.version;
   const savedDraft = readDraft(user.id, slug);
   const fallback = !savedDraft && submission && latest ? readNotebook(submission, latest) : undefined;
@@ -41,6 +45,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
 
   return (
     <WeekFrame week={week} status={status}>
+      <MarkFeedbackSeen hasNew={hasUnseenGrade} slug={slug} />
       {!isAdmin && (
         <UnfinishedWarning
           context="과제는 모든 단계를 마친 뒤에 하는 것을 권장합니다."

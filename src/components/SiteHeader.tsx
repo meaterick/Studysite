@@ -8,8 +8,8 @@ import HeaderMobileMenu from "./HeaderMobileMenu";
 const NAV = [
   { href: "/curriculum", label: "커리큘럼" },
   { href: "/weeks", label: "주차별 자료" },
-  { href: "/progress", label: "내 진도" },
 ];
+// "내 진도"는 로그인한 사용자에게만 의미가 있어 HeaderAuthSection에서 로그인 시에만 보여 준다.
 
 function AuthSkeleton() {
   return (

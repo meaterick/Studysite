@@ -58,6 +58,8 @@ export interface LearningRecord {
   quizReviews?: Record<string, Record<string, QuizReviewStatus>>;
   /** 피드백함을 마지막으로 확인한 시각. 이보다 새 채점·코멘트를 "새 피드백"으로 표시한다. */
   feedbackSeenAt?: string;
+  /** 피드백함 밖(과제 화면)에서 확인한 채점 키("<제출 id>:<채점 시각>") */
+  seenGrades?: string[];
   updatedAt?: string;
 }
 
