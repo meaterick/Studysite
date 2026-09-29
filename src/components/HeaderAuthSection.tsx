@@ -4,6 +4,7 @@ import { findConversation, unreadCount } from "@/lib/chatStore";
 import { adminUnreadTotal } from "@/lib/chatView";
 import { getLearningRecord } from "@/lib/learningStore";
 import { listUserSubmissions } from "@/lib/submissionStore";
+import { isGradeUnseen } from "@/lib/feedback";
 
 // 로그인 여부는 요청마다 쿠키를 읽어야 알 수 있는(=정적으로 미리 만들어둘 수
 // 없는) 유일한 부분이다. 이 조각만 따로 떼어 Suspense로 감싸두면, 나머지
@@ -15,10 +16,10 @@ export default async function HeaderAuthSection() {
   // 피드백함 배지: 마지막으로 피드백함을 연 뒤에 나온 채점·재제출 요청 수(채팅은 채팅 배지로 따로 보인다).
   let newGrades = 0;
   if (user && user.role !== "admin") {
-    const seenAt = getLearningRecord(user.id).feedbackSeenAt ?? "";
+    const record = getLearningRecord(user.id);
     newGrades = listUserSubmissions(user.id)
-      .flatMap((s) => s.grades)
-      .filter((g) => g.gradedAt > seenAt).length;
+      .flatMap((s) => s.grades.map((g) => ({ id: s.id, gradedAt: g.gradedAt })))
+      .filter((g) => isGradeUnseen(record, g.id, g.gradedAt)).length;
   }
 
   return (
