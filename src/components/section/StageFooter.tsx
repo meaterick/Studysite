@@ -8,11 +8,13 @@ export interface StageRequirement {
   label: string;
   done: number;
   total: number;
+  /** 선택 활동(서술형): 진행만 보여 주고 완료 조건에는 넣지 않는다. */
+  optional?: boolean;
 }
 
 /**
  * 단계 페이지 하단에 고정되는 진행 막대.
- * 긴 학습 자료를 읽는 동안에도 남은 과제(확인 문제·서술형)와 완료 버튼이 항상 보이게 한다.
+ * 긴 학습 자료를 읽는 동안에도 남은 확인 문제(필수)·서술형(선택)과 완료 버튼이 항상 보이게 한다.
  */
 export default function StageFooter({
   slug,
@@ -48,7 +50,7 @@ export default function StageFooter({
     });
   };
 
-  const remaining = requirements.filter((r) => r.done < r.total);
+  const remaining = requirements.filter((r) => !r.optional && r.done < r.total);
 
   return (
     <div className="sticky bottom-0 z-20 -mx-4 mt-10 border-t border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_97%,transparent)] px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur sm:mx-0 sm:rounded-t-xl sm:border-x print:hidden">
@@ -60,10 +62,14 @@ export default function StageFooter({
             requirements.map((r) => {
               const done = r.done >= r.total;
               return (
-                <li key={r.label} className={done ? "font-bold text-[var(--status-good)]" : "text-ink-secondary"}>
+                <li
+                  key={r.label}
+                  className={done ? "font-bold text-[var(--status-good)]" : r.optional ? "text-ink-muted" : "text-ink-secondary"}
+                >
                   <span aria-hidden="true">{done ? "✓ " : ""}</span>
                   {r.label} {r.done}/{r.total}
-                  <span className="sr-only">{done ? " (완료)" : " (미완료)"}</span>
+                  {r.optional && <span className="ml-0.5 text-xs font-medium">(선택)</span>}
+                  <span className="sr-only">{done ? " (완료)" : r.optional ? " (선택 사항)" : " (미완료)"}</span>
                 </li>
               );
             })

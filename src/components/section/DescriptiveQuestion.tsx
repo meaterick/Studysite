@@ -102,7 +102,7 @@ export default function DescriptiveQuestion({
     <div className={`rounded-xl border bg-card p-4 sm:p-5 ${review ? "border-[var(--status-good)]/60" : "border-[var(--border-hairline)]"}`}>
       <div className="mb-3 flex items-start gap-2">
         <span className="mt-0.5 shrink-0 rounded-md bg-[color-mix(in_srgb,var(--series-violet)_14%,transparent)] px-2 py-0.5 text-xs font-black text-[var(--series-violet)]">
-          서술형 {index + 1}
+          서술형 {index + 1} · 선택
         </span>
         <div className="text-[15px] font-medium text-ink">{question}</div>
       </div>
