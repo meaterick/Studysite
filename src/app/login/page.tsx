@@ -22,6 +22,11 @@ export default async function LoginPage({
     <div className="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">Aegis AI 스터디</p>
       <h1 className="mb-2 text-2xl font-black text-ink">로그인</h1>
+      {from && returnPath !== "/account" && (
+        <p className="mb-4 rounded-lg border-l-4 border-[var(--series-blue)] bg-[color-mix(in_srgb,var(--series-blue)_8%,transparent)] px-4 py-3 text-sm text-ink">
+          로그인한 스터디원만 볼 수 있는 페이지입니다. 로그인하면 보려던 페이지로 바로 이동합니다.
+        </p>
+      )}
       <p className="mb-8 text-sm text-ink-secondary">Google 계정으로 로그인하면 처음 방문할 때 스터디원 계정이 자동으로 생성됩니다.</p>
       <Link
         href={googleHref}

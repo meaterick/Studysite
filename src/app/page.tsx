@@ -6,6 +6,7 @@ import HomeCta from "@/components/HomeCta";
 import CountUp from "@/components/home/CountUp";
 import Journey, { type JourneyScene } from "@/components/journey/Journey";
 import { getCurrentUser } from "@/lib/dal";
+import { gatedHref } from "@/lib/returnPath";
 import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
@@ -147,7 +148,7 @@ export default async function Home() {
                     const pct = Math.round(st.ratio * 100);
                     return (
                       <li key={w.slug}>
-                        <Link href={`/weeks/${w.slug}`} className="journey-week group flex items-center gap-4 py-2.5">
+                        <Link href={gatedHref(!!user, `/weeks/${w.slug}`)} prefetch={user ? undefined : false} className="journey-week group flex items-center gap-4 py-2.5">
                           <span className="w-7 shrink-0 font-mono text-xs text-[var(--j-3)] group-hover:text-[var(--journey-accent)]">
                             {String(n).padStart(2, "0")}
                           </span>

@@ -3,13 +3,14 @@ import { syllabus } from "@/content/syllabus";
 import { WEEKS } from "@/content/weeks";
 import Markdown from "@/components/MarkdownBlocks";
 import Link from "next/link";
-import { requireUser } from "@/lib/dal";
+import { getCurrentUser } from "@/lib/dal";
+import { gatedHref } from "@/lib/returnPath";
 import LearningCycle from "@/components/LearningCycle";
 
 export const metadata: Metadata = { title: "커리큘럼" };
 
 export default async function CurriculumPage() {
-  await requireUser("/curriculum");
+  const user = await getCurrentUser();
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">8주 커리큘럼</p>
@@ -48,7 +49,12 @@ export default async function CurriculumPage() {
                 </td>
                 <td className="border-b border-[var(--border-hairline)] px-3 py-2">{"★".repeat(w.difficulty)}</td>
                 <td className="w-[72px] border-b border-[var(--border-hairline)] px-3 py-2">
-                  <Link href={`/weeks/${w.slug}`} className="inline-flex whitespace-nowrap font-bold text-[var(--series-blue)]">
+                  <Link
+                    href={gatedHref(!!user, `/weeks/${w.slug}`)}
+                    prefetch={user ? undefined : false}
+                    title={user ? undefined : "로그인 후 볼 수 있습니다"}
+                    className="inline-flex whitespace-nowrap font-bold text-[var(--series-blue)]"
+                  >
                     보기 <span aria-hidden="true">→</span>
                   </Link>
                 </td>
