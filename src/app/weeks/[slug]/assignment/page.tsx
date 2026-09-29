@@ -14,7 +14,9 @@ import { findConversation, unreadCount } from "@/lib/chatStore";
 import { mergeDraft } from "@/lib/notebook";
 import { courseDocFiles, notebookViewTasks, workspaceTasks } from "@/lib/assignmentView";
 import { ASSIGNMENT_STATUS_LABEL } from "@/lib/study";
-import { formatDateTime } from "@/lib/datetime";
+import { formatDate, formatDateTime } from "@/lib/datetime";
+import { dueDateEnd, getSettings } from "@/lib/settingsStore";
+import UnfinishedWarning from "@/components/UnfinishedWarning";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -23,9 +25,10 @@ export function generateStaticParams() {
 export default async function WeekAssignmentPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { user, week, submission, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}/assignment`);
-  if (!status.allSectionsDone && !isAdmin) redirect(`/weeks/${slug}?locked=finale`);
+  if (!status.finaleOpen && !isAdmin) redirect(`/weeks/${slug}?locked=finale`);
 
   const spec = week.assignment;
+  const dueDate = getSettings().dueDates[slug];
   const latest = submission ? latestVersion(submission) : undefined;
   const grade = submission ? latestGrade(submission) : undefined;
   const gradeIsCurrent = !!grade && !!latest && grade.version === latest.version;
@@ -38,6 +41,14 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
 
   return (
     <WeekFrame week={week} status={status}>
+      {!isAdmin && (
+        <UnfinishedWarning
+          context="과제는 모든 단계를 마친 뒤에 하는 것을 권장합니다."
+          items={status.sections
+            .filter((r) => r.access !== "completed")
+            .map((r) => ({ number: r.section.number, title: r.section.title, href: `/weeks/${slug}/sections/${r.section.id}` }))}
+        />
+      )}
       <div className="space-y-10">
         <section aria-labelledby="assignment-status" className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -57,7 +68,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
             </span>
           </div>
           <p className="mt-1 text-sm text-ink-muted">
-            {week.dueNote} · 만점 {week.assignmentMaxScore}점
+            {dueDate ? `마감 ${formatDate(dueDateEnd(dueDate).toISOString())} 23:59` : week.dueNote} · 만점 {week.assignmentMaxScore}점
             {latest && ` · 최근 제출본 v${latest.version} (${formatDateTime(latest.submittedAt)})`}
           </p>
           {grade && (

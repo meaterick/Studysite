@@ -25,6 +25,7 @@ export default function StageFooter({
   isLast,
   nextHref,
   nextLabel,
+  skipHref,
 }: {
   slug: string;
   sectionId: string;
@@ -34,6 +35,8 @@ export default function StageFooter({
   isLast: boolean;
   nextHref?: string;
   nextLabel?: string;
+  /** 미완료 상태로 다음으로 넘어가는 링크(운영 설정이 "미완료 경고"일 때) */
+  skipHref?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +96,7 @@ export default function StageFooter({
               disabled={pending}
               className="rounded-lg bg-[var(--series-blue)] px-4 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
             >
-              {pending ? "저장 중…" : isLast ? "단계 완료 · 백지공부와 과제 열기" : "단계 완료 · 다음 단계 열기"}
+              {pending ? "저장 중…" : isLast ? "단계 완료 · 백지공부와 과제로" : "단계 완료 · 다음 단계로"}
             </button>
           ) : (
             <a
@@ -103,6 +106,15 @@ export default function StageFooter({
             >
               확인 문제 풀기 ↓
             </a>
+          )}
+          {!completed && skipHref && (
+            <Link
+              href={skipHref}
+              title="이 단계는 미완료로 남고, 나중에 돌아와 마칠 수 있습니다."
+              className="text-xs font-bold text-ink-muted underline-offset-2 hover:text-ink-secondary hover:underline"
+            >
+              {isLast ? "미완료로 두고 백지공부로 →" : "미완료로 두고 다음 단계로 →"}
+            </Link>
           )}
         </div>
       </div>

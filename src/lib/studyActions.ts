@@ -95,6 +95,23 @@ export async function reviewQuizAnswer(slug: string, sectionId: string, quizId: 
   refresh();
 }
 
+/** 실습을 마쳤다고 표시하거나 취소한다(완료 조건이 아니라 실습 완료율 기록용). */
+export async function markPracticeDone(slug: string, sectionId: string, done: boolean) {
+  const { user, section } = await loadSectionContext(slug, sectionId);
+  limit(user.id, "learn", RATE_RULES.learningWrite);
+  if (section.practice.length === 0) throw new Error("NO_PRACTICE");
+  await updateLearningRecord(user.id, (record) => {
+    const state = ensureSectionState(record, slug, sectionId);
+    state.startedAt ??= new Date().toISOString();
+    if (done) state.practiceDoneAt ??= new Date().toISOString();
+    else {
+      delete state.practiceDoneAt;
+      delete state.practiceDone;
+    }
+  });
+  refresh();
+}
+
 export async function completeSection(slug: string, sectionId: string) {
   const { user, week, section } = await loadSectionContext(slug, sectionId);
   const record = getLearningRecord(user.id);
@@ -118,7 +135,7 @@ async function loadFinaleContext(slug: string) {
   const week = getWeek(slug);
   if (!week) throw new Error("NOT_FOUND");
   const status = weekStatus(week, getLearningRecord(user.id));
-  if (!status.allSectionsDone && user.role !== "admin") throw new Error("SECTIONS_NOT_DONE");
+  if (!status.finaleOpen && user.role !== "admin") throw new Error("SECTIONS_NOT_DONE");
   return { user, week };
 }
 

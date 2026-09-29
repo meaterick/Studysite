@@ -29,8 +29,10 @@ export interface QuizAnswerState {
 export interface SectionState {
   checks: Record<string, CheckState>;
   answers: Record<string, QuizAnswerState>;
-  /** 예전 버전의 "실습 완료" 체크 기록. 더 이상 완료 조건에 쓰지 않는다. */
+  /** 예전 버전의 "실습 완료" 체크 기록. 실습 완료율 계산에만 쓴다. */
   practiceDone?: boolean;
+  /** 학습자가 "실습을 마쳤습니다"로 표시한 시각. 완료 조건은 아니고 실습 완료율에만 쓴다. */
+  practiceDoneAt?: string;
   startedAt?: string;
   completedAt?: string;
 }
@@ -54,6 +56,8 @@ export interface LearningRecord {
   /** (이전 버전) 수동 체크리스트·퀴즈 자기평가 — 읽기만 하고 더 이상 쓰지 않는다 */
   progress?: Record<string, Partial<Record<string, boolean>>>;
   quizReviews?: Record<string, Record<string, QuizReviewStatus>>;
+  /** 피드백함을 마지막으로 확인한 시각. 이보다 새 채점·코멘트를 "새 피드백"으로 표시한다. */
+  feedbackSeenAt?: string;
   updatedAt?: string;
 }
 

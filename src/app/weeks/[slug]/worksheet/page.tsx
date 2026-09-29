@@ -6,6 +6,7 @@ import Worksheet from "@/components/Worksheet";
 import WeekFrame from "@/components/WeekFrame";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readSectionState, readWorksheetState } from "@/lib/learningStore";
+import UnfinishedWarning from "@/components/UnfinishedWarning";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -14,7 +15,7 @@ export function generateStaticParams() {
 export default async function WeekWorksheetPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { week, record, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}/worksheet`);
-  if (!status.allSectionsDone && !isAdmin) redirect(`/weeks/${slug}?locked=finale`);
+  if (!status.finaleOpen && !isAdmin) redirect(`/weeks/${slug}?locked=finale`);
   const sheet = readWorksheetState(record, slug);
 
   // 제출 전에는 비교 자료를 내려보내지 않는다 — 보면서 쓰면 백지공부가 아니다.
@@ -64,6 +65,14 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
 
   return (
     <WeekFrame week={week} status={status}>
+      {!isAdmin && (
+        <UnfinishedWarning
+          context="백지공부는 모든 단계를 마친 뒤에 하는 것을 권장합니다."
+          items={status.sections
+            .filter((r) => r.access !== "completed")
+            .map((r) => ({ number: r.section.number, title: r.section.title, href: `/weeks/${slug}/sections/${r.section.id}` }))}
+        />
+      )}
       <section id="worksheet" className="scroll-mt-24">
         <h2 className="mb-1 text-xl font-black text-ink">백지공부</h2>
         <p className="mb-4 text-sm text-ink-muted">

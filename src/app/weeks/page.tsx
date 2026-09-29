@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { WEEKS } from "@/content/weeks";
 import WeekCard from "@/components/WeekCard";
+import { getWeekOutline } from "@/content/sections";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/dal";
 import { loginHref } from "@/lib/returnPath";
@@ -41,6 +42,7 @@ export default async function WeeksIndexPage() {
                 ratio={statuses.get(w.slug)!.ratio}
                 sectionsDone={statuses.get(w.slug)!.sectionsDone}
                 sectionsTotal={statuses.get(w.slug)!.sectionsTotal}
+                minutes={getWeekOutline(w).sections.reduce((sum, x) => sum + x.minutes, 0)}
                 locked={!user}
               />
             ))}

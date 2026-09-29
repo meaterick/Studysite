@@ -3,13 +3,18 @@ import type { WeekMeta, WeekSection } from "@/content/types";
 import { getWeekOutline } from "@/content/sections";
 import { readSectionState, readWorksheetState, type LearningRecord, type SectionState } from "./learningStore";
 import { latestGrade, type Submission } from "./submissionStore";
+import { getProgressionMode, type ProgressionMode } from "./settingsStore";
 
 // 단계 진행 규칙을 한곳에 모아둔다 — 페이지(표시), 서버 액션(검증), 운영자 화면(요약)이
 // 모두 같은 함수를 쓰므로 "화면에서는 완료인데 서버는 미완료" 같은 불일치가 생기지 않는다.
 //
 // 한 단계를 끝내려면 객관식 확인 문제를 전부 맞히면 된다. 서술형 문항(작성 → 모범답안과 비교 →
-// 자기평가)과 실습은 권장 활동이며 완료 조건에는 넣지 않는다. 앞 단계를 끝내야 다음 단계가 열리고,
-// 모든 단계를 끝내면 백지공부와 과제가 열린다.
+// 자기평가)과 실습은 권장 활동이며 완료 조건에는 넣지 않는다.
+//
+// 진행 방식(운영 설정, settingsStore)
+// - warn(기본): 순서는 안내만 한다. 끝내지 않은 앞 단계가 있어도 다음 단계·백지공부·과제로 갈 수 있고,
+//   화면에 미완료 경고를 보여 준다. 단계는 순서와 상관없이 완료할 수 있다.
+// - lock: 앞 단계를 끝내야 다음 단계가 열리고, 모든 단계를 끝내야 백지공부·과제가 열린다.
 
 export interface SectionProgress {
   checksDone: number;
@@ -40,7 +45,11 @@ export function sectionProgress(section: WeekSection, state: SectionState): Sect
   };
 }
 
-export type SectionAccess = "completed" | "current" | "locked";
+/**
+ * completed: 완료 / current: 지금 할 차례(끝내지 않은 첫 단계) /
+ * upcoming: 아직 끝내지 않았지만 열려 있음(warn 모드) / locked: 잠김(lock 모드)
+ */
+export type SectionAccess = "completed" | "current" | "upcoming" | "locked";
 
 export interface WeekStatus {
   sections: { section: WeekSection; access: SectionAccess; progress: SectionProgress }[];
@@ -49,6 +58,9 @@ export interface WeekStatus {
   /** 다음에 학습할 단계 (모두 끝났으면 undefined) */
   currentSection?: WeekSection;
   allSectionsDone: boolean;
+  /** 백지공부·과제를 열 수 있는지(lock 모드에서는 모든 단계 완료 후, warn 모드에서는 항상) */
+  finaleOpen: boolean;
+  mode: ProgressionMode;
   worksheetSubmitted: boolean;
   assignment: {
     status: "none" | Submission["status"];
@@ -59,13 +71,25 @@ export interface WeekStatus {
   ratio: number;
 }
 
-export function weekStatus(week: WeekMeta, record: LearningRecord, submission?: Submission): WeekStatus {
+export function weekStatus(
+  week: WeekMeta,
+  record: LearningRecord,
+  submission?: Submission,
+  mode: ProgressionMode = getProgressionMode()
+): WeekStatus {
   const { sections } = getWeekOutline(week);
   let blocked = false;
   const rows = sections.map((section) => {
     const progress = sectionProgress(section, readSectionState(record, week.slug, section.id));
     let access: SectionAccess;
-    if (progress.completed && !blocked) access = "completed";
+    if (mode === "warn") {
+      // 순서와 상관없이 완료한 단계는 완료로, 끝내지 않은 첫 단계가 "지금 할 차례"다.
+      if (progress.completed) access = "completed";
+      else if (!blocked) {
+        access = "current";
+        blocked = true;
+      } else access = "upcoming";
+    } else if (progress.completed && !blocked) access = "completed";
     else if (!blocked) {
       access = "current";
       blocked = true;
@@ -84,6 +108,8 @@ export function weekStatus(week: WeekMeta, record: LearningRecord, submission?: 
     sectionsTotal: sections.length,
     currentSection: rows.find((r) => r.access === "current")?.section,
     allSectionsDone,
+    finaleOpen: allSectionsDone || mode === "warn",
+    mode,
     worksheetSubmitted,
     assignment: {
       status: assignmentStatus,
@@ -94,11 +120,21 @@ export function weekStatus(week: WeekMeta, record: LearningRecord, submission?: 
   };
 }
 
-/** 운영자는 콘텐츠 검수를 위해 잠금 없이 모든 단계를 볼 수 있다. */
+/** 운영자는 콘텐츠 검수를 위해 잠금 없이 모든 단계를 볼 수 있다. warn 모드에서는 잠긴 단계가 없다. */
 export function canOpenSection(status: WeekStatus, sectionId: string, isAdmin: boolean): boolean {
   if (isAdmin) return true;
   const row = status.sections.find((r) => r.section.id === sectionId);
   return !!row && row.access !== "locked";
+}
+
+/** 이 단계보다 앞에 있으면서 아직 끝내지 않은 단계들(warn 모드의 미완료 경고용) */
+export function unfinishedBefore(status: WeekStatus, sectionId: string): WeekSection[] {
+  const out: WeekSection[] = [];
+  for (const row of status.sections) {
+    if (row.section.id === sectionId) break;
+    if (row.access !== "completed") out.push(row.section);
+  }
+  return out;
 }
 
 export const ASSIGNMENT_STATUS_LABEL: Record<WeekStatus["assignment"]["status"], string> = {

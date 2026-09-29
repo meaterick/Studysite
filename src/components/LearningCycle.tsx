@@ -78,7 +78,7 @@ export default function LearningCycle() {
           ↻
         </span>
         <span>
-          모든 단계를 마치면 그 주의 백지공부와 과제가 열리며, 한 주를 마치면
+          모든 단계를 마친 뒤 그 주의 백지공부와 과제로 마무리하며, 한 주를 마치면
           다음 주제에서 같은 과정을 반복합니다.
         </span>
       </p>
