@@ -39,7 +39,7 @@ export default function WeekTabs({
     <div className="relative -mx-4 mb-6 sm:mx-0 sm:mb-8 print:hidden">
       <nav
         aria-label="주차 메뉴"
-        className="flex gap-1 overflow-x-auto border-b border-[var(--border-hairline)] px-4 pb-px [scrollbar-width:none] sm:px-0"
+        className="flex gap-1 overflow-x-auto border-b border-[var(--border-hairline)] px-4 pb-px [scrollbar-width:none] [mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] sm:px-0 sm:[mask-image:none]"
       >
         {tabs.map((tab) => {
           const active = tab.match(pathname);

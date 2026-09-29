@@ -29,7 +29,7 @@ export default function SettingsForm({
 
   return (
     <form action={submit} className="space-y-8">
-      <fieldset className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
+      <fieldset className="min-w-0 rounded-xl border border-[var(--border-hairline)] bg-card p-5">
         <legend className="px-1 text-lg font-black text-ink">단계 진행 방식</legend>
         <div className="mt-2 space-y-3">
           <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--border-hairline)] p-3 has-[:checked]:border-[var(--series-blue)]">
@@ -53,14 +53,14 @@ export default function SettingsForm({
         </div>
       </fieldset>
 
-      <fieldset className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
+      <fieldset className="min-w-0 rounded-xl border border-[var(--border-hairline)] bg-card p-5">
         <legend className="px-1 text-lg font-black text-ink">주차별 과제 마감일</legend>
         <p className="mb-4 text-sm text-ink-secondary">
           정해 두면 스터디원의 진도 대시보드에 &lsquo;가장 가까운 마감&rsquo;과 남은 일수가 표시됩니다(한국 시간 그날 23:59까지). 비워 두면 표시하지 않습니다.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {weeks.map((w) => (
-            <label key={w.slug} className="flex items-center justify-between gap-3 text-sm">
+            <label key={w.slug} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span className="min-w-0 truncate text-ink-secondary">
                 <strong className="text-ink">{w.number}주차</strong> {w.title}
               </span>

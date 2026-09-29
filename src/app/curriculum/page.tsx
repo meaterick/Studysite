@@ -15,8 +15,8 @@ export default async function CurriculumPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">8주 커리큘럼</p>
-      <h1 className="mb-3 text-3xl font-black text-ink">{syllabus.title}</h1>
-      <p className="mb-8 text-sm italic text-ink-secondary">{syllabus.designNote}</p>
+      <h1 className="mb-3 text-2xl font-black leading-tight text-ink sm:text-3xl">{syllabus.title}</h1>
+      <p className="mb-8 text-sm text-ink-secondary">{syllabus.designNote}</p>
 
       <section className="not-prose mb-10">
         <h2 className="mb-1 text-xl font-black text-ink">주간 학습 순환</h2>

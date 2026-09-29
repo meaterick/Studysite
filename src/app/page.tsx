@@ -10,6 +10,7 @@ import { gatedHref } from "@/lib/returnPath";
 import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
+import { difficultyInfo } from "@/lib/difficulty";
 
 // 메인 화면: 다섯 장면(소개 → 대상 → 학습 방법 → 8주 커리큘럼 → 수료)이 하나의 3D 공간 안에서 이어진다.
 // 첫 화면에는 과정을 고를 때 필요한 정보(비용·대상, 주당 시간, 선수 지식)를 요약해 둔다.
@@ -83,7 +84,7 @@ export default async function Home() {
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[var(--j-2)] sm:text-lg">
             수학 기초부터 LLM 에이전트까지, 8주 동안 직접 코드를 작성하며 배웁니다.
           </p>
-          <ul className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-2 text-[13px] text-[var(--j-1)] sm:text-sm">
+          <ul className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2 text-[13px] text-[var(--j-1)] sm:text-sm">
             {[
               "무료 · 누구나 이용 가능",
               `주 ${weeklyMin}~${weeklyMax}시간`,
@@ -126,7 +127,7 @@ export default async function Home() {
       label: "대상",
       content: (
         <div className="mx-auto max-w-5xl">
-          <Label>01 — Is it for me?</Label>
+          <Label>02 — Is it for me?</Label>
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             시작하기 전에
             <br />
@@ -151,7 +152,7 @@ export default async function Home() {
                 a: "무료이며 동아리원이 아니어도 누구나 Google 계정으로 가입해 이용할 수 있습니다. 코드는 브라우저에서 실행되어 설치할 것이 없습니다.",
               },
             ].map((item) => (
-              <div key={item.q} className="border-b border-[var(--j-line)] py-4 sm:pr-8">
+              <div key={item.q} className="border-b border-[var(--j-line)] py-3 sm:py-4 sm:pr-8">
                 <dt className="text-base font-semibold text-white sm:text-lg">{item.q}</dt>
                 <dd className="mt-1.5 text-sm leading-relaxed text-[var(--j-2)] sm:text-[15px]">{item.a}</dd>
               </div>
@@ -178,7 +179,7 @@ export default async function Home() {
       label: "학습 방법",
       content: (
         <div className="mx-auto max-w-5xl">
-          <Label>02 — Method</Label>
+          <Label>03 — Method</Label>
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             한 주는 네 단계로
             <br />
@@ -209,14 +210,14 @@ export default async function Home() {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <Label>03 — Curriculum</Label>
+              <Label>04 — Curriculum</Label>
               <h2 className="mt-4 text-3xl font-bold tracking-[-0.02em] text-white sm:text-5xl">8주 커리큘럼</h2>
             </div>
             <Link href="/curriculum" className="text-sm text-[var(--j-2)] underline-offset-4 transition hover:text-white hover:underline">
               전체 커리큘럼 보기 →
             </Link>
           </div>
-          <div className="mt-10 grid gap-x-10 border-t border-[var(--j-line)] md:grid-cols-2">
+          <div className="mt-10 grid grid-cols-1 gap-x-10 border-t border-[var(--j-line)] md:grid-cols-2">
             {PHASES.map((phase) => (
               <section key={phase.key} aria-label={`${phase.key} ${phase.name}`} className="border-b border-[var(--j-line)] py-4">
                 <p className="mb-1 flex items-baseline gap-3 text-[11px] uppercase tracking-[0.2em] text-[var(--j-3)]">
@@ -242,8 +243,9 @@ export default async function Home() {
                               <span className="block h-px bg-[var(--journey-accent)] transition-all" style={{ width: `${pct}%` }} />
                             </span>
                           </span>
-                          <span className="w-10 shrink-0 text-right font-mono text-xs tabular-nums text-[var(--j-3)]">
-                            {pct > 0 ? `${pct}%` : "—"}
+                          {/* 로그인한 사용자는 진행률, 방문자는 난이도를 보여 준다(방문자에게 "—"는 의미가 없다). */}
+                          <span className="w-16 shrink-0 text-right text-xs tabular-nums text-[var(--j-3)]">
+                            {user ? (pct > 0 ? `${pct}%` : "—") : difficultyInfo(w.difficulty).label}
                           </span>
                           <span aria-hidden="true" className="text-[var(--j-4)] transition group-hover:translate-x-0.5 group-hover:text-white">
                             →
@@ -267,7 +269,7 @@ export default async function Home() {
       label: "수료",
       content: (
         <div className="mx-auto max-w-5xl">
-          <Label>04 — Outcomes</Label>
+          <Label>05 — Outcomes</Label>
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             8주 뒤,
             <br />

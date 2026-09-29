@@ -56,7 +56,7 @@ export default function CheckQuestion({
 
   return (
     <fieldset
-      className={`rounded-xl border p-4 sm:p-5 ${solved ? "border-[var(--status-good)]/60" : "border-[var(--border-hairline)]"} bg-card`}
+      className={`min-w-0 rounded-xl border p-4 sm:p-5 ${solved ? "border-[var(--status-good)]/60" : "border-[var(--border-hairline)]"} bg-card`}
     >
       <legend className="sr-only">확인 문제 {index + 1}</legend>
       <div className="mb-3 flex items-start gap-2">

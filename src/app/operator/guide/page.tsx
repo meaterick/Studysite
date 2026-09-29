@@ -9,7 +9,7 @@ export default async function OperatorGuidePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
       <h1 className="mb-2 text-3xl font-black text-ink">{operatorGuide.title}</h1>
-      <p className="mb-8 text-sm italic text-ink-secondary">{operatorGuide.subtitle}</p>
+      <p className="mb-8 text-sm text-ink-secondary">{operatorGuide.subtitle}</p>
       <Markdown source={operatorGuide.md} />
     </div>
   );
