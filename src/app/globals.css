@@ -384,3 +384,16 @@ body:has(.journey) header {
   --border-hairline: rgba(138, 184, 255, 0.14);
   color: #fff;
 }
+
+/* 스크롤바는 모든 화면에서 숨긴다. 스크롤 자체(휠·터치·키보드·드래그)는 그대로 동작한다. */
+html,
+body,
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* 구형 Edge */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome·Safari·Edge */
+  width: 0;
+  height: 0;
+}
