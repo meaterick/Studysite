@@ -7,10 +7,14 @@ import { getLearningRecord } from "./learningStore";
 import { weekStatus } from "./study";
 import { readDraft, writeDraft } from "./assignmentDraftStore";
 import { mergeDraft, missingRequiredAnswers, sanitizeDraft } from "./notebook";
+import { consumeRate, RATE_LIMIT_MESSAGE, RATE_RULES } from "./rateLimit";
+import { DISK_FULL_MESSAGE, hasDiskSpaceFor } from "./diskGuard";
 import {
   fileExtension,
   findSubmission,
+  findUserSubmission,
   gradeSubmission,
+  listUserSubmissions,
   saveSubmission,
   SUBMISSION_LIMITS,
   type IncomingFile,
@@ -33,10 +37,12 @@ export type ActionResult = { ok: true; savedAt?: string } | { ok: false; error: 
 /** 작업 공간 자동 저장. 클라이언트가 보낸 초안은 명세 기준으로 정리한 뒤 저장한다. */
 export async function saveAssignmentDraft(slug: string, draft: unknown): Promise<ActionResult> {
   const { user, week } = await loadAssignmentContext(slug);
+  if (!consumeRate(`draft:${user.id}`, RATE_RULES.draftSave)) return { ok: false, error: RATE_LIMIT_MESSAGE };
   const clean = sanitizeDraft(week.assignment, draft);
   if (!clean) {
     return { ok: false, error: "작업 내용이 너무 커서 저장하지 못했습니다. 그림이나 출력이 많은 셀을 정리해 주십시오." };
   }
+  if (!hasDiskSpaceFor(JSON.stringify(clean).length)) return { ok: false, error: DISK_FULL_MESSAGE };
   await writeDraft(user.id, slug, clean);
   return { ok: true, savedAt: clean.updatedAt };
 }
@@ -47,6 +53,16 @@ export async function saveAssignmentDraft(slug: string, draft: unknown): Promise
  */
 export async function submitAssignmentWork(slug: string, formData: FormData): Promise<ActionResult> {
   const { user, week } = await loadAssignmentContext(slug);
+  if (!consumeRate(`submit:${user.id}`, RATE_RULES.submission)) {
+    return { ok: false, error: "제출이 너무 잦습니다. 1분쯤 뒤에 다시 제출해 주십시오." };
+  }
+  const existing = findUserSubmission(user.id, slug);
+  if (existing && existing.versions.length >= SUBMISSION_LIMITS.versionsMax) {
+    return {
+      ok: false,
+      error: `한 과제는 최대 ${SUBMISSION_LIMITS.versionsMax}번까지 제출할 수 있습니다. 더 제출해야 하면 운영자에게 문의해 주십시오.`,
+    };
+  }
   const draft = mergeDraft(week.assignment, readDraft(user.id, slug));
 
   const missing = missingRequiredAnswers(week.assignment, draft);
@@ -104,6 +120,18 @@ export async function submitAssignmentWork(slug: string, formData: FormData): Pr
   if (total > SUBMISSION_LIMITS.totalBytesMax) {
     return { ok: false, error: "첨부 파일의 합계가 9MB를 넘습니다." };
   }
+  // 계정 하나가 재제출을 반복해 서버 디스크를 채우지 못하도록 모든 과제의 첨부 파일 합계를 제한한다.
+  const usedBytes = listUserSubmissions(user.id)
+    .flatMap((s) => s.versions)
+    .flatMap((v) => v.files)
+    .reduce((sum, f) => sum + f.size, 0);
+  if (usedBytes + total > SUBMISSION_LIMITS.userBytesMax) {
+    return {
+      ok: false,
+      error: `지금까지 첨부한 파일이 ${Math.round(SUBMISSION_LIMITS.userBytesMax / 1024 / 1024)}MB 한도에 닿았습니다. 파일 대신 링크를 첨부하거나 운영자에게 문의해 주십시오.`,
+    };
+  }
+  if (!hasDiskSpaceFor(total + JSON.stringify(draft).length)) return { ok: false, error: DISK_FULL_MESSAGE };
 
   await saveSubmission({ userId: user.id, weekSlug: slug, text, links, files, notebook: draft });
   refresh();

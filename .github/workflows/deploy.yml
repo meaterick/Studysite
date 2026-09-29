@@ -6,7 +6,8 @@ name: Deploy to OCI
 # runner registered on the OCI box unpacks it into DEPLOY_DIR (a stable
 # directory *outside* the runner's own workspace -- see the "Sync app
 # files" step for why that matters), writes the runtime secret from a
-# GitHub Actions secret, runs the app under PM2, and makes sure nginx +
+# GitHub Actions secret, runs the app under PM2 with a blue-green switch
+# (scripts/deploy/deploy.sh -- no downtime per deploy), and makes sure nginx +
 # a Let's Encrypt certificate are set up for DOMAIN. nginx (not a custom
 # proxy) terminates TLS and reverse-proxies to the app -- it's a proper
 # systemd service from the moment it's installed, has near-zero RAM
@@ -89,13 +90,37 @@ jobs:
           node -v
           pm2 -v
 
+      - name: Make sure the PM2 daemon runs under systemd
+        # Self-hosted runners kill every process still in the job's process tree once the job
+        # ends ("Cleaning up orphan processes"). If the PM2 daemon is a systemd service, every
+        # `pm2 ...` command below just talks to it and the app is never part of this job's tree.
+        # Previously every deploy did `pm2 kill` + `systemctl restart`, which took the site down
+        # each time; now that only happens once, the first time the service is set up.
+        run: |
+          SERVICE="pm2-$(whoami)"
+          if systemctl is-active --quiet "$SERVICE"; then
+            echo "PM2 already runs under systemd (${SERVICE}.service)"
+            exit 0
+          fi
+          # A daemon started outside systemd (e.g. by hand) is still serving the site: keep its
+          # process list so systemd can resurrect it. Never call `pm2 save` without a running
+          # daemon -- that would spawn an empty one and overwrite the saved list.
+          if pgrep -u "$(whoami)" -f "PM2 .*God Daemon" >/dev/null; then pm2 save; fi
+          STARTUP_LINE=$(pm2 startup systemd -u "$(whoami)" --hp "$HOME" 2>&1 | grep -E '^(sudo )?env PATH=' || true)
+          if [ -n "$STARTUP_LINE" ]; then eval "$STARTUP_LINE" || true; fi
+          if ! systemctl list-unit-files "${SERVICE}.service" 2>/dev/null | grep -q "${SERVICE}.service"; then
+            echo "::error::Could not register PM2 as a systemd service (${SERVICE}.service). This needs passwordless sudo for the runner user."
+            exit 1
+          fi
+          pm2 kill || true
+          sudo systemctl start "$SERVICE"
+          sleep 3
+          pm2 list
+
       - name: Sync app files into a stable directory outside the runner workspace
         run: |
-          mkdir -p "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR/data" "$DEPLOY_DIR/logs" "$DEPLOY_DIR/releases"
           cp ecosystem.config.js "$DEPLOY_DIR/ecosystem.config.js"
-          # 회원 계정(users.json)은 여기, .next 바깥에 둡니다 — 다음 스텝에서
-          # .next만 지우고 다시 받으므로 이 디렉터리는 재배포에도 살아남습니다.
-          mkdir -p "$DEPLOY_DIR/data"
 
       - name: Prepare to restore the bundle
         # 캐시는 build 잡(GitHub 호스팅 러너)에서 zstd로 압축된다. 이 서버에
@@ -113,12 +138,6 @@ jobs:
           key: standalone-build-${{ github.run_id }}
           fail-on-cache-miss: true
 
-      - name: Replace the previous build
-        run: |
-          rm -rf "$DEPLOY_DIR/.next"
-          mkdir -p "$DEPLOY_DIR/.next"
-          cp -a .next/standalone "$DEPLOY_DIR/.next/standalone"
-
       - name: Write runtime secrets
         # Regenerated on every deploy from the GitHub Actions secrets, so
         # nothing has to be created or edited by hand on the server. Set/
@@ -127,85 +146,55 @@ jobs:
         # (Passed via env:, not interpolated into the script, so the secret
         # can never break out of the shell command.) Lives in DEPLOY_DIR,
         # not the checkout, so it survives every checkout untouched.
+        # PUBLIC_ORIGIN pins the site's own origin for redirects, so a client-sent
+        # Host/X-Forwarded-Host header can never change where users are redirected.
         env:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
+          umask 077
           {
             echo "SESSION_SECRET=${SESSION_SECRET}"
             echo "ADMIN_EMAILS=${ADMIN_EMAILS}"
             echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}"
             echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}"
             echo "DATA_DIR=${DEPLOY_DIR}/data"
+            echo "PUBLIC_ORIGIN=https://${DOMAIN}"
           } > "$DEPLOY_DIR/.env.production.local"
+          chmod 600 "$DEPLOY_DIR/.env.production.local"
           if [ -z "${SESSION_SECRET}" ]; then
             echo "::warning::SESSION_SECRET secret is not set — falling back to the built-in dev secret, which means anyone who reads the source code could forge login cookies. Add it under repo Settings > Secrets and variables > Actions (openssl rand -base64 32)."
           fi
 
-      - name: Install and configure nginx
-        # Idempotent: safe to run on every deploy. Installs nginx if it
-        # isn't there yet, writes a plain-HTTP reverse-proxy site pointing
-        # at the app, and disables the stock default site so it can't
-        # collide with ours.
+      - name: Install nginx (first deploy only)
         run: |
           if ! command -v nginx >/dev/null 2>&1; then
             sudo apt-get update -y && sudo apt-get install -y nginx
           fi
 
-          cat <<NGINX_CONF | sudo tee /etc/nginx/sites-available/aegis-ai-study.conf >/dev/null
-          server {
-              listen 80;
-              listen [::]:80;
-              server_name ${DOMAIN};
-              # 과제 제출 첨부 파일(합계 9MB)을 받기 위해 기본값 1MB에서 늘린다 (next.config.ts의 bodySizeLimit과 맞춤)
-              client_max_body_size 10m;
+      - name: Deploy without downtime (blue-green)
+        # Starts the new build on the idle port (3000 <-> 3001), waits for /api/health,
+        # switches nginx over with a graceful reload, then stops the old build. If the new
+        # build never becomes healthy (or the nginx config fails `nginx -t`), the old build
+        # keeps serving and this step fails. See scripts/deploy/deploy.sh and nginx-site.sh
+        # (the nginx config also carries per-IP rate/connection limits and HSTS).
+        run: bash scripts/deploy/deploy.sh "$GITHUB_WORKSPACE/.next/standalone"
 
-              location / {
-                  proxy_pass http://127.0.0.1:3000;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade \$http_upgrade;
-                  proxy_set_header Connection "upgrade";
-                  proxy_set_header Host \$host;
-                  proxy_set_header X-Real-IP \$remote_addr;
-                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto \$scheme;
-              }
-          }
-          NGINX_CONF
-
-          sudo ln -sf /etc/nginx/sites-available/aegis-ai-study.conf /etc/nginx/sites-enabled/aegis-ai-study.conf
-          sudo rm -f /etc/nginx/sites-enabled/default
-          sudo nginx -t
-          sudo systemctl enable --now nginx
-          sudo systemctl reload nginx
-
-      - name: Start or reload the app with PM2
-        # Delete + start, not startOrReload: PM2's "reload" of an
-        # already-registered app reuses its originally-stored cwd/script/
-        # env and does not re-read those from the config file. Deleting
-        # first guarantees every deploy fully re-registers the app from
-        # the current file.
+      - name: Obtain the HTTPS certificate (first deploy only)
+        # Once a certificate exists, nginx-site.sh writes the HTTPS server block itself on every
+        # deploy, so HTTPS no longer drops out while certbot re-adds it. certbot's own systemd
+        # timer keeps renewing the certificate.
         run: |
-          pm2 delete "$DEPLOY_DIR/ecosystem.config.js" 2>/dev/null || true
-          pm2 start "$DEPLOY_DIR/ecosystem.config.js"
-          pm2 save
-
-      - name: Obtain/renew the HTTPS certificate (certbot's nginx plugin)
-        # Idempotent: certbot no-ops if the existing cert still has >30 days
-        # left. The nginx plugin edits the site config in place to add the
-        # ssl_certificate directives and the http->https redirect, and
-        # reloads nginx itself -- nothing else to wire up. Renewal is
-        # handled by the certbot package's own systemd timer.
-        run: |
-          # Always attempt this (apt-get is a fast no-op when already
-          # installed) rather than gating on `command -v certbot` -- a box
-          # that already had plain certbot installed (e.g. from an earlier
-          # design) would skip installing python3-certbot-nginx too,
-          # leaving certbot unable to find "the requested nginx plugin".
-          sudo apt-get update -y && sudo apt-get install -y certbot python3-certbot-nginx || \
-            echo "::warning::Could not install certbot/python3-certbot-nginx automatically — HTTPS cert cannot be obtained. Install them once manually and re-run this workflow."
+          if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+            echo "certificate for ${DOMAIN} already present"
+            exit 0
+          fi
+          if ! command -v certbot >/dev/null 2>&1 || ! dpkg -s python3-certbot-nginx >/dev/null 2>&1; then
+            sudo apt-get update -y && sudo apt-get install -y certbot python3-certbot-nginx || \
+              echo "::warning::Could not install certbot/python3-certbot-nginx automatically — install them once manually and re-run this workflow."
+          fi
           if command -v certbot >/dev/null 2>&1; then
             sudo certbot --nginx \
               -d "${DOMAIN}" \
@@ -213,55 +202,29 @@ jobs:
               --redirect --keep-until-expiring \
               || echo "::warning::certbot did not succeed — check that ${DOMAIN} really points at this server's public IP and that :80 is reachable from the internet."
           fi
-
-      - name: Keep PM2 running across this job ending and server reboots
-        # Self-hosted runners kill every process still in the job's
-        # process tree once the job completes ("Cleaning up orphan
-        # processes" in the run log) -- including a PM2 daemon started
-        # with `detached: true`. Register PM2 as a systemd service
-        # (idempotent), then stop the daemon that's still attached to this
-        # job and let systemd spawn a fresh one from the saved process
-        # list. Combined with running everything out of DEPLOY_DIR above
-        # (not $GITHUB_WORKSPACE), this survives both this job ending and
-        # server reboots. (nginx needs none of this -- it's already a
-        # systemd service.)
-        run: |
-          pm2 save
-
-          SERVICE="pm2-$(whoami)"
-          STARTUP_LINE=$(pm2 startup systemd -u "$(whoami)" --hp "$HOME" 2>&1 | grep -E '^(sudo )?env PATH=' || true)
-          if [ -n "$STARTUP_LINE" ]; then
-            eval "$STARTUP_LINE" || true
+          # Replace certbot's edits with our managed HTTPS config (limits, HSTS) right away.
+          if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+            bash scripts/deploy/nginx-site.sh "$(cat "$DEPLOY_DIR/active-port")"
           fi
 
-          if systemctl list-unit-files "${SERVICE}.service" 2>/dev/null | grep -q "${SERVICE}.service"; then
-            pm2 kill
-            if sudo systemctl restart "$SERVICE"; then
-              sleep 3
-              pm2 list
-              echo "PM2 now runs under systemd (${SERVICE}.service) -- it will survive this job ending and server reboots."
-            else
-              echo "::error::'sudo systemctl restart ${SERVICE}' failed after 'pm2 kill' -- the site is down right now. Run that command by hand on the server to bring it back."
-            fi
-          else
-            echo "::error::Could not register PM2 as a systemd service (${SERVICE}.service not found) -- the site will go down as soon as this job ends, because the runner kills any process left in its job tree. This needs passwordless sudo for the runner user; check the 'pm2 startup systemd' output above this step."
-          fi
+      - name: Rotate app and PM2 logs
+        # Hourly logrotate (systemd timer): cut logs past 20MB or a day old, keep 14.
+        run: bash scripts/deploy/logrotate.sh
 
       - name: Verify the site actually responds
         # Runs from the OCI box itself, so it isn't affected by whatever
         # network path a browser or CI runner elsewhere on the internet
         # takes to get here. Never fails the job (informational). The
-        # loopback checks send a Host header matching DOMAIN -- certbot's
-        # --redirect config only redirects/serves that host, so plain
-        # `curl http://127.0.0.1/` would just show its catch-all 404.
+        # loopback checks send a Host header matching DOMAIN -- the nginx
+        # config only serves that host.
         run: |
           sleep 2
           curl -m 5 -s -H "Host: ${DOMAIN}" -o /dev/null -w "http://127.0.0.1/ -> %{http_code} (expect 301)\n" http://127.0.0.1/ || echo "http://127.0.0.1/ -> (connection failed)"
-          curl -m 5 -sk -H "Host: ${DOMAIN}" -o /dev/null -w "https://127.0.0.1/ -> %{http_code}\n" https://127.0.0.1/ || echo "https://127.0.0.1/ -> (connection failed)"
-          curl -m 5 -s -o /dev/null -w "https://${DOMAIN}/ -> %{http_code}\n" "https://${DOMAIN}/" || echo "https://${DOMAIN}/ -> (connection failed -- check DNS / OCI Security List for 80+443, 'sudo certbot certificates', and 'pm2 logs aegis-ai-study')"
+          curl -m 5 -sk --resolve "${DOMAIN}:443:127.0.0.1" -o /dev/null -w "https://${DOMAIN}/ (loopback) -> %{http_code}\n" "https://${DOMAIN}/" || echo "https (loopback) -> (connection failed)"
+          curl -m 5 -s -o /dev/null -w "https://${DOMAIN}/ -> %{http_code}\n" "https://${DOMAIN}/" || echo "https://${DOMAIN}/ -> (connection failed -- check DNS / OCI Security List for 80+443, 'sudo certbot certificates', and 'pm2 logs')"
 
       - name: Delete the build cache entry
-        # 번들(약 34MB)은 위에서 DEPLOY_DIR로 복사한 뒤에는 쓸 일이 없으니 바로
+        # 번들(약 34MB)은 위에서 DEPLOY_DIR/releases로 복사한 뒤에는 쓸 일이 없으니 바로
         # 지운다. 앞 단계가 실패하면 이 단계는 건너뛰므로, "Re-run failed jobs"로
         # deploy 잡만 다시 돌려도 캐시가 남아 있다(안 쓰는 캐시는 7일 뒤 자동 삭제).
         uses: actions/github-script@v7

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import "@/lib/monacoSetup";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { loadCellCode, resetCellCode, saveCellCode } from "@/lib/codeStore";
 import { forceStop, preloadPyodide, runPython, type RunStatus } from "@/lib/pyRunner";

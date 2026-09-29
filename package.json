@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-monaco.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-monaco.mjs",
     "build": "next build",
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
@@ -15,6 +17,7 @@
     "idb": "^8.0.3",
     "jose": "^6.2.12",
     "katex": "^0.18.7",
+    "monaco-editor": "0.57.0",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",

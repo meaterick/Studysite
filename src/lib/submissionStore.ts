@@ -19,6 +19,10 @@ export const SUBMISSION_LIMITS = {
   filesMax: 3,
   fileBytesMax: 5 * 1024 * 1024,
   totalBytesMax: 9 * 1024 * 1024,
+  /** 한 과제(주차)에 쌓을 수 있는 제출 버전 수 */
+  versionsMax: 30,
+  /** 한 계정이 모든 과제에 첨부할 수 있는 파일 합계 */
+  userBytesMax: 100 * 1024 * 1024,
   extensions: [".pdf", ".ipynb", ".py", ".md", ".txt", ".zip", ".png", ".jpg", ".jpeg", ".csv", ".json"],
 } as const;
 

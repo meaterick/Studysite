@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Plain Node/CommonJS script run directly (PM2 config), not app source.
     "ecosystem.config.js",
+    // Monaco editor files copied from node_modules at build time (scripts/copy-monaco.mjs).
+    "public/vendor/**",
   ]),
 ]);
 
