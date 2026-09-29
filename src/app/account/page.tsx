@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/dal";
 import { formatDate } from "@/lib/datetime";
+import DeleteAccountButton from "@/components/account/DeleteAccountButton";
 
 export const metadata = { title: "내 계정" };
 
@@ -57,13 +58,7 @@ export default async function AccountPage({
             마지막 관리자 계정은 탈퇴할 수 없습니다. 다른 관리자 계정이 남아 있어야 탈퇴할 수 있습니다.
           </p>
         )}
-        <a
-          href="/api/auth/google?intent=delete_account"
-          className="block w-full rounded-lg px-4 py-3 text-center text-sm font-bold text-white transition hover:opacity-90"
-          style={{ background: "var(--status-critical)" }}
-        >
-          Google로 본인 확인 후 탈퇴
-        </a>
+        <DeleteAccountButton />
       </div>
     </div>
   );
