@@ -126,7 +126,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "scaling-laws": {
-    "goal": "$L(N, D) \\approx E + A/N^\\alpha + B/D^\\beta$, $C \\approx 6ND$, $D \\approx 20N$을 이용해 컴퓨트 예산에서 최적 모델 크기와 데이터 양을 계산하고, 실무의 과잉학습(overtraining)을 설명할 수 있다.",
+    "goal": "$L(N, D) \\approx E + A/N^\\alpha + B/D^\\beta$, $C \\approx 6ND$, $D \\approx 20N$을 이용해 컴퓨트 예산에서 최적 모델 크기와 데이터 양을 계산하고, 실무의 과잉학습(overtraining)과 스케일링 법칙이 경험적 적합이라는 한계를 설명할 수 있다.",
     "checks": [
       {
         "id": "w6-scaling-laws-c1",
@@ -163,6 +163,18 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "학습은 한 번이지만 추론은 계속된다. 실습에서 8B 모델은 최적점보다 손실이 약 0.02 높을 뿐이었다."
+      },
+      {
+        "id": "w6-scaling-laws-c4",
+        "question": "스케일링 법칙 $L(N, D) \\approx E + A/N^\\alpha + B/D^\\beta$에 대한 설명으로 가장 정확한 것은?",
+        "choices": [
+          "어떤 모델·데이터에서도 성립하는 물리 법칙이라, 계산값이 도달 가능한 최저 손실이다",
+          "특정 구조·데이터·학습 설정에서 관찰한 결과에 맞춘 경험식이라, 실험 범위 밖 외삽이나 설정 변화에서는 틀릴 수 있다",
+          "특정 과제의 정확도를 정확히 예측해 준다",
+          "$E$는 실험으로 직접 측정한 값이다"
+        ],
+        "answer": 1,
+        "explanation": "스케일링 법칙은 사전학습 손실에 대한 경험적 적합이다. 지수·상수는 구조·데이터 분포·학습률 스케줄에 따라 달라지고(Kaplan과 Chinchilla의 최적 비율이 다른 이유 중 하나), 다운스트림 능력은 손실만으로 직접 예측되지 않는다. $E$도 곡선을 맞춰 얻은 추정치다."
       }
     ],
     "quizIds": [
@@ -347,7 +359,7 @@ const sections: Record<string, SectionMeta> = {
           "손실이 항상 커진다"
         ],
         "answer": 1,
-        "explanation": "$\\beta$는 KL 페널티 계수와 같은 역할이다. 최적 정책 $\\pi^* \\propto \\pi_{ref}\\,e^{r/\\beta}$에서 $\\beta$가 클수록 $\\pi^*$가 $\\pi_{ref}$에 가깝다."
+        "explanation": "$\\beta$는 KL 페널티 계수와 같은 역할이다. 최적 정책 $\\pi^* \\propto \\pi_{ref}\\,e^{r/\\beta}$에서 $\\beta$가 클수록 $\\pi^*$가 $\\pi_{ref}$에 가깝다. 학습 초반의 기울기 크기($\\beta/2$)는 오히려 $\\beta$가 클수록 크지만, 작은 로그비율 차이에서 손실이 포화되어 더 멀리 가지 않는다."
       },
       {
         "id": "w6-rlhf-dpo-c4",
@@ -360,6 +372,18 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "보상모델은 사람 선호의 근사일 뿐이라, 기준 분포에서 멀리 벗어난 이상한 출력에 높은 점수를 줄 수 있다."
+      },
+      {
+        "id": "w6-rlhf-dpo-c5",
+        "question": "DPO에 대한 설명으로 가장 정확한 것은?",
+        "choices": [
+          "보상모델도 기준 모델도 필요 없고, 결과는 PPO 기반 RLHF와 항상 같다",
+          "보상모델을 따로 학습하지 않지만 기준 모델 $\\pi_{ref}$는 계속 필요하고, 미리 모은 선호 쌍으로만 학습하는 오프라인 방식이다",
+          "강화학습으로 새 응답을 생성하며 보상모델 점수를 최대화한다",
+          "선호 데이터 없이 정답 응답만으로 학습한다"
+        ],
+        "answer": 1,
+        "explanation": "DPO는 정책의 로그확률 비율을 암묵적 보상으로 써서 보상모델과 PPO 루프를 없앴다. 이상적인 가정(Bradley–Terry 선호, 충분한 데이터)에서 같은 KL-정규화 목적함수의 최적해를 겨냥하지만, 오프라인 학습이라 실제 결과는 PPO와 다를 수 있고 선호 응답의 확률까지 함께 내려가는 현상도 보고된다."
       }
     ],
     "quizIds": [
@@ -449,7 +473,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "hallucination": {
-    "goal": "다음 토큰 예측 목적함수에 사실 검증 항이 없다는 점에서 환각의 원인을 설명하고, 지식 빈틈·보정 부족·컨텍스트 창·지식 컷오프·평가 방식의 영향과 완화책을 구분할 수 있다.",
+    "goal": "환각이 사전학습 목적함수, 드물게 등장한 사실, 사후학습·평가 방식, 디코딩, 컨텍스트 창·지식 컷오프 등 여러 요인에서 생긴다는 점을 설명하고, 완화책이 환각을 줄일 뿐 없애지 못하는 이유를 말할 수 있다.",
     "checks": [
       {
         "id": "w6-hallucination-c1",
@@ -461,7 +485,7 @@ const sections: Record<string, SectionMeta> = {
           "어휘가 부족해서"
         ],
         "answer": 1,
-        "explanation": "\"X 는 Y 의 수도 이다\"라는 패턴은 모두 확률이 높다. 사실 여부는 손실함수에 들어 있지 않다."
+        "explanation": "bigram은 바로 앞 단어 하나만 보므로 \"파리\"와 \"프랑스\"를 연결하지 못하고, \"X 는 Y 의 수도 이다\"라는 패턴의 확률만 배운다. 손실함수에는 사실 여부를 직접 검사하는 항이 없다. 실제 LLM은 긴 문맥으로 자주 나온 사실은 잘 맞히지만, 드물게 나온 사실에서 같은 종류의 오류를 낸다."
       },
       {
         "id": "w6-hallucination-c2",
@@ -486,6 +510,18 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "확신도와 실제 정답률이 일치할수록 ECE가 0에 가깝다."
+      },
+      {
+        "id": "w6-hallucination-c4",
+        "question": "환각 완화책에 대한 설명으로 가장 정확한 것은?",
+        "choices": [
+          "RAG를 쓰면 모델이 근거 문서만 사용하므로 환각이 사라진다",
+          "답변에 인용을 붙이게 하면 인용된 출처는 항상 실제로 존재한다",
+          "RAG·인용·도구 사용·답변 보류 학습은 환각을 줄이지만, 검색 실패나 근거 오독, 가짜 인용이 남아 사람의 확인이 필요하다",
+          "temperature를 0으로 두면 사실만 말한다"
+        ],
+        "answer": 2,
+        "explanation": "검색이 엉뚱한 문서를 가져오거나 모델이 근거를 무시·오독하면 RAG에서도 환각이 생긴다. 모델이 만든 인용도 가짜이거나 주장을 뒷받침하지 않을 수 있다. temperature 0은 가장 확률이 높은 토큰을 고를 뿐, 그 토큰이 사실이라는 보장은 없다."
       }
     ],
     "quizIds": [

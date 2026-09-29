@@ -383,6 +383,18 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "$\\gamma = \\sigma$, $\\beta = \\mu$가 되면 원래 값이 복원된다. 정규화가 \"표현을 강제로 제한\"하지 않도록 여지를 남긴다."
+      },
+      {
+        "id": "w3-normalization-c4",
+        "question": "Transformer의 은닉 상태 텐서 모양이 (배치 $B$, 길이 $T$, $d_{model}$)일 때, LayerNorm은 평균·분산을 어떻게 계산하는가?",
+        "choices": [
+          "문장 하나의 모든 토큰($T$개)을 모아 특징마다 계산한다",
+          "배치 전체($B \\times T$개 토큰)를 모아 특징마다 계산한다",
+          "토큰마다 따로, 그 토큰 벡터의 $d_{model}$개 값으로 계산한다",
+          "배치의 첫 토큰으로 계산한 통계를 모든 토큰에 쓴다"
+        ],
+        "answer": 2,
+        "explanation": "LayerNorm은 마지막 축($d_{model}$)만 본다. 같은 문장의 다른 토큰도 참고하지 않으므로, 문장 길이·패딩·배치 구성이 바뀌어도, 생성 중에 토큰이 추가되어도 기존 토큰의 결과가 변하지 않는다. 두 번째 선택지는 BatchNorm을 시퀀스에 적용한 방식에 가깝다."
       }
     ],
     "quizIds": [
