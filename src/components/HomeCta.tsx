@@ -17,7 +17,6 @@ export default async function HomeCta({ tone = "default" }: { tone?: "default" |
           <Link href="/login?from=%2Fweeks%2Fweek-1" className={primary}>
             Google 계정으로 시작하기
           </Link>
-          <p className="text-center text-xs text-[var(--j-3)]">처음 로그인할 때 계정이 자동으로 만들어집니다.</p>
         </div>
       );
     }
