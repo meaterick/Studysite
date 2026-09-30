@@ -195,3 +195,14 @@ export function deleteUserChats(userId: string): Promise<void> {
     }
   });
 }
+
+/** 운영자가 모든 대화를 지운다. 지운 대화 수를 돌려준다. 열려 있는 채팅 창에도 곧바로 반영된다. */
+export function deleteAllChats(): Promise<number> {
+  return enqueue(() => {
+    const all = readAll();
+    if (all.length === 0) return 0;
+    writeAll([]);
+    for (const c of all) notify(c.userId);
+    return all.length;
+  });
+}

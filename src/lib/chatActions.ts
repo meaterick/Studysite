@@ -2,7 +2,7 @@
 
 import { requireAdmin, requireUser } from "./dal";
 import { findUserById } from "./userStore";
-import { CHAT_LIMITS, markChatRead, postChatMessage } from "./chatStore";
+import { CHAT_LIMITS, deleteAllChats, deleteUserChats, markChatRead, postChatMessage } from "./chatStore";
 import { consumeRate, RATE_LIMIT_MESSAGE, RATE_RULES } from "./rateLimit";
 import type { ChatMessageView } from "@/components/chat/types";
 
@@ -46,4 +46,23 @@ export async function markChatConversationRead(targetUserId?: string): Promise<v
     const user = await requireUser("/chat");
     await markChatRead(user.id, "member");
   }
+}
+
+export type ClearResult = { ok: true; deleted: number } | { ok: false; error: string };
+
+/** 운영자 전용: 스터디원 한 명과 주고받은 채팅을 모두 지운다(되돌릴 수 없음). */
+export async function clearChatConversation(targetUserId: string): Promise<ClearResult> {
+  await requireAdmin("/operator/chat");
+  if (typeof targetUserId !== "string" || !findUserById(targetUserId)) {
+    return { ok: false, error: "대화 상대를 찾을 수 없습니다." };
+  }
+  await deleteUserChats(targetUserId);
+  return { ok: true, deleted: 1 };
+}
+
+/** 운영자 전용: 모든 스터디원과의 채팅을 한꺼번에 지운다(되돌릴 수 없음). */
+export async function clearAllChatConversations(): Promise<ClearResult> {
+  await requireAdmin("/operator/chat");
+  const deleted = await deleteAllChats();
+  return { ok: true, deleted };
 }
