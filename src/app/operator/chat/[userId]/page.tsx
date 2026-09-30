@@ -6,6 +6,7 @@ import { listUserSubmissions } from "@/lib/submissionStore";
 import { conversationView } from "@/lib/chatView";
 import { getWeek } from "@/content/weeks";
 import ChatPanel from "@/components/chat/ChatPanel";
+import ClearChatButton from "@/components/chat/ClearChatButton";
 
 export const metadata = { title: "채팅" };
 
@@ -28,7 +29,7 @@ export default async function OperatorChatPage({ params }: { params: Promise<{ u
           {student.name}
           <span className="ml-2 text-xs font-medium text-ink-muted">{student.email}</span>
         </p>
-        <p className="flex flex-wrap gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <Link href={`/operator/members/${student.id}`} className="font-bold text-[var(--series-orange)] hover:underline">
             학습 현황
           </Link>
@@ -37,7 +38,8 @@ export default async function OperatorChatPage({ params }: { params: Promise<{ u
               {s.week}주차 과제
             </Link>
           ))}
-        </p>
+          <ClearChatButton targetUserId={student.id} targetName={student.name} />
+        </div>
       </div>
       <ChatPanel
         key={student.id}
