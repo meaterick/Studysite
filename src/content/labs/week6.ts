@@ -24,7 +24,7 @@ const week6: WeekLab = {
       id: "w6-lab-perplexity",
       sectionId: "pretraining",
       title: "공짜 라벨 만들기와 bigram 모델의 perplexity",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`make_pairs(tokens, k)\`: 원문을 한 칸 밀어 \`(직전 최대 k개 토큰 리스트, 다음 토큰)\` 쌍을 위치 1부터 끝까지 만듭니다. 사람이 붙인 라벨이 필요 없습니다.
 2. \`bigram_prob(tokens, alpha)\`: 바로 앞 토큰을 보고 다음 토큰 확률을 주는 함수 \`prob(prev, nxt)\`를 돌려줍니다. 가산 스무딩: $\\dfrac{\\text{count}(prev, nxt) + \\alpha}{\\text{count}(prev) + \\alpha|V|}$
@@ -118,7 +118,7 @@ print("균등:", perplexity(text, lambda a, b: 1 / V), " bigram:", perplexity(te
       id: "w6-lab-masks",
       sectionId: "architectures",
       title: "GPT(CLM)와 BERT(MLM)의 학습 문제와 attention 마스크",
-      level: 1,
+      tier: "core",
       prompt: `
 같은 문장에서 두 목적함수가 만드는 학습 문제를 비교합니다.
 
@@ -200,7 +200,7 @@ print(attention_mask(3, "decoder"))
       id: "w6-lab-scaling",
       sectionId: "scaling-laws",
       title: "스케일링 법칙으로 컴퓨트 최적 모델 크기 찾기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 재추정한 Chinchilla 상수 $E = 1.82$, $A = 482.01$, $B = 2085.43$, $\\alpha = 0.3478$, $\\beta = 0.3658$으로 계산합니다.
 
@@ -291,7 +291,7 @@ print(f"best N ≈ {best_N(1e23) / 1e9:.1f}B, 규칙 N ≈ {rule_of_thumb(1e23)[
       id: "w6-lab-lora-quant",
       sectionId: "finetuning-efficiency",
       title: "LoRA 저랭크 근사와 블록 단위 양자화",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`lora_params(d, k, r)\`: $\\Delta W = BA$($B$: $d \\times r$, $A$: $r \\times k$)의 학습 파라미터 수
 2. \`low_rank(dW, r)\`: SVD로 얻은 가장 좋은 랭크-$r$ 근사 $B A$를 돌려줍니다.
@@ -382,7 +382,7 @@ print("INT4 전체:", rel(W, quantize(W, 4)), " INT4 블록:", rel(W, quantize_b
       id: "w6-lab-qlearning",
       sectionId: "rl-basics",
       title: "점진적 평균과 벨만 방정식으로 Q값 배우기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`update_mean(est, n, r)\`: 지금까지 \`n\`번의 평균 \`est\`에 새 보상 \`r\`을 반영한 평균. 모든 보상을 저장하지 않고 $est + (r - est)/(n+1)$로 갱신합니다.
 2. \`q_learning(n_states, gamma, lr, episodes, eps, seed)\`: 칸 0~(n−1) 복도에서 행동 0=왼쪽, 1=오른쪽. 오른쪽 끝에 닿으면 보상 1로 에피소드가 끝납니다. $\\varepsilon$-탐욕으로 행동을 고르고(두 Q값이 같으면 무작위) $Q(s,a) \\leftarrow Q(s,a) + \\eta\\,[r + \\gamma \\max_{a'} Q(s', a') - Q(s,a)]$로 갱신합니다(끝 상태의 미래 가치는 0). Q 테이블 (n_states, 2)를 돌려줍니다.
@@ -471,7 +471,7 @@ print(np.round(q_learning()[:-1], 3))
       id: "w6-lab-dpo",
       sectionId: "rlhf-dpo",
       title: "DPO 손실과 KL 페널티 아래의 최적 정책",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`dpo_loss(lw, lw_ref, ll, ll_ref, beta)\` $= -\\log\\sigma\\big(\\beta[(\\log\\pi_\\theta(y_w) - \\log\\pi_{ref}(y_w)) - (\\log\\pi_\\theta(y_l) - \\log\\pi_{ref}(y_l))]\\big)$
 2. \`optimal_policy(pi_ref, r, beta)\`: $E[r] - \\beta\\,\\mathrm{KL}(\\pi \\parallel \\pi_{ref})$를 최대화하는 정책 $\\pi^*(y) \\propto \\pi_{ref}(y)\\,e^{r(y)/\\beta}$ (합이 1이 되도록 정규화)
@@ -556,7 +556,7 @@ for b in (0.1, 1.0, 5.0):
       id: "w6-lab-sampling",
       sectionId: "decoding",
       title: "temperature·top-k·top-p·반복 페널티 구현",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`softmax_T(logits, T)\`: $\\mathrm{softmax}(z/T)$ (최댓값을 빼서 안정화)
 2. \`top_k(p, k)\`: 확률이 큰 순서로 $k$개만 남기고 다시 정규화(동점은 고려하지 않아도 됨)
@@ -657,7 +657,7 @@ print(top_p(np.array([0.9, 0.05, 0.03, 0.02]), 0.9))
       id: "w6-lab-ece",
       sectionId: "hallucination",
       title: "말투의 확신과 실제 정답률: ECE 계산",
-      level: 2,
+      tier: "supplement",
       prompt: `
 \`ece(conf, correct, n_bins, lo, hi)\`를 구현합니다. 확신도 구간 $[lo, hi)$을 \`n_bins\`개로 똑같이 나눈 뒤, 구간마다 $|\\text{평균 확신도} - \\text{실제 정답률}|$에 그 구간의 표본 비율을 곱해 더합니다(비어 있는 구간은 건너뜀). 마지막 구간은 $hi$를 포함합니다.
 
@@ -744,6 +744,7 @@ print("과신하는 모델:", ece(conf, rng.random(5000) < (conf - 0.5) * 0.8 + 
     {
       kind: "choice",
       id: "w6-drill-ppl-one",
+      tier: "core",
       sectionId: "pretraining",
       question: "언어모델의 **검증** perplexity가 1.02로 나왔다. 가장 먼저 의심할 것은?",
       choices: [
@@ -758,6 +759,7 @@ print("과신하는 모델:", ece(conf, rng.random(5000) < (conf - 0.5) * 0.8 + 
     {
       kind: "choice",
       id: "w6-drill-fixed-compute",
+      tier: "core",
       sectionId: "scaling-laws",
       question: "학습 컴퓨트 $C \\approx 6ND$를 고정한 채 모델 크기 $N$을 4배로 키우면 학습 토큰 수 $D$는?",
       choices: ["4배", "그대로", "1/4배", "2배"],
@@ -767,6 +769,7 @@ print("과신하는 모델:", ece(conf, rng.random(5000) < (conf - 0.5) * 0.8 + 
     {
       kind: "choice",
       id: "w6-drill-lora-pct",
+      tier: "core",
       sectionId: "finetuning-efficiency",
       question: "$d = k = 1024$인 가중치 행렬에 랭크 $r = 8$ LoRA를 붙이면 학습 파라미터는 원래 $\\Delta W$의 몇 %인가?",
       choices: ["약 1.56%", "약 0.78%", "약 12.5%", "약 50%"],
@@ -776,6 +779,7 @@ print("과신하는 모델:", ece(conf, rng.random(5000) < (conf - 0.5) * 0.8 + 
     {
       kind: "choice",
       id: "w6-drill-dpo-data",
+      tier: "core",
       sectionId: "rlhf-dpo",
       question: "DPO로 정렬 학습을 하려면 무엇이 필요한가?",
       choices: [
@@ -790,6 +794,7 @@ print("과신하는 모델:", ece(conf, rng.random(5000) < (conf - 0.5) * 0.8 + 
     {
       kind: "predict",
       id: "w6-drill-pairs",
+      tier: "core",
       sectionId: "pretraining",
       code: py`
 text = "나는 오늘 학교 에 갔다 .".split()
@@ -802,6 +807,7 @@ print(len(pairs), pairs[2])
     {
       kind: "predict",
       id: "w6-drill-chinchilla",
+      tier: "core",
       sectionId: "scaling-laws",
       code: py`
 import math
@@ -815,6 +821,7 @@ print(f"{N:.2e} {20 * N:.2e}")
     {
       kind: "predict",
       id: "w6-drill-temperature",
+      tier: "core",
       sectionId: "decoding",
       code: py`
 import numpy as np
@@ -830,6 +837,7 @@ for T in (0.5, 1.0, 2.0):
     {
       kind: "predict",
       id: "w6-drill-incremental",
+      tier: "core",
       sectionId: "rl-basics",
       code: py`
 est, n = 0.0, 0
@@ -844,6 +852,7 @@ for r in [1, 0, 1, 1]:
     {
       kind: "descriptive",
       id: "w6-drill-bidirectional",
+      tier: "core",
       sectionId: "architectures",
       question: "\"이 리뷰가 긍정인가?\" 같은 분류에는 BERT식 양방향 마스크가 유리하지만, 대화 생성에는 쓸 수 없는 이유를 attention 마스크와 학습 목적함수로 설명하십시오.",
       modelAnswer:
@@ -853,6 +862,7 @@ for r in [1, 0, 1, 1]:
     {
       kind: "descriptive",
       id: "w6-drill-reward-hacking",
+      tier: "core",
       sectionId: "rlhf-dpo",
       question: "보상모델이 실수로 \"무례하고 틀림\" 응답에 가장 높은 점수를 줬다고 합시다. KL 페널티 계수(DPO의 $\\beta$)가 작을 때와 클 때 중 어느 쪽이 더 크게 피해를 보는지, 최적 정책 식 $\\pi^*(y) \\propto \\pi_{ref}(y) e^{r(y)/\\beta}$로 설명하십시오.",
       modelAnswer:
@@ -862,6 +872,7 @@ for r in [1, 0, 1, 1]:
     {
       kind: "descriptive",
       id: "w6-drill-bigram-hallucination",
+      tier: "core",
       sectionId: "hallucination",
       question: "사실 문장만으로 학습한 bigram 모델이 \"파리 는 일본 의 수도 이다\"를 만든 이유를 설명하고, 반대로 학습 문장 전체를 통째로 외우는 모델을 쓰면 환각은 사라지지만 무엇을 잃는지 적으십시오.",
       modelAnswer:
@@ -929,7 +940,7 @@ assert N_pub > 0 and D_pub > 0 and isinstance(name, str) and name, "name, N_pub,
       {
         id: "w6-ch-beam",
         title: "빔 서치와 길이 정규화",
-        level: 3,
+        tier: "advanced",
         prompt: `
 「디코딩 전략과 서빙」의 작은 언어모델 \`lm\`으로 디코딩을 구현합니다.
 
@@ -1025,7 +1036,7 @@ for name, (seq, lp) in [("greedy", greedy(lm)), ("beam(2)", beam_search(lm, 2))]
       {
         id: "w6-ch-dpo-train",
         title: "DPO 기울기를 유도하고 작은 정책을 직접 학습시키기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 응답 4개에 대한 정책을 logit $\\theta$로 두고($\\pi = \\mathrm{softmax}(\\theta)$) DPO로 학습합니다.
 

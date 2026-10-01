@@ -19,7 +19,7 @@ const week5: WeekLab = {
       id: "w5-lab-cooc",
       sectionId: "sequence-embedding",
       title: "함께 나온 횟수로 단어 임베딩 만들기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 "문맥이 비슷하면 의미도 비슷하다"는 분포 가설을 코드로 확인합니다.
 
@@ -122,7 +122,7 @@ for a, b in [("고양이", "강아지"), ("자동차", "버스"), ("고양이", 
       id: "w5-lab-rnn",
       sectionId: "rnn-bptt",
       title: "RNN 순전파와 시간을 거슬러 줄어드는 기울기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`rnn_forward(xs, W, U, b)\`: $h_t = \\tanh(Wx_t + Uh_{t-1} + b)$를 $h_0 = 0$에서 시작해 계산하고 모든 $h_t$의 리스트를 돌려줍니다. 길이와 상관없이 같은 $W, U, b$를 씁니다(파라미터 공유).
 2. \`grad_norms(hs, U)\`: BPTT에서 $\\partial h_T/\\partial h_k = \\prod_{t=k+1}^{T} \\mathrm{diag}(1 - h_t^2)\\,U$입니다. 뒤에서부터 야코비안을 하나씩 곱해 가며 거리 1, 2, …, T−1의 **스펙트럼 노름**(\`np.linalg.norm(J, 2)\`)을 리스트로 돌려줍니다.
@@ -223,7 +223,7 @@ print(len(hs), [f"{n[d - 1]:.1e}" for d in (1, 10, 40)] if len(n) >= 40 else n)
       id: "w5-lab-lstm",
       sectionId: "lstm-gru",
       title: "LSTM 셀 한 스텝 구현하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 \`lstm_step(x, h, c, P)\`를 구현합니다. \`P\`는 게이트마다 \`(W, U, b)\`를 담은 딕셔너리이고 키는 \`"f"\`(forget), \`"i"\`(input), \`"g"\`(후보), \`"o"\`(output)입니다.
 
@@ -322,7 +322,7 @@ print(np.round(h, 3))
       id: "w5-lab-attention",
       sectionId: "seq2seq-attention",
       title: "디코더가 필요할 때마다 다시 보는 attention",
-      level: 1,
+      tier: "core",
       prompt: `
 Seq2Seq의 병목을 푼 attention의 핵심 세 줄을 구현합니다.
 
@@ -396,7 +396,7 @@ print(np.round(attention_weights(H, s), 2))
       id: "w5-lab-sdpa",
       sectionId: "self-attention",
       title: "softmax(QKᵀ/√d_k)V 직접 계산하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 \`attention(Q, K, V, scale=True)\`가 \`(출력, 가중치)\`를 돌려주게 구현합니다. 가중치는 각 Query 행마다 Key들에 대한 softmax이며, \`scale=True\`면 점수를 $\\sqrt{d_k}$로 나눕니다.
 
@@ -483,7 +483,7 @@ print(np.round(w, 3), np.round(out, 2))
       id: "w5-lab-heads",
       sectionId: "multi-head-causal",
       title: "헤드 나누기·합치기와 causal mask",
-      level: 2,
+      tier: "supplement",
       prompt: `
 멀티헤드 attention에서 가장 실수가 잦은 텐서 조작 세 가지를 따로 구현합니다.
 
@@ -564,7 +564,7 @@ print(causal_mask(3).astype(int))
       id: "w5-lab-posenc",
       sectionId: "transformer-block",
       title: "사인·코사인 위치 인코딩으로 순서 구별하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`sinusoidal_pe(n, d)\`: 위치 $pos$, 짝수 차원 $2i$에 대해 $\\sin(pos / 10000^{2i/d})$, 다음 홀수 차원에 $\\cos(\\cdot)$를 넣은 (n, d) 행렬
 2. \`self_attention(X, Wq, Wk, Wv)\`: 마스크 없는 단일 헤드 attention(스케일링 포함)
@@ -661,7 +661,7 @@ print(np.round(sinusoidal_pe(3, d)[:, :4], 3))
       id: "w5-lab-bpe",
       sectionId: "bpe",
       title: "BPE 병합 규칙 학습과 새 단어 토큰화",
-      level: 3,
+      tier: "advanced",
       prompt: `
 「토크나이저: BPE」의 알고리즘을 처음부터 구현합니다.
 
@@ -775,7 +775,7 @@ for w in ["slow", "lowering", "banana"]:
       id: "w5-lab-kvcache",
       sectionId: "kv-cache-rope",
       title: "KV 캐시로 한 토큰씩 생성하기와 RoPE의 상대 거리",
-      level: 3,
+      tier: "advanced",
       prompt: `
 1. \`generate_with_cache(X, Wq, Wk, Wv)\`: 토큰이 하나씩 들어온다고 보고, 매 스텝 **새 토큰의 q, k, v만** 계산해 K·V 캐시에 쌓은 뒤 캐시 전체에 attention해 출력을 모읍니다. \`(출력들 (n, d), K·V 계산 횟수)\`를 돌려줍니다. 결과는 문장 전체를 causal mask로 한 번에 계산한 것과 **정확히 같아야** 합니다.
 2. \`rope(v, pos, theta=0.3)\`: 성분 쌍 $(v_{2i}, v_{2i+1})$을 각도 $pos \\cdot \\theta / 10000^{2i/d}$만큼 회전합니다. 회전한 $q$(위치 $m$)와 $k$(위치 $n$)의 내적은 $m - n$에만 의존해야 합니다.
@@ -888,6 +888,7 @@ print([round(float(rope(q, m) @ rope(k, p)), 6) for m, p in [(5, 3), (12, 10), (
     {
       kind: "choice",
       id: "w5-drill-softmax-axis",
+      tier: "core",
       sectionId: "self-attention",
       question: "Query 5개(`Q`: (5, 8))와 Key 7개(`K`: (7, 8))로 `S = Q @ K.T`를 만들었다. attention 가중치를 만들 때 softmax는 어느 축으로 해야 하는가?",
       choices: ["axis=0: Key마다 Query들에 대한 분포", "axis=-1: Query(행)마다 Key 7개에 대한 분포", "전체 35칸에 한 번", "축과 상관없다"],
@@ -897,6 +898,7 @@ print([round(float(rope(q, m) @ rope(k, p)), 6) for m, p in [(5, 3), (12, 10), (
     {
       kind: "choice",
       id: "w5-drill-triu0",
+      tier: "core",
       sectionId: "multi-head-causal",
       question: "causal mask를 `np.triu(np.ones((n, n)), 1)` 대신 `np.triu(np.ones((n, n)), 0)`으로 만들어 `-1e9`를 채우면 **첫 번째 토큰**의 가중치 행은?",
       choices: [
@@ -911,6 +913,7 @@ print([round(float(rope(q, m) @ rope(k, p)), 6) for m, p in [(5, 3), (12, 10), (
     {
       kind: "choice",
       id: "w5-drill-endofword",
+      tier: "core",
       sectionId: "bpe",
       question: "BPE 학습에서 각 단어 끝에 `</w>`를 붙이는 이유는?",
       choices: [
@@ -925,6 +928,7 @@ print([round(float(rope(q, m) @ rope(k, p)), 6) for m, p in [(5, 3), (12, 10), (
     {
       kind: "choice",
       id: "w5-drill-cache-mask",
+      tier: "core",
       sectionId: "kv-cache-rope",
       question: "KV 캐시로 한 토큰씩 생성할 때 causal mask를 쓰지 않아도 결과가 학습 때와 같은 이유는?",
       choices: [
@@ -939,6 +943,7 @@ print([round(float(rope(q, m) @ rope(k, p)), 6) for m, p in [(5, 3), (12, 10), (
     {
       kind: "predict",
       id: "w5-drill-scores",
+      tier: "core",
       sectionId: "self-attention",
       code: py`
 import numpy as np
@@ -952,6 +957,7 @@ print((K @ q).tolist(), (K @ q / np.sqrt(4)).tolist())
     {
       kind: "predict",
       id: "w5-drill-triu",
+      tier: "core",
       sectionId: "multi-head-causal",
       code: py`
 import numpy as np
@@ -964,6 +970,7 @@ print(np.tril(np.ones((3, 3))).astype(int).sum(axis=1).tolist())
     {
       kind: "predict",
       id: "w5-drill-bpe-pairs",
+      tier: "core",
       sectionId: "bpe",
       code: py`
 from collections import Counter
@@ -979,6 +986,7 @@ print(len(pairs))
     {
       kind: "predict",
       id: "w5-drill-kv-memory",
+      tier: "core",
       sectionId: "kv-cache-rope",
       code: py`
 n_layers, n_heads, head_dim, seq, batch = 32, 32, 128, 2048, 1
@@ -991,6 +999,7 @@ print(elems, round(elems * 2 / 1e9, 2))
     {
       kind: "descriptive",
       id: "w5-drill-forget-bias",
+      tier: "core",
       sectionId: "lstm-gru",
       question: "LSTM 실습에서 forget bias가 0이면 RNN보다 오히려 첫 시점의 영향이 더 빨리 사라졌는데, bias를 2 이상으로 올리면 40스텝 뒤에도 살아남았습니다. 셀 상태 식 $c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde c_t$로 이유를 설명하십시오.",
       modelAnswer:
@@ -1000,6 +1009,7 @@ print(elems, round(elems * 2 / 1e9, 2))
     {
       kind: "descriptive",
       id: "w5-drill-bottleneck",
+      tier: "core",
       sectionId: "seq2seq-attention",
       question: "병목 실험에서 마지막 은닉 상태 $h_T$로 첫 토큰을 복원하는 $R^2$는 문장이 길어질수록 0으로 떨어졌지만 $h_1$로는 길이와 무관하게 1이었습니다. 이유를 설명하고, 은닉 차원을 16에서 64로 늘려도 병목이 '해결'되지 않는 이유를 적으십시오.",
       modelAnswer:
@@ -1009,6 +1019,7 @@ print(elems, round(elems * 2 / 1e9, 2))
     {
       kind: "descriptive",
       id: "w5-drill-perm",
+      tier: "core",
       sectionId: "transformer-block",
       question: "위치 인코딩 없는 self-attention에 \"고양이가 생선을 먹었다\"와 \"먹었다 생선을 고양이가\"를 넣으면, 각 단어의 출력은 같고 **문장 전체 출력의 평균**도 같습니다. 각각 순열 등변·순열 불변 중 무엇인지 구분해 설명하고, causal mask를 쓰면 왜 위치 인코딩 없이도 '고양이가'의 출력이 달라지는지 적으십시오.",
       modelAnswer:
@@ -1094,7 +1105,7 @@ assert len(queries) >= 3, f"Query가 {len(queries)}개입니다. 직접 고른 Q
       {
         id: "w5-ch-decoder-block",
         title: "GPT형 디코더 블록 전체 순전파",
-        level: 3,
+        tier: "advanced",
         prompt: `
 지금까지 만든 부품으로 **pre-norm GPT 디코더 블록**을 조립합니다.
 
@@ -1206,7 +1217,7 @@ print(decoder_block(x, P).shape, n_params(768))
       {
         id: "w5-ch-byte-bpe",
         title: "바이트 수준 BPE로 한국어 토큰 수 줄이기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 GPT 계열 토크나이저는 글자가 아니라 **UTF-8 바이트**에서 출발합니다. 한글 한 글자는 3바이트라 병합이 없으면 토큰이 많아집니다.
 

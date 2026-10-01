@@ -9,6 +9,7 @@ scikit-learn의 유방암 진단 데이터(\`load_breast_cancer\`)로 세 모델
   tasks: [
     {
       id: "compare",
+      tier: "core",
       title: "세 모델을 같은 교차검증으로 비교하기",
       instructions: `
 다수결 베이스라인(\`DummyClassifier\`), 로지스틱 회귀, 랜덤 포레스트를 **같은** 5-Fold 층화 교차검증으로 비교해 F1과 ROC-AUC를 평균 $\\pm$ 표준편차로 출력합니다. 스케일링 같은 전처리는 반드시 \`Pipeline\` 안에 넣습니다. 코드 셀의 \`TODO\`를 채워 로지스틱 회귀 파이프라인을 완성합니다.
@@ -75,6 +76,7 @@ for metric in ("F1", "ROC-AUC"):
     },
     {
       id: "metric",
+      tier: "core",
       title: "지표 선택의 근거 세우기",
       instructions: `
 클래스 비율(악성:양성)을 확인하고, 로지스틱 회귀를 훈련 데이터 전체로 학습해 테스트셋의 혼동행렬과 Precision·Recall을 출력합니다. 이 문제에서 어떤 지표를 가장 중요하게 봐야 하는지, 악성 종양을 놓치는 비용과 오진의 비용을 비교해 설명합니다.
@@ -105,6 +107,7 @@ print(classification_report(y_test, pred, target_names=["양성 종양", "악성
     },
     {
       id: "leak",
+      tier: "core",
       title: "데이터 누수 실험",
       instructions: `
 두 가지 누수를 일부러 만들어 교차검증 점수가 얼마나 부풀려지는지 측정합니다.
@@ -158,6 +161,7 @@ print(f"(b) 타깃 파생 특징 추가  ROC-AUC = {leak_b:.4f}  (차이 {leak_b
     },
     {
       id: "biasvar",
+      tier: "core",
       title: "편향과 분산을 숫자로 확인하기",
       instructions: `
 결정트리를 서로 다른 \`random_state\` 분할 10개로 학습해 테스트 정확도 10개를 얻고, \`max_depth\`를 1, 3, 5, 제한 없음으로 바꿔 가며 평균과 표준편차를 비교합니다. 깊이가 커질 때 평균과 흔들림이 어떻게 변하는지 편향·분산의 용어로 해석합니다. 이 표준편차에는 "훈련 데이터가 바뀌어 모델이 달라지는 흔들림(분산)"과 "테스트셋 표본이 바뀌어 점수가 달라지는 흔들림"이 함께 들어 있다는 점도 해석에 반영합니다.
@@ -190,8 +194,8 @@ for depth in (1, 3, 5, None):
     },
     {
       id: "advanced",
+      tier: "advanced",
       title: "심화: 학습 곡선·추가 모델·규제 경로",
-      optional: true,
       instructions: `
 다음 중 하나 이상을 골라 실험합니다.
 

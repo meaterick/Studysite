@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import CodeBlock from "@/components/CodeBlock";
 import CellOutputs from "@/components/assignment/CellOutputs";
 import { useUserScope } from "@/components/UserScope";
+import TierBadge from "@/components/TierBadge";
+import type { Tier } from "@/content/tiers";
 import { loadCellCode, resetCellCode, saveCellCode } from "@/lib/codeStore";
 import { forceStop, preloadPyodide, resetNamespace, runPython, type RunHandlers, type RunStatus } from "@/lib/pyRunner";
 import { buildGradeProgram, countTodos, parseGradeReport, type LabGradeReport } from "@/lib/labHarness";
@@ -20,8 +22,7 @@ export interface ExerciseView {
   slug: string;
   id: string;
   title: string;
-  level: 1 | 2 | 3;
-  levelLabel: string;
+  tier: Tier;
   /** 서버에서 렌더링한 문제 설명 */
   prompt: ReactNode;
   starter: string;
@@ -29,7 +30,7 @@ export interface ExerciseView {
   /** 서버에서 렌더링한 단계별 힌트 */
   hints: ReactNode[];
   /** 연결된 단계(단계 실습일 때) */
-  section?: { number: number; title: string; href: string };
+  section?: { label: string; title: string; href: string };
   state: { attempts: number; bestPassed: number; hintsUsed: number; passed: boolean };
   /** 잠겨 있으면 그 이유 */
   locked?: string;
@@ -43,8 +44,6 @@ const STATUS_TEXT: Record<RunStatus, string> = {
 
 /** 실행이 이 시간을 넘기면 무한 루프로 보고 실행 환경을 다시 시작한다(패키지 로딩 시간은 제외). */
 const TIME_LIMIT_MS = 30_000;
-
-const LEVEL_COLOR: Record<1 | 2 | 3, string> = { 1: "var(--status-good)", 2: "var(--series-blue)", 3: "var(--series-orange)" };
 
 function countTests(tests: string): number {
   return (tests.match(/@test\(/g) ?? []).length;
@@ -250,15 +249,10 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
             <span className="rounded-md bg-[color-mix(in_srgb,var(--series-orange)_15%,transparent)] px-2 py-0.5 text-[var(--series-orange)]">
               TODO 실습
             </span>
-            <span
-              className="rounded-full px-2 py-0.5"
-              style={{ color: LEVEL_COLOR[view.level], background: `color-mix(in srgb, ${LEVEL_COLOR[view.level]} 12%, transparent)` }}
-            >
-              {view.levelLabel}
-            </span>
+            <TierBadge tier={view.tier} />
             {view.section && (
               <a href={view.section.href} className="font-medium text-ink-muted hover:text-[var(--series-blue)] hover:underline">
-                {view.section.number}단계 · {view.section.title}
+                {view.section.label} · {view.section.title}
               </a>
             )}
           </div>

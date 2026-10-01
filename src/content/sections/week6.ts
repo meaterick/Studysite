@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "pretraining": {
+    "tier": "core",
     "goal": "사전학습의 다음 토큰 예측 손실 $L = -\\frac{1}{T}\\sum_t \\log P(x_t \\mid x_{<t})$과 perplexity $e^L$의 의미를 설명하고, 라벨 없이 학습 데이터가 만들어지는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -62,6 +63,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "architectures": {
+    "tier": "core",
     "goal": "BERT(Encoder-only, MLM)·GPT(Decoder-only, 다음 토큰 예측)·T5(Encoder-Decoder, text-to-text)의 차이와 대형 LLM이 Decoder-only로 수렴한 이유를 설명하고, 창발 능력과 그에 대한 반론을 말할 수 있다.",
     "checks": [
       {
@@ -126,6 +128,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "scaling-laws": {
+    "tier": "core",
     "goal": "$L(N, D) \\approx E + A/N^\\alpha + B/D^\\beta$, $C \\approx 6ND$, $D \\approx 20N$을 이용해 컴퓨트 예산에서 최적 모델 크기와 데이터 양을 계산하고, 실무의 과잉학습(overtraining)과 스케일링 법칙이 경험적 적합이라는 한계를 설명할 수 있다.",
     "checks": [
       {
@@ -199,6 +202,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "finetuning-efficiency": {
+    "tier": "core",
     "goal": "SFT의 역할과 풀 파인튜닝의 메모리 비용을 설명하고, LoRA($\\Delta W = BA$)·QLoRA·지식 증류·양자화가 각각 무엇을 줄이는지 계산과 함께 말할 수 있다.",
     "checks": [
       {
@@ -263,6 +267,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "rl-basics": {
+    "tier": "core",
     "goal": "Agent·Environment·State·Action·Reward·Policy·Return과 MDP, 벨만 방정식, 탐색–활용 트레이드오프를 설명하고, 가치 기반(Q-Learning·DQN)과 정책 기반(Policy Gradient·Actor-Critic·PPO) 방법을 구분할 수 있다.",
     "checks": [
       {
@@ -323,6 +328,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "rlhf-dpo": {
+    "tier": "core",
     "goal": "SFT·RLHF·DPO의 데이터와 목적함수 차이, 보상모델과 KL 페널티의 역할을 설명하고, DPO 손실을 계산하며 $\\beta$가 클수록 기준 모델 근처에 머무는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -412,6 +418,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "decoding": {
+    "tier": "core",
     "goal": "$\\text{softmax}(z/T)$로 temperature의 효과를 계산하고, greedy·beam search·top-k·top-p·반복 페널티·스톱 토큰의 차이와 지연시간–처리량 트레이드오프를 설명할 수 있다.",
     "checks": [
       {
@@ -473,6 +480,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "hallucination": {
+    "tier": "core",
     "goal": "환각이 사전학습 목적함수, 드물게 등장한 사실, 사후학습·평가 방식, 디코딩, 컨텍스트 창·지식 컷오프 등 여러 요인에서 생긴다는 점을 설명하고, 완화책이 환각을 줄일 뿐 없애지 못하는 이유를 말할 수 있다.",
     "checks": [
       {

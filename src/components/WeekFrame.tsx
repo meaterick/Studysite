@@ -26,17 +26,28 @@ export default function WeekFrame({
           <p className="mt-2 max-w-2xl text-ink-secondary">{week.subtitle}</p>
           <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink-muted">
             <DifficultyBadge level={week.difficulty} />
-            <span>
-              {status.sectionsTotal}단계 중 {status.sectionsDone}단계 완료
+            <span title="주차 완료는 핵심 단계만으로 판단합니다">
+              핵심 {status.tiers.core.done}/{status.tiers.core.total}단계 완료
+              {status.coreDone && " ✓"}
             </span>
+            {status.tiers.supplement.total > 0 && (
+              <span>
+                보충 {status.tiers.supplement.done}/{status.tiers.supplement.total}
+              </span>
+            )}
+            {status.tiers.advanced.total > 0 && (
+              <span>
+                심화 {status.tiers.advanced.done}/{status.tiers.advanced.total}
+              </span>
+            )}
           </div>
         </div>
-        <div className="shrink-0 text-center" title="단계 학습, 백지공부, 과제 제출을 모두 반영한 진행률">
+        <div className="shrink-0 text-center" title="핵심 단계 학습, 백지공부, 과제 제출을 반영한 진행률(보충·심화는 따로 기록)">
           <ProgressRing ratio={status.ratio} size={56} />
           <p className="mt-1 text-[11px] font-bold text-ink-muted">진행률</p>
         </div>
       </div>
-      <WeekTabs slug={week.slug} finaleLocked={!status.finaleOpen} finaleUnfinished={!status.allSectionsDone} />
+      <WeekTabs slug={week.slug} finaleLocked={!status.finaleOpen} finaleUnfinished={!status.coreDone} />
       {children}
     </>
   );

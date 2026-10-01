@@ -41,7 +41,7 @@ const week3: WeekLab = {
       id: "w3-lab-mlp-forward",
       sectionId: "neurons-mlp",
       title: "뉴런·층 계산과 \"비선형이 없으면 한 층\" 증명",
-      level: 1,
+      tier: "core",
       prompt: `
 1. \`neuron(x, w, b)\`: ReLU 뉴런 $\\max(0, w \\cdot x + b)$
 2. \`layer(x, W, b)\`: 선형 층 $Wx + b$ (W의 shape은 (출력, 입력))
@@ -135,7 +135,7 @@ print("두 층:", layer(layer(x, W1, b1), W2, b2), " 합친 한 층:", None if W
       id: "w3-lab-backprop",
       sectionId: "backprop",
       title: "덧셈·곱셈 노드로 손 역전파, 그리고 층 하나의 δxᵀ",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`backprop(w, x, c)\`: $L = (wx + c)^2$을 $u = wx$, $v = u + c$, $L = v^2$로 쪼개 역전파한 $(\\partial L/\\partial w, \\partial L/\\partial x, \\partial L/\\partial c)$. 덧셈 노드는 기울기를 그대로 나눠 주고, 곱셈 노드는 **상대방의 값**을 곱해 전달합니다.
 2. \`layer_grad(W, x)\`: $z = Wx$, $L = \\sum z^2$일 때 $\\dfrac{\\partial L}{\\partial W} = \\delta x^\\top$ ($\\delta = 2z$). 결과 shape은 W와 같아야 합니다.
@@ -225,7 +225,7 @@ print(backprop(2.0, 3.0, 1.0))
       id: "w3-lab-money",
       sectionId: "python-for-autograd",
       title: "연산자 오버로딩·클로저·재귀로 계산 기록 남기기",
-      level: 1,
+      tier: "core",
       prompt: `
 「자동미분 엔진을 읽기 위한 파이썬 문법」 실습의 \`Money\`를 완성합니다. 다음 단계 \`Value\`와 구조가 같습니다.
 
@@ -343,7 +343,7 @@ print(vat(a + b) if vat else "make_tax 미완성")
       id: "w3-lab-micrograd",
       sectionId: "micrograd",
       title: "micrograd의 backward()와 국소 미분 채우기",
-      level: 3,
+      tier: "advanced",
       prompt: `
 덧셈·곱셈만 있는 \`Value\`에 세 가지를 직접 구현합니다.
 
@@ -469,7 +469,7 @@ print(a.grad, b.grad)
       id: "w3-lab-optimizers",
       sectionId: "optimizers",
       title: "Momentum과 Adam 한 스텝 구현하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 최적화기를 "상태를 받아 새 상태를 돌려주는 함수"로 구현합니다.
 
@@ -565,7 +565,7 @@ print("Momentum 100스텝:", np.round(w, 3))
       id: "w3-lab-init",
       sectionId: "init-stability",
       title: "He·Xavier 초기화와 층별 활성화 분산 추적",
-      level: 2,
+      tier: "supplement",
       prompt: `
 $\\mathrm{Var}(z) \\approx \\text{fan\\_in} \\cdot \\mathrm{Var}(w) \\cdot \\mathrm{Var}(x)$에서 나온 초기화 규칙을 구현하고 실험합니다.
 
@@ -657,7 +657,7 @@ for name, s in [("He", he), ("1.5배", he * 1.5), ("0.8배", he * 0.8)]:
       id: "w3-lab-norm",
       sectionId: "normalization",
       title: "BatchNorm과 LayerNorm: 같은 숫자, 다른 축",
-      level: 2,
+      tier: "supplement",
       prompt: `
 두 정규화 층을 \`gamma\`, \`beta\`까지 포함해 구현합니다(\`eps=1e-5\`).
 
@@ -739,7 +739,7 @@ print("LN:\n", np.round(layer_norm(z), 3))
       id: "w3-lab-twolayer",
       sectionId: "pytorch-core",
       title: "autograd 없이 2층 신경망의 backward 작성하기",
-      level: 3,
+      tier: "advanced",
       prompt: `
 「PyTorch가 대신해주는 것들」 실습의 2층 신경망에서 \`backward\`를 직접 작성합니다. 순전파는 $z_1 = XW_1 + b_1$, $h = \\mathrm{ReLU}(z_1)$, $z_2 = hW_2 + b_2$, $p = \\sigma(z_2)$, 손실은 평균 이진 교차 엔트로피입니다.
 
@@ -871,6 +871,7 @@ for epoch in range(1001):
     {
       kind: "choice",
       id: "w3-drill-shapes",
+      tier: "core",
       sectionId: "neurons-mlp",
       question: "입력 배치 `X`의 shape이 `(32, 3)`, `W1`이 `(3, 4)`일 때 `X @ W1 + b1`이 동작하려면 `b1`의 shape과 결과 shape은?",
       choices: ["`b1`: (4,), 결과: (32, 4)", "`b1`: (32,), 결과: (32, 4)", "`b1`: (3,), 결과: (32, 3)", "`b1`: (4, 32), 결과: (4, 32)"],
@@ -881,6 +882,7 @@ for epoch in range(1001):
     {
       kind: "choice",
       id: "w3-drill-missing-backward",
+      tier: "core",
       sectionId: "micrograd",
       question: "`Value.__mul__`에서 `out._backward = _backward` 줄을 빠뜨린 채 `L = (a * b + c).relu()`에 `L.backward()`를 실행하면?",
       choices: [
@@ -896,6 +898,7 @@ for epoch in range(1001):
     {
       kind: "choice",
       id: "w3-drill-adam-nocorrect",
+      tier: "core",
       sectionId: "optimizers",
       question: "Adam($\\beta_1 = 0.9$, $\\beta_2 = 0.999$)에서 편향 보정 없이 $m_1/\\sqrt{s_1}$로 첫 스텝을 밟으면 이동량은 학습률 $\\eta$의 약 몇 배인가?",
       choices: ["정확히 1배", "약 3.16배 ($0.1 / \\sqrt{0.001}$)", "약 0.1배", "0배 (움직이지 않음)"],
@@ -906,6 +909,7 @@ for epoch in range(1001):
     {
       kind: "choice",
       id: "w3-drill-zero-grad-order",
+      tier: "core",
       sectionId: "pytorch-core",
       question: "PyTorch 학습 루프를 `loss.backward()` → `optimizer.zero_grad()` → `optimizer.step()` 순서로 쓰면?",
       choices: [
@@ -921,6 +925,7 @@ for epoch in range(1001):
     {
       kind: "predict",
       id: "w3-drill-closure",
+      tier: "core",
       sectionId: "python-for-autograd",
       code: py`
 def make_counter():
@@ -941,6 +946,7 @@ print(a(), a(), b(), a())
     {
       kind: "predict",
       id: "w3-drill-chain",
+      tier: "core",
       sectionId: "backprop",
       code: py`
 w, x, c = 2.0, 3.0, 1.0
@@ -959,6 +965,7 @@ print(L, dw, dx, dv)
     {
       kind: "predict",
       id: "w3-drill-explode",
+      tier: "core",
       sectionId: "init-stability",
       code: py`
 print(round(1.5 ** 10, 1), round(0.8 ** 10, 3))
@@ -971,6 +978,7 @@ print(round(1.2 ** 15, 1))
     {
       kind: "predict",
       id: "w3-drill-fp16",
+      tier: "core",
       sectionId: "pytorch-practice",
       code: py`
 import numpy as np
@@ -985,6 +993,7 @@ print(((g * 1024).astype(np.float16) == 0).tolist())
     {
       kind: "descriptive",
       id: "w3-drill-xx-plus-x",
+      tier: "core",
       sectionId: "micrograd",
       question:
         "`x = Value(3.0); y = x * x + x; y.backward()`에서 `x.grad`가 7이 되는 과정을, 계산 그래프의 노드와 `_backward` 호출 순서로 설명하십시오. `+=` 대신 `=`를 쓰면 몇이 되는지도 적습니다.",
@@ -995,6 +1004,7 @@ print(((g * 1024).astype(np.float16) == 0).tolist())
     {
       kind: "descriptive",
       id: "w3-drill-sgd-vs-adam",
+      tier: "core",
       sectionId: "optimizers",
       question:
         "협곡 모양 손실 실습에서 학습률을 잘 고른 SGD(0.04)가 Adam보다 정확했던 이유와, 그럼에도 실무에서 Adam을 기본값으로 쓰는 이유를 함께 설명하십시오.",
@@ -1005,6 +1015,7 @@ print(((g * 1024).astype(np.float16) == 0).tolist())
     {
       kind: "descriptive",
       id: "w3-drill-relu-mask",
+      tier: "core",
       sectionId: "pytorch-core",
       question:
         "2층 신경망의 `backward`에서 `dz1 = (dz2 @ W2.T) * (z1 > 0)`의 `* (z1 > 0)`을 지우면 gradient check와 학습이 어떻게 됩니까? 이유를 ReLU의 국소 미분으로 설명하십시오.",
@@ -1084,7 +1095,7 @@ for i in (0, len(params) // 2, len(params) - 1):
       {
         id: "w3-ch-softmax-ce",
         title: "Value에 log를 추가해 소프트맥스 교차 엔트로피 만들기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 다중 분류 손실을 \`Value\`의 기본 연산만으로 조립합니다. \`exp\`와 \`__truediv__\`는 완성되어 있습니다.
 
@@ -1231,7 +1242,7 @@ print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logi
       {
         id: "w3-ch-deep-grads",
         title: "깊은 망의 층별 기울기 크기 측정과 기울기 클리핑",
-        level: 3,
+        tier: "advanced",
         prompt: `
 깊이 20인 MLP에서 기울기가 층을 거슬러 올라가며 어떻게 변하는지 직접 측정합니다.
 

@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "convolution": {
+    "tier": "core",
     "goal": "합성곱의 계산 과정과 출력 크기 공식 $\\lfloor (N + 2P - K)/S \\rfloor + 1$을 적용하고, 지역성·파라미터 공유가 FC층 대비 파라미터를 얼마나 줄이는지 계산할 수 있다.",
     "checks": [
       {
@@ -63,6 +64,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "pooling-receptive-field": {
+    "tier": "core",
     "goal": "Max·Average 풀링의 차이와 strided convolution과의 관계를 설명하고, 점프 $j$를 이용해 여러 층의 수용영역을 계산할 수 있다.",
     "checks": [
       {
@@ -121,6 +123,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "resnet": {
+    "tier": "core",
     "goal": "degradation 문제가 과적합이 아닌 최적화 문제인 이유를 설명하고, 잔차 연결 $y = F(x) + x$의 기울기 $F'(x) + 1$이 깊은 망의 학습을 돕는 원리를 숫자로 보일 수 있다.",
     "checks": [
       {
@@ -178,6 +181,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "cnn-history-applications": {
+    "tier": "core",
     "goal": "LeNet → AlexNet → VGG → ResNet이 각각 무엇을 해결했는지 설명하고, Detection·Segmentation·ViT가 분류와 어떻게 다른 문제를 푸는지 구분할 수 있다.",
     "checks": [
       {
@@ -239,6 +243,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "regularization": {
+    "tier": "core",
     "goal": "BatchNorm·Dropout·Weight Decay·데이터 증강·Early Stopping의 원리와 train/eval 모드 차이를 설명하고, Colab에서 CIFAR-10 CNN을 학습시킬 수 있다.",
     "checks": [
       {
@@ -296,6 +301,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "transfer-diagnostics": {
+    "tier": "core",
     "goal": "특징 추출과 파인튜닝을 구분해 전이학습을 적용하고, Karpathy 레시피(초기 손실 $\\ln C$, 배치 하나 과적합, 한 번에 하나만 바꾸기)로 학습 실패를 진단할 수 있다.",
     "checks": [
       {
@@ -352,6 +358,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "generative-models": {
+    "tier": "core",
     "goal": "판별 모델과 생성 모델의 차이를 설명하고, Autoencoder·VAE·GAN·Diffusion이 각각 \"생성\"을 가능하게 하는 메커니즘을 정확한 용어로 설명할 수 있다.",
     "checks": [
       {

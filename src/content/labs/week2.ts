@@ -8,7 +8,7 @@ const week2: WeekLab = {
       id: "w2-lab-outliers",
       sectionId: "data-cleaning",
       title: "IQR과 Z-score: 같은 데이터, 다른 결론",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「데이터 수집·정제와 결측값·이상치」 예제를 함수로 만듭니다. 사분위수는 본문처럼 **정렬한 데이터를 반으로 나눠 각 절반의 중앙값**으로 구합니다.
 
@@ -104,7 +104,7 @@ print("Z-score 이상치(|z|>3):", zscore_outliers(data))
       id: "w2-lab-scaler",
       sectionId: "features",
       title: "훈련 통계로만 변환하는 표준화기 만들기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 scikit-learn의 \`StandardScaler\`가 하는 일을 직접 구현해 "훈련 데이터로만 fit, 테스트에는 transform만" 원칙을 코드로 확인합니다.
 
@@ -210,7 +210,7 @@ print("minmax([2, 4, 6, 8]) =", minmax([2, 4, 6, 8]))
       id: "w2-lab-logistic",
       sectionId: "regression-logistic",
       title: "로지스틱 회귀의 손실과 기울기 (p − y)x",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「문제 유형과 손실함수」 실습의 로지스틱 회귀를 부품으로 나눠 구현합니다. 학습 루프는 이미 작성되어 있습니다.
 
@@ -325,7 +325,7 @@ print("손실 =", bce_loss(p, y), " 훈련 정확도 =", np.mean((p >= 0.5) == y
       id: "w2-lab-knn",
       sectionId: "knn-naive-bayes",
       title: "KNN 다수결과 나이브 베이즈를 직접 계산하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「알고리즘 지도 ①」의 두 예제를 라이브러리 없이 구현합니다.
 
@@ -418,7 +418,7 @@ print(naive_bayes({"스팸": 0.3, "정상": 0.7}, {"스팸": [0.6, 0.4], "정상
       id: "w2-lab-gini",
       sectionId: "trees-ensembles",
       title: "지니 불순도로 가장 좋은 분할 찾기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 결정트리가 한 노드에서 하는 일을 직접 구현합니다.
 
@@ -516,7 +516,7 @@ print("최적 분할점 =", best_threshold([1, 2, 3, 10, 11, 12], [0, 0, 0, 1, 1
       id: "w2-lab-kmeans",
       sectionId: "svm-unsupervised",
       title: "K-Means 할당·갱신 반복 직접 구현",
-      level: 3,
+      tier: "advanced",
       prompt: `
 「알고리즘 지도 ③」에서 손으로 따라간 K-Means를 구현합니다. 한 번의 반복은 **할당**(가장 가까운 중심에 배정)과 **갱신**(군집 평균으로 중심 이동) 두 단계입니다.
 
@@ -622,7 +622,7 @@ print("수렴 결과:", kmeans(pts, [[1, 1], [5, 4]]))
       id: "w2-lab-kfold",
       sectionId: "validation-leakage",
       title: "K-Fold 분할과 누수 없는 fold별 표준화",
-      level: 3,
+      tier: "advanced",
       prompt: `
 교차검증의 뼈대를 직접 만듭니다.
 
@@ -714,7 +714,7 @@ for train, val in kfold_indices(10, 3):
       id: "w2-lab-metrics",
       sectionId: "classification-metrics",
       title: "혼동행렬·F1·AUC를 손으로 구현하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「분류 평가지표」의 스팸 필터 예제와 ROC 예제를 함수로 만듭니다.
 
@@ -821,7 +821,7 @@ print("AUC =", auc_by_pairs([1, 0, 1, 0, 0], [0.9, 0.8, 0.6, 0.5, 0.2]))
       id: "w2-lab-regmetrics",
       sectionId: "regression-metrics-baseline",
       title: "회귀 지표와 평균 베이스라인",
-      level: 1,
+      tier: "core",
       prompt: `
 \`regression_report(y, y_hat)\`가 MAE·MSE·RMSE·$R^2$를 딕셔너리로 돌려주게 완성합니다. $R^2 = 1 - \\dfrac{\\sum (y - \\hat y)^2}{\\sum (y - \\bar y)^2}$는 "평균만 말하는 베이스라인보다 오차를 얼마나 줄였는가"입니다. 그래서 평균을 그대로 예측하면 $R^2 = 0$, 그보다 못하면 음수가 됩니다.
 `,
@@ -885,6 +885,7 @@ print("평균 베이스라인:", regression_report([3, 5, 7, 9], [6, 6, 6, 6]))
     {
       kind: "choice",
       id: "w2-drill-logistic-sign",
+      tier: "core",
       sectionId: "regression-logistic",
       question: "로지스틱 회귀 학습 루프에서 `grad_w = X.T @ (p - y) / len(y)`를 실수로 `X.T @ (y - p) / len(y)`로 쓰고 `w -= lr * grad_w`로 갱신하면?",
       choices: [
@@ -900,6 +901,7 @@ print("평균 베이스라인:", regression_report([3, 5, 7, 9], [6, 6, 6, 6]))
     {
       kind: "choice",
       id: "w2-drill-knn-scale",
+      tier: "core",
       sectionId: "knn-naive-bayes",
       question: "방 개수(1~5)와 면적(20~200㎡) 두 특징으로 KNN을 할 때 스케일링을 하지 않으면?",
       choices: [
@@ -915,6 +917,7 @@ print("평균 베이스라인:", regression_report([3, 5, 7, 9], [6, 6, 6, 6]))
     {
       kind: "choice",
       id: "w2-drill-ridge",
+      tier: "core",
       sectionId: "bias-variance",
       question: "12차 다항 특징에 Ridge를 적용하고 `alpha`를 `1e-8`에서 `10`까지 키울 때 **훈련** 오차는 대체로 어떻게 되는가?",
       choices: ["계속 줄어든다", "커진다. 규제가 강할수록 훈련 데이터에 맞추는 자유가 줄어든다", "U자 모양을 그린다", "변하지 않는다"],
@@ -925,6 +928,7 @@ print("평균 베이스라인:", regression_report([3, 5, 7, 9], [6, 6, 6, 6]))
     {
       kind: "choice",
       id: "w2-drill-leaky-select",
+      tier: "core",
       sectionId: "validation-leakage",
       question: "`X_sel = SelectKBest(k=20).fit_transform(X, y)` 다음에 `cross_val_score(model, X_sel, y, cv=5)`를 실행했다. 무엇이 문제인가?",
       choices: [
@@ -940,6 +944,7 @@ print("평균 베이스라인:", regression_report([3, 5, 7, 9], [6, 6, 6, 6]))
     {
       kind: "predict",
       id: "w2-drill-iqr",
+      tier: "core",
       sectionId: "data-cleaning",
       code: py`
 import numpy as np
@@ -953,6 +958,7 @@ print(q1, q3, q3 + 1.5 * (q3 - q1))
     {
       kind: "predict",
       id: "w2-drill-dummies",
+      tier: "core",
       sectionId: "features",
       code: py`
 import pandas as pd
@@ -968,6 +974,7 @@ print(dummies.values.tolist())
     {
       kind: "predict",
       id: "w2-drill-boosting",
+      tier: "core",
       sectionId: "trees-ensembles",
       code: py`
 y = [10, 20, 30]
@@ -983,6 +990,7 @@ print([round(f, 2) for f in F])
     {
       kind: "predict",
       id: "w2-drill-threshold",
+      tier: "core",
       sectionId: "classification-metrics",
       code: py`
 y_true = [1, 1, 0, 0, 0]
@@ -1000,6 +1008,7 @@ for t in (0.85, 0.55):
     {
       kind: "descriptive",
       id: "w2-drill-leak-explain",
+      tier: "core",
       sectionId: "validation-leakage",
       question:
         "「데이터 분할·교차검증·데이터 누수」 실습에서 동전 던지기로 만든 레이블인데도 '누수 있는 교차검증'이 약 0.85를 낸 과정을 단계별로 설명하고, 파이프라인이 이를 어떻게 막는지 적으십시오.",
@@ -1010,6 +1019,7 @@ for t in (0.85, 0.55):
     {
       kind: "descriptive",
       id: "w2-drill-ridge-u",
+      tier: "core",
       sectionId: "bias-variance",
       question: "Ridge의 `alpha`를 바꾼 실험에서 검증 오차가 U자 모양을 그린 이유를 편향과 분산으로 설명하고, '다항식 차수를 낮추는 것'과 '규제를 강하게 하는 것'의 같은 점과 다른 점을 한 가지씩 적으십시오.",
       modelAnswer:
@@ -1019,6 +1029,7 @@ for t in (0.85, 0.55):
     {
       kind: "descriptive",
       id: "w2-drill-threshold-cancer",
+      tier: "core",
       sectionId: "classification-metrics",
       question:
         "유방암 데이터로 **악성 종양 검진**을 한다면 임계값을 어느 방향으로 움직여야 합니까? 이 데이터에서 클래스 0이 악성이라는 점과, 코드의 `score = clf.predict_proba(Xte)[:, 1]`이 무엇의 확률인지에 주의해 설명하십시오.",
@@ -1090,7 +1101,7 @@ assert leak_b - clean > 0.05, f"타깃 파생 특징의 부풀림이 {leak_b - c
       {
         id: "w2-ch-logreg-l2",
         title: "L2 규제 로지스틱 회귀를 NumPy로 구현해 sklearn과 맞추기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 목적함수 $\\dfrac{1}{n}\\sum \\text{BCE} + \\dfrac{\\lambda}{2}\\lVert w \\rVert^2$(편향은 규제하지 않음)를 경사하강법으로 최소화하는 \`fit_logreg(X, y, l2, lr, steps)\`를 구현합니다.
 
@@ -1181,7 +1192,7 @@ print("sklearn  :", np.round(sk.coef_[0], 3), round(float(sk.intercept_[0]), 3))
       {
         id: "w2-ch-bias-variance",
         title: "부트스트랩으로 편향²과 분산을 숫자로 분해하기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 같은 참함수 $f(x) = \\sin 2\\pi x$에서 훈련 데이터를 여러 번 새로 뽑아 다항식 모델을 학습하면, 고정한 점들에서의 예측이 데이터에 따라 흔들립니다.
 

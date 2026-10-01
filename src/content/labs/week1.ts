@@ -8,7 +8,7 @@ const week1: WeekLab = {
       id: "w1-lab-loss",
       sectionId: "ai-landscape",
       title: "함수를 찾는 게임: MSE와 격자 탐색",
-      level: 1,
+      tier: "core",
       prompt: `
 「AI의 지형도와 "함수를 찾는 게임"」 실습 2를 직접 구현합니다. 데이터는 대략 $y = 2x$를 따릅니다.
 
@@ -86,7 +86,7 @@ print("가장 좋은 theta:", grid_search(xs, ys, candidates))
       id: "w1-lab-summarize",
       sectionId: "python-basics",
       title: "성적 요약 함수: 빈 리스트까지 안전하게",
-      level: 1,
+      tier: "core",
       prompt: `
 「Python 기초 문법」 실습 1의 \`summarize\`를 완성하고 "한 걸음 더"까지 해결합니다.
 
@@ -158,7 +158,7 @@ print(label_students({"민수": 88, "지현": 95, "도윤": 67}))
       id: "w1-lab-axis",
       sectionId: "dev-tools",
       title: "NumPy 축(axis)과 브로드캐스팅",
-      level: 2,
+      tier: "supplement",
       prompt: `
 학생 4명, 과목 3개짜리 점수표로 축과 브로드캐스팅을 연습합니다. **반복문 없이** NumPy 연산만 씁니다.
 
@@ -253,7 +253,7 @@ print(count_high(scores))
       id: "w1-lab-cosine",
       sectionId: "vectors",
       title: "NumPy 없이 내적과 코사인 유사도",
-      level: 1,
+      tier: "core",
       prompt: `
 「벡터: 내적과 코사인 유사도」의 공식을 순수 파이썬 리스트로 구현합니다. NumPy의 \`@\`나 \`np.linalg.norm\`은 쓰지 않습니다.
 
@@ -340,7 +340,7 @@ print("king과 가장 비슷한 단어:", most_similar([0.9, 0.8, 0.1], words))
       id: "w1-lab-coords",
       sectionId: "basis-matrix",
       title: "기저 좌표와 행렬 곱 직접 계산하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「벡터공간·기저와 행렬 곱셈」 실습을 \`np.linalg.solve\`와 \`@\` 없이 구현합니다.
 
@@ -437,7 +437,7 @@ print("AB =", matmul(A, B), " BA =", matmul(B, A))
       id: "w1-lab-bayes",
       sectionId: "probability",
       title: "베이즈 정리를 사람 수(자연 빈도)로 계산하기",
-      level: 1,
+      tier: "core",
       prompt: `
 확률 공식 대신 "1만 명이 검사를 받는다면 몇 명이 어디에 들어가는가"로 베이즈 정리를 계산합니다(자연 빈도). 확률로 생각할 때보다 기저율의 효과가 훨씬 잘 보입니다.
 
@@ -508,7 +508,7 @@ for prev in (0.01, 0.10):
       id: "w1-lab-entropy",
       sectionId: "entropy",
       title: "엔트로피·교차 엔트로피·KL 발산 구현",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「엔트로피·교차 엔트로피·KL 발산」의 세 정의를 밑이 2인 로그(비트)로 구현합니다.
 
@@ -598,7 +598,7 @@ print("KL(fair‖biased) =", kl(fair, biased), " KL(biased‖fair) =", kl(biased
       id: "w1-lab-gd",
       sectionId: "gradient-descent",
       title: "경사하강법 함수와 학습률 진단기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「미분과 경사하강법」의 갱신식 $w \\leftarrow w - \\eta \\, \\dfrac{dL}{dw}$을 어떤 손실에도 쓸 수 있는 함수로 만들고, 배율 $(1 - 2\\eta)$로 학습률을 진단합니다.
 
@@ -690,6 +690,7 @@ for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
     {
       kind: "choice",
       id: "w1-drill-tuple",
+      tier: "core",
       sectionId: "python-basics",
       question: "`point = (37.5, 127.0)` 다음 줄에서 `point[0] = 36.0`을 실행하면?",
       choices: [
@@ -705,6 +706,7 @@ for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
     {
       kind: "choice",
       id: "w1-drill-keepdims",
+      tier: "core",
       sectionId: "dev-tools",
       question: "shape이 `(4, 3)`인 `scores`에 대해 `scores - scores.mean(axis=1, keepdims=True)`의 결과는?",
       choices: ["shape `(4, 3)`: 각 행에서 그 행의 평균을 뺀 배열", "shape `(4,)`인 배열", "브로드캐스팅 오류", "shape `(3, 4)`: 전치된 배열"],
@@ -715,6 +717,7 @@ for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
     {
       kind: "choice",
       id: "w1-drill-lr075",
+      tier: "core",
       sectionId: "gradient-descent",
       question: "$L(w) = (w-3)^2$를 학습률 $\\eta = 0.75$로 경사하강법할 때, 오차 $w - 3$은 매 스텝 어떻게 변하는가?",
       choices: ["0.5배씩 줄며 부호가 유지된다", "−0.5배가 된다: 부호가 번갈아 바뀌며 줄어든다", "1.5배씩 커지며 발산한다", "첫 스텝에 정확히 0이 된다"],
@@ -725,6 +728,7 @@ for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
     {
       kind: "choice",
       id: "w1-drill-entropy-mask",
+      tier: "core",
       sectionId: "entropy",
       question: "엔트로피 구현의 `p = p[p > 0]` 줄을 지우고 `entropy([1.0, 0.0])`을 계산하면?",
       choices: ["0.0이 정상적으로 나온다", "`nan`이 나온다. $0 \\cdot \\log 0$이 `0 * -inf = nan`이 되기 때문이다", "1.0이 나온다", "`ZeroDivisionError`가 발생한다"],
@@ -735,6 +739,7 @@ for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
     {
       kind: "predict",
       id: "w1-drill-slicing",
+      tier: "core",
       sectionId: "python-basics",
       code: py`
 scores = [90, 85, 77, 60]
@@ -749,6 +754,7 @@ print(len(passed), sum(passed) / len(passed))
     {
       kind: "predict",
       id: "w1-drill-alias",
+      tier: "core",
       sectionId: "python-basics",
       code: py`
 a = [1, 2, 3]
@@ -765,6 +771,7 @@ print(a, len(c), a is b)
     {
       kind: "predict",
       id: "w1-drill-axis",
+      tier: "core",
       sectionId: "dev-tools",
       code: py`
 import numpy as np
@@ -780,6 +787,7 @@ print(x.mean(axis=1))
     {
       kind: "predict",
       id: "w1-drill-gdsteps",
+      tier: "core",
       sectionId: "gradient-descent",
       code: py`
 w, lr = 0.0, 0.1
@@ -795,6 +803,7 @@ for step in range(3):
     {
       kind: "descriptive",
       id: "w1-drill-cosine-why",
+      tier: "core",
       sectionId: "vectors",
       question:
         "검색 시스템이 문서 유사도에 내적 대신 코사인 유사도를 쓰는 이유를 \"긴 문서와 짧은 문서\" 관점에서 설명하십시오. 실습에서 $b$를 10배 했을 때의 결과를 근거로 듭니다.",
@@ -805,6 +814,7 @@ for step in range(3):
     {
       kind: "descriptive",
       id: "w1-drill-baserate",
+      tier: "core",
       sectionId: "probability",
       question:
         "자연 빈도 실습에서 같은 검사(민감도 99%, 위양성률 5%)인데 유병률 1%와 10%의 $P(\\text{병} \\mid \\text{양성})$이 약 16.7%와 68.8%로 크게 다른 이유를, 1만 명 기준 TP와 FP의 **사람 수**로 설명하십시오.",
@@ -815,6 +825,7 @@ for step in range(3):
     {
       kind: "descriptive",
       id: "w1-drill-diagnose-limit",
+      tier: "core",
       sectionId: "gradient-descent",
       question:
         "`diagnose(lr)`가 학습률만 보고 수렴 여부를 판정할 수 있는 이유는 무엇입니까? 또 이 방법을 신경망 손실에 그대로 쓸 수 없는 이유를 변수가 두 개인 실습(협곡 모양 손실)과 연결해 설명하십시오.",
@@ -883,7 +894,7 @@ assert abs(posterior(0.3, 0.9, 0.1) - 0.27 / (0.27 + 0.07)) < 1e-4, "민감도·
       {
         id: "w1-ch-minibatch",
         title: "미니배치 확률적 경사하강법",
-        level: 3,
+        tier: "advanced",
         prompt: `
 과제의 선형회귀를 **미니배치 SGD**로 바꿉니다. 에폭마다 데이터를 섞고(\`rng.permutation\`) \`batch_size\`개씩 잘라, 그 배치의 MSE 기울기로 $w, b$를 갱신합니다. 에폭이 끝날 때마다 **전체 데이터**의 MSE를 기록합니다.
 
@@ -982,7 +993,7 @@ for bs in (1, 10, 100):
       {
         id: "w1-ch-gradcheck",
         title: "수치미분으로 기울기 검산하기 (gradient check)",
-        level: 2,
+        tier: "advanced",
         prompt: `
 손으로 유도한 기울기가 맞는지 확인하는 표준 방법인 **gradient check**를 일반 함수로 만듭니다. 3주차 역전파 구현을 검증할 때도 그대로 씁니다.
 

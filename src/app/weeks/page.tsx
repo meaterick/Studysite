@@ -40,8 +40,8 @@ export default async function WeeksIndexPage() {
                 key={w.slug}
                 week={w}
                 ratio={statuses.get(w.slug)!.ratio}
-                sectionsDone={statuses.get(w.slug)!.sectionsDone}
-                sectionsTotal={statuses.get(w.slug)!.sectionsTotal}
+                coreDone={statuses.get(w.slug)!.tiers.core.done}
+                coreTotal={statuses.get(w.slug)!.tiers.core.total}
                 minutes={getWeekOutline(w).sections.reduce((sum, x) => sum + x.minutes, 0)}
                 locked={!user}
               />

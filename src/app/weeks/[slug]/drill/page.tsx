@@ -15,6 +15,8 @@ import DrillDescriptive from "@/components/lab/DrillDescriptive";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readLabState, type LabQuizState } from "@/lib/learningStore";
 import { labProgress, QUIZ_KIND_LABEL, quizItemDone, quizItemWeak } from "@/lib/labView";
+import { sectionLabel, TIER_INFO, TIER_ORDER } from "@/content/tiers";
+import TierBadge from "@/components/TierBadge";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -50,7 +52,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
         {weak && <span className="rounded bg-[color-mix(in_srgb,var(--status-critical)_12%,transparent)] px-1.5 py-0.5 font-bold text-[var(--status-critical)]">다시 볼 문항</span>}
         {s && (
           <Link href={`/weeks/${slug}/sections/${s.id}`} className="hover:text-[var(--series-blue)] hover:underline">
-            관련 단계: {s.number}. {s.title} →
+            관련 단계: {sectionLabel(s)}. {s.title} →
           </Link>
         )}
       </p>
@@ -64,7 +66,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
     if (!isAdmin && row?.access === "locked") {
       return (
         <div key={item.id} className="rounded-xl border border-dashed border-[var(--border-hairline)] p-4 text-sm text-ink-muted">
-          🔒 {label}: {row.section.number}단계를 열면 풀 수 있습니다.
+          🔒 {label}: {row.section.tier === "core" ? `${sectionLabel(row.section)}단계를 열면` : "핵심 단계를 모두 마치면"} 풀 수 있습니다.
         </div>
       );
     }
@@ -142,36 +144,55 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
               </p>
             )}
           </div>
-          <nav aria-label="문제 유형" className="mt-4 flex flex-wrap gap-2 text-xs font-bold">
-            {KIND_ORDER.map((kind) => {
-              const items = lab.quiz.filter((q) => q.kind === kind);
+          <ul className="mt-4 space-y-1 text-sm text-ink-muted">
+            {KIND_ORDER.map((kind) => (
+              <li key={kind}>
+                <strong className="text-ink-secondary">{QUIZ_KIND_LABEL[kind]}</strong>: {KIND_DESC[kind]}
+              </li>
+            ))}
+          </ul>
+          <nav aria-label="단계 구분" className="mt-4 flex flex-wrap gap-2 text-xs font-bold">
+            {TIER_ORDER.map((tier) => {
+              const items = lab.quiz.filter((q) => q.tier === tier);
               if (items.length === 0) return null;
               const done = items.filter((q) => quizItemDone(q, state.quiz[q.id])).length;
               return (
                 <a
-                  key={kind}
-                  href={`#kind-${kind}`}
+                  key={tier}
+                  href={`#tier-${tier}`}
                   className="rounded-full border border-[var(--border-hairline)] px-3 py-1 text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
                 >
-                  {QUIZ_KIND_LABEL[kind]} {done}/{items.length}
+                  {TIER_INFO[tier].label} {done}/{items.length}
                 </a>
               );
             })}
           </nav>
         </section>
 
-        {KIND_ORDER.map((kind) => {
-          const items = lab.quiz.filter((q) => q.kind === kind);
+        {TIER_ORDER.map((tier) => {
+          const items = KIND_ORDER.flatMap((kind) => lab.quiz.filter((q) => q.tier === tier && q.kind === kind));
           if (items.length === 0) return null;
+          const counters: Partial<Record<LabQuizItem["kind"], number>> = {};
           return (
-            <section key={kind} id={`kind-${kind}`} aria-labelledby={`kind-${kind}-heading`} className="scroll-mt-24">
+            <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-heading`} className="scroll-mt-24">
               <div className="mb-4 border-b border-[var(--border-hairline)] pb-2">
-                <h2 id={`kind-${kind}-heading`} className="text-lg font-black text-ink">
-                  {QUIZ_KIND_LABEL[kind]} ({items.length})
+                <h2 id={`tier-${tier}-heading`} className="flex flex-wrap items-center gap-2 text-lg font-black text-ink">
+                  {TIER_INFO[tier].label} 문항 ({items.length}) <TierBadge tier={tier} />
                 </h2>
-                <p className="mt-0.5 text-sm text-ink-muted">{KIND_DESC[kind]}</p>
+                <p className="mt-0.5 text-sm text-ink-muted">
+                  {tier === "core"
+                    ? "이번 주 핵심 개념을 확인하는 문항입니다. 먼저 풀어 보십시오."
+                    : tier === "supplement"
+                      ? "보충 단계의 내용과 핵심 개념의 응용을 다루는 문항입니다."
+                      : "유도·분석·설계 판단을 요구하는 전문가 수준 문항입니다. 심화 달성 기록에 반영됩니다."}
+                </p>
               </div>
-              <div className="space-y-4">{items.map((item, i) => render(item, i))}</div>
+              <div className="space-y-4">
+                {items.map((item) => {
+                  counters[item.kind] = (counters[item.kind] ?? 0) + 1;
+                  return render(item, counters[item.kind]! - 1);
+                })}
+              </div>
             </section>
           );
         })}

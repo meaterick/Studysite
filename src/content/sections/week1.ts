@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "ai-landscape": {
+    "tier": "core",
     "goal": "AI ⊃ 머신러닝 ⊃ 딥러닝의 포함관계와, 생성형 AI·파운데이션 모델이 이들과 겹치는 방식을 설명하고, 학습을 \"손실 $L(\\theta)$를 줄이는 $\\theta$ 찾기\"로 정의할 수 있다.",
     "checks": [
       {
@@ -76,6 +77,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "ai-terms": {
+    "tier": "core",
     "goal": "모델·파라미터·하이퍼파라미터, 학습·추론, 분류·회귀·생성, 판별·생성 모델, 4대 학습 패러다임을 정확한 정의로 구분할 수 있다.",
     "checks": [
       {
@@ -136,6 +138,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "python-basics": {
+    "tier": "core",
     "goal": "변수·자료형·제어문·함수·리스트/튜플/집합/딕셔너리·클래스·예외 처리를 읽고, 짧은 함수를 직접 작성할 수 있다.",
     "checks": [
       {
@@ -192,6 +195,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "dev-tools": {
+    "tier": "core",
     "goal": "가상환경·Colab·Git의 역할을 구분하고, NumPy 배열의 shape·axis·브로드캐스팅을 예측해 계산할 수 있다.",
     "checks": [
       {
@@ -251,6 +255,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "vectors": {
+    "tier": "core",
     "goal": "내적과 코사인 유사도를 손으로 계산하고, 코사인 유사도가 \"방향의 비슷함\"만 재는 이유를 설명할 수 있다.",
     "checks": [
       {
@@ -308,6 +313,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "basis-matrix": {
+    "tier": "core",
     "goal": "선형독립·기저·좌표의 관계를 설명하고, 행렬 곱이 함수 합성이라 순서를 바꾸면 결과가 달라지는 이유를 계산으로 보일 수 있다.",
     "checks": [
       {
@@ -365,6 +371,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "rank-eigen": {
+    "tier": "core",
     "goal": "rank와 L1/L2 노름을 계산하고, 고유값·고유벡터를 특성방정식으로 구하며 SVD가 PCA로 이어지는 흐름을 설명할 수 있다.",
     "checks": [
       {
@@ -424,6 +431,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "probability": {
+    "tier": "core",
     "goal": "조건부확률과 베이즈 정리로 \"양성일 때 실제 병일 확률\"을 계산하고, 기대값·분산의 정의를 숫자 예로 설명할 수 있다.",
     "checks": [
       {
@@ -480,6 +488,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "mle-map": {
+    "tier": "core",
     "goal": "베르누이·이항분포를 구분하고, 확률과 가능도의 차이를 설명하며 로그가능도 미분으로 MLE를, 사전분포를 더해 MAP를 구할 수 있다.",
     "checks": [
       {
@@ -539,6 +548,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "distributions": {
+    "tier": "core",
     "goal": "균등분포와 정규분포의 모양을 비교하고, $\\mu$·$\\sigma$의 역할과 68-95-99.7 규칙, 중심극한정리의 직관을 설명할 수 있다.",
     "checks": [
       {
@@ -595,6 +605,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "entropy": {
+    "tier": "core",
     "goal": "엔트로피·교차 엔트로피·KL 발산을 동전 예제로 계산하고, 교차 엔트로피가 분류 손실로 쓰이는 이유와 KL의 비대칭성을 설명할 수 있다.",
     "checks": [
       {
@@ -647,6 +658,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "gradient-descent": {
+    "tier": "core",
     "goal": "미분·기울기의 의미를 설명하고, 경사하강법 갱신을 손과 코드로 계산하며 학습률에 따른 수렴·진동·발산을 배율 $(1-2\\eta)$로 설명할 수 있다.",
     "checks": [
       {

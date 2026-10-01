@@ -7,6 +7,7 @@ import WeekFrame from "@/components/WeekFrame";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readSectionState, readWorksheetState } from "@/lib/learningStore";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
+import { sectionLabel } from "@/content/tiers";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -42,7 +43,7 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
           return (
             <li key={section.id}>
               <Link href={`/weeks/${slug}/sections/${section.id}`} className="font-bold text-[var(--series-blue)] hover:underline">
-                {section.number}단계 · {section.title}
+                {sectionLabel(section)}단계 · {section.title}
               </Link>
               <span className="text-ink-secondary">: <Inline text={section.meta.goal} /></span>
               {weakAnswers > 0 && (
@@ -67,10 +68,10 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
     <WeekFrame week={week} status={status}>
       {!isAdmin && (
         <UnfinishedWarning
-          context="백지공부는 모든 단계를 마친 뒤에 하는 것을 권장합니다."
+          context="백지공부는 핵심 단계를 모두 마친 뒤에 하는 것을 권장합니다."
           items={status.sections
-            .filter((r) => r.access !== "completed")
-            .map((r) => ({ number: r.section.number, title: r.section.title, href: `/weeks/${slug}/sections/${r.section.id}` }))}
+            .filter((r) => r.section.tier === "core" && r.access !== "completed")
+            .map((r) => ({ label: sectionLabel(r.section), title: r.section.title, href: `/weeks/${slug}/sections/${r.section.id}` }))}
         />
       )}
       <section id="worksheet" className="scroll-mt-24">

@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "sequence-embedding": {
+    "tier": "core",
     "goal": "텍스트를 숫자로 바꾸는 절차(전처리·토큰화·어휘 사전)를 설명하고, One-hot의 두 한계를 Word Embedding·Word2Vec이 어떻게 해결하는지 말할 수 있다.",
     "checks": [
       {
@@ -63,6 +64,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "rnn-bptt": {
+    "tier": "core",
     "goal": "RNN의 재귀식 $h_t = f(Wx_t + Uh_{t-1} + b)$과 파라미터 공유를 설명하고, BPTT에서 야코비안이 $T-k$번 곱해져 기울기가 소실·폭발하는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -121,6 +123,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "lstm-gru": {
+    "tier": "core",
     "goal": "LSTM의 forget·input·output 게이트와 셀 상태, GRU의 update·reset 게이트를 설명하고, $c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde{c}_t$가 기울기 소실을 완화하는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -184,6 +187,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "seq2seq-attention": {
+    "tier": "core",
     "goal": "Seq2Seq의 Encoder–Decoder 구조와 Teacher Forcing을 설명하고, 고정 크기 문맥 벡터의 병목이 Attention으로 이어진 이유와 RNN 대비 Self-Attention의 경로 길이·연산량($O(1)$ vs $O(n)$, $O(n^2)$)을 비교할 수 있다.",
     "checks": [
       {
@@ -242,6 +246,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "self-attention": {
+    "tier": "core",
     "goal": "$\\text{softmax}(QK^\\top/\\sqrt{d_k})V$의 각 부분($QK^\\top$, softmax, $\\sqrt{d_k}$, Value 가중합)이 왜 필요한지 설명하고, 작은 예제를 손과 코드로 계산할 수 있다.",
     "checks": [
       {
@@ -317,6 +322,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "multi-head-causal": {
+    "tier": "core",
     "goal": "멀티헤드 attention의 split–attention–concat–$W^O$ 과정을 shape과 함께 추적하고, causal mask가 필요한 이유와 올바르게 적용됐는지 검사하는 방법을 설명할 수 있다.",
     "checks": [
       {
@@ -374,6 +380,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "transformer-block": {
+    "tier": "core",
     "goal": "마스크 없는 Self-Attention이 순열 등변(불변이 아니다) 연산이라 위치 인코딩이 필요한 이유와 causal mask가 이를 어떻게 바꾸는지 설명하고, 사인·코사인 위치 인코딩과 GPT형 디코더 블록(Attention + MLP, 잔차·정규화)의 역할 분담을 말할 수 있다.",
     "checks": [
       {
@@ -443,6 +450,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "bpe": {
+    "tier": "core",
     "goal": "BPE가 가장 잦은 쌍을 반복 병합해 어휘를 만드는 과정을 직접 따라가고, 이 방식이 OOV 완화·한국어 토큰 수·철자 세기 약점으로 이어지는 이유를 설명할 수 있다.",
     "checks": [
       {
@@ -504,6 +512,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "kv-cache-rope": {
+    "tier": "core",
     "goal": "생성 시 KV 캐시가 무엇을 저장하고 무엇을 새로 계산하는지, 왜 결과가 같은지 설명하고, 메모리 비용을 계산하며, RoPE가 회전으로 상대 거리만 반영하는 원리를 말할 수 있다.",
     "checks": [
       {

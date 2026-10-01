@@ -199,7 +199,7 @@ export function checkTasks(spec: AssignmentSpec, draft: AssignmentDraft): TaskCh
     return {
       taskId: task.id,
       title: task.title,
-      optional: !!task.optional,
+      optional: task.tier !== "core",
       missingAnswers,
       unrunCode,
       failedCode,

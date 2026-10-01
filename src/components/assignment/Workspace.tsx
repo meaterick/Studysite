@@ -15,6 +15,8 @@ import { saveAssignmentDraft, submitAssignmentWork } from "@/lib/assignmentActio
 import { forceStop, onRuntimeReset, preloadPyodide, resetNamespace, runPython, writeRuntimeFiles, type RunStatus } from "@/lib/pyRunner";
 import AnswerCell from "./AnswerCell";
 import AutoTestPanel, { type AutoTestView } from "@/components/lab/AutoTestPanel";
+import TierBadge from "@/components/TierBadge";
+import { TIER_INFO, type Tier } from "@/content/tiers";
 import { formatTime } from "@/lib/datetime";
 
 // Monaco 편집기는 무겁기 때문에 작업 공간이 열릴 때 별도 청크로 불러온다.
@@ -42,6 +44,7 @@ export interface WorkspaceTaskView {
   id: string;
   title: string;
   optional: boolean;
+  tier: Tier;
   /** 서버에서 렌더링한 과제 설명 */
   intro: ReactNode;
   cells: WorkspaceCellView[];
@@ -402,7 +405,7 @@ export default function Workspace({
                       </span>
                       <span className="min-w-0">
                         {t.title}
-                        {t.optional && <span className="ml-1 text-xs text-ink-muted">(선택)</span>}
+                        {t.optional && <span className="ml-1 text-xs text-ink-muted">({TIER_INFO[t.tier].label} · 선택)</span>}
                       </span>
                     </a>
                   </li>
@@ -491,7 +494,10 @@ export default function Workspace({
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-2">
                 <h3 id={`task-title-${task.id}`} className="text-lg font-black text-ink">
                   과제 {i + 1}. {task.title}
-                  {task.optional && <span className="ml-2 rounded bg-[var(--surface-card-2)] px-1.5 py-0.5 text-xs font-bold text-ink-muted">선택</span>}
+                  <span className="ml-2 align-middle">
+                    <TierBadge tier={task.tier} />
+                  </span>
+                  {task.optional && <span className="ml-1.5 align-middle text-xs font-bold text-ink-muted">선택</span>}
                 </h3>
                 {c && (
                   <p className="text-xs font-bold">

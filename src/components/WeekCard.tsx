@@ -12,15 +12,16 @@ function politeObjective(text: string): string {
 export default function WeekCard({
   week,
   ratio,
-  sectionsDone,
-  sectionsTotal,
+  coreDone,
+  coreTotal,
   minutes,
   locked = false,
 }: {
   week: WeekMeta;
   ratio: number;
-  sectionsDone: number;
-  sectionsTotal: number;
+  /** 핵심 단계 완료 수(주차 완료 기준) */
+  coreDone: number;
+  coreTotal: number;
   /** 단계 학습 예상 시간(분) */
   minutes?: number;
   /** 로그인하지 않은 방문자: 진도 대신 로그인 안내를 보이고, 누르면 로그인 페이지로 보낸다. */
@@ -51,7 +52,7 @@ export default function WeekCard({
           <span className="font-bold text-[var(--series-blue)]">로그인 후 학습하기 →</span>
         ) : (
           <span>
-            {sectionsDone}/{sectionsTotal}단계 완료
+            핵심 {coreDone}/{coreTotal}단계 완료
           </span>
         )}
       </div>

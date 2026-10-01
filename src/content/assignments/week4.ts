@@ -147,6 +147,7 @@ GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8
   tasks: [
     {
       id: "engine",
+      tier: "core",
       title: "실험 엔진 읽고 준비하기",
       instructions: `
 첫 코드 셀은 데이터 분할과 신경망(64 → 128 → 64 → 10, ReLU), 학습 루프를 정의합니다. 먼저 실행한 뒤 코드를 읽으며 다음을 확인합니다. 이 셀은 수정하지 않는 것이 원칙이며, 설정은 \`train(dropout=0.0)\`처럼 인자로만 바꿉니다.
@@ -159,6 +160,7 @@ GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8
     },
     {
       id: "baseline",
+      tier: "core",
       title: "기준선 학습과 초기 손실 확인",
       instructions: `
 학습 전에 Karpathy 레시피의 초기 손실 점검을 먼저 합니다. 클래스가 10개이므로 무작위로 초기화한 모델의 손실은 $\\ln 10 \\approx 2.303$ 근처여야 합니다. 그다음 기준선을 학습해 train/val 손실과 정확도 곡선을 그립니다.
@@ -190,6 +192,7 @@ plt.show()
     },
     {
       id: "ablation",
+      tier: "core",
       title: "Ablation 두 가지",
       instructions: `
 아래 후보 중 **두 가지**를 골라, 실행하기 **전에** 결과를 예측하는 가설을 한 줄씩 적습니다. 그다음 코드 셀의 \`ABLATIONS\`에서 고른 항목의 주석을 해제하고 실행합니다. 각 실험은 기준선에서 설정 하나만 바꿉니다.
@@ -254,6 +257,7 @@ for name, r in results.items():
     },
     {
       id: "errors",
+      tier: "core",
       title: "오류 분석",
       instructions: `
 기준선 모델이 테스트셋에서 틀린 이미지를 최대 16장까지 (정답, 예측)과 함께 시각화합니다. 공통 패턴을 두 가지 이상 찾아 적습니다(예: 획이 끊긴 숫자, 비슷한 모양의 숫자 쌍).
@@ -287,6 +291,7 @@ plt.show()
     },
     {
       id: "checklist",
+      tier: "core",
       title: "재현성 체크리스트",
       instructions: `
 실험 엔진 코드에서 아래 두 가지를 직접 찾아, 해당 코드 줄 번호와 함께 답합니다. 코드 셀 왼쪽의 줄 번호를 참고합니다.
@@ -307,6 +312,7 @@ plt.show()
     },
     {
       id: "conv",
+      tier: "core",
       title: "합성곱 층 직접 구현하기",
       instructions: `
 이번 주의 주인공인 합성곱을 NumPy로 직접 구현해, 학습 자료의 네 가지 주장을 숫자로 확인합니다. 위의 ablation 실험은 속도 때문에 완전연결 신경망(MLP)을 썼으므로, CNN만의 성질은 이 과제에서 따로 다룹니다.
@@ -395,8 +401,8 @@ print("stride 2 | 옮기기 전 출력과의 차이:", np.abs(fmap2_moved - fmap
     },
     {
       id: "advanced",
+      tier: "advanced",
       title: "심화: 반복 실험·추가 ablation",
-      optional: true,
       instructions: `
 다음 중 하나 이상을 골라 실험합니다.
 

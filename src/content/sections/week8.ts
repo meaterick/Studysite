@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "risk-map": {
+    "tier": "core",
     "goal": "AI 위험의 일곱 영역과 사례를 연결하고, 서브그룹 불균형이 집단별 성능 격차로 이어지는 원리, 적대적 공격(FGSM)·자동화 편향·학습 데이터 암기가 왜 위험한지 설명할 수 있다.",
     "checks": [
       {
@@ -71,6 +72,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "fairness": {
+    "tier": "core",
     "goal": "인구통계 동등성·균등화된 오즈·보정을 수식과 채용 예시로 구분하고, 기저율이 다를 때 어떤 기준끼리 충돌하는지(보정·PPV ↔ 오류율, 선택률 ↔ 오류율)를 TP·FP 계산과 임계값 실험으로 보이며, 정답 레이블 자체의 편향이라는 한계를 말할 수 있다.",
     "checks": [
       {
@@ -146,6 +148,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "governance": {
+    "tier": "core",
     "goal": "NIST AI RMF의 Govern·Map·Measure·Manage, EU AI Act의 위험 기반 4등급, 모델카드의 필수 항목을 설명하고, 자신의 프로젝트에 모델카드를 작성할 수 있다.",
     "checks": [
       {
@@ -208,6 +211,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "mlops": {
+    "tier": "core",
     "goal": "모델 서빙(REST·FastAPI)·Docker·점진적 배포·실험 추적·세 파이프라인·CI/CD를 설명하고, 데이터 드리프트와 개념 드리프트를 구분하고, PSI가 감지할 수 있는 것(입력 분포 변화)과 없는 것(개념 드리프트, 실제 성능 저하)을 말할 수 있다.",
     "checks": [
       {
@@ -283,6 +287,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "llmops": {
+    "tier": "core",
     "goal": "LLM API와 로컬 LLM의 트레이드오프, 서빙 도구(Transformers·vLLM·Ollama)의 위치, 프롬프트 관리·토큰 비용·상시 평가·관측 가능성·가드레일·rate limiting을 설명하고 간단히 구현할 수 있다.",
     "checks": [
       {
@@ -346,6 +351,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "research-methods": {
+    "tier": "core",
     "goal": "검증 가능한 연구 질문을 세우고, baseline·절제 연구·다중 시드·통계적 검정으로 주장을 뒷받침하며, 한계와 인용을 갖춘 결과 보고를 설계할 수 있다.",
     "checks": [
       {
@@ -409,6 +415,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "capstone": {
+    "tier": "core",
     "goal": "퍼셉트론부터 DPO까지 핵심 논문들이 각각 무엇을 처음으로 해냈는지 한 줄로 설명하고, 8주의 지식을 엮어 검증 가능한 캡스톤 계획을 세울 수 있다.",
     "checks": [
       {

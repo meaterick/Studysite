@@ -17,7 +17,8 @@ export function workspaceTasks(spec: AssignmentSpec): WorkspaceTaskView[] {
   return spec.tasks.map((task) => ({
     id: task.id,
     title: task.title,
-    optional: !!task.optional,
+    optional: task.tier !== "core",
+    tier: task.tier,
     intro: <Intro md={task.instructions} />,
     cells: task.cells.map((c) =>
       c.kind === "code"
@@ -38,7 +39,8 @@ export function notebookViewTasks(spec: AssignmentSpec, withIntro = true): Noteb
   return spec.tasks.map((task) => ({
     id: task.id,
     title: task.title,
-    optional: !!task.optional,
+    optional: task.tier !== "core",
+    tier: task.tier,
     intro: withIntro ? <Intro md={task.instructions} /> : undefined,
     prompts: Object.fromEntries(task.cells.filter((c) => c.kind === "text").map((c) => [c.id, <Inline key={c.id} text={c.kind === "text" ? c.prompt : ""} />])),
     labels: Object.fromEntries(task.cells.filter((c) => c.kind === "code" && c.label).map((c) => [c.id, c.kind === "code" ? c.label ?? "" : ""])),

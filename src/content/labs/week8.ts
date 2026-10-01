@@ -118,7 +118,7 @@ const week8: WeekLab = {
       id: "w8-lab-fgsm",
       sectionId: "risk-map",
       title: "FGSM으로 숫자 분류기 속이기와 같은 크기의 무작위 잡음 비교",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「AI 위험 지도」 실습의 FGSM을 직접 구현합니다. 숫자 3과 8을 구별하는 로지스틱 회귀 \`clf\`(가중치 \`w\`)가 주어져 있습니다.
 
@@ -196,7 +196,7 @@ for eps in [0.0, 0.05, 0.1, 0.2]:
       id: "w8-lab-subgroup",
       sectionId: "risk-map",
       title: "집단별 정확도로 평균이 숨긴 격차를 찾고, 재가중으로 줄이기",
-      level: 1,
+      tier: "core",
       prompt: `
 「AI 위험 지도」 실습처럼 다수 집단 A(90%)와 특징–정답 관계가 조금 다른 소수 집단 B(10%)로 모델을 학습합니다.
 
@@ -273,7 +273,7 @@ for name, model in [("가중치 없음", plain), ("집단 재가중", weighted)]
       id: "w8-lab-fairness",
       sectionId: "fairness",
       title: "선택률·TPR·FPR·PPV로 세 공정성 기준 점검하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「공정성은 하나가 아니다」의 채용 AI 숫자 예제를 함수로 확인합니다.
 
@@ -350,7 +350,7 @@ print("선택률을 맞춘 뒤 격차:", fairness_gaps(ra, rb_dp))
       id: "w8-lab-threshold",
       sectionId: "fairness",
       title: "보정된 점수에서 세 가지 임계값 정책 비교하기",
-      level: 3,
+      tier: "advanced",
       prompt: `
 「공정성은 하나가 아니다」 실습처럼, 점수 $s$를 받은 사람이 정확히 확률 $s$로 우수 인재인 **보정된** 모델을 기저율이 다른 두 집단(약 50% vs 20%)에 적용합니다.
 
@@ -442,7 +442,7 @@ for name, tB in policies.items():
       id: "w8-lab-modelcard",
       sectionId: "governance",
       title: "모델카드 점검기와 위험 등급 분류(엄격한 등급 우선)",
-      level: 1,
+      tier: "core",
       prompt: `
 「거버넌스」 실습의 모델카드 점검기와 EU AI Act식 위험 등급 연습을 직접 만듭니다(법적 판단이 아닌 개념 연습입니다).
 
@@ -536,7 +536,7 @@ for uc in ["이력서 자동 채용 선별", "고객 상담 챗봇", "채용 면
       id: "w8-lab-psi",
       sectionId: "mlops",
       title: "PSI로 드리프트 경보를 만들고 카나리 배포 판정하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「MLOps」 실습의 드리프트 감지와 카나리 배포를 직접 구현합니다.
 
@@ -613,7 +613,7 @@ print(canary_decision(80, 1000, 380, 19000), canary_decision(18, 1000, 380, 1900
       id: "w8-lab-llmops",
       sectionId: "llmops",
       title: "RAG 토큰 비용, 토큰 버킷 속도 제한, 개인정보 가드레일",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「LLMOps」 실습의 세 가지 운영 장치를 직접 만듭니다.
 
@@ -718,7 +718,7 @@ print(output_guardrail("연락처 010-1234-5678, 메일 lead@club.example.com, �
       id: "w8-lab-permutation",
       sectionId: "research-methods",
       title: "시드 5개의 평균·표준편차, 정확 순열 검정, 두 비율 z-검정",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「AI 연구 방법론」 실습의 통계 도구를 직접 구현합니다. \`a\`, \`b\`는 두 방법을 같은 시드(같은 데이터 분할) 5개로 평가한 정확도입니다.
 
@@ -802,7 +802,7 @@ for n in (500, 5000):
       id: "w8-lab-repro",
       sectionId: "capstone",
       title: "캡스톤용 재현 가능한 실험 뼈대: 시드 분할과 다중 시드 요약",
-      level: 1,
+      tier: "core",
       prompt: `
 캡스톤 「구현과 실험」에 그대로 가져다 쓸 수 있는 실험 뼈대를 만듭니다.
 
@@ -884,6 +884,7 @@ print(report_line("baseline", run_seeds(noisy_baseline, range(5))))
     {
       kind: "choice",
       id: "w8-drill-adv-vs-bias",
+      tier: "core",
       sectionId: "risk-map",
       question: "편향 완화책인 \"데이터를 더 많이, 더 고르게 모은다\"가 적대적 공격(FGSM)에는 잘 통하지 않는 이유는?",
       choices: [
@@ -898,6 +899,7 @@ print(report_line("baseline", run_seeds(noisy_baseline, range(5))))
     {
       kind: "choice",
       id: "w8-drill-automation-bias",
+      tier: "core",
       sectionId: "risk-map",
       question: "\"최종 결정은 사람이 한다\"는 채용 시스템에서 자동화 편향을 줄이는 데 가장 효과적인 설계는?",
       choices: [
@@ -912,6 +914,7 @@ print(report_line("baseline", run_seeds(noisy_baseline, range(5))))
     {
       kind: "choice",
       id: "w8-drill-eu-tier",
+      tier: "core",
       sectionId: "governance",
       question: "EU AI Act식 위험 등급에서 \"대학 입학 서류를 자동으로 평가해 순위를 매기는 AI\"는 어디에 속하는가?",
       choices: ["최소 위험", "제한적 위험(투명성 의무)", "고위험", "금지"],
@@ -921,6 +924,7 @@ print(report_line("baseline", run_seeds(noisy_baseline, range(5))))
     {
       kind: "choice",
       id: "w8-drill-concept-drift",
+      tier: "core",
       sectionId: "mlops",
       question: "사기 탐지 모델의 입력 특징 PSI는 몇 달째 0.02 안팎으로 조용한데, 늦게 들어온 정답 라벨로 보니 재현율이 크게 떨어졌다. 가장 그럴듯한 원인과 대응은?",
       choices: [
@@ -935,6 +939,7 @@ print(report_line("baseline", run_seeds(noisy_baseline, range(5))))
     {
       kind: "choice",
       id: "w8-drill-shadow",
+      tier: "core",
       sectionId: "mlops",
       question: "새 모델을 실제 트래픽으로 검증하고 싶지만, 검증 기간 동안 사용자는 어떤 영향도 받지 않아야 한다. 알맞은 배포 전략은?",
       choices: ["카나리 배포", "블루-그린 배포", "섀도 배포", "한 번에 전체 교체"],
@@ -944,6 +949,7 @@ print(report_line("baseline", run_seeds(noisy_baseline, range(5))))
     {
       kind: "choice",
       id: "w8-drill-local-llm",
+      tier: "core",
       sectionId: "llmops",
       question: "환자 진료 기록을 요약하는 병원 내부 도구를 만든다. 트래픽은 많지 않지만 데이터는 기관 밖으로 나가면 안 된다. 우선 고려할 방식은?",
       choices: [
@@ -958,6 +964,7 @@ print(report_line("baseline", run_seeds(noisy_baseline, range(5))))
     {
       kind: "predict",
       id: "w8-drill-selection",
+      tier: "core",
       sectionId: "fairness",
       code: py`
 tpr, fpr, base = 0.8, 0.2, 0.2
@@ -971,6 +978,7 @@ print(round(sel, 2), round(ppv, 2))
     {
       kind: "predict",
       id: "w8-drill-psi",
+      tier: "core",
       sectionId: "mlops",
       code: py`
 import numpy as np
@@ -984,6 +992,7 @@ print(round(float(np.sum((p - q) * np.log(p / q))), 3))
     {
       kind: "predict",
       id: "w8-drill-bucket",
+      tier: "core",
       sectionId: "llmops",
       code: py`
 tokens, last, rate, cap = 2.0, 0.0, 1.0, 2.0
@@ -1004,6 +1013,7 @@ print("".join(out))
     {
       kind: "predict",
       id: "w8-drill-ablation",
+      tier: "core",
       sectionId: "research-methods",
       code: py`
 full = 91.2
@@ -1017,6 +1027,7 @@ print(drops, max(drops, key=drops.get))
     {
       kind: "descriptive",
       id: "w8-drill-policy-choice",
+      tier: "core",
       sectionId: "fairness",
       question: "보정된 점수 모델을 기저율이 다른 두 집단에 쓸 때, 대출 심사와 암 선별 검사에서 각각 어떤 임계값 정책(같은 임계값 / 선택률 맞춤 / TPR 맞춤)을 택하겠습니까? 각 정책에서 누가 피해를 보는지를 근거로 설명하십시오.",
       modelAnswer:
@@ -1026,6 +1037,7 @@ print(drops, max(drops, key=drops.get))
     {
       kind: "descriptive",
       id: "w8-drill-out-of-scope",
+      tier: "core",
       sectionId: "governance",
       question: "모델카드의 '의도하지 않은 용도(out_of_scope_use)' 항목이 비어 있으면 어떤 일이 생길 수 있는지, 이력서 스크리닝 모델을 예로 들어 설명하십시오.",
       modelAnswer:
@@ -1035,6 +1047,7 @@ print(drops, max(drops, key=drops.get))
     {
       kind: "descriptive",
       id: "w8-drill-one-seed",
+      tier: "core",
       sectionId: "research-methods",
       question: "캡스톤에서 \"제안 방법이 baseline보다 정확도가 0.4%p 높았다\"를 시드 하나의 결과로 보고했다. 이 주장의 문제와, 재현성·통계적 유의성 관점에서 무엇을 보완해야 하는지 적으십시오.",
       modelAnswer:
@@ -1084,7 +1097,7 @@ assert all(math.isfinite(float(x)) for v in results.values() for x in v), "점�
       {
         id: "w8-ch-adversarial-training",
         title: "적대적 학습으로 FGSM에 강한 분류기 만들기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 숫자 3과 8을 구별하는 로지스틱 회귀를 NumPy 경사하강으로 직접 학습시키고, FGSM에 대한 강건성을 높입니다.
 
@@ -1175,7 +1188,7 @@ for name, ae in [("일반 학습", 0.0), ("적대적 학습", 0.1)]:
       {
         id: "w8-ch-bootstrap",
         title: "부트스트랩 신뢰구간으로 캡스톤 결과의 불확실성 보고하기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 캡스톤 리포트의 "정확도 0.75"에는 얼마만큼의 불확실성이 있을까요? 문항별 정답 여부(0/1)를 복원추출로 다시 뽑는 **부트스트랩**으로 신뢰구간을 구합니다.
 

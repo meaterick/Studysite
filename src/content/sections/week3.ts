@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "neurons-mlp": {
+    "tier": "core",
     "goal": "뉴런 하나의 계산과 MLP의 순전파를 행렬 모양까지 추적하고, 비선형 활성화 함수(ReLU·GELU)가 왜 반드시 필요한지 설명할 수 있다.",
     "checks": [
       {
@@ -63,6 +64,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "backprop": {
+    "tier": "core",
     "goal": "계산 그래프의 덧셈·곱셈·max 노드 규칙으로 역전파를 손으로 수행하고, 한 층의 $\\partial L/\\partial W = \\delta x^\\top$을 수치미분으로 검산할 수 있다.",
     "checks": [
       {
@@ -121,6 +123,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "python-for-autograd": {
+    "tier": "core",
     "goal": "클래스와 `__init__`, 연산자 오버로딩, 클로저, 재귀, set/reversed를 읽고 써서 자동미분 엔진 코드를 이해할 준비를 한다.",
     "checks": [
       {
@@ -175,6 +178,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "micrograd": {
+    "tier": "core",
     "goal": "Value 클래스가 계산 그래프를 기록하고 위상정렬 역순으로 `_backward`를 실행하는 원리를 설명하고, 새 연산을 추가해 gradient check로 검증할 수 있다.",
     "checks": [
       {
@@ -231,6 +235,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "optimizers": {
+    "tier": "core",
     "goal": "SGD·Momentum·Adam의 갱신식을 쓰고 Adam 첫 스텝을 손으로 계산하며, 최적화기의 장단점을 실험 결과로 판단할 수 있다.",
     "checks": [
       {
@@ -287,6 +292,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "init-stability": {
+    "tier": "core",
     "goal": "기울기 소실·폭발과 죽은 ReLU를 설명하고, $\\mathrm{Var}(z) \\approx \\text{fan\\_in}\\cdot\\mathrm{Var}(w)\\cdot\\mathrm{Var}(x)$로 He·Xavier 초기화를 유도하며 대칭성 문제를 확인할 수 있다.",
     "checks": [
       {
@@ -346,6 +352,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "normalization": {
+    "tier": "core",
     "goal": "BatchNorm과 LayerNorm이 평균·분산을 계산하는 축의 차이를 작은 예제로 계산하고, Transformer가 LayerNorm을 쓰는 이유를 설명할 수 있다.",
     "checks": [
       {
@@ -414,6 +421,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "pytorch-core": {
+    "tier": "core",
     "goal": "Tensor·Autograd·nn.Module·Optimizer·Dataset·학습 루프가 손으로 구현한 역전파·경사하강법의 어느 부분을 대신하는지 대응시키고, NumPy로 2층 신경망을 끝까지 학습시킬 수 있다.",
     "checks": [
       {
@@ -473,6 +481,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "pytorch-practice": {
+    "tier": "core",
     "goal": "GPU·CUDA가 행렬 연산을 가속하는 원리와 혼합 정밀도의 underflow·loss scaling을 설명하고, 같은 모델을 NumPy와 PyTorch로 풀어 비교할 수 있다.",
     "checks": [
       {

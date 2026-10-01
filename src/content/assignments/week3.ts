@@ -104,6 +104,7 @@ const week3Assignment: AssignmentSpec = {
   tasks: [
     {
       id: "extend",
+      tier: "core",
       title: "Value에 나눗셈과 exp 추가하기",
       instructions: `
 코드 셀의 \`__truediv__\`와 \`exp\`에서 \`_backward\`의 \`TODO\`를 채웁니다. 순전파는 이미 구현되어 있습니다. 실행하면 셀 아래쪽 검증 코드가 수치미분과 비교해 ✓ 또는 ✗를 표시합니다. 모든 항목에 ✓가 붙어야 합니다.
@@ -122,6 +123,7 @@ const week3Assignment: AssignmentSpec = {
     },
     {
       id: "mlp",
+      tier: "core",
       title: "Value로 만든 MLP로 make_moons 분류하기",
       instructions: `
 \`Neuron\`, \`Layer\`, \`MLP\` 클래스는 제공합니다. 학습 루프의 \`TODO\` 두 곳(기울기 초기화와 파라미터 갱신)을 채운 뒤 실행합니다. 권장 설정(샘플 100개, 은닉층 8개 2층, tanh, 학습률 0.3, 60에폭, 전체 배치)에서 **훈련 정확도 90% 이상**이면 통과입니다. 실행에는 20~40초 정도 걸립니다.
@@ -228,6 +230,7 @@ plt.show()
     },
     {
       id: "gradcheck",
+      tier: "core",
       title: "MLP 전체에 대한 gradient check",
       instructions: `
 학습한 MLP에서 파라미터 5개를 무작위로 골라, 역전파 기울기와 중앙차분 수치미분 $\\frac{L(\\theta + h) - L(\\theta - h)}{2h}$의 상대오차를 표로 출력합니다. 코드 셀의 \`TODO\`를 채웁니다. 상대오차가 $10^{-5}$를 넘는 항목이 있다면 원인을 찾아 고치고 과정을 답안에 적습니다.
@@ -265,6 +268,7 @@ for i in rng_check.sample(range(len(params)), 5):
     },
     {
       id: "graph",
+      tier: "core",
       title: "나만의 계산 그래프 손으로 풀기",
       instructions: `
 노드 4~6개로 이루어진 계산 그래프를 직접 설계합니다. 곱셈, 덧셈, 거듭제곱 중 두 종류 이상을 사용해야 합니다. 답안 칸에 순전파 값과 모든 노드의 역전파 기울기를 표로 정리하고, 코드 셀에서 \`Value\`로 같은 계산을 재현해 손으로 구한 값과 일치하는지 확인합니다.
@@ -300,6 +304,7 @@ for name, v in (("a", a), ("b", b), ("c", c), ("d", d), ("e", e), ("L", L)):
     },
     {
       id: "numpy",
+      tier: "core",
       title: "NumPy 벡터화 구현과 비교하기",
       instructions: `
 같은 구조(2 → 8 → 8 → 1, tanh)의 MLP를 NumPy 행렬 연산으로 학습해 정확도와 학습 시간을 \`Value\` 구현과 비교합니다. 코드 셀의 \`backward\` 함수는 완성되어 있으니 한 줄씩 읽고 각 줄이 어떤 연쇄법칙에 해당하는지 확인합니다. 그런 다음 \`Value\` 구현이 느린 이유를 세 가지 이상 적습니다.
@@ -352,8 +357,8 @@ print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
     },
     {
       id: "advanced",
+      tier: "advanced",
       title: "심화: 최적화기 비교·깊은 망의 기울기",
-      optional: true,
       instructions: `
 다음 중 하나 이상을 골라 실험합니다.
 

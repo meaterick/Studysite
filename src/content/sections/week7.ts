@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "prompting": {
+    "tier": "core",
     "goal": "역할·출력 형식·Few-shot·CoT·불확실성 허용·구분자 원칙으로 프롬프트를 명세서처럼 설계하고, CoT·Self-Consistency·Structured Output의 원리와 탈옥·프롬프트 인젝션의 차이를 설명할 수 있다.",
     "checks": [
       {
@@ -71,6 +72,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "retrieval": {
+    "tier": "core",
     "goal": "임베딩 기반 Dense 검색과 BM25 Sparse 검색의 매칭 기준·강약점을 비교하고, ANN(HNSW·IVF)·벡터 DB·FAISS·메타데이터 필터링·하이브리드 검색·재순위화의 역할을 설명할 수 있다.",
     "checks": [
       {
@@ -135,6 +137,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "rag-pipeline": {
+    "tier": "core",
     "goal": "색인(청킹·벡터화)과 질의(검색·프롬프트 조립·생성) 단계로 RAG를 구현하고, 청크 크기·overlap의 트레이드오프와 검색 실패·생성 실패를 구분해 진단할 수 있다.",
     "checks": [
       {
@@ -193,6 +196,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "retrieval-metrics": {
+    "tier": "core",
     "goal": "Recall@k와 MRR을 정의대로 계산하고, 두 지표가 각각 무엇(도달 여부 vs 순위의 질)을 재는지, 검색이 맞았는데도 답이 틀릴 때 무엇을 의심할지 설명할 수 있다.",
     "checks": [
       {
@@ -251,6 +255,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "agent-loop": {
+    "tier": "core",
     "goal": "ReAct의 관찰→추론→행동 루프를 코드로 구현하고, 종료 판단 실패·도구 오선택·출력 형식 오류 같은 실패 유형과 max_steps·오류 관찰 되돌리기·Reflection의 역할을 설명할 수 있다.",
     "checks": [
       {
@@ -308,6 +313,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "agent-design": {
+    "tier": "core",
     "goal": "단기·장기 메모리, 플래너/실행자 멀티에이전트, MCP의 역할을 설명하고, 간접 프롬프트 인젝션에 대해 데이터/지시 분리·최소 권한·Human-in-the-loop를 겹겹이 적용할 수 있다.",
     "checks": [
       {
@@ -373,6 +379,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "multimodal": {
+    "tier": "core",
     "goal": "Joint Embedding이 필요한 이유와 CLIP의 대조 학습($N \\times N$ 유사도 행렬의 대각선은 올리고 나머지는 내림)을 설명하고, VLM·Image Captioning·VQA·Multimodal LLM·Audio Model을 구분할 수 있다.",
     "checks": [
       {
@@ -432,6 +439,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "evaluation": {
+    "tier": "core",
     "goal": "대표성 있는 골든셋을 설계하고 채점 방식(정확 일치·포함·의미 유사도·LLM-as-judge)을 고르며, LLM 채점관의 편향을 점검하고 회귀 테스트로 변경의 부작용을 잡을 수 있다.",
     "checks": [
       {

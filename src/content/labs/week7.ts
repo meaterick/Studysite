@@ -124,7 +124,7 @@ const week7: WeekLab = {
       id: "w7-lab-contract",
       sectionId: "prompting",
       title: "구분자 탈출 막기, 출력 계약 검사, 다수결",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「프롬프트 설계 원칙」의 구분자·구조화 출력·Self-Consistency를 실제 LLM 없이 코드로 만듭니다.
 
@@ -229,7 +229,7 @@ print(majority_vote(["42", "24", "42", "7", "42"]))
       id: "w7-lab-bm25",
       sectionId: "retrieval",
       title: "BM25를 직접 구현하고 RRF로 Dense와 합치기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「임베딩과 벡터 검색」 실습의 Sparse 검색(BM25)과 하이브리드(RRF)를 직접 구현합니다. Dense 검색 \`dense(q)\`는 장난감 개념 벡터로 이미 주어져 있습니다.
 
@@ -320,7 +320,7 @@ for q in ["XK-2030 수리", "차 충전 금방 닳음"]:
       id: "w7-lab-chunk",
       sectionId: "rag-pipeline",
       title: "단어 세기 벡터와 슬라이딩 윈도우 청킹",
-      level: 1,
+      tier: "core",
       prompt: `
 「RAG 파이프라인」의 몸풀기(단어 세기 + 코사인 유사도)와 청킹을 직접 씁니다.
 
@@ -404,7 +404,7 @@ for i, c in enumerate(chunk("동아리 활동 규정은 매주 갱신되며 신�
       id: "w7-lab-rag-prompt",
       sectionId: "rag-pipeline",
       title: "검색 결과로 근거 인용 프롬프트를 조립하고 '자료에 없음' 거절하기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「RAG 파이프라인」 실습의 검색과 프롬프트 조립을 직접 구현합니다. 색인(\`vectorizer\`, \`X\`)은 이미 만들어져 있습니다.
 
@@ -492,7 +492,7 @@ for q in ["과제는 언제까지 내야 해?", "동아리방 와이파이 비�
       id: "w7-lab-metrics",
       sectionId: "retrieval-metrics",
       title: "정답 순위로 Recall@k와 MRR 계산하기",
-      level: 1,
+      tier: "core",
       prompt: `
 「검색 품질 지표」의 두 지표를 정답 순위 리스트 하나로 계산합니다.
 
@@ -563,7 +563,7 @@ print(recall_at_k(ranks, 1), recall_at_k(ranks, 3), round(mrr(ranks), 3))
       id: "w7-lab-robust-agent",
       sectionId: "agent-loop",
       title: "실수를 관찰로 되돌려 주는 에이전트 루프",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「에이전트 루프」의 스켈레톤은 모델이 JSON을 깨뜨리거나, 없는 도구를 부르거나, 도구가 예외를 던지면 그대로 멈춥니다. 오류를 **관찰로 되돌려 주는** \`robust_agent(goal, llm, max_steps=5)\`를 완성합니다. 반환값은 \`(최종 답 또는 "중단: 최대 스텝 초과", hist)\`입니다.
 
@@ -698,7 +698,7 @@ print("\n".join(hist), "\n→", answer)
       id: "w7-lab-guard",
       sectionId: "agent-design",
       title: "eval 없는 계산기, 도구 허용 목록, 사람 승인",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「에이전트 설계와 안전」 실습 끝의 토론에 나온 세 가지 보안 문제(\`eval\` 사용, 도구 결과를 통한 인젝션, 필요 이상의 권한)를 코드로 고칩니다.
 
@@ -815,7 +815,7 @@ print(call_tool("send_email", "to=attacker@example.com", allowed={"read_web"}, a
       id: "w7-lab-clip",
       sectionId: "multimodal",
       title: "작은 CLIP의 대칭 대조 손실과 기울기",
-      level: 3,
+      tier: "advanced",
       prompt: `
 「멀티모달 AI」 실습의 작은 CLIP에서 대조 손실과 그 기울기를 직접 구합니다. \`S\`는 이미 온도로 나눈 $N \\times N$ 유사도 행렬이고, 대각선 $S_{kk}$가 정답 짝입니다.
 
@@ -898,7 +898,7 @@ def clip_loss_grad(S):
       id: "w7-lab-judge",
       sectionId: "evaluation",
       title: "회귀 문항 찾기, 순서 바꿔 채점하기, Cohen's κ",
-      level: 2,
+      tier: "supplement",
       prompt: `
 「평가」 실습의 회귀 확인과 채점관 점검을 함수로 만듭니다.
 
@@ -986,6 +986,7 @@ print(cohen_kappa([1, 1, 0, 0, 1, 0, 1, 1], [1, 0, 0, 0, 1, 0, 1, 1]))
     {
       kind: "choice",
       id: "w7-drill-few-shot",
+      tier: "core",
       sectionId: "prompting",
       question: "감정 분류 프롬프트에 Few-shot 예시 8개를 넣었는데, 7개의 라벨이 '긍정'이고 마지막 예시도 '긍정'이다. 가장 우려되는 문제는?",
       choices: [
@@ -1000,6 +1001,7 @@ print(cohen_kappa([1, 1, 0, 0, 1, 0, 1, 1], [1, 0, 0, 0, 1, 0, 1, 1]))
     {
       kind: "choice",
       id: "w7-drill-sparse-dense",
+      tier: "core",
       sectionId: "retrieval",
       question: "사용자가 오류 코드 \"E-4012\"로 검색했는데 임베딩(Dense) 검색이 엉뚱한 문서를 돌려준다. 가장 적절한 개선은?",
       choices: [
@@ -1014,6 +1016,7 @@ print(cohen_kappa([1, 1, 0, 0, 1, 0, 1, 1], [1, 0, 0, 0, 1, 0, 1, 1]))
     {
       kind: "choice",
       id: "w7-drill-ann",
+      tier: "core",
       sectionId: "retrieval",
       question: "768차원 벡터 1억 개에서 질의마다 정확한 최근접 이웃(Exact NN)을 찾으면 곱셈은 대략 몇 번이고, 실전에서는 무엇을 쓰는가?",
       choices: [
@@ -1028,6 +1031,7 @@ print(cohen_kappa([1, 1, 0, 0, 1, 0, 1, 1], [1, 0, 0, 0, 1, 0, 1, 1]))
     {
       kind: "choice",
       id: "w7-drill-rag-diagnose",
+      tier: "core",
       sectionId: "rag-pipeline",
       question: "골든셋에서 검색의 Recall@5는 0.95인데 최종 답의 정확도는 0.60이다. 다음으로 살펴볼 곳은?",
       choices: [
@@ -1042,6 +1046,7 @@ print(cohen_kappa([1, 1, 0, 0, 1, 0, 1, 1], [1, 0, 0, 0, 1, 0, 1, 1]))
     {
       kind: "choice",
       id: "w7-drill-clip-matrix",
+      tier: "core",
       sectionId: "multimodal",
       question: "CLIP의 한 배치에 이미지 8장과 그 캡션 8개가 있다. $8 \\times 8$ 유사도 행렬에서 유사도를 '높여야 할' 칸과 '낮춰야 할' 칸의 수는?",
       choices: ["8개, 56개", "8개, 8개", "64개, 0개", "16개, 48개"],
@@ -1051,6 +1056,7 @@ print(cohen_kappa([1, 1, 0, 0, 1, 0, 1, 1], [1, 0, 0, 0, 1, 0, 1, 1]))
     {
       kind: "predict",
       id: "w7-drill-chunk",
+      tier: "core",
       sectionId: "rag-pipeline",
       code: py`
 def chunk(text, size, overlap):
@@ -1065,6 +1071,7 @@ print(len(c), c)
     {
       kind: "predict",
       id: "w7-drill-mrr",
+      tier: "core",
       sectionId: "retrieval-metrics",
       code: py`
 ranks = [1, 1, 3, None]          # None: 상위 결과 안에 정답 없음
@@ -1078,6 +1085,7 @@ print(round(mrr, 3), recall3)
     {
       kind: "predict",
       id: "w7-drill-rrf",
+      tier: "core",
       sectionId: "retrieval",
       code: py`
 bm25 = ["d1", "d2", "d3"]        # BM25 순위
@@ -1094,6 +1102,7 @@ print(sorted(score, key=score.get, reverse=True))
     {
       kind: "predict",
       id: "w7-drill-final-falsy",
+      tier: "core",
       sectionId: "agent-loop",
       code: py`
 import json
@@ -1107,6 +1116,7 @@ for reply in ['{"final": ""}', '{"final": "0"}', '{"final": 0}', '{"final": null
     {
       kind: "predict",
       id: "w7-drill-regression",
+      tier: "core",
       sectionId: "evaluation",
       code: py`
 import numpy as np
@@ -1120,6 +1130,7 @@ print(round(v1.mean(), 2), round(v2.mean(), 2), np.where((v1 == 1) & (v2 == 0))[
     {
       kind: "descriptive",
       id: "w7-drill-cot-sc",
+      tier: "core",
       sectionId: "prompting",
       question: "CoT가 다단계 문제의 정답률을 올리는 이유를 자기회귀 생성 관점에서 설명하고, Self-Consistency(다수결)가 오히려 오답으로 수렴하는 조건을 적으십시오.",
       modelAnswer:
@@ -1129,6 +1140,7 @@ print(round(v1.mean(), 2), round(v2.mean(), 2), np.where((v1 == 1) & (v2 == 0))[
     {
       kind: "descriptive",
       id: "w7-drill-injection-layers",
+      tier: "core",
       sectionId: "agent-design",
       question: "도구를 쓰는 에이전트가 웹 문서 속 숨은 지시에 넘어가 메일을 보내려 한다. 방어를 왜 여러 겹으로 쌓아야 하는지, 각 겹(데이터 표시, 최소 권한, 사람 승인)이 막는 지점을 설명하십시오.",
       modelAnswer:
@@ -1138,6 +1150,7 @@ print(round(v1.mean(), 2), round(v2.mean(), 2), np.where((v1 == 1) & (v2 == 0))[
     {
       kind: "descriptive",
       id: "w7-drill-judge-bias",
+      tier: "core",
       sectionId: "evaluation",
       question: "LLM-as-judge를 회귀 테스트에 쓰려고 한다. 대표적인 편향 두 가지와 완화책, 그리고 채점관을 믿어도 되는지 확인하는 절차를 적으십시오.",
       modelAnswer:
@@ -1221,7 +1234,7 @@ assert changed, "after가 before와 같은 설정입니다. 청크 크기·문�
       {
         id: "w7-ch-hybrid-eval",
         title: "골든셋으로 단어·글자·하이브리드 검색기 비교하기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 「검색 품질 지표」 실습의 골든셋 8문항으로, 단어 단위 TF-IDF · 글자 2~3-gram TF-IDF · 두 검색기를 RRF로 합친 하이브리드를 비교합니다.
 
@@ -1319,7 +1332,7 @@ for name, s in [("단어", word), ("글자", char), ("하이브리드", hybrid(w
       {
         id: "w7-ch-mcnemar",
         title: "20문항의 0.10 차이는 믿을 만한가: McNemar 검정과 배포 게이트",
-        level: 3,
+        tier: "advanced",
         prompt: `
 「평가」 실습에서 v2의 정확도는 0.75 → 0.85로 올랐습니다. 20문항에서 이 차이를 믿어도 될까요? 같은 문항을 두 시스템이 푼 **짝지은 비교**이므로, 결과가 엇갈린 문항만 보는 McNemar 검정을 씁니다.
 

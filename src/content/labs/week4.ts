@@ -8,7 +8,7 @@ const week4: WeekLab = {
       id: "w4-lab-conv2d",
       sectionId: "convolution",
       title: "합성곱 직접 구현과 파라미터 수 계산",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`conv2d(x, k, stride=1, padding=0)\`: 흑백 이미지 \`x\`(H, W)에 정사각 커널 \`k\`를 미끄러뜨리며 **원소별 곱의 합**을 구합니다. 패딩은 0으로 채웁니다(\`np.pad\`). 출력 크기는 $\\lfloor (N + 2P - K)/S \\rfloor + 1$입니다.
 2. \`conv_params(k, c_in, c_out)\`: $k \\times k$ 커널, 입력 채널 \`c_in\`, 출력 채널 \`c_out\`인 합성곱층의 파라미터 수(편향 포함)
@@ -112,7 +112,7 @@ print(conv_params(3, 3, 64), fc_params(224 * 224 * 3, 64))
       id: "w4-lab-pool-rf",
       sectionId: "pooling-receptive-field",
       title: "반복문 없는 풀링과 수용영역 계산기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`max_pool(a)\`, \`avg_pool(a)\`: $2 \\times 2$ 영역, stride 2 풀링을 **반복문 없이** \`reshape\`와 \`axis\`로 구현합니다. (H, W)를 (H/2, 2, W/2, 2)로 바꾸면 블록 내부가 1번·3번 축이 됩니다.
 2. \`receptive_field(layers)\`: \`(커널, 보폭)\` 리스트를 받아 마지막 층 한 칸이 입력에서 보는 범위를 돌려줍니다. 층마다 $r \\leftarrow r + (k-1)\\,j$, $j \\leftarrow j \\cdot s$로 갱신합니다($r = j = 1$에서 시작).
@@ -204,7 +204,7 @@ print(receptive_field([(3, 1), (3, 1), (2, 2), (3, 1), (3, 1), (2, 2), (3, 1)]))
       id: "w4-lab-residual",
       sectionId: "resnet",
       title: "잔차 블록: 항등함수와 기울기 고속도로",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`res_block(x, W1, W2)\` $= x + W_2\\,\\mathrm{ReLU}(W_1 x)$
 2. \`plain_grad(local)\`, \`residual_grad(f_primes)\`: 층마다의 국소 기울기 배열을 받아 입력까지 전달되는 기울기 배율을 돌려줍니다. 잔차 없는 망은 국소 기울기의 곱 $\\prod F_i'$, 잔차 연결이 있으면 $y = F(x) + x$이므로 $\\prod (F_i' + 1)$입니다.
@@ -283,7 +283,7 @@ print(f"50층 plain: {plain_grad(local):.2e}, residual: {residual_grad(small):.3
       id: "w4-lab-patchify",
       sectionId: "cnn-history-applications",
       title: "ViT처럼 이미지를 패치 토큰으로 자르기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`patchify(img, P)\`: (H, W) 이미지를 $P \\times P$ 패치로 잘라, 패치를 **왼쪽 위부터 행 순서대로** 한 줄씩 편 (패치 수, P·P) 행렬을 돌려줍니다. 반복문 없이 \`reshape\`와 \`transpose\`로 씁니다.
 2. \`n_tokens(img_size, patch)\`: 정사각 이미지에서 나오는 패치 토큰 수
@@ -363,7 +363,7 @@ print(n_tokens(224, 16), vgg_compare(64))
       id: "w4-lab-dropout",
       sectionId: "regularization",
       title: "inverted dropout과 라벨을 보존하는 이동 증강",
-      level: 2,
+      tier: "supplement",
       prompt: `
 1. \`dropout(h, p, rng, train=True)\`: 학습 중에는 확률 \`p\`로 뉴런을 끄고 살아남은 값을 $1/(1-p)$배 키웁니다(inverted dropout). \`train=False\`(평가)면 \`h\`를 그대로 돌려줍니다.
 2. \`shift(img, dy, dx)\`: 이미지를 아래로 \`dy\`, 오른쪽으로 \`dx\`칸 옮기고 빈칸은 0으로 채웁니다(음수면 반대 방향). \`np.roll\`은 반대편으로 넘어간 값이 다시 들어오므로 쓰지 않습니다.
@@ -449,7 +449,7 @@ print(shift(np.arange(9).reshape(3, 3), 1, 1))
       id: "w4-lab-recipe",
       sectionId: "transfer-diagnostics",
       title: "Karpathy 레시피: 초기 손실 점검과 배치 하나 외우기",
-      level: 2,
+      tier: "supplement",
       prompt: `
 학습이 이상할 때 가장 먼저 하는 두 가지 검사를 구현합니다.
 
@@ -550,7 +550,7 @@ print("배치 10개 과적합:", overfit_batch(X[:10], y[:10]))
       id: "w4-lab-diffusion",
       sectionId: "generative-models",
       title: "순확산 과정과 잡음 예측으로 원본 되찾기",
-      level: 3,
+      tier: "advanced",
       prompt: `
 Diffusion 모델의 순방향 과정을 식 그대로 구현합니다.
 
@@ -643,6 +643,7 @@ print("복원 오차:", np.abs(predict_x0(xt, 9, ab, eps) - x0).max())
     {
       kind: "choice",
       id: "w4-drill-params",
+      tier: "core",
       sectionId: "convolution",
       question: "RGB 입력(3채널)에 $5\\times5$ 커널 32개를 쓰는 합성곱층의 파라미터 수(편향 포함)는?",
       choices: ["2,432", "2,400", "832", "800"],
@@ -652,6 +653,7 @@ print("복원 오차:", np.abs(predict_x0(xt, 9, ab, eps) - x0).max())
     {
       kind: "choice",
       id: "w4-drill-plain50",
+      tier: "core",
       sectionId: "resnet",
       question: "잔차 연결 없는 50층에서 층마다 기울기가 평균 0.6배씩 곱해진다면, 입력 쪽에 도착하는 기울기는 대략 원래의 몇 배인가?",
       choices: ["약 $10^{-11}$배", "약 0.03배", "약 0.6배", "약 30배"],
@@ -661,6 +663,7 @@ print("복원 오차:", np.abs(predict_x0(xt, 9, ab, eps) - x0).max())
     {
       kind: "choice",
       id: "w4-drill-initloss",
+      tier: "core",
       sectionId: "transfer-diagnostics",
       question: "10클래스 분류 모델의 학습 첫 스텝 손실(교차 엔트로피)이 23.0으로 나왔다. 가장 먼저 의심할 것은?",
       choices: [
@@ -675,6 +678,7 @@ print("복원 오차:", np.abs(predict_x0(xt, 9, ab, eps) - x0).max())
     {
       kind: "choice",
       id: "w4-drill-diffusion-noise",
+      tier: "core",
       sectionId: "generative-models",
       question: "순확산 $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$에서 $\\bar\\alpha_t$가 0에 가까워지면 $x_t$는?",
       choices: ["원본 $x_0$와 거의 같다", "원본 정보가 거의 없는 표준 가우시안 잡음에 가깝다", "모든 값이 0이 된다", "원본의 두 배가 된다"],
@@ -684,6 +688,7 @@ print("복원 오차:", np.abs(predict_x0(xt, 9, ab, eps) - x0).max())
     {
       kind: "predict",
       id: "w4-drill-outsize",
+      tier: "core",
       sectionId: "convolution",
       code: py`
 def out_size(n, k, s=1, p=0):
@@ -697,6 +702,7 @@ print(out_size(5, 3), out_size(5, 3, p=1), out_size(5, 3, s=2), out_size(28, 5))
     {
       kind: "predict",
       id: "w4-drill-pool",
+      tier: "core",
       sectionId: "pooling-receptive-field",
       code: py`
 import numpy as np
@@ -714,6 +720,7 @@ print(blocks.mean(axis=(1, 3)).tolist())
     {
       kind: "predict",
       id: "w4-drill-rf",
+      tier: "core",
       sectionId: "pooling-receptive-field",
       code: py`
 r, j = 1, 1
@@ -727,6 +734,7 @@ for k, s in [(3, 1), (3, 1), (2, 2), (3, 1)]:
     {
       kind: "predict",
       id: "w4-drill-vit",
+      tier: "core",
       sectionId: "cnn-history-applications",
       code: py`
 print((224 // 16) ** 2, (224 // 32) ** 2)
@@ -738,6 +746,7 @@ print(3 * (9 * 64 * 64), 49 * 64 * 64)
     {
       kind: "descriptive",
       id: "w4-drill-augment",
+      tier: "core",
       sectionId: "regularization",
       question:
         "손글씨 숫자에 '위아래 뒤집기' 증강이 잘못된 이유, CIFAR-10에서 '좌우 뒤집기'는 괜찮지만 '위아래 뒤집기'는 잘 쓰지 않는 이유, 그리고 증강을 훈련 데이터에만 적용해야 하는 이유를 함께 설명하십시오.",
@@ -748,6 +757,7 @@ print(3 * (9 * 64 * 64), 49 * 64 * 64)
     {
       kind: "descriptive",
       id: "w4-drill-overfit-bug",
+      tier: "core",
       sectionId: "transfer-diagnostics",
       question:
         "배치 10개 과적합 실험에서 기울기 줄 `G[np.arange(10), ys] -= 1`을 실수로 지우면 무슨 일이 생기는지, 그리고 \"배치 하나도 외우지 못하면 파이프라인 버그\"라는 레시피가 왜 이런 버그를 잘 잡아내는지 설명하십시오.",
@@ -758,6 +768,7 @@ print(3 * (9 * 64 * 64), 49 * 64 * 64)
     {
       kind: "descriptive",
       id: "w4-drill-ae-generate",
+      tier: "core",
       sectionId: "generative-models",
       question:
         "PCA(선형 오토인코더)로 2차원까지 줄인 잠재공간에서 아무 점이나 골라 복원하면 그럴듯한 숫자가 잘 나오지 않는 이유와, VAE의 KL 항이 이 문제를 어떻게 완화하는지 설명하십시오.",
@@ -820,7 +831,7 @@ for n, k, s, p, expect in [(8, 3, 2, 1, 4), (32, 5, 1, 2, 32), (32, 5, 2, 2, 16)
       {
         id: "w4-ch-conv-multi",
         title: "다채널 합성곱을 반복문 두 개로 벡터화하기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 실제 CNN의 합성곱은 입력이 여러 채널입니다. \`conv2d_multi(x, w, b, stride, pad)\`를 구현합니다.
 
@@ -914,7 +925,7 @@ print(conv2d_multi(x, w, np.zeros(4), pad=1).shape)
       {
         id: "w4-ch-maxpool-backward",
         title: "Max Pooling의 역전파: 승자에게만 기울기를",
-        level: 3,
+        tier: "advanced",
         prompt: `
 Max Pooling은 파라미터가 없지만 역전파는 해야 합니다. $2 \\times 2$(stride 2) 풀링의 순전파·역전파를 구현합니다.
 

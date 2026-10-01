@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "data-cleaning": {
+    "tier": "core",
     "goal": "수집·정제·전처리를 구분하고, 결측값 처리 전략의 트레이드오프와 IQR·Z-score 이상치 판정이 엇갈리는 이유를 설명할 수 있다.",
     "checks": [
       {
@@ -63,6 +64,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "features": {
+    "tier": "core",
     "goal": "명목형·순서형 변수에 맞는 인코딩을 고르고, Min-Max와 Z-score 스케일링을 계산하며 \"훈련 데이터로만 fit\" 원칙을 지킬 수 있다.",
     "checks": [
       {
@@ -120,6 +122,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "regression-logistic": {
+    "tier": "core",
     "goal": "회귀·분류에 맞는 손실(MSE·교차 엔트로피)을 고르고, 정규방정식·다항회귀·로지스틱 회귀의 기울기 $(p-y)x$를 유도·구현할 수 있다.",
     "checks": [
       {
@@ -176,6 +179,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "knn-naive-bayes": {
+    "tier": "core",
     "goal": "KNN의 거리·다수결 예측과 $K$에 따른 편향-분산을, 나이브 베이즈의 조건부 독립 가정과 계산 과정을 설명할 수 있다.",
     "checks": [
       {
@@ -233,6 +237,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "trees-ensembles": {
+    "tier": "core",
     "goal": "지니 불순도·정보이득으로 트리 분할을 계산하고, 배깅(랜덤 포레스트)과 부스팅이 각각 분산과 편향을 줄이는 방식을 설명할 수 있다.",
     "checks": [
       {
@@ -291,6 +296,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "svm-unsupervised": {
+    "tier": "core",
     "goal": "SVM의 마진·서포트벡터를 계산하고, K-Means의 할당-갱신 반복과 PCA가 분산이 큰 방향(공분산의 고유벡터)을 찾는 원리를 설명할 수 있다.",
     "checks": [
       {
@@ -348,6 +354,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "bias-variance": {
+    "tier": "core",
     "goal": "훈련·검증 오차로 과적합과 과소적합을 진단하고, 편향의 제곱과 분산을 숫자로 분해하며 L1·L2 정규화로 복잡도를 조절할 수 있다.",
     "checks": [
       {
@@ -406,6 +413,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "validation-leakage": {
+    "tier": "core",
     "goal": "훈련·검증·테스트셋의 역할과 K-Fold 교차검증을 설명하고, 전처리를 파이프라인에 넣어 데이터 누수를 막을 수 있다.",
     "checks": [
       {
@@ -475,6 +483,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "classification-metrics": {
+    "tier": "core",
     "goal": "혼동행렬에서 Accuracy·Precision·Recall·F1·Specificity를 계산하고, 임계값과 ROC 곡선·AUC의 의미를 확률적 해석까지 설명할 수 있다.",
     "checks": [
       {
@@ -535,6 +544,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "regression-metrics-baseline": {
+    "tier": "core",
     "goal": "MAE·MSE·RMSE·$R^2$를 계산하고, 베이스라인 대비 성능과 점수의 흔들림, 오차 분석으로 모델 결과를 해석할 수 있다.",
     "checks": [
       {

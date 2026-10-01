@@ -21,7 +21,7 @@ import {
 } from "./submissionStore";
 
 // 과제 작업 공간·제출·채점 액션. 모든 액션은 브라우저에서 임의로 호출될 수 있으므로
-// 로그인, 과제 열림 여부(모든 단계 완료), 입력값을 여기서 다시 검증한다.
+// 로그인, 과제 열림 여부(핵심 단계 완료), 입력값을 여기서 다시 검증한다.
 
 async function loadAssignmentContext(slug: string) {
   const user = await requireUser(`/weeks/${slug}/assignment`);
