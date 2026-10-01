@@ -1,16 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import CodeBlock from "@/components/CodeBlock";
-import CodeCell from "@/components/CodeCellLoader";
+import { loadCellCode } from "@/lib/codeStore";
+import { useUserScope } from "./UserScope";
+
+// Monaco Editor(수 MB)와 Pyodide 연동 로직은 별도 청크로 분리해, 학습자가 편집·실행을
+// 누른 셀에서만 불러온다.
+const loadCodeCell = () => import("./CodeCell");
+const CodeCell = lazy(loadCodeCell);
 
 /**
- * 코드 셀이 뷰포트 근처에 오거나 클릭되기 전까지는 Monaco 청크 자체를
- * 불러오지 않는다. 학습자료 한 페이지에 코드 블록이 여러 개(주차에 따라
- * 10개 안팎) 있을 수 있어서, 전부 즉시 마운트하면 방문하자마자 Monaco를
- * 그만큼 준비하게 되어 초기 로딩이 느려진다 — 실제로 스크롤해서 보게 될
- * 때에만 무거운 에디터를 활성화한다. 활성화 전에는 기존 정적 코드
- * 블록(문법 강조만, 실행 불가)을 그대로 보여준다.
+ * 학습 자료의 실행 가능한 코드 블록.
+ *
+ * 처음에는 서버에서 렌더링한 정적 코드 블록(문법 강조)을 그대로 보여 주고, 학습자가
+ * "편집"이나 "실행"을 눌렀을 때에만 편집기로 바꾼다. 스크롤만으로 편집기를 붙이면
+ * 단계를 옮길 때마다 정적 블록 → 로딩 문구 → 편집기로 바뀌며 높이가 출렁여 화면이
+ * 깜빡이기 때문이다. 화면 근처에 오면 편집기 청크만 미리 받아 두어 전환을 빠르게 하고,
+ * 전환하는 동안에도 같은 정적 블록을 대체 화면으로 써서 모양이 바뀌지 않게 한다.
  */
 export default function LazyCodeCell({
   cellId,
@@ -21,17 +28,30 @@ export default function LazyCodeCell({
   starterCode: string;
   onComplete?: () => void;
 }) {
+  const uid = useUserScope();
   const [active, setActive] = useState(false);
+  const [autoRun, setAutoRun] = useState(false);
+  // 이전에 수정해 둔 코드가 있으면 정적 블록에도 그 코드를 보여 준다.
+  const [saved, setSaved] = useState<string | undefined>(undefined);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (active) return;
+    let cancelled = false;
+    loadCellCode(`${uid}::${cellId}`).then((code) => {
+      if (!cancelled && code !== undefined && code !== starterCode) setSaved(code);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, cellId, starterCode]);
+
+  useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || active) return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          setActive(true);
+          void loadCodeCell();
           io.disconnect();
         }
       },
@@ -41,31 +61,45 @@ export default function LazyCodeCell({
     return () => io.disconnect();
   }, [active]);
 
-  const [autoRun, setAutoRun] = useState(false);
+  const open = (run: boolean) => {
+    setAutoRun(run);
+    setActive(true);
+  };
 
-  if (active) {
-    return <CodeCell cellId={cellId} starterCode={starterCode} onComplete={onComplete} autoRun={autoRun} />;
-  }
-
-  return (
-    <div ref={ref}>
-      <CodeBlock
-        lang="python"
-        label="Python · 완성 예제"
-        code={starterCode}
-        action={
+  const staticBlock = (
+    <CodeBlock
+      lang="python"
+      label={saved ? "Python · 내가 수정한 코드" : "Python · 완성 예제"}
+      code={saved ?? starterCode}
+      action={
+        <>
           <button
             type="button"
-            onClick={() => {
-              setAutoRun(true);
-              setActive(true);
-            }}
-            className="rounded-md bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white hover:opacity-90"
+            onClick={() => open(false)}
+            disabled={active}
+            className="rounded-md px-2 py-1 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card)] hover:text-ink disabled:opacity-50"
+          >
+            ✎ 편집
+          </button>
+          <button
+            type="button"
+            onClick={() => open(true)}
+            disabled={active}
+            className="rounded-md bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50"
           >
             ▶ 실행
           </button>
-        }
-      />
-    </div>
+        </>
+      }
+    />
   );
+
+  if (active) {
+    return (
+      <Suspense fallback={staticBlock}>
+        <CodeCell cellId={cellId} starterCode={starterCode} onComplete={onComplete} autoRun={autoRun} />
+      </Suspense>
+    );
+  }
+  return <div ref={ref}>{staticBlock}</div>;
 }

@@ -154,6 +154,17 @@ export default function CodeCell({
 
   const lineCount = Math.max(code.split("\n").length, 3);
   const editorHeight = Math.min(Math.max(lineCount * 19 + 16, 90), 420);
+  // 저장된 코드를 읽는 동안과 Monaco가 뜨는 동안에도 같은 높이로 코드를 보여 줘서
+  // 편집기로 바뀔 때 화면이 출렁이지 않게 한다.
+  const placeholder = (
+    <pre
+      aria-busy="true"
+      style={{ height: editorHeight }}
+      className="m-0 w-full overflow-hidden bg-[var(--surface-card)] px-4 py-2.5 font-mono text-[12.5px] leading-[19px] text-ink"
+    >
+      {code}
+    </pre>
+  );
 
   return (
     <div ref={containerRef} className="not-prose overflow-hidden rounded-lg border border-[var(--border-hairline)]">
@@ -201,11 +212,10 @@ export default function CodeCell({
             padding: { top: 10, bottom: 10 },
             renderLineHighlight: "none",
           }}
+          loading={placeholder}
         />
       ) : (
-        <div className="flex items-center justify-center bg-[var(--surface-card)] py-8 text-xs text-ink-muted">
-          편집기를 불러오고 있습니다…
-        </div>
+        placeholder
       )}
       {(status || output.length > 0) && (
         <div className="border-t border-[var(--border-hairline)] bg-[#0d1117] px-4 py-2.5 font-mono text-[12.5px] leading-relaxed">

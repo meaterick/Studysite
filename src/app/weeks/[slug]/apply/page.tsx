@@ -4,6 +4,7 @@ import { WEEKS, getWeek } from "@/content/weeks";
 import { TIER_INFO, TIER_ORDER } from "@/content/tiers";
 import WeekFrame from "@/components/WeekFrame";
 import { loadWeekPage } from "@/lib/weekPage";
+import { continueHref } from "@/lib/study";
 import { applySummary, type ApplyItem } from "@/lib/applyView";
 
 export function generateStaticParams() {
@@ -40,7 +41,7 @@ export default async function ApplyHubPage({
     ? {
         label: "핵심 단계 마저 학습하기",
         detail: `핵심 단계가 ${coreLeft}개 남았습니다. 백지공부와 과제는 핵심 단계를 모두 마친 뒤에 하는 것이 효과적입니다.`,
-        href: `/weeks/${slug}/continue`,
+        href: continueHref(slug, status),
       }
     : summary.nextRequired
       ? {
@@ -107,7 +108,7 @@ export default async function ApplyHubPage({
                 state={status.coreDone ? "완료" : `${status.tiers.core.done}/${status.tiers.core.total}단계`}
                 done={status.coreDone}
                 current={!status.coreDone}
-                href={`/weeks/${slug}/continue`}
+                href={continueHref(slug, status)}
               />
               {required.map((item, i) => (
                 <PathNode

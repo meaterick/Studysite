@@ -16,6 +16,8 @@ import UnfinishedWarning from "@/components/UnfinishedWarning";
 import PracticeDoneButton from "@/components/section/PracticeDoneButton";
 import { readSectionState } from "@/lib/learningStore";
 import { getWeekLab } from "@/content/labs";
+import { cookies } from "next/headers";
+import { STAGE_LIST_COOKIE } from "@/lib/stageListCookie";
 
 export function generateStaticParams() {
   return WEEKS.flatMap((w) => getWeekOutline(w).sections.map((s) => ({ slug: w.slug, sectionId: s.id })));
@@ -80,12 +82,14 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const footerNextLabel = continueTo ? undefined : isCore ? undefined : "주차 개요로";
   const skipped = isAdmin ? [] : unfinishedBefore(status, sectionId);
   const practiceDone = !!state.practiceDoneAt || !!state.practiceDone;
+  const listCollapsed = (await cookies()).get(STAGE_LIST_COOKIE)?.value === "1";
 
   return (
     <WeekFrame week={week} status={status} record={record}>
       <StageLayout
         done={status.tiers.core.done}
         total={status.tiers.core.total}
+        initialCollapsed={listCollapsed}
         list={<StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />}
       >
         <article className="min-w-0">

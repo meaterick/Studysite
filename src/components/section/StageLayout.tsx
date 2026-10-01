@@ -1,40 +1,17 @@
 "use client";
 
-import { useSyncExternalStore, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { STAGE_LIST_COOKIE } from "@/lib/stageListCookie";
 
-const STORAGE_KEY = "aegis:stage-list-collapsed";
-const CHANGE_EVENT = "aegis:stage-list-toggle";
-
-// 접힘 상태는 localStorage에 두고 useSyncExternalStore로 읽는다. 서버 렌더링 때는 항상 펼친 상태.
-function readCollapsed(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGE_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGE_EVENT, onChange);
-  };
-}
+// 접힘 상태는 쿠키에 둔다. 서버가 첫 화면부터 같은 모양으로 그려야 펼쳤다 접히는 깜빡임이 없다.
 
 function writeCollapsed(value: boolean) {
-  try {
-    localStorage.setItem(STORAGE_KEY, value ? "1" : "0");
-  } catch {
-    // 저장소를 쓸 수 없으면 이번 화면에서만 적용되지 않는다.
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
+  document.cookie = `${STAGE_LIST_COOKIE}=${value ? "1" : "0"}; path=/; max-age=31536000; samesite=lax`;
 }
 
 /**
  * 단계 학습 화면의 2단 배치. 넓은 화면에서는 오른쪽 "이번 주 단계" 목록을 접어
- * 본문을 넓게 쓸 수 있고, 접은 상태는 브라우저에 기억한다. 좁은 화면에서는 본문 위에
+ * 본문을 넓게 쓸 수 있고, 접은 상태는 쿠키에 기억해 서버 렌더링부터 반영한다. 좁은 화면에서는 본문 위에
  * 접고 펼 수 있는 목록으로 보여 준다(기본은 접힘).
  */
 export default function StageLayout({
@@ -42,15 +19,21 @@ export default function StageLayout({
   list,
   done,
   total,
+  initialCollapsed = false,
 }: {
   children: ReactNode;
   /** 단계 목록(서버에서 렌더링) */
   list: ReactNode;
   done: number;
   total: number;
+  /** 서버가 쿠키에서 읽은 접힘 상태 */
+  initialCollapsed?: boolean;
 }) {
-  const collapsed = useSyncExternalStore(subscribe, readCollapsed, () => false);
-  const toggle = () => writeCollapsed(!collapsed);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const toggle = () => {
+    writeCollapsed(!collapsed);
+    setCollapsed(!collapsed);
+  };
 
   const summary = `이번 주 단계 · ${done}/${total} 완료`;
 
