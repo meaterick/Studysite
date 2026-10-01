@@ -44,6 +44,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "평균은 이상치에 끌려가지만 중앙값은 거의 영향을 받지 않는다. 예를 들어 소득처럼 꼬리가 긴 열에서 평균 대체값이 약 1022일 때 중앙값 대체값은 235에 그칠 수 있다."
+      },
+      {
+        "id": "w2-data-cleaning-c4",
+        "question": "pandas에서 `df.isna().sum()`이 돌려주는 것은?",
+        "choices": [
+          "열마다 결측값(NaN)의 개수",
+          "행마다 결측값의 개수",
+          "결측값을 0으로 채운 표",
+          "전체 원소의 합"
+        ],
+        "answer": 0,
+        "explanation": "`isna()`는 결측이면 True인 표를 만들고, `sum()`은 열마다 True의 개수를 센다. 정제를 시작할 때 가장 먼저 보는 숫자다."
+      },
+      {
+        "id": "w2-data-cleaning-c5",
+        "question": "\"서울\", \"Seoul\", \"서울 \"(끝에 공백)이 섞인 열에서 중복 행을 지우기 전에 해야 할 일은?",
+        "choices": [
+          "표기를 하나로 통일한다(공백 제거, 같은 뜻의 값 치환)",
+          "결측값을 먼저 평균으로 채운다",
+          "열 전체를 삭제한다",
+          "아무것도 하지 않아도 같은 값으로 인식된다"
+        ],
+        "answer": 0,
+        "explanation": "컴퓨터에게 \"서울\"과 \"서울 \"은 다른 문자열이다. 표기를 통일해야 같은 행이 중복으로 잡히고, 범주별 개수도 바르게 센다."
       }
     ],
     "quizIds": [
@@ -102,6 +126,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "테스트 통계가 학습에 섞이면 누수가 된다. 테스트를 각자 따로 fit하는 것도 훈련과 다른 잣대로 변환하게 되어 틀린 방법이다."
+      },
+      {
+        "id": "w2-features-c4",
+        "question": "범주가 4개(봄·여름·가을·겨울)인 명목형 변수를 원-핫 인코딩하면 열이 몇 개 생기는가?",
+        "choices": [
+          "4개",
+          "1개",
+          "2개",
+          "16개"
+        ],
+        "answer": 0,
+        "explanation": "범주마다 0/1 열이 하나씩 생긴다. 각 행은 자기 계절 열에만 1을 갖는다."
+      },
+      {
+        "id": "w2-features-c5",
+        "question": "$x = [2, 4, 6, 8]$을 Z-score로 표준화했을 때 8의 값에 가장 가까운 것은? ($\\sigma = \\sqrt5 \\approx 2.236$)",
+        "choices": [
+          "1.342",
+          "1",
+          "0.75",
+          "3"
+        ],
+        "answer": 0,
+        "explanation": "평균 5를 빼면 3, 표준편차 2.236으로 나누면 약 1.342다. 평균보다 표준편차 1.34개만큼 크다는 뜻이다."
       }
     ],
     "quizIds": [
@@ -160,6 +208,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "$x^2$을 새 특징으로 보면 모델은 파라미터에 대해 선형(linear in parameters)이므로 선형회귀의 손실·기울기를 그대로 쓸 수 있다."
+      },
+      {
+        "id": "w2-regression-logistic-c4",
+        "question": "로지스틱 회귀에서 $z = w^\\top x + b = 0$인 샘플의 예측 확률 $p$는?",
+        "choices": [
+          "0.5",
+          "0",
+          "1",
+          "0.731"
+        ],
+        "answer": 0,
+        "explanation": "$\\sigma(0) = \\frac{1}{1 + e^0} = 0.5$다. 그래서 $z = 0$인 점들의 모임 $w^\\top x + b = 0$이 결정 경계가 된다."
+      },
+      {
+        "id": "w2-regression-logistic-c5",
+        "question": "정답이 $y = 1$인 샘플에 모델이 $p = 0.7$을 예측했다. 경사하강법 한 걸음 뒤 이 샘플의 $p$는 대체로 어떻게 되는가?",
+        "choices": [
+          "커진다. $p - y < 0$이라 점수 $z$를 키우는 쪽으로 가중치가 움직이기 때문",
+          "작아진다",
+          "변하지 않는다",
+          "정확히 1이 된다"
+        ],
+        "answer": 0,
+        "explanation": "기울기 $(p - y)x$에서 $p - y = -0.3 < 0$이므로 $w \\leftarrow w - \\eta(p - y)x$는 $w$를 $x$ 방향으로 키워 $z$와 $p$를 올린다(학습률이 적당할 때)."
       }
     ],
     "quizIds": [
@@ -217,6 +289,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "$F_m = F_{m-1} + \\eta h_m$처럼 오차를 한 걸음씩 줄여가며 주로 편향을 줄인다. 병렬·독립 학습은 배깅의 특징이다."
+      },
+      {
+        "id": "w2-trees-ensembles-c4",
+        "question": "샘플 1만 개로 부트스트랩 표본(1만 번, 중복 허용)을 만들면 서로 다른 원래 샘플은 대략 몇 %가 들어가는가?",
+        "choices": [
+          "약 63%",
+          "100%",
+          "50%",
+          "약 37%"
+        ],
+        "answer": 0,
+        "explanation": "한 샘플이 한 번도 안 뽑힐 확률은 $(1 - 1/n)^n \\approx 1/e \\approx 0.368$이다. 그래서 약 63%가 들어가고 나머지 약 37%가 OOB 샘플이 된다."
+      },
+      {
+        "id": "w2-trees-ensembles-c5",
+        "question": "양성 4개, 음성 4개가 섞인 노드의 엔트로피(밑 2)는?",
+        "choices": [
+          "1비트",
+          "0.5비트",
+          "0비트",
+          "2비트"
+        ],
+        "answer": 0,
+        "explanation": "$-[0.5\\log_2 0.5 + 0.5\\log_2 0.5] = 1$이다. 두 클래스가 반반이면 엔트로피는 최대(1비트), 지니는 최대(0.5)다."
       }
     ],
     "quizIds": [
@@ -276,6 +372,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "L2의 벌점 기울기 $2\\lambda w$는 0에 가까울수록 약해져 정확히 0에 닿지 않지만, L1은 일정한 힘으로 밀어 희소성을 만든다."
+      },
+      {
+        "id": "w2-bias-variance-c4",
+        "question": "훈련 데이터를 늘려도 훈련 오차와 검증 오차가 둘 다 0.4 근처에서 만나 더 내려가지 않는다. 가장 알맞은 처방은?",
+        "choices": [
+          "더 복잡한 모델이나 더 좋은 특징을 쓴다",
+          "데이터를 10배 더 모은다",
+          "정규화를 더 강하게 한다",
+          "검증셋을 줄인다"
+        ],
+        "answer": 0,
+        "explanation": "두 곡선이 높은 곳에서 만나는 것은 과소적합(편향이 큼)의 신호다. 데이터를 늘려도 이 높이는 내려가지 않고, 정규화를 강하게 하면 오히려 더 단순해진다."
+      },
+      {
+        "id": "w2-bias-variance-c5",
+        "question": "L2 정규화 $L + \\lambda\\lVert w \\rVert_2^2$에서 $\\lambda$를 아주 크게 키우면 모델은 어떻게 되는가?",
+        "choices": [
+          "가중치가 모두 0에 가까워져 과소적합(편향이 큼)에 가까워진다",
+          "과적합이 심해진다",
+          "훈련 오차가 0이 된다",
+          "아무 영향이 없다"
+        ],
+        "answer": 0,
+        "explanation": "벌점이 지배하면 손실을 줄이는 것보다 가중치를 작게 만드는 것이 우선이 되어, 모델이 거의 상수처럼 단순해진다. $\\lambda$는 편향과 분산 사이를 조절하는 손잡이다."
       }
     ],
     "quizIds": [
@@ -347,6 +467,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "5-Fold에서 두 fold의 훈련 데이터는 75%가 겹친다. 이런 상관 때문에 K-Fold 평균의 분산을 편향 없이 추정하는 일반적인 방법이 없다(Bengio & Grandvalet, 2004). 또 np.std(ddof=0)와 pandas .std()(ddof=1)는 같은 점수에서도 값이 다르므로 무엇을 계산했는지 밝힌다."
+      },
+      {
+        "id": "w2-validation-leakage-c5",
+        "question": "샘플 100개로 5-Fold 교차검증을 할 때, 각 샘플은 검증에 몇 번 쓰이고 한 번의 학습에는 몇 개가 쓰이는가?",
+        "choices": [
+          "검증에 정확히 1번, 학습에는 80개",
+          "검증에 5번, 학습에는 100개",
+          "검증에 1번, 학습에는 20개",
+          "검증에 0번, 학습에는 80개"
+        ],
+        "answer": 0,
+        "explanation": "100개를 20개씩 다섯 조각으로 나눠, 매번 한 조각(20개)을 검증으로 빼고 나머지 80개로 학습한다. 다섯 번 돌면 모든 샘플이 한 번씩 검증된다."
+      },
+      {
+        "id": "w2-validation-leakage-c6",
+        "question": "양성이 5%뿐인 분류 데이터에서 교차검증을 할 때 `StratifiedKFold`를 쓰는 이유는?",
+        "choices": [
+          "fold마다 양성 비율(5%)이 유지되어, 양성이 거의 없는 fold가 생기지 않게 하려고",
+          "학습 속도를 높이려고",
+          "데이터 누수를 완전히 막으려고",
+          "양성 샘플을 복제해 늘리려고"
+        ],
+        "answer": 0,
+        "explanation": "무작위로 나누면 어떤 fold에는 양성이 거의 없어 점수가 크게 흔들린다. 층화(stratify)는 원래 비율을 fold마다 유지한다. 누수 방지는 별개의 문제다."
       }
     ],
     "quizIds": [
@@ -405,6 +549,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 2,
         "explanation": "AUC는 임계값과 무관한 순위 능력이다. 본문 예제에서 6쌍 중 5쌍의 순서가 맞아 $5/6 \\approx 0.833$이었다."
+      },
+      {
+        "id": "w2-classification-metrics-c4",
+        "question": "클래스 A(support 90, recall 1.0)와 B(support 10, recall 0.0)의 macro 평균 recall과 weighted 평균 recall은?",
+        "choices": [
+          "macro 0.5, weighted 0.9",
+          "macro 0.9, weighted 0.5",
+          "둘 다 0.5",
+          "둘 다 0.9"
+        ],
+        "answer": 0,
+        "explanation": "macro는 $(1.0 + 0.0)/2 = 0.5$, weighted는 $(1.0 \\times 90 + 0.0 \\times 10)/100 = 0.9$다. weighted는 다수 클래스가 소수 클래스의 실패를 가린다."
+      },
+      {
+        "id": "w2-classification-metrics-c5",
+        "question": "$TN = 90$, $FP = 10$일 때 특이도(Specificity)와 FPR은?",
+        "choices": [
+          "특이도 0.9, FPR 0.1",
+          "특이도 0.1, FPR 0.9",
+          "특이도 0.9, FPR 0.9",
+          "특이도 0.5, FPR 0.5"
+        ],
+        "answer": 0,
+        "explanation": "특이도는 $\\frac{TN}{TN + FP} = \\frac{90}{100} = 0.9$이고, FPR은 $\\frac{FP}{FP + TN} = 0.1$로 항상 $1 - \\text{특이도}$다."
       }
     ],
     "quizIds": [
@@ -466,6 +634,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "평균 차이 0.006이 fold 간 흔들림보다 작다. 다만 ±값은 fold 점수의 흩어짐이지 신뢰구간이 아니므로, 두 모델을 같은 fold로 평가했다면 fold별 차이(짝지은 비교)를 보는 것이 더 정확하다. 그래도 차이가 작다면 다른 근거(해석 가능성, 속도, 오류 유형)도 함께 본다."
+      },
+      {
+        "id": "w2-regression-metrics-baseline-c4",
+        "question": "테스트 데이터에서 어떤 회귀 모델의 $R^2$가 $-0.5$로 나왔다. 이것의 의미는?",
+        "choices": [
+          "항상 평균만 예측하는 베이스라인보다 오차가 크다",
+          "계산 오류다. $R^2$는 항상 0 이상이다",
+          "설명력이 50%다",
+          "과소적합이 아니라는 뜻이다"
+        ],
+        "answer": 0,
+        "explanation": "$R^2 = 1 - \\frac{\\text{모델 오차}}{\\text{베이스라인 오차}}$라서 모델 오차가 베이스라인보다 크면 음수다. 새 데이터에서는 흔히 일어날 수 있다."
+      },
+      {
+        "id": "w2-regression-metrics-baseline-c5",
+        "question": "어떤 모델의 MAE는 2인데 RMSE는 10이다. 가장 그럴듯한 해석은?",
+        "choices": [
+          "대부분은 작게 틀리지만 소수의 아주 큰 오차가 섞여 있다",
+          "모든 샘플을 고르게 10씩 틀린다",
+          "MAE와 RMSE는 항상 같으므로 계산이 틀렸다",
+          "모델이 완벽하다"
+        ],
+        "answer": 0,
+        "explanation": "RMSE는 제곱 평균이라 큰 오차에 훨씬 민감하다. 오차가 고르면 둘이 비슷하고, RMSE가 MAE보다 크게 벌어지면 큰 오차가 몇 개 있다는 뜻이다."
       }
     ],
     "quizIds": [
@@ -525,6 +717,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "이 가정 덕분에 $P(x_1,\\dots,x_n|c) = \\prod_i P(x_i|c)$로 쪼개져 계산이 쉬워진다. 순위 비교만 맞으면 되므로 가정이 틀려도 잘 작동하는 경우가 많다."
+      },
+      {
+        "id": "w2-knn-naive-bayes-c4",
+        "question": "나이(20~60)와 연봉(2000~8000만 원)을 그대로 KNN에 넣으면 생기는 문제는?",
+        "choices": [
+          "연봉의 값이 커서 거리를 거의 연봉 차이만으로 정하게 된다",
+          "나이가 거리를 독차지한다",
+          "KNN은 단위의 영향을 받지 않는다",
+          "학습 시간이 0이 된다"
+        ],
+        "answer": 0,
+        "explanation": "유클리드 거리는 각 축의 차이를 그대로 제곱해 더하므로 숫자가 큰 특징이 지배한다. 스케일링으로 축을 맞춘 뒤 거리를 재야 한다."
+      },
+      {
+        "id": "w2-knn-naive-bayes-c5",
+        "question": "나이브 베이즈에서 라플라스 스무딩(개수에 1을 더하기)을 쓰는 이유는?",
+        "choices": [
+          "훈련 데이터에 없던 단어 하나 때문에 확률 곱 전체가 0이 되는 것을 막으려고",
+          "계산을 빠르게 하려고",
+          "특징들의 조건부 독립을 보장하려고",
+          "클래스 불균형을 없애려고"
+        ],
+        "answer": 0,
+        "explanation": "곱 안에 0이 하나라도 있으면 다른 증거와 상관없이 그 클래스의 확률이 0이 된다. 1을 더해 본 적 없는 경우에도 작은 확률을 남긴다."
       }
     ],
     "quizIds": [
@@ -583,6 +799,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "모든 변동이 $(1,1)$ 방향에만 있으므로 PC1 하나가 분산의 100%를 설명한다(공분산 행렬의 고유값 4와 0)."
+      },
+      {
+        "id": "w2-svm-unsupervised-c4",
+        "question": "PCA의 누적 설명 비율이 PC1~PC4에서 $[0.44, 0.63, 0.73, 0.79]$일 때, 분산의 70% 이상을 설명하는 최소 주성분 수는?",
+        "choices": [
+          "3개",
+          "1개",
+          "2개",
+          "4개"
+        ],
+        "answer": 0,
+        "explanation": "누적 비율이 처음으로 0.7을 넘는 것은 PC3(0.73)이다. 그래서 세 개의 주성분이면 분산의 73%를 보존한다."
+      },
+      {
+        "id": "w2-svm-unsupervised-c5",
+        "question": "PCA 전에 특징을 표준화하는 가장 중요한 이유는?",
+        "choices": [
+          "단위 때문에 값이 큰 특징이 분산을 독차지해 주성분을 왜곡하지 않게 하려고",
+          "계산 속도를 높이려고",
+          "주성분의 개수를 늘리려고",
+          "레이블을 만들려고"
+        ],
+        "answer": 0,
+        "explanation": "PCA는 분산이 큰 방향을 찾는다. 넓이(수천)와 비율(0~1)을 섞으면 넓이의 분산이 압도해, 의미가 아니라 단위가 주성분을 정한다."
       }
     ],
     "quizIds": [
@@ -653,6 +893,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "잡음이 있는 점수 여러 개 중 최댓값을 골랐으므로 체계적으로 부풀려진다. 정직한 추정은 따로 떼어 둔 테스트셋이나 중첩 교차검증으로 얻는다."
+      },
+      {
+        "id": "w2-pipeline-tuning-c5",
+        "question": "후보가 `max_depth` 5개와 `n_estimators` 3개의 모든 조합이고 5-Fold인 `GridSearchCV`는 (최종 재학습을 빼고) 모델을 몇 번 학습하는가?",
+        "choices": [
+          "75번",
+          "15번",
+          "8번",
+          "25번"
+        ],
+        "answer": 0,
+        "explanation": "조합이 $5 \\times 3 = 15$개이고 조합마다 fold 5개를 돌리므로 $15 \\times 5 = 75$번이다."
+      },
+      {
+        "id": "w2-pipeline-tuning-c6",
+        "question": "하이퍼파라미터 종류가 많아 조합이 수천 개일 때 흔히 쓰는 대안은?",
+        "choices": [
+          "정해진 횟수만큼 조합을 무작위로 뽑는 `RandomizedSearchCV`",
+          "테스트셋으로 직접 고르기",
+          "모든 조합을 한 fold로만 평가하기",
+          "하이퍼파라미터를 학습 중에 경사하강법으로 정하기"
+        ],
+        "answer": 0,
+        "explanation": "격자 탐색은 조합이 곱으로 늘어난다. 무작위 탐색은 예산을 정해 두고 다양한 값을 시험한다. 테스트셋으로 고르면 누수다."
       }
     ],
     "quizIds": [
@@ -710,6 +974,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "한 실험에서 두 모델의 ROC-AUC·AP는 같았지만, balanced 모델의 평균 예측 확률은 실제 비율 0.078 대신 약 0.34였다. 확률을 비용 계산에 쓰려면 가중치 없이 학습하고 임계값을 옮기는 편이 낫다."
+      },
+      {
+        "id": "w2-imbalance-threshold-c4",
+        "question": "예측 확률 $[0.8, 0.4]$, 정답 $[1, 0]$의 브라이어 점수는?",
+        "choices": [
+          "0.1",
+          "0.2",
+          "0.4",
+          "0.6"
+        ],
+        "answer": 0,
+        "explanation": "$\\frac{(0.8 - 1)^2 + (0.4 - 0)^2}{2} = \\frac{0.04 + 0.16}{2} = 0.1$이다."
+      },
+      {
+        "id": "w2-imbalance-threshold-c5",
+        "question": "오경보 비용이 3, 놓치는 비용이 1인 문제(예: 스팸 필터)에서 보정된 확률의 최적 임계값은?",
+        "choices": [
+          "0.75",
+          "0.25",
+          "0.5",
+          "0.33"
+        ],
+        "answer": 0,
+        "explanation": "$t^* = \\frac{C_{FP}}{C_{FP} + C_{FN}} = \\frac{3}{3 + 1} = 0.75$다. 오경보가 비쌀수록 확실할 때만 양성으로 처리하도록 임계값이 올라간다."
       }
     ],
     "quizIds": [
@@ -767,6 +1055,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "모든 점을 가르는 $w$의 크기를 키울수록 손실이 계속 줄어 MLE가 존재하지 않는다. 경사하강법을 돌리면 스텝이 10배 늘 때마다 $w$가 약 2.3씩 커지고 손실은 10분의 1이 된다. L2 규제를 넣으면 유한한 해가 생긴다."
+      },
+      {
+        "id": "w2-loss-likelihood-c4",
+        "question": "모든 샘플을 상수 $c$ 하나로 예측할 때, MAE를 최소화하는 $c$는?",
+        "choices": [
+          "중앙값",
+          "평균",
+          "최댓값",
+          "최빈값"
+        ],
+        "answer": 0,
+        "explanation": "MAE의 기울기는 $c$보다 작은 샘플 수와 큰 샘플 수의 차이에 비례해, 양쪽 수가 같아지는 중앙값에서 0이 된다. MSE는 평균에서 최소다."
+      },
+      {
+        "id": "w2-loss-likelihood-c5",
+        "question": "로지스틱 회귀의 손실이 볼록(convex)이라는 사실이 주는 실용적 의미는?",
+        "choices": [
+          "경사하강법이 지역 최솟값에 갇히지 않고 전역 최솟값으로 간다",
+          "닫힌 해가 항상 존재한다",
+          "규제가 필요 없다",
+          "선형분리 데이터에서도 유한한 해가 존재한다"
+        ],
+        "answer": 0,
+        "explanation": "볼록 함수에는 지역 최솟값이 전역 최솟값뿐이다. 다만 닫힌 해는 없고, 선형분리 데이터에서는 최솟값이 무한히 먼 곳에 있어 규제가 필요하다."
       }
     ],
     "quizIds": [
@@ -824,6 +1136,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "유사역행렬은 특이값의 역수를 곱하므로 작은 특이값이 잡음을 증폭한다(분산 폭발). 한 실험에서 $p = 40 = n$일 때 최소 특이값이 약 0.09로 가장 작았고 테스트 MSE가 약 39로 치솟았다."
+      },
+      {
+        "id": "w2-bias-variance-theory-c4",
+        "question": "분산이 1이고 서로 **독립**($\\rho = 0$)인 예측 100개를 평균하면 분산은?",
+        "choices": [
+          "0.01",
+          "0.1",
+          "1",
+          "0"
+        ],
+        "answer": 0,
+        "explanation": "$\\rho\\sigma^2 + \\frac{1-\\rho}{B}\\sigma^2$에서 $\\rho = 0$이면 $\\sigma^2/B = 1/100 = 0.01$이다. 상관이 있으면 $\\rho\\sigma^2$ 밑으로는 내려가지 않는다."
+      },
+      {
+        "id": "w2-bias-variance-theory-c5",
+        "question": "편향-분산 분해에서 $\\sigma^2$(줄일 수 없는 잡음)에 대한 설명으로 옳은 것은?",
+        "choices": [
+          "어떤 모델로도 줄일 수 없는 오차의 바닥으로, 줄이려면 데이터(특징·레이블의 질)를 바꿔야 한다",
+          "모델을 복잡하게 하면 0이 된다",
+          "정규화로 줄일 수 있다",
+          "훈련 데이터를 외우면 사라진다"
+        ],
+        "answer": 0,
+        "explanation": "같은 $x$에서도 $y$가 흩어지는 정도라 모델과 무관하다. 더 좋은 특징을 측정하거나 레이블 잡음을 줄여야만 내려간다."
       }
     ],
     "quizIds": [
@@ -886,6 +1222,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "Nadeau·Bengio 보정은 분산에 $(1/J + n_{test}/n_{train})$을 곱해 겹침을 반영한다. 한 실험에서 단순 $t \\approx 4.56$($p \\approx 0.0004$)이 보정 $t \\approx 2.09$($p \\approx 0.055$)로 줄었다."
+      },
+      {
+        "id": "w2-model-evaluation-stats-c4",
+        "question": "A만 맞힌 샘플 $b = 12$, B만 맞힌 샘플 $c = 4$일 때 McNemar 통계량 $\\frac{(|b - c| - 1)^2}{b + c}$는?",
+        "choices": [
+          "약 3.06",
+          "약 4.0",
+          "0.5",
+          "49"
+        ],
+        "answer": 0,
+        "explanation": "$\\frac{(8 - 1)^2}{16} = \\frac{49}{16} \\approx 3.06$이다. 5% 기준값 3.84보다 작아 이 정도로는 유의하다고 말하기 어렵다."
+      },
+      {
+        "id": "w2-model-evaluation-stats-c5",
+        "question": "McNemar 검정에서 두 모델이 **둘 다 맞힌** 샘플과 **둘 다 틀린** 샘플은 어떻게 쓰이는가?",
+        "choices": [
+          "쓰이지 않는다. 두 모델의 차이에 대한 정보가 없기 때문이다",
+          "둘 다 맞힌 샘플만 분모에 들어간다",
+          "모두 $b$에 더한다",
+          "가장 중요한 정보다"
+        ],
+        "answer": 0,
+        "explanation": "두 모델이 같은 답을 낸 샘플은 우열을 가르는 데 아무 정보가 없다. 엇갈린 샘플 $b$와 $c$만 비교한다."
       }
     ],
     "quizIds": [

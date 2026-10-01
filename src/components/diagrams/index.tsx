@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { AiHierarchy, MlLoop, NumpyAxis, BayesFrequency, DotProductAngle } from "./w1";
-import { ConfusionMatrix, DataSplitDiagram } from "./w2";
+import { ConfusionMatrix, DataSplitDiagram, SigmoidCurve, LearningCurves } from "./w2";
 import { ComputationalGraph, MlpDiagram } from "./w3";
 import { ResNetSkip, TransferLearning } from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe } from "./w5";
@@ -24,6 +24,8 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "bias-variance-curve": InteractiveBiasVariance,
   "confusion-matrix": ConfusionMatrix,
   "data-split": DataSplitDiagram,
+  "sigmoid-curve": SigmoidCurve,
+  "learning-curves": LearningCurves,
   "computational-graph": ComputationalGraph,
   "mlp-diagram": MlpDiagram,
   "conv-operation": InteractiveConv,
