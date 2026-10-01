@@ -44,4 +44,26 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ],
     ],
   },
+  "week-4": {
+    "ablation-code": [
+      ['# "Dropout 제거": dict(dropout=0.0),', '"Dropout 제거": dict(dropout=0.0),'],
+      ['# "데이터 증강 제거": dict(augment=False),', '"데이터 증강 제거": dict(augment=False),'],
+    ],
+    "conv-code": [["return 0  # TODO: 학습 자료의 출력 크기 공식을 직접 써 넣습니다. (정수 나눗셈은 //)", "return (n + 2 * p - k) // s + 1"]],
+  },
+  "week-5": {
+    "mha-code": [
+      [
+        "scores = np.zeros((n_heads, T, T))          # TODO: Qh와 Kh로 점수를 계산하고, scale=True면 √d_k로 나눕니다. shape: ?",
+        "scores = Qh @ Kh.transpose(0, 2, 1) / (np.sqrt(d_k) if scale else 1.0)",
+      ],
+    ],
+    "verify-code": [
+      [
+        "pass\n    return concat @ Wo",
+        "s = np.array([Q[i, c0:c0 + d_k] @ K[j, c0:c0 + d_k] / np.sqrt(d_k) for j in range(i + 1)]); a = np.exp(s - s.max()); a /= a.sum(); concat[i, c0:c0 + d_k] = a @ V[:i + 1, c0:c0 + d_k]\n    return concat @ Wo",
+      ],
+    ],
+    "example-code": [["# TODO: 직접 고른 Query를 하나 이상 추가합니다.", '"먹었다의 Key와 같은 Query": [1, 1, 0, -1],']],
+  },
 };
