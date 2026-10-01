@@ -24,6 +24,7 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ["X_scaled_all = Xw  # TODO: StandardScaler().fit_transform(Xw)", "X_scaled_all = StandardScaler().fit_transform(Xw)"],
       ["X_leaky = Xw  # TODO: np.column_stack([Xw, leaky_col])", "X_leaky = np.column_stack([Xw, leaky_col])"],
     ],
+    "threshold-code": [["t_star = 0.5  # TODO: 비용으로 정한 임계값 C_FP / (C_FP + C_FN)", "t_star = C_FP / (C_FP + C_FN)"]],
   },
   "week-3": {
     "extend-code": [

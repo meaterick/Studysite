@@ -118,6 +118,22 @@ export function parseMarkdownUncached(source: string): Block[] {
       continue;
     }
 
+    // Display math: $$ ... $$ (한 줄 또는 여러 줄). ```math 펜스와 같은 블록이 된다.
+    if (trimmed.startsWith("$$")) {
+      flushParagraph();
+      const texLines: string[] = [];
+      let rest = trimmed.slice(2);
+      while (!rest.trimEnd().endsWith("$$") && i + 1 < lines.length) {
+        texLines.push(rest);
+        i++;
+        rest = lines[i].trim();
+      }
+      texLines.push(rest.trimEnd().replace(/\$\$$/, ""));
+      i++;
+      blocks.push({ type: "math", tex: texLines.join("\n").trim() });
+      continue;
+    }
+
     // Callout containers: :::tone Title
     const calloutMatch = trimmed.match(/^:::(info|warn|example|quote|tip|task)\s*(.*)$/);
     if (calloutMatch) {

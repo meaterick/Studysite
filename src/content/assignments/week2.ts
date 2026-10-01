@@ -1,10 +1,13 @@
 import type { AssignmentSpec } from "../types";
 
 // 2주차 과제: 믿을 수 있는 모델 비교 리포트. scikit-learn은 브라우저(Pyodide)에서 그대로 동작한다.
+// 핵심: compare·metric·leak·biasvar(채점 대상) / 보충: threshold / 심화: advanced
 const week2Assignment: AssignmentSpec = {
   title: "믿을 수 있는 모델 비교 리포트",
   summary: `
 scikit-learn의 유방암 진단 데이터(\`load_breast_cancer\`)로 세 모델을 공정하게 비교하고, 지표 선택의 근거를 세우고, 데이터 누수가 점수를 얼마나 부풀리는지 직접 확인합니다. 마지막으로 결정트리의 깊이를 바꿔 가며 편향과 분산을 숫자로 관찰합니다. 모든 실험은 \`random_state=0\`으로 고정합니다.
+
+**핵심** 항목 네 개는 핵심 과정만으로 풀 수 있고, 채점 기준은 이 네 항목만 봅니다. **보충**(비용 기반 임계값)과 **심화**(중첩 교차검증·학습 곡선 등) 항목은 선택이며 점수 대신 피드백을 받습니다.
 `,
   tasks: [
     {
@@ -193,14 +196,53 @@ for depth in (1, 3, 5, None):
       ],
     },
     {
+      id: "threshold",
+      tier: "supplement",
+      title: "보충: 비용으로 임계값 정하기",
+      instructions: `
+악성 종양을 놓치는 비용(FN)이 양성 종양을 악성으로 판정해 정밀 검사를 하는 비용(FP)의 10배라고 가정합니다. 「불균형 데이터와 임계값 결정」 단계의 공식 $t^* = C_{FP}/(C_{FP}+C_{FN})$으로 임계값을 정하고, 임계값 0.5와 비교해 테스트셋의 FN·FP 개수와 샘플당 평균 비용을 출력합니다. ROC-AUC와 Average Precision도 함께 확인합니다. 이 방법이 정당하려면 무엇이 필요한지(확률 보정)와, 데이터가 적은 테스트셋 하나로 임계값을 고르면 생기는 문제도 적습니다.
+`,
+      cells: [
+        {
+          kind: "code",
+          id: "threshold-code",
+          label: "비용 기반 임계값",
+          starter: `from sklearn.metrics import roc_auc_score, average_precision_score
+
+proba = clf.predict_proba(X_test)[:, 1]          # 악성일 확률 (위 셀에서 학습한 로지스틱 회귀 파이프라인)
+print(f"악성 비율 {y_test.mean():.3f}, ROC-AUC {roc_auc_score(y_test, proba):.3f}, AP {average_precision_score(y_test, proba):.3f}")
+
+C_FP, C_FN = 1, 10
+t_star = 0.5  # TODO: 비용으로 정한 임계값 C_FP / (C_FP + C_FN)
+
+costs = {}
+for t in (0.5, t_star):
+    pred_t = (proba >= t).astype(int)
+    fp = int(((pred_t == 1) & (y_test == 0)).sum())
+    fn = int(((pred_t == 0) & (y_test == 1)).sum())
+    costs[t] = (C_FP * fp + C_FN * fn) / len(y_test)
+    print(f"임계값 {t:.3f}: FN {fn}, FP {fp}, 샘플당 평균 비용 {costs[t]:.4f}")
+`,
+        },
+        {
+          kind: "text",
+          id: "threshold-answer",
+          prompt: "두 임계값의 결과를 비교하고, 이 결정이 정당하려면 무엇이 필요한지 적어 주십시오.",
+          minChars: 100,
+        },
+      ],
+    },
+    {
       id: "advanced",
       tier: "advanced",
-      title: "심화: 학습 곡선·추가 모델·규제 경로",
+      title: "심화: 중첩 교차검증·보정된 비교·학습 곡선",
       instructions: `
-다음 중 하나 이상을 골라 실험합니다.
+다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않으며, 심화 단계의 도구를 실제 과제 데이터에 적용해 보는 것이 목적입니다.
 
+- 로지스틱 회귀의 \`C\`를 \`GridSearchCV\`로 고른 \`best_score_\`와, 같은 탐색을 바깥 5-fold로 감싼 중첩 교차검증 점수를 비교합니다(「평가의 통계학」).
+- 로지스틱 회귀와 랜덤 포레스트를 \`RepeatedStratifiedKFold\`(5-fold를 5회 반복)로 짝지어 평가하고, 단순 t와 나도-벤지오 보정 t를 비교합니다.
 - \`learning_curve\`로 학습 곡선을 그려 과적합 여부를 판단합니다.
-- KNN, 나이브 베이즈, SVM 중 두 개 이상을 같은 교차검증으로 추가 비교하고, fold별 짝지은 차이를 근거로 우열을 판단합니다. \`RepeatedStratifiedKFold\`로 분할을 여러 번 바꿔도 결론이 유지되는지 확인하면 더 좋습니다.
+- KNN, 나이브 베이즈, SVM 중 두 개 이상을 같은 교차검증으로 추가 비교하고, fold별 짝지은 차이를 근거로 우열을 판단합니다.
 - 로지스틱 회귀를 NumPy로 직접 구현해 sklearn과 계수를 비교합니다.
 - Ridge의 $\\lambda$에 따른 계수 경로를 그립니다.
 `,

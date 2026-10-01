@@ -178,64 +178,6 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
-  "knn-naive-bayes": {
-    "tier": "core",
-    "goal": "KNN의 거리·다수결 예측과 $K$에 따른 편향-분산을, 나이브 베이즈의 조건부 독립 가정과 계산 과정을 설명할 수 있다.",
-    "checks": [
-      {
-        "id": "w2-knn-naive-bayes-c1",
-        "question": "KNN이 다른 모델과 가장 다른 점은?",
-        "choices": [
-          "확률을 전혀 쓰지 않는다",
-          "파라미터 $w, b$를 학습하는 과정 없이 예측 때 훈련 데이터와의 거리를 계산한다",
-          "회귀에는 쓸 수 없다",
-          "특징 스케일링이 필요 없다"
-        ],
-        "answer": 1,
-        "explanation": "KNN은 훈련 데이터를 저장해두고 예측할 때마다 거리를 잰다. 거리 기반이라 오히려 스케일링이 매우 중요하다."
-      },
-      {
-        "id": "w2-knn-naive-bayes-c2",
-        "question": "KNN에서 $K = 1$일 때 훈련 정확도가 거의 항상 1.0이 되는 이유는?",
-        "choices": [
-          "모델이 완벽해서",
-          "훈련 샘플의 가장 가까운 이웃이 자기 자신이라서",
-          "$K$가 작을수록 편향이 커서",
-          "테스트 데이터를 봤기 때문에"
-        ],
-        "answer": 1,
-        "explanation": "자기 자신과의 거리가 0이므로 자기 레이블을 그대로 답한다. 그래서 훈련 정확도는 일반화 성능을 전혀 말해주지 않는다."
-      },
-      {
-        "id": "w2-knn-naive-bayes-c3",
-        "question": "나이브 베이즈가 \"나이브(naive)\"한 이유는?",
-        "choices": [
-          "사전확률을 무시해서",
-          "클래스가 주어졌을 때 특징들이 서로 조건부 독립이라고 가정해서",
-          "데이터를 전부 외워서",
-          "베이즈 정리를 쓰지 않아서"
-        ],
-        "answer": 1,
-        "explanation": "이 가정 덕분에 $P(x_1,\\dots,x_n|c) = \\prod_i P(x_i|c)$로 쪼개져 계산이 쉬워진다. 순위 비교만 맞으면 되므로 가정이 틀려도 잘 작동하는 경우가 많다."
-      }
-    ],
-    "quizIds": [
-      "w2-q15",
-      "w2-q16"
-    ],
-    "references": [
-      {
-        "title": "scikit-learn — Nearest Neighbors",
-        "url": "https://scikit-learn.org/stable/modules/neighbors.html",
-        "note": "KNN 분류·회귀와 거리 척도"
-      },
-      {
-        "title": "scikit-learn — Naive Bayes",
-        "url": "https://scikit-learn.org/stable/modules/naive_bayes.html",
-        "note": "Gaussian·Multinomial 나이브 베이즈 비교"
-      }
-    ]
-  },
   "trees-ensembles": {
     "tier": "core",
     "goal": "지니 불순도·정보이득으로 트리 분할을 계산하고, 배깅(랜덤 포레스트)과 부스팅이 각각 분산과 편향을 줄이는 방식을 설명할 수 있다.",
@@ -292,64 +234,6 @@ const sections: Record<string, SectionMeta> = {
         "title": "scikit-learn — Ensembles",
         "url": "https://scikit-learn.org/stable/modules/ensemble.html",
         "note": "RandomForest·GradientBoosting·HistGradientBoosting"
-      }
-    ]
-  },
-  "svm-unsupervised": {
-    "tier": "core",
-    "goal": "SVM의 마진·서포트벡터를 계산하고, K-Means의 할당-갱신 반복과 PCA가 분산이 큰 방향(공분산의 고유벡터)을 찾는 원리를 설명할 수 있다.",
-    "checks": [
-      {
-        "id": "w2-svm-unsupervised-c1",
-        "question": "SVM에서 $w = (0.5, -0.5)$일 때 마진 폭 $2/\\lVert w\\rVert$는?",
-        "choices": [
-          "$\\sqrt{2} \\approx 1.41$",
-          "$2\\sqrt{2} \\approx 2.83$",
-          "4",
-          "0.5"
-        ],
-        "answer": 1,
-        "explanation": "$\\lVert w\\rVert = \\sqrt{0.25 + 0.25} = \\sqrt{0.5} \\approx 0.707$이므로 $2/0.707 \\approx 2.83$."
-      },
-      {
-        "id": "w2-svm-unsupervised-c2",
-        "question": "K-Means의 한 반복을 올바르게 나타낸 것은?",
-        "choices": [
-          "레이블 $y$로 중심을 정한다",
-          "각 점을 가장 가까운 중심에 배정 → 배정된 점들의 평균으로 중심을 갱신",
-          "가장 먼 점끼리 묶는다",
-          "주성분 방향으로 투영한다"
-        ],
-        "answer": 1,
-        "explanation": "할당과 갱신을 배정이 바뀌지 않을 때까지 반복한다. 레이블을 쓰지 않으므로 비지도학습이다."
-      },
-      {
-        "id": "w2-svm-unsupervised-c3",
-        "question": "모든 점이 정확히 직선 $y = x$ 위에 있는 2차원 데이터에 PCA를 하면 PC1과 PC2의 분산 설명 비율은?",
-        "choices": [
-          "0.5, 0.5",
-          "1.0, 0.0",
-          "0.0, 1.0",
-          "0.7, 0.3"
-        ],
-        "answer": 1,
-        "explanation": "모든 변동이 $(1,1)$ 방향에만 있으므로 PC1 하나가 분산의 100%를 설명한다(공분산 행렬의 고유값 4와 0)."
-      }
-    ],
-    "quizIds": [
-      "w2-q20",
-      "w2-q21"
-    ],
-    "references": [
-      {
-        "title": "scikit-learn — Support Vector Machines",
-        "url": "https://scikit-learn.org/stable/modules/svm.html",
-        "note": "마진·커널·C 파라미터"
-      },
-      {
-        "title": "Setosa — Principal Component Analysis explained visually",
-        "url": "https://setosa.io/ev/principal-component-analysis/",
-        "note": "PCA를 인터랙티브 그래프로 이해하기"
       }
     ]
   },
@@ -602,6 +486,429 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
+  "knn-naive-bayes": {
+    "tier": "supplement",
+    "goal": "KNN의 거리·다수결 예측과 $K$에 따른 편향-분산을, 나이브 베이즈의 조건부 독립 가정과 계산 과정을 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w2-knn-naive-bayes-c1",
+        "question": "KNN이 다른 모델과 가장 다른 점은?",
+        "choices": [
+          "확률을 전혀 쓰지 않는다",
+          "파라미터 $w, b$를 학습하는 과정 없이 예측 때 훈련 데이터와의 거리를 계산한다",
+          "회귀에는 쓸 수 없다",
+          "특징 스케일링이 필요 없다"
+        ],
+        "answer": 1,
+        "explanation": "KNN은 훈련 데이터를 저장해두고 예측할 때마다 거리를 잰다. 거리 기반이라 오히려 스케일링이 매우 중요하다."
+      },
+      {
+        "id": "w2-knn-naive-bayes-c2",
+        "question": "KNN에서 $K = 1$일 때 훈련 정확도가 거의 항상 1.0이 되는 이유는?",
+        "choices": [
+          "모델이 완벽해서",
+          "훈련 샘플의 가장 가까운 이웃이 자기 자신이라서",
+          "$K$가 작을수록 편향이 커서",
+          "테스트 데이터를 봤기 때문에"
+        ],
+        "answer": 1,
+        "explanation": "자기 자신과의 거리가 0이므로 자기 레이블을 그대로 답한다. 그래서 훈련 정확도는 일반화 성능을 전혀 말해주지 않는다."
+      },
+      {
+        "id": "w2-knn-naive-bayes-c3",
+        "question": "나이브 베이즈가 \"나이브(naive)\"한 이유는?",
+        "choices": [
+          "사전확률을 무시해서",
+          "클래스가 주어졌을 때 특징들이 서로 조건부 독립이라고 가정해서",
+          "데이터를 전부 외워서",
+          "베이즈 정리를 쓰지 않아서"
+        ],
+        "answer": 1,
+        "explanation": "이 가정 덕분에 $P(x_1,\\dots,x_n|c) = \\prod_i P(x_i|c)$로 쪼개져 계산이 쉬워진다. 순위 비교만 맞으면 되므로 가정이 틀려도 잘 작동하는 경우가 많다."
+      }
+    ],
+    "quizIds": [
+      "w2-q15",
+      "w2-q16"
+    ],
+    "references": [
+      {
+        "title": "scikit-learn — Nearest Neighbors",
+        "url": "https://scikit-learn.org/stable/modules/neighbors.html",
+        "note": "KNN 분류·회귀와 거리 척도"
+      },
+      {
+        "title": "scikit-learn — Naive Bayes",
+        "url": "https://scikit-learn.org/stable/modules/naive_bayes.html",
+        "note": "Gaussian·Multinomial 나이브 베이즈 비교"
+      }
+    ]
+  },
+  "svm-unsupervised": {
+    "tier": "supplement",
+    "goal": "SVM의 마진·서포트벡터를 계산하고, K-Means의 할당-갱신 반복과 PCA가 분산이 큰 방향(공분산의 고유벡터)을 찾는 원리를 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w2-svm-unsupervised-c1",
+        "question": "SVM에서 $w = (0.5, -0.5)$일 때 마진 폭 $2/\\lVert w\\rVert$는?",
+        "choices": [
+          "$\\sqrt{2} \\approx 1.41$",
+          "$2\\sqrt{2} \\approx 2.83$",
+          "4",
+          "0.5"
+        ],
+        "answer": 1,
+        "explanation": "$\\lVert w\\rVert = \\sqrt{0.25 + 0.25} = \\sqrt{0.5} \\approx 0.707$이므로 $2/0.707 \\approx 2.83$."
+      },
+      {
+        "id": "w2-svm-unsupervised-c2",
+        "question": "K-Means의 한 반복을 올바르게 나타낸 것은?",
+        "choices": [
+          "레이블 $y$로 중심을 정한다",
+          "각 점을 가장 가까운 중심에 배정 → 배정된 점들의 평균으로 중심을 갱신",
+          "가장 먼 점끼리 묶는다",
+          "주성분 방향으로 투영한다"
+        ],
+        "answer": 1,
+        "explanation": "할당과 갱신을 배정이 바뀌지 않을 때까지 반복한다. 레이블을 쓰지 않으므로 비지도학습이다."
+      },
+      {
+        "id": "w2-svm-unsupervised-c3",
+        "question": "모든 점이 정확히 직선 $y = x$ 위에 있는 2차원 데이터에 PCA를 하면 PC1과 PC2의 분산 설명 비율은?",
+        "choices": [
+          "0.5, 0.5",
+          "1.0, 0.0",
+          "0.0, 1.0",
+          "0.7, 0.3"
+        ],
+        "answer": 1,
+        "explanation": "모든 변동이 $(1,1)$ 방향에만 있으므로 PC1 하나가 분산의 100%를 설명한다(공분산 행렬의 고유값 4와 0)."
+      }
+    ],
+    "quizIds": [
+      "w2-q20",
+      "w2-q21"
+    ],
+    "references": [
+      {
+        "title": "scikit-learn — Support Vector Machines",
+        "url": "https://scikit-learn.org/stable/modules/svm.html",
+        "note": "마진·커널·C 파라미터"
+      },
+      {
+        "title": "Setosa — Principal Component Analysis explained visually",
+        "url": "https://setosa.io/ev/principal-component-analysis/",
+        "note": "PCA를 인터랙티브 그래프로 이해하기"
+      }
+    ]
+  },
+  "pipeline-tuning": {
+    "tier": "supplement",
+    "goal": "숫자·범주·결측이 섞인 데이터를 ColumnTransformer 파이프라인으로 누수 없이 전처리하고, GridSearchCV로 하이퍼파라미터를 고르며, 그룹·시계열 데이터에 맞는 분할을 고를 수 있다.",
+    "checks": [
+      {
+        "id": "w2-pipeline-tuning-c1",
+        "question": "`make_pipeline(StandardScaler(), LogisticRegression())`의 규제 강도 `C`를 `GridSearchCV`에서 탐색할 때 파라미터 이름은?",
+        "choices": [
+          "`logisticregression__C`",
+          "`C`",
+          "`LogisticRegression.C`",
+          "`pipeline_C`"
+        ],
+        "answer": 0,
+        "explanation": "파이프라인 안쪽 단계의 파라미터는 `단계이름__파라미터`(밑줄 두 개)로 가리킨다. `make_pipeline`은 단계 이름을 클래스 이름의 소문자로 붙이므로 `logisticregression__C`다."
+      },
+      {
+        "id": "w2-pipeline-tuning-c2",
+        "question": "훈련 데이터에 없던 도시 \"광주\"가 예측 시점에 들어왔다. `OneHotEncoder(handle_unknown=\"ignore\")`의 동작은?",
+        "choices": [
+          "도시 원-핫 열을 모두 0으로 두고 예측을 계속한다",
+          "오류를 내고 멈춘다",
+          "가장 흔한 도시로 바꿔 넣는다",
+          "그 행을 삭제한다"
+        ],
+        "answer": 0,
+        "explanation": "기본값(`\"error\"`)은 처음 보는 범주에서 오류를 낸다. `\"ignore\"`는 해당 원-핫 열을 모두 0으로 두어 서비스가 멈추지 않게 한다."
+      },
+      {
+        "id": "w2-pipeline-tuning-c3",
+        "question": "환자 80명에게서 각각 5장의 사진을 얻었다. 환자 단위로 일반화 성능을 재려면 어떤 분할이 알맞은가?",
+        "choices": [
+          "GroupKFold(환자 ID를 그룹으로)",
+          "샘플을 섞는 KFold",
+          "TimeSeriesSplit",
+          "분할 없이 훈련 정확도"
+        ],
+        "answer": 0,
+        "explanation": "같은 환자의 다른 사진이 훈련에 있으면 모델이 그 환자를 외워 맞힌다. 실습에서 1-NN이 KFold 1.000, GroupKFold 약 0.64로 갈렸다. 그룹 단위로 나눠야 처음 보는 환자에 대한 성능이 된다."
+      },
+      {
+        "id": "w2-pipeline-tuning-c4",
+        "question": "`GridSearchCV`의 `best_score_`에 대한 설명으로 옳은 것은?",
+        "choices": [
+          "후보 중 가장 높은 교차검증 점수라 실제 성능보다 낙관적이다",
+          "테스트셋 점수와 같다",
+          "항상 실제 성능보다 낮다",
+          "후보 전체의 평균 점수다"
+        ],
+        "answer": 0,
+        "explanation": "잡음이 있는 점수 여러 개 중 최댓값을 골랐으므로 체계적으로 부풀려진다. 정직한 추정은 따로 떼어 둔 테스트셋이나 중첩 교차검증으로 얻는다."
+      }
+    ],
+    "quizIds": [
+      "w2-q26"
+    ],
+    "references": [
+      {
+        "title": "scikit-learn — Column Transformer with Mixed Types",
+        "url": "https://scikit-learn.org/stable/auto_examples/compose/plot_column_transformer_mixed_types.html",
+        "note": "숫자·범주 열을 함께 처리하는 공식 예제"
+      },
+      {
+        "title": "scikit-learn — Cross-validation iterators for grouped data",
+        "url": "https://scikit-learn.org/stable/modules/cross_validation.html#group-k-fold",
+        "note": "GroupKFold·TimeSeriesSplit이 필요한 상황"
+      }
+    ]
+  },
+  "imbalance-threshold": {
+    "tier": "supplement",
+    "goal": "양성이 드문 문제에서 PR 곡선·Average Precision을 해석하고, 오류 비용으로 임계값 $t^* = C_{FP}/(C_{FP}+C_{FN})$을 계산하며, 신뢰도 표와 브라이어 점수로 확률 보정을 점검할 수 있다.",
+    "checks": [
+      {
+        "id": "w2-imbalance-threshold-c1",
+        "question": "양성 비율이 2%인 데이터에서 무작위로 점수를 매기는 분류기의 Average Precision(PR 곡선 아래 면적)은 대략?",
+        "choices": [
+          "0.02",
+          "0.5",
+          "1.0",
+          "0"
+        ],
+        "answer": 0,
+        "explanation": "무작위 분류기의 Precision은 어느 임계값에서나 양성 비율과 같으므로 PR 곡선의 기준선은 0.02다. ROC-AUC의 기준선 0.5와 다르다."
+      },
+      {
+        "id": "w2-imbalance-threshold-c2",
+        "question": "양성을 놓치는 비용이 오경보의 4배($C_{FN}=4$, $C_{FP}=1$)이고 확률이 잘 보정되어 있다면 최적 임계값은?",
+        "choices": [
+          "0.2",
+          "0.5",
+          "0.8",
+          "0.25"
+        ],
+        "answer": 0,
+        "explanation": "$t^* = C_{FP}/(C_{FP}+C_{FN}) = 1/5 = 0.2$. 확률이 0.2만 넘어도 양성으로 처리하는 것이 기대 비용이 작다."
+      },
+      {
+        "id": "w2-imbalance-threshold-c3",
+        "question": "`class_weight=\"balanced\"`로 학습한 로지스틱 회귀에 대한 설명으로 옳은 것은?",
+        "choices": [
+          "순위(ROC-AUC)는 거의 같지만 예측 확률이 부풀어 실제 빈도와 맞지 않는다",
+          "ROC-AUC가 항상 크게 오른다",
+          "예측 확률이 더 잘 보정된다",
+          "임계값과 무관하게 비용이 최소가 된다"
+        ],
+        "answer": 0,
+        "explanation": "실습에서 두 모델의 ROC-AUC·AP는 같았고, balanced 모델의 평균 예측 확률은 실제 비율 0.078 대신 약 0.34였다. 확률을 비용 계산에 쓰려면 가중치 없이 학습하고 임계값을 옮기는 편이 낫다."
+      }
+    ],
+    "quizIds": [
+      "w2-q27"
+    ],
+    "references": [
+      {
+        "title": "scikit-learn — Probability calibration",
+        "url": "https://scikit-learn.org/stable/modules/calibration.html",
+        "note": "신뢰도 곡선·Platt 스케일링·등위 회귀"
+      },
+      {
+        "title": "Saito & Rehmsmeier (2015) — The Precision-Recall Plot Is More Informative than the ROC Plot",
+        "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0118432",
+        "note": "불균형 데이터에서 PR 곡선을 보는 이유 (영문)"
+      }
+    ]
+  },
+  "loss-likelihood": {
+    "tier": "advanced",
+    "goal": "가우시안·베르누이 가능도에서 MSE와 교차 엔트로피를 유도하고, L2·L1 정규화를 가우시안·라플라스 사전분포의 MAP로 설명하며, 로지스틱 손실의 볼록성과 선형분리 데이터에서의 발산을 분석할 수 있다.",
+    "checks": [
+      {
+        "id": "w2-loss-likelihood-c1",
+        "question": "잡음을 정규분포가 아니라 라플라스 분포 $p(\\varepsilon) \\propto e^{-|\\varepsilon|/b}$로 가정하고 최대가능도를 구하면 최소화하는 손실은?",
+        "choices": [
+          "평균절대오차(MAE)",
+          "평균제곱오차(MSE)",
+          "교차 엔트로피",
+          "힌지 손실"
+        ],
+        "answer": 0,
+        "explanation": "음의 로그가능도가 $\\frac{1}{b}\\sum|y_i - \\hat y_i| + $상수이므로 MAE다. 꼬리가 두꺼운 잡음(이상치)을 가정하면 큰 오차에 덜 민감한 손실이 나온다."
+      },
+      {
+        "id": "w2-loss-likelihood-c2",
+        "question": "Ridge 회귀를 가중치의 가우시안 사전분포 $\\mathcal{N}(0, \\tau^2)$와 잡음 분산 $\\sigma^2$의 MAP로 보면 규제 강도 $\\lambda$는?",
+        "choices": [
+          "$\\sigma^2/\\tau^2$",
+          "$\\tau^2/\\sigma^2$",
+          "$\\sigma^2\\tau^2$",
+          "$1/\\tau$"
+        ],
+        "answer": 0,
+        "explanation": "NLL의 $\\frac{1}{2\\sigma^2}\\lVert y - Xw\\rVert^2$와 음의 로그 사전 $\\frac{1}{2\\tau^2}\\lVert w\\rVert^2$를 $2\\sigma^2$배 하면 $\\lVert y - Xw\\rVert^2 + \\frac{\\sigma^2}{\\tau^2}\\lVert w\\rVert^2$다. 잡음이 크거나 사전 믿음이 강할수록 규제가 세다."
+      },
+      {
+        "id": "w2-loss-likelihood-c3",
+        "question": "선형분리 가능한 데이터에서 규제 없는 로지스틱 회귀를 경사하강법으로 오래 학습하면?",
+        "choices": [
+          "가중치 크기가 끝없이(대략 로그로) 커지고 손실은 0으로 다가간다",
+          "유한한 최적값에 수렴한다",
+          "가중치가 0으로 줄어든다",
+          "손실이 ln 2에 머문다"
+        ],
+        "answer": 0,
+        "explanation": "모든 점을 가르는 $w$의 크기를 키울수록 손실이 계속 줄어 MLE가 존재하지 않는다. 실습에서 스텝이 10배 늘 때마다 $w$가 약 2.3씩 커지고 손실은 10분의 1이 되었다. L2 규제를 넣으면 유한한 해가 생긴다."
+      }
+    ],
+    "quizIds": [
+      "w2-q28"
+    ],
+    "references": [
+      {
+        "title": "Bishop — Pattern Recognition and Machine Learning, 3.1·4.3절",
+        "url": "https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/",
+        "note": "최대가능도·MAP로 본 선형회귀와 로지스틱 회귀 (영문, 무료 PDF)"
+      },
+      {
+        "title": "Soudry et al. (2018) — The Implicit Bias of Gradient Descent on Separable Data",
+        "url": "https://arxiv.org/abs/1710.10345",
+        "note": "규제 없는 로지스틱 회귀가 최대 마진 방향으로 수렴함을 증명 (영문, 연구 논문)"
+      }
+    ]
+  },
+  "bias-variance-theory": {
+    "tier": "advanced",
+    "goal": "제곱 오차의 편향-분산 분해를 유도하고, 상관된 예측의 평균 분산 $\\rho\\sigma^2 + (1-\\rho)\\sigma^2/B$로 랜덤 포레스트를 설명하며, 최소 노름 보간에서 이중 하강이 생기는 원인을 특이값으로 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w2-bias-variance-theory-c1",
+        "question": "편향-분산 분해의 1단계에서 교차항 $2\\,\\mathbb{E}[(f - \\hat f)\\varepsilon]$이 0이 되는 이유는?",
+        "choices": [
+          "새 관측의 잡음 $\\varepsilon$이 훈련 데이터로 만든 $\\hat f$와 독립이고 평균이 0이라서",
+          "$\\hat f$가 항상 $f$와 같아서",
+          "잡음의 분산이 0이라서",
+          "제곱 오차가 대칭이라서"
+        ],
+        "answer": 0,
+        "explanation": "독립이면 곱의 기대값이 기대값의 곱이 되고 $\\mathbb{E}[\\varepsilon] = 0$이라 교차항이 사라진다."
+      },
+      {
+        "id": "w2-bias-variance-theory-c2",
+        "question": "분산 1, 서로의 상관 0.5인 트리 1000개를 평균한 예측의 분산은 대략?",
+        "choices": [
+          "0.5",
+          "0.001",
+          "0.25",
+          "1"
+        ],
+        "answer": 0,
+        "explanation": "$\\rho\\sigma^2 + (1-\\rho)\\sigma^2/B = 0.5 + 0.5/1000 \\approx 0.5$. 트리를 늘려도 $\\rho\\sigma^2$ 밑으로 내려가지 않으므로, 랜덤 포레스트는 특징을 무작위로 골라 $\\rho$를 낮춘다."
+      },
+      {
+        "id": "w2-bias-variance-theory-c3",
+        "question": "최소 노름 최소제곱에서 파라미터 수 $p$가 샘플 수 $n$과 같을 때 테스트 오차가 치솟는 직접적인 원인은?",
+        "choices": [
+          "$X$의 최소 특이값이 0 근처로 떨어져 유사역행렬이 잡음을 크게 증폭한다",
+          "파라미터가 너무 적어 편향이 커진다",
+          "학습률이 너무 크다",
+          "훈련 오차가 커진다"
+        ],
+        "answer": 0,
+        "explanation": "유사역행렬은 특이값의 역수를 곱하므로 작은 특이값이 잡음을 증폭한다(분산 폭발). 실습에서 $p = 40 = n$일 때 최소 특이값이 약 0.09로 가장 작았고 테스트 MSE가 약 39로 치솟았다."
+      }
+    ],
+    "quizIds": [
+      "w2-q29"
+    ],
+    "references": [
+      {
+        "title": "Belkin et al. (2019) — Reconciling modern machine learning practice and the bias-variance trade-off",
+        "url": "https://arxiv.org/abs/1812.11118",
+        "note": "이중 하강을 처음 체계적으로 제시한 논문 (영문)"
+      },
+      {
+        "title": "Nakkiran et al. (2019) — Deep Double Descent",
+        "url": "https://arxiv.org/abs/1912.02292",
+        "note": "신경망에서의 모델 크기·학습 시간에 따른 이중 하강 (영문)"
+      },
+      {
+        "title": "ISLP 8.2절 — Bagging, Random Forests",
+        "url": "https://www.statlearning.com/",
+        "note": "상관된 트리의 평균과 특징 무작위 선택"
+      }
+    ]
+  },
+  "model-evaluation-stats": {
+    "tier": "advanced",
+    "goal": "fold 표준편차의 의미와 한계를 설명하고, 튜닝 점수의 선택 편향을 중첩 교차검증으로 바로잡으며, 반복 교차검증의 짝지은 차이에 보정된 t 검정을 적용할 수 있다.",
+    "checks": [
+      {
+        "id": "w2-model-evaluation-stats-c1",
+        "question": "순수한 잡음 데이터(참 정확도 0.5)에서 후보 7개의 C를 교차검증으로 골랐더니 최고 점수가 0.57이었다. 가장 적절한 해석은?",
+        "choices": [
+          "최댓값을 고르는 과정에서 생긴 선택 편향이며, 새 데이터에서는 약 0.5가 나올 것이다",
+          "모델이 잡음에서 신호를 찾았다",
+          "교차검증 fold가 너무 많다",
+          "C를 더 크게 하면 0.6을 넘을 것이다"
+        ],
+        "answer": 0,
+        "explanation": "잡음이 있는 점수 여러 개 중 최댓값의 기대값은 참값보다 크다. 실습에서 고른 점수 평균 0.573, 새 데이터 정확도 0.496이었다."
+      },
+      {
+        "id": "w2-model-evaluation-stats-c2",
+        "question": "중첩 교차검증의 바깥 fold 점수가 추정하는 것은?",
+        "choices": [
+          "하이퍼파라미터 선택까지 포함한 튜닝 절차 전체로 만든 모델의 성능",
+          "가장 좋은 하이퍼파라미터 하나의 성능",
+          "훈련 오차",
+          "안쪽 교차검증의 최고 점수"
+        ],
+        "answer": 0,
+        "explanation": "바깥 fold마다 안쪽에서 다시 고르므로, 평가 대상은 특정 값이 아니라 고르는 절차다. fold마다 고른 값이 달라도 괜찮다."
+      },
+      {
+        "id": "w2-model-evaluation-stats-c3",
+        "question": "5-fold를 3회 반복한 교차검증의 짝지은 차이 15개에 단순 t 검정을 쓰면 안 되는 이유는?",
+        "choices": [
+          "훈련 데이터가 겹쳐 차이들이 서로 상관되어 분산을 과소평가하므로 유의성이 과장된다",
+          "표본이 15개라 t 분포를 쓸 수 없다",
+          "차이가 음수일 수 있어서",
+          "정확도는 정규분포를 따르지 않아서"
+        ],
+        "answer": 0,
+        "explanation": "Nadeau·Bengio 보정은 분산에 $(1/J + n_{test}/n_{train})$을 곱해 겹침을 반영한다. 실습에서 단순 $t \\approx 4.56$($p \\approx 0.0004$)이 보정 $t \\approx 2.09$($p \\approx 0.055$)로 줄었다."
+      }
+    ],
+    "quizIds": [
+      "w2-q30"
+    ],
+    "references": [
+      {
+        "title": "Nadeau & Bengio (2003) — Inference for the Generalization Error",
+        "url": "https://link.springer.com/article/10.1023/A:1024068626366",
+        "note": "반복 교차검증의 보정된 t 검정 (영문, 연구 논문)"
+      },
+      {
+        "title": "Cawley & Talbot (2010) — On Over-fitting in Model Selection",
+        "url": "https://jmlr.org/papers/v11/cawley10a.html",
+        "note": "모델 선택 과정의 과적합과 중첩 교차검증 (영문)"
+      },
+      {
+        "title": "scikit-learn — Nested versus non-nested cross-validation",
+        "url": "https://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html",
+        "note": "선택 편향을 그림으로 보여 주는 공식 예제"
+      }
+    ]
+  }
 };
 
 export default sections;
