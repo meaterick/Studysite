@@ -266,7 +266,7 @@ const sections: Record<string, SectionMeta> = {
           "학습 때 모든 뉴런을 켠다"
         ],
         "answer": 1,
-        "explanation": "학습 때 $1/(1-p)$로 미리 보정해 기대값을 맞춰두므로, 평가 때는 아무것도 하지 않아도 된다."
+        "explanation": "학습 때 $1/(1-p)$로 미리 보정해 기댓값을 맞춰두므로, 평가 때는 아무것도 하지 않아도 된다."
       },
       {
         "id": "w4-regularization-c2",
@@ -543,7 +543,7 @@ const sections: Record<string, SectionMeta> = {
       },
       {
         "id": "w4-generative-models-c4",
-        "question": "생성자가 감별자를 속이기 쉬운 몇 가지 결과만 반복해서 만드는 \"모드 붕괴\"가 대표적으로 문제 되는 모델은?",
+        "question": "생성자가 판별자를 속이기 쉬운 몇 가지 결과만 반복해서 만드는 \"모드 붕괴\"가 대표적으로 문제 되는 모델은?",
         "choices": [
           "GAN",
           "VAE",
@@ -551,19 +551,19 @@ const sections: Record<string, SectionMeta> = {
           "Autoencoder"
         ],
         "answer": 0,
-        "explanation": "GAN의 생성자는 감별자를 속이는 것만 목표로 하므로, 속이기 쉬운 일부 결과에 몰릴 수 있다. 데이터 전체의 다양성을 직접 맞추는 항이 없기 때문이다."
+        "explanation": "GAN의 생성자는 판별자를 속이는 것만 목표로 하므로, 속이기 쉬운 일부 결과에 몰릴 수 있다. 데이터 전체의 다양성을 직접 맞추는 항이 없기 때문이다."
       },
       {
         "id": "w4-generative-models-c5",
         "question": "같은 품질의 이미지를 만들 때 생성(샘플링)이 가장 느린 방식은?",
         "choices": [
           "Diffusion: 노이즈를 수십~수천 단계에 걸쳐 걷어 내야 해서",
-          "GAN: 감별자를 함께 돌려야 해서",
+          "GAN: 판별자를 함께 돌려야 해서",
           "VAE: 인코더를 거쳐야 해서",
           "모두 같다"
         ],
         "answer": 0,
-        "explanation": "VAE와 GAN은 신경망을 한 번 통과하면 결과가 나오지만, 확산 모델은 역확산 단계마다 신경망을 다시 돌린다. 생성 때는 GAN의 감별자도, VAE의 인코더도 쓰지 않는다."
+        "explanation": "VAE와 GAN은 신경망을 한 번 통과하면 결과가 나오지만, 확산 모델은 역확산 단계마다 신경망을 다시 돌린다. 생성 때는 GAN의 판별자도, VAE의 인코더도 쓰지 않는다."
       }
     ],
     "quizIds": [

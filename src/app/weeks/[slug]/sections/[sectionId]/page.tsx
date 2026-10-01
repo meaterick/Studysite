@@ -338,7 +338,7 @@ function RelatedActivities({
         이 단계와 이어지는 적용 활동 <span className="font-bold text-ink-muted">· 추가 활동</span>
       </h3>
       <p className="mt-1 text-sm text-ink-muted">
-        단계 학습은 확인 문제까지면 충분합니다. 설명하고 코드로 옮기는 연습은 <strong className="text-ink-secondary">적용과 복습</strong>에서 이어서 할 수 있습니다.
+        학습 자료는 확인 문제까지 풀면 충분합니다. 설명하고 코드로 옮기는 연습은 <strong className="text-ink-secondary">적용과 복습</strong>에서 이어서 할 수 있습니다.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {links.map((l) => (

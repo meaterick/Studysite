@@ -287,7 +287,7 @@ const sections: Record<string, SectionMeta> = {
           "4096분의 1"
         ],
         "answer": 1,
-        "explanation": "$2 \\times 4096 \\times 16 = 131{}072$개, 원래는 $4096^2 \\approx 1{}678$만 개이므로 $4096 / (2 \\times 16) = 128$분의 1."
+        "explanation": "$2 \\times 4096 \\times 16 = 131{,}072$개, 원래는 $4096^2 \\approx 1{,}678$만 개이므로 $4096 / (2 \\times 16) = 128$분의 1."
       },
       {
         "id": "w6-finetuning-efficiency-c2",
@@ -299,7 +299,7 @@ const sections: Record<string, SectionMeta> = {
           "학생 모델"
         ],
         "answer": 1,
-        "explanation": "학습하는 $B, A$는 그대로 두고, 얼려둔 원본 $W_0$를 저비트로 저장한다."
+        "explanation": "학습하는 $B, A$는 그대로 두고, 고정해 둔 원본 $W_0$를 저비트로 저장한다."
       },
       {
         "id": "w6-finetuning-efficiency-c3",
@@ -949,7 +949,7 @@ const sections: Record<string, SectionMeta> = {
       },
       {
         "id": "w6-policy-gradient-c2",
-        "question": "REINFORCE에서 보상에서 기준선 $b$(행동과 무관한 값)를 빼도 기울기 추정의 기대값이 변하지 않는 이유는?",
+        "question": "REINFORCE에서 보상에서 기준선 $b$(행동과 무관한 값)를 빼도 기울기 추정의 기댓값이 변하지 않는 이유는?",
         "choices": [
           "$\\mathbb{E}[b\\,\\nabla\\log\\pi] = b\\,\\nabla\\sum_a\\pi(a) = b\\,\\nabla 1 = 0$이라서",
           "$b$가 항상 0이라서",

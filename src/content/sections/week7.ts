@@ -211,7 +211,7 @@ const sections: Record<string, SectionMeta> = {
         "question": "RAG가 이상하게 답할 때 가장 먼저 확인할 것은?",
         "choices": [
           "생성 모델의 temperature",
-          "정답이 들어있는 조각이 Top-k 검색 결과에 들어왔는지(검색 단계)",
+          "정답이 들어 있는 조각이 Top-k 검색 결과에 들어왔는지(검색 단계)",
           "GPU 메모리",
           "프롬프트의 말투"
         ],

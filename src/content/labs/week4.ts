@@ -326,7 +326,7 @@ def _():
     vals = set(np.round(out, 6).tolist())
     assert vals <= {0.0, 4.0} and 0.18 < np.mean(out == 0) < 0.32, f"값 종류 {vals}, 0의 비율 {np.mean(out == 0):.2f}"
 
-@test("1만 번 평균 = 원래 값(기대값 보존)")
+@test("1만 번 평균 = 원래 값(기댓값 보존)")
 def _():
     rng = np.random.default_rng(0)
     h = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])

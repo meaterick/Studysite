@@ -169,7 +169,7 @@ export const ASSIGNMENT_STATUS_LABEL: Record<WeekStatus["assignment"]["status"],
 };
 
 /**
- * "단계 학습"으로 들어가는 주소: 지금 학습할 차례인 단계, 핵심을 모두 끝냈으면 적용과 복습.
+ * "학습 자료"로 들어가는 주소: 지금 학습할 차례인 단계, 핵심을 모두 끝냈으면 적용과 복습.
  * 탭·버튼이 이 주소로 바로 가게 해서, 리다이렉트 페이지를 거치며 빈 화면이 잠깐 보이지 않게 한다.
  */
 export function continueHref(slug: string, status: WeekStatus): string {

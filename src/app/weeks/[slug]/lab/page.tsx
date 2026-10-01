@@ -61,7 +61,7 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-[var(--series-blue)]/40 bg-card p-4 text-sm text-ink-secondary">
-              <p className="font-black text-[var(--series-blue)]">완성 예제 (단계 학습 속 코드 셀)</p>
+              <p className="font-black text-[var(--series-blue)]">완성 예제 (학습 자료 속 코드 셀)</p>
               <p className="mt-1">이미 완성된 코드입니다. 그대로 실행해 결과를 확인하고, 숫자를 바꿔 가며 관찰합니다. 채점은 없습니다.</p>
             </div>
             <div className="rounded-xl border border-[var(--series-orange)]/40 bg-card p-4 text-sm text-ink-secondary">

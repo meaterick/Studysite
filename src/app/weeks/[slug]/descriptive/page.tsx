@@ -34,7 +34,7 @@ const TIER_DESC = {
 
 /**
  * 서술형: 단계별 서술형 문항과 퀴즈의 서술형 문항을 단계 순서대로 모아, 직접 쓰고 → 모범답안과 비교 → 자기평가한다.
- * 단계 학습 화면에서는 객관식 확인 문제만 빠르게 풀고, 설명하는 연습은 이곳에서 한다.
+ * 학습 자료 화면에서는 객관식 확인 문제만 빠르게 풀고, 설명하는 연습은 이곳에서 한다.
  */
 export default async function WeekDescriptivePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

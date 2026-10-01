@@ -35,7 +35,7 @@ export default async function ApplyHubPage({
   const coreLeft = status.tiers.core.total - status.tiers.core.done;
   const allRequired = summary.requiredDone === summary.requiredTotal;
 
-  // 지금 할 일: 핵심 단계가 남았으면 단계 학습, 아니면 다음 필수 활동, 다 끝났으면 추가 활동 중 아직 덜 한 것
+  // 지금 할 일: 핵심 단계가 남았으면 학습 자료, 아니면 다음 필수 활동, 다 끝났으면 추가 활동 중 아직 덜 한 것
   const nextExtra = summary.items.find((i) => !i.required && i.key !== "notes" && i.total > 0 && !i.complete);
   const nextStep: { label: string; detail: string; href: string } = !status.coreDone
     ? {
@@ -72,7 +72,7 @@ export default async function ApplyHubPage({
             적용과 복습
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-ink-muted">
-            단계 학습에서 개념을 익혔다면, 이제 그 개념을 <strong className="text-ink-secondary">설명하고(서술형)</strong>,{" "}
+            학습 자료에서 개념을 익혔다면, 이제 그 개념을 <strong className="text-ink-secondary">설명하고(서술형)</strong>,{" "}
             <strong className="text-ink-secondary">코드로 옮기고(코딩 실습)</strong>, <strong className="text-ink-secondary">더 풀어 보고(추가 퀴즈)</strong>,{" "}
             <strong className="text-ink-secondary">자료 없이 떠올리고(백지공부)</strong>, <strong className="text-ink-secondary">과제로 적용한 뒤</strong>,{" "}
             <strong className="text-ink-secondary">약한 부분을 다시 봅니다(복습 노트)</strong>.
@@ -104,7 +104,7 @@ export default async function ApplyHubPage({
               <PathNode
                 step={1}
                 title="핵심 단계"
-                place="단계 학습"
+                place="학습 자료"
                 state={status.coreDone ? "완료" : `${status.tiers.core.done}/${status.tiers.core.total}단계`}
                 done={status.coreDone}
                 current={!status.coreDone}

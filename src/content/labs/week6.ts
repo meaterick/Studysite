@@ -952,11 +952,11 @@ print(optimal_policy(pi_ref, r, 0.5).round(4))
       title: "정책 경사의 기준선과 PPO 클리핑",
       tier: "advanced",
       prompt: `
-「정책 경사와 PPO」 단계의 식을 소프트맥스 정책(로짓 \`theta\`)에서 정확히 계산합니다. 샘플링 없이 기대값과 분산을 모든 행동에 대한 합으로 구합니다.
+「정책 경사와 PPO」 단계의 식을 소프트맥스 정책(로짓 \`theta\`)에서 정확히 계산합니다. 샘플링 없이 기댓값과 분산을 모든 행동에 대한 합으로 구합니다.
 
 1. \`grad_log_softmax(theta, a)\`: $\\nabla_\\theta\\log\\pi_\\theta(a) = \\text{onehot}(a) - \\pi_\\theta$
 2. \`exact_policy_gradient(theta, rewards)\`: $\\nabla_\\theta\\sum_a\\pi_\\theta(a)r(a) = \\pi \\odot (r - \\pi\\cdot r)$
-3. \`expected_estimator(theta, rewards, b)\`: REINFORCE 추정 $(R - b)\\nabla\\log\\pi(a)$의 기대값 $\\sum_a \\pi(a)(r(a) - b)\\nabla\\log\\pi(a)$
+3. \`expected_estimator(theta, rewards, b)\`: REINFORCE 추정 $(R - b)\\nabla\\log\\pi(a)$의 기댓값 $\\sum_a \\pi(a)(r(a) - b)\\nabla\\log\\pi(a)$
 4. \`estimator_variance(theta, rewards, b, noise_var=1.0)\`: 보상 $R = r(a) + \\text{잡음}$(분산 \`noise_var\`)일 때 추정의 성분별 분산. $\\mathbb{E}[(R-b)^2 \\mid a] = (r(a) - b)^2 + \\sigma^2$을 이용해 $\\mathbb{E}[g^2] - (\\mathbb{E}[g])^2$로 계산합니다.
 5. \`ppo_clip(rho, adv, eps=0.2)\`: $\\min(\\rho A, \\text{clip}(\\rho, 1-\\varepsilon, 1+\\varepsilon)A)$ (배열도 처리)
 `,
@@ -1005,7 +1005,7 @@ def _():
     num = np.array([(J(th + 1e-6 * e) - J(th - 1e-6 * e)) / 2e-6 for e in np.eye(3)])
     assert approx(exact_policy_gradient(th, r), num, 1e-6)
 
-@test("기준선 b를 바꿔도 추정의 기대값은 정확한 기울기 그대로")
+@test("기준선 b를 바꿔도 추정의 기댓값은 정확한 기울기 그대로")
 def _():
     th = np.array([0.3, -0.7, 1.1])
     for b in (0.0, 1.5, 10.0, -3.0):
@@ -1026,7 +1026,7 @@ def _():
 `,
       hints: [
         "`grad_log_softmax`는 `np.eye(len(theta))[a] - softmax(theta)`, `exact_policy_gradient`는 `pi * (rewards - pi @ rewards)`입니다.",
-        "행렬 `G = np.eye(n) - pi`의 a번째 행이 $\\nabla\\log\\pi(a)$입니다. 기대값은 `(pi * (rewards - b)) @ G`, 제곱의 기대값은 `(pi * ((rewards - b) ** 2 + noise_var)) @ G ** 2`입니다.",
+        "행렬 `G = np.eye(n) - pi`의 a번째 행이 $\\nabla\\log\\pi(a)$입니다. 기댓값은 `(pi * (rewards - b)) @ G`, 제곱의 기댓값은 `(pi * ((rewards - b) ** 2 + noise_var)) @ G ** 2`입니다.",
         "`ppo_clip`은 `np.minimum(rho * adv, np.clip(rho, 1 - eps, 1 + eps) * adv)`입니다.",
       ],
       solution: py`
@@ -1368,12 +1368,12 @@ r = np.array([1.0, 1.5, 2.0])
 pi = np.ones(3) / 3
 G = np.eye(3) - pi                     # a번째 행 = ∇log π(a)
 for b in (0.0, 1.5, 10.0):
-    mean = (pi * (r - b)) @ G          # 기준선 b를 뺀 REINFORCE 추정의 기대값
+    mean = (pi * (r - b)) @ G          # 기준선 b를 뺀 REINFORCE 추정의 기댓값
     print(b, [round(float(x), 3) + 0.0 for x in mean])
 `,
       expected: "0.0 [-0.167, 0.0, 0.167]\n1.5 [-0.167, 0.0, 0.167]\n10.0 [-0.167, 0.0, 0.167]",
       explanation:
-        "기준선이 0이든 평균 보상(1.5)이든 10이든 기대값은 정확한 기울기 $[-1/6, 0, 1/6]$으로 같습니다. $\\mathbb{E}[b\\,\\nabla\\log\\pi] = b\\,\\nabla\\sum_a\\pi(a) = 0$이기 때문입니다. 기준선이 바꾸는 것은 분산뿐이라, 평균 보상이면 성분별 분산이 약 0.24로 가장 작고 10이면 15 이상으로 커집니다.",
+        "기준선이 0이든 평균 보상(1.5)이든 10이든 기댓값은 정확한 기울기 $[-1/6, 0, 1/6]$으로 같습니다. $\\mathbb{E}[b\\,\\nabla\\log\\pi] = b\\,\\nabla\\sum_a\\pi(a) = 0$이기 때문입니다. 기준선이 바꾸는 것은 분산뿐이라, 평균 보상이면 성분별 분산이 약 0.24로 가장 작고 10이면 15 이상으로 커집니다.",
     },
     {
       kind: "choice",

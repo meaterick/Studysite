@@ -441,7 +441,7 @@ const sections: Record<string, SectionMeta> = {
   },
   "probability": {
     "tier": "core",
-    "goal": "조건부확률과 베이즈 정리로 \"양성일 때 실제 병일 확률\"을 계산하고, 기대값·분산의 정의를 숫자 예로 설명할 수 있다.",
+    "goal": "조건부확률과 베이즈 정리로 \"양성일 때 실제 병일 확률\"을 계산하고, 기댓값·분산의 정의를 숫자 예로 설명할 수 있다.",
     "checks": [
       {
         "id": "w1-probability-c1",
@@ -469,7 +469,7 @@ const sections: Record<string, SectionMeta> = {
       },
       {
         "id": "w1-probability-c3",
-        "question": "공정한 주사위 한 개의 기대값 $E[X]$는?",
+        "question": "공정한 주사위 한 개의 기댓값 $E[X]$는?",
         "choices": [
           "3",
           "3.5",
@@ -477,7 +477,7 @@ const sections: Record<string, SectionMeta> = {
           "21"
         ],
         "answer": 1,
-        "explanation": "$E[X] = (1+2+3+4+5+6)/6 = 21/6 = 3.5$. 기대값은 실제로 나올 수 없는 값일 수도 있다."
+        "explanation": "$E[X] = (1+2+3+4+5+6)/6 = 21/6 = 3.5$. 기댓값은 실제로 나올 수 없는 값일 수도 있다."
       },
       {
         "id": "w1-probability-c4",
@@ -959,7 +959,7 @@ const sections: Record<string, SectionMeta> = {
           "rank 0, 역행렬 없음"
         ],
         "answer": 1,
-        "explanation": "두 번째 행이 첫 번째 행의 3배라 선형독립인 행이 1개뿐이다. full rank가 아니면 변환이 정보를 짜부라뜨리므로 역행렬이 없다(행렬식 $1\\cdot6 - 2\\cdot3 = 0$)."
+        "explanation": "두 번째 행이 첫 번째 행의 3배라 선형독립인 행이 1개뿐이다. full rank가 아니면 변환이 공간을 낮은 차원으로 찌그러뜨려 되돌릴 수 없으므로 역행렬이 없다(행렬식 $1\\cdot6 - 2\\cdot3 = 0$)."
       },
       {
         "id": "w1-rank-eigen-c2",
@@ -1104,7 +1104,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "CS229 Probability Theory Review",
         "url": "https://cs229.stanford.edu/section/cs229-prob.pdf",
-        "note": "확률변수·분포·기대값·MLE의 정식 정리 (영문)"
+        "note": "확률변수·분포·기댓값·MLE의 정식 정리 (영문)"
       },
       {
         "title": "Seeing Theory — Bayesian Inference",
