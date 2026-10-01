@@ -509,7 +509,7 @@ const sections: Record<string, SectionMeta> = {
           "정확도 90% 이상"
         ],
         "answer": 1,
-        "explanation": "잘 된 결과만 보여주는 발표는 반쪽짜리로 취급한다."
+        "explanation": "잘된 결과만 보여 주는 발표는 반쪽짜리로 취급한다."
       },
       {
         "id": "w8-capstone-c4",
