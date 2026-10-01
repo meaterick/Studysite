@@ -11,7 +11,7 @@ const sections: Record<string, SectionMeta> = {
     "checks": [
       {
         "id": "w5-sequence-embedding-c1",
-        "question": "어휘 크기가 $|V| = 50{}000$일 때 One-hot 표현에서 서로 다른 두 단어 벡터의 내적은?",
+        "question": "어휘 크기가 $|V| = 50{,}000$일 때 One-hot 표현에서 서로 다른 두 단어 벡터의 내적은?",
         "choices": [
           "항상 0",
           "항상 1",
