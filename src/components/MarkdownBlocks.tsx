@@ -208,8 +208,6 @@ export function BlocksRenderer({
               </div>
             );
           }
-          case "practice":
-            return null;
           case "diagram": {
             const Diagram = DIAGRAMS[b.id];
             if (!Diagram) return null;

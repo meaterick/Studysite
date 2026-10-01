@@ -43,7 +43,7 @@ const sections: Record<string, SectionMeta> = {
           "0이 된다"
         ],
         "answer": 1,
-        "explanation": "$W_{10}\\cdots W_1 x$는 결국 행렬 하나로 합쳐지므로 단일 선형 변환과 같다. 실습에서 `np.allclose`가 True로 확인되었다."
+        "explanation": "$W_{10}\\cdots W_1 x$는 결국 행렬 하나로 합쳐지므로 단일 선형 변환과 같다. 코드로 두 결과를 비교하면 `np.allclose`가 True다."
       }
     ],
     "quizIds": [
@@ -215,7 +215,7 @@ const sections: Record<string, SectionMeta> = {
           "$\\cosh z$"
         ],
         "answer": 1,
-        "explanation": "$\\frac{d}{dz}\\tanh z = 1 - \\tanh^2 z$. 실습에서 이 식으로 채운 역전파가 수치미분과 $10^{-11}$ 수준까지 일치했다."
+        "explanation": "$\\frac{d}{dz}\\tanh z = 1 - \\tanh^2 z$. 이 식으로 채운 역전파는 수치미분과 $10^{-11}$ 수준까지 일치한다."
       }
     ],
     "quizIds": [
@@ -264,7 +264,7 @@ const sections: Record<string, SectionMeta> = {
       },
       {
         "id": "w3-optimizers-c3",
-        "question": "실습 결과를 바탕으로 가장 적절한 결론은?",
+        "question": "SGD·Momentum·Adam을 비교할 때 가장 적절한 결론은?",
         "choices": [
           "Adam은 모든 문제에서 SGD보다 빠르다",
           "같은 학습률이면 Momentum이 SGD보다 유리하지만, 잘 튜닝된 SGD가 단순한 문제에서 가장 정확할 수도 있다",
@@ -329,7 +329,7 @@ const sections: Record<string, SectionMeta> = {
           "학습률에 따라 자동으로 달라진다"
         ],
         "answer": 1,
-        "explanation": "대칭성이 깨지지 않는다. 실습 2에서 200스텝 뒤에도 세 열이 완전히 같았다. 작은 무작위 값으로 시작해야 한다."
+        "explanation": "대칭성이 깨지지 않는다. 실제로 200스텝을 학습해도 세 열이 완전히 같게 남는다. 작은 무작위 값으로 시작해야 한다."
       }
     ],
     "quizIds": [
@@ -494,7 +494,7 @@ const sections: Record<string, SectionMeta> = {
           "정밀도가 항상 더 높아서"
         ],
         "answer": 1,
-        "explanation": "행렬 곱의 각 원소 계산은 서로 독립이라 병렬화에 최적이다. 실습에서 벡터화만으로도 파이썬 반복문보다 수백 배 빨랐다."
+        "explanation": "행렬 곱의 각 원소 계산은 서로 독립이라 병렬화에 최적이다. 벡터화만으로도 파이썬 반복문보다 수백 배 빨라질 수 있다."
       },
       {
         "id": "w3-pytorch-practice-c2",
@@ -564,7 +564,7 @@ const sections: Record<string, SectionMeta> = {
           "검증 데이터에 버그가 있다"
         ],
         "answer": 0,
-        "explanation": "교차 엔트로피는 확신하며 틀린 예측에 큰 벌점을 준다. 실습에서 정확도 0.87은 그대로인데 검증 손실이 0.32에서 0.95로 올랐다. 조기 종료·가중치 감쇠·드롭아웃이 이를 막는다."
+        "explanation": "교차 엔트로피는 확신하며 틀린 예측에 큰 벌점을 준다. 예를 들어 정확도는 0.87 그대로인데 검증 손실이 0.32에서 0.95로 오를 수 있다. 조기 종료·가중치 감쇠·드롭아웃이 이를 막는다."
       },
       {
         "id": "w3-dl-regularization-c3",
@@ -678,7 +678,7 @@ const sections: Record<string, SectionMeta> = {
           "편향 보정이 불가능해진다"
         ],
         "answer": 0,
-        "explanation": "기울기가 큰 파라미터는 감쇠가 약해지고, 데이터 기울기가 0인 파라미터는 $\\lambda$와 무관하게 약 $\\eta$씩 줄어든다(실습: $\\lambda$를 1만 배 바꿔도 같은 0.2577). AdamW는 감쇠를 갱신에서 따로 적용한다."
+        "explanation": "기울기가 큰 파라미터는 감쇠가 약해지고, 데이터 기울기가 0인 파라미터는 $\\lambda$와 무관하게 약 $\\eta$씩 줄어든다(예: $\\lambda$를 1만 배 바꿔도 이동량이 같다). AdamW는 감쇠를 갱신에서 따로 적용한다."
       },
       {
         "id": "w3-adam-theory-c3",
@@ -740,7 +740,7 @@ const sections: Record<string, SectionMeta> = {
           "$2I$"
         ],
         "answer": 0,
-        "explanation": "항등 경로의 야코비안 $I$가 더해지므로, 기울기는 층마다 원래 값이 그대로 전달되는 길을 가진다. 실습에서 같은 작은 초기화라도 잔차 망은 50층에서 기울기가 사라지지 않았다."
+        "explanation": "항등 경로의 야코비안 $I$가 더해지므로, 기울기는 층마다 원래 값이 그대로 전달되는 길을 가진다. 같은 작은 초기화라도 잔차 망은 50층에서 기울기가 사라지지 않는다."
       },
       {
         "id": "w3-gradient-flow-c3",

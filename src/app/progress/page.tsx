@@ -115,16 +115,7 @@ export default async function ProgressPage() {
   const advancedEarned = rows.reduce((sum, r) => sum + r.advanced.earned, 0);
   const advancedTotal = rows.reduce((sum, r) => sum + r.advanced.total, 0);
   const advancedWeeks = rows.filter((r) => r.advanced.complete);
-  let practiceTotal = 0;
-  let practiceDone = 0;
-  for (const week of WEEKS) {
-    for (const section of getWeekOutline(week).sections) {
-      if (section.practice.length === 0) continue;
-      practiceTotal++;
-      const st = readSectionState(record, week.slug, section.id);
-      if (st.practiceDoneAt || st.practiceDone) practiceDone++;
-    }
-  }
+  const worksheetsDone = rows.filter((r) => r.status.worksheetSubmitted).length;
   const submitted = rows.filter((r) => r.status.assignment.status !== "none").length;
   const graded = rows.filter((r) => r.status.assignment.status === "graded");
   const revisions = rows.filter((r) => r.status.assignment.status === "revision").length;
@@ -253,11 +244,11 @@ export default async function ProgressPage() {
         </div>
       </div>
 
-      {/* ── 진행률: 학습 / 실습 / 과제 / 피드백 확인을 따로 ─────── */}
+      {/* ── 진행률: 학습 / 백지공부 / 과제 / 피드백 확인을 따로 ─────── */}
       <h2 className="mt-12 mb-3 text-xl font-black text-ink">진행 현황</h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Rate label="핵심 학습 진행률" percent={pct(sectionsDone, sectionsTotal)} detail={`핵심 단계 ${sectionsDone}/${sectionsTotal}`} />
-        <Rate label="실습 완료율" percent={pct(practiceDone, practiceTotal)} detail={`실습 ${practiceDone}/${practiceTotal}`} />
+        <Rate label="백지공부" percent={pct(worksheetsDone, rows.length)} detail={`제출 ${worksheetsDone}/${rows.length}주`} />
         <Rate
           label="과제"
           percent={pct(submitted, rows.length)}

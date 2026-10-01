@@ -4,7 +4,6 @@ import { parseMarkdown } from "./markdown";
 // 한 주차의 학습 자료(conceptsMd)를 "단계" 단위로 나눈다.
 //   - `## 제목 {#id}` 하나가 단계 하나다. id는 진도 저장 키이므로 한 번 정하면 바꾸지 않는다.
 //   - 첫 `##` 앞의 블록은 주차 도입부(intro)로 개요 화면에 보여준다.
-//   - 단계 안의 `[[practice]]` 뒤 블록은 "실습" 단계, 앞은 "학습" 단계다.
 //   - 단계마다 구분(핵심·보충·심화, sections/weekN.ts의 tier)이 있고, 본문은 핵심 → 보충 → 심화 순서로 쓴다.
 //     번호(number)는 구분 안에서 매긴다("핵심 3", "심화 1").
 // 콘텐츠는 빌드에 포함된 상수라 결과를 프로세스 수명 동안 캐시한다.
@@ -64,9 +63,6 @@ export function getWeekOutline(week: WeekMeta): WeekOutline {
 
   const tierCount: Record<string, number> = {};
   const sections: WeekSection[] = raw.map((section, index) => {
-    const marker = section.blocks.findIndex((b) => b.type === "practice");
-    const learn = marker === -1 ? section.blocks : section.blocks.slice(0, marker);
-    const practice = marker === -1 ? [] : section.blocks.slice(marker + 1);
     const meta = week.sections[section.id] ?? { tier: "core", goal: "", checks: [], quizIds: [] };
     tierCount[meta.tier] = (tierCount[meta.tier] ?? 0) + 1;
     return {
@@ -75,8 +71,7 @@ export function getWeekOutline(week: WeekMeta): WeekOutline {
       number: tierCount[meta.tier],
       order: index + 1,
       title: section.title,
-      learn,
-      practice,
+      learn: section.blocks,
       meta,
       minutes: estimateMinutes(section.blocks, meta.checks.length, meta.quizIds.length),
     };

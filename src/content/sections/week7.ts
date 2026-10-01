@@ -32,7 +32,7 @@ const sections: Record<string, SectionMeta> = {
           "정답이 숫자일 때"
         ],
         "answer": 1,
-        "explanation": "다수결은 오답이 흩어진다는 전제에서만 효과가 있다. 실습에서 같은 오답이 약 48%면 샘플을 늘릴수록 오답이 이겼다."
+        "explanation": "다수결은 오답이 흩어진다는 전제에서만 효과가 있다. 예를 들어 같은 오답이 약 48%로 몰려 있으면 샘플을 늘릴수록 오답이 이긴다."
       },
       {
         "id": "w7-prompting-c3",
@@ -262,7 +262,7 @@ const sections: Record<string, SectionMeta> = {
           "JSON 파싱을 빠르게 하려고"
         ],
         "answer": 1,
-        "explanation": "실습의 `stuck_llm`처럼 같은 호출만 반복하는 경우에도 정해진 스텝에서 멈춘다."
+        "explanation": "같은 도구 호출만 반복하는 모델이라도 정해진 스텝에서 멈춘다."
       },
       {
         "id": "w7-agent-loop-c2",
@@ -386,7 +386,7 @@ const sections: Record<string, SectionMeta> = {
           "채점 기준을 숨긴다"
         ],
         "answer": 1,
-        "explanation": "실습에서 순서를 바꿔도 일관된 판정만 남기자 실제 품질과 모두 일치했다."
+        "explanation": "순서를 바꿔도 일관된 판정만 남기면 위치 편향에서 나온 판정이 걸러진다."
       },
       {
         "id": "w7-evaluation-c2",
@@ -455,7 +455,7 @@ const sections: Record<string, SectionMeta> = {
           "질의와 가장 먼 칸부터 연다"
         ],
         "answer": 1,
-        "explanation": "실습에서 $n_\\text{probe} = 4$는 문서의 약 6.3%만 비교하고 Recall@10 0.838을 얻었다. $n_\\text{probe}$를 늘리면 재현율과 비용이 함께 오른다."
+        "explanation": "한 실험에서 $n_\\text{probe} = 4$는 문서의 약 6.3%만 비교하고 Recall@10 0.838을 얻었다. $n_\\text{probe}$를 늘리면 재현율과 비용이 함께 오른다."
       },
       {
         "id": "w7-vector-search-c2",
@@ -687,7 +687,7 @@ const sections: Record<string, SectionMeta> = {
           "배치 크기가 커진다"
         ],
         "answer": 1,
-        "explanation": "실습에서 어려운 오답의 몫은 $\\tau = 1$에서 39%, $0.1$에서 99.2%였다. CLIP은 $\\tau$를 학습 파라미터로 두고 로짓 배율을 100 이하로 제한했다."
+        "explanation": "한 실험에서 어려운 오답의 몫은 $\\tau = 1$에서 39%, $0.1$에서 99.2%였다. CLIP은 $\\tau$를 학습 파라미터로 두고 로짓 배율을 100 이하로 제한했다."
       }
     ],
     "quizIds": [

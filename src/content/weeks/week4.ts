@@ -174,53 +174,6 @@ $224\\times224\\times3$ 크기의 컬러 사진을 입력받아 64개의 특징�
 
 실제 프레임워크가 이중 반복문 대신 합성곱을 행렬 곱 하나로 계산하는 방법(im2col), 합성곱의 역전파가 왜 또 하나의 합성곱인지는 심화 과정의 「합성곱의 계산」 단계에서 다룬다.
 
-[[practice]]
-
-### 실습: 실제 손글씨 숫자에 가장자리 검출 커널 적용하기
-
-\`sklearn.datasets.load_digits()\`는 사람이 쓴 손글씨 숫자 1,797장을 $8\\times8$ 흑백 이미지(픽셀값 0~16)로 담은 실제 데이터셋이다. 크기가 작아 브라우저에서도 빠르게 돌아가므로, 이번 주 브라우저 실습은 이 데이터로 CNN의 원리를 확인하고, 실제 CIFAR-10 학습은 Colab에서 한다. 아래 코드는 숫자 이미지 한 장에 세로 가장자리 커널과 가로 가장자리 커널을 적용해 반응 강도를 문자 그림으로 출력한다(진한 문자일수록 반응이 크다).
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-
-digits = load_digits()
-img = digits.images[0]                         # (8, 8), 픽셀값 0~16
-print("레이블:", digits.target[0], "/ shape:", img.shape)
-
-def conv2d(x, k, stride=1, padding=0):
-    if padding: x = np.pad(x, padding)
-    H, W = x.shape; K = k.shape[0]
-    out = np.zeros(((H - K) // stride + 1, (W - K) // stride + 1))
-    for i in range(out.shape[0]):
-        for j in range(out.shape[1]):
-            out[i, j] = np.sum(x[i*stride:i*stride+K, j*stride:j*stride+K] * k)
-    return out
-
-def show(a):
-    """절댓값이 클수록 진한 문자로 표시하는 작은 텍스트 이미지"""
-    chars = " .:-=+*#%@"
-    m = np.abs(a).max() or 1
-    for row in a:
-        print("".join(chars[int(abs(v) / m * 9)] * 2 for v in row))
-
-vertical = np.array([[1, 0, -1]] * 3, dtype=float)    # 세로 가장자리 검출
-horizontal = vertical.T                               # 가로 가장자리 검출
-
-print("\\n원본 이미지"); show(img)
-print("\\n세로 가장자리 반응 (padding=1, 출력 8x8)"); show(conv2d(img, vertical, padding=1))
-print("\\n가로 가장자리 반응"); show(conv2d(img, horizontal, padding=1))
-
-def conv_params(k, c_in, c_out):   return k * k * c_in * c_out + c_out     # 가중치 + 편향
-def fc_params(n_in, n_out):        return n_in * n_out + n_out
-print("\\n3x3 conv(3→64) 파라미터:", conv_params(3, 3, 64))
-print("224x224x3 → 64 FC 파라미터:", fc_params(224 * 224 * 3, 64))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 숫자 0의 원본에서 왼쪽·오른쪽 세로 획은 세로 커널에, 위·아래 가로 획은 가로 커널에 강하게 반응한다. 파라미터 수는 1,792개 vs 9,633,856개로 본문 예제와 같다. **해볼 것:** \`digits.images[1]\`(숫자 1)로 바꿔보자. 세로 획 하나뿐인 1에서는 어느 커널이 더 강하게 반응하는가? \`stride=2, padding=0\`으로 바꾸면 출력 크기가 공식 $\\lfloor(8-3)/2\\rfloor + 1 = 3$과 맞는가?
-:::
-
 ## 풀링과 수용영역 {#pooling-receptive-field}
 
 합성곱이 학습된 커널로 특정 패턴을 검출해 특징 지도를 만드는 연산이라면, 풀링(pooling)은 그렇게 만들어진 특징 지도의 공간 해상도를 줄여 정보를 요약하는 연산이다. 특징 지도의 해상도를 그대로 다음 층에 넘기면 연산량이 커질 뿐 아니라, 물체가 사진 안에서 한두 픽셀 옆으로 옮겨갔을 뿐인데도 결과가 흔들리기 쉽다. 풀링은 작은 영역(대개 $2\\times2$)을 하나의 값으로 압축함으로써 이 두 문제를 동시에 완화한다. 방법은 크게 두 가지, 그 영역에서 가장 큰 값만 남기는 Max Pooling과 영역 전체의 평균을 내는 Average Pooling이다.
@@ -323,48 +276,6 @@ print("axis=(1, 3) 최댓값:\\n", blocks.max(axis=(1, 3)))  # 블록 내부(1, 
 
 \`axis=(1, 3)\`은 "1번 축과 3번 축, 즉 각 블록 내부의 세로·가로 두 칸만 남기고 그 안에서 최댓값을 구하라"는 뜻이다. 그 결과 앞서 반복문으로 만든 \`max_pool2x2(y)\`와 정확히 같은 $2\\times2$ 결과가 한 줄로 나온다. 참고로 이미지를 배열로 다룰 때는 (높이, 너비, 채널) 순서(예: \`(H, W, 3)\`)로 저장하는 경우와, 파이토치처럼 (채널, 높이, 너비) 순서(\`(3, H, W)\`)로 저장하는 경우가 둘 다 흔히 쓰이는데, 두 순서를 서로 바꿔야 할 때는 \`arr.transpose(2, 0, 1)\`처럼 축의 순서 자체를 바꿔주는 \`transpose\`를 사용한다.
 
-[[practice]]
-
-### 실습: 수용영역 계산기와 "한 칸 이동"에 대한 풀링의 둔감함
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-
-# 1) 층 목록을 받아 수용영역 r과 점프 j를 차례로 갱신하는 계산기
-def receptive_field(layers):
-    r, j = 1, 1
-    for name, k, s in layers:
-        r, j = r + (k - 1) * j, j * s
-        print(f"{name:10s} (k={k}, s={s}) → 수용영역 {r:3d}, 점프 {j}")
-    return r
-
-receptive_field([("conv3x3", 3, 1), ("conv3x3", 3, 1), ("pool2x2", 2, 2),
-                 ("conv3x3", 3, 1), ("conv3x3", 3, 1), ("pool2x2", 2, 2),
-                 ("conv3x3", 3, 1)])
-
-# 2) 숫자 이미지를 오른쪽으로 한 칸 옮기면 특징은 얼마나 바뀌는가?
-def conv2d(x, k, padding=1):
-    x = np.pad(x, padding); K = k.shape[0]
-    return np.array([[np.sum(x[i:i+K, j:j+K] * k) for j in range(x.shape[1] - K + 1)]
-                     for i in range(x.shape[0] - K + 1)])
-def max_pool(a):
-    H, W = a.shape
-    return a.reshape(H // 2, 2, W // 2, 2).max(axis=(1, 3))
-
-x = load_digits().images[3]
-shifted = np.roll(x, 1, axis=1)                         # 오른쪽으로 한 칸 이동
-k = np.array([[1, 0, -1]] * 3, dtype=float)
-f, fs = np.maximum(0, conv2d(x, k)), np.maximum(0, conv2d(shifted, k))
-print("\\n특징 지도의 평균 차이     :", np.abs(f - fs).mean().round(3))
-print("풀링 1번 뒤의 평균 차이   :", np.abs(max_pool(f) - max_pool(fs)).mean().round(3))
-print("풀링 2번 뒤의 평균 차이   :", np.abs(max_pool(max_pool(f)) - max_pool(max_pool(fs))).mean().round(3))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 수용영역이 3 → 5로 커지고, 첫 풀링에서 6(점프 2)이 된 뒤로는 conv 한 층마다 $2 \\times 2 = 4$씩 커져 10 → 14, 두 번째 풀링에서 16(점프 4), 마지막 conv에서는 $2 \\times 4 = 8$이 늘어 24가 된다. 같은 $3\\times3$ conv라도 뒤에 올수록 수용영역을 더 크게 넓힌다. 한 칸 이동 실험에서는 풀링을 한 번 거친 것만으로는 차이가 약간 줄어드는 데 그치지만, 두 번 거치면 이 예에서는 차이가 0이 된다. 다운샘플링을 거듭할수록 작은 위치 변화에 둔감해진다(불변성). **해볼 것:** 마지막 conv를 두 개 더 쌓으면 수용영역이 얼마가 되는가? 먼저 손으로 예측하고 코드로 확인하자.
-:::
-
 ## ResNet: 잔차 연결 {#resnet}
 
 층을 단순히 깊게 쌓으면 신경망이 항상 더 똑똑해질 것 같지만 실제로는 그렇지 않다. 56층짜리 "민짜" 신경망이 20층짜리보다 오히려 학습 데이터에 대한 오차조차 더 높게 나오는 현상이 관찰됐는데, 이걸 degradation(성능 저하) 문제라 부른다. 흥미로운 점은 이것이 과적합이 아니라는 것이다. 과적합이라면 학습 오차는 낮은데 검증 오차만 높아야 하는데, 여기서는 학습 오차 자체가 더 높다. 즉 층을 늘렸더니 모델이 오히려 학습 자체를 제대로 못 하게 된 것이다. 흔히 기울기 소실이 원인이라고 오해하지만, ResNet 논문(He et al., 2015)은 BatchNorm으로 순전파·역전파 신호가 건강하게 유지되는 상태에서도 이 현상이 나타난다는 점을 들어 **기울기 소실보다는 최적화의 어려움**: 여러 비선형 층을 쌓은 망이 "적어도 얕은 망만큼" 하려면 추가된 층들이 항등함수를 근사해야 하는데, 경사하강법이 이를 쉽게 찾지 못한다는 것)으로 설명한다.
@@ -405,33 +316,6 @@ for x in [0.0, 1.0, 2.0, 5.0]:
 \`\`\`
 
 $x=5$에서도 \`F_prime(x)\`는 $0.075$ 밖에 안 될 만큼 작지만, \`dydx_numeric\`과 \`dydx_formula\`는 둘 다 $1.075$로 정확히 일치하며 항상 1보다 크다. $F$ 경로의 기울기가 거의 0이어도 identity shortcut이 더해주는 "+1" 덕분에 전체 기울기가 1 근처에 머문다는 것을 실제로 찍힌 숫자로 확인한 셈이다.
-
-[[practice]]
-
-### 실습: 50개 블록을 거친 기울기: 잔차 연결이 있을 때와 없을 때
-
-sigmoid·tanh처럼 포화되는 활성화를 쓰면 층마다의 국소 기울기가 1보다 작은 경우가 많다. 블록마다 국소 기울기가 0.25~1.0 사이에서 무작위로 정해지는 50층 네트워크를 흉내내, 입력까지 도달하는 기울기의 크기를 비교해보자. 잔차 연결이 없으면 기울기는 $\\prod_i F'_i$, 있으면 $\\prod_i (1 + F'_i)$인데, 학습 초기에 잔차 경로 $F$의 기울기가 작다면(여기서는 $\\pm 0.05$) 각 항이 1 근처가 된다.
-
-\`\`\`python
-import numpy as np
-
-rng = np.random.default_rng(0)
-n_blocks = 50
-local = rng.uniform(0.25, 1.0, n_blocks)         # 잔차 없는 층의 국소 기울기 (1보다 작은 경우가 많다)
-small = rng.uniform(-0.05, 0.05, n_blocks)       # 잔차 경로 F의 작은 기울기
-
-plain = np.cumprod(local)                         # 잔차 없음: 곱하기만
-residual = np.cumprod(1 + small)                  # 잔차 있음: (1 + F'_i)의 곱
-
-for depth in [1, 10, 20, 30, 50]:
-    print(f"{depth:2d}층까지: plain {plain[depth - 1]:.2e}   residual {residual[depth - 1]:.3f}")
-
-print("\\nlog(F'_i)의 평균 =", np.log(local).mean().round(3), "→ 층마다 약", np.exp(np.log(local).mean()).round(3), "배씩 곱해지는 셈")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 잔차 연결이 없으면 10층에서 이미 약 $7 \\times 10^{-3}$, 50층에서는 $10^{-11}$ 수준으로 기울기가 사라진다(층마다 평균 약 0.6배씩 곱해지는 셈). 잔차 연결이 있으면 50층을 지나도 0.8~1.4 정도로 1과 같은 자릿수에 머문다. **생각해볼 것:** \`local\`의 범위를 \`0.9~1.1\`로 좁히면 plain의 결과는 어떻게 되는가? "초기화를 아주 정확히 맞추거나(3주차) 잔차 연결을 쓰거나"라는 두 처방이 같은 문제를 푼다는 것을 연결해보자.
-:::
 
 ## 정규화·일반화 기법과 CIFAR-10 학습 {#regularization}
 
@@ -496,7 +380,7 @@ print("dropout 적용 후:", h_dropped)
 | 데이터 증강 | 뒤집기·크롭·컬러지터로 데이터 다양화 | 라벨 보존 변환만 |
 | Early Stopping | 검증 손실 상승 시 중단 | 검증셋 필요 |
 
-표에서 특히 주의할 항목은 BatchNorm과 Dropout의 "주의" 칸이다. 두 기법 모두 학습(train) 때와 평가(eval) 때 서로 다르게 동작하도록 설계되어 있다. BatchNorm은 학습 중에는 그때그때의 배치 통계를 쓰지만, 평가할 때는 배치 하나(심지어 이미지 한 장)에 대해서도 안정적인 결과를 내야 하므로 학습 내내 누적해온 이동평균(running mean, running variance)을 사용한다. Dropout은 평가 때 뉴런을 끄지 않고 전부 사용한다(inverted dropout은 학습 때 이미 $1/(1-p)$로 보정했으므로 평가 때는 추가 보정이 없다). 파이토치에서는 이 전환이 \`net.train()\`과 \`net.eval()\` 호출 하나로 자동 처리되는데, 이걸 깜빡하면 어떤 일이 벌어지는지는 바로 아래 실습에서 직접 확인해본다.
+표에서 특히 주의할 항목은 BatchNorm과 Dropout의 "주의" 칸이다. 두 기법 모두 학습(train) 때와 평가(eval) 때 서로 다르게 동작하도록 설계되어 있다. BatchNorm은 학습 중에는 그때그때의 배치 통계를 쓰지만, 평가할 때는 배치 하나(심지어 이미지 한 장)에 대해서도 안정적인 결과를 내야 하므로 학습 내내 누적해온 이동평균(running mean, running variance)을 사용한다. Dropout은 평가 때 뉴런을 끄지 않고 전부 사용한다(inverted dropout은 학습 때 이미 $1/(1-p)$로 보정했으므로 평가 때는 추가 보정이 없다). 파이토치에서는 이 전환이 \`net.train()\`과 \`net.eval()\` 호출 하나로 자동 처리되는데, 이걸 깜빡하면 어떤 일이 벌어지는지는 적용과 복습의 코딩 실습에서 직접 확인할 수 있다.
 
 먼저 데이터를 준비하는 부분이다. 학습용 변환(tf_tr)에는 RandomCrop과 RandomHorizontalFlip이라는 데이터 증강이 들어가 있는 반면, 평가용 변환(tf_te)에는 이런 무작위 변형이 전혀 없다는 점을 눈여겨보자. 증강은 모델이 "같은 물체를 여러 각도·위치에서 봐도 같은 답을 내야 한다"는 걸 배우게 하려는 장치이므로 학습 데이터에만 적용하고, 실력을 재는 평가 데이터는 있는 그대로 정직하게 채점해야 한다. 만약 평가 데이터에도 크롭이나 뒤집기를 적용한다면 매번 답이 흔들려서 모델의 실제 성능을 잴 수 없게 된다.
 
@@ -543,39 +427,6 @@ for ep in range(10):
 \`net.eval()\`을 부르지 않고 그대로 평가하면 두 가지 문제가 동시에 생긴다. 첫째, BatchNorm이 테스트 배치(심지어 이미지 한 장짜리 배치)의 통계로 정규화를 시도하면서 배치 크기가 작을수록 평균·분산 추정이 불안정해지고, 같은 이미지를 넣어도 배치 구성에 따라 다른 예측이 나올 수 있다. 둘째, Dropout이 여전히 뉴런을 무작위로 꺼버리므로 같은 입력을 두 번 넣어도 답이 달라지는, 재현 불가능한 모델이 된다. 정확도가 이상하게 들쭉날쭉하거나 학습 때보다 뚜렷이 낮게 나온다면, 가장 먼저 \`net.eval()\`을 잊지 않았는지 확인하는 습관을 들이자.
 :::
 
-[[practice]]
-
-### 실습: Dropout의 기대값 보존과 "라벨을 보존하는" 데이터 증강
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-
-rng = np.random.default_rng(0)
-h = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])
-p = 0.5
-
-# 1) inverted dropout을 1만 번 적용해 평균을 내면 원래 값과 같아지는가?
-outs = np.array([h * (rng.random(h.shape) > p) / (1 - p) for _ in range(10_000)])
-print("원래 값        :", h)
-print("dropout 평균   :", outs.mean(axis=0).round(2))
-print("한 번의 결과   :", outs[0])
-
-# 2) 증강은 "라벨이 바뀌지 않는" 변환만 써야 한다
-digits = load_digits()
-def show(a):
-    for row in a: print("".join(" .:-=+*#%@"[int(v / 16 * 9)] * 2 for v in row))
-
-six = digits.images[digits.target.tolist().index(6)]
-print("\\n원본 (레이블 6)"); show(six)
-print("\\n위아래 뒤집기: 이것도 여전히 6인가?"); show(np.flipud(six))
-print("\\n한 칸 오른쪽 이동: 레이블이 보존되는 증강"); show(np.roll(six, 1, axis=1))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 1만 번 평균은 원래 값 \`[1, 2, 3, 4, 5, 6]\`과 거의 같다. 그래서 평가 때 보정이 필요 없다. 숫자 6을 위아래로 뒤집으면 9처럼 보인다. 고양이 사진에서는 좌우 뒤집기가 안전한 증강이지만, 숫자 데이터에서는 뒤집기가 **라벨을 바꿔버리는** 잘못된 증강이 될 수 있다. **생각해볼 것:** CIFAR-10(비행기, 자동차, 새, 고양이 …)에 좌우 뒤집기는 괜찮은데 위아래 뒤집기는 왜 잘 쓰지 않을까? 증강은 반드시 훈련 데이터에만 적용한다는 원칙도 다시 확인하자.
-:::
-
 ## 전이학습과 학습 진단 레시피 {#transfer-diagnostics}
 
 전이학습(transfer learning)은 대규모 데이터셋에서 미리 학습된 모델의 가중치를 그대로, 혹은 일부만 추가로 조정해서 다른(대개 데이터가 적은) 문제에 재사용하는 방법이다. ImageNet처럼 수백만 장의 이미지로 이미 학습된 CNN은, 앞쪽 층에서 가장자리·질감·색 대비처럼 특정 클래스에 국한되지 않는 저수준 시각 특징을 검출하도록 이미 학습되어 있다. 우리가 가진 데이터(예를 들어 CIFAR-10의 클래스당 수백 장)로 이런 저수준 특징 추출 층들을 무작위 초기화 상태부터 다시 학습시키는 것은 연산 낭비일 뿐 아니라, 데이터 수가 적어 오히려 과적합만 심해질 위험이 크다.
@@ -604,51 +455,6 @@ m.fc = nn.Linear(512, 10)   # 이후 32x32를 128x128로 리사이즈하여 fc�
 3. 배치 하나에 일부러 **과적합**시켜본다. 데이터 몇 개짜리 미니배치 하나조차 외우지 못한다면, 이는 데이터가 부족해서가 아니라 파이프라인 어딘가(기울기가 안 흐른다거나, 레이블이 밀렸다거나)에 버그가 있다는 강력한 신호다.
 4. train/val 곡선으로 과·소적합을 진단하고 그에 맞춰 모델 용량이나 정규화 강도를 조절한다.
 5. 한 번에 하나만 바꾼다(ablation): 여러 요소를 동시에 바꾸면 무엇이 효과를 냈는지 알 수 없게 되므로, 원인과 결과를 명확히 추적하려면 반드시 지켜야 하는 원칙이다.
-
-[[practice]]
-
-### 실습: Karpathy 레시피의 두 가지 검사를 직접 해보기
-
-손글씨 숫자(10클래스)를 분류하는 softmax 회귀(층 하나짜리 신경망)로 레시피 2번(초기 손실 검사)과 3번(배치 하나 과적합)을 직접 해보자.
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-
-digits = load_digits()
-X, y = digits.data / 16.0, digits.target            # (1797, 64), 0~9
-rng = np.random.default_rng(0)
-
-def softmax(z):
-    z = z - z.max(axis=1, keepdims=True)             # 수치 안정성을 위해 최댓값을 빼준다
-    e = np.exp(z)
-    return e / e.sum(axis=1, keepdims=True)
-
-def cross_entropy(P, y):
-    return -np.log(P[np.arange(len(y)), y] + 1e-12).mean()
-
-# 레시피 2: 가중치를 아주 작게 초기화하면 모든 클래스에 약 1/10을 주므로 손실 ≈ ln 10
-W, b = rng.normal(0, 0.01, (64, 10)), np.zeros(10)
-print(f"초기 손실 = {cross_entropy(softmax(X @ W + b), y):.4f}, ln(10) = {np.log(10):.4f}")
-
-W_big = rng.normal(0, 5.0, (64, 10))                 # 일부러 너무 크게 초기화하면?
-print(f"큰 초기화의 초기 손실 = {cross_entropy(softmax(X @ W_big), y):.2f}  ← 레시피 2가 잡아내는 버그 신호")
-
-# 레시피 3: 샘플 10개짜리 배치 하나를 100% 외울 수 있는가?
-Xs, ys = X[:10], y[:10]
-W, b = rng.normal(0, 0.01, (64, 10)), np.zeros(10)
-for step in range(300):
-    P = softmax(Xs @ W + b)
-    G = P.copy(); G[np.arange(10), ys] -= 1; G /= 10   # softmax+교차엔트로피의 기울기 = P - 원핫
-    W -= 1.0 * Xs.T @ G
-    b -= 1.0 * G.sum(axis=0)
-P = softmax(Xs @ W + b)
-print(f"배치 10개 과적합: 정확도 {np.mean(P.argmax(1) == ys):.2f}, 손실 {cross_entropy(P, ys):.4f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 작은 초기화의 초기 손실은 2.30 근처로 $\\ln 10$과 거의 같고, 큰 초기화에서는 훨씬 큰 값이 나온다. 배치 10개는 300스텝 안에 정확도 1.00, 손실 0.01 수준까지 외워진다. **해볼 것:** 기울기 줄에서 \`G[np.arange(10), ys] -= 1\`을 실수로 지워보자. 과적합 검사가 어떻게 실패하는가? "배치 하나도 못 외우면 파이프라인 버그"라는 레시피 3의 의미가 이것이다.
-:::
 
 ## CNN의 계보와 응용: LeNet부터 ViT까지 {#cnn-history-applications}
 
@@ -706,39 +512,6 @@ height: 456
 \`\`\`
 
 CNN의 합성곱 연산은 애초에 "가까운 픽셀끼리만 본다"는 지역성 귀납편향을 구조 자체에 박아 넣은 것이었다(「합성곱」 단계). ViT는 이미지를 패치로 자르는 첫 단계를 빼면 이 귀납편향을 대부분 덜어내고, 패치들 사이의 관계를 5주차에서 배울 Self-Attention이 데이터로부터 학습하도록 맡긴다. 그 대가로 ViT는 CNN보다 훨씬 많은 데이터로 사전학습해야 비슷하거나 더 나은 성능을 낼 수 있지만(귀납편향이 적을수록 그 편향이 주던 지름길을 데이터 양으로 메꿔야 한다는 것을 6주차 스케일링 법칙에서 다시 만나게 될 것이다), 일단 그 벽을 넘고 나면 이미지·텍스트를 가리지 않고 같은 Self-Attention 메커니즘 하나로 다룰 수 있다는 강력한 장점을 얻는다. 지금은 "이미지도 패치로 잘라 Transformer에 넣을 수 있다"는 아이디어만 기억해 두고, 그 Self-Attention이 정확히 어떻게 계산되는지는 다음 주에 손으로 직접 굴려본다.
-
-[[practice]]
-
-### 실습: ViT처럼 이미지를 패치 토큰으로 자르기
-
-ViT의 첫 단계는 이미지를 겹치지 않는 정사각형 패치로 자르고, 각 패치를 한 줄로 펴서 "토큰 벡터"로 만드는 것이다. $8\\times8$ 숫자 이미지를 $4\\times4$ 패치 4개로 잘라보고, $224\\times224$ 이미지를 $16\\times16$ 패치로 자르면 토큰이 몇 개가 되는지도 계산해보자.
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-
-img = load_digits().images[0]                     # (8, 8)
-P = 4                                             # 패치 한 변의 길이
-H, W = img.shape
-patches = img.reshape(H // P, P, W // P, P).transpose(0, 2, 1, 3).reshape(-1, P * P)
-print("패치 토큰 행렬 shape:", patches.shape)      # (패치 수, 패치 하나의 픽셀 수)
-for i, p in enumerate(patches):
-    print(f"토큰 {i}: {p.astype(int)}")
-
-# 이 토큰들에 학습 가능한 행렬 E(16 → d)를 곱하면 "패치 임베딩"이 된다
-rng = np.random.default_rng(0)
-d = 8
-E = rng.normal(0, 0.1, (P * P, d))
-print("\\n임베딩 후 shape:", (patches @ E).shape)
-
-def n_tokens(img_size, patch):  return (img_size // patch) ** 2
-print("224x224, 16x16 패치 → 토큰 수:", n_tokens(224, 16))
-print("VGG식 3x3 세 층 vs 7x7 한 층 (C=64):", 3 * (9 * 64 * 64), "vs", 49 * 64 * 64)
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 패치 토큰 행렬은 \`(4, 16)\`, 임베딩 후 \`(4, 8)\`, $224\\times224$ 이미지는 $14 \\times 14 = 196$개의 토큰이 된다. 파라미터 비교는 110,592 vs 200,704로 본문 예제와 같다. **생각해볼 것:** 패치를 자르고 한 줄로 펴는 순간 "패치 안에서 어느 픽셀이 어느 픽셀 옆에 있었는지"라는 정보는 어디에 남아 있는가? ViT가 위치 정보(position embedding)를 따로 더해야 하는 이유와 연결해보자.
-:::
 
 ## 생성 모델: Autoencoder·VAE·GAN·Diffusion {#generative-models}
 
@@ -799,45 +572,6 @@ VAE의 학습 목표(ELBO)와 재매개변수화 트릭, 확산 모델의 노이
 
 지금까지 설명한 VAE·GAN·Diffusion Model은 전부 "어떤 그럴듯한 데이터를 만들어내라"는 조건 없는(unconditional) 생성이었다. 실제로 우리가 접하는 이미지 생성 서비스는 대부분 "고양이가 우주복을 입고 있는 그림을 그려줘"처럼 텍스트로 원하는 결과를 지정한다. 이렇게 원하는 조건(condition)을 함께 입력해 그 조건에 맞는 데이터를 생성하도록 만드는 것을 조건부 생성(conditional generation)이라 부른다. Text-to-Image 모델은 앞서 설명한 Diffusion Model의 Reverse Diffusion 과정에 문장을 벡터로 바꾼 텍스트 임베딩을 각 노이즈 제거 단계마다 함께 넣어주어, 모델이 "지금 이 텍스트 조건에 맞는 노이즈를 예측하라"는 조건부 Noise Prediction을 학습하게 만든 것이다. Image-to-Image는 조건이 텍스트 대신(혹은 텍스트와 함께) 원본 이미지 자체가 되는 경우로, 이미 있는 이미지의 스타일을 바꾸거나 일부를 수정하는 데 같은 원리가 쓰인다. 텍스트와 이미지를 함께 다루는 이 조건부 생성의 메커니즘은 7주차 멀티모달 단계에서 텍스트·이미지 임베딩을 어떻게 하나의 공간에 정렬시키는지를 배우면서 조금 더 구체적으로 다시 다루게 된다.
 
-[[practice]]
-
-### 실습: PCA를 "선형 오토인코더"로, 그리고 순확산 과정 흉내내기
-
-PCA는 인코더와 디코더가 모두 선형인 가장 단순한 오토인코더로 볼 수 있다. 64차원 숫자 이미지를 $k$차원으로 압축했다가 복원할 때 복원 오차가 어떻게 변하는지 보자. 이어서 Diffusion의 순확산 공식 $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\epsilon$으로 이미지에 노이즈를 단계적으로 섞어, 원본과의 상관계수가 어떻게 떨어지는지 확인한다.
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-from sklearn.decomposition import PCA
-
-digits = load_digits()
-X = digits.data / 16.0                                  # (1797, 64)
-
-print(f"{'잠재 차원 k':>10} {'복원 MSE':>9} {'보존된 분산':>10}")
-for k in [2, 5, 10, 20, 40]:
-    pca = PCA(n_components=k).fit(X)                     # 인코더: 64 → k
-    X_rec = pca.inverse_transform(pca.transform(X))      # 디코더: k → 64
-    print(f"{k:10d} {np.mean((X - X_rec) ** 2):9.4f} {pca.explained_variance_ratio_.sum():10.3f}")
-
-# 순확산: 원본 x0에 노이즈를 점점 더 섞는다 (학습되는 파라미터 없음)
-rng = np.random.default_rng(0)
-x0 = digits.images[0] / 16.0 * 2 - 1                     # 픽셀을 [-1, 1] 범위로
-betas = np.linspace(1e-4, 0.35, 10)                      # 스텝마다 섞을 노이즈의 양
-alpha_bar = np.cumprod(1 - betas)                        # ᾱ_t: 원본 신호가 남아 있는 비율
-print(f"\\n{'t':>2} {'ᾱ_t':>6} {'원본과의 상관(300회 평균)':>18}")
-for t in range(10):
-    corrs = []
-    for _ in range(300):                                   # 픽셀이 64개뿐이라 한 번의 샘플은 들쭉날쭉하므로 평균을 낸다
-        eps = rng.normal(size=x0.shape)
-        xt = np.sqrt(alpha_bar[t]) * x0 + np.sqrt(1 - alpha_bar[t]) * eps
-        corrs.append(np.corrcoef(x0.ravel(), xt.ravel())[0, 1])
-    print(f"{t:2d} {alpha_bar[t]:6.3f} {np.mean(corrs):18.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 잠재 차원이 2 → 40으로 커질수록 복원 오차가 줄고 보존된 분산이 약 0.29 → 0.99로 늘어난다. 차원을 줄일수록 정보를 잃는다는 오토인코더의 트레이드오프다. 순확산에서는 $\\bar\\alpha_t$가 1에서 약 0.13까지 줄면서 원본과의 평균 상관이 1에서 약 0.25로 꾸준히 떨어진다. Reverse Diffusion은 이 과정을 거꾸로, 매 스텝 섞인 노이즈 $\\epsilon$을 예측해 걷어내도록 학습한다. **생각해볼 것:** PCA로 2차원까지 줄인 잠재공간에서 아무 점이나 골라 복원하면 그럴듯한 숫자가 나올까? 일반 오토인코더가 "생성"에 약한 이유와 VAE의 KL 항이 하는 일을 연결해보자.
-:::
-
 ## 탐지·분할의 핵심 계산: IoU·NMS·AP·Dice {#detection-segmentation}
 
 「CNN의 계보와 응용」 단계에서 객체 탐지(Object Detection)와 의미론적 분할(Semantic Segmentation)이 분류와 어떻게 다른 문제인지 개념으로 구분했다. 이 단계는 그 두 과제의 결과를 실제로 계산하고 평가하는 네 가지 도구를 다룬다. 모델 구조가 아무리 달라도(YOLO, Faster R-CNN, DETR, U-Net) 이 계산들은 공통으로 쓰이므로, 논문이나 대회 결과표를 읽으려면 반드시 알아야 한다.
@@ -866,60 +600,6 @@ $$\\text{Dice}(A, B) = \\frac{2|A \\cap B|}{|A| + |B|}$$
 
 Dice와 IoU는 $\\text{Dice} = \\frac{2\\,\\text{IoU}}{1 + \\text{IoU}}$로 일대일 대응하므로 순위는 같고, Dice가 항상 IoU 이상이다. Dice는 작은 구조물(종양처럼 전체 픽셀의 1%도 안 되는 영역)에서도 "배경을 맞힌 픽셀 수"에 휘둘리지 않는다는 장점이 있어, 손실함수(Dice loss)로도 쓰인다. 픽셀 정확도(맞힌 픽셀의 비율)는 배경이 99%인 영상에서 "전부 배경"만 답해도 99%가 나오는, 2주차의 정확도 함정을 그대로 가진 지표다.
 
-[[practice]]
-
-### 실습: IoU·NMS·Dice·AP 직접 계산하기
-
-본문의 IoU 예제를 확인하고, 두 물체 주위에 겹친 상자 5개에 NMS를 적용하고, $3 \\times 3$ 마스크 두 개의 IoU와 Dice를 구한 뒤, 점수순으로 정렬한 탐지 결과 5개의 Precision·Recall과 AP를 계산한다. 실행 전에 NMS가 상자 몇 개를 남길지 예측해 보자.
-
-\`\`\`python
-import numpy as np
-
-# 1) IoU: 두 상자 (x1, y1, x2, y2)의 겹친 넓이 / 합친 넓이
-def iou(a, b):
-    ix1, iy1 = max(a[0], b[0]), max(a[1], b[1])
-    ix2, iy2 = min(a[2], b[2]), min(a[3], b[3])
-    inter = max(0, ix2 - ix1) * max(0, iy2 - iy1)
-    area = lambda r: (r[2] - r[0]) * (r[3] - r[1])
-    return inter / (area(a) + area(b) - inter)
-
-print("IoU 예제:", round(iou((0, 0, 4, 4), (2, 2, 6, 6)), 4))           # 4 / 28
-
-# 2) NMS: 점수 높은 상자부터 고르고, 그 상자와 IoU가 임계값을 넘는 상자는 지운다
-def nms(boxes, scores, thr=0.5):
-    order = list(np.argsort(scores)[::-1])
-    keep = []
-    while order:
-        i = order.pop(0)
-        keep.append(int(i))
-        order = [j for j in order if iou(boxes[i], boxes[j]) <= thr]
-    return keep
-
-boxes = [(10, 10, 50, 50), (12, 12, 52, 52), (100, 100, 140, 140), (11, 9, 49, 51), (98, 102, 139, 141)]
-scores = np.array([0.9, 0.8, 0.75, 0.6, 0.7])
-print("NMS가 남긴 상자:", nms(boxes, scores))
-
-# 3) 분할 평가: 픽셀 단위 IoU와 Dice
-pred = np.zeros((6, 6), int); pred[1:4, 1:4] = 1                       # 예측 마스크 9픽셀
-true = np.zeros((6, 6), int); true[2:5, 2:5] = 1                       # 정답 마스크 9픽셀
-inter, union = np.sum(pred & true), np.sum(pred | true)
-print(f"마스크 IoU = {inter}/{union} = {inter / union:.3f}, Dice = {2 * inter}/{pred.sum() + true.sum()} = {2 * inter / (pred.sum() + true.sum()):.3f}")
-
-# 4) 탐지 결과 5개를 점수순으로 정렬해 Precision·Recall과 AP(정밀도의 평균) 계산
-is_tp = np.array([1, 1, 0, 1, 0])             # 점수 높은 순서대로 정답과 IoU ≥ 0.5로 맞았는지
-n_gt = 4                                      # 정답 물체는 4개
-tp_cum = np.cumsum(is_tp)
-precision = tp_cum / np.arange(1, 6)
-recall = tp_cum / n_gt
-print("Precision:", precision.round(3), " Recall:", recall.round(3))
-ap = np.sum(precision[is_tp == 1]) / n_gt     # 맞힌 지점의 정밀도를 모아 정답 수로 나눈다
-print(f"AP = {ap:.4f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** IoU 예제는 $4/28 \\approx 0.1429$. NMS는 두 물체에 상자 하나씩, \`[0, 2]\`만 남긴다(상자 1·3은 상자 0과, 상자 4는 상자 2와 IoU가 0.5를 넘는다). 한 칸씩 어긋난 $3\\times3$ 마스크는 IoU $4/14 \\approx 0.286$, Dice $8/18 \\approx 0.444$로, Dice가 IoU보다 크고 공식 $2\\cdot\\text{IoU}/(1+\\text{IoU})$와 맞는다. 탐지 결과는 Precision \`[1, 1, 0.667, 0.75, 0.6]\`, Recall \`[0.25, 0.5, 0.5, 0.75, 0.75]\`, AP $= (1 + 1 + 0.75)/4 = 0.6875$다. 정답 4개 중 하나는 끝내 찾지 못했으므로 Recall이 0.75에서 멈춘다. **해볼 것:** NMS 임계값을 0.95로 올리면 몇 개가 남는가? 반대로 0.0으로 내리면?
-:::
-
 ## 합성곱의 계산: im2col·역전파·depthwise 분리 {#conv-as-matmul}
 
 핵심 과정에서는 이중 반복문으로 합성곱을 구현했다. 실제 프레임워크는 이렇게 계산하지 않는다. 이 단계는 합성곱이 GPU에서 어떻게 **행렬 곱 하나**로 바뀌는지, 합성곱의 역전파가 왜 **또 하나의 합성곱**인지, 그리고 모바일 기기용 모델이 연산량을 어떻게 10분의 1 가까이 줄이는지(depthwise separable convolution)를 다룬다.
@@ -942,60 +622,6 @@ print(f"AP = {ap:.4f}")
 ### depthwise separable convolution
 
 표준 $3\\times3$ 합성곱은 공간 패턴($3\\times3$ 이웃)과 채널 결합(모든 입력 채널 섞기)을 한 번에 한다. MobileNet(Howard et al., 2017)은 이것을 두 단계로 나눈다. ① **depthwise**: 채널마다 따로 $3\\times3$ 필터 하나씩(채널끼리 섞지 않음), ② **pointwise**: $1\\times1$ 합성곱으로 채널만 섞기. 파라미터는 $K^2C_{in}C_{out}$에서 $K^2C_{in} + C_{in}C_{out}$으로 줄고, 비율은 대략 $\\frac{1}{C_{out}} + \\frac{1}{K^2}$이다. $K = 3$이면 8~9배 가까이 줄어든다. 표현력이 조금 줄지만 휴대폰에서 실시간으로 돌아가는 모델(MobileNet, EfficientNet)의 기본 부품이 되었고, 이 "공간과 채널을 분리한다"는 발상은 Transformer의 어텐션(토큰 섞기)과 MLP(채널 섞기) 분업에도 그대로 이어진다.
-
-[[practice]]
-
-### 실습: im2col, 합성곱의 역전파, depthwise 분리의 절약
-
-① im2col로 만든 행렬 곱이 핵심 과정의 반복문 합성곱과 같은지 확인한다. ② 합성곱의 두 기울기 공식(입력: 뒤집은 커널로 full 합성곱, 커널: 입력과 기울기의 합성곱)을 수치미분으로 검증한다. ③ $56 \\times 56$, 128채널 층에서 표준 합성곱과 depthwise separable 합성곱의 파라미터·연산량을 비교한다. 실행 전에 ③에서 몇 배나 줄어들지 예측해 보자.
-
-\`\`\`python
-import numpy as np
-
-def conv2d_loop(x, k):                                   # 핵심 과정의 반복문 합성곱(stride 1, padding 0)
-    K = k.shape[0]
-    H, W = x.shape[0] - K + 1, x.shape[1] - K + 1
-    return np.array([[np.sum(x[i:i + K, j:j + K] * k) for j in range(W)] for i in range(H)])
-
-def im2col(x, K):
-    """모든 K×K 창을 한 줄로 펴서 쌓는다: (창 개수, K*K)"""
-    H, W = x.shape[0] - K + 1, x.shape[1] - K + 1
-    return np.array([x[i:i + K, j:j + K].ravel() for i in range(H) for j in range(W)])
-
-rng = np.random.default_rng(0)
-x, k = rng.normal(size=(6, 6)), rng.normal(size=(3, 3))
-y = (im2col(x, 3) @ k.ravel()).reshape(4, 4)            # 합성곱 = 행렬 곱 하나
-print("im2col 합성곱이 반복문과 같은가?", np.allclose(y, conv2d_loop(x, k)))
-
-# 역전파: L = sum(y * G)일 때 dL/dx = G를 0으로 감싼 뒤 뒤집은 커널로 합성곱, dL/dk = x와 G의 합성곱
-G = rng.normal(size=(4, 4))                              # 위에서 내려온 기울기 dL/dy
-dx = conv2d_loop(np.pad(G, 2), k[::-1, ::-1])            # "full" 합성곱 + 180° 뒤집은 커널
-dk = conv2d_loop(x, G)
-num_dx = np.zeros_like(x)
-for i in range(6):
-    for j in range(6):
-        e = np.zeros_like(x); e[i, j] = 1e-6
-        num_dx[i, j] = (np.sum(conv2d_loop(x + e, k) * G) - np.sum(conv2d_loop(x - e, k) * G)) / 2e-6
-num_dk = np.zeros_like(k)
-for i in range(3):
-    for j in range(3):
-        e = np.zeros_like(k); e[i, j] = 1e-6
-        num_dk[i, j] = (np.sum(conv2d_loop(x, k + e) * G) - np.sum(conv2d_loop(x, k - e) * G)) / 2e-6
-print("dL/dx 공식 = 수치미분?", np.allclose(dx, num_dx, atol=1e-6), " dL/dk 공식 = 수치미분?", np.allclose(dk, num_dk, atol=1e-6))
-
-# 연산량과 파라미터: 표준 합성곱 vs depthwise separable (MobileNet)
-H = W = 56; C_in = C_out = 128; K = 3
-std_params = K * K * C_in * C_out
-sep_params = K * K * C_in + C_in * C_out                # 채널별 3×3 + 1×1로 채널 섞기
-std_flops = 2 * H * W * std_params                      # 곱셈+덧셈 = 2 FLOPs, 출력 위치마다
-sep_flops = 2 * H * W * sep_params
-print(f"표준 3×3 conv : 파라미터 {std_params:,}, FLOPs {std_flops / 1e9:.2f} G")
-print(f"depthwise sep.: 파라미터 {sep_params:,}, FLOPs {sep_flops / 1e9:.2f} G  ({std_params / sep_params:.1f}배 절약)")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 세 비교가 모두 \`True\`다. 합성곱의 역전파가 합성곱만으로 정확히 계산된다. 표준 $3\\times3$ 합성곱(128 → 128)은 파라미터 147,456개, 약 0.92 GFLOPs이고, depthwise separable은 파라미터 17,536개, 약 0.11 GFLOPs로 약 8.4배 줄어든다(공식 $\\frac{1}{128} + \\frac{1}{9} \\approx 0.119$의 역수). **설명해볼 것:** 같은 층에서 입력 해상도를 $112\\times112$로 두 배 키우면 파라미터와 FLOPs는 각각 몇 배가 되는가?
-:::
 
 ## 생성 모델의 수학: ELBO·재매개변수화·확산의 노이즈 예측 {#generative-math}
 
@@ -1025,62 +651,11 @@ DDPM(Ho et al., 2020)의 순방향 과정은 $q(x_t \\mid x_{t-1}) = \\mathcal{N
 
 $$q(x_t \\mid x_0) = \\mathcal{N}\\!\\left(\\sqrt{\\bar\\alpha_t}\\,x_0,\\ (1-\\bar\\alpha_t)\\,I\\right), \\qquad \\bar\\alpha_t = \\prod_{s=1}^{t}(1-\\beta_s)$$
 
-즉 $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon$이다(「생성 모델」 실습에서 쓴 바로 그 식). 확산 모델도 ELBO를 최대화하도록 유도되는데, 그 ELBO를 시점별 KL 항으로 펼치고 정리하면 놀랍도록 단순한 손실로 줄어든다.
+즉 $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon$이다. 확산 모델도 ELBO를 최대화하도록 유도되는데, 그 ELBO를 시점별 KL 항으로 펼치고 정리하면 놀랍도록 단순한 손실로 줄어든다.
 
 $$\\mathcal{L}_{\\text{simple}} = \\mathbb{E}_{t,\\,x_0,\\,\\varepsilon}\\big\\lVert \\varepsilon - \\varepsilon_\\theta(\\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon,\\ t)\\big\\rVert^2$$
 
 무작위 시점 $t$를 고르고, 위 식으로 노이즈를 섞은 뒤, 신경망이 섞인 노이즈 $\\varepsilon$을 맞히게 하는 MSE다. 노이즈를 정확히 맞히면 $x_0 = (x_t - \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon)/\\sqrt{\\bar\\alpha_t}$로 원본을 되찾을 수 있다. 이 노이즈 예측은 데이터 분포의 로그밀도 기울기(score) $\\nabla_x \\log p(x_t)$를 추정하는 것과 같다는 것이 알려져 있어(Song et al., 2021), 확산 모델은 "점수 기반 생성 모델"이라고도 불린다.
-
-[[practice]]
-
-### 실습: KL 닫힌 형태, 재매개변수화의 분산, 확산의 닫힌 형태
-
-① $\\mathcal{N}(1.5, 0.5^2)$와 $\\mathcal{N}(0, 1)$의 KL을 닫힌 형태와 몬테카를로로 비교한다. ② $\\mathbb{E}_{z\\sim\\mathcal{N}(\\mu,1)}[z^2]$의 $\\mu$에 대한 기울기(정답 $2\\mu$)를 재매개변수화와 점수 함수로 각각 추정해 분산을 비교한다. ③ 300스텝 동안 노이즈를 한 스텝씩 더한 결과와 닫힌 형태 $q(x_t \\mid x_0)$의 평균·분산을 비교하고, ④ 노이즈를 맞히면 원본이 정확히 복원되는지 확인한다. 실행 전에 ②에서 어느 추정의 표준편차가 더 클지 예측해 보자.
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-# 1) 가우시안 KL의 닫힌 형태: KL(N(μ, σ²) ‖ N(0, 1)) = ½(μ² + σ² − 1 − log σ²)
-mu, sigma = 1.5, 0.5
-closed = 0.5 * (mu ** 2 + sigma ** 2 - 1 - np.log(sigma ** 2))
-z = rng.normal(mu, sigma, 200_000)                       # q에서 뽑아 log q − log p의 평균
-log_q = -0.5 * ((z - mu) / sigma) ** 2 - np.log(sigma) - 0.5 * np.log(2 * np.pi)
-log_p = -0.5 * z ** 2 - 0.5 * np.log(2 * np.pi)
-print(f"KL 닫힌 형태 {closed:.4f}, 몬테카를로 추정 {np.mean(log_q - log_p):.4f}")
-
-# 2) 재매개변수화 vs 점수 함수(REINFORCE): E_{z~N(μ,1)}[z²]의 μ에 대한 기울기(정답 2μ)
-mu, n, trials = 1.0, 100, 2000
-reparam, score = [], []
-for _ in range(trials):
-    eps = rng.normal(size=n)
-    z = mu + eps                                          # z = μ + ε: 무작위성을 ε로 밀어낸다
-    reparam.append(np.mean(2 * z))                        # d(z²)/dμ = 2z · dz/dμ = 2z
-    score.append(np.mean(z ** 2 * (z - mu)))              # f(z) · d log q(z)/dμ
-print(f"정답 {2 * mu:.1f} | 재매개변수화 평균 {np.mean(reparam):.3f}, 표준편차 {np.std(reparam):.3f}"
-      f" | 점수 함수 평균 {np.mean(score):.3f}, 표준편차 {np.std(score):.3f}")
-
-# 3) 확산의 순방향 닫힌 형태: 한 스텝씩 노이즈를 더한 것과 x_t = √ᾱ x0 + √(1−ᾱ) ε의 분포가 같다
-betas = np.linspace(1e-4, 0.02, 1000)
-alpha_bar = np.cumprod(1 - betas)
-x0 = 0.8
-xs = np.full(50_000, x0)
-for t in range(300):                                      # 300스텝 반복
-    xs = np.sqrt(1 - betas[t]) * xs + np.sqrt(betas[t]) * rng.normal(size=xs.shape)
-print(f"300스텝 반복: 평균 {xs.mean():.4f}, 분산 {xs.var():.4f} | 닫힌 형태: 평균 {np.sqrt(alpha_bar[299]) * x0:.4f}, 분산 {1 - alpha_bar[299]:.4f}")
-
-# 4) 노이즈 예측 손실: 노이즈 ε을 정확히 맞히면 x0를 정확히 되찾는다
-t = 299
-eps = rng.normal(size=5)
-x0v = np.array([0.8, -0.3, 0.1, 0.5, -0.9])
-xt = np.sqrt(alpha_bar[t]) * x0v + np.sqrt(1 - alpha_bar[t]) * eps
-x0_hat = (xt - np.sqrt(1 - alpha_bar[t]) * eps) / np.sqrt(alpha_bar[t])
-print("x0 복원:", np.round(x0_hat, 6))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** ① 닫힌 형태 1.4431, 몬테카를로 약 1.442로 일치한다. ② 두 추정 모두 평균이 2.0으로 편향이 없지만, 표준편차는 재매개변수화 약 0.20, 점수 함수 약 0.54로 점수 함수가 2.7배쯤 흔들린다. ③ 300스텝 반복의 평균 약 0.505, 분산 약 0.600이 닫힌 형태(0.5037, 0.6036)와 몬테카를로 오차 안에서 같다. ④ 노이즈를 정확히 알면 원본 \`[0.8, -0.3, 0.1, 0.5, -0.9]\`가 그대로 복원된다. **설명해볼 것:** 학습 중에 매 스텝 무작위 $t$를 골라 한 번에 $x_t$를 만들 수 있다는 사실(③)이 확산 모델 학습을 왜 효율적으로 만드는가?
-:::
 
 ## 적대적 예제: 선형성 가설과 FGSM {#adversarial-examples}
 
@@ -1105,54 +680,6 @@ $$x_{\\text{adv}} = \\operatorname{clip}_{[0,1]}\\big(x + \\varepsilon\\,\\opera
 ### 왜 중요한가
 
 적대적 예제는 정확도라는 숫자가 "평균적인 입력"에 대한 성적일 뿐, 최악의 입력에 대한 보장이 아니라는 것을 보여 준다. 정지 표지판에 붙인 작은 스티커로 자율주행 인식기를 속이는 물리적 공격(Eykholt et al., 2018)도 보고되었다. 같은 질문은 7주차의 LLM에서도 다시 나온다. 프롬프트 인젝션과 탈옥(jailbreak)은 언어 모델에 대한 적대적 입력이다.
-
-[[practice]]
-
-### 실습: 손글씨 숫자 분류기를 FGSM으로 속이기
-
-손글씨 숫자(픽셀 0~1)로 softmax 회귀를 학습한 뒤, 테스트 이미지에 FGSM 노이즈와 같은 크기의 **무작위 부호** 노이즈를 각각 더해 정확도를 비교한다. softmax 회귀의 입력 기울기는 $\\nabla_x L = (p - y)W^\\top$로 한 줄이다. 마지막으로 선형성 가설의 $\\varepsilon\\lVert w\\rVert_1$을 계산한다. 실행 전에 예측해 보자. $\\varepsilon = 0.1$(픽셀 밝기의 10%)에서 정확도는 얼마나 떨어질까?
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
-
-X, y = load_digits(return_X_y=True)
-X = X / 16.0                                               # 픽셀을 [0, 1]로
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0, stratify=y)
-
-def softmax(z):
-    z = z - z.max(axis=1, keepdims=True)
-    e = np.exp(z)
-    return e / e.sum(axis=1, keepdims=True)
-
-# softmax 회귀(층 하나) 학습
-W, b = np.zeros((64, 10)), np.zeros(10)
-Y = np.eye(10)[ytr]
-for _ in range(500):
-    G = (softmax(Xtr @ W + b) - Y) / len(Xtr)
-    W -= 1.0 * Xtr.T @ G
-    b -= 1.0 * G.sum(axis=0)
-acc = lambda Xs: np.mean((Xs @ W + b).argmax(1) == yte)
-print(f"깨끗한 테스트 정확도: {acc(Xte):.3f}")
-
-# FGSM: 입력에 대한 손실의 기울기 부호 방향으로 ε만큼 밀기
-grad_x = (softmax(Xte @ W + b) - np.eye(10)[yte]) @ W.T     # dL/dx = (p - y) Wᵀ
-rng = np.random.default_rng(0)
-print(f"{'ε':>5} {'FGSM':>7} {'무작위 부호':>10}")
-for eps in (0.05, 0.1, 0.2, 0.3):
-    adv = np.clip(Xte + eps * np.sign(grad_x), 0, 1)
-    rand = np.clip(Xte + eps * rng.choice([-1.0, 1.0], size=Xte.shape), 0, 1)
-    print(f"{eps:5.2f} {acc(adv):7.3f} {acc(rand):10.3f}")
-
-# 선형성 가설: ε·sign(w) 방향으로 밀면 로짓이 ε·‖w‖₁만큼 움직인다(차원이 클수록 커진다)
-w_diff = W[:, 3] - W[:, 8]                                  # 클래스 3과 8의 로짓 차이를 만드는 방향
-print(f"\\nε=0.1일 때 로짓 차이 변화 ε·‖w‖₁ = {0.1 * np.abs(w_diff).sum():.2f}, 픽셀 하나당 최대 변화 0.1")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 깨끗한 테스트 정확도 0.965. FGSM은 $\\varepsilon = 0.05$에서 0.883, 0.1에서 0.646, 0.2에서 0.137, 0.3에서 0.002로 무너지지만, 같은 크기의 무작위 부호 노이즈는 0.1까지 0.965 그대로이고 0.3에서도 0.870이다. 노이즈의 **크기가 아니라 방향**이 문제라는 뜻이다. $\\varepsilon = 0.1$에서 클래스 3과 8의 로짓 차이는 $\\varepsilon\\lVert w\\rVert_1 \\approx 4.3$까지 움직일 수 있는데, 픽셀 하나는 0.1밖에 바뀌지 않는다. **설명해볼 것:** 64픽셀이 아니라 $224\\times224\\times3$ 이미지라면 같은 $\\varepsilon$에서 로짓의 최대 변화가 대략 몇 배가 될지, $\\lVert w\\rVert_1$이 차원에 비례한다는 가정으로 추정해 보자.
-:::
 
 `,
   sections,

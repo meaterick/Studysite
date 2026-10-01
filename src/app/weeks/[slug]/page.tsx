@@ -155,7 +155,7 @@ export default async function WeekOverviewPage({
           </div>
           <p className="mb-5 text-sm text-ink-muted">
             단계는 <strong>핵심(초심자)</strong>, <strong>보충(중급자)</strong>, <strong>심화(전문가)</strong>로 나뉩니다. <strong>핵심 단계만 마치면 이번 주가 완료</strong>되고,
-            보충은 선택, 심화는 별도의 달성 기록으로 남습니다. 각 단계는 학습 → 따라 해 보기 → 객관식 확인 문제 순서로 짧게 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다. 서술형·코딩 실습 같은 적용 활동은 <strong>적용과 복습</strong>에 모여 있습니다.
+            보충은 선택, 심화는 별도의 달성 기록으로 남습니다. 각 단계는 학습 → 객관식 확인 문제 순서로 짧게 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다. 서술형·코딩 실습 같은 적용 활동은 <strong>적용과 복습</strong>에 모여 있습니다.
             {status.mode === "warn"
               ? " 핵심 단계를 순서대로 학습하는 것을 권장하지만, 필요하면 건너뛰고 먼저 볼 수도 있습니다."
               : " 앞의 핵심 단계를 마쳐야 다음 핵심 단계가 열리고, 보충·심화 단계는 핵심 단계를 모두 마치면 열립니다."}
@@ -342,7 +342,6 @@ function SectionRow({
         </p>
         <p className="mt-1 text-xs text-ink-muted">
           <span className="sr-only">{style.label} · </span>약 {section.minutes}분 · 확인 문제 {progress.checksTotal}개
-          {progress.hasPractice && " · 따라 해 보기 포함"}
           {access === "current" && progress.checksDone > 0 && ` · 확인 문제 ${progress.checksDone}/${progress.checksTotal}`}
         </p>
       </div>

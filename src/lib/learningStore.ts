@@ -29,10 +29,6 @@ export interface QuizAnswerState {
 export interface SectionState {
   checks: Record<string, CheckState>;
   answers: Record<string, QuizAnswerState>;
-  /** 예전 버전의 "실습 완료" 체크 기록. 실습 완료율 계산에만 쓴다. */
-  practiceDone?: boolean;
-  /** 학습자가 "실습을 마쳤습니다"로 표시한 시각. 완료 조건은 아니고 실습 완료율에만 쓴다. */
-  practiceDoneAt?: string;
   startedAt?: string;
   completedAt?: string;
 }

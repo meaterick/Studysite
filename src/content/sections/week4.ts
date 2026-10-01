@@ -562,7 +562,7 @@ const sections: Record<string, SectionMeta> = {
           "분산을 0으로 만든다"
         ],
         "answer": 0,
-        "explanation": "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기가 인코더까지 흐른다. 점수 함수 추정보다 분산도 훨씬 작다(실습: 표준편차 0.20 대 0.54)."
+        "explanation": "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기가 인코더까지 흐른다. 점수 함수 추정보다 분산도 훨씬 작다(예: 같은 문제에서 표준편차 약 0.20 대 0.54)."
       },
       {
         "id": "w4-generative-math-c3",
@@ -628,7 +628,7 @@ const sections: Record<string, SectionMeta> = {
       },
       {
         "id": "w4-adversarial-examples-c3",
-        "question": "실습에서 $\\varepsilon = 0.1$의 FGSM은 정확도를 0.965에서 0.646으로 떨어뜨렸지만 같은 크기의 무작위 부호 노이즈는 0.965 그대로였다. 가장 알맞은 해석은?",
+        "question": "한 실험에서 $\\varepsilon = 0.1$의 FGSM은 정확도를 0.965에서 0.646으로 떨어뜨렸지만 같은 크기의 무작위 부호 노이즈는 0.965 그대로였다. 가장 알맞은 해석은?",
         "choices": [
           "노이즈의 크기보다 방향(기울기와 맞춘 부호)이 결정적이다",
           "무작위 노이즈가 더 작았다",

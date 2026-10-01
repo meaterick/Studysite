@@ -165,7 +165,7 @@ const sections: Record<string, SectionMeta> = {
           "데이터가 부족해서"
         ],
         "answer": 1,
-        "explanation": "학습은 한 번이지만 추론은 계속된다. 실습에서 8B 모델은 최적점보다 손실이 약 0.02 높을 뿐이었다."
+        "explanation": "학습은 한 번이지만 추론은 계속된다. Chinchilla 식으로 계산하면 같은 컴퓨트에서 8B 모델은 최적점보다 손실이 약 0.02 높을 뿐이다."
       },
       {
         "id": "w6-scaling-laws-c4",
@@ -197,7 +197,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Besiroglu et al. (2024) — Chinchilla Scaling: A replication attempt",
         "url": "https://arxiv.org/abs/2404.10102",
-        "note": "실습에 쓴 수정 상수의 출처 (심화)"
+        "note": "Chinchilla 식의 수정 상수 출처 (심화)"
       }
     ]
   },
@@ -239,7 +239,7 @@ const sections: Record<string, SectionMeta> = {
           "학습 파라미터 수가 줄어든다"
         ],
         "answer": 1,
-        "explanation": "실습에서 상대 오차가 INT8 약 1%에서 INT4 약 16%로 커졌다. 블록 단위 스케일 등으로 이 오차를 줄인다."
+        "explanation": "정규분포 가중치로 실험하면 상대 오차가 INT8 약 1%에서 INT4 약 16%로 커진다. 블록 단위 스케일 등으로 이 오차를 줄인다."
       }
     ],
     "quizIds": [
@@ -394,7 +394,7 @@ const sections: Record<string, SectionMeta> = {
           "다양한 출력을 만들기 때문에"
         ],
         "answer": 1,
-        "explanation": "실습에서 그리디는 \"나는 그냥 그냥…\"(0.021), 빔 서치는 \"오늘 밥을 먹었다\"(0.342)를 골랐다."
+        "explanation": "예를 들어 작은 확률표 언어모델에서 그리디는 \"나는 그냥 그냥…\"(0.021), 빔 서치는 \"오늘 밥을 먹었다\"(0.342)를 고른다."
       }
     ],
     "quizIds": [
@@ -513,7 +513,7 @@ const sections: Record<string, SectionMeta> = {
           "0.5"
         ],
         "answer": 1,
-        "explanation": "한 칸 전: 1, 두 칸 전: $0 + 0.9 \\times 1 = 0.9$. 실습의 복도에서 칸 2의 값이다."
+        "explanation": "한 칸 전: 1, 두 칸 전: $0 + 0.9 \\times 1 = 0.9$. 목표 바로 앞 두 칸의 값이 이렇게 정해진다."
       },
       {
         "id": "w6-rl-basics-c3",

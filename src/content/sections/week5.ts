@@ -77,7 +77,7 @@ const sections: Record<string, SectionMeta> = {
           "은닉 상태의 크기가 문장 길이에 비례하기 때문에"
         ],
         "answer": 1,
-        "explanation": "파라미터 공유 덕분에 파라미터 수가 시퀀스 길이와 무관하게 고정된다. 실습에서 길이 3과 50 모두 파라미터 336개였다."
+        "explanation": "파라미터 공유 덕분에 파라미터 수가 시퀀스 길이와 무관하게 고정된다. 예를 들어 같은 RNN은 길이 3이든 50이든 파라미터가 336개다."
       },
       {
         "id": "w5-rnn-bptt-c2",
@@ -148,7 +148,7 @@ const sections: Record<string, SectionMeta> = {
           "Encoder와 Decoder의 파라미터가 공유된다"
         ],
         "answer": 1,
-        "explanation": "실습에서 16차원 $h_T$로 첫 토큰을 복원하는 $R^2$가 문장이 길어질수록 0으로 떨어졌다. Attention은 매 스텝 모든 $h_t$를 다시 조회해 이 병목을 없앤다."
+        "explanation": "한 실험에서 16차원 $h_T$로 첫 토큰을 복원하는 $R^2$가 문장이 길어질수록 0으로 떨어졌다. Attention은 매 스텝 모든 $h_t$를 다시 조회해 이 병목을 없앤다."
       },
       {
         "id": "w5-seq2seq-attention-c3",
@@ -219,7 +219,7 @@ const sections: Record<string, SectionMeta> = {
           "causal mask가 작동하지 않는다"
         ],
         "answer": 1,
-        "explanation": "실습에서 $d_k = 512$일 때 나누지 않으면 최대 가중치 평균이 0.96까지 치솟았고, 나누면 0.3 안팎으로 유지됐다."
+        "explanation": "무작위 벡터로 실험하면 $d_k = 512$일 때 나누지 않으면 최대 가중치 평균이 0.96까지 치솟고, 나누면 0.3 안팎으로 유지된다."
       },
       {
         "id": "w5-self-attention-c4",
@@ -329,7 +329,7 @@ const sections: Record<string, SectionMeta> = {
           "첫 단어의 출력만 같다"
         ],
         "answer": 0,
-        "explanation": "마스크 없는 attention은 순열 등변이다: 입력 순서를 $P$로 섞으면 출력도 $P$로 섞일 뿐 각 토큰의 출력값은 같다($\\text{Attn}(PX) = P\\,\\text{Attn}(X)$). 그래서 순서 정보를 스스로 만들지 못하고, 실습에서 '고양이가'의 출력이 두 문장에서 같았다. 출력이 통째로 같은 순열 불변과는 구별한다."
+        "explanation": "마스크 없는 attention은 순열 등변이다: 입력 순서를 $P$로 섞으면 출력도 $P$로 섞일 뿐 각 토큰의 출력값은 같다($\\text{Attn}(PX) = P\\,\\text{Attn}(X)$). 그래서 순서 정보를 스스로 만들지 못한다. 예를 들어 위치 정보 없이는 '고양이가 쥐를 쫓는다'와 '쥐를 고양이가 쫓는다'에서 '고양이가'의 출력이 같다. 출력이 통째로 같은 순열 불변과는 구별한다."
       },
       {
         "id": "w5-transformer-block-c2",
@@ -473,7 +473,7 @@ const sections: Record<string, SectionMeta> = {
           "은닉 상태를 사용하지 않기 때문에"
         ],
         "answer": 1,
-        "explanation": "실습에서 forget bias를 올려 $f$를 1에 가깝게 하자 40스텝 전의 영향이 살아남았다. 반대로 $f \\approx 0.5$면 RNN보다도 빨리 사라졌다."
+        "explanation": "forget bias를 올려 $f$를 1에 가깝게 하면 40스텝 전의 영향이 살아남는다. 반대로 $f \\approx 0.5$면 RNN보다도 빨리 사라진다."
       },
       {
         "id": "w5-lstm-gru-c3",
@@ -485,7 +485,7 @@ const sections: Record<string, SectionMeta> = {
           "GRU가 항상 LSTM보다 정확하다"
         ],
         "answer": 1,
-        "explanation": "실습의 파라미터 수는 GRU 1008, LSTM 1344로 3:4다. 성능 차이는 태스크마다 엇갈린다."
+        "explanation": "같은 크기라면 예컨대 GRU 1008개, LSTM 1344개로 파라미터가 3:4다. 성능 차이는 태스크마다 엇갈린다."
       }
     ],
     "quizIds": [
@@ -537,7 +537,7 @@ const sections: Record<string, SectionMeta> = {
           "완전히 다른 값이다"
         ],
         "answer": 1,
-        "explanation": "실습에서 `np.allclose`가 True였다. 캐시는 근사가 아니라 같은 계산의 중복을 없앤 것이다."
+        "explanation": "캐시를 쓴 결과와 쓰지 않은 결과를 비교하면 `np.allclose`가 True다. 캐시는 근사가 아니라 같은 계산의 중복을 없앤 것이다."
       },
       {
         "id": "w5-kv-cache-rope-c3",
@@ -561,7 +561,7 @@ const sections: Record<string, SectionMeta> = {
           "문장 전체 길이"
         ],
         "answer": 1,
-        "explanation": "회전 각도의 차이 $(m-n)\\theta$만 남는다. 실습에서 (5,3), (12,10), (102,100)의 점수가 모두 같았다."
+        "explanation": "회전 각도의 차이 $(m-n)\\theta$만 남는다. 그래서 위치 쌍 (5,3), (12,10), (102,100)의 점수가 모두 같다."
       }
     ],
     "quizIds": [

@@ -88,53 +88,6 @@ Buolamwini와 Gebru의 2018년 연구 "Gender Shades"는 상용 얼굴 인식 �
 
 프라이버시 쪽의 핵심 위험은 **학습 데이터 암기(memorization)**다. 대형 모델은 학습 데이터의 일부 문장을 거의 그대로 외울 수 있고, 적절한 프롬프트로 그 문장을 다시 뽑아낼 수 있다는 것이 실험으로 확인되었다(Carlini et al., 2021: GPT-2에서 이름·전화번호·이메일 주소가 포함된 학습 문장을 추출). 웹에서 긁어온 데이터에 개인정보가 섞여 있으면, 모델이 배포된 뒤 누군가의 개인정보가 답변으로 흘러나올 수 있다는 뜻이다. 학습 전 비식별화, 중복 제거(여러 번 본 문장일수록 잘 외운다), 차등 프라이버시(differential privacy) 학습, 그리고 사용자가 개인정보를 프롬프트에 넣지 않도록 하는 입력 정책이 완화책이다. 이름을 지운 데이터가 왜 생각만큼 익명이 아닌지, 차등 프라이버시가 정확히 무엇을 보장하는지는 보충 과정의 「프라이버시 공학」 단계에서 숫자로 확인한다.
 
-[[practice]]
-
-### 실습: 적대적 공격과 서브그룹 불균형을 직접 만들어 보기
-
-손글씨 숫자 3과 8을 구별하는 로지스틱 회귀에 FGSM을 적용하고, 같은 크기의 무작위 잡음과 비교한다. 이어서 다수 집단(90%)과 소수 집단(10%)의 "특징–정답 관계"가 조금 다른 데이터로 모델 하나를 학습해 집단별 정확도를 본다.
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_digits
-from sklearn.linear_model import LogisticRegression
-
-# 1) FGSM: 숫자 3과 8을 구별하는 로지스틱 회귀를 속여 보자
-digits = load_digits()
-mask = np.isin(digits.target, [3, 8])
-X, y = digits.data[mask] / 16.0, (digits.target[mask] == 8).astype(int)   # 픽셀 0~1, 8이면 1
-clf = LogisticRegression(max_iter=2000).fit(X, y)
-w = clf.coef_[0]
-
-def fgsm(X, y, eps):
-    p = clf.predict_proba(X)[:, 1]
-    grad = (p - y)[:, None] * w[None, :]        # 교차 엔트로피 손실을 입력 x로 미분한 값 = (p - y)·w
-    return np.clip(X + eps * np.sign(grad), 0, 1)
-
-print("ε(픽셀당 최대 변화)   정확도")
-for eps in [0.0, 0.02, 0.05, 0.1, 0.2]:
-    print(f"{eps:8.2f}            {clf.score(fgsm(X, y, eps), y):.3f}")
-
-rng = np.random.default_rng(0)
-noise = np.clip(X + 0.1 * rng.choice([-1, 1], size=X.shape), 0, 1)   # 같은 크기의 무작위 잡음
-print(f"같은 크기(0.1)의 무작위 잡음일 때 정확도: {clf.score(noise, y):.3f}")
-
-# 2) 서브그룹 불균형: 소수 집단은 특징과 정답의 관계가 조금 다르다
-def make_group(n, shift):
-    Xg = rng.normal(size=(n, 2))
-    yg = (Xg[:, 0] + shift * Xg[:, 1] > 0).astype(int)
-    return Xg, yg
-Xa, ya = make_group(1800, 0.0)     # 다수 집단 A: 90%
-Xb, yb = make_group(200, 1.5)      # 소수 집단 B: 10%
-model = LogisticRegression().fit(np.vstack([Xa, Xb]), np.concatenate([ya, yb]))
-print(f"\\n전체 정확도 {model.score(np.vstack([Xa, Xb]), np.concatenate([ya, yb])):.3f}"
-      f" | A 집단 {model.score(Xa, ya):.3f} | B 집단 {model.score(Xb, yb):.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 깨끗한 입력의 정확도는 1.000인데, 픽셀당 최대 0.1만 바꾸는 FGSM으로 약 0.78, 0.2로는 약 0.22까지 떨어진다. 같은 크기의 **무작위** 잡음으로는 0.99를 유지한다. 적대적 공격이 무서운 것은 크기가 아니라 "손실이 가장 가파르게 늘어나는 방향"을 골라 민다는 점이다. 서브그룹 실험에서는 전체 정확도가 약 0.95로 좋아 보이지만, 소수 집단 B의 정확도는 약 0.71에 그친다. 전체 평균만 보고했다면 이 격차는 드러나지 않았다. **해볼 것:** B 집단 크기를 200에서 1,800으로 늘리면 두 집단의 정확도는 어떻게 되는가? 반대로 집단마다 모델을 따로 두면 어떤 새로운 문제가 생길까?
-:::
-
 ## 공정성은 하나가 아니다 {#fairness}
 
 "공정하게 만들어라"는 말은 쉽게 하지만, 공정함을 재는 잣대는 사실 하나가 아니다. 출신 학교가 다른 두 그룹의 학생을 하나의 입시 전형으로 줄 세운다고 해보자. 한쪽 학교의 평균 성적이 다른 쪽보다 높다면, "두 학교의 합격률이 똑같아야 한다"는 기준과 "합격한 학생들의 실제 실력 분포가 똑같아야 한다"는 기준을 동시에 만족시키기는 사실상 불가능하다. 애초에 두 집단의 출발선(기저율)이 다르기 때문이다. AI 공정성 지표도 똑같은 딜레마에 부딪힌다. 인구통계 동등성(선택률 동일), 균등화된 오즈(TPR/FPR 동일), 보정(같은 점수는 같은 확률을 의미)은 각각 나름대로 타당한 정의지만, 집단 간 기저율이 다르면 서로 충돌한다. 다만 무엇이 무엇과 충돌하는지는 정확히 구분해야 한다.
@@ -305,48 +258,6 @@ for name, groups in scenarios.items():
 
 출력을 보면 임계값을 완화할수록 선택률 격차(0.18 $\\to$ 0.09 $\\to$ 0.00)는 꾸준히 줄지만, 그 대가로 FPR 격차(0.00 $\\to$ 0.10 $\\to$ 0.20)는 정확히 그만큼 벌어진다. 한쪽 지표를 개선하면 다른 쪽 지표가 나빠지는 이 트레이드오프가, 위에서 손으로 확인했던 불가능성 정리가 임계값을 조금씩 움직일 때마다 연속적으로 나타나는 모습이다. 캡스톤에서 편향·공정성을 다루는 팀(특히 D. 책임형)이라면, 위 \`fairness_report\` 함수를 자신의 데이터에 맞게 확장해 실제 지표로 제시해보는 것을 권한다. 격차를 측정한 다음 실제로 줄이는 방법(대리 변수 다루기, 학습 중 벌점, 집단별 임계값)과 그 대가는 보충 과정의 「편향 완화」 단계에서, 세 기준이 함께 성립할 수 없다는 것의 일반적인 증명은 심화 과정의 「공정성 불가능성 정리」 단계에서 다룬다.
 
-[[practice]]
-
-### 실습: 보정된 점수에서 출발해 세 가지 정책을 비교하기
-
-손으로 만든 TP·FP 대신, 점수 $s$를 받은 사람이 정확히 확률 $s$로 우수 인재인 **보정된 모델**을 만들어 두 집단(기저율 50% vs 20%)에 적용한다. 그리고 ① 두 집단에 같은 임계값, ② 선택률을 맞춘 임계값, ③ TPR을 맞춘 임계값의 세 정책에서 선택률·TPR·FPR·PPV를 한 줄씩 비교한다.
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-# 보정된(calibrated) 점수 모델: 점수 s를 받은 사람은 정확히 확률 s로 실제 우수(Y=1)
-def make_group(n, a, b):
-    s = rng.beta(a, b, n)                   # 모델이 내놓는 점수
-    y = (rng.random(n) < s).astype(int)     # 실제 정답: 점수가 곧 확률이므로 보정이 성립
-    return s, y
-sA, yA = make_group(20000, 5, 5)            # A 집단: 기저율 약 50%
-sB, yB = make_group(20000, 2, 8)            # B 집단: 기저율 약 20%
-print(f"기저율  A {yA.mean():.2f}  B {yB.mean():.2f}")
-
-def rates(s, y, t):
-    pred = s >= t
-    return {"선택률": pred.mean(), "TPR": pred[y == 1].mean(),
-            "FPR": pred[y == 0].mean(), "PPV": y[pred].mean()}   # PPV: 합격 추천자 중 실제 우수 비율
-
-def show(name, tA, tB):
-    a, b = rates(sA, yA, tA), rates(sB, yB, tB)
-    cells = "  ".join(f"{k} {a[k]:.2f}/{b[k]:.2f}" for k in a)
-    print(f"{name:18s} {cells}")
-
-print("\\n정책 (A 임계값 / B 임계값)      지표는 A값/B값")
-show("같은 임계값 0.5", 0.5, 0.5)
-tB_dp = np.quantile(sB, 1 - rates(sA, yA, 0.5)["선택률"])            # B의 선택률을 A와 같게
-show("선택률 맞춤(DP)", 0.5, tB_dp)
-target_tpr = rates(sA, yA, 0.5)["TPR"]
-tB_tpr = np.quantile(sB[yB == 1], 1 - target_tpr)                  # B의 TPR을 A와 같게
-show("TPR 맞춤", 0.5, tB_tpr)
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** ① 같은 임계값 0.5를 쓰면 PPV는 0.62 대 0.58로 비슷하지만(점수의 의미가 비슷하다), B 집단의 선택률은 0.02, TPR은 0.06으로 A(0.50, 0.61)와 극단적으로 다르다. ② 선택률을 0.50으로 맞추면 B의 PPV가 0.30으로 떨어진다. ③ TPR을 맞춰도 FPR과 PPV는 여전히 다르다. 세 정책 중 어느 것도 네 지표를 모두 같게 만들지 못한다. "어떤 공정성을 왜 택했는가"를 명시해야 하는 이유다. **생각해볼 것:** 대출 심사라면 어느 정책을, 암 선별 검사라면 어느 정책을 택하겠는가? 각 정책에서 **누가** 피해를 보는지를 기준으로 답해 보자.
-:::
-
 ## 거버넌스: NIST AI RMF · EU AI Act · 모델카드 {#governance}
 
 프레임워크 얘기로 넘어가자. 정부나 기관이 AI를 규제하려 할 때 가장 먼저 부딪히는 질문은 "모든 AI를 똑같은 강도로 규제할 것인가"이다. 챗봇에게 저녁 메뉴를 추천받는 일과, AI가 대출 승인이나 채용 여부를 결정하는 일은 실패했을 때의 피해 규모가 전혀 다르다. 그래서 대부분의 AI 규제는 의약품을 분류하는 방식과 비슷한 논리를 쓴다. 편의점에서 누구나 살 수 있는 감기약이 있는가 하면, 의사의 처방이 있어야만 살 수 있는 약이 있고, 아예 유통 자체가 금지된 물질도 있다. EU AI Act의 위험 등급 구분도 같은 발상이다. 사람의 생계·건강·자유에 미치는 영향이 클수록 더 엄격한 의무를 지운다.
@@ -426,61 +337,6 @@ EU AI Act는 2024년 발효 후 조항별로 단계적으로 적용되고 있고
 2. 개인정보·비공개 자료를 외부 서비스에 입력하지 않는다.
 3. 출처 없는 주장은 인용하지 않는다(환각 주의).
 4. 모든 프로젝트에 한계와 실패 사례 항목을 둔다.
-
-[[practice]]
-
-### 실습: 모델카드 점검기와 위험 등급 연습
-
-\`\`\`python
-# 1) 모델카드 점검기: 필수 항목이 빠졌거나 비어 있으면 알려준다
-REQUIRED = ["model_name", "intended_use", "out_of_scope_use", "training_data",
-            "performance_by_group", "limitations", "ethical_considerations"]
-
-def check_model_card(card):
-    problems = [k for k in REQUIRED if not card.get(k)]
-    groups = card.get("performance_by_group", {})
-    if len(groups) < 2:
-        problems.append("performance_by_group: 집단이 2개 이상이어야 격차를 볼 수 있음")
-    return problems
-
-draft = {
-    "model_name": "동아리 QA 봇 v0.3",
-    "intended_use": "동아리 규정·일정에 대한 질문에 근거와 함께 답한다",
-    "out_of_scope_use": [],                       # 비어 있음!
-    "training_data": {"source": "동아리 공지 42건(2024~2025)", "pii_removed": True},
-    "performance_by_group": {"전체": {"accuracy": 0.86}},
-    "limitations": ["공지에 없는 질문에 추측으로 답할 수 있음"],
-}
-for p in check_model_card(draft):
-    print("✗", p)
-
-def to_markdown(card):
-    lines = [f"# 모델카드: {card.get('model_name', '?')}"]
-    for k, v in card.items():
-        if k != "model_name":
-            lines.append(f"- **{k}**: {v}")
-    return "\\n".join(lines)
-print("\\n" + to_markdown(draft))
-
-# 2) EU AI Act식 위험 등급 연습: 법적 판단이 아니라 개념 연습용 단순화다
-TIERS = {
-    "금지": ["사회적 점수", "취약성 악용 조작"],
-    "고위험": ["채용", "신용평가", "입학·시험 평가", "의료기기"],
-    "제한적 위험(투명성 의무)": ["챗봇", "딥페이크"],
-}
-def tier_of(use_case):
-    for tier, keys in TIERS.items():
-        if any(k in use_case for k in keys):
-            return tier
-    return "최소 위험"
-print()
-for uc in ["이력서 자동 채용 선별", "고객 상담 챗봇", "스팸 메일 필터", "대출 신용평가 모델", "시민 행동 기반 사회적 점수"]:
-    print(f"{uc:18s} → {tier_of(uc)}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 초안 모델카드에서 비어 있는 \`out_of_scope_use\`, 없는 \`ethical_considerations\`, 집단이 하나뿐인 \`performance_by_group\` 세 가지가 지적된다. 위험 등급 연습에서는 채용 선별과 신용평가가 고위험, 챗봇이 제한적 위험, 스팸 필터가 최소 위험, 사회적 점수가 금지로 분류된다. 이 분류기는 키워드만 보는 개념 연습이다. 실제 판단은 용도·맥락·법 조문을 따져야 한다. **해볼 것:** 초안의 문제 세 가지를 고쳐 점검기를 통과시키고, 여러분의 캡스톤 주제를 \`tier_of()\`에 넣어 보자. 키워드 분류가 틀리는 사례를 하나 찾아 이유를 적어 보자.
-:::
 
 ## MLOps: 모델을 서비스로 만들기 {#mlops}
 
@@ -609,51 +465,6 @@ width: 960
 height: 691
 \`\`\`
 
-[[practice]]
-
-### 실습: PSI로 드리프트 감지하기, 카나리 배포로 피해 줄이기
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-# 1) PSI로 데이터 드리프트 감지하기
-def psi(train, prod, bins=10):
-    edges = np.quantile(train, np.linspace(0, 1, bins + 1))    # 학습 데이터 기준 10분위 구간
-    edges[0], edges[-1] = -np.inf, np.inf
-    p = np.histogram(train, edges)[0] / len(train)
-    q = np.histogram(prod, edges)[0] / len(prod)
-    p, q = np.clip(p, 1e-6, None), np.clip(q, 1e-6, None)     # log(0) 방지
-    return np.sum((p - q) * np.log(p / q))
-
-train = rng.normal(35, 8, 10000)                                # 학습 당시 사용자 나이 분포
-for name, prod in [("같은 분포", rng.normal(35, 8, 3000)),
-                   ("평균 +2세", rng.normal(37, 8, 3000)),
-                   ("평균 +3세", rng.normal(38, 8, 3000)),
-                   ("평균 +6세", rng.normal(41, 8, 3000)),
-                   ("젊은 신규 유입", np.concatenate([rng.normal(35, 8, 2000), rng.normal(20, 3, 1000)]))]:
-    v = psi(train, prod)
-    flag = "안정" if v < 0.1 else ("관찰 필요" if v < 0.2 else "재학습 검토")
-    print(f"{name:10s} PSI = {v:.3f}  → {flag}")
-
-# 2) 카나리 배포: 새 모델에 트래픽 5%만 보내고 오류율을 비교한 뒤 확대/롤백을 정한다
-def canary(new_error_rate, old_error_rate=0.02, share=0.05, requests=20000, tolerance=0.005):
-    n_new = int(requests * share)
-    err_new = rng.binomial(n_new, new_error_rate) / n_new
-    err_old = rng.binomial(requests - n_new, old_error_rate) / (requests - n_new)
-    decision = "확대" if err_new <= err_old + tolerance else "롤백"
-    return n_new, err_new, err_old, decision
-
-print()
-for label, rate in [("정상 새 모델", 0.018), ("결함 있는 새 모델", 0.08)]:
-    n_new, e_new, e_old, d = canary(rate)
-    print(f"{label:10s} 카나리 {n_new}건 오류율 {e_new:.3f} vs 기존 {e_old:.3f} → {d} (영향받은 요청 약 {int(n_new * e_new)}건)")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 같은 분포의 PSI는 거의 0이고, 평균이 2세 이동하면 약 0.06(안정), 3세면 약 0.15(관찰 필요), 6세나 젊은 신규 사용자 유입이면 약 0.5로 재학습 검토 신호가 켜진다. 정답 라벨 없이 입력 분포만으로 경보를 울린다는 점이 PSI의 실무적 가치다. 다만 이 경보는 "입력 분포가 바뀌었다"는 뜻이지 "성능이 떨어졌다"는 뜻이 아니며, 나이 분포가 그대로여도 개념 드리프트가 생기면 PSI는 조용하다. 카나리 배포에서는 결함 있는 새 모델(오류율 8%)이 5% 트래픽에서 걸러져 롤백되고, 영향받은 요청은 약 80건에 그친다. 전체 트래픽에 한 번에 배포했다면 약 1,600건이었다. **해볼 것:** \`tolerance\`를 0.05로 너무 느슨하게 두면 결함 모델도 "확대"될 수 있는가? 반대로 너무 엄격하면 어떤 문제가 생길까?
-:::
-
 ## AI 연구 방법론: 결과를 믿을 수 있게 만드는 절차 {#research-methods}
 
 캡스톤 프로젝트를 "일단 코드를 돌려서 뭔가 나오면 끝"이라는 태도로 접근하면, 결과가 좋아 보여도 그 결과를 왜 믿어야 하는지 스스로 설명하지 못하는 경우가 많다. 이 단계는 AI 연구자들이 자신의 주장을 검증하고 남에게 정당화하기 위해 지켜온 절차를 소개한다. 이 절차를 캡스톤에 그대로 적용하면, 과제 페이지에 있는 캡스톤 루브릭의 "실험·평가의 엄밀성" 항목을 충족시키는 실질적인 방법이 된다.
@@ -727,60 +538,6 @@ print("실험 설정(config):", config)
 
 논문 하나를 읽고 그 안의 알고리즘을 처음부터 직접 구현해보는 것은 AI를 배우는 가장 확실한 방법 중 하나로 꼽힌다. 논문의 수식과 설명만으로는 드러나지 않는 세부 구현 결정(학습률 스케줄, 초기화 방법, 사소해 보이지만 결과를 좌우하는 전처리 단계 등)이 실제로 코드를 짜보는 과정에서만 드러나기 때문이다. 이는 지금까지 이 스터디가 매주 "이해 $\\to$ 직접 구현 $\\to$ 설명 $\\to$ 활용" 순서를 따라온 것과 같은 원리이며, 다음 단계의 논문 목록 중 하나를 골라 축소판으로 재현해보는 것 자체가 훌륭한 캡스톤 주제가 된다(다음 단계의 캡스톤 유형 중 "논문 재현 프로젝트" 참고).
 
-[[practice]]
-
-### 실습: 시드 5개, 순열 검정, 그리고 A/B 테스트의 표본 크기
-
-손글씨 숫자 분류기 두 개(은닉 뉴런 28개 vs 32개)를 시드만 바꿔 5번씩 학습·평가하고, 두 방법의 차이가 우연으로 설명되는지 **짝지은 순열 검정**으로 확인한다. 마지막으로 같은 전환율 차이(10% vs 12%)가 표본 크기에 따라 유의한지 z-검정으로 본다.
-
-\`\`\`python
-import numpy as np
-from math import erf, sqrt
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
-
-# 1) 시드를 바꿔 5번씩 실행: 한 번의 결과로 "이겼다"고 말할 수 있을까?
-X, y = load_digits(return_X_y=True)
-X = X / 16.0
-def run(hidden, seed):
-    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=seed)
-    clf = MLPClassifier(hidden_layer_sizes=(hidden,), max_iter=60, random_state=seed).fit(Xtr, ytr)
-    return clf.score(Xte, yte)
-
-import warnings; warnings.filterwarnings("ignore")     # max_iter가 작아 나오는 수렴 경고는 숨긴다
-seeds = range(5)
-a = np.array([run(28, s) for s in seeds])              # 방법 A: 은닉 뉴런 28개
-b = np.array([run(32, s) for s in seeds])              # 방법 B: 은닉 뉴런 32개
-print("A:", a.round(3), f"평균 {a.mean():.3f} ± {a.std(ddof=1):.3f}")
-print("B:", b.round(3), f"평균 {b.mean():.3f} ± {b.std(ddof=1):.3f}")
-print("시드별 승자:", ["B" if bb > aa else "A" for aa, bb in zip(a, b)], "← 어느 시드 하나만 봤다면?")
-
-# 2) 짝지은 순열 검정: 같은 시드(같은 데이터 분할)끼리의 차이가 우연으로 설명되는가?
-rng = np.random.default_rng(0)
-d = b - a
-observed = d.mean()
-flips = rng.choice([-1, 1], size=(20000, len(d)))      # 두 방법의 이름표를 무작위로 바꿔 본다
-null = (flips * d).mean(axis=1)
-p_value = np.mean(np.abs(null) >= abs(observed))
-print(f"\\n평균 차이 {observed:+.4f}, 순열 검정 p = {p_value:.3f}")
-
-# 3) A/B 테스트: 두 비율의 차이에 대한 z-검정
-def two_proportion_z(success_a, n_a, success_b, n_b):
-    pa, pb = success_a / n_a, success_b / n_b
-    pooled = (success_a + success_b) / (n_a + n_b)
-    z = (pb - pa) / sqrt(pooled * (1 - pooled) * (1 / n_a + 1 / n_b))
-    p = 2 * (1 - 0.5 * (1 + erf(abs(z) / sqrt(2))))    # 양측 p값
-    return pa, pb, z, p
-for n in [500, 5000]:
-    pa, pb, z, p = two_proportion_z(int(0.10 * n), n, int(0.12 * n), n)
-    print(f"그룹당 {n:5d}명: 전환율 {pa:.2f} vs {pb:.2f}, z = {z:.2f}, p = {p:.4f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 두 방법의 평균은 약 0.940과 0.942로 거의 같고, 시드별 승자는 B·A·B·A·A처럼 뒤섞인다. 시드 하나만 보고 "B가 이겼다"(시드 0) 또는 "A가 이겼다"(시드 1)고 쓰면 둘 다 근거 없는 주장이다. 순열 검정의 p값도 약 0.75로 크다. A/B 테스트에서는 같은 2%p 차이가 그룹당 500명일 때는 p값이 약 0.31로 유의하지 않고, 5,000명일 때는 약 0.001로 유의하다. (브라우저 환경에 따라 정확도가 소수점 셋째 자리에서 조금 다를 수 있다.) **해볼 것:** 은닉 뉴런을 16 vs 32로 바꿔 다시 실행해 보자. 차이가 크면 시드 5개로도 결론이 흔들리지 않는가?
-:::
-
 ## 핵심 논문 하이라이트와 캡스톤 설계 {#capstone}
 
 지금까지 8주 동안 각 주차에서 관련 논문을 하나씩 다뤄왔다(예: 4주차 ResNet, 5주차 Transformer, 6주차 스케일링 법칙, 7주차 RAG: 전체 목록은 syllabus의 참고자료 참고). 아래 표는 그 흐름 전체를 관통하는 핵심 논문들을 시간순으로 모아, "이 논문이 처음으로 무엇을 해냈는가"만 한 줄로 정리한 것이다. 캡스톤에서 논문 재현 프로젝트를 고려한다면 이 표가 후보를 고르는 출발점이 될 수 있다.
@@ -853,22 +610,6 @@ for n in [500, 5000]:
 
 D-7까지 유형과 주제를 확정 짓지 못하면 남은 기간 동안 완성도를 끌어올리기 어려우니, 위 표의 네 시점을 실제 캘린더에 미리 옮겨 적어두길 권한다.
 
-[[practice]]
-
-### 실습: 캡스톤 한 문단 계획서 쓰기 (D-7 체크포인트)
-
-코드 실습 대신, 캡스톤의 첫 체크포인트를 지금 바로 해 보자. 아래 다섯 줄을 채운 한 문단 계획서를 스터디 채널에 공유하면 이 단계의 실습이 끝난다.
-
-1. **유형과 주제**: A~D 중 무엇이며, 한 문장으로 무엇을 만드는가?
-2. **연구 질문과 가설**: 「AI 연구 방법론」 단계의 세 조건(검증 가능, 구체적 범위, 차별점)을 만족하는가?
-3. **사용할 기술**: 8주 중 어느 주차의 무엇을 쓰는가? (예: 5주차 causal attention, 7주차 RAG + 골든셋)
-4. **성공 기준과 평가 방법**: 어떤 지표로, 어떤 baseline과 비교하는가? 시드를 몇 개 쓸 것인가?
-5. **예상되는 위험과 한계**: 「AI 위험 지도」·「공정성은 하나가 아니다」·「거버넌스」 단계의 관점에서 누가 어떤 피해를 볼 수 있는가?
-
-:::task 통과 조건과 한 걸음 더
-**통과 조건:** 다섯 항목이 모두 채워져 있고, 2번의 질문이 예/아니오나 숫자로 검증 가능하며, 4번에 baseline이 하나 이상 있다. **한 걸음 더:** 핵심 논문 표에서 캡스톤과 가장 가까운 논문 하나를 골라 초록과 그림 1을 읽고, 계획서에 "이 논문과 무엇이 다른가"를 한 줄 덧붙여 보자.
-:::
-
 ## LLMOps: LLM 운영에서 달라지는 점 {#llmops}
 
 핵심 과정의 「MLOps」 단계에서 다룬 원칙(서빙, 배포, 모니터링, 드리프트 대응)은 대형 언어모델에도 그대로 적용된다. 다만 LLM은 파라미터 규모가 수십억~수천억에 이르고, 많은 경우 모델 자체를 직접 학습시키지 않고 OpenAI·Anthropic 같은 업체가 API로 제공하는 모델을 그대로 가져다 쓴다는 점에서 몇 가지 고유한 운영 이슈가 추가된다. 이 단계에서는 그 차이점만 짚는다.
@@ -922,61 +663,6 @@ Guardrails는 LLM의 입력과 출력에 정책 위반 여부를 검사하는 �
 
 한 사용자나 클라이언트가 짧은 시간에 지나치게 많은 요청을 보내면 서버 자원이 고갈되거나 비용이 통제 불가능하게 치솟을 수 있다. Rate limiting은 사용자·API 키 단위로 단위 시간당 허용 요청 수(예: 분당 60회)를 정해두고 이를 초과하는 요청을 거부하거나 지연시키는 기법이다. 이는 「MLOps」 단계의 캐싱·로드 밸런싱과 함께 서비스 안정성을 지키는 방어선이자, 토큰 비용 추적과 맞물려 예상치 못한 과금 폭증을 막는 안전장치이기도 하다.
 
-[[practice]]
-
-### 실습: 토큰 비용, 속도 제한, 출력 가드레일
-
-\`\`\`python
-import re
-
-# 1) 토큰 비용 추적: RAG 컨텍스트 길이가 비용을 어떻게 바꾸는가 (단가는 예시 값)
-PRICE_IN, PRICE_OUT = 3.0 / 1e6, 15.0 / 1e6          # 달러/토큰: 입력보다 출력이 비싼 경우가 많다
-def cost(n_in, n_out):
-    return n_in * PRICE_IN + n_out * PRICE_OUT
-
-question, answer = 50, 300
-print("검색 조각 수 k  입력 토큰  1회 비용($)  하루 1만 회($)")
-for k in [0, 3, 10]:
-    n_in = 400 + question + k * 500                   # 시스템 프롬프트 400 + 질문 + 조각당 500토큰
-    c = cost(n_in, answer)
-    print(f"{k:12d}  {n_in:8d}  {c:10.5f}  {c * 10000:12.2f}")
-
-# 2) Rate limiting: 토큰 버킷: 1초에 2개씩 채워지고 최대 5개까지 쌓이는 허용량
-class TokenBucket:
-    def __init__(self, rate, capacity):
-        self.rate, self.capacity, self.tokens, self.last = rate, capacity, capacity, 0.0
-    def allow(self, now):
-        self.tokens = min(self.capacity, self.tokens + (now - self.last) * self.rate)
-        self.last = now
-        if self.tokens >= 1:
-            self.tokens -= 1
-            return True
-        return False
-
-bucket = TokenBucket(rate=2, capacity=5)
-times = [0.0] * 8 + [1.0, 1.1, 1.2, 3.0]              # 0초에 8번 몰아치고, 이후 띄엄띄엄
-print("\\n요청 시각:", times)
-print("허용 여부:", ["O" if bucket.allow(t) else "X" for t in times])
-
-# 3) 출력 가드레일: 응답에 개인정보(전화번호·이메일)가 있으면 가린다
-PII = [(re.compile(r"01[016789]-?\\d{3,4}-?\\d{4}"), "[전화번호]"),
-       (re.compile(r"[\\w.+-]+@[\\w-]+\\.[\\w.]+"), "[이메일]")]
-def output_guardrail(text):
-    hits = 0
-    for pattern, label in PII:
-        text, n = pattern.subn(label, text)
-        hits += n
-    return text, hits
-
-reply = "회장 연락처는 010-1234-5678이고, 메일은 lead@club.example.com 입니다."
-safe, n = output_guardrail(reply)
-print(f"\\n가드레일 적용({n}건 가림): {safe}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 검색 조각을 0개 → 3개 → 10개로 늘리면 입력 토큰이 450 → 1,950 → 5,450으로 늘고, 하루 1만 회 기준 비용이 약 59달러 → 104달러 → 209달러로 커진다(단가는 예시 값). RAG에서 k와 조각 길이를 정할 때 정확도뿐 아니라 비용도 함께 봐야 하는 이유다. 토큰 버킷은 0초에 몰린 8개 요청 중 5개만 허용하고, 시간이 지나 허용량이 다시 차면 요청을 받는다. 가드레일은 응답 속 전화번호와 이메일 2건을 가린다. **해볼 것:** 주민등록번호 형식(\`######-#######\`)을 가리는 규칙을 추가해 보자. 정규식 가드레일이 놓치는 경우(예: "공일공 일이삼사…")는 어떻게 막을 수 있을까?
-:::
-
 ## 프라이버시 공학: 재식별 · k-익명성 · 차등 프라이버시 {#privacy}
 
 핵심 과정의 「AI 위험 지도」는 학습 데이터 암기를 프라이버시 위험으로, 비식별화와 차등 프라이버시를 완화책으로 꼽았다. 그런데 "이름과 전화번호를 지우면 익명 데이터"라는 직관은 생각보다 자주 틀린다. 이 단계는 이름을 지운 데이터가 어떻게 다시 사람을 가리키는지, 그것을 막는 두 가지 접근(데이터를 뭉뚱그리는 k-익명성과 결과에 잡음을 섞는 차등 프라이버시)이 무엇을 보장하고 무엇을 대가로 치르는지를 숫자로 확인한다.
@@ -1012,56 +698,6 @@ P[M(D) \\in S] \\le e^{\\varepsilon}\\, P[M(D') \\in S]
 내가 데이터에 들어가든 빠지든 결과의 분포가 최대 $e^\\varepsilon$배밖에 달라지지 않으므로, 결과를 보고 나에 대해 알 수 있는 것이 그만큼 제한된다. 공격자가 무엇을 미리 알든 성립한다는 점이 k-익명성과 다르다. $\\varepsilon$이 작을수록 강한 보호다.
 
 가장 단순한 구현이 **라플라스 메커니즘**이다. "조건을 만족하는 사람 수" 같은 개수 질의는 한 사람이 들어가거나 빠질 때 답이 최대 1만 바뀐다(이것을 민감도 1이라 한다). 그래서 참 개수에 척도 $1/\\varepsilon$의 라플라스 잡음을 더해 공개하면 $\\varepsilon$-차등 프라이버시가 된다. 잡음의 평균 크기는 $1/\\varepsilon$이라서, 같은 잡음이라도 큰 집단의 개수에는 거의 티가 나지 않고 작은 집단의 개수는 크게 흔들린다. 작은 집단일수록 보호받는 만큼 통계가 부정확해지는 것이다. 질의를 여러 번 하면 프라이버시 손실이 쌓인다. $\\varepsilon$짜리 질의를 $k$번 하면 전체는 최대 $k\\varepsilon$이므로, 실무에서는 쓸 수 있는 전체 $\\varepsilon$을 "예산"으로 정해 두고 나눠 쓴다. 미국의 2020년 인구조사 공표 통계, 스마트폰의 사용 통계 수집 등이 실제로 차등 프라이버시를 쓴다. 라플라스 메커니즘이 왜 정확히 $\\varepsilon$을 보장하는지, 학습 자체를 차등 프라이버시로 만드는 DP-SGD와 그 보장이 공격자에게 의미하는 바는 심화 과정의 「프라이버시의 수학」 단계에서 증명한다.
-
-[[practice]]
-
-### 실습: 준식별자로 특정되는 비율, 무작위 응답 추정, 라플라스 잡음의 크기
-
-① 2,000명의 나이·성별·동네로 "혼자인 사람"의 비율과 k-익명성의 $k$를 재고, 뭉뚱그리면 어떻게 바뀌는지 본다. ② 실제 비율 15%인 민감한 질문을 무작위 응답으로 1,000명에게 물어 비율을 추정한다. ③ 라플라스 메커니즘의 $\\varepsilon$에 따른 오차를 집단 크기별로 비교한다. 실행 전에 예측해 보자. 나이(40가지)·성별·동네(50곳)를 모두 알면 2,000명 중 몇 %가 유일하게 특정될까?
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-# 1) 준식별자(quasi-identifier)만으로 개인을 특정할 수 있는가
-n = 2000
-age = rng.integers(20, 60, n)                    # 나이 40가지
-sex = rng.integers(0, 2, n)                      # 성별 2가지
-zipc = rng.integers(0, 50, n)                    # 동네(우편번호) 50곳
-def group_sizes(*cols):
-    keys = list(zip(*cols))
-    counts = {}
-    for k in keys:
-        counts[k] = counts.get(k, 0) + 1
-    return np.array([counts[k] for k in keys])
-for name, cols in [("나이·성별·동네", (age, sex, zipc)),
-                   ("나이 10년 단위·성별·동네", (age // 10, sex, zipc)),
-                   ("나이 10년 단위·성별·동네 5곳씩 묶음", (age // 10, sex, zipc // 5))]:
-    g = group_sizes(*cols)
-    print(f"{name:24s} 혼자인 사람 {np.mean(g == 1):6.1%}  k-익명성 k = {g.min()}")
-
-# 2) 무작위 응답(randomized response): 민감한 질문에 '부정할 수 있는' 답을 받는다
-true_rate, m = 0.15, 1000
-truth = rng.random(m) < true_rate
-coin1, coin2 = rng.random(m) < 0.5, rng.random(m) < 0.5
-answer = np.where(coin1, truth, coin2)           # 앞면이면 사실대로, 뒷면이면 동전 하나 더 던져 그대로 답한다
-yes = answer.mean()                              # P(예) = 0.5·π + 0.25
-est = 2 * (yes - 0.25)
-se = 2 * np.sqrt(yes * (1 - yes) / m)
-print(f"\\n'예' 비율 {yes:.3f} → 추정한 실제 비율 {est:.3f} ± {1.96 * se:.3f} (참값 {true_rate})")
-print("사실이 '예'인 사람이 '예'라고 답할 확률 0.75, '아니오'인 사람은 0.25 → 비율 3배 = e^ε, ε = ln 3 ≈", round(np.log(3), 3))
-
-# 3) 라플라스 메커니즘: 개수 질의(한 사람이 바꿀 수 있는 값 = 1)에 잡음 Laplace(1/ε)를 더한다
-print("\\n  ε     평균 절대 오차   집단 120명의 상대 오차   집단 12명의 상대 오차")
-for eps in (0.1, 1.0, 10.0):
-    noise = rng.laplace(0, 1 / eps, 100_000)
-    err = np.abs(noise).mean()
-    print(f"{eps:5.1f}   {err:12.2f}   {err / 120:20.1%}   {err / 12:20.1%}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 나이·성별·동네를 그대로 두면 2,000명 중 59.6%가 그 조합의 유일한 사람이라 이름이 없어도 특정된다($k = 1$). 나이를 10년 단위로 묶으면 혼자인 사람은 0.8%로 줄지만 여전히 $k = 1$이고, 동네까지 5곳씩 묶어야 $k = 15$가 된다. 그만큼 데이터는 거칠어졌다. 무작위 응답의 "예" 비율은 0.326이고, 이것으로 추정한 실제 비율은 $0.152 \\pm 0.058$로 참값 0.15를 맞힌다. 라플라스 잡음의 평균 절대 오차는 $1/\\varepsilon$(0.1에서 약 10, 1에서 1, 10에서 0.1)이고, $\\varepsilon = 1$일 때 120명 집단에서는 0.8% 오차지만 12명 집단에서는 8.3%다. **해볼 것:** 무작위 응답에서 첫 동전이 앞면일 확률을 0.5에서 0.8로 올리면 $\\varepsilon$과 추정 오차는 각각 어떻게 바뀌는가? 프라이버시와 정확도가 같은 손잡이에 묶여 있음을 확인하자.
-:::
 
 ## 편향 완화: 대리 변수 · 재가중 · 학습 중 벌점 · 후처리 임계값 {#bias-mitigation}
 
@@ -1099,64 +735,6 @@ $\\lambda$가 0이면 원래 모델이고, 클수록 선택률 격차가 줄어�
 
 완화를 하면 거의 항상 정확도가 떨어진다. 그런데 그 정확도를 **무엇과 비교해** 쟀는지 물어야 한다. 정답 라벨이 과거의 편향된 결정 기록이라면, 그 기록과의 일치도가 떨어졌다는 것은 편향을 덜 재현했다는 뜻일 수도 있다. 핵심 과정에서 "$Y$가 편향된 결정의 기록이라면 그 $Y$에 맞춘 공정한 모델은 과거의 편향을 재현한다"고 했던 바로 그 문제다. 가능하면 실제 성과처럼 편향이 덜한 정답으로도 함께 평가해야 한다.
 
-[[practice]]
-
-### 실습: 대리 변수, 학습 중 벌점, 후처리 임계값을 같은 데이터에서 비교하기
-
-과거 채용 기록 2,000건을 만든다. 실력(skill)은 두 집단이 같은 분포인데, 과거 결정은 A 집단에 가산점을 줬다(라벨 자체의 편향). 사는 동네(zipcode)는 집단과 강하게 상관된 대리 변수다. ① 집단 변수를 넣거나 빼거나 실력만 쓴 모델을 비교하고, ② 선택률 격차 벌점 $\\lambda$를 키워 가며, ③ 집단별 임계값으로 선택률을 맞춘다. 실행 전에 예측해 보자. 집단 변수를 빼면 선택률 격차가 사라질까?
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-# 과거 채용 기록: 실력(skill)은 두 집단이 같은 분포인데, 과거 결정은 A 집단에 가산점을 줬다(라벨 자체의 편향)
-n = 2000
-group = rng.random(n) < 0.5                                   # True = A 집단
-skill = rng.normal(size=n)
-zipcode = group + 0.3 * rng.normal(size=n)                    # 사는 동네: 집단과 강하게 상관(대리 변수)
-y = (skill + 0.8 * group + 0.5 * rng.normal(size=n) > 0.4).astype(float)
-
-sigmoid = lambda z: 1 / (1 + np.exp(-z))
-def fit(F, y, lam=0.0, steps=600, lr=2.0):
-    """로지스틱 회귀. lam > 0이면 두 집단의 평균 예측 확률 차이의 제곱을 벌점으로 더한다(학습 중 완화)"""
-    F = np.column_stack([F, np.ones(len(F))])
-    w = np.zeros(F.shape[1])
-    for _ in range(steps):
-        p = sigmoid(F @ w)
-        grad = F.T @ (p - y) / len(y)
-        gap = p[group].mean() - p[~group].mean()
-        dgap = (F[group] * (p * (1 - p))[group, None]).mean(0) - (F[~group] * (p * (1 - p))[~group, None]).mean(0)
-        w -= lr * (grad + lam * 2 * gap * dgap)
-    return lambda G: sigmoid(np.column_stack([G, np.ones(len(G))]) @ w)
-
-def report(name, pred):
-    sel_a, sel_b = pred[group].mean(), pred[~group].mean()
-    acc = np.mean(pred == y)
-    print(f"{name:28s} 선택률 A {sel_a:.2f} / B {sel_b:.2f} (격차 {sel_a - sel_b:+.2f}) | 과거 기록과 일치 {acc:.3f}")
-
-print("과거 기록의 선택률 A {:.2f} / B {:.2f}\\n".format(y[group].mean(), y[~group].mean()))
-# 1) '모르는 척'은 통하지 않는다: 집단 변수를 빼도 동네가 대신 알려 준다
-report("집단 변수 포함", fit(np.column_stack([skill, group]), y)(np.column_stack([skill, group])) > 0.5)
-report("집단 변수 제외(동네 포함)", fit(np.column_stack([skill, zipcode]), y)(np.column_stack([skill, zipcode])) > 0.5)
-report("실력만 사용", fit(skill[:, None], y)(skill[:, None]) > 0.5)
-
-# 2) 학습 중 완화: 선택률 차이에 벌점을 준다
-print()
-F = np.column_stack([skill, zipcode])
-for lam in (0.0, 1.0, 5.0, 20.0):
-    report(f"벌점 λ = {lam}", fit(F, y, lam=lam)(F) > 0.5)
-
-# 3) 후처리: 집단별 임계값으로 선택률을 맞춘다
-score = fit(F, y)(F)
-t_a = 0.5
-t_b = np.quantile(score[~group], 1 - (score[group] > t_a).mean())
-report("후처리(집단별 임계값)", np.where(group, score > t_a, score > t_b))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 과거 기록의 선택률은 A 0.65, B 0.35다. 집단 변수를 넣은 모델은 이 격차를 그대로 재현하고(+0.31), 집단 변수를 빼도 동네가 대신 알려 줘 격차가 +0.25로 남는다. 실력만 쓰면 격차는 +0.02로 거의 사라지는데, 과거 기록과의 일치도는 0.859에서 0.821로 떨어진다. 실력 분포가 두 집단에서 같으므로 이 "하락"은 과거의 가산점을 덜 따라 한 결과다. 벌점 $\\lambda$를 0, 1, 5, 20으로 키우면 격차가 +0.25 → +0.16 → +0.06 → +0.02로 줄고 일치도는 0.856 → 0.821로 내려간다. 집단별 임계값은 선택률을 0.63으로 정확히 맞추지만 일치도는 0.781로 가장 많이 떨어진다. B 집단의 임계값을 크게 낮춰 선택률을 A에 맞췄기 때문이다. **해볼 것:** 후처리에서 선택률 대신 "실제로 합격했던 사람 중 합격 추천 비율(TPR)"을 맞추면 결과가 어떻게 달라지는가? 그 TPR의 기준인 과거 합격 기록 자체가 편향되어 있다는 점을 함께 생각해 보자.
-:::
-
 ## 공정성 불가능성 정리: 항등식 · 보정과 균형 · 무작위 후처리 {#fairness-impossibility}
 
 핵심 과정의 「공정성은 하나가 아니다」에서는 채용 AI 숫자 예제 하나로 공정성 기준끼리 충돌하는 모습을 봤다. 이 단계는 그 충돌이 특정 예제의 우연이 아니라 **항상** 일어난다는 것을 두 줄짜리 증명 두 개로 보이고, 그래도 균등화된 오즈를 맞춰야 한다면 무엇을 대가로 내야 하는지 계산한다. 기호는 핵심 과정과 같다. 기저율 $p = P(Y=1)$, 정밀도 $\\text{PPV} = P(Y=1 \\mid \\hat Y=1)$, 위음성률 $\\text{FNR} = 1 - \\text{TPR}$이다.
@@ -1192,67 +770,6 @@ p\\,(1 - x) = E[s(1-s)] = (1 - p)\\,z \\quad\\Rightarrow\\quad z = \\dfrac{p}{1-
 \`\`\`
 
 이렇게 하면 두 집단의 FPR과 TPR이 정확히 같아진다. 대가는 분명하다. 더 잘 맞히던 집단의 판정에 일부러 무작위성을 섞어 정확도를 깎는다. 같은 점수를 받은 두 사람이 동전 때문에 다른 판정을 받을 수 있다는 점도 "개인에 대한 공정성" 관점에서 논쟁거리다. 공정성 기준을 고르는 것은 수학이 대신해 줄 수 없는 가치 판단이고, 수학이 해 줄 수 있는 일은 그 선택의 비용을 정확히 계산해 보여 주는 것이다.
-
-[[practice]]
-
-### 실습: 항등식 검증, 보정 아래의 등식, 균등화된 오즈를 맞추는 무작위 혼합
-
-보정된 점수 모델(점수 = 실제로 양성일 확률)을 기저율 약 0.5인 A 집단과 약 0.2인 B 집단에 만든다. ① Chouldechova 항등식을 숫자로 확인하고, ② 보정이 강제하는 $p(1-x) = (1-p)z$를 두 집단에서 확인한 뒤, ③ FPR 0.2에서 TPR이 더 높은 집단을 무작위 혼합으로 낮춰 균등화된 오즈를 맞춘다. 실행 전에 예측해 보자. 두 집단에 같은 FPR을 주면 어느 집단의 TPR이 더 높을까?
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-# 1) Chouldechova 항등식: FPR = p/(1-p) · (1-PPV)/PPV · (1-FNR)
-def fpr_from(p, ppv, fnr):
-    return p / (1 - p) * (1 - ppv) / ppv * (1 - fnr)
-for p in (0.5, 0.2):
-    print(f"기저율 {p}: PPV 0.8과 FNR 0.2를 맞추면 FPR은 반드시 {fpr_from(p, 0.8, 0.2):.3f}")
-
-# 보정된 점수 모델(점수 s = 실제로 우수할 확률)의 두 집단에서 항등식을 확인한다
-def make_group(n, a, b):
-    s = rng.beta(a, b, n)
-    return s, (rng.random(n) < s).astype(int)
-sA, yA = make_group(20000, 5, 5)                   # 기저율 약 0.5
-sB, yB = make_group(20000, 2, 8)                   # 기저율 약 0.2
-for name, s, y in [("A", sA, yA), ("B", sB, yB)]:
-    pred = s >= 0.4
-    tp, fp = np.sum(pred & (y == 1)), np.sum(pred & (y == 0))
-    fn, tn = np.sum(~pred & (y == 1)), np.sum(~pred & (y == 0))
-    p, ppv, fnr = (tp + fn) / len(y), tp / (tp + fp), fn / (tp + fn)
-    print(f"{name}: 임계값 0.4의 실제 FPR {fp / (fp + tn):.4f} = 항등식 {fpr_from(p, ppv, fnr):.4f}")
-
-# 2) Kleinberg의 등식: 보정된 점수라면 집단마다 p·(1 - x) = (1 - p)·z  (x = 양성의 평균 점수, z = 음성의 평균 점수)
-for name, s, y in [("A", sA, yA), ("B", sB, yB)]:
-    p, x, z = y.mean(), s[y == 1].mean(), s[y == 0].mean()
-    print(f"{name}: 기저율 {p:.3f}, 양성의 평균 점수 x = {x:.3f}, 음성의 평균 점수 z = {z:.3f} | p(1-x) = {p * (1 - x):.4f}, (1-p)z = {(1 - p) * z:.4f}")
-
-# 3) 균등화된 오즈를 후처리로 맞추기(Hardt et al., 2016)
-#    판정 규칙 두 개를 확률로 섞으면, 두 규칙의 (FPR, TPR)을 잇는 선분 위의 점을 모두 얻을 수 있다
-def roc_point(s, y, t):
-    return np.mean(s[y == 0] >= t), np.mean(s[y == 1] >= t)
-def threshold_for_fpr(s, y, f):                    # 실제 음성 중 비율 f가 임계값 이상이 되게
-    return np.quantile(s[y == 0], 1 - f)
-f_target = 0.20
-tA_rule, tB_rule = threshold_for_fpr(sA, yA, f_target), threshold_for_fpr(sB, yB, f_target)
-(fA, tA), (fB, tB) = roc_point(sA, yA, tA_rule), roc_point(sB, yB, tB_rule)
-print(f"\\nFPR {f_target}에 맞춘 임계값: A {tA_rule:.3f} → (FPR {fA:.3f}, TPR {tA:.3f}), B {tB_rule:.3f} → (FPR {fB:.3f}, TPR {tB:.3f})")
-
-# TPR이 더 높은 집단을 낮은 쪽에 맞춘다: 확률 λ로는 자기 규칙, 1-λ로는 '확률 f로 무작위 합격'(대각선 위의 점 (f, f))
-t_hi, t_lo = max(tA, tB), min(tA, tB)
-lam = (t_lo - f_target) / (t_hi - f_target)
-print(f"공통 목표 (FPR, TPR) = ({f_target:.2f}, {t_lo:.3f}), 섞는 확률 λ = {lam:.3f}")
-
-s_hi, y_hi, th = (sA, yA, tA_rule) if tA > tB else (sB, yB, tB_rule)
-use_rule = rng.random(len(s_hi)) < lam
-pred = np.where(use_rule, s_hi >= th, rng.random(len(s_hi)) < f_target)
-print(f"시뮬레이션: FPR {np.mean(pred[y_hi == 0]):.3f}, TPR {np.mean(pred[y_hi == 1]):.3f}")
-print(f"그 집단의 정확도: 섞기 전 {np.mean((s_hi >= th) == y_hi):.3f} → 섞은 뒤 {np.mean(pred == y_hi):.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** PPV 0.8과 FNR 0.2를 맞추면 기저율 0.5인 집단의 FPR은 0.200, 기저율 0.2인 집단은 0.050으로 정해진다. 임계값 0.4에서 실제로 잰 FPR(A 0.6408, B 0.0455)은 항등식으로 계산한 값과 소수 넷째 자리까지 같다. 보정된 모델에서 $p(1-x)$와 $(1-p)z$는 A 0.2277 대 0.2286, B 0.1457 대 0.1449로 표본 오차 안에서 같지만, 양성의 평균 점수 $x$는 A 0.543, B 0.272로 크게 달라 균형이 깨져 있다. FPR을 0.2로 맞추면 TPR은 A 0.410, B 0.471로 B가 더 높다. B는 $\\lambda = 0.777$의 확률로만 자기 규칙을 쓰고 나머지는 확률 0.2로 무작위 합격시키면 (0.199, 0.409)가 되어 A와 같아지고, 그 대가로 B의 정확도가 0.734에서 0.723으로 떨어진다. **해볼 것:** 목표 FPR을 0.1과 0.4로 바꿔 $\\lambda$와 정확도 손실이 어떻게 변하는지 보자. 무작위 혼합 대신 B의 임계값만 올려 TPR을 맞추면 FPR은 어떻게 되는가?
-:::
 
 ## 프라이버시의 수학: 차등 프라이버시의 보장 · 멤버십 추론 · DP-SGD {#privacy-math}
 
@@ -1294,54 +811,6 @@ $\\varepsilon = 0.1$이면 0.05로 공격이 거의 동전 던지기 수준이�
 
 대가는 잡음이다. 잡음 벡터의 길이는 대략 $\\sigma C \\sqrt{d}$이고 이것을 $B$로 나누므로, 학습 신호(평균 기울기)에 비한 잡음의 크기는 배치가 작을수록, 파라미터가 많을수록 커진다. DP 학습에 큰 배치와 많은 데이터가 필요한 이유다. 또 자르기와 잡음은 드물고 특이한 표본의 영향을 먼저 지우므로, 데이터가 적은 소수 집단의 정확도가 더 크게 떨어질 수 있다(Bagdasaryan et al., 2019). 프라이버시를 위한 장치가 공정성 문제를 새로 만들 수 있다는 것이다.
 
-[[practice]]
-
-### 실습: 과적합과 멤버십 추론, $\\varepsilon$이 허용하는 공격 이득의 상한, DP-SGD의 자르기와 잡음
-
-① 특징 100개짜리 데이터 400명 중 200명으로 로지스틱 회귀를 학습하고, 규제 강도에 따라 학습·비구성원 정확도와 멤버십 추론의 공격 이득이 어떻게 변하는지 본다. ② $\\varepsilon$별로 공격 이득의 이론적 상한을 계산한다. ③ 표본별 기울기를 자르면 한 사람의 영향이 어떻게 묶이는지, 배치 크기에 따라 잡음이 신호에 비해 얼마나 큰지 계산한다. 실행 전에 예측해 보자. $\\varepsilon = 1$이면 공격자가 얼마나 잘 맞힐 수 있을까?
-
-\`\`\`python
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-rng = np.random.default_rng(0)
-
-# 특징 100개짜리 데이터 400명: 정답과 약하게만 관련된 특징이 많다(외우기 쉬운 상황)
-n, d = 400, 100
-X = rng.normal(size=(n, d))
-w_true = np.zeros(d); w_true[:5] = 1.0
-y = (X @ w_true + 2.0 * rng.normal(size=n) > 0).astype(int)
-mem, non = np.arange(0, 200), np.arange(200, 400)     # 학습에 쓴 200명(구성원) / 쓰지 않은 200명
-
-def advantage(model):
-    """정답에 준 확신도가 문턱값 이상이면 '학습에 쓰였다'고 추측한다. 가장 좋은 문턱값에서 TPR - FPR"""
-    cm = model.predict_proba(X[mem])[np.arange(len(mem)), y[mem]]
-    cn = model.predict_proba(X[non])[np.arange(len(non)), y[non]]
-    return max(np.mean(cm >= t) - np.mean(cn >= t) for t in np.concatenate([cm, cn]))
-
-for C in (100.0, 1.0, 0.01):
-    model = LogisticRegression(C=C, max_iter=10000).fit(X[mem], y[mem])
-    print(f"C = {C:6}: 학습 정확도 {model.score(X[mem], y[mem]):.3f}, 비구성원 정확도 {model.score(X[non], y[non]):.3f}, 공격 이득 {advantage(model):.3f}")
-
-# ε-차등 프라이버시가 보장하는 공격 이득의 상한: TPR ≤ e^ε·FPR 이고 1 - FPR ≤ e^ε·(1 - TPR)
-print("\\n  ε     공격 이득(TPR - FPR)의 최댓값 (e^ε - 1)/(e^ε + 1)")
-for eps in (0.1, 0.5, 1.0, 2.0, 4.0, 8.0):
-    print(f"{eps:5.1f}   {(np.exp(eps) - 1) / (np.exp(eps) + 1):.3f}")
-
-# DP-SGD의 두 장치: 표본별 기울기를 길이 C로 자르고(한 사람이 미치는 영향에 상한), 기울기 합에 N(0, (σC)²) 잡음을 더한다
-G = (0.5 - y[mem])[:, None] * X[mem]                    # w = 0(p = 0.5)에서 표본별 로지스틱 손실의 기울기
-norms = np.linalg.norm(G, axis=1)
-Gc = G / np.maximum(1, norms[:, None] / 1.0)             # C = 1로 자르기
-print(f"\\n표본별 기울기 길이: 자르기 전 최대 {norms.max():.2f} → 자른 뒤 최대 {np.linalg.norm(Gc, axis=1).max():.2f}")
-signal = np.linalg.norm(Gc.mean(axis=0))                 # 평균 기울기(학습 신호)의 길이
-for B in (10, 100, 1000, 10000):
-    noise = 1.0 * 1.0 * np.sqrt(d) / B                   # σ = 1, C = 1: 잡음 벡터 길이 ≈ σC√d를 배치 크기로 나눈 값
-    print(f"배치 {B:5d}명: 잡음 길이 / 신호 길이 ≈ {noise / signal:6.2f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 규제가 약한 $C = 100$에서는 학습 정확도 1.000과 비구성원 정확도 0.680의 차이가 크고 공격 이득이 0.395다. 규제를 강하게 할수록($C$ = 1, 0.01) 학습 정확도는 0.985, 0.880으로 내려가 비구성원 정확도(약 0.68~0.70)에 가까워지고, 공격 이득도 0.290, 0.230으로 줄어든다. 비구성원 정확도는 거의 그대로이므로 이 경우 규제는 성능을 잃지 않고 유출만 줄였다. 여기서 공격 이득은 가장 좋은 문턱값을 같은 데이터에서 고른 값이라 실제보다 다소 낙관적이다(7주차 심화의 선택 편향과 같은 문제). 이론적 상한은 $\\varepsilon$ = 0.1, 0.5, 1, 2, 4, 8에서 0.050, 0.245, 0.462, 0.762, 0.964, 0.999다. 표본별 기울기의 길이는 자르기 전 최대 5.92에서 자른 뒤 1.00으로 묶이고, $\\sigma = 1$일 때 잡음과 신호의 길이 비는 배치 10명에서 약 11.4, 100명에서 1.1, 1,000명에서 0.11로 배치가 클수록 작아진다. **해볼 것:** $\\delta$를 고려한 상한 $(e^\\varepsilon - 1)(1-\\delta)/(e^\\varepsilon + 1) + \\delta$를 $\\delta = 10^{-5}$에서 계산해 보자. 학습 데이터가 10만 명일 때 $\\delta$가 $1/n$보다 훨씬 작아야 하는 이유는 무엇일까?
-:::
-
 ## 드리프트 감지의 통계: PSI의 정체 · 거짓 경보 · 라벨 드리프트 추정 {#drift-statistics}
 
 핵심 과정의 「MLOps」에서는 PSI가 0.1을 넘으면 관찰, 0.2를 넘으면 재학습을 검토한다는 경험칙을 배웠다. 운영 현장에서 이 경보를 믿으려면 세 가지를 알아야 한다. PSI가 수학적으로 무엇을 재는지, 분포가 전혀 바뀌지 않아도 PSI가 얼마나 나오는지(거짓 경보), 그리고 입력 분포가 아니라 **정답 비율**이 바뀌었을 때 라벨 없이 그것을 알아내는 방법이다.
@@ -1382,64 +851,6 @@ q = \\dfrac{\\mu_1 - \\text{FPR}}{\\text{TPR} - \\text{FPR}}
 
 7주차 심화 「LLM 평가의 통계」의 채점관 보정(Rogan–Gladen)과 똑같은 식이다. 그때는 "완벽하지 않은 채점관의 통과율"에서 진짜 정확도를, 지금은 "완벽하지 않은 분류기의 예측 비율"에서 진짜 양성 비율을 되돌린다. 예측 양성 비율을 그대로 새 양성 비율로 믿으면 FPR만큼 부풀려진 값을 읽게 된다. 추정한 비율로 판정 임계값이나 확률 보정을 다시 맞출 수 있다. 다만 $P(x \\mid y)$가 그대로라는 가정이 깨지면(개념 드리프트가 함께 오면) 이 추정도 틀린다.
 
-[[practice]]
-
-### 실습: PSI = 양방향 KL, 드리프트 없을 때의 PSI, 다중 검사, BBSE
-
-① 같은 두 표본으로 PSI와 두 방향의 KL을 계산해 합이 같은지 본다. ② 드리프트가 없는 운영 표본을 크기별로 300번씩 뽑아 PSI의 평균, 근사식, 0.1을 넘는 비율(거짓 경보)을 비교한다. ③ 특징 50개를 검사할 때의 거짓 경보 확률을 계산한다. ④ 양성 비율이 50%에서 20%로 줄어든 운영 데이터에서 예측만 보고 새 비율을 추정한다. 실행 전에 예측해 보자. 드리프트가 전혀 없는데 운영 표본이 100명이면, 몇 % 확률로 PSI가 0.1을 넘을까?
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-def bin_props(train, prod, bins=10):
-    edges = np.quantile(train, np.linspace(0, 1, bins + 1))
-    edges[0], edges[-1] = -np.inf, np.inf
-    p = np.histogram(train, edges)[0] / len(train)
-    q = np.histogram(prod, edges)[0] / len(prod)
-    return np.clip(p, 1e-6, None), np.clip(q, 1e-6, None)
-
-def psi(train, prod, bins=10):
-    p, q = bin_props(train, prod, bins)
-    return np.sum((p - q) * np.log(p / q))
-
-# 1) PSI는 양방향 KL의 합(제프리스 발산)이다
-train = rng.normal(35, 8, 10000)
-prod = rng.normal(38, 8, 3000)
-p, q = bin_props(train, prod)
-kl = lambda a, b: np.sum(a * np.log(a / b))
-print(f"PSI {psi(train, prod):.4f} = KL(p‖q) {kl(p, q):.4f} + KL(q‖p) {kl(q, p):.4f}")
-
-# 2) 분포가 전혀 바뀌지 않아도 운영 구간이 작으면 PSI는 0이 아니다: 대략 (구간 수 - 1)(1/n + 1/m)
-print("\\n운영 표본 수   드리프트 없을 때 PSI 평균   이론 근사   0.1 넘는 비율(거짓 경보)")
-for m in (100, 300, 1000, 3000):
-    vals = np.array([psi(train, rng.normal(35, 8, m)) for _ in range(300)])
-    print(f"{m:10d}   {vals.mean():20.4f}   {9 * (1 / 10000 + 1 / m):8.4f}   {np.mean(vals > 0.1):14.1%}")
-
-# 3) 특징이 많으면 경보도 많아진다: 특징 50개를 각각 유의수준 5%로 검사하면
-k, alpha = 50, 0.05
-print(f"\\n특징 {k}개, 각 5% 검사: 아무 변화가 없어도 경보가 하나 이상 울릴 확률 {1 - (1 - alpha) ** k:.2f} → 본페로니 기준 {alpha / k:.4f}")
-
-# 4) 라벨 드리프트를 라벨 없이 추정하기(BBSE, Lipton et al. 2018)
-#    검증 데이터에서 잰 혼동 행렬 C[i, j] = P(예측 = i, 실제 = j), 운영 데이터의 예측 비율 μ[i] = P_운영(예측 = i)
-#    P(x | y)가 그대로라면 μ = C · w, w[j] = q(y = j) / p(y = j)  → 연립방정식을 풀어 새 사전확률 q를 얻는다
-p_train = np.array([0.5, 0.5])                       # 학습 때 양성 비율 50%
-tpr, fpr = 0.85, 0.10                                # 분류기의 성능(검증 데이터에서 잼)
-C = np.array([[(1 - fpr) * p_train[0], (1 - tpr) * p_train[1]],
-              [fpr * p_train[0],        tpr * p_train[1]]])
-q_true = np.array([0.8, 0.2])                        # 운영에서는 양성이 20%로 줄었다(아무도 모름)
-y_prod = rng.random(5000) < q_true[1]
-pred_prod = np.where(y_prod, rng.random(5000) < tpr, rng.random(5000) < fpr)
-mu = np.array([1 - pred_prod.mean(), pred_prod.mean()])
-w = np.linalg.solve(C, mu)
-q_est = w * p_train
-print(f"\\n운영 데이터의 예측 양성 비율 {mu[1]:.3f} (실제 양성 비율 {y_prod.mean():.3f}과 다름)")
-print(f"BBSE로 추정한 양성 비율 {q_est[1]:.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 평균이 3 이동한 분포의 PSI 0.1394는 $\\text{KL}(p \\Vert q)$ 0.0700과 $\\text{KL}(q \\Vert p)$ 0.0694의 합과 같다. 드리프트가 없을 때의 PSI 평균은 운영 표본 100, 300, 1,000, 3,000명에서 0.098, 0.031, 0.011, 0.005로 근사식 $(B-1)(1/n + 1/m)$과 비슷하고, 100명일 때는 42%의 경우 PSI가 0.1을 넘어 "관찰 필요" 경보가 울린다. 특징 50개를 각각 5%로 검사하면 아무 변화가 없어도 0.92의 확률로 경보가 울린다. 운영 데이터의 예측 양성 비율은 0.246으로 실제 양성 비율 0.196과 다르지만, BBSE는 0.195로 거의 정확히 되돌린다. **해볼 것:** 운영 데이터에서 양성의 모습까지 바뀌도록(예: 양성일 때의 TPR이 0.85에서 0.6으로 떨어지도록) 바꿔 BBSE가 얼마나 틀리는지 보자. 가정이 깨진 것을 어떻게 알아챌 수 있을까?
-:::
 `,
   sections,
   quiz: [

@@ -86,39 +86,6 @@ ReLU $=\\max(0,x)$와 비교하면 차이가 뚜렷하다. ReLU는 x=0에서 미
 충분히 넓은 1개 은닉층 MLP는 임의의 연속함수를 근사할 수 있다(단, 학습 가능성을 보장하진 않는다). 즉 "표현할 수 있다"는 것과 "경사하강법으로 실제로 찾아낼 수 있다"는 것은 전혀 다른 문제다. 층을 더 깊게 쌓는 이유 중 하나는, 넓지만 얕은 망보다 깊은 망이 실제로 학습이 더 잘 되는 경우가 많기 때문이다.
 :::
 
-[[practice]]
-
-### 실습: "비선형이 없으면 여러 층 = 한 층"을 숫자로 확인하기
-
-활성화 함수 없이 두 층을 쌓은 결과가 정말로 행렬 하나($W_2W_1$)와 편향 하나로 똑같이 재현되는지, 그리고 ReLU를 넣으면 그 등식이 깨지는지 확인해보자. 마지막으로 ReLU와 GELU의 값을 몇 점에서 비교한다.
-
-\`\`\`python
-import numpy as np
-from math import erf, sqrt
-
-rng = np.random.default_rng(0)
-x = rng.normal(size=3)                                   # 입력 3차원
-W1, b1 = rng.normal(size=(4, 3)), rng.normal(size=4)      # 은닉 4차원
-W2, b2 = rng.normal(size=(1, 4)), rng.normal(size=1)      # 출력 1차원
-
-two_linear = W2 @ (W1 @ x + b1) + b2                     # 비선형 없이 두 층
-W, b = W2 @ W1, W2 @ b1 + b2                             # 하나의 행렬 W와 편향 b로 합친 것
-one_linear = W @ x + b
-print("두 선형층:", two_linear, " 합친 한 층:", one_linear, " 같은가?", np.allclose(two_linear, one_linear))
-
-with_relu = W2 @ np.maximum(0, W1 @ x + b1) + b2           # 사이에 ReLU를 끼우면?
-print("ReLU를 넣은 결과:", with_relu, " 한 층과 같은가?", np.allclose(with_relu, one_linear))
-
-def gelu(v):
-    return v * 0.5 * (1 + erf(v / sqrt(2)))
-for v in [-3, -1, -0.5, 0, 0.5, 1, 3]:
-    print(f"x={v:>4}: ReLU={max(0, v):5.2f}, GELU={gelu(v):6.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 비선형이 없으면 두 결과가 \`True\`로 같고, ReLU를 넣으면(대부분의 난수에서) \`False\`가 된다. GELU는 $x=-1$에서 약 $-0.159$, $x=-0.5$에서 약 $-0.154$로 음수 구간에서도 0이 아닌 작은 값을 흘려보내고, 큰 양수에서는 $x$와 거의 같다. **해볼 것:** \`W1\`, \`W2\`의 모양을 바꿔(예: 은닉 10차원) 같은 실험을 해보자. 은닉층이 아무리 넓어도 비선형이 없으면 결과가 한 층과 같다는 사실이 유지되는가?
-:::
-
 ## 역전파 = 연쇄법칙의 효율적 적용 {#backprop}
 
 본격적인 정의에 들어가기 전에, 아주 작은 숫자로 직관을 먼저 얻어 보자. $u=w\\times x$ 라는 계산 하나만 놓고 보면, $w$가 아주 조금(0.001) 커질 때 $u$는 $x$배만큼 커진다. 이것이 미분 $du/dw=x$의 의미다. 그런데 이 u가 다시 다음 계산의 재료로 쓰여 최종적으로 손실 L을 만든다면, "w가 조금 커졌을 때 L이 얼마나 변하는가"는 두 단계를 거쳐야 한다. 먼저 "w가 커지면 u가 얼마나 커지는가"($du/dw$), 그다음 "u가 커지면 L이 얼마나 커지는가"($dL/du$). 연쇄법칙은 이 두 변화율을 곱하기만 하면 된다고 말해준다: $dL/dw = (dL/du)\\times(du/dw)$. 역전파는 이 곱셈을, 신경망 전체의 수백만 개 파라미터에 대해 단 한 번의 계산으로 한꺼번에 끝내는 방법이다. 아래에서 이것을 정확한 알고리즘으로 정의한다.
@@ -154,55 +121,6 @@ w=2, x=3, c=1이라는 작은 숫자로 시작해서 순전파와 역전파를 �
 가 된다. 말로 읽으면 "가중치 $W$가 받는 기울기는 상류 기울기 $\\delta$와 입력 $x$를 곱한 것, 편향 $b$가 받는 기울기는 $\\delta$ 그 자체, 입력 $x$가 받는 기울기(다음 층으로 더 내려보낼 몫)는 가중치를 뒤집어(전치) $\\delta$에 곱한 것"이라는 뜻이다. 1주차 「행렬 곱셈」 단계에서 예고했던 "$(AB)^\\top = B^\\top A^\\top$, 기울기는 전치된 형태로 거슬러 올라간다"가 바로 이 $W^\\top\\delta$다. 처음 보면 전치(transpose)가 왜 여기저기 붙는지 헷갈리기 쉬운데, 가장 믿을 만한 검증법은 차원(shape)이 맞는지 확인하는 것이다. $W$가 $4\\times 3$이면 x는 $3\\times 1$, z는 $4\\times 1$이어야 하고 $\\delta$도 $4\\times 1$이어야 하니, $\\dfrac{dL}{dW}$($4\\times 3$)를 만들려면 $\\delta$($4\\times 1$)와 $x^\\top$($1\\times 3$)를 곱해야 한다는 식으로 형태만 보고도 공식을 거꾸로 유추할 수 있다. 실제로 현업에서도 shape이 안 맞아서 나는 에러가 역전파 디버깅의 8할을 차지한다. 형태가 항상 일치하는지 확인하는 습관이 최고의 디버깅 습관이다.
 
 다음 두 단계에서는 지금까지 배운 역전파를 실제로 동작하는 코드로 만든다. Andrej Karpathy가 만든 micrograd라는 아주 작은 자동미분 엔진을 그대로 따라 구현하는데, 겨우 백 줄 남짓한 이 코드 안에 PyTorch의 autograd가 하는 일의 핵심 원리가 전부 들어있다.
-
-[[practice]]
-
-### 실습: 손 역전파를 수치미분으로 검산하기
-
-본문 예제 $L = (w\\cdot x + c)^2$의 기울기를 역전파 규칙으로 계산하는 함수와, "조금 흔들어서 재는" 수치미분 함수를 각각 만들어 비교해보자. 이어서 한 층 전체의 공식 $\\partial L/\\partial W = \\delta x^\\top$도 같은 방법으로 검산한다.
-
-\`\`\`python
-import numpy as np
-
-def forward(w, x, c):
-    return (w * x + c) ** 2
-
-def backprop(w, x, c):
-    u = w * x; v = u + c                   # 순전파 중간값
-    dL_dv = 2 * v                          # 제곱 노드
-    dL_du = dL_dv; dL_dc = dL_dv           # 덧셈 노드: 그대로 나눠줌
-    dL_dw = dL_du * x; dL_dx = dL_du * w   # 곱셈 노드: 상대방 값을 곱함
-    return dL_dw, dL_dx, dL_dc
-
-def numerical(f, args, i, eps=1e-6):
-    """i번째 인자만 ±eps 흔들어 중앙 차분으로 미분을 근사한다."""
-    plus, minus = list(args), list(args)
-    plus[i] += eps; minus[i] -= eps
-    return (f(*plus) - f(*minus)) / (2 * eps)
-
-args = (2.0, 3.0, 1.0)
-print("역전파  :", backprop(*args))
-print("수치미분:", tuple(round(numerical(forward, args, i), 4) for i in range(3)))
-
-# 한 층 전체: z = W x, L = sum(z^2) 일 때 dL/dW = δ x^T (δ = dL/dz = 2z)
-rng = np.random.default_rng(0)
-W, x = rng.normal(size=(4, 3)), rng.normal(size=3)
-z = W @ x
-delta = 2 * z
-grad_formula = np.outer(delta, x)           # (4,1) × (1,3) = (4,3)
-grad_numeric = np.zeros_like(W)
-for i in range(4):
-    for j in range(3):
-        Wp, Wm = W.copy(), W.copy()
-        Wp[i, j] += 1e-6; Wm[i, j] -= 1e-6
-        grad_numeric[i, j] = (np.sum((Wp @ x) ** 2) - np.sum((Wm @ x) ** 2)) / 2e-6
-print("dL/dW 공식과 수치미분의 최대 차이:", np.abs(grad_formula - grad_numeric).max())
-print("shape:", grad_formula.shape, "== W.shape", W.shape)
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 역전파 \`(42.0, 28.0, 14.0)\`과 수치미분 \`(42.0, 28.0, 14.0)\`이 일치하고, 한 층 공식과 수치미분의 최대 차이는 $10^{-6}$ 이하, shape은 \`(4, 3)\`. **해볼 것:** 본문 퀴즈처럼 $w=-1, x=4, c=2$로 바꿔 손으로 먼저 계산한 뒤 코드로 확인하자. \`backprop\`의 곱셈 노드에서 \`* x\`와 \`* w\`를 실수로 바꿔 쓰면 수치미분 비교가 어떻게 버그를 잡아내는가?
-:::
 
 ## 자동미분 엔진을 읽기 위한 파이썬 문법 {#python-for-autograd}
 
@@ -278,49 +196,6 @@ print(list(reversed(nums)))          # [3, 2, 1]
 
 이 다섯 가지(클래스/\`__init__\`, 연산자 오버로딩, 클로저, 재귀, set/reversed)를 머릿속에 담아두고 다음 단계에서 실제 Value 클래스를 읽는다. 코드 자체는 여전히 짧지만, 문법을 미리 알고 보면 훨씬 편하게 읽힐 것이다.
 
-[[practice]]
-
-### 실습: 다섯 문법을 한 클래스에 모아보기
-
-아래 \`Money\` 클래스는 \`+\`와 \`*\`를 지원하고, 연산 기록을 남기며, 기록을 재귀로 거꾸로 출력한다. 다음 단계 Value 클래스의 축소판이다. 빈칸 없이 완성된 코드이니, 먼저 **실행 결과를 예측**한 뒤 실행해 비교하자.
-
-\`\`\`python
-class Money:
-    def __init__(self, amount, parents=(), op=""):
-        self.amount = amount
-        self.parents = set(parents)        # ⑤ set: 나를 만든 객체들
-        self.op = op
-
-    def __add__(self, other):              # ② 연산자 오버로딩: a + b
-        return Money(self.amount + other.amount, (self, other), "+")
-
-    def __mul__(self, k):                  # ② a * 숫자
-        return Money(self.amount * k, (self,), f"*{k}")
-
-    def __repr__(self):
-        return f"Money({self.amount})"
-
-def make_tax(rate):                        # ③ 클로저: rate를 기억하는 함수를 돌려준다
-    def tax(m):
-        return m * rate
-    return tax
-
-def history(m, depth=0):                   # ④ 재귀: 부모를 따라 거슬러 올라간다
-    print("  " * depth + f"{m} {m.op}")
-    for p in m.parents:
-        history(p, depth + 1)
-
-a, b = Money(1000), Money(500)
-vat = make_tax(1.1)
-total = vat(a + b)
-print(total)                               # 예상: Money(1650.0...) (부동소수점 오차가 조금 붙을 수 있다)
-history(total)
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** \`Money(1650.0000000000002)\`처럼 1650에 가까운 값이 나오고(부동소수점 오차), \`history\`가 \`*1.1\` → \`+\` → 두 원래 금액 순서로 들여쓰기하며 출력된다. **해볼 것:** \`__sub__\`를 추가해 \`a - b\`가 되게 하고, \`history\`가 이미 출력한 객체는 다시 출력하지 않도록 \`seen\` 집합을 인자로 넘겨보자. 다음 단계 \`backward()\`의 \`seen\`과 같은 역할이다.
-:::
-
 ## 미니 자동미분 엔진(micrograd) 직접 구현하기 {#micrograd}
 
 Value 클래스가 하는 일을 한 문장으로 요약하면, "숫자 하나(data)에 그 숫자가 어떻게 만들어졌는지에 대한 기억(_prev, _op)과, 자신에게 기울기가 도착했을 때 그것을 부모에게 어떻게 나눠줄지에 대한 지침서(_backward)를 함께 들고 다니는 객체"다. 여기서 눈여겨봐야 할 설계 포인트가 하나 있다. \`__add__\`나 \`__mul__\` 안에서 _backward를 지금 당장 실행하지 않고 나중에 실행할 함수로만 저장해둔다는 점이다(파이썬의 클로저 기능을 쓴 것이다). 왜 이렇게 할까? 순전파를 하는 시점에는 아직 이 노드의 출력이 최종 손실에 얼마나 기여할지(out.grad)를 알 수 없기 때문이다. 그 값은 순전파가 전부 끝나고 손실 L이 나온 뒤, 역전파가 거꾸로 이 노드까지 도달했을 때야 비로소 정해진다. 그래서 "어떻게 나눠줄지에 대한 계산 방법"만 미리 클로저로 포장해 저장해두고, 실제 계산은 그 정보(out.grad)가 준비된 나중 시점에 실행하는 것이다. 이것이 지연 계산(lazy evaluation)이고, PyTorch가 모든 텐서 연산 뒤에서 grad_fn을 저장해뒀다가 loss.backward() 호출 시점에야 순서대로 실행하는 것과 똑같은 아이디어다.
@@ -381,97 +256,7 @@ backward() 메서드 안에서 topo 리스트를 만드는 부분이 왜 필요�
 micrograd와 PyTorch의 autograd는 손실(출력)에서 입력 쪽으로 거슬러 가는 **역방향 모드** 자동미분이다. 입력 쪽에서 출발하는 순방향 모드와의 차이, 중간값을 모두 저장해야 하는 메모리 문제는 심화 과정의 「자동미분의 두 모드」 단계에서 다룬다.
 
 :::info 주의
-\`+=\`로 기울기를 누적하는 이유: 한 변수가 여러 경로에 쓰이면 기울기가 합산된다(다변수 연쇄법칙, fan-out gradient accumulation). 이를 \`=\`로 쓰면 어떤 버그가 생기는지는 실습에서 $y = x\\cdot x + x$로 직접 확인한다.
-:::
-
-[[practice]]
-
-### 실습: Value를 확장하고 gradient check로 검증하기
-
-아래 셀은 본문의 Value에 \`__pow__\`(거듭제곱), \`__neg__\`/\`__sub__\`(뺄셈), \`tanh\`를 더한 버전이다. \`tanh\`의 \`_backward\`만 비어 있다(\`...\`). 국소 미분 $\\frac{d}{dz}\\tanh z = 1 - \\tanh^2 z$를 이용해 채운 뒤 실행하자. 아래쪽 검증 코드가 자동으로 수치미분과 비교해준다.
-
-\`\`\`python
-import math
-
-class Value:
-    def __init__(self, data, _children=(), _op=""):
-        self.data, self.grad = data, 0.0
-        self._prev, self._backward = set(_children), lambda: None
-
-    def __add__(self, o):
-        o = o if isinstance(o, Value) else Value(o)
-        out = Value(self.data + o.data, (self, o), "+")
-        def _backward():
-            self.grad += out.grad
-            o.grad += out.grad
-        out._backward = _backward
-        return out
-
-    def __mul__(self, o):
-        o = o if isinstance(o, Value) else Value(o)
-        out = Value(self.data * o.data, (self, o), "*")
-        def _backward():
-            self.grad += o.data * out.grad
-            o.grad += self.data * out.grad
-        out._backward = _backward
-        return out
-
-    def __pow__(self, k):                       # k는 상수 지수
-        out = Value(self.data ** k, (self,), f"**{k}")
-        def _backward():
-            self.grad += k * self.data ** (k - 1) * out.grad    # d(x^k)/dx = k x^(k-1)
-        out._backward = _backward
-        return out
-
-    def __neg__(self):  return self * -1
-    def __sub__(self, o): return self + (-o if isinstance(o, Value) else Value(-o))
-    def __radd__(self, o): return self + o      # 숫자 + Value 도 되도록
-    def __rmul__(self, o): return self * o      # 숫자 * Value 도 되도록
-
-    def tanh(self):
-        t = math.tanh(self.data)
-        out = Value(t, (self,), "tanh")
-        def _backward():
-            self.grad += (1 - t ** 2) * out.grad   # ← 이 줄이 d tanh/dz = 1 - tanh² 이다 (직접 지워보고 다시 써보자)
-        out._backward = _backward
-        return out
-
-    def backward(self):
-        topo, seen = [], set()
-        def build(v):
-            if v not in seen:
-                seen.add(v)
-                for c in v._prev: build(c)
-                topo.append(v)
-        build(self)
-        self.grad = 1.0
-        for v in reversed(topo):
-            v._backward()
-
-# ── 검증 1: 뉴런 하나 tanh(w1*x1 + w2*x2 + b) 의 기울기를 수치미분과 비교 ──
-def f(w1, w2, b, x1=2.0, x2=-1.0):
-    return math.tanh(w1 * x1 + w2 * x2 + b)
-
-vals = {"w1": 0.5, "w2": -0.3, "b": 0.1}
-w1, w2, b = Value(vals["w1"]), Value(vals["w2"]), Value(vals["b"])
-out = (w1 * 2.0 + w2 * -1.0 + b).tanh()
-out.backward()
-for name, v in [("w1", w1), ("w2", w2), ("b", b)]:
-    plus, minus = dict(vals), dict(vals)
-    plus[name] += 1e-6; minus[name] -= 1e-6
-    num = (f(**plus) - f(**minus)) / 2e-6
-    rel = abs(v.grad - num) / max(1e-12, abs(v.grad) + abs(num))
-    print(f"{name}: 역전파 {v.grad:.6f}, 수치미분 {num:.6f}, 상대오차 {rel:.1e}", "✓" if rel < 1e-5 else "✗")
-
-# ── 검증 2: 같은 변수를 여러 번 쓰는 식 y = x*x + x 에서 dy/dx = 2x + 1 ──
-x = Value(3.0)
-y = x * x + x
-y.backward()
-print("y = x*x + x, x=3 → dy/dx =", x.grad, "(기대값 7)")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 세 파라미터 모두 상대오차가 $10^{-9}$ 수준으로 ✓가 붙고, $y = x\\cdot x + x$의 기울기는 7이다. **해볼 것:** ① \`tanh\`의 \`_backward\` 줄을 \`self.grad += out.grad\`처럼 틀리게 바꾸면 검증 1이 어떻게 ✗를 띄우는지 확인하자. ② \`__add__\`와 \`__mul__\`의 \`+=\`를 \`=\`로 바꾸면 검증 2의 결과가 7이 아니라 얼마가 되는가? 왜 그 값이 나오는지 계산 그래프로 설명해보자.
+\`+=\`로 기울기를 누적하는 이유: 한 변수가 여러 경로에 쓰이면 기울기가 합산된다(다변수 연쇄법칙, fan-out gradient accumulation). 이를 \`=\`로 쓰면 버그가 생긴다. 예를 들어 $y = x\\cdot x + x$에서 $x$는 세 경로로 쓰이므로 $x = 3$일 때 기울기는 $2x + 1 = 7$이어야 하는데, \`=\`로 덮어쓰면 마지막에 계산된 경로의 값만 남아 7이 아닌 값이 나온다.
 :::
 
 ## 최적화기: SGD·Momentum·Adam {#optimizers}
@@ -502,51 +287,6 @@ m_t = \\beta_1 m_{t-1} + (1-\\beta_1)g_t, \\qquad v_t = \\beta_2 v_{t-1} + (1-\\
 
 실무에서는 특별한 이유가 없다면 Adam(또는 그 개선판인 AdamW)을 기본값으로 놓고 학습을 시작하는 경우가 많고, 자원이 충분할 때 SGD+Momentum으로 더 세밀하게 튜닝해 마지막 성능을 쥐어짜는 경우가 많다는 정도만 기억해두자. 편향 보정이 왜 $1-\\beta^t$로 나누는지, Adam에 L2 규제를 그냥 넣으면 왜 안 되고 AdamW가 필요한지, 학습률 워밍업은 왜 하는지는 심화 과정의 「Adam의 이론」 단계에서 다룬다.
 
-[[practice]]
-
-### 실습: 좁고 긴 협곡에서 SGD·Momentum·Adam 경주시키기
-
-1주차 마지막 실습의 $L(w_1, w_2) = (w_1 - 1)^2 + 10(w_2 + 2)^2$을 다시 가져오자. 두 방향의 가파름이 10배 달라서, 하나의 학습률로는 한쪽이 느리거나 다른 쪽이 발산했다. 세 최적화기를 같은 출발점에서 100스텝씩 돌려 비교한다.
-
-\`\`\`python
-import numpy as np
-
-def loss(w):  return (w[0] - 1) ** 2 + 10 * (w[1] + 2) ** 2
-def grad(w):  return np.array([2 * (w[0] - 1), 20 * (w[1] + 2)])
-
-def run(opt, lr, steps=100):
-    w = np.array([5.0, 5.0])
-    v = np.zeros(2); m = np.zeros(2); s = np.zeros(2)
-    b1, b2, eps = 0.9, 0.999, 1e-8
-    for t in range(1, steps + 1):
-        g = grad(w)
-        if opt == "SGD":
-            w = w - lr * g
-        elif opt == "Momentum":
-            v = 0.9 * v + g
-            w = w - lr * v
-        elif opt == "Adam":
-            m = b1 * m + (1 - b1) * g
-            s = b2 * s + (1 - b2) * g ** 2
-            m_hat, s_hat = m / (1 - b1 ** t), s / (1 - b2 ** t)
-            w = w - lr * m_hat / (np.sqrt(s_hat) + eps)
-    return w, loss(w)
-
-for opt, lr in [("SGD", 0.01), ("Momentum", 0.01), ("SGD", 0.04), ("Adam", 0.1), ("Adam", 0.3)]:
-    w, l = run(opt, lr)
-    print(f"{opt:8s} lr={lr:<5}: 100스텝 후 w = {np.round(w, 3)}, loss = {l:.2e}")
-
-# Adam 첫 스텝이 기울기 크기와 무관하게 약 lr만큼 움직이는지 확인 (본문 손계산)
-for g1 in [5.0, 0.01]:
-    m1, v1 = 0.1 * g1, 0.001 * g1 ** 2
-    step = 0.1 * (m1 / 0.1) / (np.sqrt(v1 / 0.001) + 1e-8)
-    print(f"g1={g1}: Adam 첫 스텝 이동량 = {step:.4f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** ① 같은 학습률 0.01에서 SGD는 완만한 $w_1$ 방향이 1.53까지밖에 못 가지만(loss 약 0.28), Momentum은 누적된 속도 덕분에 1.02 근처까지 간다(loss 약 0.004). 같은 보폭이라면 관성이 큰 차이를 만든다. ② 그런데 학습률을 0.04로 잘 고른 SGD가 오히려 가장 정확하다(loss $10^{-6}$ 수준). 이렇게 단순한 2차 함수에서는 잘 튜닝된 SGD가 이긴다. ③ Adam은 두 방향을 기울기 크기로 나눠 비슷한 보폭으로 움직이지만, lr=0.3은 정답 근처에서 진동하고 lr=0.1은 100스텝으로 부족하다. Adam의 장점은 "기울기 스케일에 둔감해서 학습률을 덜 신경 써도 된다"이지 "항상 가장 빠르다"가 아니다. 실무에서 Adam을 기본값으로 쓰고, 여유가 있으면 SGD+Momentum을 튜닝해 마지막 성능을 짜내는 이유다. Adam 첫 스텝 이동량은 두 경우 모두 0.1이다. **해볼 것:** Momentum의 계수 0.9를 0.99로 바꾸면 어떻게 되는가? 너무 큰 관성은 최솟값을 지나쳐 오래 진동하게 만든다는 것을 확인해보자.
-:::
-
 ## 실전 이슈: 기울기 소실·폭발과 가중치 초기화 {#init-stability}
 
 세 가지 실전 이슈를 짚고 넘어가자. 첫 번째는 기울기 소실과 폭발이다. sigmoid나 tanh처럼 입력이 조금만 커져도 출력이 거의 평평해지는 활성화 함수를 깊게 쌓으면, 연쇄법칙으로 기울기를 곱해나가는 과정에서 0에 가까운 국소 미분들이 계속 곱해져 맨 앞쪽 층에 도달할 때쯤에는 기울기가 사실상 0이 된다(기울기 소실). 반대로 미분값이 1보다 큰 항들이 계속 곱해지면 기울기가 기하급수적으로 커져 학습이 발산하기도 한다(기울기 폭발). ReLU가 널리 쓰이는 이유 중 하나가 바로 이것이다. 입력이 양수인 구간에서는 미분이 항상 1이라서, 이 구간에서는 기울기가 층을 지나도 줄어들거나 커지지 않고 그대로 전달된다. 다만 ReLU도 공짜는 아니다. 입력이 음수인 구간에서는 미분이 정확히 0이므로, 한번 음수 쪽으로 넘어가 버린 뉴런은 그 이후로 기울기를 전혀 받지 못해 영영 업데이트되지 않는 "죽은 ReLU(dead ReLU)" 현상이 생기기도 한다. 여기에 He/Xavier 초기화, 그리고 4주차에 배울 잔차 연결(residual connection)을 더하면 훨씬 깊은 네트워크도 안정적으로 학습시킬 수 있다. 기울기가 층을 거슬러 내려가며 어떻게 줄고 커지는지를 식으로, 잔차 연결과 기울기 클리핑이 왜 통하는지는 심화 과정의 「기울기 흐름의 수학」 단계에서 다룬다.
@@ -568,7 +308,7 @@ height: 606
 \\frac{\\partial f}{\\partial \\theta} \\approx \\frac{f(\\theta + \\epsilon) - f(\\theta - \\epsilon)}{2\\epsilon}, \\qquad \\text{상대오차} = \\frac{|g_{\\text{역전파}} - g_{\\text{수치}}|}{|g_{\\text{역전파}}| + |g_{\\text{수치}}|}
 \`\`\`
 
-상대오차가 $10^{-5}$보다 작으면 구현이 맞다고 믿을 수 있다. 「역전파」와 「미니 자동미분 엔진」 단계의 실습에서 이미 이 방법으로 손 역전파와 Value 클래스를 검증했다.
+상대오차가 $10^{-5}$보다 작으면 구현이 맞다고 믿을 수 있다. 적용과 복습의 코딩 실습에서도 이 방법으로 손 역전파와 Value 클래스를 검증한다.
 
 ### 가중치 초기화의 수학: 분산이 왜 fan_in에 반비례해야 하는가
 
@@ -601,63 +341,6 @@ height: 606
 \`\`\`
 
 말로 읽으면 "가중치 하나의 분산을, 2를 입력 개수(fan_in)로 나눈 값 정도로 잡아라"는 뜻이다. 예를 들어 fan_in=100인 층이라면 $\\text{Var}(W)\\approx 2/100=0.02$, 즉 표준편차는 $\\sqrt{0.02}\\approx 0.141$ 정도의 아주 작은 값으로 가중치를 초기화해야 한다는 뜻이다. 결국 두 초기화가 서로 다른 공식을 쓰는 것은 경쟁하는 두 유파가 있어서가 아니라, "어떤 활성화 함수 뒤에 어떤 분산 보정이 필요한가"라는 질문의 답이 다르기 때문이다. 실무에서는 ReLU 계열이면 He, tanh/sigmoid 계열이면 Xavier를 기본값으로 쓰면 된다.
-
-[[practice]]
-
-### 실습 1: 초기화 스케일과 분산 폭발/소실을 눈으로 확인하기
-
-위에서 손으로 계산했던 $1.5^{10} \\approx 57.7$배, $0.8^{10} \\approx 0.107$배가 실제 코드에서도 재현되는지 확인해보자. 10층짜리 ReLU 네트워크를 흉내내면서, 매 층 출력의 표준편차가 초기화 스케일에 따라 어떻게 변하는지만 관찰한다(학습은 하지 않고 순전파만 반복한다).
-
-\`\`\`python
-import numpy as np
-
-def forward_stds(scale, n_layers=10, width=256, n_samples=1000):
-    rng = np.random.default_rng(0)             # 결과를 재현할 수 있도록 시드 고정
-    x = rng.standard_normal((n_samples, width))   # 표준편차 1로 시작
-    stds = [x.std()]
-    for _ in range(n_layers):
-        W = rng.standard_normal((width, width)) * scale
-        x = np.maximum(0, x @ W)                # ReLU
-        stds.append(x.std())
-    return stds
-
-he_scale  = np.sqrt(2 / 256)     # He 초기화: Var(W) = 2/fan_in
-too_big   = he_scale * 1.5       # 표준편차를 일부러 1.5배 키운 경우
-too_small = he_scale * 0.8       # 표준편차를 일부러 0.8배로 줄인 경우
-
-for name, scale in [("He(적정)", he_scale), ("과도(x1.5)", too_big), ("과소(x0.8)", too_small)]:
-    stds = forward_stds(scale)
-    print(name, [f"{s:.4f}" for s in stds])
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** He 스케일은 층을 지나도 표준편차가 거의 일정하고(ReLU 출력이라 약 0.8 근처), 과도(1.5배) 버전은 층마다 약 1.5배, 과소(0.8배) 버전은 약 0.8배씩 변해 10층 뒤 대략 57배, 0.1배 수준이 된다. **해볼 것:** \`n_layers\`를 20으로 늘려 표의 3325배·0.0115배에 가까워지는지 확인하자.
-:::
-
-### 실습 2: 가중치를 전부 0(또는 같은 값)으로 시작하면?
-
-\`\`\`python
-import numpy as np
-
-X = np.array([[0.5, -1.0], [1.5, 2.0], [-1.0, 0.3]])     # 샘플 3개, 특징 2개
-y = np.array([[1.0], [0.0], [1.0]])
-
-W1 = np.full((2, 3), 0.5)      # 은닉 뉴런 3개의 가중치를 전부 같은 값으로
-W2 = np.full((3, 1), 0.5)
-for step in range(200):
-    h = np.tanh(X @ W1)
-    pred = h @ W2
-    d_pred = 2 * (pred - y) / len(X)
-    dW2 = h.T @ d_pred
-    dW1 = X.T @ ((d_pred @ W2.T) * (1 - h ** 2))
-    W1 -= 0.1 * dW1
-    W2 -= 0.1 * dW2
-print("200스텝 뒤 W1의 세 열(= 은닉 뉴런 3개):\\n", np.round(W1, 4))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 200스텝을 학습해도 \`W1\`의 세 열이 **완전히 같다**. 세 뉴런이 같은 값에서 출발해 같은 기울기를 받으므로 영원히 서로의 복사본으로 남는다(대칭성). **해볼 것:** \`W1\`을 \`np.random.default_rng(0).normal(0, 0.5, (2, 3))\`처럼 작은 무작위 값으로 바꾸면 세 열이 서로 달라지는지 확인하자.
-:::
 
 ## PyTorch가 대신해주는 것들 {#pytorch-core}
 
@@ -752,62 +435,6 @@ for epoch in range(num_epochs):
 | 「최적화기」 단계에서 손으로 쓴 Adam 갱신식 | torch.optim.Adam.step() |
 | 갱신 후 grad를 0으로 되돌리는 코드 | optimizer.zero_grad() |
 
-[[practice]]
-
-### 실습: autograd 없이 2층 신경망을 끝까지 학습시키기 (브라우저에서 실행)
-
-PyTorch가 대신해주는 일을 정확히 이해하는 가장 좋은 방법은, 한 번은 그 일을 전부 손으로 해보는 것이다. 아래 코드는 NumPy만으로 2층 MLP(은닉 16, ReLU)를 만들어 make_moons를 분류한다. \`backward\` 함수의 네 줄이 바로 \`loss.backward()\`가 자동으로 해주는 일이고, 학습 전에 gradient check로 그 네 줄이 맞는지부터 확인한다.
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import make_moons
-
-X, y = make_moons(n_samples=400, noise=0.15, random_state=0)
-Y = y.reshape(-1, 1).astype(float)                       # (400, 1)
-rng = np.random.default_rng(0)
-H = 16
-W1 = rng.normal(0, np.sqrt(2 / 2), (2, H)); b1 = np.zeros(H)   # He 초기화: Var = 2/fan_in
-W2 = rng.normal(0, np.sqrt(1 / H), (H, 1)); b2 = np.zeros(1)
-
-def forward(X, W1, b1, W2, b2):
-    z1 = X @ W1 + b1                   # (400, 16)
-    h = np.maximum(0, z1)              # ReLU
-    z2 = h @ W2 + b2                   # (400, 1)
-    p = 1 / (1 + np.exp(-z2))          # 시그모이드 → 양성 확률
-    return z1, h, p
-
-def loss_fn(p, Y):
-    return -np.mean(Y * np.log(p + 1e-12) + (1 - Y) * np.log(1 - p + 1e-12))
-
-def backward(X, Y, z1, h, p, W2):
-    dz2 = (p - Y) / len(X)             # 2주차: 시그모이드+교차엔트로피의 기울기 = p - y
-    dW2, db2 = h.T @ dz2, dz2.sum(axis=0)       # dL/dW = (입력)^T δ
-    dz1 = (dz2 @ W2.T) * (z1 > 0)      # W^T δ 로 내려보내고 ReLU에서 음수 자리는 차단
-    dW1, db1 = X.T @ dz1, dz1.sum(axis=0)
-    return dW1, db1, dW2, db2
-
-# 1) gradient check: W1[0, 0] 하나의 기울기를 수치미분과 비교
-z1, h, p = forward(X, W1, b1, W2, b2)
-dW1 = backward(X, Y, z1, h, p, W2)[0]
-Wp, Wm = W1.copy(), W1.copy()
-Wp[0, 0] += 1e-5; Wm[0, 0] -= 1e-5
-num = (loss_fn(forward(X, Wp, b1, W2, b2)[2], Y) - loss_fn(forward(X, Wm, b1, W2, b2)[2], Y)) / 2e-5
-print(f"gradient check: 역전파 {dW1[0, 0]:.8f}, 수치미분 {num:.8f}")
-
-# 2) 학습 루프: 순전파 → 손실 → 역전파 → 갱신 (PyTorch의 네 줄과 같은 구조)
-lr = 0.5
-for epoch in range(2001):
-    z1, h, p = forward(X, W1, b1, W2, b2)
-    dW1, db1, dW2, db2 = backward(X, Y, z1, h, p, W2)
-    W1 -= lr * dW1; b1 -= lr * db1; W2 -= lr * dW2; b2 -= lr * db2
-    if epoch % 500 == 0:
-        print(f"epoch {epoch:4d}: loss = {loss_fn(p, Y):.4f}, 정확도 = {np.mean((p >= 0.5) == Y):.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** gradient check의 두 값이 소수점 여덟째 자리까지 거의 같고, 손실이 약 0.69에서 0.04 근처로 줄며 정확도가 0.97 이상이 된다. **해볼 것:** ① \`H\`를 1, 2로 줄이면 정확도가 어디서 멈추는가(표현력 부족)? ② \`backward\`에서 \`* (z1 > 0)\`을 지우면 gradient check가 어떻게 되는가? ③ 본문의 PyTorch make_moons 코드를 Colab에서 실행해, 손으로 쓴 \`backward\` 네 줄이 \`loss.backward()\` 한 줄로 바뀌었다는 것을 직접 확인하자.
-:::
-
 ## 정규화 층: BatchNorm과 LayerNorm {#normalization}
 
 깊은 네트워크를 학습시킬 때 층을 통과할 때마다 활성화 값의 분포(평균과 분산)가 스텝마다 계속 흔들리면, 뒤쪽 층은 매번 달라지는 입력 분포에 다시 적응해야 해서 학습이 느려지고 불안정해진다. 정규화(normalization) 층은 이 문제를 완화하려고, 활성화 값 $z$를 평균 0·분산 1로 표준화한 뒤 학습 가능한 스케일 $\\gamma$와 이동 $\\beta$를 다시 곱하고 더해 $\\hat{z}=\\gamma\\cdot\\text{표준화}(z)+\\beta$ 형태로 되돌려준다. (이 "분포 흔들림"은 BatchNorm 원 논문이 내세운 설명이고, 이후 연구에서는 정규화가 손실 지형을 매끄럽게 만들어 더 큰 학습률로도 안정적으로 학습하게 해 주는 효과가 더 중요하다는 반론도 나왔다. 정규화 층이 학습을 돕는다는 사실은 분명하지만 "왜" 돕는지는 아직 완전히 합의되지 않았다.) 그런데 "평균과 분산을 어떤 축을 따라 계산하느냐"에 따라 전혀 다른 정규화 기법이 만들어진다.
@@ -840,47 +467,6 @@ Transformer(5주차)에서는 이 "샘플 하나"가 **토큰 하나**다. 입�
 | LayerNorm | 특징 축(같은 샘플, 다른 특징들). Transformer에서는 토큰마다 $d_{model}$ 축 | 없음: 샘플(토큰) 하나만으로도 계산 가능 | Transformer(5~7주차) |
 
 두 기법 모두 학습 가능한 파라미터 $\\gamma, \\beta$는 그대로 유지한다. 정규화가 표현력을 해치지 않도록, 표준화한 뒤 다시 원하는 스케일과 위치로 되돌릴 여지를 남겨두는 것이다.
-
-[[practice]]
-
-### 실습: 같은 숫자, 다른 축: BatchNorm vs LayerNorm
-
-\`\`\`python
-import numpy as np
-
-def batch_norm(z, eps=1e-5):
-    mu, var = z.mean(axis=0), z.var(axis=0)            # 열(같은 특징, 다른 샘플) 방향
-    return (z - mu) / np.sqrt(var + eps), mu, var
-
-def layer_norm(z, eps=1e-5):
-    mu, var = z.mean(axis=1, keepdims=True), z.var(axis=1, keepdims=True)   # 행(같은 샘플, 다른 특징) 방향
-    return (z - mu) / np.sqrt(var + eps), mu.ravel(), var.ravel()
-
-z = np.array([[2.0, 4.0],
-              [6.0, 8.0]])                              # 본문 예제: 행=샘플, 열=특징
-bn, bn_mu, bn_var = batch_norm(z)
-ln, ln_mu, ln_var = layer_norm(z)
-print("BN 평균/분산:", bn_mu, bn_var, "\\nBN 결과:\\n", np.round(bn, 3))
-print("LN 평균/분산:", ln_mu, ln_var, "\\nLN 결과:\\n", np.round(ln, 3))
-
-# 배치 크기가 1이면? BN은 분산이 0이 되어 모든 값이 0으로 뭉개진다
-one = np.array([[3.0, 7.0, 1.0]])
-print("\\n배치 1개에 BN:", np.round(batch_norm(one)[0], 3), " / LN:", np.round(layer_norm(one)[0], 3))
-
-# Transformer 모양 (배치 B, 길이 T, 은닉 차원 d): LN은 마지막 축(d)만 보고 토큰마다 따로 정규화한다
-rng = np.random.default_rng(0)
-h = rng.normal(5, 3, size=(2, 3, 4))                    # B=2 문장, T=3 토큰, d=4
-mu, var = h.mean(axis=-1, keepdims=True), h.var(axis=-1, keepdims=True)
-ln3 = (h - mu) / np.sqrt(var + 1e-5)
-print("\\n토큰마다의 평균 (B, T):\\n", ln3.mean(axis=-1).round(6))
-h_longer = np.concatenate([h, rng.normal(5, 3, size=(2, 1, 4))], axis=1)   # 토큰 하나를 덧붙이면?
-m2, v2 = h_longer.mean(axis=-1, keepdims=True), h_longer.var(axis=-1, keepdims=True)
-print("기존 토큰의 LN 결과가 그대로인가?", np.allclose(((h_longer - m2) / np.sqrt(v2 + 1e-5))[:, :3], ln3))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** BN은 특징별 평균 \`[4, 6]\`, 분산 \`[4, 4]\`, LN은 샘플별 평균 \`[3, 7]\`, 분산 \`[1, 1]\`로 본문과 같고, 정규화 결과는 둘 다 $\\pm 1$로 나오지만 부호가 놓이는 위치가 다르다. 샘플 하나짜리 배치에서 BN은 전부 0이 되지만 LN은 여전히 의미 있는 값을 낸다. Transformer 모양의 텐서에서는 $2 \\times 3$개 토큰의 평균이 모두 0이고(토큰마다 따로 정규화), 토큰을 하나 덧붙여도 기존 토큰의 결과가 그대로다(\`True\`). Transformer가 LN을 쓰는 이유다. **해볼 것:** 두 함수에 학습 가능한 \`gamma\`, \`beta\`를 추가해 \`gamma * norm + beta\`를 돌려주게 바꿔보자. \`gamma=표준편차\`, \`beta=평균\`으로 두면 원래 값이 복원되는가?
-:::
 
 ## GPU·혼합 정밀도와 PyTorch 실전 {#pytorch-practice}
 
@@ -960,57 +546,6 @@ print(f"PyTorch     : w={w_t:.4f}, b={b_t:.4f}, loss={loss.item():.4f}")
 
 두 print 문을 나란히 실행해보면 w, b, loss가 소수점 셋째 자리 안팎에서 거의 일치한다(둘 다 참값 w=3, b=2에 수렴하고, np.isclose(w, w_t, atol=1e-2)가 참이 될 것이다). 그런데 정작 눈여겨봐야 할 것은 최종 숫자의 일치보다 "학습 루프 안에 무엇이 남아있고 무엇이 사라졌는가"다. NumPy 버전의 루프 7줄 중 두 줄(grad_w, grad_b)은 이 문제(선형회귀 + MSE)에 대해서만 유효한, 손으로 유도한 미분 공식이다. 모델을 2층 MLP로 바꾸면 이 두 줄은 완전히 새로 유도해서 다시 써야 한다. 반면 PyTorch 버전의 루프 5줄 중에는 w나 b를 직접 언급하는 코드가 단 한 줄도 없다. \`loss.backward()\`가 미분 공식이 있던 자리를 대신하고, \`opt.step()\`이 파라미터 갱신 두 줄을 대신한다. 그래서 \`model = torch.nn.Linear(1, 1)\`을 앞서 만든 \`nn.Sequential(nn.Linear(2,16), nn.ReLU(), ...)\`처럼 훨씬 복잡한 네트워크로 바꿔도, 학습 루프의 나머지 5줄은 단 한 글자도 손댈 필요가 없다. 이것이 "코드 줄 수가 줄었다"는 것보다 훨씬 중요한, autograd와 optimizer가 만들어주는 실질적인 자동화다.
 
-[[practice]]
-
-### 실습 1: 16비트에서 기울기가 사라지는 현상과 loss scaling
-
-혼합 정밀도의 위험(작은 기울기가 0으로 반올림되는 underflow)과 그 처방(loss scaling)을 NumPy의 \`float16\`으로 직접 재현해보자.
-
-\`\`\`python
-import numpy as np
-
-grads = np.array([3e-4, 5e-6, 2e-8, 1e-9], dtype=np.float32)     # 층마다 다른 크기의 기울기
-print("FP32 그대로       :", grads)
-print("FP16으로 변환      :", grads.astype(np.float16))           # 너무 작은 값은 0이 된다
-
-scale = 1024.0                                                    # loss scaling: 손실(→기울기)을 키운 뒤 계산
-scaled_fp16 = (grads * scale).astype(np.float16)
-recovered = scaled_fp16.astype(np.float32) / scale                # 갱신 직전에 FP32로 되돌려 다시 나눈다
-print("스케일 후 FP16→복원:", recovered)
-print("FP16이 표현하는 가장 작은 양수:", np.finfo(np.float16).tiny, "(subnormal 포함 최소값은 약 6e-8)")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** FP16으로 바로 바꾸면 \`2e-8\`, \`1e-9\`가 0이 되지만, 1024배 키운 뒤 FP16으로 계산하고 되돌리면 두 값 모두 근사값으로 살아남는다(\`1e-9\`는 약 \`9.9e-10\`처럼 오차가 조금 붙는다). 스케일이 부족하면 여전히 사라질 수 있어서, 실제 구현(\`torch.cuda.amp.GradScaler\`)은 오버플로가 나지 않는 한도에서 스케일을 동적으로 키웠다 줄였다 한다. **생각해볼 것:** 스케일을 너무 크게(예: \`1e8\`) 잡으면 반대로 어떤 문제가 생길까? \`(grads * 1e8).astype(np.float16)\`을 실행해 \`inf\`(오버플로)를 확인하자.
-:::
-
-### 실습 2: 반복문 vs 한 번의 행렬 연산: 병렬화가 왜 빠른가
-
-GPU가 빠른 이유는 "같은 연산을 수많은 데이터에 동시에 적용"하는 데 특화되어 있기 때문이다. CPU 위의 NumPy에서도 파이썬 반복문(한 번에 하나씩)과 벡터화된 행렬 곱(한 번에 통째로)의 차이로 같은 원리를 체감할 수 있다.
-
-\`\`\`python
-import time
-import numpy as np
-
-rng = np.random.default_rng(0)
-A, B = rng.normal(size=(120, 120)), rng.normal(size=(120, 120))
-
-t0 = time.perf_counter()
-C_loop = [[sum(A[i, k] * B[k, j] for k in range(120)) for j in range(120)] for i in range(120)]
-t_loop = time.perf_counter() - t0
-
-t0 = time.perf_counter()
-C_vec = A @ B
-t_vec = time.perf_counter() - t0
-
-print(f"파이썬 3중 반복문: {t_loop:.3f}초, 행렬 곱 @: {t_vec:.5f}초, 약 {t_loop / t_vec:,.0f}배 차이")
-print("결과가 같은가?", np.allclose(C_loop, C_vec))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 결과는 같지만 속도는 수백~수천 배 차이 난다(실행 환경마다 다르다). 행렬 곱의 곱셈-덧셈 약 170만 개는 서로 독립이라 한꺼번에 처리할 수 있고, GPU는 이런 독립 연산을 수천 개의 코어로 동시에 처리해 그 차이를 더 벌린다. **해볼 것:** 행렬 크기를 60, 240으로 바꿔보자. 반복문의 시간은 크기의 몇 제곱에 비례해 늘어나는가?
-:::
-
 ## 딥러닝 학습 기법: 드롭아웃·가중치 감쇠·학습률 스케줄·조기 종료 {#dl-regularization}
 
 핵심 과정에서 만든 2층 신경망은 데이터가 400개였고 은닉 뉴런이 16개였다. 실전에서는 반대 상황이 흔하다. 파라미터는 수백만 개인데 라벨이 붙은 데이터는 수천 개뿐이다. 2주차 「편향-분산 트레이드오프와 정규화」에서 본 과적합이 신경망에서는 더 쉽게, 더 조용히 일어난다. 이 단계는 실무에서 거의 모든 학습 코드에 들어가는 네 가지 도구를 다룬다. 가중치 감쇠, 드롭아웃, 조기 종료, 학습률 스케줄이다.
@@ -1043,78 +578,6 @@ $$\\eta_t = \\eta_{\\min} + \\tfrac{1}{2}(\\eta_{\\max} - \\eta_{\\min})\\left(1
 
 로 부드럽게 줄인다. 초반의 큰 학습률은 손실 지형을 넓게 탐색하고, 후반의 작은 학습률은 최솟값 근처에서 진동하지 않고 정착하게 한다. 5~7주차의 Transformer 학습은 거의 예외 없이 이 스케줄을 쓴다.
 
-[[practice]]
-
-### 실습: 드롭아웃·스케줄 확인과 과적합 다스리기
-
-첫 셀은 역드롭아웃이 평균을 유지하는지, 워밍업+코사인 스케줄이 스텝마다 어떤 값을 주는지 확인한다. 둘째 셀은 훈련 데이터가 60개뿐인 make_moons에 은닉 뉴런 128개의 신경망을 3000에폭 학습시켜, 아무것도 안 했을 때·가중치 감쇠·드롭아웃을 비교하고 조기 종료라면 언제 멈췄을지 기록한다. 실행 전에 예측해 보자. 세 경우의 검증 **정확도**는 크게 다를까?
-
-\`\`\`python
-import numpy as np
-
-# 1) 역드롭아웃(inverted dropout): 살아남은 값을 1/(1-p)배 해 평균을 유지한다
-rng = np.random.default_rng(0)
-h = rng.random((10_000, 50))                       # 어떤 층의 활성화
-p = 0.5
-mask = (rng.random(h.shape) >= p) / (1 - p)
-print(f"드롭아웃 전 평균 {h.mean():.4f}, 학습 중(드롭아웃 후) 평균 {(h * mask).mean():.4f}, 꺼진 비율 {(mask == 0).mean():.3f}")
-
-# 2) 워밍업 + 코사인 감쇠 학습률 스케줄
-def lr_at(step, total=1000, warmup=100, lr_max=1e-3, lr_min=1e-5):
-    if step < warmup:
-        return lr_max * (step + 1) / warmup                       # 선형 워밍업
-    progress = (step - warmup) / (total - warmup)
-    return lr_min + 0.5 * (lr_max - lr_min) * (1 + np.cos(np.pi * progress))
-print("학습률:", {s: f"{lr_at(s):.2e}" for s in (0, 49, 99, 100, 550, 999)})
-\`\`\`
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import make_moons
-
-X, y = make_moons(n_samples=1060, noise=0.35, random_state=0)
-Xtr, ytr = X[:60], y[:60].reshape(-1, 1).astype(float)          # 훈련 60개뿐
-Xva, yva = X[60:], y[60:].reshape(-1, 1).astype(float)          # 검증 1000개
-
-def predict(X, W1, b1, W2, b2):
-    return 1 / (1 + np.exp(-(np.maximum(0, X @ W1 + b1) @ W2 + b2)))
-
-def bce(p, y):
-    return -np.mean(y * np.log(p + 1e-12) + (1 - y) * np.log(1 - p + 1e-12))
-
-def train(weight_decay=0.0, p_drop=0.0, epochs=3000, lr=0.5, H=128, seed=0):
-    rng = np.random.default_rng(seed)
-    W1, b1 = rng.normal(0, 1.0, (2, H)), np.zeros(H)
-    W2, b2 = rng.normal(0, np.sqrt(1 / H), (H, 1)), np.zeros(1)
-    log = []
-    for ep in range(epochs + 1):
-        z1 = Xtr @ W1 + b1
-        h = np.maximum(0, z1)
-        mask = (rng.random(h.shape) >= p_drop) / (1 - p_drop)   # p_drop=0이면 전부 1
-        hd = h * mask
-        p = 1 / (1 + np.exp(-(hd @ W2 + b2)))
-        dz2 = (p - ytr) / len(Xtr)
-        dW2, db2 = hd.T @ dz2 + weight_decay * W2, dz2.sum(axis=0)
-        dz1 = (dz2 @ W2.T) * mask * (z1 > 0)
-        dW1, db1 = Xtr.T @ dz1 + weight_decay * W1, dz1.sum(axis=0)
-        W1 -= lr * dW1; b1 -= lr * db1; W2 -= lr * dW2; b2 -= lr * db2
-        if ep % 100 == 0:                                         # 평가할 때는 드롭아웃을 끈다
-            pv, pt = predict(Xva, W1, b1, W2, b2), predict(Xtr, W1, b1, W2, b2)
-            log.append((ep, np.mean((pt >= 0.5) == ytr), np.mean((pv >= 0.5) == yva), bce(pv, yva)))
-    return log
-
-for name, kw in [("기본", {}), ("가중치 감쇠 0.01", {"weight_decay": 1e-2}), ("드롭아웃 0.5", {"p_drop": 0.5})]:
-    log = train(**kw)
-    ep, tr_acc, va_acc, va_loss = log[-1]
-    best = min(log, key=lambda r: r[3])                          # 조기 종료라면 고를 시점
-    print(f"{name:12s} 마지막: 훈련 정확도 {tr_acc:.3f}, 검증 정확도 {va_acc:.3f}, 검증 손실 {va_loss:.3f}"
-          f" | 검증 손실 최소: {best[0]}에폭 {best[3]:.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 드롭아웃 전후 평균이 0.500으로 같고 꺼진 비율은 0.500이다. 학습률은 0스텝 $10^{-5}$에서 99스텝 $10^{-3}$까지 오른 뒤 550스텝 약 $5\\times10^{-4}$, 999스텝 $10^{-5}$로 내려간다. 둘째 셀에서 세 경우의 검증 정확도는 모두 약 0.87로 비슷하지만(잡음 0.35인 데이터의 한계에 가깝다), 아무것도 안 한 모델은 훈련 정확도 0.967에 검증 손실이 0.948까지 치솟는다. 검증 손실은 300에폭에 0.320으로 가장 낮았으므로 조기 종료했다면 그때 멈췄을 것이다. 가중치 감쇠는 끝까지 검증 손실을 0.313으로 유지하고, 드롭아웃은 0.670으로 기본보다 훨씬 낮다. **설명해볼 것:** 정확도는 같은데 검증 손실만 세 배가 된 기본 모델에서 무슨 일이 일어난 것인지, "확신하며 틀린다"는 말로 설명해 보자.
-:::
-
 ## 자동미분의 두 모드: 순방향·역방향과 메모리 {#autodiff-theory}
 
 핵심 과정에서 만든 micrograd와 PyTorch의 autograd는 **역방향 모드(reverse mode)** 자동미분이다. 자동미분에는 반대 방향의 **순방향 모드(forward mode)**도 있고, 어느 쪽이 유리한지는 입력과 출력의 개수가 정한다. 이 단계는 두 모드를 야코비안(Jacobian)의 언어로 정리하고, 역방향 모드가 왜 딥러닝의 표준이 되었는지, 그 대가인 메모리 문제를 어떻게 다루는지 살펴본다.
@@ -1135,74 +598,6 @@ for name, kw in [("기본", {}), ("가중치 감쇠 0.01", {"weight_decay": 1e-2
 역방향 모드는 거꾸로 거슬러 올라가며 각 층의 국소 미분을 계산하므로, 순전파 때 계산한 중간 활성화를 **모두 저장**해 두어야 한다(micrograd의 각 \`Value\`가 \`data\`를 들고 있는 이유). 층이 $L$개면 메모리가 $L$에 비례하고, 큰 모델 학습에서 GPU 메모리를 가장 많이 차지하는 것이 파라미터가 아니라 이 활성화인 경우가 많다.
 
 **그레이디언트 체크포인팅(gradient checkpointing)**은 계산으로 메모리를 산다. 활성화를 $k$층마다 하나씩만 저장하고, 역전파 중 어떤 구간이 필요해지면 가장 가까운 체크포인트에서 그 구간만 순전파를 다시 계산한다. 메모리는 "체크포인트 $L/k$개 + 다시 계산하는 구간 $k$개"이므로 $k = \\sqrt{L}$로 잡으면 $O(\\sqrt{L})$로 줄고, 대가는 순전파를 대략 한 번 더 하는 것이다(Chen et al., 2016). 거대 언어 모델 학습에서 표준으로 쓰는 기법이다.
-
-[[practice]]
-
-### 실습: 이원수, JVP 대 VJP, 체크포인팅 계산
-
-① 이원수로 $f(x) = x\\sin x + e^x$의 미분을 정확히 구한다. ② 입력 500차원·출력 1차원인 4층 tanh 망에서 기울기 전체를 순방향 모드(500번)와 역방향 모드(1번)로 구해 결과와 시간을 비교한다. ③ 층 수에 따른 체크포인팅의 메모리 절약을 계산한다. 실행 전에 ②의 시간 차이가 몇 배쯤 될지 예측해 보자.
-
-\`\`\`python
-import math
-import numpy as np
-
-# 1) 이원수(dual number)로 하는 순방향 모드: a + b·ε, ε² = 0
-class Dual:
-    def __init__(self, val, dot=0.0):
-        self.val, self.dot = val, dot                 # 값과 "그 값의 미분"을 함께 들고 다닌다
-    def __add__(self, o):
-        o = o if isinstance(o, Dual) else Dual(o)
-        return Dual(self.val + o.val, self.dot + o.dot)
-    __radd__ = __add__
-    def __mul__(self, o):
-        o = o if isinstance(o, Dual) else Dual(o)
-        return Dual(self.val * o.val, self.dot * o.val + self.val * o.dot)   # 곱의 미분법
-    __rmul__ = __mul__
-def sin(d): return Dual(math.sin(d.val), math.cos(d.val) * d.dot)
-def exp(d): return Dual(math.exp(d.val), math.exp(d.val) * d.dot)
-
-f = lambda x: x * sin(x) + exp(x)
-out = f(Dual(1.0, 1.0))                               # x = 1에서 dx/dx = 1을 씨앗으로
-exact = math.sin(1) + math.cos(1) + math.exp(1)       # f'(x) = sin x + x cos x + e^x
-print(f"f(1) = {out.val:.6f}, 순방향 미분 = {out.dot:.12f}, 해석적 미분 = {exact:.12f}")
-
-# 2) 입력 n개 → 출력 1개: 순방향은 n번, 역방향은 1번
-rng = np.random.default_rng(0)
-n, depth = 500, 4
-Ws = [rng.normal(0, 1 / np.sqrt(n), (n, n)) for _ in range(depth)]
-w_out = rng.normal(size=n)
-def forward(x):
-    hs = [x]
-    for W in Ws:
-        hs.append(np.tanh(W @ hs[-1]))
-    return w_out @ hs[-1], hs
-x0 = rng.normal(size=n)
-_, hs = forward(x0)
-
-def jvp(v):                                           # 순방향 모드: J·v (방향 하나에 대한 변화율)
-    for W, h in zip(Ws, hs[1:]):
-        v = (1 - h ** 2) * (W @ v)
-    return w_out @ v
-def vjp():                                            # 역방향 모드: 1·J (모든 입력에 대한 기울기)
-    g = w_out
-    for W, h in zip(reversed(Ws), reversed(hs[1:])):
-        g = W.T @ ((1 - h ** 2) * g)
-    return g
-
-import time
-t0 = time.perf_counter(); g_fwd = np.array([jvp(e) for e in np.eye(n)]); t_fwd = time.perf_counter() - t0
-t0 = time.perf_counter(); g_rev = vjp(); t_rev = time.perf_counter() - t0
-print(f"순방향 {n}번: {t_fwd:.3f}초, 역방향 1번: {t_rev:.5f}초, 결과 일치: {np.allclose(g_fwd, g_rev)}")
-
-# 3) 메모리: 층 L개의 활성화를 모두 저장 vs √L 간격 체크포인트
-for L in (16, 100, 400):
-    k = int(round(math.sqrt(L)))
-    print(f"L={L:3d}: 모두 저장 {L}개, 체크포인트(간격 {k}) 최대 {L // k + k}개, 추가 순전파 약 1회")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 이원수 미분 4.100055119135가 해석적 미분과 소수 열두째 자리까지 같다(수치미분이 아니라 정확한 미분이다). ②에서 두 모드의 기울기가 일치하고(\`True\`), 역방향 1번이 순방향 500번보다 수백 배 빠르다(실행 환경마다 다르다). ③에서 $L = 100$이면 저장할 활성화가 100개에서 최대 20개로, $L = 400$이면 400개에서 40개로 준다. **설명해볼 것:** 출력이 1000개이고 입력이 3개인 함수의 야코비안 전체가 필요하다면 어느 모드를 몇 번 쓰는 것이 유리한가?
-:::
 
 ## Adam의 이론: 편향 보정·AdamW·워밍업 {#adam-theory}
 
@@ -1232,43 +627,6 @@ $$w \\leftarrow w - \\eta\\left(\\frac{\\hat m_t}{\\sqrt{\\hat v_t} + \\epsilon}
 
 덧붙여, Adam이 항상 수렴하는 것은 아니다. Reddi et al.(2018)은 간단한 볼록 문제에서도 Adam이 최적해로 수렴하지 않는 반례를 만들고, $\\hat v$의 최댓값을 유지하는 AMSGrad를 제안했다. 실무에서 Adam(W)이 잘 동작하는 것과 이론적 보장은 별개라는 점을 기억해 두자.
 
-[[practice]]
-
-### 실습: 편향 보정과 고장 난 감쇠 계수
-
-① 기울기가 항상 2일 때 $m_t$와 보정된 $\\hat m_t$를 5스텝 출력한다. ② 데이터 기울기가 0인 파라미터 하나($w_0 = 1$)를 학습률 $10^{-3}$으로 1000스텝 갱신하며, $\\lambda = 10^{-4}, 10^{-2}, 1$에서 "Adam + L2"와 "AdamW"의 최종 $w$를 비교한다. 실행 전에 예측해 보자. Adam + L2에서 $\\lambda$를 1만 배 바꾸면 결과가 얼마나 달라질까?
-
-\`\`\`python
-import numpy as np
-
-# 1) 편향 보정: 기울기가 항상 g=2일 때 m_t와 보정된 m̂_t
-b1 = 0.9
-m = 0.0
-for t in range(1, 6):
-    m = b1 * m + (1 - b1) * 2.0
-    print(f"t={t}: m = {m:.4f}, 1-β₁^t = {1 - b1 ** t:.4f}, m̂ = {m / (1 - b1 ** t):.4f}")
-
-# 2) 데이터 기울기가 0인(한 번도 쓰이지 않는) 파라미터 하나에 L2 vs 분리된 가중치 감쇠
-def adam(lam, decoupled, steps=1000, lr=1e-3, b1=0.9, b2=0.999, eps=1e-8):
-    w, m, v = 1.0, 0.0, 0.0
-    for t in range(1, steps + 1):
-        g = 0.0 if decoupled else lam * w          # Adam + L2: 감쇠를 기울기에 섞는다
-        m = b1 * m + (1 - b1) * g
-        v = b2 * v + (1 - b2) * g ** 2
-        step = m / (1 - b1 ** t) / (np.sqrt(v / (1 - b2 ** t)) + eps)
-        w -= lr * step
-        if decoupled:
-            w -= lr * lam * w                       # AdamW: 감쇠를 갱신에서 따로 적용
-    return w
-print()
-for lam in (1e-4, 1e-2, 1.0):
-    print(f"λ={lam:<6}: Adam+L2 → w = {adam(lam, False):.4f}   AdamW → w = {adam(lam, True):.4f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** $m_t$는 0.2, 0.38, 0.542, ...로 2보다 한참 작지만 $\\hat m_t$는 매 스텝 정확히 2.0000이다. ②에서 Adam + L2는 $\\lambda$가 $10^{-4}$이든 1이든 $w$가 똑같이 0.2577로 줄어든다($\\lambda$가 아무 역할을 못 한다). AdamW는 $w = (1 - \\eta\\lambda)^{1000} \\approx e^{-\\lambda}$로 0.9999, 0.9900, 0.3677이 되어 $\\lambda$에 따라 감쇠 강도가 의도대로 달라진다. **설명해볼 것:** Adam + L2에서 $w$가 $\\lambda$와 무관하게 줄어드는 이유를 "$\\hat m/\\sqrt{\\hat v}$는 기울기의 크기가 아니라 부호에 반응한다"는 성질로 설명해 보자.
-:::
-
 ## 기울기 흐름의 수학: 야코비안의 곱·잔차 연결·기울기 클리핑 {#gradient-flow}
 
 핵심 과정 「기울기 소실·폭발과 가중치 초기화」 단계에서는 활성화의 표준편차가 층마다 1.5배, 0.8배가 되면 10층 뒤 57배, 0.1배가 된다는 것을 봤다. 이 단계는 같은 현상을 **역전파되는 기울기**의 관점에서 정확히 쓰고, 현대 신경망이 수백 층을 학습시키는 두 열쇠인 잔차 연결과 기울기 클리핑이 왜 작동하는지 보인다.
@@ -1296,54 +654,6 @@ $$g_{l-1} = g_l + \\left(\\frac{\\partial F}{\\partial h}\\right)^{\\!\\top} g_l
 $$g \\leftarrow g \\cdot \\frac{c}{\\lVert g \\rVert}$$
 
 로 길이만 $c$로 줄이고 **방향은 그대로** 둔다(Pascanu et al., 2013). 원소마다 따로 자르는 방식과 달리 기울기의 방향을 왜곡하지 않는다. PyTorch에서는 \`torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)\`을 \`loss.backward()\`와 \`optimizer.step()\` 사이에 넣는다. 대형 언어 모델 학습은 거의 항상 1.0 근처의 클리핑을 쓴다.
-
-[[practice]]
-
-### 실습: 50층을 거슬러 내려가는 기울기
-
-너비 64, 깊이 50인 tanh 망에서 출력 쪽 기울기(노름 1)를 입력 쪽으로 역전파하며 10·30·50층에서의 노름을 기록한다. 초기화 스케일 0.5·1.0·3.0의 일반 망과, 작은 초기화(0.5)에 잔차 연결을 더한 망을 비교한 뒤, 노름 클리핑이 방향을 유지하는지 확인한다. 실행 전에 예측해 보자. 작은 초기화의 일반 망과 잔차 망은 50층에서 몇 자릿수나 차이 날까?
-
-\`\`\`python
-import numpy as np
-
-# 깊이 50, 너비 64인 tanh 망에서 입력 쪽까지 내려온 기울기의 크기
-def grad_norms(scale, residual, depth=50, width=64, seed=0):
-    rng = np.random.default_rng(seed)
-    Ws = [rng.normal(0, scale / np.sqrt(width), (width, width)) for _ in range(depth)]
-    h = rng.normal(size=width)
-    hs, pre = [h], []
-    for W in Ws:                                          # 순전파
-        z = W @ h
-        h = h + np.tanh(z) if residual else np.tanh(z)    # 잔차 연결: h + F(h)
-        pre.append(z); hs.append(h)
-    g = np.ones(width) / np.sqrt(width)                   # 출력 쪽 기울기(크기 1)
-    norms = [np.linalg.norm(g)]
-    for W, z in zip(reversed(Ws), reversed(pre)):         # 역전파: g ← Jᵀ g
-        back = W.T @ ((1 - np.tanh(z) ** 2) * g)
-        g = g + back if residual else back                # 잔차 연결이면 g가 그대로 지나가는 길이 있다
-        norms.append(np.linalg.norm(g))
-    return norms
-
-print("층을 거슬러 내려갈 때 기울기 노름 (출력 쪽 = 1)")
-for name, scale, res in [("tanh, 작은 초기화(0.5)", 0.5, False), ("tanh, 적정 초기화(1.0)", 1.0, False),
-                         ("tanh, 큰 초기화(3.0)", 3.0, False), ("잔차 연결 + 작은 초기화(0.5)", 0.5, True)]:
-    n = grad_norms(scale, res)
-    print(f"{name:22s} 10층 {n[10]:.2e}  30층 {n[30]:.2e}  50층 {n[50]:.2e}")
-
-# 기울기 클리핑: 전체 노름이 c를 넘으면 방향은 유지한 채 길이만 c로
-def clip_by_norm(grads, c):
-    total = np.sqrt(sum(np.sum(g ** 2) for g in grads))
-    factor = min(1.0, c / (total + 1e-12))
-    return [g * factor for g in grads], total
-g1, g2 = np.array([30.0, -40.0]), np.array([120.0])
-clipped, total = clip_by_norm([g1, g2], c=5.0)
-new_total = np.sqrt(sum(np.sum(g ** 2) for g in clipped))
-print(f"\\n클리핑 전 노름 {total:.1f} → 후 {new_total:.1f}, g1 방향 유지: {np.round(clipped[0] / np.linalg.norm(clipped[0]), 3)} vs {np.round(g1 / np.linalg.norm(g1), 3)}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 작은 초기화(0.5)의 일반 망은 기울기가 10층에서 $10^{-3}$, 50층에서 $3\\times10^{-16}$으로 사실상 사라지고, 큰 초기화(3.0)는 50층에서 약 $5\\times10^4$으로 폭발한다. 적정 초기화(1.0)도 50층에서 약 0.05로 줄어 균형이 완벽하지 않다. 같은 작은 초기화에 잔차 연결만 더하면 50층에서도 약 7.8로, 일반 망과 16자릿수 차이가 난다(다만 1보다 조금씩 커지므로 실제 모델은 잔차 가지를 작게 시작하거나 정규화 층과 함께 쓴다). 클리핑은 노름을 130에서 5로 줄이면서 방향 $[0.6, -0.8]$을 그대로 유지한다. **설명해볼 것:** 잔차 망의 기울기가 50층에서 1보다 큰 7.8이 된 이유를 "$I + \\partial F/\\partial h$의 곱"으로 설명하고, 잔차 가지의 출력을 $1/\\sqrt{L}$로 줄이면 어떻게 될지 예측해 보자.
-:::
 
 `,
   sections,

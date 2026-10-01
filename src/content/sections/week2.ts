@@ -43,7 +43,7 @@ const sections: Record<string, SectionMeta> = {
           "0으로 대체"
         ],
         "answer": 1,
-        "explanation": "평균은 이상치에 끌려가지만 중앙값은 거의 영향을 받지 않는다. 실습에서 평균 대체값은 약 1022, 중앙값 대체값은 235였다."
+        "explanation": "평균은 이상치에 끌려가지만 중앙값은 거의 영향을 받지 않는다. 예를 들어 소득처럼 꼬리가 긴 열에서 평균 대체값이 약 1022일 때 중앙값 대체값은 235에 그칠 수 있다."
       }
     ],
     "quizIds": [
@@ -640,7 +640,7 @@ const sections: Record<string, SectionMeta> = {
           "분할 없이 훈련 정확도"
         ],
         "answer": 0,
-        "explanation": "같은 환자의 다른 사진이 훈련에 있으면 모델이 그 환자를 외워 맞힌다. 실습에서 1-NN이 KFold 1.000, GroupKFold 약 0.64로 갈렸다. 그룹 단위로 나눠야 처음 보는 환자에 대한 성능이 된다."
+        "explanation": "같은 환자의 다른 사진이 훈련에 있으면 모델이 그 환자를 외워 맞힌다. 한 실험에서 1-NN이 KFold로는 1.000, GroupKFold로는 약 0.64로 갈렸다. 그룹 단위로 나눠야 처음 보는 환자에 대한 성능이 된다."
       },
       {
         "id": "w2-pipeline-tuning-c4",
@@ -709,7 +709,7 @@ const sections: Record<string, SectionMeta> = {
           "임계값과 무관하게 비용이 최소가 된다"
         ],
         "answer": 0,
-        "explanation": "실습에서 두 모델의 ROC-AUC·AP는 같았고, balanced 모델의 평균 예측 확률은 실제 비율 0.078 대신 약 0.34였다. 확률을 비용 계산에 쓰려면 가중치 없이 학습하고 임계값을 옮기는 편이 낫다."
+        "explanation": "한 실험에서 두 모델의 ROC-AUC·AP는 같았지만, balanced 모델의 평균 예측 확률은 실제 비율 0.078 대신 약 0.34였다. 확률을 비용 계산에 쓰려면 가중치 없이 학습하고 임계값을 옮기는 편이 낫다."
       }
     ],
     "quizIds": [
@@ -766,7 +766,7 @@ const sections: Record<string, SectionMeta> = {
           "손실이 ln 2에 머문다"
         ],
         "answer": 0,
-        "explanation": "모든 점을 가르는 $w$의 크기를 키울수록 손실이 계속 줄어 MLE가 존재하지 않는다. 실습에서 스텝이 10배 늘 때마다 $w$가 약 2.3씩 커지고 손실은 10분의 1이 되었다. L2 규제를 넣으면 유한한 해가 생긴다."
+        "explanation": "모든 점을 가르는 $w$의 크기를 키울수록 손실이 계속 줄어 MLE가 존재하지 않는다. 경사하강법을 돌리면 스텝이 10배 늘 때마다 $w$가 약 2.3씩 커지고 손실은 10분의 1이 된다. L2 규제를 넣으면 유한한 해가 생긴다."
       }
     ],
     "quizIds": [
@@ -823,7 +823,7 @@ const sections: Record<string, SectionMeta> = {
           "훈련 오차가 커진다"
         ],
         "answer": 0,
-        "explanation": "유사역행렬은 특이값의 역수를 곱하므로 작은 특이값이 잡음을 증폭한다(분산 폭발). 실습에서 $p = 40 = n$일 때 최소 특이값이 약 0.09로 가장 작았고 테스트 MSE가 약 39로 치솟았다."
+        "explanation": "유사역행렬은 특이값의 역수를 곱하므로 작은 특이값이 잡음을 증폭한다(분산 폭발). 한 실험에서 $p = 40 = n$일 때 최소 특이값이 약 0.09로 가장 작았고 테스트 MSE가 약 39로 치솟았다."
       }
     ],
     "quizIds": [
@@ -861,7 +861,7 @@ const sections: Record<string, SectionMeta> = {
           "C를 더 크게 하면 0.6을 넘을 것이다"
         ],
         "answer": 0,
-        "explanation": "잡음이 있는 점수 여러 개 중 최댓값의 기대값은 참값보다 크다. 실습에서 고른 점수 평균 0.573, 새 데이터 정확도 0.496이었다."
+        "explanation": "잡음이 있는 점수 여러 개 중 최댓값의 기대값은 참값보다 크다. 한 실험에서 고른 모델의 검증 점수 평균은 0.573이었지만 새 데이터 정확도는 0.496이었다."
       },
       {
         "id": "w2-model-evaluation-stats-c2",
@@ -885,7 +885,7 @@ const sections: Record<string, SectionMeta> = {
           "정확도는 정규분포를 따르지 않아서"
         ],
         "answer": 0,
-        "explanation": "Nadeau·Bengio 보정은 분산에 $(1/J + n_{test}/n_{train})$을 곱해 겹침을 반영한다. 실습에서 단순 $t \\approx 4.56$($p \\approx 0.0004$)이 보정 $t \\approx 2.09$($p \\approx 0.055$)로 줄었다."
+        "explanation": "Nadeau·Bengio 보정은 분산에 $(1/J + n_{test}/n_{train})$을 곱해 겹침을 반영한다. 한 실험에서 단순 $t \\approx 4.56$($p \\approx 0.0004$)이 보정 $t \\approx 2.09$($p \\approx 0.055$)로 줄었다."
       }
     ],
     "quizIds": [

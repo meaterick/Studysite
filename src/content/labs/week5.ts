@@ -1396,7 +1396,7 @@ print(elems, round(elems * 2 / 1e9, 2))
       id: "w5-drill-forget-bias",
       tier: "supplement",
       sectionId: "lstm-gru",
-      question: "LSTM 실습에서 forget bias가 0이면 RNN보다 오히려 첫 시점의 영향이 더 빨리 사라졌는데, bias를 2 이상으로 올리면 40스텝 뒤에도 살아남았습니다. 셀 상태 식 $c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde c_t$로 이유를 설명하십시오.",
+      question: "LSTM을 실험해 보면 forget bias가 0일 때 RNN보다 오히려 첫 시점의 영향이 더 빨리 사라지는데, bias를 2 이상으로 올리면 40스텝 뒤에도 살아남습니다. 셀 상태 식 $c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde c_t$로 이유를 설명하십시오.",
       modelAnswer:
         "첫 시점의 기억이 $T$스텝 뒤까지 전달되는 정도는 대략 forget gate 값들의 곱 $\\prod f_t$에 비례합니다(셀 경로에는 행렬곱이나 tanh가 없고 원소별 곱셈과 덧셈만 있기 때문). bias가 0이면 $f_t \\approx \\sigma(0) = 0.5$ 근처라 40스텝 뒤에는 $0.5^{40} \\approx 10^{-12}$ 수준으로 사라져 RNN보다도 나빠집니다. bias를 2~4로 올리면 $f_t$가 0.87~0.98이 되어 곱이 천천히 줄고 기억이 살아남습니다. 즉 장기 기억의 핵심은 게이트가 있다는 사실 자체가 아니라 $f_t \\approx 1$로 유지되는 덧셈 경로이고, 그래서 실무에서 forget bias를 1 이상으로 초기화합니다.",
       keyPoints: ["기억의 전달은 forget gate 값들의 곱에 비례", "셀 경로는 원소별 곱셈과 덧셈뿐(행렬곱·tanh 없음)", "bias 0이면 $f \\approx 0.5$라 빠르게 사라진다", "bias를 올려 $f \\approx 1$이면 기억이 유지된다"],

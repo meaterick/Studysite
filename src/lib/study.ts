@@ -23,7 +23,6 @@ export interface SectionProgress {
   checksTotal: number;
   quizDone: number;
   quizTotal: number;
-  hasPractice: boolean;
   ready: boolean;
   completed: boolean;
 }
@@ -33,7 +32,6 @@ export function sectionProgress(section: WeekSection, state: SectionState): Sect
   const checksDone = section.meta.checks.filter((c) => state.checks[c.id]?.correct).length;
   const quizTotal = section.meta.quizIds.length;
   const quizDone = section.meta.quizIds.filter((id) => !!state.answers[id]?.review).length;
-  const hasPractice = section.practice.length > 0;
   // 서술형은 선택 사항이라 완료 조건에 넣지 않는다(진행 표시에는 quizDone/quizTotal로 보여 준다).
   const ready = checksDone === checksTotal;
   return {
@@ -41,7 +39,6 @@ export function sectionProgress(section: WeekSection, state: SectionState): Sect
     checksTotal,
     quizDone,
     quizTotal,
-    hasPractice,
     ready,
     completed: !!state.completedAt,
   };

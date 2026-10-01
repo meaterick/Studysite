@@ -245,7 +245,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "NumPy Broadcasting",
         "url": "https://numpy.org/doc/stable/user/basics.broadcasting.html",
-        "note": "브로드캐스팅 규칙을 그림으로 설명: 실습의 오류 원인을 확인할 때"
+        "note": "브로드캐스팅 규칙을 그림으로 설명: shape 오류의 원인을 확인할 때"
       }
     ]
   },
@@ -662,7 +662,7 @@ const sections: Record<string, SectionMeta> = {
           "균등분포와 정규분포는 같은 분포다"
         ],
         "answer": 1,
-        "explanation": "측정 오차처럼 여러 작은 원인이 더해진 결과가 종 모양이 되는 이유다. 실습에서 균등분포 12개의 합이 $\\mathcal{N}(6, 1)$에 가까워지는 것을 확인했다."
+        "explanation": "측정 오차처럼 여러 작은 원인이 더해진 결과가 종 모양이 되는 이유다. 예를 들어 0~1 균등분포 12개를 더하면 그 합이 $\\mathcal{N}(6, 1)$에 가까워진다."
       }
     ],
     "quizIds": [
@@ -827,7 +827,7 @@ const sections: Record<string, SectionMeta> = {
           "항상 $D_{\\mathrm{KL}}(q\\parallel p)$와 같다"
         ],
         "answer": 3,
-        "explanation": "KL 발산은 비대칭이다. 실습에서 $D_{\\mathrm{KL}}(\\text{fair}\\parallel\\text{biased}) \\approx 0.737$, $D_{\\mathrm{KL}}(\\text{biased}\\parallel\\text{fair}) \\approx 0.531$로 서로 달랐다."
+        "explanation": "KL 발산은 비대칭이다. 한 예로 공정한 분포와 치우친 분포 사이에서 $D_{\\mathrm{KL}}(\\text{fair}\\parallel\\text{biased}) \\approx 0.737$, $D_{\\mathrm{KL}}(\\text{biased}\\parallel\\text{fair}) \\approx 0.531$로 서로 다르다."
       },
       {
         "id": "w1-entropy-c3",
@@ -902,7 +902,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Distill — Why Momentum Really Works",
         "url": "https://distill.pub/2017/momentum/",
-        "note": "실습의 \"방향마다 가파름이 다른\" 두 방향 문제와 모멘텀을 인터랙티브로 확인"
+        "note": "\"방향마다 가파름이 다른\" 문제와 모멘텀을 인터랙티브로 확인"
       },
       {
         "title": "Boyd & Vandenberghe — Convex Optimization",

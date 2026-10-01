@@ -20,7 +20,7 @@ const sections: Record<string, SectionMeta> = {
           "이미지를 흑백으로 바꾸기 때문에"
         ],
         "answer": 1,
-        "explanation": "실습에서 크기 0.1의 FGSM은 정확도를 약 0.78로, 같은 크기의 무작위 잡음은 0.99로 유지했다."
+        "explanation": "한 실험에서 크기 0.1의 FGSM은 정확도를 약 0.78로 떨어뜨렸지만, 같은 크기의 무작위 잡음은 0.99를 유지했다."
       },
       {
         "id": "w8-risk-map-c2",
@@ -237,7 +237,7 @@ const sections: Record<string, SectionMeta> = {
           "롤백"
         ],
         "answer": 1,
-        "explanation": "문제가 있어도 영향받는 사용자가 적다. 실습에서 결함 모델은 5% 구간에서 롤백되었다."
+        "explanation": "문제가 있어도 영향받는 사용자가 적다. 결함이 있는 모델은 트래픽 5% 구간에서 발견해 롤백할 수 있다."
       },
       {
         "id": "w8-mlops-c3",
@@ -325,7 +325,7 @@ const sections: Record<string, SectionMeta> = {
           "정확도는 비교할 수 없는 지표라서"
         ],
         "answer": 1,
-        "explanation": "실습에서 시드별 승자가 B·A·B·A·A로 뒤섞였고 순열 검정 p값도 컸다."
+        "explanation": "예를 들어 시드별 승자가 B·A·B·A·A로 뒤섞이고 순열 검정 p값도 크다면 차이를 주장할 수 없다."
       }
     ],
     "quizIds": [
@@ -488,7 +488,7 @@ const sections: Record<string, SectionMeta> = {
           "데이터가 많을수록 더 안전하다"
         ],
         "answer": 1,
-        "explanation": "혼자서는 아무도 가리키지 않지만 조합하면 사람을 특정하는 값이 준식별자다. 실습에서 세 값의 조합으로 2,000명 중 약 60%가 유일했다."
+        "explanation": "혼자서는 아무도 가리키지 않지만 조합하면 사람을 특정하는 값이 준식별자다. 예를 들어 세 값의 조합만으로 2,000명 중 약 60%가 유일해질 수 있다."
       },
       {
         "id": "w8-privacy-c2",
@@ -550,7 +550,7 @@ const sections: Record<string, SectionMeta> = {
           "성별 열을 지우면 항상 격차가 커진다"
         ],
         "answer": 1,
-        "explanation": "보호 속성을 빼는 것(fairness through unawareness)은 대리 변수가 있으면 통하지 않는다. 실습에서 집단 변수를 빼도 동네 때문에 격차가 +0.25로 남았다."
+        "explanation": "보호 속성을 빼는 것(fairness through unawareness)은 대리 변수가 있으면 통하지 않는다. 예를 들어 집단 변수를 빼도 동네 변수 때문에 격차가 +0.25로 남을 수 있다."
       },
       {
         "id": "w8-bias-mitigation-c2",
@@ -698,7 +698,7 @@ const sections: Record<string, SectionMeta> = {
           "배치 크기를 줄이려고"
         ],
         "answer": 1,
-        "explanation": "민감도가 묶여야 표준편차 $\\sigma C$의 잡음으로 보장을 계산할 수 있다. 실습에서 자르기 전 최대 길이 5.92가 1.00으로 묶였다."
+        "explanation": "민감도가 묶여야 표준편차 $\\sigma C$의 잡음으로 보장을 계산할 수 있다. 예를 들어 자르기 전 최대 길이 5.92가 $C = 1$로 자르면 1.00으로 묶인다."
       }
     ],
     "quizIds": [
@@ -753,7 +753,7 @@ const sections: Record<string, SectionMeta> = {
           "약 1.0"
         ],
         "answer": 1,
-        "explanation": "$(B-1)(1/n + 1/m) = 9 \\times (0.0001 + 0.01) \\approx 0.09$. 실습에서는 42%의 경우 0.1을 넘어 거짓 경보가 울렸다."
+        "explanation": "$(B-1)(1/n + 1/m) = 9 \\times (0.0001 + 0.01) \\approx 0.09$. 시뮬레이션하면 42%의 경우 0.1을 넘어 거짓 경보가 울린다."
       },
       {
         "id": "w8-drift-statistics-c3",

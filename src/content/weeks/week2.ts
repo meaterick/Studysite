@@ -114,43 +114,6 @@ print("95는 이상치인가 (|z|>3 기준)?", abs(z95) > 3)
 
 출력된 Q1=13.0, Q3=15.5, Z-score(약 2.64)가 위 예제에서 손으로 구한 값과 정확히 일치하는지 확인하자. 그리고 두 마지막 print문의 결과(True/False)가 서로 반대로 나온다는 사실 자체가 이 부분의 핵심이었다는 것도 다시 한번 기억해두자. 같은 데이터를 같은 "이상치 판정"이라는 목적으로 살펴봤는데도, 어떤 통계량을 쓰느냐에 따라 결론이 뒤집힐 수 있다.
 
-[[practice]]
-
-### 실습: pandas로 결측값 처리 전략 비교하기
-
-pandas의 \`DataFrame\`은 행·열이 있는 표를 다루는 도구다. 아래 가상의 학생 데이터에는 결측값(\`NaN\`)과 입력 오류로 보이는 이상치가 섞여 있다. 전략마다 "소득" 열의 평균·표준편차가 어떻게 달라지는지 비교해보자. 실행 전에, 평균 대체가 표준편차를 **줄일지 늘릴지** 먼저 예측해보자.
-
-\`\`\`python
-import numpy as np
-import pandas as pd
-
-df = pd.DataFrame({
-    "공부시간": [2, 4, np.nan, 5, 3, 6, np.nan, 4],
-    "소득":     [200, 250, 230, np.nan, 210, 5000, 240, np.nan],   # 5000은 입력 오류로 보이는 값
-})
-print(df, "\\n")
-print("열별 결측 개수:\\n", df.isna().sum(), "\\n")
-
-dropped = df.dropna()                                   # ① 결측이 있는 행을 통째로 삭제
-mean_filled = df.fillna(df.mean())                      # ② 열 평균으로 대체
-median_filled = df.fillna(df.median())                  # ③ 열 중앙값으로 대체
-for name, d in [("삭제", dropped), ("평균 대체", mean_filled), ("중앙값 대체", median_filled)]:
-    print(f"{name:7s}: 남은 행 {len(d)}개, 소득 평균 {d['소득'].mean():8.1f}, 소득 표준편차 {d['소득'].std():8.1f}")
-
-# ④ 결측 여부 자체를 특징으로 남기기
-df["소득_결측"] = df["소득"].isna().astype(int)
-print("\\n결측 지시 특징 추가:\\n", df)
-
-# 이상치: IQR 방법으로 소득 열 검사
-q1, q3 = df["소득"].quantile([0.25, 0.75])
-upper = q3 + 1.5 * (q3 - q1)
-print(f"\\nIQR 상한선 = {upper:.1f}, 이상치:", df.loc[df["소득"] > upper, "소득"].tolist())
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 삭제하면 8행 중 4행만 남는다. 평균 대체는 5000이라는 이상치에 끌려간 평균(약 1022)으로 빈칸을 채우므로 대체값 자체가 비현실적이고, 중앙값 대체(235)는 이상치에 거의 흔들리지 않는다. IQR 검사는 5000을 이상치로 잡아낸다. **해볼 것:** 5000을 먼저 결측으로 바꾼 뒤(\`df.loc[df["소득"] > upper, "소득"] = np.nan\`) 평균 대체를 다시 하면 대체값이 어떻게 바뀌는가? "이상치 처리 → 결측 대체" 순서가 왜 중요한지 한 문장으로 적어보자.
-:::
-
 ## 특징 공학·인코딩·스케일링과 EDA {#features}
 
 ### Feature Engineering과 인코딩: 원본 데이터를 모델이 쓸 수 있는 형태로
@@ -209,36 +172,6 @@ print("\\n표준화 후 각 열의 평균:", np.round(X_std.mean(axis=0), 3), " 
 데이터 증강(Data Augmentation)은 기존 데이터를 변형하거나 합성해 학습 데이터의 양과 다양성을 늘리는 기법이다. 이미지 데이터의 증강(회전·자르기·색상 변화 등)은 4주차에서 본격적으로 다루므로, 여기서는 표(정형) 데이터와 텍스트 데이터에 흔히 쓰이는 방식만 짚고 넘어간다. 클래스 불균형이 심한 표 데이터에서는 SMOTE(Synthetic Minority Oversampling)가 널리 쓰인다. 소수 클래스에 속한 샘플 하나를 고르고, 그 샘플의 K-최근접 이웃(보충 과정의 「KNN과 나이브 베이즈」 단계에서 다루는 KNN과 같은 개념) 중 하나를 골라 두 점 사이를 보간해 새로운 합성 샘플을 만드는 방식이다. 텍스트 데이터에서는 동의어로 일부 단어를 바꿔치기하거나(synonym replacement), 다른 언어로 번역했다가 다시 원래 언어로 재번역해 표현을 다양화하는 역번역(back-translation) 등을 쓴다. 목적은 공통적으로 데이터 부족과 클래스 불균형을 완화하고, 모델이 특정 샘플의 사소한 표현 차이에 과적합하지 않도록 만드는 것이다.
 
 탐색적 데이터 분석(Exploratory Data Analysis, EDA)은 본격적으로 모델을 학습시키기 전에 데이터를 직접 눈으로 들여다보는 과정이다. 히스토그램으로 각 변수의 분포가 한쪽으로 치우쳐 있는지, 산점도로 두 변수 사이에 관계가 있는지, 상관행렬(히트맵)로 특징들끼리 심하게 겹치는(다중공선성) 부분은 없는지, 그리고 결측값이나 클래스 비율이 얼마나 되는지를 모델링 이전에 확인한다. EDA를 건너뛰고 곧바로 모델을 학습시키면, 예를 들어 양성 비율이 0.1%에 불과한 데이터인 줄도 모른 채 정확도(accuracy) 숫자 하나만 보고 모델이 훌륭하다고 착각하는 실수가 생긴다. 이 함정은 「분류 평가지표」 단계에서 숫자로 직접 확인한다. "모델을 학습시키기 전에 최소한 데이터를 한 번은 그래프로 그려본다"는 습관이 이후에 나올 어떤 정교한 알고리즘보다 실전에서 더 많은 실수를 막아 준다.
-
-[[practice]]
-
-### 실습: 원-핫 인코딩과 "훈련 통계로만 변환하기"
-
-\`\`\`python
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-
-# 1) 명목형 변수: 원-핫 인코딩 / 순서형 변수: 순서대로 정수 부여
-df = pd.DataFrame({"도시": ["서울", "부산", "서울", "대구"], "학력": ["고졸", "대졸", "대학원졸", "대졸"]})
-onehot = pd.get_dummies(df["도시"], prefix="도시", dtype=int)
-df["학력_순서"] = df["학력"].map({"고졸": 0, "대졸": 1, "대학원졸": 2})
-print(pd.concat([df, onehot], axis=1), "\\n")
-
-# 2) 스케일러는 훈련 데이터로만 fit하고, 테스트 데이터에는 transform만 한다
-train = np.array([[10.0], [20.0], [30.0]])
-test = np.array([[40.0]])
-scaler = StandardScaler().fit(train)                  # 훈련 데이터의 평균·표준편차만 기억
-print("훈련 평균, 표준편차:", scaler.mean_, np.sqrt(scaler.var_))
-print("테스트 40의 표준화 값:", scaler.transform(test).ravel())
-
-wrong = StandardScaler().fit(np.vstack([train, test]))  # 잘못된 방법: 테스트까지 합쳐서 fit
-print("테스트까지 섞어 fit했을 때 40의 값:", wrong.transform(test).ravel())
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** "도시"는 \`도시_대구·도시_부산·도시_서울\` 세 개의 0/1 열로, "학력"은 0/1/2 하나의 열로 바뀐다. 훈련 통계(평균 20, 표준편차 약 8.16)로 변환한 40은 약 2.45이지만, 테스트를 섞어 fit하면 약 1.34로 값 자체가 달라진다. 모델이 "처음 보는 값"을 이미 본 것처럼 다루게 되는 누수의 씨앗이다. **생각해볼 것:** "도시"에 Label Encoding(서울=0, 부산=1, 대구=2)을 쓰면 선형 모델은 어떤 잘못된 관계를 배울 수 있을까?
-:::
 
 ## 문제 유형과 손실함수: 선형·다항·로지스틱 회귀 {#regression-logistic}
 
@@ -309,47 +242,6 @@ $z\\to\\infty$일 때 $\\sigma(z)\\to1$, $z\\to-\\infty$일 때 $\\sigma(z)\\to0
 \`\`\`
 
 "예측 확률 − 정답"에 입력을 곱한 꼴로, 선형회귀의 MSE 기울기 $(\\hat y - y)x$(상수배 제외)와 모양이 똑같다. 예측이 정답과 가까우면 기울기가 작고, 멀수록 크다는 직관과도 정확히 맞는다.
-
-[[practice]]
-
-### 실습: 로지스틱 회귀를 경사하강법으로 직접 학습시키기
-
-방금 유도한 기울기 $(p - y)x$만으로 로지스틱 회귀를 학습시킨 뒤, sklearn의 결과와 비교해보자. 예제에서 손으로 구한 $\\sigma(0.9) \\approx 0.711$도 함께 확인한다.
-
-\`\`\`python
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
-
-print("sigmoid(0.9) =", round(sigmoid(0.9), 3))        # 예제 값 0.711 확인
-
-# 공부시간(x1), 수면시간(x2) → 합격(1)/불합격(0) 가상 데이터
-rng = np.random.default_rng(0)
-X = rng.normal(size=(200, 2))
-y = (X[:, 0] + 0.5 * X[:, 1] + rng.normal(0, 0.5, 200) > 0).astype(int)
-
-w, b, lr = np.zeros(2), 0.0, 0.5
-for step in range(2000):
-    p = sigmoid(X @ w + b)                   # (200,) 각 샘플의 예측 확률
-    grad_w = X.T @ (p - y) / len(y)          # 유도한 기울기 (p - y) x 를 샘플 평균
-    grad_b = np.mean(p - y)
-    w -= lr * grad_w
-    b -= lr * grad_b
-    if step in (0, 10, 100, 1999):
-        loss = -np.mean(y * np.log(p) + (1 - y) * np.log(1 - p))
-        print(f"step {step:4d}: loss = {loss:.4f}")
-
-sk = LogisticRegression(C=1e6, max_iter=5000).fit(X, y)   # C를 크게: 정규화를 사실상 끈다
-print("직접 학습한 w, b :", np.round(w, 3), round(b, 3))
-print("sklearn   w, b  :", np.round(sk.coef_[0], 3), round(sk.intercept_[0], 3))
-print("훈련 정확도:", np.mean((sigmoid(X @ w + b) >= 0.5) == y))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 손실이 약 0.693($=\\ln 2$, 모든 예측이 0.5인 상태)에서 시작해 꾸준히 줄고, 직접 학습한 $w, b$가 sklearn 값과 소수 둘째 자리 정도까지 비슷하다. $w_1$이 $w_2$보다 큰 것도 데이터를 만든 식($x_1 + 0.5x_2$)에서 $x_1$의 영향이 더 크다는 사실과 맞는다(잡음 때문에 정확히 2배가 되지는 않는다). **해볼 것:** 학습률을 \`5.0\`으로 올리면? 손실이 여전히 줄어드는가? 1주차의 "학습률과 발산" 결론이 여기서도 성립하는지 확인하자.
-:::
 
 ## 결정트리·랜덤 포레스트·부스팅 {#trees-ensembles}
 
@@ -446,46 +338,6 @@ XGBoost와 LightGBM은 이 그래디언트 부스팅 아이디어를 실무에�
 | Bagging | 부트스트랩 표본으로 여러 모델을 독립적으로 학습, 평균/다수결로 결합 | 병렬 | 분산(variance) | Random Forest |
 | Boosting | 이전 모델의 오차를 다음 모델이 순차적으로 보완 | 순차 | 편향(bias) | Gradient Boosting, XGBoost, LightGBM |
 
-[[practice]]
-
-### 실습: 트리 깊이, 그리고 트리 하나 vs 숲
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-
-X, y = load_breast_cancer(return_X_y=True)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
-
-# 1) 깊이 제한에 따른 훈련/테스트 정확도
-for depth in [1, 2, 4, 8, None]:
-    tree = DecisionTreeClassifier(max_depth=depth, random_state=0).fit(Xtr, ytr)
-    print(f"max_depth={str(depth):>4}: 훈련 {tree.score(Xtr, ytr):.3f}, 테스트 {tree.score(Xte, yte):.3f}")
-
-# 2) 분할 방식을 바꿔가며(10가지 random_state) 트리 하나와 랜덤 포레스트의 테스트 정확도가 얼마나 흔들리는지
-tree_acc, forest_acc = [], []
-for seed in range(10):
-    a, b, c, d = train_test_split(X, y, test_size=0.3, stratify=y, random_state=seed)
-    tree_acc.append(DecisionTreeClassifier(random_state=0).fit(a, c).score(b, d))
-    forest_acc.append(RandomForestClassifier(n_estimators=100, random_state=0).fit(a, c).score(b, d))
-print(f"\\n트리 하나 : 평균 {np.mean(tree_acc):.3f}, 표준편차 {np.std(tree_acc):.3f}")
-print(f"랜덤포레스트: 평균 {np.mean(forest_acc):.3f}, 표준편차 {np.std(forest_acc):.3f}")
-
-# 3) 그래디언트 부스팅의 잔차 보정을 m번 반복하면? (본문 예제: y=[10,20,30], F0=20, 학습률 0.1)
-y_small, F = np.array([10.0, 20.0, 30.0]), np.full(3, 20.0)
-for m in range(1, 31):
-    F = F + 0.1 * (y_small - F)          # h_m이 잔차를 정확히 맞힌다고 가정
-    if m in (1, 5, 30):
-        print(f"m={m:2d}: F = {np.round(F, 2)}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 깊이 제한이 없으면 훈련 정확도가 1.000이 되지만 테스트 정확도는 얕은 트리보다 나을 것이 없다. 랜덤 포레스트는 트리 하나보다 평균이 높고 표준편차가 작다(배깅이 분산을 줄인다). 부스팅 보정은 $m=1$에서 본문과 같은 \`[19, 20, 21]\`, $m=30$에서 정답 \`[10, 20, 30]\`에 거의 도착한다. **생각해볼 것:** 부스팅 예제에서 오차는 매 단계 몇 배씩 줄어드는가? 1주차 경사하강법의 "$(1-2\\eta)$배"와 비교해보자.
-:::
-
 ## 편향-분산 트레이드오프와 정규화 {#bias-variance}
 
 지금까지 선형·다항회귀, 로지스틱 회귀, 결정트리와 앙상블의 원리와 사용 시점을 살펴봤다(보충 과정에서 KNN·나이브 베이즈·SVM·K-Means·PCA를 더 다룬다). 지금부터는 새로운 알고리즘이 등장하지 않는다. 대신 질문이 바뀐다. "어떤 모델을 쓸 것인가"에서 "그 모델이 정말 좋은 모델인지 어떻게 확인할 것인가"로.
@@ -580,41 +432,6 @@ for d in range(1, 13):
 
 L2 정규화(Ridge)는 $L + \\lambda\\lVert w\\rVert_2^2$처럼 가중치 제곱의 합을 벌점으로 쓴다. 이 벌점 항을 $w$에 대해 미분하면 $2\\lambda w$로, 벌점의 기울기가 가중치 크기에 비례한다. 그 결과 가중치가 클수록 강하게, 작을수록 약하게 축소되어 모든 가중치가 고르게 줄어들지만 정확히 0에 도달하지는 않는다. L1 정규화(Lasso)는 $L + \\lambda\\lVert w\\rVert_1$처럼 가중치 절댓값의 합을 벌점으로 쓰는데, 이 벌점 항의 기울기는 $w$의 부호에 따라 $\\pm\\lambda$로 일정하다. 가중치의 크기와 무관하게 항상 같은 크기로 0 방향으로 밀어붙인다. 그래서 원래 손실에 대한 기울기가 이 상수 벌점보다 작은 가중치는 최적화 과정에서 정확히 0으로 수렴하며, 결과적으로 일부 가중치가 완전히 제거되는 희소성(sparsity)이 나타난다. 그래서 L1은 "특징 선택"의 효과까지 덤으로 가진다. 베이지안 관점에서 보면 이 둘은 각각 가중치에 대해 가우시안·라플라스 사전분포를 가정한 것과 정확히 같은 결과를 낳는다는 사실도 알아두면 좋다. 정규화는 결국 "가중치는 0 근처에 있을 가능성이 높다"는 사전 확률 분포를 손실함수에 직접 반영하는 방법이다. 이 L1·L2 정규화는 선형·로지스틱 회귀뿐 아니라, XGBoost가 트리 복잡도에 거는 벌점에도, 랜덤 포레스트가 여러 트리를 평균 내 분산을 억누르는 방식에도 형태만 다를 뿐 "모델이 데이터의 우연한 잡음까지 외우지 못하게 막는다"는 같은 목적으로 등장한다. 벌점이 왜 사전분포와 같은지, 분해식 자체가 어떻게 유도되는지는 심화 과정의 「손실함수의 확률적 기원」과 「편향-분산 분해의 유도와 이중 하강」 단계에서 다룬다.
 
-[[practice]]
-
-### 실습: 정규화 강도 $\\lambda$로 과적합 누르기, L1의 희소성 확인
-
-본문의 차수 12 다항회귀(과적합 상태)에 Ridge 정규화를 걸고 $\\lambda$(sklearn에서는 \`alpha\`)를 바꿔가며 검증 오차가 어떻게 변하는지 보자. 이어서 Lasso(L1)가 정말로 가중치를 정확히 0으로 만드는지 세어보자.
-
-\`\`\`python
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler, PolynomialFeatures
-from sklearn.linear_model import Ridge, Lasso
-
-rng = np.random.default_rng(0)
-x = np.sort(rng.uniform(0, 1, 30))[:, None]
-y = np.sin(2 * np.pi * x[:, 0]) + rng.normal(0, 0.2, 30)
-xtr, xva, ytr, yva = train_test_split(x, y, test_size=0.4, random_state=0)
-
-print(f"{'alpha':>8} {'훈련오차':>9} {'검증오차':>9}")
-for alpha in [1e-8, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10]:
-    m = make_pipeline(PolynomialFeatures(12), StandardScaler(), Ridge(alpha=alpha)).fit(xtr, ytr)
-    tr = np.mean((m.predict(xtr) - ytr) ** 2)
-    va = np.mean((m.predict(xva) - yva) ** 2)
-    print(f"{alpha:8.0e} {tr:9.4f} {va:9.4f}")
-
-for alpha in [0.001, 0.01, 0.1]:
-    lasso = make_pipeline(PolynomialFeatures(12), StandardScaler(), Lasso(alpha=alpha, max_iter=100000)).fit(xtr, ytr)
-    coefs = lasso[-1].coef_
-    print(f"Lasso alpha={alpha}: 0이 된 가중치 {np.sum(np.abs(coefs) < 1e-10)}개 / 전체 {coefs.size}개")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** \`alpha\`가 아주 작으면(정규화 거의 없음) 훈련 오차는 작지만 검증 오차가 크고, 적당한 값에서 검증 오차가 가장 작아지며, 너무 크면 둘 다 커진다(과소적합). 다항식 차수를 바꿨을 때와 같은 U자 모양이 "정규화 강도"라는 다른 손잡이에서도 나타난다. Lasso는 \`alpha\`가 커질수록 정확히 0인 가중치가 늘어난다. **설명해볼 것:** 모델 복잡도를 줄이는 방법 두 가지(차수 낮추기 vs 정규화 강화)는 무엇이 같고 무엇이 다른가?
-:::
-
 ## 데이터 분할·교차검증·데이터 누수 {#validation-leakage}
 
 모델을 학습시킨 바로 그 데이터로 그 모델의 성능을 평가하면 안 된다. 학습에 사용된 데이터에 대한 오차(훈련 오차, training error)는 모델이 그 데이터의 노이즈까지 일부 암기했을 가능성이 있어, 처음 보는 데이터에 대한 오차(일반화 오차, generalization error)를 체계적으로 과소평가한다. 그래서 데이터를 미리 세 부분으로 분리해둔다. 훈련셋(train set)은 파라미터 $\\theta$를 직접 최적화하는 데 쓰인다. 검증셋(validation set)은 하이퍼파라미터(정규화 강도 $\\lambda$, 다항식 차수 등 경사하강법으로 직접 최적화되지 않는 값)를 선택하기 위해 반복적으로 사용된다. 테스트셋(test set)은 모든 모델·하이퍼파라미터 선택이 끝난 뒤, 최종 성능을 단 한 번 추정하는 데만 사용한다. 검증셋 점수를 보고 하이퍼파라미터를 계속 바꾸는 것은 문제가 없지만, 테스트셋 점수를 보고 그 이후의 어떤 결정이라도 바꾸면 테스트셋의 정보가 모델 선택 과정에 유입되어(정보 누수), 그 시점부터 테스트셋은 더 이상 편향되지 않은(unbiased) 일반화 성능 추정치를 제공하지 못한다.
@@ -658,39 +475,6 @@ print(classification_report(yte, clf.predict(Xte)))
 \`\`\`
 
 stratify=y로 나눈 이유도 짚고 넘어가자. 단순히 무작위로 나누면 훈련셋과 테스트셋의 양성·음성 비율이 우연히 서로 달라질 수 있는데, stratify는 원래 데이터의 클래스 비율을 훈련셋과 테스트셋 양쪽에 그대로 유지시켜준다. \`cross_val_score\`는 5번의 fold 각각에서 계산된 F1 점수 5개를 배열로 돌려주므로, 그 평균(\`cv_f1.mean()\`)이 한 번의 분할로 얻은 점수보다 훨씬 믿을 만한 추정치라는 것을 기억해두자.
-
-[[practice]]
-
-### 실습: 누수가 만들어내는 "가짜 성능"을 직접 재보기
-
-스케일러 누수는 유방암 데이터처럼 신호가 강한 데이터에서는 점수 차이가 작게 나타나 체감하기 어렵다. 그래서 극단적인 실험을 해보자. **완전히 무작위인** 특징 5000개와 **완전히 무작위인** 레이블로 이루어진 데이터를 만든다. 특징이 정답과 아무 관계가 없으므로 어떤 모델도 50%보다 잘할 수 없어야 한다. 여기서 "레이블과 가장 관련 있어 보이는 특징 20개"를 고르는 전처리를 ① 전체 데이터로 먼저 한 뒤 교차검증하는 경우와 ② 교차검증의 각 fold 안에서(파이프라인 안에서) 하는 경우를 비교한다.
-
-\`\`\`python
-import numpy as np
-from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import make_pipeline
-
-rng = np.random.default_rng(0)
-X = rng.normal(size=(100, 5000))          # 샘플 100개, 의미 없는 특징 5000개
-y = rng.integers(0, 2, size=100)          # 동전 던지기로 만든 레이블
-
-# ① 잘못된 방법: 전체 데이터(검증 fold 포함)를 보고 특징을 고른 뒤 교차검증
-X_selected = SelectKBest(f_classif, k=20).fit_transform(X, y)
-leaky = cross_val_score(LogisticRegression(max_iter=1000), X_selected, y, cv=5).mean()
-
-# ② 올바른 방법: 특징 선택까지 파이프라인에 넣어 매 fold의 훈련 부분만 보고 고르게 한다
-pipe = make_pipeline(SelectKBest(f_classif, k=20), LogisticRegression(max_iter=1000))
-honest = cross_val_score(pipe, X, y, cv=5).mean()
-
-print(f"① 누수 있는 교차검증 정확도 = {leaky:.3f}")
-print(f"② 올바른 교차검증 정확도   = {honest:.3f}  (무작위 데이터이므로 약 0.5가 정상)")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** ①은 약 0.85처럼 그럴듯한 점수가 나오지만 ②는 약 0.5 근처다. 아무 정보도 없는 데이터에서 85%가 나왔다면 그 숫자 자체가 누수의 증거다. **해볼 것:** 본문 유방암 코드에서 스케일러를 파이프라인 밖으로 빼서(\`Xtr_scaled = StandardScaler().fit_transform(Xtr)\`) 같은 교차검증을 돌려보고 F1 차이를 기록하자. 차이가 작더라도 "평가할 때 쓸 정보가 학습에 새어 들어갔다"는 구조는 위 실험과 똑같다. 본문 경고 상자의 누수 사례 네 가지 중 이 실험은 어느 것에 해당하는가?
-:::
 
 ## 분류 평가지표: 정확도·Precision·Recall·ROC-AUC {#classification-metrics}
 
@@ -850,42 +634,6 @@ for i in sample_idx:
 위 코드에서 나온 AUC 값이 1.0에 아주 가까운가? 유방암 데이터셋처럼 두 클래스가 비교적 잘 갈라지는 문제에서는 AUC가 0.99 이상으로 나오는 일이 흔한데, 그렇다면 왜 여전히 Precision·Recall도 함께 봐야 하는지 바로 위 마지막 문단을 참고해 설명해보라.
 :::
 
-[[practice]]
-
-### 실습: 임계값을 움직이면 Precision·Recall이 어떻게 미끄러지는가
-
-같은 모델이라도 임계값을 어디에 두느냐에 따라 Precision과 Recall이 서로 반대로 움직인다. 그리고 극단적으로 불균형한 데이터에서 "정확도 99%"가 얼마나 공허한지도 숫자로 확인하자.
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import precision_score, recall_score, accuracy_score
-
-X, y = load_breast_cancer(return_X_y=True)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
-clf = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)).fit(Xtr, ytr)
-score = clf.predict_proba(Xte)[:, 1]
-
-print(f"{'임계값':>6} {'Precision':>10} {'Recall':>8}")
-for t in [0.05, 0.2, 0.5, 0.8, 0.95, 0.99]:
-    pred = (score >= t).astype(int)
-    print(f"{t:6.2f} {precision_score(yte, pred, zero_division=0):10.3f} {recall_score(yte, pred):8.3f}")
-
-# 양성이 1%뿐인 데이터에서 "무조건 음성"이라고 답하는 모델
-y_rare = np.array([1] * 10 + [0] * 990)
-always_negative = np.zeros_like(y_rare)
-print("\\n불균형 데이터: 정확도 =", accuracy_score(y_rare, always_negative),
-      " / Recall =", recall_score(y_rare, always_negative))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 임계값을 올릴수록 Precision은 대체로 올라가고 Recall은 내려간다(유방암 데이터에서 클래스 1은 "양성 종양"이다). "무조건 음성" 모델은 정확도 0.99, Recall 0.0이다. **생각해볼 것:** 이 데이터로 **악성 종양 검진**을 한다면(악성을 놓치는 것이 치명적이라면) 임계값을 어느 방향으로 움직여야 할까? 클래스 0이 악성이라는 점에 주의해서 답해보자.
-:::
-
 ## 회귀 평가지표·베이스라인·오차 분석 {#regression-metrics-baseline}
 
 지금까지의 평가지표는 전부 분류 문제를 위한 것이었다. 「문제 유형과 손실함수」 단계에서 다룬 선형·다항회귀처럼 연속값을 예측하는 문제에는 별도의 평가지표가 필요하다. $y$를 실제값, $\\hat y$를 예측값이라 하면 다음 네 가지가 표준적으로 쓰인다.
@@ -915,52 +663,6 @@ MSE는 사실 「문제 유형과 손실함수」 단계에서 회귀의 손실�
 위 예제를 그대로 이어가보자. $y=[3,5,7,9]$의 평균은 $\\bar y=6$이므로, 베이스라인 모델은 네 샘플 모두에 $6$을 예측한다. 이 베이스라인의 MSE는 $\\dfrac{\\sum(y-\\bar y)^2}{n}=\\dfrac{20}{4}=5$다. 우리 모델의 MSE는 $0.625$였으니, 베이스라인 대비 오차가 $\\dfrac{0.625}{5}=0.125$, 즉 $12.5\\%$ 수준으로 줄어들었다. 그런데 $1-0.125=0.875$는 바로 앞서 계산한 $R^2$ 값과 정확히 같다. $R^2$는 사실 "베이스라인(평균 예측)의 오차 대비 우리 모델의 오차를 얼마나 줄였는가"를 나타내는 지표였던 것이다. 베이스라인 없이는 $R^2$라는 숫자도, MSE라는 숫자도 그 자체로는 의미를 가지지 못한다.
 
 성능 지표를 계산하는 것으로 검증이 끝나는 것은 아니다. 오차 분석(Error Analysis)은 집계된 숫자 뒤로 물러나, 모델이 실제로 틀린 개별 샘플들을 하나하나 들여다보고 공통된 패턴을 찾는 과정이다. 예를 들어 「분류 평가지표」 단계의 스팸 필터가 놓친 10통의 실제 스팸(FN)을 직접 열어본다고 하자. 만약 그 10통이 전부 이미지 위주라 텍스트 특징이 거의 없었다거나, 전부 특정 언어로 쓰여 있었다는 공통점이 발견된다면, "Recall을 어떻게 올릴 것인가"라는 막연한 질문이 "이미지 기반 스팸을 감지할 특징을 추가한다"는 구체적인 다음 행동으로 바뀐다. Precision·Recall·$R^2$ 같은 집계 지표는 "얼마나 틀렸는가"는 정확히 알려주지만 "왜, 어떤 패턴으로 틀렸는가"는 알려주지 않는다. 그 답은 언제나 개별 오답 사례를 직접 열어보는 것에서 나온다.
-
-[[practice]]
-
-### 실습: 베이스라인을 포함해 여러 알고리즘을 같은 잣대로 비교하기
-
-이제 이번 주의 알고리즘들(보충 과정의 KNN·나이브 베이즈·SVM 포함)을 같은 데이터·같은 교차검증·같은 지표로 한 번에 비교하자. 핵심은 "어느 알고리즘이 제일 좋은가"가 아니라, ① 베이스라인보다 얼마나 나은지, ② 점수의 흔들림(표준편차)이 얼마나 되는지를 함께 보는 것이다. 결정트리는 일부러 깊이를 제한하지 않았다.
-
-\`\`\`python
-# 여러 알고리즘을 같은 교차검증으로 한눈에 비교 (+ 베이스라인)
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.dummy import DummyClassifier
-import warnings
-warnings.filterwarnings("ignore", category=RuntimeWarning)   # 브라우저 실행 환경(Pyodide)의 무해한 내부 경고 숨기기
-
-X, y = load_breast_cancer(return_X_y=True)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
-
-models = {
-    "Baseline(다수결)": DummyClassifier(strategy="most_frequent"),
-    "Logistic": make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)),
-    "KNN(k=5)": make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5)),
-    "NaiveBayes": GaussianNB(),
-    "DecisionTree": DecisionTreeClassifier(random_state=0),  # 깊이 제한 없음 → 과적합되기 쉬운 상태
-    "RandomForest": RandomForestClassifier(n_estimators=200, random_state=0),
-    "GradientBoosting": GradientBoostingClassifier(random_state=0),
-    "SVM(RBF)": make_pipeline(StandardScaler(), SVC(kernel="rbf")),
-}
-for name, model in models.items():
-    scores = cross_val_score(model, Xtr, ytr, cv=5, scoring="f1")
-    print(f"{name:16s} F1 = {scores.mean():.3f} +- {scores.std():.3f}")
-\`\`\`
-
-\`models\`는 "모델 이름"을 키로, "모델 객체"를 값으로 담은 딕셔너리이고, \`.items()\`로 (이름, 모델) 쌍을 하나씩 꺼내 같은 방식으로 평가한다.
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 다수결 베이스라인도 F1이 약 0.77로 상당히 높게 나온다(유방암 데이터의 약 63%가 클래스 1이라, "전부 1"이라고만 답해도 Recall 1, Precision 0.63). 대부분의 모델은 0.95~0.98 사이이고, 깊이 제한 없는 결정트리는 랜덤 포레스트보다 평균이 낮고 표준편차가 크다. **해볼 것:** 두 모델의 평균 F1 차이가 표준편차보다 작다면 "A가 B보다 낫다"고 말할 수 있을까? 두 모델이 **같은 fold**로 평가되었으므로(\`cv=5\`는 매번 같은 분할을 쓴다), \`scores_A - scores_B\`처럼 fold별 차이를 직접 계산해 보자. 5개 fold 중 몇 번 이겼는지, 차이의 평균이 차이의 흩어짐에 비해 얼마나 큰지가 "평균 ± 표준편차" 두 줄을 눈으로 비교하는 것보다 훨씬 정확한 근거다. 그래도 fold끼리 독립이 아니므로 이것은 유의성 검정이 아니다. 엄밀한 비교는 반복 교차검증과 보정된 검정이 필요하다(심화 과정의 「평가의 통계학」 단계).
-:::
 
 ## KNN과 나이브 베이즈 {#knn-naive-bayes}
 
@@ -1056,32 +758,6 @@ print(f"P(스팸 | 무료, 당첨) = {p_spam_given_words:.4f} ({p_spam_given_wor
 \`\`\`
 
 \`p_spam, p_normal = 0.3, 0.7\`처럼 쉼표로 나열한 값을 쉼표로 나열한 변수에 한 줄로 나눠 담는 것을 다중 할당(multiple assignment)이라 부른다. 왼쪽 개수와 오른쪽 개수가 정확히 같아야 하며, 왼쪽부터 순서대로 하나씩 짝지어 대입된다. 관련 있는 변수 여러 개를 선언할 때 한 줄로 줄여 쓰는 흔한 방법이다.
-
-[[practice]]
-
-### 실습: $K$에 따라 KNN의 성격이 어떻게 바뀌는가
-
-잡음이 섞인 두 개의 반달 모양 데이터(\`make_moons\`)에서 $K$를 1부터 크게 바꿔가며 훈련 정확도와 테스트 정확도를 비교해보자. 실행 전에 "$K=1$의 훈련 정확도"가 얼마일지 예측해보자.
-
-\`\`\`python
-from sklearn.datasets import make_moons
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
-import warnings
-warnings.filterwarnings("ignore", category=RuntimeWarning)   # 브라우저 실행 환경(Pyodide)의 무해한 내부 경고 숨기기
-
-X, y = make_moons(n_samples=400, noise=0.35, random_state=0)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=0)
-
-print(f"{'K':>4} {'훈련 정확도':>10} {'테스트 정확도':>12}")
-for k in [1, 3, 7, 15, 31, 101, 279]:
-    knn = KNeighborsClassifier(n_neighbors=k).fit(Xtr, ytr)
-    print(f"{k:4d} {knn.score(Xtr, ytr):10.3f} {knn.score(Xte, yte):12.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** $K=1$은 훈련 정확도가 1.000(자기 자신이 가장 가까운 이웃이므로)이지만 테스트 정확도는 그보다 낮다(분산이 큰 상태). $K$가 커지면 두 정확도가 가까워지다가, $K=279$(훈련 샘플 전부)에서는 거의 항상 다수 클래스만 답하게 되어 둘 다 약 0.5로 떨어진다(편향이 큰 상태). **해볼 것:** 테스트 정확도가 가장 높은 $K$를 찾고, 그 값을 테스트셋으로 고르는 것이 왜 "반칙"인지 「데이터 분할·교차검증·데이터 누수」 단계의 검증셋 개념으로 설명해보자.
-:::
 
 ## SVM·K-Means·PCA {#svm-unsupervised}
 
@@ -1191,42 +867,6 @@ print("분산 설명 비율 (PC1, PC2):", np.round(pca.explained_variance_ratio_
 
 첫 번째 주성분의 방향이 $(1,1)$을 정규화한 $(\\pm0.707, \\pm0.707)$과 같은 방향이고, 분산 설명 비율이 (1.0, 0.0)으로 나오는지(즉 PC1 혼자 분산의 100%를 설명하는지) 확인하자. 고유벡터의 부호(+인지 −인지)는 계산 라이브러리마다 다르게 나올 수 있는데, 방향 자체(그 직선 위에 있다는 사실)만 같으면 결과가 같은 것으로 봐도 된다. 바로 위 예제에서 구한 $v_1=(1,1)$ 방향과 부호만 반대인 $-v_1=(-1,-1)$이 사실은 같은 직선을 가리키는 것과 같은 이치다.
 
-[[practice]]
-
-### 실습: 실제 데이터에서 PCA와 K-Means
-
-지금까지 손으로 확인한 두 알고리즘을 30개 특징을 가진 실제 데이터(유방암 진단 데이터셋)에 적용해보자. 여기서는 정답 레이블 \`y\`를 학습 과정에 전혀 넣지 않는다는 점이 지금까지의 코드와 근본적으로 다르다.
-
-\`\`\`python
-# 비지도학습: PCA로 2차원 투영 후 K-Means로 군집화
-from sklearn.datasets import load_breast_cancer
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-
-X, y = load_breast_cancer(return_X_y=True)
-Xs = StandardScaler().fit_transform(X)
-pca = PCA(n_components=2).fit(Xs)                    # 분산이 가장 큰 두 축을 찾는다
-X2d = pca.transform(Xs)
-print(f"PC1, PC2가 설명하는 분산 비율: {pca.explained_variance_ratio_[0]:.3f}, "
-      f"{pca.explained_variance_ratio_[1]:.3f} (합 {pca.explained_variance_ratio_.sum():.3f})")
-
-labels = KMeans(n_clusters=2, n_init=10, random_state=0).fit_predict(X2d)  # y 없이 군집만 찾는다
-agreement = max((labels == y).mean(), (labels != y).mean())
-print(f"K-Means 군집과 실제 진단 레이블의 일치도(참고용) = {agreement:.3f}")
-
-for cluster_id in [0, 1]:
-    mask = labels == cluster_id                       # 불리언 배열: True인 자리(그 군집에 속한 샘플)만 표시
-    n_pos, n_neg = (y[mask] == 1).sum(), (y[mask] == 0).sum()
-    print(f"군집 {cluster_id}: 총 {mask.sum()}개 (양성={n_pos}, 음성={n_neg})")
-\`\`\`
-
-\`mask = labels == cluster_id\`는 각 원소가 True/False인 배열(불리언 배열)을 만든다. \`y[mask]\`처럼 이 불리언 배열을 인덱스 자리에 넣으면 True인 위치의 값만 걸러낸다. 앞서 KNN에서 쓴 정수 인덱싱(\`y_train[nearest_idx]\`)이 "몇 번째를 꺼낼지"를 지정했다면, 불리언 인덱싱은 "조건을 만족하는 것만 꺼내라"는 방식이라는 차이가 있다. 이 코드에서 K-Means가 찾은 군집을 실제 레이블과 비교해본 이유는, K-Means는 애초에 레이블을 본 적이 없는데도 데이터의 구조만으로 실제 진단 결과와 얼마나 비슷하게 갈라놓는지를 확인해보기 위해서다. 일치도가 높다면 이 데이터의 두 클래스가 애초에 특징 공간에서 상당히 잘 분리되어 있다는 뜻이고, 이는 핵심 과정의 「분류 평가지표」 단계에서 확인한 높은 AUC와도 같은 이야기를 하고 있는 셈이다.
-
-:::warn 관찰
-PCA로 30개였던 특징을 2개로 줄였는데도 K-Means 군집이 실제 진단 레이블과 상당히 비슷하게 갈라지는가? 그렇다면 "분산이 가장 큰 방향에 클래스를 구분하는 정보도 함께 담겨 있을 수 있다"는 설명과 이 결과가 어떻게 연결되는가?
-:::
-
 ## 실전 파이프라인: ColumnTransformer·하이퍼파라미터 탐색·그룹 분할 {#pipeline-tuning}
 
 핵심 과정에서는 숫자 열만 있는 깔끔한 데이터(유방암 진단)로 "전처리는 파이프라인 안에"라는 원칙을 익혔다. 실제 표 데이터는 다르다. 나이·소득 같은 숫자 열과 도시·가입 경로 같은 범주 열이 섞여 있고, 열마다 결측 비율도 다르며, 같은 환자·같은 사용자의 기록이 여러 줄로 반복된다. 이 단계는 그런 데이터를 **한 번의 \`fit\`으로 누수 없이** 처리하는 실무 표준 도구 세 가지를 다룬다. ① 열 종류마다 다른 전처리를 묶는 \`ColumnTransformer\`, ② 하이퍼파라미터를 검증 점수로 고르는 \`GridSearchCV\`, ③ 같은 그룹·미래 정보가 섞이지 않게 나누는 \`GroupKFold\`·\`TimeSeriesSplit\`이다.
@@ -1298,79 +938,13 @@ for train_idx, val_idx in TimeSeriesSplit(n_splits=3).split(np.arange(12)):
 
 훈련 구간이 [0~2] → [0~5] → [0~8]로 늘어나고, 검증 구간은 항상 훈련 구간보다 뒤에 있다. 실제 운영에서 모델이 처하는 상황(지금까지의 데이터로 학습해 앞으로를 예측)과 같은 조건이다.
 
-[[practice]]
-
-### 실습: 혼합형 데이터 튜닝과 그룹 누수 측정
-
-첫 셀은 숫자·범주·결측이 섞인 가상 고객 데이터 300명으로 전처리+모델 파이프라인을 만들고 \`C\`를 고른다. 둘째 셀은 환자 80명에게서 **비슷한 측정을 5번씩** 얻은 데이터로, 일반 KFold와 GroupKFold의 점수를 비교한다. 실행 전에, 1-최근접 이웃(1-NN)의 KFold 점수가 얼마일지 예측해 보자.
-
-\`\`\`python
-import numpy as np
-import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
-
-rng = np.random.default_rng(0)
-n = 300
-age = rng.integers(20, 70, n).astype(float)
-income = rng.normal(300, 80, n)
-city = rng.choice(["서울", "부산", "대구"], n, p=[0.5, 0.3, 0.2])
-logit = 0.04 * (age - 45) + 0.01 * (income - 300) + np.where(city == "서울", 0.8, np.where(city == "부산", -0.4, 0.0))
-y = (rng.random(n) < 1 / (1 + np.exp(-logit))).astype(int)
-income[rng.random(n) < 0.15] = np.nan                       # 소득의 약 15%가 결측
-df = pd.DataFrame({"나이": age, "소득": income, "도시": city})
-
-pre = ColumnTransformer([
-    ("num", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()), ["나이", "소득"]),
-    ("cat", OneHotEncoder(handle_unknown="ignore"), ["도시"]),
-])
-model = make_pipeline(pre, LogisticRegression(max_iter=1000))
-search = GridSearchCV(model, {"logisticregression__C": [0.01, 0.1, 1, 10]},
-                      cv=StratifiedKFold(5, shuffle=True, random_state=0), scoring="roc_auc").fit(df, y)
-for C, s in zip([0.01, 0.1, 1, 10], search.cv_results_["mean_test_score"]):
-    print(f"C={C:<5} 교차검증 ROC-AUC = {s:.3f}")
-print("선택:", search.best_params_)
-new = pd.DataFrame({"나이": [40.0], "소득": [np.nan], "도시": ["광주"]})   # 결측 + 처음 보는 도시
-print("새 고객의 예측 확률:", search.predict_proba(new)[0].round(3))
-\`\`\`
-
-\`\`\`python
-import numpy as np
-from sklearn.model_selection import KFold, GroupKFold, cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-
-rng = np.random.default_rng(1)
-patients, per = 80, 5
-centers = rng.normal(size=(patients, 10))                                  # 환자마다 고유한 특성
-label = (centers[:, 0] + rng.normal(0, 1, patients) > 0).astype(int)        # 진단은 환자 단위
-X = np.repeat(centers, per, axis=0) + rng.normal(0, 0.1, (patients * per, 10))   # 같은 환자의 비슷한 측정 5번
-y = np.repeat(label, per)
-groups = np.repeat(np.arange(patients), per)
-
-for name, m in [("1-NN", KNeighborsClassifier(1)), ("랜덤 포레스트", RandomForestClassifier(100, random_state=0)),
-                ("로지스틱", LogisticRegression())]:
-    kf = cross_val_score(m, X, y, cv=KFold(5, shuffle=True, random_state=0)).mean()
-    gk = cross_val_score(m, X, y, cv=GroupKFold(5), groups=groups).mean()
-    print(f"{name:8s} KFold {kf:.3f}  →  GroupKFold {gk:.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 첫 셀은 네 \`C\`의 ROC-AUC가 0.74 안팎으로 비슷하고 \`C=0.1\`이 근소하게 선택된다. 결측과 처음 보는 도시("광주")가 섞인 새 고객도 오류 없이 확률이 나온다. 둘째 셀에서 1-NN은 KFold 1.000이지만 GroupKFold는 약 0.64로 떨어지고, 랜덤 포레스트도 약 0.997에서 약 0.77로 떨어진다. 같은 환자의 다른 측정이 훈련에 들어 있으면 "가장 가까운 이웃 = 같은 환자"라서 외워서 맞히기 때문이다. 로지스틱 회귀는 외울 능력이 작아 차이도 작다(약 0.80 → 0.71). **설명해볼 것:** 네 \`C\`의 점수 차이(0.736~0.743)는 의미 있는 차이일까? \`best_score_\`가 낙관적이라는 말과 연결해 보자.
-:::
-
 ## 불균형 데이터와 임계값 결정: PR 곡선·비용·확률 보정 {#imbalance-threshold}
 
 핵심 과정의 「분류 평가지표」 단계에서 "정확도 99%의 함정"과 임계값에 따라 Precision·Recall이 미끄러지는 모습을 봤다. 실무의 분류 문제(사기 탐지, 질병 선별, 불량 검출)는 대부분 양성이 수 % 이하인 불균형 문제이고, 결국 **"확률이 몇 이상이면 양성으로 처리할 것인가"**를 정해야 한다. 이 단계는 그 결정을 감이 아니라 숫자로 내리는 세 도구를 다룬다. ① 양성 비율을 반영하는 PR 곡선과 Average Precision, ② 오류 비용으로 임계값을 계산하는 방법, ③ 모델의 확률을 믿어도 되는지 확인하는 보정(calibration)이다.
 
 ### Precision은 양성 비율에 따라 달라진다
 
-1주차 베이즈 실습에서 같은 검사라도 유병률이 1%냐 10%냐에 따라 $P(\\text{병}\\mid\\text{양성})$이 16.7%와 68.8%로 크게 달랐다. 그 $P(\\text{병}\\mid\\text{양성})$이 바로 Precision이다. 즉 Recall(민감도)과 FPR(위양성률)이 같은 모델이라도 양성이 드문 데이터에서는 Precision이 낮게 나온다. ROC 곡선은 TPR과 FPR만 쓰므로 양성 비율이 바뀌어도 모양이 거의 그대로이고, 무작위 분류기의 기준선도 항상 AUC 0.5다. 반면 Precision과 Recall로 그리는 **PR 곡선**은 양성 비율을 그대로 반영하며, 무작위 분류기의 기준선은 "Precision = 양성 비율"이다. PR 곡선 아래 면적에 해당하는 **Average Precision(AP)**은 양성이 1%인 문제에서 0.3만 나와도 기준선(0.01)의 30배일 수 있다. 그래서 양성이 드문 문제에서는 ROC-AUC와 함께, 혹은 그보다 먼저 AP를 본다.
+1주차 베이즈 정리에서 보았듯이 같은 검사라도 유병률이 1%냐 10%냐에 따라 $P(\\text{병}\\mid\\text{양성})$이 16.7%와 68.8%로 크게 달랐다. 그 $P(\\text{병}\\mid\\text{양성})$이 바로 Precision이다. 즉 Recall(민감도)과 FPR(위양성률)이 같은 모델이라도 양성이 드문 데이터에서는 Precision이 낮게 나온다. ROC 곡선은 TPR과 FPR만 쓰므로 양성 비율이 바뀌어도 모양이 거의 그대로이고, 무작위 분류기의 기준선도 항상 AUC 0.5다. 반면 Precision과 Recall로 그리는 **PR 곡선**은 양성 비율을 그대로 반영하며, 무작위 분류기의 기준선은 "Precision = 양성 비율"이다. PR 곡선 아래 면적에 해당하는 **Average Precision(AP)**은 양성이 1%인 문제에서 0.3만 나와도 기준선(0.01)의 30배일 수 있다. 그래서 양성이 드문 문제에서는 ROC-AUC와 함께, 혹은 그보다 먼저 AP를 본다.
 
 ### 비용으로 임계값을 정하기
 
@@ -1390,55 +964,6 @@ $$p > t^{*} = \\frac{C_{FP}}{C_{FP} + C_{FN}}$$
 불균형 데이터에서 흔히 쓰는 \`class_weight="balanced"\`는 소수 클래스 샘플의 손실에 큰 가중치를 줘서 모델이 양성을 더 적극적으로 예측하게 만든다. 효과는 임계값을 낮추는 것과 거의 같지만 대가가 있다. 예측 확률이 전체적으로 부풀어 **더 이상 실제 빈도를 뜻하지 않는다.** 양성 비율 8%인 데이터에서 balanced로 학습한 모델의 평균 예측 확률이 0.34쯤 나오는 식이다. 확률을 비용 계산이나 위험도 설명에 쓸 거라면 가중치 없이 학습하고 임계값을 옮기는 편이 낫다.
 
 확률이 믿을 만한지는 **신뢰도 표(reliability table)**로 확인한다. 예측 확률을 구간으로 나눠, 각 구간의 평균 예측 확률과 실제 양성 비율을 나란히 놓는다. "0.2~0.4라고 예측한 샘플들 중 실제로 약 28%가 양성"이면 잘 보정된 것이다. 하나의 숫자로는 **브라이어 점수(Brier score)** $\\frac{1}{n}\\sum_i (p_i - y_i)^2$를 쓴다. 확률 예측의 평균제곱오차로, 작을수록 좋다. 보정이 어긋난 모델은 \`CalibratedClassifierCV\`(Platt 스케일링·등위 회귀)로 확률을 다시 맞출 수 있다. 결정트리·랜덤 포레스트·부스팅처럼 손실을 직접 확률로 최적화하지 않는 모델은 순위(AUC)는 좋아도 확률이 어긋나 있는 경우가 많다.
-
-[[practice]]
-
-### 실습: 같은 모델, 다른 임계값, 다른 비용
-
-양성 비율이 약 8%인 데이터에서 로지스틱 회귀를 ① 가중치 없이, ② \`class_weight="balanced"\`로 학습한다. 양성을 놓치는 비용이 오경보의 10배($C_{FN}=10$, $C_{FP}=1$)라고 두고, 임계값 0.5와 $t^*=1/11$에서의 샘플당 평균 비용을 비교한 뒤 신뢰도 표를 만든다. 실행 전에 예측해 보자. 두 모델의 ROC-AUC는 같을까, 다를까?
-
-\`\`\`python
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, average_precision_score, brier_score_loss
-
-rng = np.random.default_rng(0)
-n = 6000
-X = rng.normal(size=(n, 5))
-logit = -3.6 + X @ np.array([1.2, -1.0, 0.8, 0.0, 0.0])
-y = (rng.random(n) < 1 / (1 + np.exp(-logit))).astype(int)
-Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.5, stratify=y, random_state=0)
-print(f"양성 비율 = {y.mean():.3f}")
-
-C_FP, C_FN = 1, 10
-t_star = C_FP / (C_FP + C_FN)
-
-def avg_cost(p, y_true, t):
-    pred = p >= t
-    fp = np.sum(pred & (y_true == 0))
-    fn = np.sum(~pred & (y_true == 1))
-    return (C_FP * fp + C_FN * fn) / len(y_true)
-
-for cw in (None, "balanced"):
-    p = LogisticRegression(class_weight=cw).fit(Xtr, ytr).predict_proba(Xte)[:, 1]
-    print(f"\\nclass_weight={cw}: ROC-AUC {roc_auc_score(yte, p):.3f}, AP {average_precision_score(yte, p):.3f}, "
-          f"Brier {brier_score_loss(yte, p):.4f}, 평균 예측 확률 {p.mean():.3f}")
-    for t in (0.5, t_star):
-        print(f"  임계값 {t:.3f}: 샘플당 평균 비용 {avg_cost(p, yte, t):.4f}")
-
-# 신뢰도 표: 가중치 없이 학습한 모델
-p = LogisticRegression().fit(Xtr, ytr).predict_proba(Xte)[:, 1]
-edges = [0, 0.05, 0.1, 0.2, 0.4, 1.0]
-print("\\n예측 구간      개수   평균 예측   실제 양성 비율")
-for lo, hi in zip(edges, edges[1:]):
-    k = (p >= lo) & (p < hi)
-    print(f"{lo:.2f}~{hi:.2f}  {k.sum():6d}   {p[k].mean():8.3f}   {yte[k].mean():10.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 양성 비율 약 0.078. 두 모델의 ROC-AUC(약 0.833)와 AP(약 0.378)는 **똑같다**. class_weight는 확률을 단조롭게 부풀릴 뿐 순위는 바꾸지 않기 때문이다. 가중치 없는 모델은 Brier 약 0.059, 평균 예측 확률 0.078(실제 비율과 같음)이고, 임계값 0.5에서 비용 0.650이 $t^* \\approx 0.091$에서 0.424로 크게 줄어든다. balanced 모델은 평균 예측 확률이 약 0.34로 부풀어 Brier가 약 0.161로 나빠지고, 이 모델에 $t^*$를 쓰면 비용이 0.702로 오히려 커진다(확률이 보정되지 않았으므로 공식의 전제가 깨짐). 신뢰도 표에서 가중치 없는 모델은 구간마다 평균 예측과 실제 비율이 거의 같다. **설명해볼 것:** balanced 모델은 임계값 0.5에서 비용 약 0.421로 가중치 없는 모델의 $t^*$와 비슷하다. 양성:음성 가중치 비율(약 1:11.9)과 비용 비율(1:10)을 연결해 그 이유를 설명해 보자.
-:::
 
 ## 손실함수의 확률적 기원: 최대가능도로 본 MSE·교차 엔트로피와 정규화 {#loss-likelihood}
 
@@ -1483,54 +1008,6 @@ $$H = \\frac{1}{n} X^\\top S X, \\qquad S = \\operatorname{diag}\\big(p_i(1-p_i)
 
 그런데 데이터가 **선형분리 가능**하면 MLE가 존재하지 않는다. 모든 점을 올바르게 가르는 $w$를 찾은 뒤 크기를 $c$배로 키우면 확률이 0과 1에 더 가까워져 손실이 계속 줄어들기 때문이다. 경사하강법은 $\\lVert w \\rVert$를 끝없이(대략 $\\log t$에 비례해) 키우고, 예측 확률은 과신으로 치닫는다. 여기에 L2 규제를 넣으면 최솟값이 유한한 곳에 생긴다. 더 놀라운 사실도 알려져 있다. 규제 없는 경사하강법의 $w$는 크기가 발산하는 동안 **방향**은 최대 마진 SVM의 방향으로 수렴한다(Soudry et al., 2018). 보충 과정의 SVM과 로지스틱 회귀가 이렇게 이어지며, 과대 파라미터화된 신경망이 규제 없이도 일반화하는 이유를 설명하는 "암묵적 규제(implicit regularization)" 연구의 출발점이 된 결과다.
 
-[[practice]]
-
-### 실습: MLE·MAP 관점을 숫자로 확인하기
-
-세 가지를 확인한다. ① 가우시안 NLL과 MSE가 같은 $w$에서 최소가 되는가, ② 거의 같은 두 특징이 있을 때 Ridge의 닫힌 해가 sklearn과 같고 $\\lambda$가 조건수를 얼마나 줄이는가, ③ 선형분리 가능한 네 점에서 로지스틱 회귀의 가중치가 어떻게 자라는가. 실행 전에 ③에서 스텝을 10배 늘릴 때마다 $w$와 손실이 어떻게 변할지 예측해 보자.
-
-\`\`\`python
-import numpy as np
-from sklearn.linear_model import Ridge
-
-# 1) 가우시안 잡음을 가정한 음의 로그가능도(NLL)와 MSE는 같은 w에서 최소가 된다
-rng = np.random.default_rng(0)
-x = rng.normal(size=30)
-y = 2 * x + rng.normal(0, 0.5, 30)
-ws = np.linspace(0, 4, 401)
-sigma2 = 0.25
-mse = np.array([np.mean((w * x - y) ** 2) for w in ws])
-nll = 0.5 * np.log(2 * np.pi * sigma2) + mse / (2 * sigma2)        # 샘플당 NLL
-print(f"MSE가 최소인 w = {ws[mse.argmin()]:.2f}, NLL이 최소인 w = {ws[nll.argmin()]:.2f}")
-
-# 2) Ridge = 가우시안 사전분포의 MAP: (XᵀX + λI)⁻¹Xᵀy, 그리고 조건수
-rng = np.random.default_rng(1)
-x1 = rng.normal(size=50)
-X = np.column_stack([x1, x1 + rng.normal(0, 0.01, 50)])           # 거의 같은 두 특징(다중공선성)
-y = 3 * x1 + rng.normal(0, 0.5, 50)
-for lam in [0.0, 0.1, 1.0, 10.0]:
-    A = X.T @ X + lam * np.eye(2)
-    w = np.linalg.solve(A, X.T @ y)
-    line = f"λ={lam:<4}: w = {np.round(w, 3)}, cond(XᵀX+λI) = {np.linalg.cond(A):.3g}"
-    if lam > 0:
-        line += f", sklearn Ridge = {np.round(Ridge(alpha=lam, fit_intercept=False).fit(X, y).coef_, 3)}"
-    print(line)
-
-# 3) 선형분리 가능한 데이터: 로지스틱 회귀의 가중치가 끝없이 커진다
-Xs, ys = np.array([-2.0, -1.0, 1.0, 2.0]), np.array([0, 0, 1, 1])
-w = 0.0
-for step in range(1, 10_001):
-    p = 1 / (1 + np.exp(-w * Xs))
-    w -= 0.5 * np.mean((p - ys) * Xs)
-    if step in (10, 100, 1_000, 10_000):
-        loss = -np.mean(ys * np.log(p) + (1 - ys) * np.log(1 - p))
-        print(f"step {step:>6}: w = {w:6.3f}, loss = {loss:.1e}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** ① 두 기준이 모두 $w = 1.79$에서 최소다(데이터가 $y = 2x + $잡음이라 2 근처). ② $\\lambda = 0$이면 조건수가 약 $4.6\\times10^4$이고 계수가 $[1.224, 1.695]$처럼 두 특징에 제멋대로 나뉘지만(합은 약 2.9), $\\lambda$를 키우면 조건수가 765 → 79 → 8.8로 줄고 계수가 $[1.44, 1.44]$처럼 고르게 나뉜다. 닫힌 해는 sklearn \`Ridge(fit_intercept=False)\`와 소수 셋째 자리까지 같다. ③ 스텝이 10배 늘 때마다 $w$는 거의 일정한 폭(후반에는 약 2.3)으로 커지고(로그 증가) 손실은 약 10분의 1이 된다. 끝이 없다. **설명해볼 것:** ③에 L2 벌점 $\\frac{\\lambda}{2}w^2$를 더하면 왜 $w$가 유한한 값에서 멈추는지, 손실의 기울기 두 항이 어디서 균형을 이루는지로 설명해 보자.
-:::
-
 ## 편향-분산 분해의 유도와 이중 하강 {#bias-variance-theory}
 
 핵심 과정의 「편향-분산 트레이드오프와 정규화」 단계에서는 분해식 $\\text{오차} = \\text{편향}^2 + \\text{분산} + \\sigma^2$을 받아들이고 숫자로 확인했다. 이 단계는 그 식을 직접 유도하고, 같은 논리로 랜덤 포레스트가 왜 특징을 무작위로 고르는지 설명한 뒤, 고전적인 U자 곡선이 끝이 아니라는 최근의 발견(이중 하강)까지 다룬다.
@@ -1569,51 +1046,6 @@ $$\\operatorname{Var}\\!\\left(\\frac{1}{B}\\sum_{b=1}^{B}\\hat f_b\\right) = \\
 
 이것을 **이중 하강(double descent)**이라 부른다(Belkin et al., 2019; Nakkiran et al., 2019). 정점의 원인은 분산이다. $p = n$이면 $X$가 정사각에 가까워 가장 작은 특이값이 0 근처로 떨어지고, 유사역행렬이 그 역수를 곱하므로 잡음이 거대하게 증폭된다. $p$가 $n$보다 충분히 크면 최소 특이값이 다시 커지고, "가장 작은 노름"이라는 선택 자체가 암묵적인 규제로 작동한다. 실제로 적절한 크기의 Ridge 규제를 넣으면 정점이 사라진다는 것도 알려져 있다. 수억 개 파라미터의 신경망이 훈련 데이터를 완벽히 외우면서도 일반화하는 현상을 이해하는 출발점이며, "파라미터가 데이터보다 많으면 무조건 과적합"이라는 고전적 직관이 항상 맞지는 않는다는 경고이기도 하다.
 
-[[practice]]
-
-### 실습: 평균의 분산 공식과 이중 하강을 숫자로
-
-첫 부분은 상관 $\\rho$인 예측 $B$개를 인위적으로 만들어 평균의 분산이 공식 $\\rho + (1-\\rho)/B$와 맞는지 확인한다. 둘째 부분은 신호가 100개 특징에 고르게 퍼진 데이터에서 샘플 40개로, 앞에서부터 $p$개 특징만 쓰는 최소 노름 최소제곱의 테스트 오차와 $X$의 최소 특이값을 $p$에 따라 기록한다. 실행 전에 테스트 오차가 가장 큰 $p$를 예측해 보자.
-
-\`\`\`python
-import numpy as np
-
-# 1) 상관된 모델 B개를 평균하면 분산은 ρσ² + (1-ρ)σ²/B
-rng = np.random.default_rng(0)
-trials = 20_000
-for rho in (0.0, 0.3, 0.7):
-    row = []
-    for B in (1, 10, 100):
-        common = rng.normal(size=(trials, 1))                # 모든 모델이 공유하는 부분
-        own = rng.normal(size=(trials, B))                   # 모델마다 고유한 부분
-        preds = np.sqrt(rho) * common + np.sqrt(1 - rho) * own   # 각 모델의 분산 1, 모델 간 상관 ρ
-        row.append(f"B={B:<3} 실측 {preds.mean(axis=1).var():.3f} / 공식 {rho + (1 - rho) / B:.3f}")
-    print(f"ρ={rho}: " + " | ".join(row))
-
-# 2) 이중 하강: 샘플 40개, 특징 100개, 앞에서부터 p개 특징만 쓰는 최소 노름 최소제곱
-def experiment(p, n=40, d=100, sigma=0.1, seeds=30):
-    errs, smin = [], []
-    for s in range(seeds):
-        rng = np.random.default_rng(s)
-        beta = rng.normal(0, 1, d) / np.sqrt(d)              # 신호가 100개 특징에 고르게 퍼져 있다
-        X, Xt = rng.normal(size=(n, d)), rng.normal(size=(500, d))
-        y = X @ beta + rng.normal(0, sigma, n)
-        coef = np.linalg.pinv(X[:, :p]) @ y                  # p > n이면 훈련 데이터를 정확히 지나는 해 중 노름이 가장 작은 해
-        errs.append(np.mean((Xt[:, :p] @ coef - Xt @ beta) ** 2))
-        smin.append(np.linalg.svd(X[:, :p], compute_uv=False).min())
-    return np.median(errs), np.median(smin)
-
-print("\\n   p   테스트 MSE   X의 최소 특이값")
-for p in (5, 10, 20, 30, 36, 40, 44, 50, 60, 80, 100):
-    e, s = experiment(p)
-    print(f"{p:4d} {e:11.3f} {s:14.3f}")
-print("(참고: 항상 0을 예측하면 테스트 MSE ≈ 1)")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 첫 부분의 실측 분산이 공식과 소수 둘째 자리까지 맞는다. $\\rho = 0.7$이면 $B = 100$이어도 분산이 약 0.70에 머문다. 둘째 부분에서 테스트 MSE는 $p = 5$의 약 1.08에서 시작해 $p = 40(= n)$에서 약 39로 치솟고, 이때 최소 특이값이 약 0.09로 가장 작다. 그 뒤 다시 내려가 $p = 100$에서 약 0.61로, $p < n$인 어떤 모델보다도(심지어 항상 0을 예측하는 약 1.0보다도) 낮다. **설명해볼 것:** $p < n$인 모델들이 0을 예측하는 것보다도 나쁜 이유를 "쓰지 않은 특징의 신호가 잡음처럼 작동한다"는 관점에서, $p = 40$의 정점을 "최소 특이값의 역수가 잡음을 증폭한다"는 관점에서 설명해 보자.
-:::
-
 ## 평가의 통계학: 선택 편향·중첩 교차검증·짝지은 비교 {#model-evaluation-stats}
 
 교차검증 점수도 결국 유한한 데이터에서 계산한 **추정치**다. 추정치에는 잡음이 있고, 잡음이 있는 숫자 여러 개 중 가장 좋은 것을 고르면 그 숫자는 체계적으로 부풀려진다. 이 단계는 모델 평가에서 전문가들이 실제로 조심하는 세 가지를 다룬다. ① fold 점수의 흩어짐이 무엇을 뜻하고 무엇을 뜻하지 않는가, ② 하이퍼파라미터를 고른 점수가 왜 낙관적이고 중첩 교차검증이 그것을 어떻게 고치는가, ③ 두 모델의 우열을 어떤 근거로 말할 수 있는가.
@@ -1638,70 +1070,6 @@ print("(참고: 항상 0을 예측하면 테스트 MSE ≈ 1)")
 $$t_{\\text{보정}} = \\frac{\\bar d}{\\sqrt{\\left(\\dfrac{1}{J} + \\dfrac{n_{\\text{test}}}{n_{\\text{train}}}\\right) s^2}}$$
 
 이고, 자유도 $J-1$인 t 분포로 p값을 구한다. 5-fold면 $n_{\\text{test}}/n_{\\text{train}} = 0.25$라 $J$를 아무리 늘려도 분모가 $\\sqrt{0.25\\,s^2}$ 밑으로 줄지 않는다. "반복을 많이 해서 유의하게 만드는" 착시를 막는 장치다. 테스트셋이 하나뿐이라면 두 모델이 엇갈리게 맞힌 샘플 수($b$: A만 맞힘, $c$: B만 맞힘)로 McNemar 검정 $\\chi^2 = \\frac{(|b - c| - 1)^2}{b + c}$을 쓴다. 어떤 방법이든 p값은 "차이가 우연일 가능성"만 말해 줄 뿐이고, 차이의 **크기**가 실무적으로 의미 있는지는 따로 판단해야 한다.
-
-[[practice]]
-
-### 실습: 승자의 저주와 보정된 t 검정
-
-첫 셀은 특징과 레이블이 무관한 데이터 10개에서 \`C\`를 고른 뒤, 고른 점수·후보 전체의 평균 점수·새 데이터 2000개에서의 실제 정확도를 비교하고, 같은 문제에 중첩 교차검증을 돌린다. 둘째 셀은 유방암 데이터에서 로지스틱 회귀와 랜덤 포레스트를 5-fold를 3회 반복해 짝지어 비교하고 단순 t와 보정 t를 계산한다. 실행 전에 예측해 보자. 둘째 셀의 두 p값은 몇 배쯤 차이 날까?
-
-\`\`\`python
-import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score
-
-# 1) 승자의 저주: 순수한 잡음 데이터에서 C를 고른 "최고 점수"와 새 데이터에서의 실제 정확도
-Cs = np.logspace(-3, 3, 7)
-best, average, fresh = [], [], []
-for s in range(10):
-    rng = np.random.default_rng(s)
-    X, y = rng.normal(size=(80, 100)), rng.integers(0, 2, 80)          # 특징과 레이블이 무관: 참 정확도는 0.5
-    search = GridSearchCV(LogisticRegression(max_iter=2000), {"C": Cs},
-                          cv=StratifiedKFold(5, shuffle=True, random_state=0)).fit(X, y)
-    best.append(search.best_score_)                                     # 후보 7개 중 최고 점수
-    average.append(search.cv_results_["mean_test_score"].mean())         # 후보 7개의 평균 점수
-    X_new, y_new = rng.normal(size=(2000, 100)), rng.integers(0, 2, 2000)
-    fresh.append(search.score(X_new, y_new))                            # 고른 모델을 새 데이터로 평가
-print(f"고른 C의 교차검증 점수 평균  {np.mean(best):.3f}")
-print(f"후보 전체의 교차검증 점수 평균 {np.mean(average):.3f}")
-print(f"고른 모델의 새 데이터 정확도  {np.mean(fresh):.3f}")
-
-# 2) 중첩 교차검증: 안쪽에서 C를 고르는 과정 전체를 바깥 fold로 평가한다
-rng = np.random.default_rng(0)
-X, y = rng.normal(size=(80, 100)), rng.integers(0, 2, 80)
-inner = GridSearchCV(LogisticRegression(max_iter=2000), {"C": Cs}, cv=StratifiedKFold(5, shuffle=True, random_state=0))
-outer_scores = cross_val_score(inner, X, y, cv=StratifiedKFold(5, shuffle=True, random_state=1))
-print("중첩 교차검증 fold 점수:", np.round(outer_scores, 3), "평균", round(float(outer_scores.mean()), 3))
-\`\`\`
-
-\`\`\`python
-import numpy as np
-from math import sqrt
-from scipy import stats
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_score
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-
-X, y = load_breast_cancer(return_X_y=True)
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=3, random_state=0)      # 5-fold × 3회 = 15번 평가
-a = cross_val_score(make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000)), X, y, cv=cv)
-b = cross_val_score(RandomForestClassifier(n_estimators=100, random_state=0), X, y, cv=cv)
-d = a - b                                                                   # 같은 분할에서 짝지은 차이
-J, n_test = len(d), len(y) / 5
-n_train = len(y) - n_test
-t_naive = d.mean() / sqrt(d.var(ddof=1) / J)
-t_corr = d.mean() / sqrt((1 / J + n_test / n_train) * d.var(ddof=1))      # 나도-벤지오 보정
-print(f"정확도 평균: 로지스틱 {a.mean():.4f}, 랜덤 포레스트 {b.mean():.4f}, 차이 {d.mean():+.4f} (로지스틱 승 {np.sum(d > 0)}/{J})")
-print(f"단순 t = {t_naive:.2f} (p = {2 * stats.t.sf(abs(t_naive), J - 1):.1e})")
-print(f"보정 t = {t_corr:.2f} (p = {2 * stats.t.sf(abs(t_corr), J - 1):.3f})")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 첫 셀에서 고른 \`C\`의 교차검증 점수 평균은 약 0.57이지만, 후보 전체의 평균은 약 0.52, 고른 모델을 새 데이터로 평가하면 약 0.50(동전 던지기)이다. 0.07의 차이가 전부 "고르기"에서 생긴 착시다. 중첩 교차검증은 fold 점수가 0.44~0.69로 크게 흩어지며 평균 약 0.54로, 데이터 80개로는 어떤 방법도 정밀한 추정을 줄 수 없다는 것도 함께 보여 준다. 둘째 셀에서 로지스틱 회귀가 평균 약 0.0135 앞서고 15번 중 12번 이기며, 단순 $t \\approx 4.56$($p \\approx 0.0004$)이 보정 $t \\approx 2.09$($p \\approx 0.055$)로 줄어 "유의 수준 0.05에서 유의하다"는 결론이 뒤집힌다. **설명해볼 것:** 반복 횟수를 3회에서 10회로 늘리면 단순 t와 보정 t는 각각 어떻게 변할까? 보정식의 분모로 답해 보자.
-:::
 
 `,
   sections,

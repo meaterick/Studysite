@@ -12,7 +12,6 @@ export type Block =
   | { type: "math"; tex: string }
   | { type: "callout"; tone: CalloutTone; title?: string; text: string }
   | { type: "diagram"; id: string }
-  | { type: "practice" }
   | { type: "image"; src: string; alt: string; caption?: string; credit?: string; width: number; height: number };
 
 export type CalloutTone = "info" | "warn" | "example" | "quote" | "tip" | "task";
@@ -61,8 +60,7 @@ export interface WeekMeta {
   learningOrder: string[];
   /**
    * 학습 자료 본문. `## 제목 {#section-id}` 하나가 학습 단계 하나가 되고,
-   * 첫 `##` 앞의 글은 주차 도입부로 개요 화면에 표시된다. 단계 안의
-   * `[[practice]]` 줄 뒤는 "실습" 단계로 분리되어 렌더링된다.
+   * 첫 `##` 앞의 글은 주차 도입부로 개요 화면에 표시된다.
    */
   conceptsMd: string;
   /** 단계 id → 단계 목표·확인 문제·서술형 문항 배정·참고 자료 */
@@ -223,10 +221,8 @@ export interface WeekSection {
   /** 주차 전체에서 1부터 시작하는 순서(본문 순서 = 핵심 → 보충 → 심화) */
   order: number;
   title: string;
-  /** 설명 단계 블록 */
+  /** 학습 본문 블록 */
   learn: Block[];
-  /** `[[practice]]` 뒤의 실습 단계 블록 */
-  practice: Block[];
   meta: SectionMeta;
   /** 본문 분량과 코드 셀 수로 계산한 예상 학습 시간(분) */
   minutes: number;

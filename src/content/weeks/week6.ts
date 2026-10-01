@@ -75,54 +75,6 @@ L = -\\dfrac{1}{T}\\sum_{t} \\log P(x_t \\mid x_{<t})
 
 이 식이 말하는 바는 단순하다. 실제로 나온 정답 토큰에 모델이 낮은 확률을 줬다면 $-\\log P$가 크게 튀어 손실값이 커지고, 높은 확률을 줬다면 손실값이 0에 가까워진다. 이걸 시퀀스 전체 $T$개 토큰에 대해 평균 낸 값이 바로 손실이다. Perplexity $= e^{L}$은 이 손실값을 "모델이 매 스텝마다 평균적으로 몇 개의 후보 사이에서 균등하게 헷갈리고 있는가"에 해당하는 유효 분기 수(effective branching factor)로 환산한 지표다. 학습을 전혀 하지 않은 모델은 어휘 5만 개 중 아무거나 균등하게 찍는 것과 비슷해서 $L \\approx \\log(50000) \\approx 10.8$, perplexity는 5만에 가깝다. 유효 분기 수가 어휘 전체와 같다는, 즉 다음 토큰에 대한 사전 정보가 전혀 없다는 뜻이다. 반면 학습이 잘 끝난 GPT급 모델은 perplexity가 10~20 수준까지 떨어지는데, 이는 다음 단어를 고를 때 실질적으로 10~20개 후보 사이로 확률질량이 좁혀져 있다는 의미다.
 
-[[practice]]
-
-### 실습: "공짜 라벨"과 perplexity를 직접 계산하기
-
-작은 말뭉치로 (문맥 → 다음 토큰) 학습 예제를 만들고, 세 가지 모델(아무것도 모르는 균등 모델, 단어 빈도만 아는 unigram, 바로 앞 토큰을 보는 bigram)의 손실 $L$과 perplexity $e^L$을 비교한다.
-
-\`\`\`python
-import numpy as np
-from collections import Counter, defaultdict
-
-text = ("나는 오늘 학교 에 갔다 . 나는 오늘 도서관 에 갔다 . 친구 는 오늘 학교 에 갔다 . "
-        "나는 내일 도서관 에 간다 . 친구 는 내일 학교 에 간다 .").split()
-
-# 1) 사전학습 데이터는 "공짜 라벨": 원문을 한 칸 밀기만 하면 (문맥 → 다음 토큰) 쌍이 된다
-pairs = [(text[max(0, t - 3):t], text[t]) for t in range(1, len(text))]
-for ctx, nxt in pairs[:4]:
-    print(f"문맥 {' '.join(ctx):14s} → 정답 {nxt}")
-print(f"... 토큰 {len(text)}개짜리 원문에서 학습 예제 {len(pairs)}개가 라벨링 없이 생긴다\\n")
-
-vocab = sorted(set(text)); V = len(vocab)
-
-# 2) 세 가지 "모델"의 손실 L과 perplexity = exp(L) 비교
-def evaluate(prob):
-    """prob(prev, nxt) = 모델이 준 P(다음 토큰 | 이전 토큰)"""
-    logps = [np.log(prob(text[t - 1], text[t])) for t in range(1, len(text))]
-    L = -np.mean(logps)
-    return L, np.exp(L)
-
-uniform = lambda prev, nxt: 1 / V                           # 아무것도 모르는 모델
-unigram_counts = Counter(text)
-unigram = lambda prev, nxt: unigram_counts[nxt] / len(text) # 단어 빈도만 아는 모델
-bigram_counts = defaultdict(Counter)
-for a, b in zip(text, text[1:]):
-    bigram_counts[a][b] += 1
-def bigram(prev, nxt, alpha=0.1):                           # 바로 앞 토큰을 보는 모델 (+스무딩)
-    c = bigram_counts[prev]
-    return (c[nxt] + alpha) / (sum(c.values()) + alpha * V)
-
-for name, m in [("균등(학습 전)", uniform), ("unigram", unigram), ("bigram", bigram)]:
-    L, ppl = evaluate(m)
-    print(f"{name:10s} 손실 L = {L:.3f} nats, perplexity = {ppl:6.2f}")
-print(f"어휘 크기 |V| = {V}  ← 균등 모델의 perplexity와 같다")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 원문 32토큰에서 학습 예제 31개가 라벨링 없이 만들어진다. 균등 모델의 perplexity는 정확히 어휘 크기(11)와 같고, bigram은 약 1.98까지 떨어진다. "다음 토큰 후보를 평균 2개 정도로 좁혔다"는 뜻이다. 단, 여기서는 학습에 쓴 문장으로 평가했으므로 실제보다 낙관적인 숫자다. **해볼 것:** 원문에 없는 문장(예: \`"친구 는 오늘 도서관 에 간다 ."\`)으로 평가하도록 바꿔 보자. 스무딩 \`alpha\`를 0으로 두면 어떤 일이 생기는가? (힌트: $\\log 0$)
-:::
-
 ## LLM 아키텍처: BERT · GPT · T5 {#architectures}
 
 지금까지 설명한 다음 토큰 예측은 Transformer를 "어떻게 쌓느냐"에 따라 서로 다른 세 갈래의 아키텍처로 갈라진다. 갈래를 가르는 기준은 인코더(encoder)와 디코더(decoder) 중 무엇을 쓰는가, 그리고 문맥을 양방향(bidirectional)으로 보는가 단방향(autoregressive)으로 보는가다.
@@ -145,38 +97,6 @@ print(f"어휘 크기 |V| = {V}  ← 균등 모델의 perplexity와 같다")
 모델 크기가 어느 임계값을 넘는 순간 그 이하 크기에서는 거의 발휘되지 않던 능력이 갑자기 나타나는 현상을 창발 능력(emergent capability)이라 부른다. 예를 들어 3자리 수 덧셈이나 다단계 추론 같은 과제는 작은 모델에서는 정확도가 무작위 수준에 머물다가, 파라미터 수가 특정 규모를 넘어서면 정확도가 급격히 뛰어오르는 양상을 보인다. 이는 다음 단계의 스케일링 법칙이 매끄러운 손실 곡선을 그리는 것과는 별개로, 개별 다운스트림 능력은 비선형적으로 나타날 수 있다는 뜻이다. 다만 이 "갑작스러움"의 상당 부분은 정답/오답만 세는 불연속적인 평가 지표 때문에 생긴 착시라는 반론도 있다(Schaeffer et al., 2023). 같은 능력을 부분 점수처럼 연속적인 지표로 재면 성능이 매끄럽게 오르는 경우가 많다.
 
 이런 창발 능력 중 LLM에서 가장 널리 활용되는 것이 문맥 내 학습(In-Context Learning)이다. 파라미터를 단 하나도 업데이트하지 않고, 프롬프트 안에 넣어준 예시 몇 개만으로 새로운 과제 형식을 즉석에서 따라 하는 능력이다. 7주차에서 다룰 Few-shot Prompting이 바로 이 능력을 실전에서 활용하는 기법이며, 이 능력 자체는 모델을 다시 학습시키지 않고도 사전학습 단계에서 이미 파라미터에 내재된 성질이 프롬프트라는 입력을 통해 드러나는 것이다.
-:::
-
-[[practice]]
-
-### 실습: 같은 문장, 두 가지 학습 문제
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-tokens = "나는 어제 친구 와 맛있는 저녁 을 먹었다".split()
-n = len(tokens)
-
-# 1) 같은 문장에서 두 목적함수가 만드는 학습 문제
-# GPT(CLM): 모든 위치가 "다음 토큰"의 정답이 된다
-clm = [(" ".join(tokens[:t]), tokens[t]) for t in range(1, n)]
-# BERT(MLM): 약 15%를 [MASK]로 가리고, 가린 자리만 맞힌다 (짧은 문장이라 최소 1개)
-k = max(1, round(0.15 * n))
-masked = sorted(rng.choice(n, size=k, replace=False))
-mlm_input = ["[MASK]" if i in masked else w for i, w in enumerate(tokens)]
-print("CLM 예제 수:", len(clm), "| 예:", clm[2])
-print("MLM 입력  :", " ".join(mlm_input), "| 정답:", [tokens[i] for i in masked])
-
-# 2) 누가 누구를 볼 수 있는가: attention 마스크 (1 = 볼 수 있음)
-enc = np.ones((n, n), dtype=int)                  # Encoder-only(BERT): 양방향
-dec = np.tril(np.ones((n, n), dtype=int))         # Decoder-only(GPT): 자기 자신과 과거만
-print("\\nBERT가 3번째 토큰에서 볼 수 있는 토큰:", [tokens[j] for j in range(n) if enc[2, j]])
-print("GPT 가 3번째 토큰에서 볼 수 있는 토큰:", [tokens[j] for j in range(n) if dec[2, j]])
-print("볼 수 있는 (i, j) 쌍의 수: BERT:", enc.sum(), "/ GPT:", dec.sum())
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 8토큰 문장에서 GPT식(CLM) 학습 예제는 7개가 나오지만, BERT식(MLM)은 15%만 가리므로 이 짧은 문장에서는 1개 자리만 정답으로 쓰인다. 같은 데이터에서 얻는 학습 신호의 양이 다르다. 대신 BERT의 3번째 토큰은 문장 전체(8개)를, GPT의 3번째 토큰은 자기까지 3개만 본다. **생각해볼 것:** "이 리뷰가 긍정인가 부정인가?"를 판단하는 분류 과제라면 어느 마스크가 유리할까? 반대로 대화 생성에서 BERT식 양방향 마스크를 쓸 수 없는 이유는?
 :::
 
 ## 스케일링 법칙 {#scaling-laws}
@@ -218,48 +138,6 @@ $C = 10^{23}$ FLOPs 예산이 주어졌다고 하자. $C \\approx 6ND$이므로 
 
 스케일링 법칙은 **학습** 컴퓨트에 대한 이야기다. 학습이 끝난 모델이 답을 낼 때 컴퓨트를 더 써서(여러 번 풀어 고르거나 길게 생각해서) 정답률을 올리는 두 번째 축은 보충 과정의 「추론 시간 계산」 단계에서 다룬다.
 
-[[practice]]
-
-### 실습: 스케일링 법칙 계산기
-
-\`\`\`python
-import numpy as np
-
-# L(N, D) = E + A/N^α + B/D^β: Chinchilla 논문(Hoffmann et al., 2022)의 식에
-# 재현 연구(Besiroglu et al., 2024)가 다시 추정한 상수를 넣었다
-E, A, B, alpha, beta = 1.82, 482.01, 2085.43, 0.3478, 0.3658
-def loss(N, D):
-    return E + A / N**alpha + B / D**beta
-
-# 1) 비슷한 컴퓨트, 다른 배분: Gopher(280B, 3000억 토큰) vs Chinchilla(70B, 1.4조 토큰)
-for name, N, D in [("Gopher", 280e9, 300e9), ("Chinchilla", 70e9, 1.4e12)]:
-    print(f"{name:10s} C=6ND={6*N*D:.2e} FLOPs  D/N={D/N:5.1f}  예측 손실={loss(N, D):.3f}")
-
-# 2) 컴퓨트 C를 고정하고 N을 바꿔가며 손실 계산 (D = C / 6N): 가장 낮은 곳이 컴퓨트 최적
-C = 1e23
-print(f"\\nC = {C:.0e} FLOPs 고정")
-for N in [2e9, 8e9, 29e9, 100e9, 300e9]:
-    D = C / (6 * N)
-    print(f"N={N/1e9:5.0f}B  D={D/1e9:6.0f}B 토큰  D/N={D/N:7.1f}  손실={loss(N, D):.4f}")
-
-Ns = np.logspace(9, 12, 3000)
-best = Ns[np.argmin(loss(Ns, C / (6 * Ns)))]
-print(f"손실이 가장 낮은 N ≈ {best/1e9:.0f}B, 그때 D/N ≈ {C / (6 * best) / best:.0f}")
-
-# 3) 규칙 D ≈ 20N 으로 역산하기
-def chinchilla_optimal(C, ratio=20):
-    N = np.sqrt(C / (6 * ratio))
-    return N, ratio * N
-print()
-for C in [1e21, 1e23, 1e25]:
-    N, D = chinchilla_optimal(C)
-    print(f"C={C:.0e}: N ≈ {N/1e9:6.1f}B, D ≈ {D/1e12:6.2f}T 토큰")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 비슷한 컴퓨트에서 모델을 4배 작게, 데이터를 4.7배 많이 쓴 Chinchilla의 예측 손실(약 1.977)이 Gopher(약 2.002)보다 낮다. $C = 10^{23}$에서 손실이 가장 낮은 지점은 $N \\approx 29$B, $D/N \\approx 19$로, 규칙 $D \\approx 20N$과 거의 같다. 눈여겨볼 곳은 $N = 8$B 줄이다. 최적점보다 손실은 약 0.02 높지만 모델이 3.6배 작아 추론 비용이 훨씬 싸다. 이것이 Llama 계열이 택한 "과잉학습"의 계산이다. (Chinchilla 원 논문의 상수는 재현 연구에서 적합 오류가 지적되어, 여기서는 수정된 상수를 썼다.) **해볼 것:** 여러분이 아는 공개 모델 하나(예: 8B 모델을 15T 토큰으로 학습)를 \`loss()\`에 넣고 같은 컴퓨트의 최적 배분과 비교해 보자. 과제 3번과 이어진다.
-:::
-
 ## SFT와 효율적 파인튜닝: LoRA · 양자화 · 증류 {#finetuning-efficiency}
 
 사전학습만 마친 모델(base model)은 다음 토큰 예측 목적함수만으로 학습되었기 때문에, 질문을 입력해도 답변을 생성하기보다 학습 데이터에서 자주 나타난 패턴대로 비슷한 질문을 이어서 생성하는 경우가 많다. 여기에 (지시, 응답) 형식의 데이터 분포를 지도학습시키는 단계가 SFT(Supervised Fine-Tuning)다. 사전학습으로 이미 언어의 통계적 구조(문법, 어휘, 세계 지식의 상당 부분)가 파라미터에 인코딩되어 있으므로, 상대적으로 적은 수만~수십만 개의 (지시, 모범답안) 쌍만으로도 출력 분포를 "지시-응답" 형식으로 빠르게 이동시킬 수 있다.
@@ -281,50 +159,6 @@ QLoRA는 이 LoRA에 양자화(quantization, 아래 참고)를 결합한 방법�
 PEFT가 "학습 파라미터 수"를 줄이는 접근이라면, 학습이 끝난 모델 자체의 크기를 줄여 배포·추론 비용을 낮추는 접근도 있다. 지식 증류(distillation)는 크고 성능 좋은 교사(teacher) 모델의 출력(주로 다음 토큰 확률분포 자체)을 작은 학생(student) 모델이 모방하도록 학습시키는 기법이다. 학생 모델은 정답 레이블뿐 아니라 교사 모델이 각 후보 토큰에 부여한 확률분포 전체를 손실함수에 반영해 학습하므로, 교사가 "왜 그렇게 판단했는지"에 대한 정보(어떤 오답이 정답에 얼마나 가까운지 등)까지 함께 전달받아, 같은 크기의 학생 모델을 처음부터 단독으로 학습시켰을 때보다 더 나은 성능을 내는 경우가 많다.
 
 양자화(quantization)는 가중치를 표현하는 데 쓰는 비트 수 자체를 줄이는 기법이다. 일반적으로 학습은 FP32(32비트 부동소수점) 또는 FP16/BF16(16비트)으로 이루어지는데, 추론 단계에서는 이 가중치를 INT8(8비트 정수)이나 INT4(4비트 정수) 같은 더 낮은 정밀도로 반올림해 표현한다. 비트 수가 절반이 되면 메모리 사용량도 절반이 되고, 저정밀도 연산은 하드웨어에서 더 빠르게 처리되는 경우가 많아 추론 속도도 함께 개선된다. 다만 표현할 수 있는 값의 종류가 줄어드는 만큼 가중치 값에 반올림 오차가 누적되어 모델 성능이 조금씩 떨어질 수 있다. 그래서 양자화는 "메모리·속도"와 "정밀도" 사이의 트레이드오프를 얼마나 감당할 수 있는지를 결정하는 문제이며, QLoRA처럼 양자화와 저랭크 파인튜닝을 함께 쓰는 것도 이 트레이드오프를 최대한 유리한 지점으로 옮기려는 시도다.
-
-[[practice]]
-
-### 실습: 메모리 어림, LoRA의 저랭크 근사, 양자화 오차
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-
-# 1) 70B 모델 파인튜닝 메모리 어림 (활성값·배치 메모리는 제외)
-N = 70e9
-full = N * (2 + 2 + 12)          # bf16 가중치 2B + 그래디언트 2B + Adam 상태(fp32 사본·m·v) 12B
-lora_params = 0.002 * N          # LoRA 파라미터가 전체의 0.2%라고 가정
-lora = N * 2 + lora_params * 16  # 원본은 bf16으로 고정, LoRA 부분만 풀 학습 비용
-qlora = N * 0.5 + lora_params * 16   # 원본을 4비트(0.5바이트)로 양자화
-for name, b in [("풀 파인튜닝", full), ("LoRA", lora), ("QLoRA", qlora)]:
-    print(f"{name:7s} ≈ {b / 1e9:7.0f} GB")
-
-# 2) LoRA: 변화량 ΔW가 저랭크라면 BA로 거의 완벽히 표현된다
-d = k = 256
-true_rank = 4
-dW = rng.normal(size=(d, true_rank)) @ rng.normal(size=(true_rank, k))   # 랭크 4인 "진짜" 변화량
-dW += 0.01 * rng.normal(size=(d, k))                                      # 약간의 잡음
-U, S, Vt = np.linalg.svd(dW)
-print(f"\\nΔW 파라미터 {d * k:,}개")
-for r in [1, 2, 4, 8]:
-    B, A_ = U[:, :r] * S[:r], Vt[:r]          # 가장 좋은 랭크-r 근사 (B: d×r, A: r×k)
-    err = np.linalg.norm(dW - B @ A_) / np.linalg.norm(dW)
-    print(f"r={r}: B,A 파라미터 {B.size + A_.size:6,}개 ({(B.size + A_.size) / dW.size:5.1%}), 상대 오차 {err:.3f}")
-
-# 3) 대칭 양자화: 가중치를 정수로 반올림했다가 되돌릴 때의 오차
-W = rng.normal(0, 0.02, size=10000)
-for bits in [8, 4, 2]:
-    qmax = 2 ** (bits - 1) - 1                   # INT8이면 127
-    scale = np.abs(W).max() / qmax
-    W_q = np.clip(np.round(W / scale), -qmax, qmax)   # 저장되는 정수
-    W_back = W_q * scale                         # 계산할 때 되돌린 값
-    rel = np.linalg.norm(W - W_back) / np.linalg.norm(W)
-    print(f"INT{bits}: 메모리 {32 // bits}배 절약(FP32 대비), 서로 다른 값 {len(np.unique(W_q)):3d}개, 상대 오차 {rel:.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 70B 모델의 풀 파인튜닝은 약 1,120GB, LoRA는 원본을 bf16으로 올려두므로 약 142GB, QLoRA는 원본을 4비트로 줄여 약 37GB다. "소비자용 GPU 몇 장"과 "서버 수십 장"의 차이다. 변화량 $\\Delta W$가 실제로 랭크 4라면 $r = 4$부터 상대 오차가 0.005로 떨어진다(파라미터는 3.1%만 사용). 양자화는 INT8까지는 오차가 1% 수준이지만 INT4에서 16%, INT2에서는 대부분의 가중치가 0으로 뭉개진다. 실제 QLoRA는 텐서 전체가 아니라 작은 블록마다 스케일을 따로 두고, 정규분포에 맞춘 4비트 형식(NF4)을 써서 이 오차를 크게 줄인다. **해볼 것:** 양자화 코드에서 10,000개를 64개씩 블록으로 나눠 블록마다 \`scale\`을 따로 구해보자. INT4 오차가 얼마나 줄어드는가?
-:::
 
 ## RLHF와 DPO {#rlhf-dpo}
 
@@ -406,58 +240,6 @@ $\\beta$가 커질수록 같은 로그확률 차이라도 시그모이드 안의
 이 목적함수의 최적 정책이 왜 $\\pi^*(y) \\propto \\pi_{ref}(y)\\,e^{r(y)/\\beta}$인지, 그리고 거기서 DPO 손실이 어떻게 한 줄씩 나오는지는 심화 과정의 「DPO의 유도」 단계에서 증명한다. PPO가 샘플만으로 기울기를 구하는 방법(정책 경사)과 클리핑이 정책의 폭주를 막는 원리는 심화 과정의 「정책 경사와 PPO」 단계에서 다룬다.
 :::
 
-[[practice]]
-
-### 실습: 쌍대 비교로 보상모델 학습하기, $\\beta$가 정책을 얼마나 움직이는지 보기
-
-사람은 응답에 점수를 매기기보다 "A가 B보다 낫다"를 고르는 쪽이 훨씬 일관적이다. 이런 비교만으로 응답별 보상을 학습하는 Bradley–Terry 모델(보상모델의 표준 형태)을 만들고, KL 페널티가 붙은 목적함수의 최적 정책 $\\pi^*(y) \\propto \\pi_{ref}(y)\\,e^{r(y)/\\beta}$이 $\\beta$에 따라 어떻게 바뀌는지 본다.
-
-\`\`\`python
-import numpy as np
-sigmoid = lambda z: 1 / (1 + np.exp(-z))
-
-# 한 프롬프트에 대한 후보 응답 4개와, 기준 모델(SFT)이 각 응답에 주는 확률
-responses = ["정확하고 친절함", "정확하지만 무뚝뚝함", "친절하지만 틀림", "무례하고 틀림"]
-pi_ref = np.array([0.30, 0.30, 0.30, 0.10])
-
-# 1) 보상모델: 사람의 쌍대 비교(A가 B보다 낫다)만으로 응답별 점수 r을 학습한다
-#    Bradley–Terry 모델: P(A가 이김) = σ(r_A − r_B)
-true_r = np.array([2.0, 1.0, 0.0, -2.0])             # 사람 머릿속의 (보이지 않는) 선호
-rng = np.random.default_rng(0)
-pairs = []
-for _ in range(2000):
-    i, j = rng.choice(4, size=2, replace=False)
-    pairs.append((i, j) if rng.random() < sigmoid(true_r[i] - true_r[j]) else (j, i))  # (이긴 쪽, 진 쪽)
-
-W, L = np.array(pairs).T                              # 이긴 쪽, 진 쪽 인덱스
-r = np.zeros(4)
-for step in range(300):                               # 로지스틱 회귀와 같은 경사하강
-    g = 1 - sigmoid(r[W] - r[L])                      # 이긴 쪽 점수를 올리는 힘 (이미 크게 이기면 0에 가깝다)
-    grad = np.zeros(4)
-    np.add.at(grad, W, g); np.add.at(grad, L, -g)
-    r += 0.5 * grad / len(pairs)
-r -= r.mean()
-print("학습된 보상:", {name: round(float(v), 2) for name, v in zip(responses, r)})
-print("(점수는 차이만 의미가 있다. 사람 기준 [2, 1, 0, -2]에서 평균을 뺀 값과 비교해 보자)")
-
-# 2) KL 페널티가 붙은 목적함수 E[r] − β·KL(π‖π_ref)의 최적 정책: π*(y) ∝ π_ref(y)·exp(r(y)/β)
-#    DPO가 암묵적으로 찾아가는 것도 바로 이 π*다
-print(f"\\n{'β':>5} {'정책 확률':>32} {'KL(π‖π_ref)':>12}")
-for b in [0.1, 0.5, 1.0, 5.0]:
-    p = pi_ref * np.exp(r / b); p /= p.sum()
-    kl = np.sum(p * np.log(p / pi_ref))
-    print(f"{b:5.1f} {str(p.round(3)):>32} {kl:12.3f}")
-
-# 3) DPO 손실과 그 기울기 크기: β가 크면 작은 차이만으로도 손실이 빨리 줄고 기울기가 사라진다
-print(f"\\n{'로그비율 차이':>10} {'β=0.1 손실':>10} {'β=1.0 손실':>10}")
-for diff in [0.0, 1.0, 3.0, 10.0]:
-    print(f"{diff:10.1f} {-np.log(sigmoid(0.1 * diff)):10.3f} {-np.log(sigmoid(1.0 * diff)):10.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 2,000번의 쌍대 비교만으로 학습한 보상이 약 [1.81, 0.79, −0.31, −2.29]로, 사람 기준을 평균 0으로 옮긴 [1.75, 0.75, −0.25, −2.25]와 거의 같다. $\\beta = 0.1$이면 정책이 "정확하고 친절함" 하나에 거의 100% 몰리고 기준 모델과의 KL이 약 1.2로 크다. $\\beta = 5$면 정책이 기준 모델 [0.3, 0.3, 0.3, 0.1]에 가깝게 남는다(KL 약 0.03). 마지막 표에서 $\\beta = 1$은 로그비율 차이가 3만 되어도 손실이 0.05로 거의 사라지지만, $\\beta = 0.1$은 차이가 10이 되어도 0.31이 남아 계속 밀어붙인다. **생각해볼 것:** 보상모델이 "무례하고 틀림"에 실수로 높은 점수를 줬다면, 작은 $\\beta$와 큰 $\\beta$ 중 어느 쪽이 더 크게 피해를 볼까? 이것이 보상 해킹과 KL 페널티의 관계다.
-:::
-
 ## 디코딩 전략과 서빙 {#decoding}
 
 모델이 다음 토큰의 확률분포 $P(x_t \\mid x_{<t})$를 계산해 놓았다고 해도, 이 분포에서 실제로 어떤 토큰을 출력으로 선택할지는 별도의 샘플링 절차가 결정한다. 이 선택 절차를 디코딩(decoding)이라 부르고, 그중 확률분포 자체의 형태를 직접 변형하는 하이퍼파라미터가 temperature다. Temperature가 낮으면 확률질량이 최상위 후보 쪽으로 더 집중되어 출력의 분산(variance)이 작아지고, temperature가 높으면 확률질량이 하위 순위 후보들에게까지 더 고르게 재분배되어 출력의 분산이 커진다.
@@ -519,7 +301,7 @@ for T in (0.2, 1.0, 2.0):
 
 T=0.2를 넣으면 거의 항상 인덱스 0(가장 높은 logit, "사과")만 뽑히고, T=2.0을 넣으면 훨씬 고르게 퍼지는 것을 실행 결과에서 바로 확인할 수 있다. 이것이 바로 위 예제에서 손으로 계산했던 현상이 코드로 그대로 재현된 것이다. 표로 눈으로만 보던 확률이 실제 시뮬레이션 빈도로 다시 확인되는 순간이다.
 
-실제 서비스에 쓰이는 GPT 계열 모델도 지금 구현한 것과 원리는 완전히 같다. 다만 후보 토큰이 5개가 아니라 수만 개이고, logit을 계산하는 신경망이 훨씬 클 뿐이다. 이 단계의 나머지에서는 temperature와 함께 실전에서 쓰이는 다른 디코딩 전략들(top-k, beam search 등)을 하나씩 뜯어보고, top-k와 top-p를 직접 코드로 비교해보는 실습으로 마무리한다.
+실제 서비스에 쓰이는 GPT 계열 모델도 지금 구현한 것과 원리는 완전히 같다. 다만 후보 토큰이 5개가 아니라 수만 개이고, logit을 계산하는 신경망이 훨씬 클 뿐이다. 이 단계의 나머지에서는 temperature와 함께 실전에서 쓰이는 다른 디코딩 전략들(top-k, beam search 등)을 하나씩 뜯어보고, top-k와 top-p를 직접 코드로 비교해 본다.
 
 ### 디코딩 전략 자세히 보기
 
@@ -584,64 +366,6 @@ for tp in (0.5, 0.9, 0.99):
 
 지금까지 다룬 디코딩 전략들은 "어떤 토큰을 고를 것인가"의 문제였다면, 실제 서비스로 배포할 때는 "그 계산을 얼마나 빠르게, 얼마나 많이 처리할 것인가"라는 성능 지표도 함께 고려해야 한다. 지연시간(Latency)은 요청 하나를 보낸 시점부터 응답을 전부(혹은 첫 토큰을) 받기까지 걸리는 시간이고, 처리량(Throughput)은 서버가 초 단위 시간 동안 처리해낼 수 있는 요청(또는 토큰)의 개수다. 이 둘은 같은 방향으로 움직이지 않는 경우가 많다. 사용자 한 명의 요청만 즉시 처리하면 그 요청의 지연시간은 최소화되지만, 여러 요청을 한꺼번에 배치(batch)로 묶어 처리하면 개별 요청의 지연시간은 조금 늘어나는 대신 GPU 한 대가 같은 시간에 처리하는 전체 요청 수(처리량)는 크게 늘어난다. 실전 서빙에서 이 둘 다 중요한 이유는, 사용자 경험 관점에서는 지연시간이 짧아야 "즉각 답하는 느낌"을 주는 반면, 서비스 운영 관점에서는 처리량이 높아야 같은 하드웨어로 더 많은 사용자를 감당할 수 있어 비용 대비 효율이 올라가기 때문이다. 실제 LLM 서빙 시스템은 배치 크기, 빔 너비, top-k/top-p 계산 비용까지 함께 조절해 가며 이 지연시간-처리량 트레이드오프에서 서비스 목적에 맞는 지점을 찾는다. 출력 분포를 전혀 바꾸지 않으면서 생성 지연시간을 줄이는 기법인 투기적 디코딩(작은 모델이 초안을 쓰고 큰 모델이 한 번에 검증)은 심화 과정의 「투기적 디코딩」 단계에서 증명과 함께 다룬다.
 
-[[practice]]
-
-### 실습: 그리디는 왜 반복에 빠지고, 빔 서치는 무엇을 찾는가
-
-확률표로 정의한 아주 작은 언어모델에서 그리디와 빔 서치(너비 2)가 고르는 문장을 비교하고, 반복 페널티가 확률을 어떻게 바꾸는지 본다.
-
-\`\`\`python
-import numpy as np
-
-# 아주 작은 "언어모델": 이전 토큰 → 다음 토큰 확률표
-lm = {
-    "<s>":   {"나는": 0.6, "오늘": 0.4},
-    "나는":   {"그냥": 0.55, "밥을": 0.45},
-    "오늘":   {"밥을": 0.95, "그냥": 0.05},
-    "그냥":   {"그냥": 0.5, "<eos>": 0.5},
-    "밥을":   {"먹었다": 0.9, "<eos>": 0.1},
-    "먹었다": {"<eos>": 1.0},
-}
-
-def greedy(max_len=6):
-    seq, logp = ["<s>"], 0.0
-    while seq[-1] != "<eos>" and len(seq) <= max_len:
-        tok, p = max(lm[seq[-1]].items(), key=lambda kv: kv[1])
-        seq.append(tok); logp += np.log(p)
-    return seq, logp
-
-def beam_search(width=2, max_len=6):
-    beams = [(["<s>"], 0.0)]
-    for _ in range(max_len):
-        cand = []
-        for seq, lp in beams:
-            if seq[-1] == "<eos>":
-                cand.append((seq, lp)); continue
-            for tok, p in lm[seq[-1]].items():
-                cand.append((seq + [tok], lp + np.log(p)))
-        beams = sorted(cand, key=lambda x: -x[1])[:width]      # 누적 로그확률 상위 width개만 유지
-    return beams[0]
-
-for name, (seq, lp) in [("greedy", greedy()), ("beam(2)", beam_search(2))]:
-    print(f"{name:8s} {' '.join(seq[1:]):22s} 전체 확률 = {np.exp(lp):.3f}")
-
-# 반복 페널티: 이미 나온 토큰의 logit을 낮춘다 (logit>0이면 나누고, <0이면 곱하는 흔한 방식)
-def apply_repetition_penalty(logits, generated, penalty=1.5):
-    out = logits.copy()
-    for t in set(generated):
-        out[t] = out[t] / penalty if out[t] > 0 else out[t] * penalty
-    return out
-softmax = lambda z: np.exp(z - z.max()) / np.exp(z - z.max()).sum()
-vocab = ["그냥", "밥을", "<eos>"]
-logits = np.array([2.0, 1.0, 1.2])
-print("\\n페널티 전:", {w: round(float(p), 3) for w, p in zip(vocab, softmax(logits))})
-print("'그냥'이 이미 나왔을 때:", {w: round(float(p), 3) for w, p in zip(vocab, softmax(apply_repetition_penalty(logits, [0])))})
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 그리디는 첫 스텝에서 확률이 더 높은 "나는"(0.6)을 고른 뒤 "그냥 그냥 그냥…" 반복에 갇혀, 문장 전체 확률이 약 0.021에 그친다. 빔 서치는 첫 스텝에서는 덜 유망해 보였던 "오늘"(0.4) 경로를 살려둔 덕분에 전체 확률 0.342인 "오늘 밥을 먹었다"를 찾는다. 반복 페널티를 적용하면 이미 나온 "그냥"의 확률이 0.55에서 약 0.39로 줄어든다. **해볼 것:** 빔 너비를 1로 바꾸면 결과가 그리디와 같아지는지 확인하자. 반복 페널티를 3.0으로 올리면 확률이 어떻게 되는가?
-:::
-
 ## 환각과 한계 {#hallucination}
 
 환각(hallucination)은 그럴듯하지만 사실이 아니거나 근거가 없는 내용을 자신 있게 생성하는 현상이다. 원인은 하나로 정리되지 않고 학습·사후학습·평가·사용의 여러 단계에 걸쳐 있으며, 지금도 활발히 연구되는 주제다. 출발점은 사전학습의 손실함수다. 앞서 정의한 손실 $L = -\\dfrac{1}{T}\\sum_{t} \\log P(x_t \\mid x_{<t})$는 학습 데이터의 다음 토큰 분포를 얼마나 잘 근사하는지를 잴 뿐, 생성된 내용이 사실(ground truth)과 일치하는지를 직접 검사하는 항은 없다. 그렇다고 모델이 사실 여부와 무관한 것은 아니다. 학습 데이터에 자주, 일관되게 등장한 사실은 잘 맞히고, 모델 내부에 "이 문장이 참인가"와 관련된 신호가 있다는 연구도 있다. 문제는 데이터에 드물게(예: 한 번만) 등장한 사실이나 규칙성이 없는 사실이다. 이런 사실은 통계적으로 구별해 내기 어려워, 잘 학습된 모델이라도 일정 비율로 틀릴 수밖에 없다는 분석이 있다(Kalai et al., 2025).
@@ -649,62 +373,6 @@ print("'그냥'이 이미 나왔을 때:", {w: round(float(p), 3) for w, p in zi
 그 위에 여러 요인이 겹친다. ① **지식의 빈틈:** 모르는 내용을 만나도 "모른다"고 답하는 법을 따로 배우지 않았다면, 통계적으로 그럴듯한 말로 공백을 메운다. ② **보정(calibration) 문제:** 사전학습만 한 모델은 객관식 문제 등에서 확신도가 실제 정답률과 꽤 잘 맞는다는 보고가 있지만, 선호 학습 같은 사후학습을 거치면 보정이 나빠지기도 하고, 긴 자유 서술에서는 확신에 찬 말투와 실제 정확도가 따로 놀기 쉽다. ③ **사후학습과 평가 방식:** 모델이 모르는 사실을 정답으로 억지로 학습시키면(SFT) 오히려 지어내는 경향이 커진다는 연구가 있고, 정답에만 점수를 주고 "모르겠다"에는 0점을 주는 벤치마크에서는 찍는 쪽이 기대 점수가 높아 모델이 추측하도록 길들여진다(Kalai et al., 2025). ④ **디코딩:** 확률에 따라 샘플링하면 확률이 낮은 오답 토큰도 뽑힐 수 있고, 한 번 틀린 토큰은 뒤의 생성에 그대로 이어진다. ⑤ **컨텍스트 창과 지식 컷오프:** 한 번에 참조할 수 있는 토큰 수를 넘은 정보는 모델이 볼 수 없고, 학습 데이터 수집 이후의 일은 원천적으로 모른다. 이때 모른다고 답하지 않고 추측하면 환각이 된다.
 
 완화책으로는 검색 증강(RAG, 다음 주에 다룬다), 답변에 근거 인용을 요구하고 인용이 실제로 그 주장을 뒷받침하는지 검증하기, 계산기·검색 같은 외부 도구 사용, 모르면 답을 보류하도록 학습·평가하기(불확실성 표현) 등이 쓰인다. 다만 어느 것도 환각을 **없애지는** 못하고 **줄일** 뿐이다. RAG도 검색이 틀리거나, 모델이 검색된 근거를 무시·오독하면 환각이 생기고, 모델이 만든 인용 자체가 가짜이거나 주장과 무관할 수 있다. 그래서 중요한 용도에서는 사람의 확인과 근거 대조가 여전히 필요하다.
-
-[[practice]]
-
-### 실습: 사실만 배운 모델이 거짓을 말하는 순간, 그리고 보정
-
-\`\`\`python
-import numpy as np
-from collections import Counter, defaultdict
-
-# 1) 사실만 담은 말뭉치로 학습한 bigram 모델도 "그럴듯한 거짓"을 만든다
-corpus = ["서울 은 한국 의 수도 이다", "도쿄 는 일본 의 수도 이다",
-          "파리 는 프랑스 의 수도 이다", "서울 은 한국 에서 가장 큰 도시 이다",
-          "오사카 는 일본 에서 두 번째 로 큰 도시 이다"]
-facts = set(corpus)
-nxt = defaultdict(Counter)
-for s in corpus:
-    toks = ["<s>"] + s.split() + ["</s>"]
-    for a, b in zip(toks, toks[1:]):
-        nxt[a][b] += 1
-
-rng = np.random.default_rng(0)
-def generate():
-    tok, out = "<s>", []
-    while True:
-        cands, counts = zip(*nxt[tok].items())
-        tok = cands[rng.choice(len(cands), p=np.array(counts) / sum(counts))]
-        if tok == "</s>": return " ".join(out)
-        out.append(tok)
-
-samples = [generate() for _ in range(300)]
-novel = Counter(s for s in samples if s not in facts)
-print(f"생성 300개 중 학습 문장에 없는 문장: {sum(novel.values())}개")
-for s, c in novel.most_common(5):
-    print(f"  {c:3d}회  {s}")
-
-# 2) 보정(calibration): 모델이 말하는 확신도와 실제 정답률이 맞는가?
-#    가상의 모델: 실제 정답률보다 늘 더 자신만만하게 말한다
-conf = rng.uniform(0.5, 1.0, 5000)                    # 모델이 보고한 확신도
-correct = rng.random(5000) < (conf - 0.5) * 0.8 + 0.4 # 실제 정답 여부 (확신도보다 낮다)
-bins = np.linspace(0.5, 1.0, 6)
-ece = 0.0
-print("\\n확신도 구간    평균 확신도   실제 정답률")
-for lo, hi in zip(bins, bins[1:]):
-    m = (conf >= lo) & (conf < hi)
-    ece += m.mean() * abs(conf[m].mean() - correct[m].mean())
-    print(f"[{lo:.1f}, {hi:.1f})   {conf[m].mean():10.2f}   {correct[m].mean():10.2f}")
-print(f"ECE(기대 보정 오차) = {ece:.3f} : 0이면 완벽히 보정된 모델")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 학습 문장은 모두 사실인데도, 생성 300개 중 절반가량(149개)이 학습 문장에 없는 새 문장이고 그중 상당수가 "오사카는 일본의 수도이다", "파리는 일본의 수도이다"처럼 문법적으로 완벽한 거짓이다. 바로 앞 단어 하나만 보는 bigram은 "파리 는 … 의 수도"에서 "파리"와 "프랑스"를 연결할 방법이 없어, "X 는 Y 의 수도 이다"라는 패턴의 확률만 배웠을 뿐 어떤 조합이 사실인지는 배우지 못했다. 실제 LLM은 훨씬 긴 문맥을 보므로 자주 나온 사실은 잘 맞히지만, 학습 데이터에 드물게 나온 사실에서는 같은 종류의 그럴듯한 조합 오류가 생긴다. 이 예제는 그 원리를 극단적으로 확대해 보여 준다. 보정 표에서는 모든 구간에서 실제 정답률이 확신도보다 낮고 ECE가 약 0.16이다. 말투의 확신이 정답 여부를 알려주지 못한다. **생각해볼 것:** bigram 대신 문장 전체를 외우는 모델을 쓰면 환각은 사라지지만 무엇을 잃는가?
-:::
-
-:::warn 직접 해보기와 윤리 유의
-사용 가능한 API/웹 챗 모델에 같은 질문을 temperature 0과 1로 각 5번 물어 출력의 변동을 기록한다. 실제 존재하지 않는 논문/인물에 대해 물어 환각 양상을 수집하되, 그 결과를 사실인 것처럼 다른 사람에게 유포하지 말 것. 환각을 "유도"하는 실험은 어디까지나 이 모델의 한계를 이해하기 위한 것이지, 결과물 자체를 인용 가능한 정보로 쓰기 위한 것이 아니다.
-:::
 
 ## 강화학습 기초 {#rl-basics}
 
@@ -739,54 +407,6 @@ Q함수를 거치지 않고 정책 $\\pi(a \\mid s)$ 자체를 신경망으로 �
 
 이제 이 일반 이론을 LLM 정렬에 적용한 것이 RLHF다. Agent(LLM)가 State(대화 문맥)를 보고 Action(다음 토큰)을 선택해 Return(누적 보상)을 최대화하도록 Policy(언어모델 자체)를 학습시키는 문제로 SFT 이후 단계를 재구성하면, 남는 것은 "이 Reward를 어떻게 정의하고 어떻게 계산할 것인가"뿐이다. 「RLHF와 DPO」 단계의 RLHF가 바로 이 질문에 대한 답이다. 정책 경사를 실제로 유도하고 PPO의 클리핑을 숫자로 확인하는 것은 심화 과정의 「정책 경사와 PPO」 단계에서 한다.
 
-[[practice]]
-
-### 실습: 탐색과 활용, 그리고 벨만 방정식으로 Q값 배우기
-
-\`\`\`python
-import numpy as np
-
-# 1) 탐색 vs 활용: 슬롯머신 3대(실제 평균 보상 0.3, 0.5, 0.8)를 1000번 당긴다
-true_means = np.array([0.3, 0.5, 0.8])
-def play(eps, steps=1000, seed=0):
-    rng = np.random.default_rng(seed)
-    est, cnt, total = np.zeros(3), np.zeros(3), 0.0
-    for _ in range(steps):
-        a = rng.integers(3) if rng.random() < eps else int(np.argmax(est))   # ε 확률로 탐색
-        r = float(rng.random() < true_means[a])                              # 보상 0 또는 1
-        cnt[a] += 1
-        est[a] += (r - est[a]) / cnt[a]                                      # 평균 보상 추정치 갱신
-        total += r
-    return total / steps, cnt
-
-for eps in [0.0, 0.1, 0.5]:
-    avg = np.mean([play(eps, seed=s)[0] for s in range(50)])
-    print(f"ε={eps:.1f}: 평균 보상 {avg:.3f}  (최선 0.8)  첫 번째 실행의 선택 횟수 {play(eps)[1].astype(int)}")
-
-# 2) Q-Learning: 칸 0~4짜리 복도, 오른쪽 끝(4)에 도착하면 보상 1
-n_states, actions = 5, [-1, +1]            # 행동: 왼쪽 / 오른쪽
-gamma, lr = 0.9, 0.5
-Q = np.zeros((n_states, 2))
-rng = np.random.default_rng(0)
-for episode in range(200):
-    s = 0
-    while s != n_states - 1:
-        a = rng.integers(2) if rng.random() < 0.3 else int(np.argmax(Q[s]))
-        s2 = min(max(s + actions[a], 0), n_states - 1)
-        r = 1.0 if s2 == n_states - 1 else 0.0
-        target = r + (0 if s2 == n_states - 1 else gamma * Q[s2].max())   # 벨만 방정식의 목표값
-        Q[s, a] += lr * (target - Q[s, a])
-        s = s2
-print("\\n학습된 Q값 (행: 칸 0~3, 열: [왼쪽, 오른쪽])")
-print(Q[:-1].round(3))
-print("각 칸에서 고르는 행동:", ["→" if q[1] > q[0] else "←" for q in Q[:-1]])
-print("이론값 γ^(남은 거리-1):", [round(gamma ** (n_states - 2 - s), 3) for s in range(n_states - 1)])
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 탐색을 전혀 하지 않는 $\\varepsilon = 0$은 처음 고른 슬롯머신에 갇혀 평균 보상이 약 0.30에 그친다. $\\varepsilon = 0.1$은 약 0.76으로 최선(0.8)에 가깝고, $\\varepsilon = 0.5$는 탐색에 너무 많이 써서 약 0.67로 떨어진다. Q-Learning은 복도의 모든 칸에서 "→"를 고르게 되고, 오른쪽을 고를 때의 Q값이 이론값 $\\gamma^{\\text{남은 거리}-1}$ = [0.729, 0.81, 0.9, 1.0]과 같아진다. 벨만 방정식이 "한 칸 뒤의 가치에 $\\gamma$를 곱한 값"으로 가치를 거꾸로 전파한 결과다. **해볼 것:** $\\gamma$를 0.5로 바꾸면 칸 0의 Q값은 어떻게 되는가? 먼 보상일수록 얼마나 할인되는지 확인하자.
-:::
-
 ## 추론 시간 계산: 자기일관성 · best-of-n · 검증기 {#test-time-compute}
 
 스케일링 법칙은 **학습**에 쓰는 컴퓨트를 모델 크기와 데이터에 어떻게 나눌지에 대한 이야기였다. 2024년 무렵부터 두 번째 축이 주목받기 시작했다. 학습이 끝난 모델이라도 **답을 낼 때** 컴퓨트를 더 쓰면, 즉 더 길게 생각하게 하거나 여러 번 풀게 해서 고르면 정답률이 오른다는 것이다. OpenAI o1, DeepSeek-R1 같은 "추론 모델"이 이 축을 본격적으로 키운 사례다. 이 단계는 "생각할 시간을 더 주면 더 잘 푼다"는 말이 **언제, 얼마나** 맞는지를 확률로 따져 본다. 계산은 이항분포 하나와 조건부확률 하나면 충분하다.
@@ -820,58 +440,6 @@ $$\\lim_{n\\to\\infty} P_{\\text{best-of-}n} = \\frac{p\\cdot\\text{TPR}}{p\\cdo
 ### 언제 이득인가: 비용과 난이도
 
 후보 $n$개는 추론 비용 $n$배이고, 순차적으로 길게 생각하면 지연시간도 길어진다(「디코딩 전략과 서빙」의 지연시간-처리량). Snell et al.(2024)은 같은 총 컴퓨트에서 "작은 모델 + 추론 시간 계산"이 쉬운·중간 난이도 문제에서는 14배 큰 모델을 이기기도 하지만, 가장 어려운 문제에서는 큰 모델(학습 컴퓨트)을 대신하지 못한다고 보고했다. 위의 식이 그 이유를 보여 준다. 한 번 정답률 $p$가 거의 0인 문제는 다수결도 best-of-n도 끌어올릴 재료가 없다. 그래서 실무에서는 문제 난이도를 보고 계산을 얼마나 쓸지 정하는 적응형 전략을 쓴다.
-
-[[practice]]
-
-### 실습: 다수결과 검증기의 수학을 시뮬레이션과 맞춰 보기
-
-① 한 번 정답률 0.6과 0.4에서 표본 수를 늘리며 다수결 정답률을 이항분포로 계산한다. ② 오답이 여러 갈래로 흩어질 때 21표 다수결을 시뮬레이션한다. ③ 좋은 검증기와 엉성한 검증기로 best-of-n을 시뮬레이션해 정확한 식, 그리고 $n \\to \\infty$ 한계와 비교한다. 실행 전에 예측해 보자. 한 번 정답률 0.4인 문제를 101번 풀어 다수결하면 정답률은 오를까?
-
-\`\`\`python
-from math import comb
-import numpy as np
-
-# 1) 다수결(자기일관성): 한 번 풀 때 정답 확률이 p인 문제를 n번 독립적으로 풀어 다수결
-def majority_correct(p, n):
-    """답이 정답/오답 두 갈래이고 표본이 독립일 때, n번(홀수) 중 과반이 정답일 확률"""
-    return sum(comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n // 2 + 1, n + 1))
-
-for p in (0.6, 0.4):
-    print(f"한 번 정답률 {p}: " + ", ".join(f"n={n} → {majority_correct(p, n):.3f}" for n in (1, 5, 21, 101)))
-
-# 2) 오답이 여러 갈래로 흩어지면: 정답 0.4, 서로 다른 오답 세 개가 0.2씩
-rng = np.random.default_rng(0)
-draws = rng.choice(4, size=(5_000, 21), p=[0.4, 0.2, 0.2, 0.2])   # 0번이 정답, 21표씩 5,000번
-votes = (draws[:, :, None] == np.arange(4)).sum(axis=1)            # 답별 득표 수
-print(f"정답 0.4 · 오답 0.2×3, 21표 다수결 정답률 ≈ {(votes.argmax(axis=1) == 0).mean():.3f}")
-
-# 3) best-of-n + 검증기: 후보 n개 중 검증기가 '맞다'고 판정한 것 하나를 고른다
-def best_of_n(p, n, tpr, fpr, trials=20_000, seed=0):
-    """후보마다 정답 확률 p. 검증기는 정답을 확률 tpr로, 오답을 확률 fpr로 '맞다'고 판정한다.
-    '맞다'를 받은 후보 중 하나를 무작위로 고르고, 하나도 없으면 첫 후보를 낸다."""
-    rng = np.random.default_rng(seed)
-    correct = rng.random((trials, n)) < p
-    passed = np.where(correct, rng.random((trials, n)) < tpr, rng.random((trials, n)) < fpr)
-    keys = np.where(passed, rng.random((trials, n)), -1.0)         # 통과한 후보 중 무작위 하나
-    pick = keys.argmax(axis=1)
-    chosen = np.where(passed.any(axis=1), correct[np.arange(trials), pick], correct[:, 0])
-    return chosen.mean()
-
-def best_of_n_exact(p, n, tpr, fpr):
-    a, b = p * tpr, (1 - p) * fpr                   # 후보 하나가 '정답이면서 통과', '오답인데 통과'일 확률
-    none = (1 - a - b) ** n                         # 아무도 통과하지 못할 확률
-    return (1 - none) * a / (a + b) + none * p * (1 - tpr) / (1 - a - b)
-
-for fpr, name in [(0.1, "좋은 검증기(TPR 0.9, FPR 0.1)"), (0.5, "엉성한 검증기(TPR 0.9, FPR 0.5)")]:
-    print(f"p=0.3, {name}")
-    for n in (1, 4, 16, 64):
-        print(f"  best-of-{n:<2}: 시뮬레이션 {best_of_n(0.3, n, 0.9, fpr):.3f}, 정확한 값 {best_of_n_exact(0.3, n, 0.9, fpr):.3f}")
-    print(f"  n → ∞ 한계 p·TPR / (p·TPR + (1-p)·FPR) = {0.3 * 0.9 / (0.3 * 0.9 + 0.7 * fpr):.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 한 번 정답률 0.6이면 다수결 정답률이 $n$ = 1, 5, 21, 101에서 0.600 → 0.683 → 0.826 → 0.979로 오르고, 0.4면 0.400 → 0.317 → 0.174 → 0.021로 **떨어진다**. 오답이 0.2씩 세 갈래로 흩어지면 정답률 0.4에서도 21표 다수결이 약 0.803이다. best-of-n은 좋은 검증기(FPR 0.1)에서 약 0.30 → 0.65 → 0.79로 오르다 한계 0.794에서 멈추고, 엉성한 검증기(FPR 0.5)는 0.30 → 0.43에서 한계 0.435에 막힌다. 시뮬레이션과 정확한 식이 몬테카를로 오차(약 0.003) 안에서 일치한다. **해볼 것:** TPR 1, FPR 0(완벽한 검증기)으로 바꿔 정확한 값이 $1 - 0.7^n$(n = 4에서 0.760, 16에서 0.997)과 같아지는지 확인하고, FPR을 0.1에서 0.05로 반으로 줄이는 것과 $n$을 4배로 늘리는 것 중 어느 쪽이 정답률을 더 올리는지 비교해 보자.
-:::
 
 ## DPO의 유도: KL 규제 보상 최대화에서 손실까지 {#dpo-derivation}
 
@@ -923,65 +491,6 @@ $$\\nabla_\\theta\\mathcal{L}_{DPO} = -\\beta\\,\\sigma\\big(\\hat r_\\theta(y_l
 
 유도에 쓴 가정이 곧 DPO의 약점 목록이다. ① **관측한 쌍만 제약한다.** 손실은 $y_w$와 $y_l$의 로그확률 **차이**만 보므로, 둘 다 함께 내려가도(그 확률이 데이터에 없는 다른 응답으로 새도) 손실은 줄 수 있다. 실제로 DPO 학습 중 선호 응답의 로그확률까지 떨어지는 현상이 자주 보고된다. ② **결정적 선호에 과적합한다.** 같은 쌍에서 항상 한쪽이 이기면 최대우도는 차이를 무한대로 벌리려 하고, 이때 KL 규제가 사실상 사라진다(IPO가 이 문제를 고친 변형이다; Azar et al., 2023). ③ **오프라인이다.** 데이터는 다른 정책이 만든 응답이라, 학습 중인 정책이 실제로 만들 응답에서의 성질은 직접 보지 못한다. 그래서 새 응답을 뽑아 선호를 다시 매기는 반복형(online/iterative) DPO가 쓰인다.
 
-[[practice]]
-
-### 실습: 닫힌 해·경사상승·DPO가 같은 곳에 도착하는지 확인하기
-
-응답 4개짜리 장난감 문제에서 ① 닫힌 해 $\\pi^*$를 계산하고, 같은 목적함수를 경사상승으로 직접 최대화해 비교한다. ② 암묵적 보상 $\\beta\\log(\\pi^*/\\pi_{ref})$와 참 보상의 차이가 모든 응답에서 같은 상수($-\\beta\\log Z$)인지 본다. ③ 참 보상으로 만든 선호 쌍 8,000개에 DPO 손실을 최소화해 $\\pi^*$를 되찾는지 확인한다. 실행 전에 예측해 보자. ②의 상수와 ①의 최적 목적함수 값은 어떤 관계일까?
-
-\`\`\`python
-import numpy as np
-
-rng = np.random.default_rng(0)
-pi_ref = np.array([0.4, 0.3, 0.2, 0.1])          # SFT 모델이 응답 4개에 주는 확률
-r = np.array([0.0, 1.0, 2.0, 0.5])               # (사람 선호를 만든) 참 보상
-beta = 0.5
-
-def objective(pi):                                # E[r] - β·KL(π ‖ π_ref)
-    return pi @ r - beta * np.sum(pi * np.log(pi / pi_ref))
-
-# 1) 닫힌 해: π*(y) ∝ π_ref(y)·exp(r(y)/β)
-pi_star = pi_ref * np.exp(r / beta)
-pi_star /= pi_star.sum()
-print("닫힌 해 π* =", pi_star.round(4), " 목적함수", round(objective(pi_star), 4))
-
-# 경사상승으로 같은 목적함수를 직접 최대화해도 같은 곳에 도착하는가?
-logits = np.log(pi_ref).copy()
-for _ in range(5000):
-    pi = np.exp(logits - logits.max()); pi /= pi.sum()
-    g_pi = r - beta * (np.log(pi / pi_ref) + 1)  # dJ/dπ
-    logits += 0.1 * pi * (g_pi - pi @ g_pi)      # softmax를 거친 기울기
-pi = np.exp(logits - logits.max()); pi /= pi.sum()
-print("경사상승 결과    =", pi.round(4), " 목적함수", round(objective(pi), 4))
-
-# 2) 보상의 재매개변수화: r(y) = β·log(π*(y)/π_ref(y)) + β·log Z  → 선호 확률에서 Z가 사라진다
-implied = beta * np.log(pi_star / pi_ref)
-print("β·log(π*/π_ref) - r =", (implied - r).round(4), "(모든 응답에서 같은 상수 = -β·log Z)")
-
-# 3) 선호 데이터에 DPO 손실을 최소화하면 π*를 되찾는가?
-pairs = []
-for _ in range(8_000):
-    a, b = rng.choice(4, size=2, replace=False, p=pi_ref)          # 기준 모델이 만든 두 응답
-    p_a = 1 / (1 + np.exp(-(r[a] - r[b])))                          # 브래들리-테리: P(a ≻ b) = σ(r_a - r_b)
-    pairs.append((a, b) if rng.random() < p_a else (b, a))          # (선호, 비선호)
-w, l = np.array(pairs).T
-theta = np.log(pi_ref).copy()                                       # 정책의 로짓
-for _ in range(3000):
-    logp = theta - np.log(np.exp(theta).sum())
-    z = beta * ((logp[w] - np.log(pi_ref[w])) - (logp[l] - np.log(pi_ref[l])))
-    g = -(1 - 1 / (1 + np.exp(-z))) * beta                          # dL/dz
-    grad = np.zeros(4)
-    np.add.at(grad, w, g); np.add.at(grad, l, -g)                    # dz/dlogp
-    pi_now = np.exp(logp)
-    theta -= 2.0 * (grad - pi_now * grad.sum()) / len(w)            # log-softmax를 거친 기울기
-pi_dpo = np.exp(theta - np.log(np.exp(theta).sum()))
-print("DPO로 학습한 π   =", pi_dpo.round(4))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 닫힌 해는 $\\pi^* \\approx$ [0.029, 0.1605, 0.7908, 0.0197]이고 목적함수는 1.3126이다. 경사상승도 소수 넷째 자리까지 같은 정책과 값에 도착한다. 암묵적 보상과 참 보상의 차이는 네 응답 모두 −1.3126으로 같고, 이 값은 최적 목적함수 $\\beta\\log Z = 1.3126$에 음수를 붙인 것이다. 선호 쌍 8,000개로 학습한 DPO 정책은 약 [0.0278, 0.1597, 0.794, 0.0186]으로, 보상모델을 따로 학습하지 않고도 $\\pi^*$를 거의 되찾는다. **해볼 것:** 선호 쌍을 800개로 줄이면 DPO 정책이 $\\pi^*$에서 얼마나 벗어나는가? 또 \`beta\`를 0.1과 2.0으로 바꿔 닫힌 해가 보상 최댓값(응답 2)과 기준 모델 사이에서 어떻게 움직이는지 보자.
-:::
-
 ## 정책 경사와 PPO: REINFORCE · 기준선 · 클리핑 {#policy-gradient}
 
 「RLHF와 DPO」 단계에서 PPO를 "보상은 높이되 기준 모델에서 너무 멀어지지 않게 하는 강화학습 알고리즘"이라고만 소개했다. 이 단계는 그 안을 연다. 출발점은 기대 보상의 기울기를 **샘플만으로** 구하는 정책 경사 정리이고, 이것은 4주차 심화 「생성 모델의 수학」에서 재매개변수화와 비교했던 점수 함수 추정(REINFORCE) 그 자체다. 그다음 분산을 줄이는 기준선, 그리고 한 번 모은 데이터로 여러 번 갱신해도 정책이 폭주하지 않게 하는 PPO의 클리핑을 차례로 유도한다. LLM 강화학습의 최신 방법(GRPO 등)도 이 세 부품의 조합이다.
@@ -1012,64 +521,6 @@ $\\min$이 비대칭을 만든다. 좋은 행동($A > 0$)은 확률을 $1+\\vare
 
 RLHF의 PPO는 여기에 두 가지를 더한다. 보상에 토큰마다 $-\\lambda\\log(\\pi_\\theta/\\pi_{ref})$를 더해 기준 모델과의 KL을 벌점으로 주고, 응답의 각 토큰 위치에서 이점을 추정하려고 가치함수(value head)를 함께 학습한다. 그래서 학습 중에 정책·기준 모델·보상모델·가치 모델 네 개를 메모리에 올려야 한다. DPO와 GRPO가 각각 보상모델·가치 모델을 없앤 이유가 이것이다.
 
-[[practice]]
-
-### 실습: 기준선의 분산 감소와 PPO 클리핑을 숫자로 보기
-
-팔 3개짜리 밴딧(평균 보상 1.0, 1.5, 2.0에 잡음)에서 ① REINFORCE 기울기를 2만 번 추정해 기준선이 있을 때와 없을 때의 평균·분산을 정확한 기울기와 비교한다. ② PPO 항이 확률비 $\\rho$와 이점의 부호에 따라 어떻게 잘리는지 표로 본다. ③ 같은 데이터로 300번 갱신할 때 클리핑이 없으면 정책이 어디까지 가는지, 클리핑이 있으면 어디서 멈추는지 비교한다. 실행 전에 예측해 보자. 기준선을 빼면 기울기 추정의 평균도 달라질까?
-
-\`\`\`python
-import numpy as np
-
-rng = np.random.default_rng(0)
-true_reward = np.array([1.0, 1.5, 2.0])          # 팔 3개짜리 밴딧: 평균 보상 (+ 표준편차 1의 잡음)
-
-def policy(th):                                   # 소프트맥스 정책
-    e = np.exp(th - th.max())
-    return e / e.sum()
-
-theta = np.zeros(3)
-pi = policy(theta)
-exact = pi * (true_reward - pi @ true_reward)     # 정확한 기울기 ∇E[R]
-
-# 1) REINFORCE 기울기 추정 g = (R - b)·∇log π(a): 기준선 b가 평균은 그대로 두고 분산만 줄이는가?
-a = rng.choice(3, size=20_000, p=pi)              # 행동 2만 번
-R = true_reward[a] + rng.normal(size=a.size)
-grad_logp = np.eye(3)[a] - pi                     # ∇_θ log π(a) = onehot(a) - π
-for name, b in [("기준선 없음", 0.0), ("기준선 = 평균 보상", pi @ true_reward)]:
-    g = (R - b)[:, None] * grad_logp
-    print(f"{name:12s} 평균 {g.mean(0).round(3)} (정답 {exact.round(3)}), 성분별 분산 {g.var(0).round(2)}")
-
-# 2) PPO의 클리핑: 확률비 ρ = π_new/π_old가 [1-ε, 1+ε]를 벗어나면 그 이상의 이득을 주지 않는다
-def ppo_term(rho, adv, eps=0.2):
-    return np.minimum(rho * adv, np.clip(rho, 1 - eps, 1 + eps) * adv)
-
-print("\\n  ρ     A=+1(좋은 행동)   A=-1(나쁜 행동)")
-for rho in (0.5, 0.8, 1.0, 1.2, 1.5, 3.0):
-    print(f"{rho:4.1f} {ppo_term(rho, 1.0):12.2f} {ppo_term(rho, -1.0):16.2f}")
-
-# 3) 같은 데이터(π_old에서 모은 것)로 여러 번 갱신할 때: 클리핑이 없으면 정책이 어디까지 가는가
-def kl(p, q):
-    return np.sum(p * np.log(p / q))
-
-adv = true_reward - pi @ true_reward              # 이점 A(a) = r(a) - 평균
-for name, clip in [("클리핑 없음", False), ("PPO 클리핑", True)]:
-    th = theta.copy()
-    for _ in range(300):
-        p_new = policy(th)
-        rho = p_new / pi
-        # 대리 목적 Σ π_old(a)·ρ(a)·A(a)의 기울기. 클리핑 구간 밖에서 이득 쪽으로 더 가면 기울기 0
-        active = ~(clip & (((rho > 1.2) & (adv > 0)) | ((rho < 0.8) & (adv < 0))))
-        w = adv * active                          # ∂/∂π_new(a) of π_old(a)·(π_new(a)/π_old(a))·A(a) = A(a)
-        th += 0.5 * p_new * (w - p_new @ w)       # 소프트맥스를 거친 기울기
-    p_new = policy(th)
-    print(f"{name:10s}: π {pi.round(3)} → {p_new.round(3)}, 확률비 {(p_new / pi).round(2)}, KL {kl(p_new, pi):.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 정확한 기울기는 [−0.167, 0, 0.167]이다. 기준선이 없으면 추정 평균 [−0.175, 0.006, 0.169], 성분별 분산 [0.57, 0.75, 0.91]이고, 평균 보상을 기준선으로 빼면 평균은 [−0.162, −0.002, 0.164]로 여전히 정답 근처지만 분산이 [0.24, 0.24, 0.25]로 절반 이하가 된다. PPO 표에서 $A = +1$은 $\\rho$가 1.2를 넘으면 1.20에서 멈추고, $A = -1$은 $\\rho$가 0.8 아래면 −0.80에서 멈추지만 $\\rho$ = 1.5, 3.0에서는 −1.50, −3.00으로 손해가 그대로다. 같은 데이터로 300번 갱신하면 클리핑이 없는 정책은 [0.002, 0.005, 0.993](확률비 [0.01, 0.01, 2.98], KL 1.051)으로 한 행동에 몰리고, PPO는 [0.256, 0.322, 0.422](확률비 [0.77, 0.97, 1.26], KL 0.021)에서 멈춘다. 확률비가 1.2를 조금 넘는 것은 클리핑이 제약이 아니라 "구간 밖에서 기울기를 끄는" 장치라 마지막 한 걸음만큼 넘어가기 때문이다. 그래서 실제 구현은 KL이 일정 값을 넘으면 그 데이터로의 갱신을 일찍 멈추기도 한다. **해볼 것:** 기준선을 평균 보상 대신 10으로 잡으면 평균과 분산은 각각 어떻게 될까? 편향이 생기지 않는 이유를 위의 $b\\,\\nabla 1 = 0$ 식으로 설명해 보자.
-:::
-
 ## 투기적 디코딩: 분포를 보존하는 초안-검증 {#speculative-decoding}
 
 「디코딩 전략과 서빙」 단계의 지연시간 문제로 돌아가 보자. 토큰을 하나 생성할 때마다 수십 GB의 가중치 전체를 메모리에서 읽어야 하는데, 정작 계산은 토큰 하나 분량이라 GPU 연산 장치는 대부분 놀고 있다. 5주차 심화 「긴 문맥의 비용」에서 본 메모리 병목이다. 반면 이미 있는 토큰 $k$개를 한꺼번에 넣고 확률을 계산하는 것(학습 때처럼 병렬)은 토큰 하나를 계산하는 것과 시간이 거의 같다. 그렇다면 작고 빠른 **초안 모델**이 토큰 몇 개를 먼저 써 두고, 큰 모델은 한 번의 순전파로 그것들을 **검증**만 하면 어떨까? 놀라운 점은 이렇게 해도 출력 분포가 큰 모델에서 직접 뽑은 것과 **정확히 같게** 만들 수 있다는 것이다(Leviathan et al., 2023; Chen et al., 2023). 근사가 전혀 없는 속도 향상이다.
@@ -1097,40 +548,6 @@ $$1 + \\alpha + \\alpha^2 + \\cdots + \\alpha^k = \\frac{1 - \\alpha^{k+1}}{1 - 
 이다. 초안 모델의 한 스텝 비용이 큰 모델의 $c$배라면 실제 속도 향상은 $\\frac{1 - \\alpha^{k+1}}{(1-\\alpha)(kc + 1)}$이다. $k$를 키우면 분자는 $\\frac{1}{1-\\alpha}$에 포화하지만 초안 비용은 계속 늘어나므로 최적의 $k$가 있다.
 
 이 기법이 늘 이득은 아니다. 배치를 크게 묶는 서버에서는 이미 연산 장치가 바쁘므로(메모리 병목이 아니라 연산 병목) 검증하는 $k$개 위치의 계산이 공짜가 아니다. 또 초안이 자주 틀리는 분야(목표 모델만 아는 전문 영역)에서는 $\\alpha$가 낮아 이득이 작다. 별도 초안 모델 대신 큰 모델에 여러 토큰을 한 번에 예측하는 머리를 붙이는 Medusa·EAGLE 같은 변형도 같은 수락-거절 원리를 쓴다.
-
-[[practice]]
-
-### 실습: 투기적 샘플링이 목표 분포를 정확히 보존하는지 확인하기
-
-① 목표 분포 $p$와 초안 분포 $q$로 투기적 샘플링 한 스텝을 10만 번 실행해 출력 빈도가 $p$와 같은지 본다. ② 수락률의 실측값과 이론값 $\\sum\\min(p, q)$를 비교한다. ③ 수락률과 초안 길이 $k$에 따른 기대 토큰 수를 표로 만든다. 실행 전에 예측해 보자. 초안 분포 $q$는 0번 토큰을 $p$보다 훨씬 낮게(0.3 대 0.5) 본다. 그래도 출력에서 0번 토큰의 빈도가 0.5가 될까?
-
-\`\`\`python
-import numpy as np
-
-rng = np.random.default_rng(0)
-p = np.array([0.50, 0.20, 0.15, 0.10, 0.05])     # 큰 모델(목표)의 다음 토큰 분포
-q = np.array([0.30, 0.30, 0.20, 0.10, 0.10])     # 작은 초안 모델의 분포
-
-# 투기적 샘플링 한 스텝을 10만 번: 초안 x ~ q, 확률 min(1, p/q)로 수락, 거절되면 (p - q)+에서 다시 뽑는다
-n = 100_000
-x = rng.choice(5, size=n, p=q)                     # 초안 모델의 제안
-accept = rng.random(n) < np.minimum(1, p / q)[x]   # 수락 여부
-residual = np.maximum(p - q, 0)
-redraw = rng.choice(5, size=n, p=residual / residual.sum())
-out = np.where(accept, x, redraw)                  # 수락되면 초안 그대로, 아니면 다시 뽑은 토큰
-print("목표 분포 p      :", p)
-print("투기적 샘플 빈도 :", (np.bincount(out, minlength=5) / n).round(3))
-alpha = np.minimum(p, q).sum()                     # 이론적 수락률 = Σ min(p, q) = 1 - TV(p, q)
-print(f"수락률: 실측 {accept.mean():.3f}, 이론 Σmin(p,q) = {alpha:.3f}")
-
-# 초안 k개를 한꺼번에 검증할 때, 큰 모델 한 번 호출당 기대 생성 토큰 수 = (1 - α^(k+1)) / (1 - α)
-for a in (0.6, 0.8, 0.9):
-    print(f"α={a}: " + ", ".join(f"k={k} → {(1 - a ** (k + 1)) / (1 - a):.2f}개" for k in (1, 4, 8)))
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 투기적 샘플의 빈도가 [0.497, 0.202, 0.151, 0.099, 0.05]로 목표 분포 [0.5, 0.2, 0.15, 0.1, 0.05]와 몬테카를로 오차 안에서 같다. 초안이 낮게 본 0번 토큰은 거절된 경우의 잔여 분포($(p - q)_+$ = [0.2, 0, 0, 0, 0])가 정확히 채워 준다. 수락률은 실측 0.802, 이론 0.800이다. 큰 모델 호출당 기대 토큰 수는 $\\alpha$ = 0.6에서 $k$ = 1, 4, 8일 때 1.60, 2.31, 2.47개, $\\alpha$ = 0.8에서 1.80, 3.36, 4.33개, $\\alpha$ = 0.9에서 1.90, 4.10, 6.13개로, 수락률이 낮으면 $k$를 늘려도 금방 포화한다. **해볼 것:** 초안 비용 $c = 0.1$, $\\alpha = 0.8$일 때 $k$를 1부터 10까지 바꿔 실제 속도 향상 $\\frac{1 - \\alpha^{k+1}}{(1-\\alpha)(kc+1)}$을 계산하고 최적의 $k$를 찾아보자(약 6에서 2.47배). $q = p$로 두면 수락률과 기대 토큰 수는 어떻게 될까?
-:::
 
 `,
   sections,
