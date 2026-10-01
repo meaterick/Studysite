@@ -11,13 +11,12 @@ const week3: WeekMeta = {
   difficulty: 4,
   keywords: ["MLP", "활성화", "연쇄법칙", "계산 그래프", "SGD/Adam", "PyTorch", "Autograd", "GPU/CUDA"],
   objectives: [
-    "MLP의 순전파를 행렬식으로 쓰고 차원을 추적한다.",
-    "연쇄법칙으로 역전파를 유도하고 계산 그래프로 설명한다.",
-    "자동미분 엔진(micrograd)을 직접 구현한다.",
-    "SGD, Momentum, Adam의 차이를 설명한다.",
-    "수치미분(gradient check)으로 역전파 구현의 정확성을 검증한다.",
-    "PyTorch의 Tensor/Autograd/nn.Module/optimizer가 지금까지 손으로 구현한 backprop·경사하강법의 어느 부분을 대신하는지 정확히 대응시켜 설명한다.",
-    "GPU/CUDA가 신경망 학습을 병렬화로 가속하는 원리와 mixed precision의 이점을 설명한다.",
+    "[핵심] MLP의 순전파를 행렬식으로 쓰고 차원을 추적하며, 활성화 함수가 없으면 여러 층이 한 층과 같아지는 이유를 설명한다.",
+    "[핵심] 연쇄법칙으로 역전파를 유도하고 계산 그래프로 설명하며, 자동미분 엔진(micrograd)을 직접 구현해 수치미분으로 검증한다.",
+    "[핵심] SGD·Momentum·Adam의 차이와 기울기 소실·폭발, He·Xavier 초기화가 필요한 이유를 숫자로 설명한다.",
+    "[핵심] PyTorch의 Tensor·Autograd·nn.Module·optimizer가 손으로 구현한 역전파·경사하강법의 어느 부분을 대신하는지 대응시킨다.",
+    "[보충] BatchNorm과 LayerNorm의 정규화 축, GPU·혼합 정밀도의 원리, 드롭아웃·가중치 감쇠·조기 종료·학습률 스케줄로 과적합을 다스리는 법을 설명한다.",
+    "[심화] 순방향·역방향 자동미분의 비용과 메모리, Adam 편향 보정의 유도와 AdamW·워밍업의 필요성, 야코비안의 곱으로 본 기울기 흐름과 잔차 연결·기울기 클리핑을 설명한다.",
   ],
   learningOrder: [
     "필수: [Karpathy: The spelled-out intro to neural networks and backpropagation (micrograd)](https://karpathy.ai/zero-to-hero.html) · 반드시 손으로 따라 코딩하며 볼 것",
@@ -28,8 +27,14 @@ const week3: WeekMeta = {
   conceptsMd: `
 지난 두 주 동안 우리는 학습이라는 것을 "손실 $L(\\theta)$를 최소화하는 $\\theta$를 찾는 일"이라고 정의했고, 그 방향을 찾는 도구로 경사하강법 $\\theta \\leftarrow \\theta - \\eta \\nabla L$을 배웠다(말로 읽으면 "새 파라미터 $\\theta$는, 기존 파라미터에서 학습률 $\\eta$만큼 기울기 $\\nabla L$ 방향으로 뺀 값이다"). 그런데 정작 가장 실무적인 질문 하나를 미뤄뒀다. 파라미터가 열 개도 아니고 수백만, 어떤 모델은 수천억 개나 되는데, 그 각각에 대한 기울기 $\\nabla L$을 대체 어떻게 계산한다는 말인가? 손으로 하나하나 미분해서 코드를 작성하는 일은 상상만 해도 매우 번거롭고 사실상 불가능하다. 이번 주에 배울 역전파(backpropagation, 손실이 발생한 뒤 그 원인을 거꾸로 되짚어가며 "각 파라미터가 손실에 얼마나 책임이 있는지"를 계산해내는 절차라는 뜻)가 바로 이 문제에 대한 답이다. 그리고 놀랍게도 그 답은 이미 여러분이 알고 있는 도구 하나로 완성된다. 고등학교에서 스치듯 배운 연쇄법칙(chain rule, "y가 z에 의해 정해지고 z가 다시 x에 의해 정해질 때, x가 바뀌면 y가 얼마나 바뀌는지는 중간 단계 z를 거쳐 곱셈으로 이어붙일 수 있다"는 미분의 규칙)이다.
 
-:::info 이번 주의 흐름
-1~2단계에서 신경망과 역전파를 수식과 손계산으로 이해하고, 3~4단계에서 그것을 백 줄짜리 자동미분 엔진으로 직접 구현한다. 5~7단계는 실제로 깊은 망을 학습시킬 때 부딪히는 문제(최적화기, 초기화, 정규화)를, 8~9단계는 지금까지 손으로 한 일을 PyTorch가 어떻게 대신하는지를 다룬다. 이 사이트의 브라우저 실행 환경에는 PyTorch가 없으므로, PyTorch 코드는 "Colab에서 실행" 표시가 붙은 읽기용 코드로 제공하고, 같은 원리를 NumPy로 브라우저에서 직접 돌려보는 실습을 함께 둔다.
+:::info 이번 주의 세 과정
+**핵심 과정(초심자, 7단계):** 뉴런과 MLP, 역전파를 손계산으로 이해하고(「뉴런과 MLP」, 「역전파」), 자동미분 엔진을 백 줄로 직접 구현한 뒤(「자동미분 엔진을 읽기 위한 파이썬 문법」, 「micrograd」), 최적화기와 초기화라는 실전 문제를 다루고, 지금까지 손으로 한 일을 PyTorch가 어떻게 대신하는지 짝짓는다. 이것만 마치면 이번 주가 완료되고 과제의 채점 항목을 모두 풀 수 있다.
+
+**보충 과정(중급자, 3단계):** BatchNorm·LayerNorm, GPU·혼합 정밀도와 PyTorch 실전, 그리고 드롭아웃·가중치 감쇠·학습률 스케줄·조기 종료처럼 실제 학습 코드에 늘 들어가는 기법.
+
+**심화 과정(전문가, 3단계):** 자동미분의 순방향·역방향 모드와 메모리, Adam의 편향 보정 유도와 AdamW·워밍업, 야코비안의 곱으로 본 기울기 흐름과 잔차 연결·기울기 클리핑.
+
+이 사이트의 브라우저 실행 환경에는 PyTorch가 없으므로, PyTorch 코드는 "Colab에서 실행" 표시가 붙은 읽기용 코드로 제공하고, 같은 원리를 NumPy로 브라우저에서 직접 돌려보는 실습을 함께 둔다.
 :::
 
 ## 뉴런과 MLP, 활성화 함수 {#neurons-mlp}
@@ -75,7 +80,7 @@ $\\phi$ 자리에 넣을 수 있는 함수는 ReLU 하나만이 아니다. 최�
 
 말로 읽으면 "GELU(x)는 대략, x의 절반에 (1 + tanh에 어떤 식을 넣은 값)을 곱한 것과 같다"는 뜻이다. erf를 직접 계산하는 대신 tanh라는 계산하기 쉬운 함수로 거의 같은 모양의 곡선을 흉내 낸 것뿐이므로, 정확한 유도 과정을 외울 필요는 없다.
 
-ReLU $=\\max(0,x)$와 비교하면 차이가 뚜렷하다. ReLU는 x=0에서 미분이 불연속(왼쪽 미분 0, 오른쪽 미분 1)이고, 음수 구간에서는 출력과 미분이 정확히 0이라서 입력이 아주 조금만 음수여도 그 뉴런은 완전히 비활성화된다(6단계에서 다룰 죽은 ReLU 문제). 반면 GELU는 모든 구간에서 매끄럽게(무한히 미분 가능하게) 이어지고, 입력이 음수라도 완전히 0으로 끊지 않고 $\\Phi(x)$라는 확률만큼 깎아서 조금씩 흘려보낸다. "이 뉴런의 값을 얼마나 통과시킬지"를 0 또는 1의 이진 선택이 아니라 연속적인 확률적 가중치로 결정하는 셈이다. 이 매끄러움 덕분에 아주 깊은 Transformer를 학습시킬 때 ReLU보다 기울기가 더 안정적으로 흐른다는 것이 실험적으로 널리 보고되어 있다.
+ReLU $=\\max(0,x)$와 비교하면 차이가 뚜렷하다. ReLU는 x=0에서 미분이 불연속(왼쪽 미분 0, 오른쪽 미분 1)이고, 음수 구간에서는 출력과 미분이 정확히 0이라서 입력이 아주 조금만 음수여도 그 뉴런은 완전히 비활성화된다(「실전 이슈: 기울기 소실·폭발과 가중치 초기화」 단계에서 다룰 죽은 ReLU 문제). 반면 GELU는 모든 구간에서 매끄럽게(무한히 미분 가능하게) 이어지고, 입력이 음수라도 완전히 0으로 끊지 않고 $\\Phi(x)$라는 확률만큼 깎아서 조금씩 흘려보낸다. "이 뉴런의 값을 얼마나 통과시킬지"를 0 또는 1의 이진 선택이 아니라 연속적인 확률적 가중치로 결정하는 셈이다. 이 매끄러움 덕분에 아주 깊은 Transformer를 학습시킬 때 ReLU보다 기울기가 더 안정적으로 흐른다는 것이 실험적으로 널리 보고되어 있다.
 
 :::info 보편 근사 정리
 충분히 넓은 1개 은닉층 MLP는 임의의 연속함수를 근사할 수 있다(단, 학습 가능성을 보장하진 않는다). 즉 "표현할 수 있다"는 것과 "경사하강법으로 실제로 찾아낼 수 있다"는 것은 전혀 다른 문제다. 층을 더 깊게 쌓는 이유 중 하나는, 넓지만 얕은 망보다 깊은 망이 실제로 학습이 더 잘 되는 경우가 많기 때문이다.
@@ -137,7 +142,7 @@ for v in [-3, -1, -0.5, 0, 0.5, 1, 3]:
 핵심 규칙은 세 가지뿐이다. 덧셈 노드(z=a+b)를 지날 때는 위에서 내려온 기울기를 아무 변형 없이 양쪽 입력에 그대로 나눠준다. 덧셈은 서로의 크기에 영향을 주지 않기 때문이다. 곱셈 노드(z=a·b)를 지날 때는 자기 몫을 계산할 때 상대방의 값을 곱해서 전달한다. a의 기울기를 구하려면 b가 얼마나 컸는지가 곱해져야 하는데, 직관적으로 생각해보면 b가 0이었다면 애초에 a를 아무리 키워도 z는 전혀 변하지 않았을 것이다. max 노드(ReLU 등)는 승자독식이다. 실제로 그 값을 통과시킨 쪽에만 기울기를 온전히 전달하고, 선택받지 못한 쪽에는 기울기를 0으로 끊는다. 이 세 규칙만 있으면 아무리 복잡한 신경망도 노드 단위로 쪼개서 기계적으로 미분할 수 있다. 그리고 각 노드는 자기 바로 옆의 국소 미분(local gradient)만 알면 된다는 점이 핵심이다. 전체 함수가 아무리 복잡해도 개별 노드 입장에서는 "내 입력이 바뀌면 내 출력이 얼마나 바뀌는가"라는 아주 단순한 질문에만 답하면 되고, 나머지는 연쇄법칙이 자동으로 이어붙여준다. 이것이 PyTorch 같은 프레임워크의 autograd가 작동하는 원리이자, 새로운 연산 하나를 추가하고 싶을 때 그 연산의 순전파와 국소 미분(backward) 한 쌍만 정의하면 되는 이유다.
 
 :::example 예제: $L = (w\\cdot x + c)^2$ 을 손으로 역전파해보기
-w=2, x=3, c=1이라는 작은 숫자로 시작해서 순전파와 역전파를 한 단계씩 손으로 따라가 보자. 먼저 계산 그래프를 세 개의 노드로 쪼갠다. $u = w\\cdot x$ (곱셈), $v = u + c$ (덧셈), $L = v^2$ (제곱). 순전파(앞으로 계산): $u = 2\\times 3 = 6$, $v = 6+1 = 7$, $L = 7^2 = 49$. 이제 역전파를 시작한다. $\\dfrac{dL}{dL} = 1$에서 출발해서, $L=v^2$이므로 $\\dfrac{dL}{dv} = 2v = 2\\times 7 = 14$다. 덧셈 노드는 기울기를 그대로 나눠주므로 $\\dfrac{dL}{du} = 14$, $\\dfrac{dL}{dc} = 14$다. 곱셈 노드 u=w·x는 상대방 값을 곱해서 전달하므로 $\\dfrac{dL}{dw} = \\dfrac{dL}{du} \\times x = 14\\times 3 = 42$, $\\dfrac{dL}{dx} = \\dfrac{dL}{du} \\times w = 14\\times 2 = 28$이다. 검산해보자. w를 2에서 아주 조금(0.001) 늘리면 $u=2.001\\times 3=6.003$, v=7.003, $L=7.003^2\\approx 49.042$다. $\\Delta L\\approx 0.042$를 $\\Delta w=0.001$로 나누면 42에 가깝다. 방금 손으로 구한 $\\dfrac{dL}{dw}=42$와 일치한다. 이렇게 "수치적으로 검산한다"는 습관이 6단계에서 배울 gradient check의 원리 그 자체다.
+w=2, x=3, c=1이라는 작은 숫자로 시작해서 순전파와 역전파를 한 단계씩 손으로 따라가 보자. 먼저 계산 그래프를 세 개의 노드로 쪼갠다. $u = w\\cdot x$ (곱셈), $v = u + c$ (덧셈), $L = v^2$ (제곱). 순전파(앞으로 계산): $u = 2\\times 3 = 6$, $v = 6+1 = 7$, $L = 7^2 = 49$. 이제 역전파를 시작한다. $\\dfrac{dL}{dL} = 1$에서 출발해서, $L=v^2$이므로 $\\dfrac{dL}{dv} = 2v = 2\\times 7 = 14$다. 덧셈 노드는 기울기를 그대로 나눠주므로 $\\dfrac{dL}{du} = 14$, $\\dfrac{dL}{dc} = 14$다. 곱셈 노드 u=w·x는 상대방 값을 곱해서 전달하므로 $\\dfrac{dL}{dw} = \\dfrac{dL}{du} \\times x = 14\\times 3 = 42$, $\\dfrac{dL}{dx} = \\dfrac{dL}{du} \\times w = 14\\times 2 = 28$이다. 검산해보자. w를 2에서 아주 조금(0.001) 늘리면 $u=2.001\\times 3=6.003$, v=7.003, $L=7.003^2\\approx 49.042$다. $\\Delta L\\approx 0.042$를 $\\Delta w=0.001$로 나누면 42에 가깝다. 방금 손으로 구한 $\\dfrac{dL}{dw}=42$와 일치한다. 이렇게 "수치적으로 검산한다"는 습관이 「실전 이슈: 기울기 소실·폭발과 가중치 초기화」 단계에서 정리하는 gradient check의 원리 그 자체다.
 :::
 
 이 규칙을 한 층 전체에 행렬로 적용하면 다음과 같다. z = Wx+b이고 상류에서 내려온 기울기를 $\\delta=\\dfrac{dL}{dz}$라 하면,
@@ -201,7 +206,7 @@ print("shape:", grad_formula.shape, "== W.shape", W.shape)
 
 ## 자동미분 엔진을 읽기 위한 파이썬 문법 {#python-for-autograd}
 
-다음 단계의 자동미분 엔진(백 줄 남짓)은 지금까지 이 스터디에서 쓴 파이썬보다 훨씬 진한 문법을 한꺼번에 쓴다는 점이다. AI 개념(역전파)과 파이썬 문법(클래스, 클로저, 재귀)이 뒤엉켜 있으면 어느 쪽도 제대로 안 보이니, 둘을 완전히 분리해서 문법만 먼저 짧게 익히고 넘어가자. 아래 다섯 개는 모두 독립적으로 실행되는 미니 예제이니, 하나씩 직접 실행 버튼을 눌러 결과를 확인하고 다음으로 넘어가라.
+다음 단계의 자동미분 엔진(백 줄 남짓)은 지금까지 이 스터디에서 쓴 파이썬보다 훨씬 진한 문법을 한꺼번에 쓴다는 점이다. AI 개념(역전파)과 파이썬 문법(클래스, 클로저, 재귀)이 뒤엉켜 있으면 어느 쪽도 제대로 안 보이니, 둘을 완전히 분리해서 문법만 먼저 짧게 익히고 넘어가자. 아래 다섯 개는 모두 독립적으로 실행되는 미니 예제이니, 하나씩 직접 실행 버튼을 눌러 결과를 확인하고 다음으로 넘어가라. 1주차 보충 과정 「Python 한 걸음 더」에서 클래스를 이미 봤다면 ①은 복습이다.
 
 **① 클래스(class)와 \`__init__\`.** 클래스는 "같은 모양의 데이터와 동작을 여러 개 찍어내는 설계도"다. \`class Dog:\`로 설계도를 선언하고, \`__init__\`은 그 설계도로 실제 객체(인스턴스)를 만들 때 가장 먼저 자동으로 실행되는 특별한 메서드(생성자)다. \`self\`는 "지금 만들어지고 있는 바로 그 객체 자신"을 가리키는 이름이고, \`self.name = name\`은 "이 객체 안에 name이라는 이름표를 붙여서 값을 저장해둔다"는 뜻이다. 이렇게 저장해두면 나중에 \`d.name\`처럼 점(.)을 찍어 언제든 꺼내 쓸 수 있다.
 
@@ -373,6 +378,8 @@ backward() 메서드 안에서 topo 리스트를 만드는 부분이 왜 필요�
 
 위 코드의 a, b = Value(2.0), Value(-3.0) 예제를 직접 손으로 따라가 보자. a*b = -6, 여기에 10을 더하면 4, relu(4) = 4이므로 L.data = 4다. backward()를 부르면 L.grad = 1에서 시작해서, relu 노드는 out.data(=4)가 양수이므로 기울기 1을 그대로 통과시켜 (a*b+10)의 기울기도 1이 된다. 덧셈 노드는 기울기를 그대로 나눠주므로 a*b의 기울기도 1, 10의 기울기도 1이다. 곱셈 노드에서는 a.grad += b.data $\\times$ 1 = -3, b.grad += a.data $\\times$ 1 = 2가 되어, 코드 주석에 적힌 기대값 -3.0, 2.0과 정확히 일치한다.
 
+micrograd와 PyTorch의 autograd는 손실(출력)에서 입력 쪽으로 거슬러 가는 **역방향 모드** 자동미분이다. 입력 쪽에서 출발하는 순방향 모드와의 차이, 중간값을 모두 저장해야 하는 메모리 문제는 심화 과정의 「자동미분의 두 모드」 단계에서 다룬다.
+
 :::info 주의
 \`+=\`로 기울기를 누적하는 이유: 한 변수가 여러 경로에 쓰이면 기울기가 합산된다(다변수 연쇄법칙, fan-out gradient accumulation). 이를 \`=\`로 쓰면 어떤 버그가 생기는지는 실습에서 $y = x\\cdot x + x$로 직접 확인한다.
 :::
@@ -493,7 +500,7 @@ m_t = \\beta_1 m_{t-1} + (1-\\beta_1)g_t, \\qquad v_t = \\beta_2 v_{t-1} + (1-\\
 
 숫자를 넣어 첫 스텝(t=1)만 손으로 계산해보면 이 공식의 의도가 더 뚜렷하게 보인다. $m_0=v_0=0$에서 시작하고 $\\beta_1=0.9, \\beta_2=0.999, \\eta=0.1$이라 하자. 기울기 $g_1=5$가 들어왔다면, $m_1=(1-0.9)\\times 5=0.5$, $v_1=(1-0.999)\\times 5^2=0.025$다. 편향 보정을 하면 $\\hat m_1 = 0.5/(1-0.9^1) = 0.5/0.1 = 5$, $\\hat v_1 = 0.025/(1-0.999^1) = 0.025/0.001 = 25$가 되어, 놀랍게도 $\\hat m_1$과 $\\hat v_1$이 정확히 $g_1$과 $g_1^2$로 되돌아온다(이것이 편향 보정이 하는 일이다. 첫 스텝에서 $m,v$가 0에서 출발한 티를 완전히 지워준다). 갱신량은 $\\eta\\,\\hat m_1/(\\sqrt{\\hat v_1}+\\epsilon) = 0.1\\times 5/(\\sqrt{25}+\\epsilon) = 0.1\\times5/5 = 0.1$이다. 이번엔 기울기가 $g_1=0.01$로 훨씬 작았다면 어떻게 될까? 같은 방식으로 계산하면 $\\hat m_1=0.01$, $\\hat v_1=0.0001$, 갱신량은 $0.1\\times 0.01/\\sqrt{0.0001} = 0.1\\times0.01/0.01=0.1$로 **똑같다.** 기울기가 5든 0.01이든 첫 스텝의 실제 이동 거리는 거의 $\\eta$ 하나로 결정된다는 뜻이다. 이것이 "파라미터별 적응 학습률"의 핵심으로, 기울기의 절대 크기가 아니라 방향(부호)에 훨씬 더 의존해서 걸음을 내딛는다는 Adam의 성질을 숫자로 직접 보여준다.
 
-실무에서는 특별한 이유가 없다면 Adam(또는 그 개선판인 AdamW)을 기본값으로 놓고 학습을 시작하는 경우가 많고, 자원이 충분할 때 SGD+Momentum으로 더 세밀하게 튜닝해 마지막 성능을 쥐어짜는 경우가 많다는 정도만 기억해두자.
+실무에서는 특별한 이유가 없다면 Adam(또는 그 개선판인 AdamW)을 기본값으로 놓고 학습을 시작하는 경우가 많고, 자원이 충분할 때 SGD+Momentum으로 더 세밀하게 튜닝해 마지막 성능을 쥐어짜는 경우가 많다는 정도만 기억해두자. 편향 보정이 왜 $1-\\beta^t$로 나누는지, Adam에 L2 규제를 그냥 넣으면 왜 안 되고 AdamW가 필요한지, 학습률 워밍업은 왜 하는지는 심화 과정의 「Adam의 이론」 단계에서 다룬다.
 
 [[practice]]
 
@@ -542,7 +549,7 @@ for g1 in [5.0, 0.01]:
 
 ## 실전 이슈: 기울기 소실·폭발과 가중치 초기화 {#init-stability}
 
-세 가지 실전 이슈를 짚고 넘어가자. 첫 번째는 기울기 소실과 폭발이다. sigmoid나 tanh처럼 입력이 조금만 커져도 출력이 거의 평평해지는 활성화 함수를 깊게 쌓으면, 연쇄법칙으로 기울기를 곱해나가는 과정에서 0에 가까운 국소 미분들이 계속 곱해져 맨 앞쪽 층에 도달할 때쯤에는 기울기가 사실상 0이 된다(기울기 소실). 반대로 미분값이 1보다 큰 항들이 계속 곱해지면 기울기가 기하급수적으로 커져 학습이 발산하기도 한다(기울기 폭발). ReLU가 널리 쓰이는 이유 중 하나가 바로 이것이다. 입력이 양수인 구간에서는 미분이 항상 1이라서, 이 구간에서는 기울기가 층을 지나도 줄어들거나 커지지 않고 그대로 전달된다. 다만 ReLU도 공짜는 아니다. 입력이 음수인 구간에서는 미분이 정확히 0이므로, 한번 음수 쪽으로 넘어가 버린 뉴런은 그 이후로 기울기를 전혀 받지 못해 영영 업데이트되지 않는 "죽은 ReLU(dead ReLU)" 현상이 생기기도 한다. 여기에 He/Xavier 초기화, 그리고 4주차에 배울 잔차 연결(residual connection)을 더하면 훨씬 깊은 네트워크도 안정적으로 학습시킬 수 있다.
+세 가지 실전 이슈를 짚고 넘어가자. 첫 번째는 기울기 소실과 폭발이다. sigmoid나 tanh처럼 입력이 조금만 커져도 출력이 거의 평평해지는 활성화 함수를 깊게 쌓으면, 연쇄법칙으로 기울기를 곱해나가는 과정에서 0에 가까운 국소 미분들이 계속 곱해져 맨 앞쪽 층에 도달할 때쯤에는 기울기가 사실상 0이 된다(기울기 소실). 반대로 미분값이 1보다 큰 항들이 계속 곱해지면 기울기가 기하급수적으로 커져 학습이 발산하기도 한다(기울기 폭발). ReLU가 널리 쓰이는 이유 중 하나가 바로 이것이다. 입력이 양수인 구간에서는 미분이 항상 1이라서, 이 구간에서는 기울기가 층을 지나도 줄어들거나 커지지 않고 그대로 전달된다. 다만 ReLU도 공짜는 아니다. 입력이 음수인 구간에서는 미분이 정확히 0이므로, 한번 음수 쪽으로 넘어가 버린 뉴런은 그 이후로 기울기를 전혀 받지 못해 영영 업데이트되지 않는 "죽은 ReLU(dead ReLU)" 현상이 생기기도 한다. 여기에 He/Xavier 초기화, 그리고 4주차에 배울 잔차 연결(residual connection)을 더하면 훨씬 깊은 네트워크도 안정적으로 학습시킬 수 있다. 기울기가 층을 거슬러 내려가며 어떻게 줄고 커지는지를 식으로, 잔차 연결과 기울기 클리핑이 왜 통하는지는 심화 과정의 「기울기 흐름의 수학」 단계에서 다룬다.
 
 \`\`\`image
 src: /images/week3/activation-functions-comparison.svg
@@ -561,11 +568,11 @@ height: 606
 \\frac{\\partial f}{\\partial \\theta} \\approx \\frac{f(\\theta + \\epsilon) - f(\\theta - \\epsilon)}{2\\epsilon}, \\qquad \\text{상대오차} = \\frac{|g_{\\text{역전파}} - g_{\\text{수치}}|}{|g_{\\text{역전파}}| + |g_{\\text{수치}}|}
 \`\`\`
 
-상대오차가 $10^{-5}$보다 작으면 구현이 맞다고 믿을 수 있다. 2단계와 4의 실습에서 이미 이 방법으로 손 역전파와 Value 클래스를 검증했다.
+상대오차가 $10^{-5}$보다 작으면 구현이 맞다고 믿을 수 있다. 「역전파」와 「미니 자동미분 엔진」 단계의 실습에서 이미 이 방법으로 손 역전파와 Value 클래스를 검증했다.
 
 ### 가중치 초기화의 수학: 분산이 왜 fan_in에 반비례해야 하는가
 
-위에서 초기화를 짧게 지나쳤는데, 여기엔 사실 1주차에서 이미 확인한 원리 하나가 고스란히 숨어 있다. 한 뉴런의 출력(정확히는 활성화 함수를 통과하기 전의 값, pre-activation) z는 fan_in개의 "입력$\\times$가중치" 곱을 몽땅 더한 것이다. $z = w_1x_1 + w_2x_2 + \\cdots + w_{\\text{fan\\_in}}x_{\\text{fan\\_in}}$. 그런데 1주차 「연속 확률분포」 단계의 실습(균등분포 12개를 더하면 분산이 $12 \\times \\tfrac{1}{12} = 1$)에서 확인했듯, 서로 독립인 확률변수를 더하면 분산은 상쇄되지 않고 그대로 더해진다. $w_i$와 $x_i$가 평균 0이고 서로 독립이라고 가정하면 곱 하나의 분산은 $\\text{Var}(w)\\,\\text{Var}(x)$이고, 이런 항을 fan_in개 더한 z의 분산은 다음과 같다.
+위에서 초기화를 짧게 지나쳤는데, 여기엔 사실 1주차에서 이미 확인한 원리 하나가 고스란히 숨어 있다. 한 뉴런의 출력(정확히는 활성화 함수를 통과하기 전의 값, pre-activation) z는 fan_in개의 "입력$\\times$가중치" 곱을 몽땅 더한 것이다. $z = w_1x_1 + w_2x_2 + \\cdots + w_{\\text{fan\\_in}}x_{\\text{fan\\_in}}$. 그런데 1주차 보충 과정 「연속 확률분포」 단계의 실습(균등분포 12개를 더하면 분산이 $12 \\times \\tfrac{1}{12} = 1$)에서 확인했듯, 서로 독립인 확률변수를 더하면 분산은 상쇄되지 않고 그대로 더해진다. $w_i$와 $x_i$가 평균 0이고 서로 독립이라고 가정하면 곱 하나의 분산은 $\\text{Var}(w)\\,\\text{Var}(x)$이고, 이런 항을 fan_in개 더한 z의 분산은 다음과 같다.
 
 \`\`\`math
 \\text{Var}(z) \\approx \\text{fan\\_in} \\cdot \\text{Var}(w) \\cdot \\text{Var}(x)
@@ -652,6 +659,155 @@ print("200스텝 뒤 W1의 세 열(= 은닉 뉴런 3개):\\n", np.round(W1, 4))
 **예상 결과:** 200스텝을 학습해도 \`W1\`의 세 열이 **완전히 같다**. 세 뉴런이 같은 값에서 출발해 같은 기울기를 받으므로 영원히 서로의 복사본으로 남는다(대칭성). **해볼 것:** \`W1\`을 \`np.random.default_rng(0).normal(0, 0.5, (2, 3))\`처럼 작은 무작위 값으로 바꾸면 세 열이 서로 달라지는지 확인하자.
 :::
 
+## PyTorch가 대신해주는 것들 {#pytorch-core}
+
+앞서 우리는 Value라는 아주 작은 자동미분 엔진을 직접 만들어, 계산 그래프를 만들고 그 그래프를 거슬러 올라가며 기울기를 계산하는 과정을 한 줄씩 눈으로 확인했다. PyTorch 같은 딥러닝 프레임워크가 실전에서 하는 일은 정확히 이것과 같다. 다만 숫자 하나(스칼라)가 아니라 수백만 개의 숫자를 담은 텐서(tensor) 단위로, 그것도 CPU가 아닌 GPU에서 대량 병렬로 처리한다는 점이 다를 뿐이다. 이 단계에서는 우리가 직접 작성한 코드의 각 부분이 PyTorch의 어떤 개념에 대응하는지 하나씩 짝지어본다.
+
+- **Tensor**: PyTorch의 \`torch.Tensor\`는 NumPy의 \`ndarray\`와 데이터 구조 자체는 동일하다. 둘 다 같은 타입의 숫자를 다차원 배열로 담고, 인덱싱·브로드캐스팅·행렬 곱 같은 연산도 거의 그대로 대응된다(실제로 \`torch.from_numpy()\`로 메모리 복사 없이 서로 변환할 수 있다). 다른 점은 두 가지다. 첫째, 텐서는 \`.to("cuda")\`로 GPU 메모리로 옮겨 대량 병렬 연산을 시킬 수 있지만 NumPy 배열은 CPU에서만 동작한다. 둘째, 텐서는 \`requires_grad=True\`를 켜면 자신이 어떤 연산을 거쳐 만들어졌는지 계산 그래프를 계속 기록해 나중에 역전파에 쓸 수 있지만, NumPy 배열에는 이런 기록 기능이 아예 없다.
+
+- **Autograd**: \`requires_grad=True\`인 텐서에 연산을 적용할 때마다, PyTorch는 앞서 만든 Value가 \`_prev\`와 \`_backward\`를 저장했던 것과 똑같이 결과 텐서에 \`grad_fn\`이라는 이름으로 "이 텐서가 어떤 연산과 어떤 입력들로부터 만들어졌는지"를 기록한다. \`loss.backward()\`를 호출하면 이 grad_fn들을 따라 위상정렬의 역순으로 그래프를 순회하며 연쇄법칙을 적용하는데, 이것이 정확히 우리가 만든 \`Value.backward()\`가 topo 리스트를 뒤집어 순회하며 \`_backward()\`를 실행하던 것과 동일한 알고리즘이다. 계산이 끝나면 각 리프(leaf) 텐서, 즉 \`requires_grad=True\`로 직접 만든 파라미터 텐서의 \`.grad\` 속성에 $\\partial L/\\partial\\theta$가 채워진다(앞서 살펴본 Value의 \`.grad\` 필드와 완전히 같은 역할). \`optimizer.step()\`은 이렇게 채워진 \`.grad\`를 읽어 「최적화기」 단계의 갱신식(SGD, Adam)대로 파라미터를 갱신하고, \`optimizer.zero_grad()\`는 \`+=\`로 누적되는 성질(앞서 :::info 참고) 때문에 다음 스텝을 위해 \`.grad\`를 0으로 되돌리는 역할을 한다.
+
+\`\`\`image
+src: /images/week3/reverse-mode-autodiff.png
+alt: 함수 f(x1,x2)=x1*x2+sin(x1)의 계산 그래프를 손실 쪽에서 입력 쪽으로 거슬러 올라가며 각 노드의 국소 미분을 곱해 전달하는 역방향 자동미분 과정을 보여주는 다이어그램
+caption: 역방향 자동미분(reverse-mode automatic differentiation): f(x1,x2)=x1x2+sin(x1)의 계산 그래프를 출력(오른쪽)에서 입력(왼쪽) 방향으로 한 번만 훑으면서 연쇄법칙으로 모든 편미분을 동시에 얻는다. PyTorch의 loss.backward()가 grad_fn을 따라 수행하는 것이 바로 이 알고리즘이다.
+credit: Berland (en.wikipedia), Public Domain, Wikimedia Commons
+width: 960
+height: 560
+\`\`\`
+
+- **nn.Module**: 파라미터를 가진 레이어(예: Wx+b를 계산하는 완전연결층)를 재사용 가능한 단위로 묶는 클래스다. \`__init__\`에서 그 층이 가질 파라미터(가중치, 편향)를 \`nn.Linear\`, \`nn.Conv2d\` 같은 하위 모듈로 선언하고, \`forward\`에서는 입력이 그 파라미터들을 거쳐 출력으로 바뀌는 순전파 계산만 정의한다. 신기하게도 backward는 따로 작성하지 않는다. forward 안에서 사용한 텐서 연산 하나하나가 이미 autograd에 기록되므로, \`loss.backward()\`를 부르는 순간 이 모듈 내부의 모든 파라미터에 대한 기울기가 자동으로 계산된다. 아래 코드부터는 실제 \`torch\` 라이브러리를 사용하는데, 이 사이트의 실행 환경(Pyodide)에는 torch가 없어 브라우저에서는 실행되지 않는다. 코드를 눈으로 따라 읽으며 구조를 이해하고, 직접 돌려보고 싶다면 [Google Colab](https://colab.research.google.com/)에 새 노트북을 만들어 붙여넣어 실행하자.
+
+\`\`\`python-colab
+import torch, torch.nn as nn
+
+class TwoLayerMLP(nn.Module):
+    def __init__(self, d_in, d_hidden, d_out):
+        super().__init__()                          # nn.Module의 초기화를 먼저 실행(필수)
+        self.fc1 = nn.Linear(d_in, d_hidden)         # 층 하나 = 학습 가능한 W1, b1을 가진 객체
+        self.fc2 = nn.Linear(d_hidden, d_out)        # 층 둘 = 학습 가능한 W2, b2를 가진 객체
+
+    def forward(self, x):                            # 순전파만 정의. backward는 autograd가 알아서 함
+        h = torch.relu(self.fc1(x))
+        return self.fc2(h)
+
+model = TwoLayerMLP(3, 4, 1)   # 「뉴런과 MLP」 단계의 h=φ(W1x+b1), ŷ=W2h+b2 를 그대로 객체로 만든 것
+\`\`\`
+
+- **Optimizer (torch.optim)**: 「최적화기」 단계에서 손으로 유도한 Adam의 갱신식($m_t, v_t$의 지수이동평균과 편향 보정, $\\theta \\leftarrow \\theta - \\eta\\,\\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon)$까지 전부)을 한 줄로 대신해주는 것이 \`torch.optim.Adam\`이다(이 블록도 위 \`model\`이 이미 만들어져 있다고 가정한 이어지는 코드이며, 마찬가지로 브라우저에서는 실행되지 않는다. Colab에서는 위 블록 뒤에 이어 붙이면 된다).
+
+\`\`\`python-colab
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, betas=(0.9, 0.999), eps=1e-8)
+\`\`\`
+
+\`model.parameters()\`가 \`__init__\`에서 선언한 모든 층의 파라미터를 하나로 모아 넘겨주고, 옵티마이저는 매 \`step()\`마다 각 파라미터의 \`.grad\`를 읽어 자신이 관리하는 $m, v$ 버퍼를 갱신한 뒤 파라미터 값을 직접 수정한다.
+
+- **Dataset / DataLoader**: 학습 데이터를 미니배치 단위로 잘라 순전파에 넣어주는 역할을 담당한다. \`Dataset\`은 \`__len__\`(전체 샘플 개수)과 \`__getitem__\`(인덱스로 샘플 하나를 꺼내는 방법)이라는 두 메서드만 정의하면 되는 간단한 인터페이스이고, \`DataLoader\`가 그 위에서 셔플·배치 묶기·병렬 로딩을 대신해준다. 이 코드 역시 브라우저에서는 실행되지 않는 참고용 코드다(Colab에서 X, y를 직접 정의한 뒤 실행해보라).
+
+\`\`\`python-colab
+from torch.utils.data import Dataset, DataLoader
+
+class MoonsDataset(Dataset):
+    def __init__(self, X, y):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y = torch.tensor(y)
+    def __len__(self):                    # DataLoader가 "전체 샘플이 몇 개인지" 물어볼 때 답하는 메서드
+        return len(self.X)
+    def __getitem__(self, idx):           # DataLoader가 "idx번째 샘플을 달라"고 할 때 답하는 메서드
+        return self.X[idx], self.y[idx]
+
+loader = DataLoader(MoonsDataset(X, y), batch_size=32, shuffle=True)
+\`\`\`
+
+- **Training / Validation Loop**: 표준적인 학습 루프는 "에폭을 반복 $\\to$ 그 안에서 배치를 반복 $\\to$ 순전파(forward) $\\to$ 손실 계산(loss) $\\to$ 역전파(backward) $\\to$ 파라미터 갱신(step) $\\to$ 기울기 초기화(zero_grad)"라는 여섯 단계를 그대로 되풀이하는 구조다. 아래도 같은 이유로 브라우저에서는 실행되지 않는다.
+
+\`\`\`python-colab
+for epoch in range(num_epochs):
+    model.train()                          # 학습 모드: BatchNorm이 이번 배치 통계를 사용
+    for xb, yb in train_loader:
+        pred = model(xb)                   # 순전파
+        loss = loss_fn(pred, yb)           # 손실 계산
+        optimizer.zero_grad()              # 이전 스텝의 .grad를 0으로 리셋(안 하면 +=로 누적됨)
+        loss.backward()                    # 역전파: 모든 파라미터의 .grad를 채움
+        optimizer.step()                   # .grad를 읽어 파라미터를 실제로 갱신
+
+    model.eval()                           # 평가 모드: BatchNorm이 누적해둔 이동평균을 사용
+    with torch.no_grad():                  # 이 블록 안에서는 계산 그래프를 기록하지 않음(메모리 절약)
+        val_loss = sum(loss_fn(model(xb), yb).item() for xb, yb in val_loader)
+    print(epoch, val_loss)
+\`\`\`
+
+검증(validation) 루프에서는 두 가지가 달라진다. \`model.eval()\`은 드롭아웃을 끄고 BatchNorm이 미니배치 통계 대신 학습 중 누적해온 이동평균을 쓰도록 모드를 바꾸고(드롭아웃과 BatchNorm은 보충 과정에서 다룬다), \`torch.no_grad()\`는 이 블록 안에서는 계산 그래프를 아예 기록하지 않도록 지시한다. 검증 시점에는 backward를 부를 일이 없으므로 그래프를 기록해봐야 메모리와 연산만 낭비되기 때문이다.
+
+- **Checkpoint**: \`torch.save(model.state_dict(), "ckpt.pt")\`로 그 시점의 모든 파라미터 값을 파일로 저장하고, \`model.load_state_dict(torch.load("ckpt.pt"))\`로 복원한다. 학습이 길게는 며칠씩 걸리는 큰 모델에서는 중간에 서버가 죽거나 재시작해야 할 때를 대비해 정기적으로 체크포인트를 저장해두고, 검증 손실이 가장 낮았던 시점의 체크포인트를 따로 보관해두면 마지막 에폭이 아니라 "가장 성능이 좋았던 순간"의 모델을 최종 결과물로 쓸 수 있다.
+
+이 대응 관계를 표로 한 번에 정리하면 다음과 같다.
+
+| 우리가 앞서 손으로 짠 것 | PyTorch가 대신 해주는 것 |
+| --- | --- |
+| Value.data | tensor의 값 |
+| Value.grad | tensor.grad |
+| Value._prev, _op | tensor.grad_fn (계산 그래프 기록) |
+| Value.backward()의 topo 정렬 + 역순회 | loss.backward() |
+| 「최적화기」 단계에서 손으로 쓴 Adam 갱신식 | torch.optim.Adam.step() |
+| 갱신 후 grad를 0으로 되돌리는 코드 | optimizer.zero_grad() |
+
+[[practice]]
+
+### 실습: autograd 없이 2층 신경망을 끝까지 학습시키기 (브라우저에서 실행)
+
+PyTorch가 대신해주는 일을 정확히 이해하는 가장 좋은 방법은, 한 번은 그 일을 전부 손으로 해보는 것이다. 아래 코드는 NumPy만으로 2층 MLP(은닉 16, ReLU)를 만들어 make_moons를 분류한다. \`backward\` 함수의 네 줄이 바로 \`loss.backward()\`가 자동으로 해주는 일이고, 학습 전에 gradient check로 그 네 줄이 맞는지부터 확인한다.
+
+\`\`\`python
+import numpy as np
+from sklearn.datasets import make_moons
+
+X, y = make_moons(n_samples=400, noise=0.15, random_state=0)
+Y = y.reshape(-1, 1).astype(float)                       # (400, 1)
+rng = np.random.default_rng(0)
+H = 16
+W1 = rng.normal(0, np.sqrt(2 / 2), (2, H)); b1 = np.zeros(H)   # He 초기화: Var = 2/fan_in
+W2 = rng.normal(0, np.sqrt(1 / H), (H, 1)); b2 = np.zeros(1)
+
+def forward(X, W1, b1, W2, b2):
+    z1 = X @ W1 + b1                   # (400, 16)
+    h = np.maximum(0, z1)              # ReLU
+    z2 = h @ W2 + b2                   # (400, 1)
+    p = 1 / (1 + np.exp(-z2))          # 시그모이드 → 양성 확률
+    return z1, h, p
+
+def loss_fn(p, Y):
+    return -np.mean(Y * np.log(p + 1e-12) + (1 - Y) * np.log(1 - p + 1e-12))
+
+def backward(X, Y, z1, h, p, W2):
+    dz2 = (p - Y) / len(X)             # 2주차: 시그모이드+교차엔트로피의 기울기 = p - y
+    dW2, db2 = h.T @ dz2, dz2.sum(axis=0)       # dL/dW = (입력)^T δ
+    dz1 = (dz2 @ W2.T) * (z1 > 0)      # W^T δ 로 내려보내고 ReLU에서 음수 자리는 차단
+    dW1, db1 = X.T @ dz1, dz1.sum(axis=0)
+    return dW1, db1, dW2, db2
+
+# 1) gradient check: W1[0, 0] 하나의 기울기를 수치미분과 비교
+z1, h, p = forward(X, W1, b1, W2, b2)
+dW1 = backward(X, Y, z1, h, p, W2)[0]
+Wp, Wm = W1.copy(), W1.copy()
+Wp[0, 0] += 1e-5; Wm[0, 0] -= 1e-5
+num = (loss_fn(forward(X, Wp, b1, W2, b2)[2], Y) - loss_fn(forward(X, Wm, b1, W2, b2)[2], Y)) / 2e-5
+print(f"gradient check: 역전파 {dW1[0, 0]:.8f}, 수치미분 {num:.8f}")
+
+# 2) 학습 루프: 순전파 → 손실 → 역전파 → 갱신 (PyTorch의 네 줄과 같은 구조)
+lr = 0.5
+for epoch in range(2001):
+    z1, h, p = forward(X, W1, b1, W2, b2)
+    dW1, db1, dW2, db2 = backward(X, Y, z1, h, p, W2)
+    W1 -= lr * dW1; b1 -= lr * db1; W2 -= lr * dW2; b2 -= lr * db2
+    if epoch % 500 == 0:
+        print(f"epoch {epoch:4d}: loss = {loss_fn(p, Y):.4f}, 정확도 = {np.mean((p >= 0.5) == Y):.3f}")
+\`\`\`
+
+:::task 통과 조건과 한 걸음 더
+**예상 결과:** gradient check의 두 값이 소수점 여덟째 자리까지 거의 같고, 손실이 약 0.69에서 0.04 근처로 줄며 정확도가 0.97 이상이 된다. **해볼 것:** ① \`H\`를 1, 2로 줄이면 정확도가 어디서 멈추는가(표현력 부족)? ② \`backward\`에서 \`* (z1 > 0)\`을 지우면 gradient check가 어떻게 되는가? ③ 본문의 PyTorch make_moons 코드를 Colab에서 실행해, 손으로 쓴 \`backward\` 네 줄이 \`loss.backward()\` 한 줄로 바뀌었다는 것을 직접 확인하자.
+:::
+
 ## 정규화 층: BatchNorm과 LayerNorm {#normalization}
 
 깊은 네트워크를 학습시킬 때 층을 통과할 때마다 활성화 값의 분포(평균과 분산)가 스텝마다 계속 흔들리면, 뒤쪽 층은 매번 달라지는 입력 분포에 다시 적응해야 해서 학습이 느려지고 불안정해진다. 정규화(normalization) 층은 이 문제를 완화하려고, 활성화 값 $z$를 평균 0·분산 1로 표준화한 뒤 학습 가능한 스케일 $\\gamma$와 이동 $\\beta$를 다시 곱하고 더해 $\\hat{z}=\\gamma\\cdot\\text{표준화}(z)+\\beta$ 형태로 되돌려준다. (이 "분포 흔들림"은 BatchNorm 원 논문이 내세운 설명이고, 이후 연구에서는 정규화가 손실 지형을 매끄럽게 만들어 더 큰 학습률로도 안정적으로 학습하게 해 주는 효과가 더 중요하다는 반론도 나왔다. 정규화 층이 학습을 돕는다는 사실은 분명하지만 "왜" 돕는지는 아직 완전히 합의되지 않았다.) 그런데 "평균과 분산을 어떤 축을 따라 계산하느냐"에 따라 전혀 다른 정규화 기법이 만들어진다.
@@ -662,7 +818,7 @@ Batch Normalization(BN)은 미니배치 축을 따라 정규화한다. 미니배
 \\mu_j = \\dfrac{1}{m}\\sum_{i=1}^m z_j^{(i)}, \\qquad \\sigma_j^2 = \\dfrac{1}{m}\\sum_{i=1}^m (z_j^{(i)}-\\mu_j)^2, \\qquad \\hat{z}_j^{(i)} = \\dfrac{z_j^{(i)}-\\mu_j}{\\sqrt{\\sigma_j^2+\\epsilon}}
 \`\`\`
 
-말로 읽으면 "특징 j의 평균 $\\mu_j$는 배치 안의 m개 샘플이 갖는 그 특징 값을 전부 더해 m으로 나눈 것, 분산 $\\sigma_j^2$은 각 값이 평균에서 얼마나 떨어져 있는지를 제곱해 평균 낸 것, 정규화된 값 $\\hat z$는 원래 값에서 평균을 빼고 표준편차(+작은 값 $\\epsilon$)로 나눈 것"이라는 뜻이다. 즉 "이 뉴런의 값이 배치 전체에서 평균적으로 어느 정도인가"를 기준으로 정규화한다. 문제는 이 통계치가 배치 구성에 따라 달라진다는 점이다. 배치 크기가 작으면 $\\mu_j, \\sigma_j^2$의 추정이 불안정해지고, 추론(inference) 시점에는 배치가 하나(m=1)일 수도 있으므로 학습 중 관찰해 둔 이동평균(running mean/var)을 대신 써야 하는 번거로움도 있다(8단계에서 다룰 \`model.eval()\`이 정확히 이 전환을 담당한다).
+말로 읽으면 "특징 j의 평균 $\\mu_j$는 배치 안의 m개 샘플이 갖는 그 특징 값을 전부 더해 m으로 나눈 것, 분산 $\\sigma_j^2$은 각 값이 평균에서 얼마나 떨어져 있는지를 제곱해 평균 낸 것, 정규화된 값 $\\hat z$는 원래 값에서 평균을 빼고 표준편차(+작은 값 $\\epsilon$)로 나눈 것"이라는 뜻이다. 즉 "이 뉴런의 값이 배치 전체에서 평균적으로 어느 정도인가"를 기준으로 정규화한다. 문제는 이 통계치가 배치 구성에 따라 달라진다는 점이다. 배치 크기가 작으면 $\\mu_j, \\sigma_j^2$의 추정이 불안정해지고, 추론(inference) 시점에는 배치가 하나(m=1)일 수도 있으므로 학습 중 관찰해 둔 이동평균(running mean/var)을 대신 써야 하는 번거로움도 있다(핵심 과정 「PyTorch가 대신해주는 것들」 단계의 \`model.eval()\`이 정확히 이 전환을 담당한다).
 
 Layer Normalization(LN)은 정규화 축을 완전히 바꾼다. 배치가 아니라 한 샘플이 가진 모든 특징(feature) 축을 따라 평균과 분산을 계산한다. 샘플 i 하나가 d개의 특징 $z_1^{(i)}, \\dots, z_d^{(i)}$을 가진다면,
 
@@ -726,162 +882,13 @@ print("기존 토큰의 LN 결과가 그대로인가?", np.allclose(((h_longer -
 **예상 결과:** BN은 특징별 평균 \`[4, 6]\`, 분산 \`[4, 4]\`, LN은 샘플별 평균 \`[3, 7]\`, 분산 \`[1, 1]\`로 본문과 같고, 정규화 결과는 둘 다 $\\pm 1$로 나오지만 부호가 놓이는 위치가 다르다. 샘플 하나짜리 배치에서 BN은 전부 0이 되지만 LN은 여전히 의미 있는 값을 낸다. Transformer 모양의 텐서에서는 $2 \\times 3$개 토큰의 평균이 모두 0이고(토큰마다 따로 정규화), 토큰을 하나 덧붙여도 기존 토큰의 결과가 그대로다(\`True\`). Transformer가 LN을 쓰는 이유다. **해볼 것:** 두 함수에 학습 가능한 \`gamma\`, \`beta\`를 추가해 \`gamma * norm + beta\`를 돌려주게 바꿔보자. \`gamma=표준편차\`, \`beta=평균\`으로 두면 원래 값이 복원되는가?
 :::
 
-## PyTorch가 대신해주는 것들 {#pytorch-core}
-
-앞서 우리는 Value라는 아주 작은 자동미분 엔진을 직접 만들어, 계산 그래프를 만들고 그 그래프를 거슬러 올라가며 기울기를 계산하는 과정을 한 줄씩 눈으로 확인했다. PyTorch 같은 딥러닝 프레임워크가 실전에서 하는 일은 정확히 이것과 같다. 다만 숫자 하나(스칼라)가 아니라 수백만 개의 숫자를 담은 텐서(tensor) 단위로, 그것도 CPU가 아닌 GPU에서 대량 병렬로 처리한다는 점이 다를 뿐이다. 이 단계에서는 우리가 직접 작성한 코드의 각 부분이 PyTorch의 어떤 개념에 대응하는지 하나씩 짝지어본다.
-
-- **Tensor**: PyTorch의 \`torch.Tensor\`는 NumPy의 \`ndarray\`와 데이터 구조 자체는 동일하다. 둘 다 같은 타입의 숫자를 다차원 배열로 담고, 인덱싱·브로드캐스팅·행렬 곱 같은 연산도 거의 그대로 대응된다(실제로 \`torch.from_numpy()\`로 메모리 복사 없이 서로 변환할 수 있다). 다른 점은 두 가지다. 첫째, 텐서는 \`.to("cuda")\`로 GPU 메모리로 옮겨 대량 병렬 연산을 시킬 수 있지만 NumPy 배열은 CPU에서만 동작한다. 둘째, 텐서는 \`requires_grad=True\`를 켜면 자신이 어떤 연산을 거쳐 만들어졌는지 계산 그래프를 계속 기록해 나중에 역전파에 쓸 수 있지만, NumPy 배열에는 이런 기록 기능이 아예 없다.
-
-- **Autograd**: \`requires_grad=True\`인 텐서에 연산을 적용할 때마다, PyTorch는 앞서 만든 Value가 \`_prev\`와 \`_backward\`를 저장했던 것과 똑같이 결과 텐서에 \`grad_fn\`이라는 이름으로 "이 텐서가 어떤 연산과 어떤 입력들로부터 만들어졌는지"를 기록한다. \`loss.backward()\`를 호출하면 이 grad_fn들을 따라 위상정렬의 역순으로 그래프를 순회하며 연쇄법칙을 적용하는데, 이것이 정확히 우리가 만든 \`Value.backward()\`가 topo 리스트를 뒤집어 순회하며 \`_backward()\`를 실행하던 것과 동일한 알고리즘이다. 계산이 끝나면 각 리프(leaf) 텐서, 즉 \`requires_grad=True\`로 직접 만든 파라미터 텐서의 \`.grad\` 속성에 $\\partial L/\\partial\\theta$가 채워진다(앞서 살펴본 Value의 \`.grad\` 필드와 완전히 같은 역할). \`optimizer.step()\`은 이렇게 채워진 \`.grad\`를 읽어 5단계의 갱신식(SGD, Adam)대로 파라미터를 갱신하고, \`optimizer.zero_grad()\`는 \`+=\`로 누적되는 성질(앞서 :::info 참고) 때문에 다음 스텝을 위해 \`.grad\`를 0으로 되돌리는 역할을 한다.
-
-\`\`\`image
-src: /images/week3/reverse-mode-autodiff.png
-alt: 함수 f(x1,x2)=x1*x2+sin(x1)의 계산 그래프를 손실 쪽에서 입력 쪽으로 거슬러 올라가며 각 노드의 국소 미분을 곱해 전달하는 역방향 자동미분 과정을 보여주는 다이어그램
-caption: 역방향 자동미분(reverse-mode automatic differentiation): f(x1,x2)=x1x2+sin(x1)의 계산 그래프를 출력(오른쪽)에서 입력(왼쪽) 방향으로 한 번만 훑으면서 연쇄법칙으로 모든 편미분을 동시에 얻는다. PyTorch의 loss.backward()가 grad_fn을 따라 수행하는 것이 바로 이 알고리즘이다.
-credit: Berland (en.wikipedia), Public Domain, Wikimedia Commons
-width: 960
-height: 560
-\`\`\`
-
-- **nn.Module**: 파라미터를 가진 레이어(예: Wx+b를 계산하는 완전연결층)를 재사용 가능한 단위로 묶는 클래스다. \`__init__\`에서 그 층이 가질 파라미터(가중치, 편향)를 \`nn.Linear\`, \`nn.Conv2d\` 같은 하위 모듈로 선언하고, \`forward\`에서는 입력이 그 파라미터들을 거쳐 출력으로 바뀌는 순전파 계산만 정의한다. 신기하게도 backward는 따로 작성하지 않는다. forward 안에서 사용한 텐서 연산 하나하나가 이미 autograd에 기록되므로, \`loss.backward()\`를 부르는 순간 이 모듈 내부의 모든 파라미터에 대한 기울기가 자동으로 계산된다. 아래 코드부터는 실제 \`torch\` 라이브러리를 사용하는데, 이 사이트의 실행 환경(Pyodide)에는 torch가 없어 브라우저에서는 실행되지 않는다. 코드를 눈으로 따라 읽으며 구조를 이해하고, 직접 돌려보고 싶다면 [Google Colab](https://colab.research.google.com/)에 새 노트북을 만들어 붙여넣어 실행하자.
-
-\`\`\`python-colab
-import torch, torch.nn as nn
-
-class TwoLayerMLP(nn.Module):
-    def __init__(self, d_in, d_hidden, d_out):
-        super().__init__()                          # nn.Module의 초기화를 먼저 실행(필수)
-        self.fc1 = nn.Linear(d_in, d_hidden)         # 층 하나 = 학습 가능한 W1, b1을 가진 객체
-        self.fc2 = nn.Linear(d_hidden, d_out)        # 층 둘 = 학습 가능한 W2, b2를 가진 객체
-
-    def forward(self, x):                            # 순전파만 정의. backward는 autograd가 알아서 함
-        h = torch.relu(self.fc1(x))
-        return self.fc2(h)
-
-model = TwoLayerMLP(3, 4, 1)   # 1단계의 h=φ(W1x+b1), ŷ=W2h+b2 를 그대로 객체로 만든 것
-\`\`\`
-
-- **Optimizer (torch.optim)**: 5단계에서 손으로 유도한 Adam의 갱신식($m_t, v_t$의 지수이동평균과 편향 보정, $\\theta \\leftarrow \\theta - \\eta\\,\\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon)$까지 전부)을 한 줄로 대신해주는 것이 \`torch.optim.Adam\`이다(이 블록도 위 \`model\`이 이미 만들어져 있다고 가정한 이어지는 코드이며, 마찬가지로 브라우저에서는 실행되지 않는다. Colab에서는 위 블록 뒤에 이어 붙이면 된다).
-
-\`\`\`python-colab
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, betas=(0.9, 0.999), eps=1e-8)
-\`\`\`
-
-\`model.parameters()\`가 \`__init__\`에서 선언한 모든 층의 파라미터를 하나로 모아 넘겨주고, 옵티마이저는 매 \`step()\`마다 각 파라미터의 \`.grad\`를 읽어 자신이 관리하는 $m, v$ 버퍼를 갱신한 뒤 파라미터 값을 직접 수정한다.
-
-- **Dataset / DataLoader**: 학습 데이터를 미니배치 단위로 잘라 순전파에 넣어주는 역할을 담당한다. \`Dataset\`은 \`__len__\`(전체 샘플 개수)과 \`__getitem__\`(인덱스로 샘플 하나를 꺼내는 방법)이라는 두 메서드만 정의하면 되는 간단한 인터페이스이고, \`DataLoader\`가 그 위에서 셔플·배치 묶기·병렬 로딩을 대신해준다. 이 코드 역시 브라우저에서는 실행되지 않는 참고용 코드다(Colab에서 X, y를 직접 정의한 뒤 실행해보라).
-
-\`\`\`python-colab
-from torch.utils.data import Dataset, DataLoader
-
-class MoonsDataset(Dataset):
-    def __init__(self, X, y):
-        self.X = torch.tensor(X, dtype=torch.float32)
-        self.y = torch.tensor(y)
-    def __len__(self):                    # DataLoader가 "전체 샘플이 몇 개인지" 물어볼 때 답하는 메서드
-        return len(self.X)
-    def __getitem__(self, idx):           # DataLoader가 "idx번째 샘플을 달라"고 할 때 답하는 메서드
-        return self.X[idx], self.y[idx]
-
-loader = DataLoader(MoonsDataset(X, y), batch_size=32, shuffle=True)
-\`\`\`
-
-- **Training / Validation Loop**: 표준적인 학습 루프는 "에폭을 반복 $\\to$ 그 안에서 배치를 반복 $\\to$ 순전파(forward) $\\to$ 손실 계산(loss) $\\to$ 역전파(backward) $\\to$ 파라미터 갱신(step) $\\to$ 기울기 초기화(zero_grad)"라는 여섯 단계를 그대로 되풀이하는 구조다. 아래도 같은 이유로 브라우저에서는 실행되지 않는다.
-
-\`\`\`python-colab
-for epoch in range(num_epochs):
-    model.train()                          # 학습 모드: BatchNorm이 이번 배치 통계를 사용
-    for xb, yb in train_loader:
-        pred = model(xb)                   # 순전파
-        loss = loss_fn(pred, yb)           # 손실 계산
-        optimizer.zero_grad()              # 이전 스텝의 .grad를 0으로 리셋(안 하면 +=로 누적됨)
-        loss.backward()                    # 역전파: 모든 파라미터의 .grad를 채움
-        optimizer.step()                   # .grad를 읽어 파라미터를 실제로 갱신
-
-    model.eval()                           # 평가 모드: BatchNorm이 누적해둔 이동평균을 사용
-    with torch.no_grad():                  # 이 블록 안에서는 계산 그래프를 기록하지 않음(메모리 절약)
-        val_loss = sum(loss_fn(model(xb), yb).item() for xb, yb in val_loader)
-    print(epoch, val_loss)
-\`\`\`
-
-검증(validation) 루프에서는 두 가지가 달라진다. \`model.eval()\`은 7단계에서 배운 BatchNorm이 미니배치 통계 대신 학습 중 누적해온 이동평균을 쓰도록 모드를 바꾸고, \`torch.no_grad()\`는 이 블록 안에서는 계산 그래프를 아예 기록하지 않도록 지시한다. 검증 시점에는 backward를 부를 일이 없으므로 그래프를 기록해봐야 메모리와 연산만 낭비되기 때문이다.
-
-- **Checkpoint**: \`torch.save(model.state_dict(), "ckpt.pt")\`로 그 시점의 모든 파라미터 값을 파일로 저장하고, \`model.load_state_dict(torch.load("ckpt.pt"))\`로 복원한다. 학습이 길게는 며칠씩 걸리는 큰 모델에서는 중간에 서버가 죽거나 재시작해야 할 때를 대비해 정기적으로 체크포인트를 저장해두고, 검증 손실이 가장 낮았던 시점의 체크포인트를 따로 보관해두면 마지막 에폭이 아니라 "가장 성능이 좋았던 순간"의 모델을 최종 결과물로 쓸 수 있다.
-
-이 대응 관계를 표로 한 번에 정리하면 다음과 같다.
-
-| 우리가 앞서 손으로 짠 것 | PyTorch가 대신 해주는 것 |
-| --- | --- |
-| Value.data | tensor의 값 |
-| Value.grad | tensor.grad |
-| Value._prev, _op | tensor.grad_fn (계산 그래프 기록) |
-| Value.backward()의 topo 정렬 + 역순회 | loss.backward() |
-| 5단계에서 손으로 쓴 Adam 갱신식 | torch.optim.Adam.step() |
-| 갱신 후 grad를 0으로 되돌리는 코드 | optimizer.zero_grad() |
-
-[[practice]]
-
-### 실습: autograd 없이 2층 신경망을 끝까지 학습시키기 (브라우저에서 실행)
-
-PyTorch가 대신해주는 일을 정확히 이해하는 가장 좋은 방법은, 한 번은 그 일을 전부 손으로 해보는 것이다. 아래 코드는 NumPy만으로 2층 MLP(은닉 16, ReLU)를 만들어 make_moons를 분류한다. \`backward\` 함수의 네 줄이 바로 \`loss.backward()\`가 자동으로 해주는 일이고, 학습 전에 gradient check로 그 네 줄이 맞는지부터 확인한다.
-
-\`\`\`python
-import numpy as np
-from sklearn.datasets import make_moons
-
-X, y = make_moons(n_samples=400, noise=0.15, random_state=0)
-Y = y.reshape(-1, 1).astype(float)                       # (400, 1)
-rng = np.random.default_rng(0)
-H = 16
-W1 = rng.normal(0, np.sqrt(2 / 2), (2, H)); b1 = np.zeros(H)   # He 초기화: Var = 2/fan_in
-W2 = rng.normal(0, np.sqrt(1 / H), (H, 1)); b2 = np.zeros(1)
-
-def forward(X, W1, b1, W2, b2):
-    z1 = X @ W1 + b1                   # (400, 16)
-    h = np.maximum(0, z1)              # ReLU
-    z2 = h @ W2 + b2                   # (400, 1)
-    p = 1 / (1 + np.exp(-z2))          # 시그모이드 → 양성 확률
-    return z1, h, p
-
-def loss_fn(p, Y):
-    return -np.mean(Y * np.log(p + 1e-12) + (1 - Y) * np.log(1 - p + 1e-12))
-
-def backward(X, Y, z1, h, p, W2):
-    dz2 = (p - Y) / len(X)             # 2주차: 시그모이드+교차엔트로피의 기울기 = p - y
-    dW2, db2 = h.T @ dz2, dz2.sum(axis=0)       # dL/dW = (입력)^T δ
-    dz1 = (dz2 @ W2.T) * (z1 > 0)      # W^T δ 로 내려보내고 ReLU에서 음수 자리는 차단
-    dW1, db1 = X.T @ dz1, dz1.sum(axis=0)
-    return dW1, db1, dW2, db2
-
-# 1) gradient check: W1[0, 0] 하나의 기울기를 수치미분과 비교
-z1, h, p = forward(X, W1, b1, W2, b2)
-dW1 = backward(X, Y, z1, h, p, W2)[0]
-Wp, Wm = W1.copy(), W1.copy()
-Wp[0, 0] += 1e-5; Wm[0, 0] -= 1e-5
-num = (loss_fn(forward(X, Wp, b1, W2, b2)[2], Y) - loss_fn(forward(X, Wm, b1, W2, b2)[2], Y)) / 2e-5
-print(f"gradient check: 역전파 {dW1[0, 0]:.8f}, 수치미분 {num:.8f}")
-
-# 2) 학습 루프: 순전파 → 손실 → 역전파 → 갱신 (PyTorch의 네 줄과 같은 구조)
-lr = 0.5
-for epoch in range(2001):
-    z1, h, p = forward(X, W1, b1, W2, b2)
-    dW1, db1, dW2, db2 = backward(X, Y, z1, h, p, W2)
-    W1 -= lr * dW1; b1 -= lr * db1; W2 -= lr * dW2; b2 -= lr * db2
-    if epoch % 500 == 0:
-        print(f"epoch {epoch:4d}: loss = {loss_fn(p, Y):.4f}, 정확도 = {np.mean((p >= 0.5) == Y):.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** gradient check의 두 값이 소수점 여덟째 자리까지 거의 같고, 손실이 약 0.69에서 0.04 근처로 줄며 정확도가 0.97 이상이 된다. **해볼 것:** ① \`H\`를 1, 2로 줄이면 정확도가 어디서 멈추는가(표현력 부족)? ② \`backward\`에서 \`* (z1 > 0)\`을 지우면 gradient check가 어떻게 되는가? ③ 본문의 PyTorch make_moons 코드를 Colab에서 실행해, 손으로 쓴 \`backward\` 네 줄이 \`loss.backward()\` 한 줄로 바뀌었다는 것을 직접 확인하자.
-:::
-
 ## GPU·혼합 정밀도와 PyTorch 실전 {#pytorch-practice}
 
 **CPU / GPU / CUDA.** 신경망 학습의 대부분은 행렬 곱과 원소별 연산으로 이뤄지는데, 이 연산들은 수십만 개의 독립적인 곱셈-덧셈으로 쪼갤 수 있어 병렬화에 매우 유리하다. CPU는 코어 수가 적은 대신 코어 하나하나의 성능이 강력해 복잡한 분기와 순차 로직에 강하고, GPU(그래픽 처리 장치)는 코어 하나하나는 단순하지만 수천 개를 동시에 돌릴 수 있어 "똑같은 연산을 아주 많은 데이터에 동시에 적용하는" 행렬 연산에 압도적으로 유리하다. CUDA는 NVIDIA GPU에서 이런 범용 병렬 연산을 수행할 수 있게 해주는 프로그래밍 인터페이스로, PyTorch는 텐서를 \`.to("cuda")\`로 옮기기만 하면 이후의 모든 연산을 내부적으로 CUDA 커널 호출로 바꿔 GPU에서 병렬 실행해준다.
 
 **Mixed Precision.** 기본적으로 텐서의 숫자는 32비트 부동소수점(FP32)으로 저장되는데, 딥러닝 연산 대부분은 그렇게까지 높은 정밀도가 필요하지 않다는 점에 착안해 일부 연산을 16비트(FP16 또는 BF16)로 대신 계산하는 기법이 혼합 정밀도(mixed precision) 학습이다. 숫자를 절반 크기로 저장하므로 GPU 메모리를 적게 쓰고, 한 번에 메모리에 실을 수 있는 데이터가 늘어나는 데다 최신 GPU는 16비트 연산 전용 회로를 따로 갖추고 있어 속도도 훨씬 빨라진다. 다만 표현 범위가 좁아진 만큼 작은 기울기 값이 0으로 반올림돼버리는 문제가 생길 수 있어, PyTorch의 \`torch.cuda.amp\`는 손실 값을 일부러 키워뒀다가(loss scaling) 나중에 다시 축소하는 방식으로 이 문제를 보완한다.
 
-**Hugging Face.** \`transformers\` 라이브러리는 BERT, GPT 계열처럼 이미 대규모 데이터로 사전학습(pretrained)된 모델의 가중치와 구조를 단 몇 줄로 불러와 바로 쓸 수 있게 해준다. 지금까지 배운 nn.Module, optimizer, training loop는 이런 사전학습 모델을 가져와 우리 데이터에 맞게 미세조정(fine-tuning)할 때도 그대로 재사용된다. 5~7주차에서 Transformer, LLM, RAG를 다룰 때는 모델을 처음부터 새로 학습시키는 대신 Hugging Face 생태계에서 이미 학습된 모델을 가져와 그 위에 쌓아 올리는 방식을 계속 쓰게 될 것이므로, 앞 단계에서 짝지어본 대응 관계를 기억해두면 그때 훨씬 수월하게 이해할 수 있다.
+**Hugging Face.** \`transformers\` 라이브러리는 BERT, GPT 계열처럼 이미 대규모 데이터로 사전학습(pretrained)된 모델의 가중치와 구조를 단 몇 줄로 불러와 바로 쓸 수 있게 해준다. 지금까지 배운 nn.Module, optimizer, training loop는 이런 사전학습 모델을 가져와 우리 데이터에 맞게 미세조정(fine-tuning)할 때도 그대로 재사용된다. 5~7주차에서 Transformer, LLM, RAG를 다룰 때는 모델을 처음부터 새로 학습시키는 대신 Hugging Face 생태계에서 이미 학습된 모델을 가져와 그 위에 쌓아 올리는 방식을 계속 쓰게 될 것이므로, 핵심 과정 「PyTorch가 대신해주는 것들」 단계에서 짝지어본 대응 관계를 기억해두면 그때 훨씬 수월하게 이해할 수 있다.
 
 ### PyTorch로 make_moons 분류해보기
 
@@ -1003,6 +1010,341 @@ print("결과가 같은가?", np.allclose(C_loop, C_vec))
 :::task 통과 조건과 한 걸음 더
 **예상 결과:** 결과는 같지만 속도는 수백~수천 배 차이 난다(실행 환경마다 다르다). 행렬 곱의 곱셈-덧셈 약 170만 개는 서로 독립이라 한꺼번에 처리할 수 있고, GPU는 이런 독립 연산을 수천 개의 코어로 동시에 처리해 그 차이를 더 벌린다. **해볼 것:** 행렬 크기를 60, 240으로 바꿔보자. 반복문의 시간은 크기의 몇 제곱에 비례해 늘어나는가?
 :::
+
+## 딥러닝 학습 기법: 드롭아웃·가중치 감쇠·학습률 스케줄·조기 종료 {#dl-regularization}
+
+핵심 과정에서 만든 2층 신경망은 데이터가 400개였고 은닉 뉴런이 16개였다. 실전에서는 반대 상황이 흔하다. 파라미터는 수백만 개인데 라벨이 붙은 데이터는 수천 개뿐이다. 2주차 「편향-분산 트레이드오프와 정규화」에서 본 과적합이 신경망에서는 더 쉽게, 더 조용히 일어난다. 이 단계는 실무에서 거의 모든 학습 코드에 들어가는 네 가지 도구를 다룬다. 가중치 감쇠, 드롭아웃, 조기 종료, 학습률 스케줄이다.
+
+### 가중치 감쇠: L2 정규화를 갱신식으로 보기
+
+2주차의 L2 벌점 $\\frac{\\lambda}{2}\\lVert w\\rVert^2$을 손실에 더하면 기울기에 $\\lambda w$가 붙고, 경사하강법 갱신은
+
+$$w \\leftarrow w - \\eta(g + \\lambda w) = (1 - \\eta\\lambda)\\,w - \\eta g$$
+
+가 된다. 매 스텝 가중치를 $(1 - \\eta\\lambda)$배로 살짝 줄인 뒤 평소처럼 기울기만큼 움직이는 것이다. 그래서 신경망에서는 이것을 **가중치 감쇠(weight decay)**라 부른다. 데이터가 정말로 필요로 하는 방향의 가중치만 기울기가 계속 밀어 올려 살아남고, 잡음을 외우는 데 쓰인 가중치는 서서히 0으로 줄어든다. (SGD에서는 L2 벌점과 가중치 감쇠가 정확히 같지만 Adam에서는 달라진다. 그 차이와 AdamW는 심화 과정의 「Adam의 이론」 단계에서 다룬다.)
+
+### 드롭아웃: 매 스텝 다른 부분망을 학습시키기
+
+**드롭아웃(dropout)**은 학습 중 매 스텝, 은닉 뉴런 각각을 확률 $p$로 0으로 끈다. 어떤 뉴런도 특정 동료 뉴런이 항상 있다고 기대할 수 없으므로, 각 뉴런이 혼자서도 쓸모 있는 특징을 배우게 되고 뉴런들끼리 서로의 실수를 덮어 주는 공모(co-adaptation)가 줄어든다. 매 스텝 다른 부분망을 학습시키는 셈이라, 평가할 때 드롭아웃을 끄고 전체 망을 쓰는 것은 수많은 부분망의 예측을 평균하는 앙상블(2주차 배깅)과 비슷한 효과를 낸다.
+
+한 가지 구현 세부가 중요하다. 학습 때 뉴런의 절반이 꺼지면 다음 층이 받는 입력의 평균도 절반이 된다. 평가 때 전부 켜면 평균이 두 배로 뛰어 학습 때와 다른 분포가 들어간다. 그래서 요즘 구현은 학습 중 살아남은 값을 $\\frac{1}{1-p}$배 해 평균을 유지하는 **역드롭아웃(inverted dropout)**을 쓰고, 평가 때는 아무것도 하지 않는다. PyTorch의 \`model.train()\`과 \`model.eval()\`이 바꾸는 것이 바로 이 동작(그리고 BatchNorm의 통계)이다.
+
+### 조기 종료: 검증 손실이 가장 낮았던 시점으로
+
+학습을 오래 할수록 훈련 손실은 계속 줄지만 검증 손실은 어느 순간부터 다시 오른다. **조기 종료(early stopping)**는 검증 손실을 주기적으로 기록하다가 일정 횟수(patience) 동안 개선이 없으면 멈추고, 검증 손실이 가장 낮았던 시점의 체크포인트를 최종 모델로 쓴다. 학습 시간 자체를 규제의 손잡이로 쓰는 셈이다. 실제로 작은 학습률로 $t$스텝 학습하는 것은 대략 $\\lambda \\approx 1/(\\eta t)$인 L2 규제와 비슷한 효과를 낸다고 알려져 있다.
+
+신경망의 과적합은 정확도보다 **손실**에서 먼저, 더 크게 드러난다는 점도 기억해 두자. 모델이 훈련 데이터를 외우면 검증 샘플에 대해 틀린 답을 점점 더 확신하게 되고, 교차 엔트로피는 확신하며 틀린 예측에 큰 벌점을 주기 때문이다(2주차). 정확도가 그대로인데 검증 손실만 오른다면 모델이 과신하기 시작했다는 신호다.
+
+### 학습률 스케줄: 처음엔 조심, 중간엔 과감, 끝엔 섬세하게
+
+학습률을 처음부터 끝까지 고정할 필요는 없다. 실무에서 가장 흔한 조합은 **선형 워밍업 + 코사인 감쇠**다. 처음 몇 백 스텝은 학습률을 0 근처에서 목표값까지 선형으로 올리고(파라미터와 Adam의 통계가 아직 불안정할 때 큰 걸음을 피한다), 그 뒤에는
+
+$$\\eta_t = \\eta_{\\min} + \\tfrac{1}{2}(\\eta_{\\max} - \\eta_{\\min})\\left(1 + \\cos\\frac{\\pi\\,(t - t_{\\text{warmup}})}{T - t_{\\text{warmup}}}\\right)$$
+
+로 부드럽게 줄인다. 초반의 큰 학습률은 손실 지형을 넓게 탐색하고, 후반의 작은 학습률은 최솟값 근처에서 진동하지 않고 정착하게 한다. 5~7주차의 Transformer 학습은 거의 예외 없이 이 스케줄을 쓴다.
+
+[[practice]]
+
+### 실습: 드롭아웃·스케줄 확인과 과적합 다스리기
+
+첫 셀은 역드롭아웃이 평균을 유지하는지, 워밍업+코사인 스케줄이 스텝마다 어떤 값을 주는지 확인한다. 둘째 셀은 훈련 데이터가 60개뿐인 make_moons에 은닉 뉴런 128개의 신경망을 3000에폭 학습시켜, 아무것도 안 했을 때·가중치 감쇠·드롭아웃을 비교하고 조기 종료라면 언제 멈췄을지 기록한다. 실행 전에 예측해 보자. 세 경우의 검증 **정확도**는 크게 다를까?
+
+\`\`\`python
+import numpy as np
+
+# 1) 역드롭아웃(inverted dropout): 살아남은 값을 1/(1-p)배 해 평균을 유지한다
+rng = np.random.default_rng(0)
+h = rng.random((10_000, 50))                       # 어떤 층의 활성화
+p = 0.5
+mask = (rng.random(h.shape) >= p) / (1 - p)
+print(f"드롭아웃 전 평균 {h.mean():.4f}, 학습 중(드롭아웃 후) 평균 {(h * mask).mean():.4f}, 꺼진 비율 {(mask == 0).mean():.3f}")
+
+# 2) 워밍업 + 코사인 감쇠 학습률 스케줄
+def lr_at(step, total=1000, warmup=100, lr_max=1e-3, lr_min=1e-5):
+    if step < warmup:
+        return lr_max * (step + 1) / warmup                       # 선형 워밍업
+    progress = (step - warmup) / (total - warmup)
+    return lr_min + 0.5 * (lr_max - lr_min) * (1 + np.cos(np.pi * progress))
+print("학습률:", {s: f"{lr_at(s):.2e}" for s in (0, 49, 99, 100, 550, 999)})
+\`\`\`
+
+\`\`\`python
+import numpy as np
+from sklearn.datasets import make_moons
+
+X, y = make_moons(n_samples=1060, noise=0.35, random_state=0)
+Xtr, ytr = X[:60], y[:60].reshape(-1, 1).astype(float)          # 훈련 60개뿐
+Xva, yva = X[60:], y[60:].reshape(-1, 1).astype(float)          # 검증 1000개
+
+def predict(X, W1, b1, W2, b2):
+    return 1 / (1 + np.exp(-(np.maximum(0, X @ W1 + b1) @ W2 + b2)))
+
+def bce(p, y):
+    return -np.mean(y * np.log(p + 1e-12) + (1 - y) * np.log(1 - p + 1e-12))
+
+def train(weight_decay=0.0, p_drop=0.0, epochs=3000, lr=0.5, H=128, seed=0):
+    rng = np.random.default_rng(seed)
+    W1, b1 = rng.normal(0, 1.0, (2, H)), np.zeros(H)
+    W2, b2 = rng.normal(0, np.sqrt(1 / H), (H, 1)), np.zeros(1)
+    log = []
+    for ep in range(epochs + 1):
+        z1 = Xtr @ W1 + b1
+        h = np.maximum(0, z1)
+        mask = (rng.random(h.shape) >= p_drop) / (1 - p_drop)   # p_drop=0이면 전부 1
+        hd = h * mask
+        p = 1 / (1 + np.exp(-(hd @ W2 + b2)))
+        dz2 = (p - ytr) / len(Xtr)
+        dW2, db2 = hd.T @ dz2 + weight_decay * W2, dz2.sum(axis=0)
+        dz1 = (dz2 @ W2.T) * mask * (z1 > 0)
+        dW1, db1 = Xtr.T @ dz1 + weight_decay * W1, dz1.sum(axis=0)
+        W1 -= lr * dW1; b1 -= lr * db1; W2 -= lr * dW2; b2 -= lr * db2
+        if ep % 100 == 0:                                         # 평가할 때는 드롭아웃을 끈다
+            pv, pt = predict(Xva, W1, b1, W2, b2), predict(Xtr, W1, b1, W2, b2)
+            log.append((ep, np.mean((pt >= 0.5) == ytr), np.mean((pv >= 0.5) == yva), bce(pv, yva)))
+    return log
+
+for name, kw in [("기본", {}), ("가중치 감쇠 0.01", {"weight_decay": 1e-2}), ("드롭아웃 0.5", {"p_drop": 0.5})]:
+    log = train(**kw)
+    ep, tr_acc, va_acc, va_loss = log[-1]
+    best = min(log, key=lambda r: r[3])                          # 조기 종료라면 고를 시점
+    print(f"{name:12s} 마지막: 훈련 정확도 {tr_acc:.3f}, 검증 정확도 {va_acc:.3f}, 검증 손실 {va_loss:.3f}"
+          f" | 검증 손실 최소: {best[0]}에폭 {best[3]:.3f}")
+\`\`\`
+
+:::task 통과 조건과 한 걸음 더
+**예상 결과:** 드롭아웃 전후 평균이 0.500으로 같고 꺼진 비율은 0.500이다. 학습률은 0스텝 $10^{-5}$에서 99스텝 $10^{-3}$까지 오른 뒤 550스텝 약 $5\\times10^{-4}$, 999스텝 $10^{-5}$로 내려간다. 둘째 셀에서 세 경우의 검증 정확도는 모두 약 0.87로 비슷하지만(잡음 0.35인 데이터의 한계에 가깝다), 아무것도 안 한 모델은 훈련 정확도 0.967에 검증 손실이 0.948까지 치솟는다. 검증 손실은 300에폭에 0.320으로 가장 낮았으므로 조기 종료했다면 그때 멈췄을 것이다. 가중치 감쇠는 끝까지 검증 손실을 0.313으로 유지하고, 드롭아웃은 0.670으로 기본보다 훨씬 낮다. **설명해볼 것:** 정확도는 같은데 검증 손실만 세 배가 된 기본 모델에서 무슨 일이 일어난 것인지, "확신하며 틀린다"는 말로 설명해 보자.
+:::
+
+## 자동미분의 두 모드: 순방향·역방향과 메모리 {#autodiff-theory}
+
+핵심 과정에서 만든 micrograd와 PyTorch의 autograd는 **역방향 모드(reverse mode)** 자동미분이다. 자동미분에는 반대 방향의 **순방향 모드(forward mode)**도 있고, 어느 쪽이 유리한지는 입력과 출력의 개수가 정한다. 이 단계는 두 모드를 야코비안(Jacobian)의 언어로 정리하고, 역방향 모드가 왜 딥러닝의 표준이 되었는지, 그 대가인 메모리 문제를 어떻게 다루는지 살펴본다.
+
+### 야코비안, JVP, VJP
+
+함수 $f: \\mathbb{R}^n \\to \\mathbb{R}^m$의 야코비안 $J$는 $J_{ij} = \\partial f_i / \\partial x_j$인 $m \\times n$ 행렬이다. 층을 여러 개 합성한 $f = f_L \\circ \\cdots \\circ f_1$의 야코비안은 연쇄법칙에 의해 각 층 야코비안의 곱 $J = J_L \\cdots J_1$이다. 이 곱을 통째로 만들 필요는 없고, 벡터와 곱한 결과만 있으면 된다.
+
+- **순방향 모드**는 입력 쪽 방향 벡터 $v$에서 출발해 $J v = J_L(\\cdots(J_1 v))$를 오른쪽부터 계산한다(야코비안-벡터 곱, JVP). 순전파와 같은 방향으로 한 번 지나가면 "입력을 $v$ 방향으로 살짝 움직였을 때 모든 출력이 얼마나 변하는가"를 얻는다. 기울기 전체를 얻으려면 입력 차원마다 한 번씩, 즉 **$n$번** 지나가야 한다.
+- **역방향 모드**는 출력 쪽 벡터 $u$에서 출발해 $u^\\top J = ((u^\\top J_L)\\cdots)J_1$을 왼쪽부터 계산한다(벡터-야코비안 곱, VJP). 출력 차원마다 한 번, 즉 **$m$번** 지나가면 된다.
+
+신경망의 손실은 스칼라($m = 1$)이고 파라미터는 수백만 개($n$이 거대)다. 역방향 모드는 한 번으로 모든 기울기를 얻고, 순방향 모드는 파라미터 수만큼 반복해야 한다. 역방향 한 번의 비용은 순전파의 작은 상수배(보통 2~3배)라는 것이 알려져 있다("값싼 기울기 원리"). 반대로 입력이 하나이고 출력이 많은 문제(예: 시간 하나에 대한 여러 물리량의 민감도)라면 순방향 모드가 유리하다.
+
+순방향 모드는 **이원수(dual number)**로 아주 우아하게 구현된다. $\\varepsilon^2 = 0$인 기호 $\\varepsilon$을 도입해 $a + b\\varepsilon$ 꼴의 수를 계산하면, 테일러 전개의 2차 이상 항이 모두 사라져 $f(a + \\varepsilon) = f(a) + f'(a)\\,\\varepsilon$이 된다. 값과 미분을 한 쌍으로 들고 다니며 연산마다 곱의 미분법·연쇄법칙을 적용할 뿐이고, 수치미분과 달리 근사 오차가 없다.
+
+### 메모리라는 대가와 그레이디언트 체크포인팅
+
+역방향 모드는 거꾸로 거슬러 올라가며 각 층의 국소 미분을 계산하므로, 순전파 때 계산한 중간 활성화를 **모두 저장**해 두어야 한다(micrograd의 각 \`Value\`가 \`data\`를 들고 있는 이유). 층이 $L$개면 메모리가 $L$에 비례하고, 큰 모델 학습에서 GPU 메모리를 가장 많이 차지하는 것이 파라미터가 아니라 이 활성화인 경우가 많다.
+
+**그레이디언트 체크포인팅(gradient checkpointing)**은 계산으로 메모리를 산다. 활성화를 $k$층마다 하나씩만 저장하고, 역전파 중 어떤 구간이 필요해지면 가장 가까운 체크포인트에서 그 구간만 순전파를 다시 계산한다. 메모리는 "체크포인트 $L/k$개 + 다시 계산하는 구간 $k$개"이므로 $k = \\sqrt{L}$로 잡으면 $O(\\sqrt{L})$로 줄고, 대가는 순전파를 대략 한 번 더 하는 것이다(Chen et al., 2016). 거대 언어 모델 학습에서 표준으로 쓰는 기법이다.
+
+[[practice]]
+
+### 실습: 이원수, JVP 대 VJP, 체크포인팅 계산
+
+① 이원수로 $f(x) = x\\sin x + e^x$의 미분을 정확히 구한다. ② 입력 500차원·출력 1차원인 4층 tanh 망에서 기울기 전체를 순방향 모드(500번)와 역방향 모드(1번)로 구해 결과와 시간을 비교한다. ③ 층 수에 따른 체크포인팅의 메모리 절약을 계산한다. 실행 전에 ②의 시간 차이가 몇 배쯤 될지 예측해 보자.
+
+\`\`\`python
+import math
+import numpy as np
+
+# 1) 이원수(dual number)로 하는 순방향 모드: a + b·ε, ε² = 0
+class Dual:
+    def __init__(self, val, dot=0.0):
+        self.val, self.dot = val, dot                 # 값과 "그 값의 미분"을 함께 들고 다닌다
+    def __add__(self, o):
+        o = o if isinstance(o, Dual) else Dual(o)
+        return Dual(self.val + o.val, self.dot + o.dot)
+    __radd__ = __add__
+    def __mul__(self, o):
+        o = o if isinstance(o, Dual) else Dual(o)
+        return Dual(self.val * o.val, self.dot * o.val + self.val * o.dot)   # 곱의 미분법
+    __rmul__ = __mul__
+def sin(d): return Dual(math.sin(d.val), math.cos(d.val) * d.dot)
+def exp(d): return Dual(math.exp(d.val), math.exp(d.val) * d.dot)
+
+f = lambda x: x * sin(x) + exp(x)
+out = f(Dual(1.0, 1.0))                               # x = 1에서 dx/dx = 1을 씨앗으로
+exact = math.sin(1) + math.cos(1) + math.exp(1)       # f'(x) = sin x + x cos x + e^x
+print(f"f(1) = {out.val:.6f}, 순방향 미분 = {out.dot:.12f}, 해석적 미분 = {exact:.12f}")
+
+# 2) 입력 n개 → 출력 1개: 순방향은 n번, 역방향은 1번
+rng = np.random.default_rng(0)
+n, depth = 500, 4
+Ws = [rng.normal(0, 1 / np.sqrt(n), (n, n)) for _ in range(depth)]
+w_out = rng.normal(size=n)
+def forward(x):
+    hs = [x]
+    for W in Ws:
+        hs.append(np.tanh(W @ hs[-1]))
+    return w_out @ hs[-1], hs
+x0 = rng.normal(size=n)
+_, hs = forward(x0)
+
+def jvp(v):                                           # 순방향 모드: J·v (방향 하나에 대한 변화율)
+    for W, h in zip(Ws, hs[1:]):
+        v = (1 - h ** 2) * (W @ v)
+    return w_out @ v
+def vjp():                                            # 역방향 모드: 1·J (모든 입력에 대한 기울기)
+    g = w_out
+    for W, h in zip(reversed(Ws), reversed(hs[1:])):
+        g = W.T @ ((1 - h ** 2) * g)
+    return g
+
+import time
+t0 = time.perf_counter(); g_fwd = np.array([jvp(e) for e in np.eye(n)]); t_fwd = time.perf_counter() - t0
+t0 = time.perf_counter(); g_rev = vjp(); t_rev = time.perf_counter() - t0
+print(f"순방향 {n}번: {t_fwd:.3f}초, 역방향 1번: {t_rev:.5f}초, 결과 일치: {np.allclose(g_fwd, g_rev)}")
+
+# 3) 메모리: 층 L개의 활성화를 모두 저장 vs √L 간격 체크포인트
+for L in (16, 100, 400):
+    k = int(round(math.sqrt(L)))
+    print(f"L={L:3d}: 모두 저장 {L}개, 체크포인트(간격 {k}) 최대 {L // k + k}개, 추가 순전파 약 1회")
+\`\`\`
+
+:::task 통과 조건과 한 걸음 더
+**예상 결과:** 이원수 미분 4.100055119135가 해석적 미분과 소수 열두째 자리까지 같다(수치미분이 아니라 정확한 미분이다). ②에서 두 모드의 기울기가 일치하고(\`True\`), 역방향 1번이 순방향 500번보다 수백 배 빠르다(실행 환경마다 다르다). ③에서 $L = 100$이면 저장할 활성화가 100개에서 최대 20개로, $L = 400$이면 400개에서 40개로 준다. **설명해볼 것:** 출력이 1000개이고 입력이 3개인 함수의 야코비안 전체가 필요하다면 어느 모드를 몇 번 쓰는 것이 유리한가?
+:::
+
+## Adam의 이론: 편향 보정·AdamW·워밍업 {#adam-theory}
+
+핵심 과정 「최적화기」 단계에서 Adam의 갱신식을 숫자로 따라갔다. 이 단계는 세 가지 "왜"에 답한다. ① 편향 보정은 왜 하필 $1 - \\beta^t$로 나누는가, ② Adam에 L2 정규화를 그냥 넣으면 왜 의도대로 작동하지 않고 AdamW가 필요한가, ③ Transformer 학습에서 학습률 워밍업이 왜 사실상 필수인가.
+
+### 편향 보정의 유도
+
+$m_0 = 0$에서 시작해 $m_t = \\beta_1 m_{t-1} + (1-\\beta_1)g_t$를 풀어 쓰면
+
+$$m_t = (1-\\beta_1)\\sum_{i=1}^{t}\\beta_1^{\\,t-i}\\,g_i$$
+
+이다. 기울기의 기대값이 일정하게 $\\mathbb{E}[g]$라고 하면, 등비수열의 합 $\\sum_{i=1}^{t}\\beta_1^{t-i} = \\frac{1-\\beta_1^t}{1-\\beta_1}$에 의해 $\\mathbb{E}[m_t] = (1 - \\beta_1^t)\\,\\mathbb{E}[g]$다. 즉 $m_t$는 초반에 0 쪽으로 $(1-\\beta_1^t)$배만큼 끌려 있고, 이것을 나눠 주는 $\\hat m_t = m_t/(1-\\beta_1^t)$가 불편 추정이 된다. $\\beta_1 = 0.9$면 $t = 1$에서 0.1배, $t = 10$에서 약 0.65배, $t = 50$이면 거의 1이라 보정이 필요 없다. $v_t$도 같고, $\\beta_2 = 0.999$는 $1 - \\beta_2^t$가 1에 가까워지는 데 수천 스텝이 걸리므로 보정이 훨씬 오래 중요하다.
+
+### L2 정규화 ≠ 가중치 감쇠: AdamW
+
+SGD에서는 손실에 $\\frac{\\lambda}{2}\\lVert w\\rVert^2$을 더하는 것(L2)과 매 스텝 $w \\leftarrow (1-\\eta\\lambda)w$로 줄이는 것(가중치 감쇠)이 같았다. Adam에서는 다르다. L2 항의 기울기 $\\lambda w$가 다른 기울기와 섞여 $\\sqrt{\\hat v}$로 **나눠지기** 때문이다. 기울기가 크게 흔들리는 파라미터일수록 $\\sqrt{\\hat v}$가 커서 감쇠가 약해지고, 거의 쓰이지 않는 파라미터는 반대로 엉뚱하게 움직인다. 극단적인 예로, 데이터에서 오는 기울기가 0인 파라미터라면 기울기가 $\\lambda w$뿐이므로 $\\hat m/\\sqrt{\\hat v} \\approx \\operatorname{sign}(w)$가 되어 $\\lambda$가 $10^{-4}$이든 1이든 **매 스텝 약 $\\eta$씩** 줄어든다. $\\lambda$라는 손잡이가 사실상 고장 난 것이다.
+
+Loshchilov & Hutter(2019)의 **AdamW**는 감쇠를 기울기에서 떼어 내어 갱신 단계에서 따로 적용한다.
+
+$$w \\leftarrow w - \\eta\\left(\\frac{\\hat m_t}{\\sqrt{\\hat v_t} + \\epsilon} + \\lambda w\\right)$$
+
+이제 감쇠는 모든 파라미터에 같은 비율 $(1 - \\eta\\lambda)$로 걸리고, 학습률과 감쇠 강도를 따로 조절할 수 있다. 현재 Transformer 계열 학습의 표준 최적화기는 Adam이 아니라 AdamW이고, PyTorch에서도 \`torch.optim.AdamW\`를 쓴다.
+
+### 워밍업이 필요한 이유
+
+학습 초반에는 $\\hat v_t$가 몇 개의 기울기 제곱만으로 추정되어 매우 불안정하다. 우연히 작게 추정된 파라미터는 유효 학습률 $\\eta/\\sqrt{\\hat v}$가 폭주하고, 이 초반의 큰 걸음이 학습을 나쁜 영역으로 밀어 버릴 수 있다. Liu et al.(2020, RAdam)은 적응 학습률의 분산이 초반에 발산적으로 크다는 것을 보이고, 이것이 경험적으로 워밍업이 필요했던 이유라고 설명했다. 그래서 처음 수백~수천 스텝은 학습률을 0 근처에서 서서히 올리며 $\\hat v$가 자리를 잡을 시간을 준다. Transformer는 층이 깊고 LayerNorm 위치(5주차)에 따라 초반 기울기가 특히 불안정해 워밍업 없이는 발산하기 쉽다.
+
+덧붙여, Adam이 항상 수렴하는 것은 아니다. Reddi et al.(2018)은 간단한 볼록 문제에서도 Adam이 최적해로 수렴하지 않는 반례를 만들고, $\\hat v$의 최댓값을 유지하는 AMSGrad를 제안했다. 실무에서 Adam(W)이 잘 동작하는 것과 이론적 보장은 별개라는 점을 기억해 두자.
+
+[[practice]]
+
+### 실습: 편향 보정과 고장 난 감쇠 계수
+
+① 기울기가 항상 2일 때 $m_t$와 보정된 $\\hat m_t$를 5스텝 출력한다. ② 데이터 기울기가 0인 파라미터 하나($w_0 = 1$)를 학습률 $10^{-3}$으로 1000스텝 갱신하며, $\\lambda = 10^{-4}, 10^{-2}, 1$에서 "Adam + L2"와 "AdamW"의 최종 $w$를 비교한다. 실행 전에 예측해 보자. Adam + L2에서 $\\lambda$를 1만 배 바꾸면 결과가 얼마나 달라질까?
+
+\`\`\`python
+import numpy as np
+
+# 1) 편향 보정: 기울기가 항상 g=2일 때 m_t와 보정된 m̂_t
+b1 = 0.9
+m = 0.0
+for t in range(1, 6):
+    m = b1 * m + (1 - b1) * 2.0
+    print(f"t={t}: m = {m:.4f}, 1-β₁^t = {1 - b1 ** t:.4f}, m̂ = {m / (1 - b1 ** t):.4f}")
+
+# 2) 데이터 기울기가 0인(한 번도 쓰이지 않는) 파라미터 하나에 L2 vs 분리된 가중치 감쇠
+def adam(lam, decoupled, steps=1000, lr=1e-3, b1=0.9, b2=0.999, eps=1e-8):
+    w, m, v = 1.0, 0.0, 0.0
+    for t in range(1, steps + 1):
+        g = 0.0 if decoupled else lam * w          # Adam + L2: 감쇠를 기울기에 섞는다
+        m = b1 * m + (1 - b1) * g
+        v = b2 * v + (1 - b2) * g ** 2
+        step = m / (1 - b1 ** t) / (np.sqrt(v / (1 - b2 ** t)) + eps)
+        w -= lr * step
+        if decoupled:
+            w -= lr * lam * w                       # AdamW: 감쇠를 갱신에서 따로 적용
+    return w
+print()
+for lam in (1e-4, 1e-2, 1.0):
+    print(f"λ={lam:<6}: Adam+L2 → w = {adam(lam, False):.4f}   AdamW → w = {adam(lam, True):.4f}")
+\`\`\`
+
+:::task 통과 조건과 한 걸음 더
+**예상 결과:** $m_t$는 0.2, 0.38, 0.542, ...로 2보다 한참 작지만 $\\hat m_t$는 매 스텝 정확히 2.0000이다. ②에서 Adam + L2는 $\\lambda$가 $10^{-4}$이든 1이든 $w$가 똑같이 0.2577로 줄어든다($\\lambda$가 아무 역할을 못 한다). AdamW는 $w = (1 - \\eta\\lambda)^{1000} \\approx e^{-\\lambda}$로 0.9999, 0.9900, 0.3677이 되어 $\\lambda$에 따라 감쇠 강도가 의도대로 달라진다. **설명해볼 것:** Adam + L2에서 $w$가 $\\lambda$와 무관하게 줄어드는 이유를 "$\\hat m/\\sqrt{\\hat v}$는 기울기의 크기가 아니라 부호에 반응한다"는 성질로 설명해 보자.
+:::
+
+## 기울기 흐름의 수학: 야코비안의 곱·잔차 연결·기울기 클리핑 {#gradient-flow}
+
+핵심 과정 「기울기 소실·폭발과 가중치 초기화」 단계에서는 활성화의 표준편차가 층마다 1.5배, 0.8배가 되면 10층 뒤 57배, 0.1배가 된다는 것을 봤다. 이 단계는 같은 현상을 **역전파되는 기울기**의 관점에서 정확히 쓰고, 현대 신경망이 수백 층을 학습시키는 두 열쇠인 잔차 연결과 기울기 클리핑이 왜 작동하는지 보인다.
+
+### 기울기는 야코비안 전치의 곱을 지나간다
+
+층 $h_{l} = \\phi(W_l h_{l-1})$에서 $h_{l-1}$에 대한 야코비안은 $J_l = \\operatorname{diag}(\\phi'(z_l))\\,W_l$이다. 출력 쪽 기울기 $g_L = \\partial L/\\partial h_L$은 역전파로
+
+$$\\frac{\\partial L}{\\partial h_0} = J_1^\\top J_2^\\top \\cdots J_L^\\top\\, g_L$$
+
+을 지나 입력 쪽에 도착한다. 행렬 $L$개를 곱한 결과의 크기는 대략 각 행렬이 벡터를 늘리거나 줄이는 비율(특이값)의 곱이다. 층마다 평균적으로 0.8배씩 줄이면 50층 뒤 $0.8^{50} \\approx 10^{-5}$, 1.2배씩 늘리면 $1.2^{50} \\approx 9000$배다. tanh의 $\\phi'(z) = 1 - \\tanh^2 z \\le 1$은 포화 구간에서 0에 가까워 줄이는 쪽으로 작용하고, 가중치의 스케일은 늘이는 쪽으로 작용한다. 둘이 정확히 균형을 이루도록 초기화하면 기울기 노름이 오래 유지되는데, 이 조건을 엄밀하게 추구한 것이 직교 초기화와 "동역학적 등거리성(dynamical isometry)" 연구다(Saxe et al., 2014; Pennington et al., 2017). 하지만 이 균형은 칼날 위에 서 있어서, 학습이 진행되며 가중치가 바뀌면 쉽게 무너진다.
+
+### 잔차 연결: 기울기를 위한 고속도로
+
+4주차의 ResNet이 도입한 **잔차 연결(residual connection)** $h_l = h_{l-1} + F(h_{l-1})$은 야코비안을 $J_l = I + \\partial F/\\partial h$로 바꾼다. 역전파되는 기울기는
+
+$$g_{l-1} = g_l + \\left(\\frac{\\partial F}{\\partial h}\\right)^{\\!\\top} g_l$$
+
+로, 층을 거칠 때마다 **원래 기울기가 그대로 더해지는 경로**가 생긴다. 곱의 사슬이 "1 + 작은 값"들의 곱이 되므로 $F$의 야코비안이 작아도 기울기가 0으로 사라지지 않는다. 반대로 "1 + 작은 값"을 수백 번 곱하면 조금씩 커질 수 있으므로, 실제 모델은 잔차 가지의 출력을 작게 초기화하거나 $1/\\sqrt{L}$로 줄이고, 정규화 층(LayerNorm)과 함께 쓴다. Transformer의 블록 하나하나도 잔차 연결로 감싸여 있다(5주차).
+
+### 기울기 클리핑: 폭발에 대한 안전장치
+
+초기화와 구조를 잘 골라도 학습 도중 손실 지형의 가파른 절벽을 만나면 기울기가 순간적으로 폭발할 수 있다(특히 RNN과 큰 Transformer). **노름 기준 기울기 클리핑**은 모든 파라미터 기울기를 이어 붙인 벡터의 노름 $\\lVert g\\rVert$가 임계값 $c$를 넘으면
+
+$$g \\leftarrow g \\cdot \\frac{c}{\\lVert g \\rVert}$$
+
+로 길이만 $c$로 줄이고 **방향은 그대로** 둔다(Pascanu et al., 2013). 원소마다 따로 자르는 방식과 달리 기울기의 방향을 왜곡하지 않는다. PyTorch에서는 \`torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)\`을 \`loss.backward()\`와 \`optimizer.step()\` 사이에 넣는다. 대형 언어 모델 학습은 거의 항상 1.0 근처의 클리핑을 쓴다.
+
+[[practice]]
+
+### 실습: 50층을 거슬러 내려가는 기울기
+
+너비 64, 깊이 50인 tanh 망에서 출력 쪽 기울기(노름 1)를 입력 쪽으로 역전파하며 10·30·50층에서의 노름을 기록한다. 초기화 스케일 0.5·1.0·3.0의 일반 망과, 작은 초기화(0.5)에 잔차 연결을 더한 망을 비교한 뒤, 노름 클리핑이 방향을 유지하는지 확인한다. 실행 전에 예측해 보자. 작은 초기화의 일반 망과 잔차 망은 50층에서 몇 자릿수나 차이 날까?
+
+\`\`\`python
+import numpy as np
+
+# 깊이 50, 너비 64인 tanh 망에서 입력 쪽까지 내려온 기울기의 크기
+def grad_norms(scale, residual, depth=50, width=64, seed=0):
+    rng = np.random.default_rng(seed)
+    Ws = [rng.normal(0, scale / np.sqrt(width), (width, width)) for _ in range(depth)]
+    h = rng.normal(size=width)
+    hs, pre = [h], []
+    for W in Ws:                                          # 순전파
+        z = W @ h
+        h = h + np.tanh(z) if residual else np.tanh(z)    # 잔차 연결: h + F(h)
+        pre.append(z); hs.append(h)
+    g = np.ones(width) / np.sqrt(width)                   # 출력 쪽 기울기(크기 1)
+    norms = [np.linalg.norm(g)]
+    for W, z in zip(reversed(Ws), reversed(pre)):         # 역전파: g ← Jᵀ g
+        back = W.T @ ((1 - np.tanh(z) ** 2) * g)
+        g = g + back if residual else back                # 잔차 연결이면 g가 그대로 지나가는 길이 있다
+        norms.append(np.linalg.norm(g))
+    return norms
+
+print("층을 거슬러 내려갈 때 기울기 노름 (출력 쪽 = 1)")
+for name, scale, res in [("tanh, 작은 초기화(0.5)", 0.5, False), ("tanh, 적정 초기화(1.0)", 1.0, False),
+                         ("tanh, 큰 초기화(3.0)", 3.0, False), ("잔차 연결 + 작은 초기화(0.5)", 0.5, True)]:
+    n = grad_norms(scale, res)
+    print(f"{name:22s} 10층 {n[10]:.2e}  30층 {n[30]:.2e}  50층 {n[50]:.2e}")
+
+# 기울기 클리핑: 전체 노름이 c를 넘으면 방향은 유지한 채 길이만 c로
+def clip_by_norm(grads, c):
+    total = np.sqrt(sum(np.sum(g ** 2) for g in grads))
+    factor = min(1.0, c / (total + 1e-12))
+    return [g * factor for g in grads], total
+g1, g2 = np.array([30.0, -40.0]), np.array([120.0])
+clipped, total = clip_by_norm([g1, g2], c=5.0)
+new_total = np.sqrt(sum(np.sum(g ** 2) for g in clipped))
+print(f"\\n클리핑 전 노름 {total:.1f} → 후 {new_total:.1f}, g1 방향 유지: {np.round(clipped[0] / np.linalg.norm(clipped[0]), 3)} vs {np.round(g1 / np.linalg.norm(g1), 3)}")
+\`\`\`
+
+:::task 통과 조건과 한 걸음 더
+**예상 결과:** 작은 초기화(0.5)의 일반 망은 기울기가 10층에서 $10^{-3}$, 50층에서 $3\\times10^{-16}$으로 사실상 사라지고, 큰 초기화(3.0)는 50층에서 약 $5\\times10^4$으로 폭발한다. 적정 초기화(1.0)도 50층에서 약 0.05로 줄어 균형이 완벽하지 않다. 같은 작은 초기화에 잔차 연결만 더하면 50층에서도 약 7.8로, 일반 망과 16자릿수 차이가 난다(다만 1보다 조금씩 커지므로 실제 모델은 잔차 가지를 작게 시작하거나 정규화 층과 함께 쓴다). 클리핑은 노름을 130에서 5로 줄이면서 방향 $[0.6, -0.8]$을 그대로 유지한다. **설명해볼 것:** 잔차 망의 기울기가 50층에서 1보다 큰 7.8이 된 이유를 "$I + \\partial F/\\partial h$의 곱"으로 설명하고, 잔차 가지의 출력을 $1/\\sqrt{L}$로 줄이면 어떻게 될지 예측해 보자.
+:::
+
 `,
   sections,
   quiz: [
@@ -1024,6 +1366,10 @@ print("결과가 같은가?", np.allclose(C_loop, C_vec))
     { id: "w3-q16", question: "PyTorch의 Dataset 클래스가 반드시 정의해야 하는 두 메서드는 무엇이며, DataLoader는 그 위에서 각각 어떤 일을 대신 해주는가?" },
     { id: "w3-q17", question: "GELU와 ReLU를 입력이 음수인 구간에서의 동작을 중심으로 비교하라. GELU가 ReLU에 비해 '죽은 뉴런' 문제를 완화하는 이유는 무엇인가?" },
     { id: "w3-q18", question: "Batch Normalization과 Layer Normalization은 각각 어떤 축(배치 축 vs 특징 축)을 따라 평균·분산을 계산하는가? Transformer 계열 모델이 BatchNorm 대신 LayerNorm을 쓰는 이유를 배치 크기·시퀀스 길이 관점에서 설명하라." },
+    { id: "w3-q19", question: "드롭아웃을 쓸 때 학습 중에는 살아남은 값을 $1/(1-p)$배 하고 평가 때는 아무것도 하지 않는 이유는 무엇인가? 정확도는 그대로인데 검증 손실만 오르는 현상이 무엇을 뜻하는지, 조기 종료와 가중치 감쇠가 이를 어떻게 다스리는지 함께 설명하라." },
+    { id: "w3-q20", question: "함수 $f: \\mathbb{R}^n \\to \\mathbb{R}^m$의 기울기(야코비안)를 구할 때 순방향 모드와 역방향 모드는 각각 몇 번 지나가야 하는가? 신경망 학습에 역방향 모드가 쓰이는 이유와 그 대가(메모리), 그레이디언트 체크포인팅의 원리를 설명하라." },
+    { id: "w3-q21", question: "Adam의 편향 보정에서 $m_t$를 $1-\\beta_1^t$로 나누는 이유를 $\\mathbb{E}[m_t]$를 계산해 유도하라. Adam에 L2 정규화를 그냥 더하면 왜 의도대로 작동하지 않으며, AdamW는 이를 어떻게 고치는가?" },
+    { id: "w3-q22", question: "깊은 망에서 기울기가 사라지거나 폭발하는 이유를 '야코비안 전치의 곱'으로 설명하라. 잔차 연결 $h_l = h_{l-1} + F(h_{l-1})$이 기울기 소실을 막는 이유와, 노름 기준 기울기 클리핑이 방향을 바꾸지 않는 이유도 설명하라." },
   ],
   worksheet: [
     { label: '① 오늘의 질문: "신경망은 실수로부터 어떻게 배우는가?"', hint: "오늘 배운 내용을 한 문장 질문으로 바꿔 적어 보십시오. 예: '역전파는 왜 순전파 한 번 값으로 모든 기울기를 구할 수 있을까?'" },

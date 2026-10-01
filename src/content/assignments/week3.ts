@@ -1,6 +1,7 @@
 import type { AssignmentSpec } from "../types";
 
 // 3주차 과제: 미니 자동미분 엔진을 확장하고, 그 엔진으로 MLP를 학습한 뒤 NumPy 벡터화 구현과 비교한다.
+// 핵심: extend·mlp·gradcheck·graph(채점 대상) / 보충: numpy / 심화: advanced
 const VALUE_CLASS = `import math, random
 
 class Value:
@@ -100,6 +101,8 @@ const week3Assignment: AssignmentSpec = {
   title: "미니 자동미분 엔진으로 MLP 학습하기",
   summary: `
 「미니 자동미분 엔진」 단계의 \`Value\` 클래스에 나눗셈과 지수 함수를 추가하고, 이 엔진만으로 MLP를 만들어 make_moons 데이터를 분류합니다. gradient check로 구현을 검증하고, 같은 모델을 NumPy 행렬 연산으로 구현한 버전과 속도·정확도를 비교합니다.
+
+**핵심** 항목 네 개(Value 확장·MLP 학습·gradient check·계산 그래프)는 핵심 과정만으로 풀 수 있고, 채점 기준은 이 네 항목만 봅니다. **보충**(NumPy 벡터화 비교)과 **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
 `,
   tasks: [
     {
@@ -304,8 +307,8 @@ for name, v in (("a", a), ("b", b), ("c", c), ("d", d), ("e", e), ("L", L)):
     },
     {
       id: "numpy",
-      tier: "core",
-      title: "NumPy 벡터화 구현과 비교하기",
+      tier: "supplement",
+      title: "보충: NumPy 벡터화 구현과 비교하기",
       instructions: `
 같은 구조(2 → 8 → 8 → 1, tanh)의 MLP를 NumPy 행렬 연산으로 학습해 정확도와 학습 시간을 \`Value\` 구현과 비교합니다. 코드 셀의 \`backward\` 함수는 완성되어 있으니 한 줄씩 읽고 각 줄이 어떤 연쇄법칙에 해당하는지 확인합니다. 그런 다음 \`Value\` 구현이 느린 이유를 세 가지 이상 적습니다.
 `,
@@ -358,12 +361,13 @@ print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
     {
       id: "advanced",
       tier: "advanced",
-      title: "심화: 최적화기 비교·깊은 망의 기울기",
+      title: "심화: 최적화기·기울기 흐름·자동미분 실험",
       instructions: `
-다음 중 하나 이상을 골라 실험합니다.
+다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않으며, 심화 단계의 내용을 과제의 MLP에 적용해 보는 것이 목적입니다.
 
-- SGD, Momentum, Adam을 NumPy MLP에 직접 구현해 손실 곡선을 한 그래프로 비교합니다. 최적화기마다 학습률을 따로 조정했는지 밝힙니다.
-- ReLU와 tanh를 쓴 20층 네트워크에서 층별 기울기 크기를 그려 기울기 소실·폭발을 관찰합니다.
+- SGD, Momentum, Adam, AdamW를 NumPy MLP에 직접 구현해 손실 곡선을 비교합니다. 최적화기마다 학습률을 따로 조정했는지, Adam + L2와 AdamW에서 같은 $\\lambda$가 가중치 노름에 주는 효과가 어떻게 다른지 밝힙니다(「Adam의 이론」).
+- ReLU와 tanh를 쓴 20층 네트워크에서 층별 기울기 크기를 기록하고, 잔차 연결과 노름 기준 기울기 클리핑을 더했을 때 어떻게 달라지는지 비교합니다(「기울기 흐름의 수학」).
+- \`Value\`에 이원수(dual number) 기반 순방향 모드를 붙여, 같은 MLP의 한 파라미터에 대한 미분을 역방향 모드 결과와 비교합니다(「자동미분의 두 모드」).
 `,
       cells: [
         { kind: "code", id: "advanced-code", label: "심화 실험", starter: `# 선택한 심화 실험을 이 셀에서 진행합니다.\n` },
@@ -372,10 +376,9 @@ print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
     },
   ],
   rubric: [
-    { id: "derivation", label: "국소 미분 유도의 정확성", points: 2, guide: "나눗셈·exp의 국소 미분과 직접 설계한 계산 그래프의 역전파가 정확합니다." },
+    { id: "derivation", label: "국소 미분 유도의 정확성", points: 3, guide: "나눗셈·exp의 국소 미분과 직접 설계한 계산 그래프의 역전파가 정확합니다." },
     { id: "gradcheck", label: "구현 정확성", points: 3, guide: "확장한 Value와 MLP 전체의 gradient check를 통과했습니다." },
-    { id: "mlp", label: "MLP 학습과 문제 해결 과정", points: 2, guide: "훈련 정확도 90% 이상을 달성하고, 손실 곡선·결정경계와 문제 해결 과정을 제시했습니다." },
-    { id: "compare", label: "NumPy 구현 비교와 해석", points: 2, guide: "속도·정확도를 수치로 비교하고, Value 구현이 느린 이유를 구체적으로 설명했습니다." },
+    { id: "mlp", label: "MLP 학습과 문제 해결 과정", points: 3, guide: "훈련 정확도 90% 이상을 달성하고, 손실 곡선·결정경계와 문제 해결 과정을 제시했습니다." },
     { id: "quality", label: "코드 품질과 가독성", points: 1, guide: "코드와 답안이 읽기 쉽고, 모든 셀이 처음부터 순서대로 실행됩니다." },
   ],
 };
