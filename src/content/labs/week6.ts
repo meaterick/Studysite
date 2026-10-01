@@ -1,7 +1,10 @@
 import type { WeekLab } from "../types";
 import { py } from "./util";
 
-// 6주차: 공짜 라벨·perplexity, CLM/MLM 마스크, 스케일링 법칙, LoRA·양자화, 탐색·Q-learning, DPO·KL 최적 정책, 디코딩 필터, 보정(ECE)
+// 6주차 코딩 실습
+//   핵심: 공짜 라벨·perplexity, CLM/MLM 마스크, 스케일링 법칙, LoRA·양자화, 보상모델·KL 최적 정책, 디코딩 필터, 보정(ECE)
+//   보충: 탐색·Q-learning, 다수결·best-of-n 정답률
+//   심화: KL 규제 최적 정책과 암묵적 보상, 정책 경사 기준선·PPO 클리핑, 투기적 디코딩의 분포 보존
 const TEXT = py`
 text = ("나는 오늘 학교 에 갔다 . 나는 오늘 도서관 에 갔다 . 친구 는 오늘 학교 에 갔다 . "
         "나는 내일 도서관 에 간다 . 친구 는 내일 학교 에 간다 .").split()
@@ -24,7 +27,7 @@ const week6: WeekLab = {
       id: "w6-lab-perplexity",
       sectionId: "pretraining",
       title: "공짜 라벨 만들기와 bigram 모델의 perplexity",
-      tier: "supplement",
+      tier: "core",
       prompt: `
 1. \`make_pairs(tokens, k)\`: 원문을 한 칸 밀어 \`(직전 최대 k개 토큰 리스트, 다음 토큰)\` 쌍을 위치 1부터 끝까지 만듭니다. 사람이 붙인 라벨이 필요 없습니다.
 2. \`bigram_prob(tokens, alpha)\`: 바로 앞 토큰을 보고 다음 토큰 확률을 주는 함수 \`prob(prev, nxt)\`를 돌려줍니다. 가산 스무딩: $\\dfrac{\\text{count}(prev, nxt) + \\alpha}{\\text{count}(prev) + \\alpha|V|}$
@@ -200,7 +203,7 @@ print(attention_mask(3, "decoder"))
       id: "w6-lab-scaling",
       sectionId: "scaling-laws",
       title: "스케일링 법칙으로 컴퓨트 최적 모델 크기 찾기",
-      tier: "supplement",
+      tier: "core",
       prompt: `
 재추정한 Chinchilla 상수 $E = 1.82$, $A = 482.01$, $B = 2085.43$, $\\alpha = 0.3478$, $\\beta = 0.3658$으로 계산합니다.
 
@@ -291,7 +294,7 @@ print(f"best N ≈ {best_N(1e23) / 1e9:.1f}B, 규칙 N ≈ {rule_of_thumb(1e23)[
       id: "w6-lab-lora-quant",
       sectionId: "finetuning-efficiency",
       title: "LoRA 저랭크 근사와 블록 단위 양자화",
-      tier: "supplement",
+      tier: "core",
       prompt: `
 1. \`lora_params(d, k, r)\`: $\\Delta W = BA$($B$: $d \\times r$, $A$: $r \\times k$)의 학습 파라미터 수
 2. \`low_rank(dW, r)\`: SVD로 얻은 가장 좋은 랭크-$r$ 근사 $B A$를 돌려줍니다.
@@ -379,99 +382,10 @@ print("INT4 전체:", rel(W, quantize(W, 4)), " INT4 블록:", rel(W, quantize_b
 `,
     },
     {
-      id: "w6-lab-qlearning",
-      sectionId: "rl-basics",
-      title: "점진적 평균과 벨만 방정식으로 Q값 배우기",
-      tier: "supplement",
-      prompt: `
-1. \`update_mean(est, n, r)\`: 지금까지 \`n\`번의 평균 \`est\`에 새 보상 \`r\`을 반영한 평균. 모든 보상을 저장하지 않고 $est + (r - est)/(n+1)$로 갱신합니다.
-2. \`q_learning(n_states, gamma, lr, episodes, eps, seed)\`: 칸 0~(n−1) 복도에서 행동 0=왼쪽, 1=오른쪽. 오른쪽 끝에 닿으면 보상 1로 에피소드가 끝납니다. $\\varepsilon$-탐욕으로 행동을 고르고(두 Q값이 같으면 무작위) $Q(s,a) \\leftarrow Q(s,a) + \\eta\\,[r + \\gamma \\max_{a'} Q(s', a') - Q(s,a)]$로 갱신합니다(끝 상태의 미래 가치는 0). Q 테이블 (n_states, 2)를 돌려줍니다.
-
-학습이 끝나면 오른쪽을 고를 때의 Q값이 $\\gamma^{\\text{남은 거리}-1}$과 같아야 합니다.
-`,
-      starter: py`
-import numpy as np
-
-def update_mean(est, n, r):
-    return est  # TODO
-
-def q_learning(n_states=5, gamma=0.9, lr=0.5, episodes=200, eps=0.3, seed=0):
-    rng = np.random.default_rng(seed)
-    Q = np.zeros((n_states, 2))
-    for _ in range(episodes):
-        s = 0
-        while s != n_states - 1:
-            explore = rng.random() < eps or Q[s, 0] == Q[s, 1]   # 동점이면 무작위로 고릅니다.
-            a = int(rng.integers(2)) if explore else int(np.argmax(Q[s]))
-            s2 = min(max(s + (1 if a == 1 else -1), 0), n_states - 1)
-            r = 1.0 if s2 == n_states - 1 else 0.0
-            # TODO: 벨만 목표값으로 Q[s, a]를 갱신합니다.
-            s = s2
-    return Q
-
-print(update_mean(0.5, 2, 1.0))
-print(np.round(q_learning()[:-1], 3))
-`,
-      tests: py`
-import numpy as np
-
-@test("점진적 평균 = 전체 평균")
-def _():
-    rs, est = [1, 0, 1, 1, 0, 1], 0.0
-    for n, r in enumerate(rs):
-        est = update_mean(est, n, r)
-    assert approx(est, np.mean(rs)), f"결과: {est}"
-
-@test("복도 5칸: 오른쪽 Q값 = [0.729, 0.81, 0.9, 1.0]")
-def _():
-    Q = q_learning()
-    assert approx(Q[:-1, 1], [0.729, 0.81, 0.9, 1.0], 1e-3), f"결과: {np.round(Q[:-1, 1], 4)}"
-
-@test("모든 칸에서 오른쪽(→)을 고른다")
-def _():
-    Q = q_learning(n_states=6, episodes=300)
-    assert all(q[1] > q[0] for q in Q[:-1])
-
-@test("γ = 0.5면 칸 0의 값이 0.125로 크게 할인된다")
-def _():
-    Q = q_learning(gamma=0.5, episodes=300)
-    assert approx(Q[0, 1], 0.125, 1e-3), f"결과: {Q[0, 1]:.4f}"
-`,
-      hints: [
-        "`est + (r - est) / (n + 1)`",
-        "목표값은 `target = r + (0 if s2 == n_states - 1 else gamma * Q[s2].max())`",
-        "`Q[s, a] += lr * (target - Q[s, a])`. 끝에서 받은 보상이 한 칸씩 $\\gamma$배로 할인되며 거꾸로 전파됩니다.",
-      ],
-      solution: py`
-import numpy as np
-
-def update_mean(est, n, r):
-    return est + (r - est) / (n + 1)
-
-def q_learning(n_states=5, gamma=0.9, lr=0.5, episodes=200, eps=0.3, seed=0):
-    rng = np.random.default_rng(seed)
-    Q = np.zeros((n_states, 2))
-    for _ in range(episodes):
-        s = 0
-        while s != n_states - 1:
-            explore = rng.random() < eps or Q[s, 0] == Q[s, 1]   # 동점이면 무작위로 고릅니다.
-            a = int(rng.integers(2)) if explore else int(np.argmax(Q[s]))
-            s2 = min(max(s + (1 if a == 1 else -1), 0), n_states - 1)
-            r = 1.0 if s2 == n_states - 1 else 0.0
-            target = r + (0 if s2 == n_states - 1 else gamma * Q[s2].max())
-            Q[s, a] += lr * (target - Q[s, a])
-            s = s2
-    return Q
-
-print(update_mean(0.5, 2, 1.0))
-print(np.round(q_learning()[:-1], 3))
-`,
-    },
-    {
       id: "w6-lab-dpo",
       sectionId: "rlhf-dpo",
       title: "DPO 손실과 KL 페널티 아래의 최적 정책",
-      tier: "supplement",
+      tier: "core",
       prompt: `
 1. \`dpo_loss(lw, lw_ref, ll, ll_ref, beta)\` $= -\\log\\sigma\\big(\\beta[(\\log\\pi_\\theta(y_w) - \\log\\pi_{ref}(y_w)) - (\\log\\pi_\\theta(y_l) - \\log\\pi_{ref}(y_l))]\\big)$
 2. \`optimal_policy(pi_ref, r, beta)\`: $E[r] - \\beta\\,\\mathrm{KL}(\\pi \\parallel \\pi_{ref})$를 최대화하는 정책 $\\pi^*(y) \\propto \\pi_{ref}(y)\\,e^{r(y)/\\beta}$ (합이 1이 되도록 정규화)
@@ -556,7 +470,7 @@ for b in (0.1, 1.0, 5.0):
       id: "w6-lab-sampling",
       sectionId: "decoding",
       title: "temperature·top-k·top-p·반복 페널티 구현",
-      tier: "supplement",
+      tier: "core",
       prompt: `
 1. \`softmax_T(logits, T)\`: $\\mathrm{softmax}(z/T)$ (최댓값을 빼서 안정화)
 2. \`top_k(p, k)\`: 확률이 큰 순서로 $k$개만 남기고 다시 정규화(동점은 고려하지 않아도 됨)
@@ -657,7 +571,7 @@ print(top_p(np.array([0.9, 0.05, 0.03, 0.02]), 0.9))
       id: "w6-lab-ece",
       sectionId: "hallucination",
       title: "말투의 확신과 실제 정답률: ECE 계산",
-      tier: "supplement",
+      tier: "core",
       prompt: `
 \`ece(conf, correct, n_bins, lo, hi)\`를 구현합니다. 확신도 구간 $[lo, hi)$을 \`n_bins\`개로 똑같이 나눈 뒤, 구간마다 $|\\text{평균 확신도} - \\text{실제 정답률}|$에 그 구간의 표본 비율을 곱해 더합니다(비어 있는 구간은 건너뜀). 마지막 구간은 $hi$를 포함합니다.
 
@@ -736,6 +650,522 @@ rng = np.random.default_rng(0)
 conf = rng.uniform(0.5, 1.0, 5000)
 print("보정된 모델:", ece(conf, rng.random(5000) < conf))
 print("과신하는 모델:", ece(conf, rng.random(5000) < (conf - 0.5) * 0.8 + 0.4))
+`,
+    },
+    {
+      id: "w6-lab-qlearning",
+      sectionId: "rl-basics",
+      title: "점진적 평균과 벨만 방정식으로 Q값 배우기",
+      tier: "supplement",
+      prompt: `
+1. \`update_mean(est, n, r)\`: 지금까지 \`n\`번의 평균 \`est\`에 새 보상 \`r\`을 반영한 평균. 모든 보상을 저장하지 않고 $est + (r - est)/(n+1)$로 갱신합니다.
+2. \`q_learning(n_states, gamma, lr, episodes, eps, seed)\`: 칸 0~(n−1) 복도에서 행동 0=왼쪽, 1=오른쪽. 오른쪽 끝에 닿으면 보상 1로 에피소드가 끝납니다. $\\varepsilon$-탐욕으로 행동을 고르고(두 Q값이 같으면 무작위) $Q(s,a) \\leftarrow Q(s,a) + \\eta\\,[r + \\gamma \\max_{a'} Q(s', a') - Q(s,a)]$로 갱신합니다(끝 상태의 미래 가치는 0). Q 테이블 (n_states, 2)를 돌려줍니다.
+
+학습이 끝나면 오른쪽을 고를 때의 Q값이 $\\gamma^{\\text{남은 거리}-1}$과 같아야 합니다.
+`,
+      starter: py`
+import numpy as np
+
+def update_mean(est, n, r):
+    return est  # TODO
+
+def q_learning(n_states=5, gamma=0.9, lr=0.5, episodes=200, eps=0.3, seed=0):
+    rng = np.random.default_rng(seed)
+    Q = np.zeros((n_states, 2))
+    for _ in range(episodes):
+        s = 0
+        while s != n_states - 1:
+            explore = rng.random() < eps or Q[s, 0] == Q[s, 1]   # 동점이면 무작위로 고릅니다.
+            a = int(rng.integers(2)) if explore else int(np.argmax(Q[s]))
+            s2 = min(max(s + (1 if a == 1 else -1), 0), n_states - 1)
+            r = 1.0 if s2 == n_states - 1 else 0.0
+            # TODO: 벨만 목표값으로 Q[s, a]를 갱신합니다.
+            s = s2
+    return Q
+
+print(update_mean(0.5, 2, 1.0))
+print(np.round(q_learning()[:-1], 3))
+`,
+      tests: py`
+import numpy as np
+
+@test("점진적 평균 = 전체 평균")
+def _():
+    rs, est = [1, 0, 1, 1, 0, 1], 0.0
+    for n, r in enumerate(rs):
+        est = update_mean(est, n, r)
+    assert approx(est, np.mean(rs)), f"결과: {est}"
+
+@test("복도 5칸: 오른쪽 Q값 = [0.729, 0.81, 0.9, 1.0]")
+def _():
+    Q = q_learning()
+    assert approx(Q[:-1, 1], [0.729, 0.81, 0.9, 1.0], 1e-3), f"결과: {np.round(Q[:-1, 1], 4)}"
+
+@test("모든 칸에서 오른쪽(→)을 고른다")
+def _():
+    Q = q_learning(n_states=6, episodes=300)
+    assert all(q[1] > q[0] for q in Q[:-1])
+
+@test("γ = 0.5면 칸 0의 값이 0.125로 크게 할인된다")
+def _():
+    Q = q_learning(gamma=0.5, episodes=300)
+    assert approx(Q[0, 1], 0.125, 1e-3), f"결과: {Q[0, 1]:.4f}"
+`,
+      hints: [
+        "`est + (r - est) / (n + 1)`",
+        "목표값은 `target = r + (0 if s2 == n_states - 1 else gamma * Q[s2].max())`",
+        "`Q[s, a] += lr * (target - Q[s, a])`. 끝에서 받은 보상이 한 칸씩 $\\gamma$배로 할인되며 거꾸로 전파됩니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def update_mean(est, n, r):
+    return est + (r - est) / (n + 1)
+
+def q_learning(n_states=5, gamma=0.9, lr=0.5, episodes=200, eps=0.3, seed=0):
+    rng = np.random.default_rng(seed)
+    Q = np.zeros((n_states, 2))
+    for _ in range(episodes):
+        s = 0
+        while s != n_states - 1:
+            explore = rng.random() < eps or Q[s, 0] == Q[s, 1]   # 동점이면 무작위로 고릅니다.
+            a = int(rng.integers(2)) if explore else int(np.argmax(Q[s]))
+            s2 = min(max(s + (1 if a == 1 else -1), 0), n_states - 1)
+            r = 1.0 if s2 == n_states - 1 else 0.0
+            target = r + (0 if s2 == n_states - 1 else gamma * Q[s2].max())
+            Q[s, a] += lr * (target - Q[s, a])
+            s = s2
+    return Q
+
+print(update_mean(0.5, 2, 1.0))
+print(np.round(q_learning()[:-1], 3))
+`,
+    },
+    {
+      id: "w6-lab-test-time",
+      sectionId: "test-time-compute",
+      title: "다수결과 best-of-n의 정답률 계산기",
+      tier: "supplement",
+      prompt: `
+「추론 시간 계산」 단계의 식을 함수로 만듭니다. 표본은 모두 독립이라고 가정합니다.
+
+1. \`majority_correct(p, n)\`: 정답·오답 두 갈래인 문제를 \`n\`번(홀수) 풀어 다수결할 때 정답일 확률 $\\sum_{k > n/2}\\binom{n}{k}p^k(1-p)^{n-k}$ (\`math.comb\` 사용)
+2. \`perfect_best_of_n(p, n)\`: 완벽한 검증기로 고를 때의 정답률 $1 - (1-p)^n$
+3. \`best_of_n_exact(p, n, tpr, fpr)\`: 검증기가 정답을 \`tpr\`, 오답을 \`fpr\` 확률로 통과시키고, 통과한 후보 중 하나를 무작위로 고르며, 아무도 통과하지 못하면 첫 후보를 낼 때의 정답률. $a = p\\cdot\\text{TPR}$, $b = (1-p)\\cdot\\text{FPR}$, $u = 1 - a - b$라 하면 $(1 - u^n)\\frac{a}{a+b} + u^n\\frac{p(1-\\text{TPR})}{u}$입니다.
+4. \`verifier_limit(p, tpr, fpr)\`: $n \\to \\infty$ 한계 $\\frac{a}{a+b}$
+`,
+      starter: py`
+from math import comb
+
+def majority_correct(p, n):
+    return 0.0  # TODO: k가 n//2 + 1부터 n까지인 이항확률의 합
+
+def perfect_best_of_n(p, n):
+    return 0.0  # TODO
+
+def best_of_n_exact(p, n, tpr, fpr):
+    a, b = p * tpr, (1 - p) * fpr
+    u = 1 - a - b
+    return 0.0  # TODO
+
+def verifier_limit(p, tpr, fpr):
+    return 0.0  # TODO
+
+for n in (1, 5, 21, 101):
+    print(n, round(majority_correct(0.6, n), 3), round(majority_correct(0.4, n), 3))
+`,
+      tests: py`
+@test("다수결: p=0.6이면 n=5에서 0.68256, n=101에서 약 0.979")
+def _():
+    assert approx(majority_correct(0.6, 1), 0.6)
+    assert approx(majority_correct(0.6, 5), 0.68256), f"결과: {majority_correct(0.6, 5)}"
+    assert approx(majority_correct(0.6, 101), 0.979, 1e-3)
+
+@test("다수결: p>0.5면 n과 함께 오르고 p<0.5면 떨어진다")
+def _():
+    ns = list(range(1, 52, 2))
+    up = [majority_correct(0.6, n) for n in ns]
+    down = [majority_correct(0.4, n) for n in ns]
+    assert all(x < y for x, y in zip(up, up[1:])), "p=0.6인데 단조 증가가 아닙니다"
+    assert all(x > y for x, y in zip(down, down[1:])), "p=0.4인데 단조 감소가 아닙니다"
+    assert approx(majority_correct(0.4, 101), 0.021, 1e-3)
+
+@test("완벽한 검증기: 1 - 0.7^4 = 0.7599")
+def _():
+    assert approx(perfect_best_of_n(0.3, 4), 0.7599), f"결과: {perfect_best_of_n(0.3, 4)}"
+
+@test("best-of-n: n=1이면 p 그대로, 좋은 검증기 n=4에서 약 0.652")
+def _():
+    for tpr, fpr in [(0.9, 0.1), (0.9, 0.5), (0.6, 0.3)]:
+        assert approx(best_of_n_exact(0.3, 1, tpr, fpr), 0.3), f"n=1, tpr={tpr}, fpr={fpr}"
+    assert approx(best_of_n_exact(0.3, 4, 0.9, 0.1), 0.6521, 1e-3)
+    assert approx(best_of_n_exact(0.3, 4, 0.9, 0.5), 0.4280, 1e-3)
+
+@test("TPR 1, FPR 0이면 완벽한 검증기와 같다")
+def _():
+    for n in (2, 4, 16):
+        assert approx(best_of_n_exact(0.3, n, 1.0, 0.0), perfect_best_of_n(0.3, n)), f"n={n}"
+
+@test("n이 커지면 검증기의 정밀도 a/(a+b)에 수렴한다")
+def _():
+    assert approx(verifier_limit(0.3, 0.9, 0.1), 0.794, 1e-3)
+    assert approx(verifier_limit(0.3, 0.9, 0.5), 0.4355, 1e-3)
+    assert approx(best_of_n_exact(0.3, 500, 0.9, 0.5), verifier_limit(0.3, 0.9, 0.5))
+`,
+      hints: [
+        "`majority_correct`는 `sum(comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n // 2 + 1, n + 1))`입니다.",
+        "`best_of_n_exact`는 `(1 - u ** n) * a / (a + b) + u ** n * p * (1 - tpr) / u`입니다. 통과한 후보가 하나라도 있으면 고른 후보가 정답일 확률은 몇 개가 통과했든 `a / (a + b)`입니다.",
+        "`verifier_limit`는 `a / (a + b)`, 즉 2주차의 정밀도와 같은 식입니다.",
+      ],
+      solution: py`
+from math import comb
+
+def majority_correct(p, n):
+    return sum(comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n // 2 + 1, n + 1))
+
+def perfect_best_of_n(p, n):
+    return 1 - (1 - p) ** n
+
+def best_of_n_exact(p, n, tpr, fpr):
+    a, b = p * tpr, (1 - p) * fpr
+    u = 1 - a - b
+    return (1 - u ** n) * a / (a + b) + u ** n * p * (1 - tpr) / u
+
+def verifier_limit(p, tpr, fpr):
+    a, b = p * tpr, (1 - p) * fpr
+    return a / (a + b)
+
+for n in (1, 5, 21, 101):
+    print(n, round(majority_correct(0.6, n), 3), round(majority_correct(0.4, n), 3))
+`,
+    },
+    {
+      id: "w6-lab-dpo-closed",
+      sectionId: "dpo-derivation",
+      title: "KL 규제 최적 정책과 DPO의 암묵적 보상",
+      tier: "advanced",
+      prompt: `
+「DPO의 유도」 단계의 세 단계를 코드로 확인합니다. 정책은 응답별 확률 배열입니다.
+
+1. \`optimal_policy(pi_ref, r, beta)\`: $\\pi^*(y) \\propto \\pi_{ref}(y)\\,e^{r(y)/\\beta}$ (정규화까지)
+2. \`kl_objective(pi, pi_ref, r, beta)\`: $\\sum_y \\pi(y)r(y) - \\beta\\sum_y \\pi(y)\\log\\frac{\\pi(y)}{\\pi_{ref}(y)}$
+3. \`implied_reward(pi, pi_ref, beta)\`: 암묵적 보상 $\\beta\\log\\frac{\\pi(y)}{\\pi_{ref}(y)}$ (배열)
+4. \`preference_prob(pi, pi_ref, beta, w, l)\`: 암묵적 보상으로 계산한 Bradley–Terry 선호 확률 $\\sigma(\\hat r(w) - \\hat r(l))$
+
+$\\pi^*$에서는 목적함수가 $\\beta\\log Z$이고, 암묵적 보상과 참 보상의 차이가 모든 응답에서 같으며, 선호 확률이 참 보상으로 계산한 것과 같아야 합니다.
+`,
+      starter: py`
+import numpy as np
+
+def optimal_policy(pi_ref, r, beta):
+    return np.array(pi_ref, dtype=float)  # TODO: π_ref·exp(r/β)를 정규화
+
+def kl_objective(pi, pi_ref, r, beta):
+    return 0.0  # TODO
+
+def implied_reward(pi, pi_ref, beta):
+    return np.zeros(len(pi))  # TODO
+
+def preference_prob(pi, pi_ref, beta, w, l):
+    return 0.5  # TODO
+
+pi_ref = np.array([0.4, 0.3, 0.2, 0.1])
+r = np.array([0.0, 1.0, 2.0, 0.5])
+print(optimal_policy(pi_ref, r, 0.5).round(4))
+`,
+      tests: py`
+import numpy as np
+pi_ref = np.array([0.4, 0.3, 0.2, 0.1])
+r = np.array([0.0, 1.0, 2.0, 0.5])
+beta = 0.5
+
+@test("닫힌 해: π* ≈ [0.029, 0.1605, 0.7908, 0.0197]")
+def _():
+    p = optimal_policy(pi_ref, r, beta)
+    assert approx(p, [0.0290, 0.1605, 0.7908, 0.0197], 1e-3), f"결과: {np.round(p, 4)}"
+    assert approx(np.sum(p), 1.0)
+
+@test("최적 목적함수 값 = β·log Z ≈ 1.3126")
+def _():
+    Z = np.sum(pi_ref * np.exp(r / beta))
+    val = kl_objective(optimal_policy(pi_ref, r, beta), pi_ref, r, beta)
+    assert approx(val, beta * np.log(Z)) and approx(val, 1.3126, 1e-3), f"결과: {val}"
+
+@test("π*는 무작위 정책 300개보다 목적함수가 크다")
+def _():
+    rng = np.random.default_rng(0)
+    best = kl_objective(optimal_policy(pi_ref, r, beta), pi_ref, r, beta)
+    for _ in range(300):
+        pi = rng.dirichlet(np.ones(4))
+        assert kl_objective(pi, pi_ref, r, beta) <= best + 1e-12
+
+@test("암묵적 보상 - 참 보상 = 모든 응답에서 같은 상수 -β·log Z")
+def _():
+    diff = implied_reward(optimal_policy(pi_ref, r, beta), pi_ref, beta) - r
+    assert approx(diff, np.full(4, diff[0])), f"결과: {np.round(diff, 4)}"
+    assert approx(diff[0], -1.3126, 1e-3)
+
+@test("π*의 암묵적 보상으로 계산한 선호 확률 = 참 보상의 σ(r_w - r_l)")
+def _():
+    p = optimal_policy(pi_ref, r, beta)
+    for w in range(4):
+        for l in range(4):
+            if w != l:
+                assert approx(preference_prob(p, pi_ref, beta, w, l), 1 / (1 + np.exp(-(r[w] - r[l])))), (w, l)
+
+@test("β가 크면 π_ref에, 작으면 보상 최댓값에 몰린다")
+def _():
+    assert approx(optimal_policy(pi_ref, r, 100.0), pi_ref, 1e-2)
+    assert optimal_policy(pi_ref, r, 0.01)[2] > 0.999
+`,
+      hints: [
+        "`optimal_policy`는 `p = pi_ref * np.exp(r / beta)`를 `p / p.sum()`으로 정규화합니다. $\\beta$가 아주 작을 때 넘치지 않게 하려면 `r / beta`에서 최댓값을 빼고 지수를 취합니다.",
+        "`kl_objective`는 `pi @ r - beta * np.sum(pi * np.log(pi / pi_ref))`, `implied_reward`는 `beta * np.log(pi / pi_ref)`입니다.",
+        "`preference_prob`는 `h = implied_reward(...)`로 `1 / (1 + np.exp(-(h[w] - h[l])))`입니다. $\\pi^*$에서는 $\\beta\\log Z$가 빼기에서 사라져 참 보상의 차이와 같아집니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def optimal_policy(pi_ref, r, beta):
+    z = np.asarray(r, dtype=float) / beta
+    p = np.asarray(pi_ref, dtype=float) * np.exp(z - z.max())
+    return p / p.sum()
+
+def kl_objective(pi, pi_ref, r, beta):
+    return pi @ r - beta * np.sum(pi * np.log(pi / pi_ref))
+
+def implied_reward(pi, pi_ref, beta):
+    return beta * np.log(np.asarray(pi) / np.asarray(pi_ref))
+
+def preference_prob(pi, pi_ref, beta, w, l):
+    h = implied_reward(pi, pi_ref, beta)
+    return 1 / (1 + np.exp(-(h[w] - h[l])))
+
+pi_ref = np.array([0.4, 0.3, 0.2, 0.1])
+r = np.array([0.0, 1.0, 2.0, 0.5])
+print(optimal_policy(pi_ref, r, 0.5).round(4))
+`,
+    },
+    {
+      id: "w6-lab-ppo",
+      sectionId: "policy-gradient",
+      title: "정책 경사의 기준선과 PPO 클리핑",
+      tier: "advanced",
+      prompt: `
+「정책 경사와 PPO」 단계의 식을 소프트맥스 정책(로짓 \`theta\`)에서 정확히 계산합니다. 샘플링 없이 기대값과 분산을 모든 행동에 대한 합으로 구합니다.
+
+1. \`grad_log_softmax(theta, a)\`: $\\nabla_\\theta\\log\\pi_\\theta(a) = \\text{onehot}(a) - \\pi_\\theta$
+2. \`exact_policy_gradient(theta, rewards)\`: $\\nabla_\\theta\\sum_a\\pi_\\theta(a)r(a) = \\pi \\odot (r - \\pi\\cdot r)$
+3. \`expected_estimator(theta, rewards, b)\`: REINFORCE 추정 $(R - b)\\nabla\\log\\pi(a)$의 기대값 $\\sum_a \\pi(a)(r(a) - b)\\nabla\\log\\pi(a)$
+4. \`estimator_variance(theta, rewards, b, noise_var=1.0)\`: 보상 $R = r(a) + \\text{잡음}$(분산 \`noise_var\`)일 때 추정의 성분별 분산. $\\mathbb{E}[(R-b)^2 \\mid a] = (r(a) - b)^2 + \\sigma^2$을 이용해 $\\mathbb{E}[g^2] - (\\mathbb{E}[g])^2$로 계산합니다.
+5. \`ppo_clip(rho, adv, eps=0.2)\`: $\\min(\\rho A, \\text{clip}(\\rho, 1-\\varepsilon, 1+\\varepsilon)A)$ (배열도 처리)
+`,
+      starter: py`
+import numpy as np
+
+def softmax(theta):
+    e = np.exp(theta - np.max(theta))
+    return e / e.sum()
+
+def grad_log_softmax(theta, a):
+    return np.zeros(len(theta))  # TODO
+
+def exact_policy_gradient(theta, rewards):
+    return np.zeros(len(theta))  # TODO
+
+def expected_estimator(theta, rewards, b):
+    return np.zeros(len(theta))  # TODO
+
+def estimator_variance(theta, rewards, b, noise_var=1.0):
+    return np.zeros(len(theta))  # TODO
+
+def ppo_clip(rho, adv, eps=0.2):
+    return rho * adv  # TODO: 클리핑과 min
+
+r = np.array([1.0, 1.5, 2.0])
+print(exact_policy_gradient(np.zeros(3), r).round(3))
+`,
+      tests: py`
+import numpy as np
+r = np.array([1.0, 1.5, 2.0])
+th0 = np.zeros(3)
+
+@test("∇log π(a) = onehot(a) - π, 성분의 합은 0")
+def _():
+    th = np.array([0.5, -1.0, 2.0])
+    g = grad_log_softmax(th, 1)
+    pi = np.exp(th) / np.exp(th).sum()
+    assert approx(g, np.eye(3)[1] - pi) and approx(np.sum(g), 0.0), f"결과: {g}"
+
+@test("정확한 정책 경사: 균등 정책에서 [-1/6, 0, 1/6], 수치 미분과 일치")
+def _():
+    assert approx(exact_policy_gradient(th0, r), [-1 / 6, 0, 1 / 6]), f"결과: {exact_policy_gradient(th0, r)}"
+    th = np.array([0.3, -0.7, 1.1])
+    J = lambda t: (np.exp(t) / np.exp(t).sum()) @ r
+    num = np.array([(J(th + 1e-6 * e) - J(th - 1e-6 * e)) / 2e-6 for e in np.eye(3)])
+    assert approx(exact_policy_gradient(th, r), num, 1e-6)
+
+@test("기준선 b를 바꿔도 추정의 기대값은 정확한 기울기 그대로")
+def _():
+    th = np.array([0.3, -0.7, 1.1])
+    for b in (0.0, 1.5, 10.0, -3.0):
+        assert approx(expected_estimator(th, r, b), exact_policy_gradient(th, r)), f"b={b}"
+
+@test("분산: 기준선 0이면 [0.574, 0.741, 0.907], 평균 보상이면 0.241씩, 10이면 훨씬 크다")
+def _():
+    assert approx(estimator_variance(th0, r, 0.0), [0.5741, 0.7407, 0.9074], 1e-3), f"결과: {estimator_variance(th0, r, 0.0)}"
+    assert approx(estimator_variance(th0, r, 1.5), [0.2407] * 3, 1e-3)
+    assert np.all(estimator_variance(th0, r, 10.0) > 15)
+
+@test("PPO 클리핑 표 (ε=0.2)")
+def _():
+    rho = np.array([0.5, 0.8, 1.0, 1.2, 1.5, 3.0])
+    assert approx(ppo_clip(rho, 1.0), [0.5, 0.8, 1.0, 1.2, 1.2, 1.2]), f"A=+1: {ppo_clip(rho, 1.0)}"
+    assert approx(ppo_clip(rho, -1.0), [-0.8, -0.8, -1.0, -1.2, -1.5, -3.0]), f"A=-1: {ppo_clip(rho, -1.0)}"
+    assert approx(ppo_clip(1.5, 2.0, eps=0.1), 2.2)
+`,
+      hints: [
+        "`grad_log_softmax`는 `np.eye(len(theta))[a] - softmax(theta)`, `exact_policy_gradient`는 `pi * (rewards - pi @ rewards)`입니다.",
+        "행렬 `G = np.eye(n) - pi`의 a번째 행이 $\\nabla\\log\\pi(a)$입니다. 기대값은 `(pi * (rewards - b)) @ G`, 제곱의 기대값은 `(pi * ((rewards - b) ** 2 + noise_var)) @ G ** 2`입니다.",
+        "`ppo_clip`은 `np.minimum(rho * adv, np.clip(rho, 1 - eps, 1 + eps) * adv)`입니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def softmax(theta):
+    e = np.exp(theta - np.max(theta))
+    return e / e.sum()
+
+def grad_log_softmax(theta, a):
+    return np.eye(len(theta))[a] - softmax(theta)
+
+def exact_policy_gradient(theta, rewards):
+    pi = softmax(theta)
+    return pi * (rewards - pi @ rewards)
+
+def expected_estimator(theta, rewards, b):
+    pi = softmax(theta)
+    G = np.eye(len(theta)) - pi
+    return (pi * (rewards - b)) @ G
+
+def estimator_variance(theta, rewards, b, noise_var=1.0):
+    pi = softmax(theta)
+    G = np.eye(len(theta)) - pi
+    mean = (pi * (rewards - b)) @ G
+    second = (pi * ((rewards - b) ** 2 + noise_var)) @ G ** 2
+    return second - mean ** 2
+
+def ppo_clip(rho, adv, eps=0.2):
+    rho = np.asarray(rho, dtype=float)
+    return np.minimum(rho * adv, np.clip(rho, 1 - eps, 1 + eps) * adv)
+
+r = np.array([1.0, 1.5, 2.0])
+print(exact_policy_gradient(np.zeros(3), r).round(3))
+`,
+    },
+    {
+      id: "w6-lab-speculative",
+      sectionId: "speculative-decoding",
+      title: "투기적 디코딩의 출력 분포와 최적 초안 길이",
+      tier: "advanced",
+      prompt: `
+「투기적 디코딩」 단계의 증명과 속도 계산을 코드로 확인합니다.
+
+1. \`acceptance_rate(p, q)\`: $\\alpha = \\sum_y \\min(p(y), q(y))$
+2. \`output_distribution(p, q)\`: 투기적 샘플링 한 스텝의 **정확한** 출력 분포 $q(x)\\min(1, p(x)/q(x)) + (1 - \\alpha)\\cdot\\text{잔여 분포}(x)$. 잔여 분포는 $(p - q)_+$를 정규화한 것이고, $\\alpha = 1$이면(잔여가 모두 0) 둘째 항이 없습니다. $q$는 모든 토큰에 양수라고 가정합니다.
+3. \`expected_tokens(alpha, k)\`: 큰 모델 호출당 기대 토큰 수 $\\frac{1 - \\alpha^{k+1}}{1 - \\alpha}$ ($\\alpha = 1$이면 $k + 1$)
+4. \`speedup(alpha, k, c)\`: 초안 한 스텝 비용이 큰 모델의 \`c\`배일 때 $\\frac{\\text{expected\\_tokens}}{kc + 1}$
+5. \`best_k(alpha, c, k_max=20)\`: \`1..k_max\` 중 속도 향상이 가장 큰 \`(k, speedup)\`
+`,
+      starter: py`
+import numpy as np
+
+def acceptance_rate(p, q):
+    return 0.0  # TODO
+
+def output_distribution(p, q):
+    return np.array(q, dtype=float)  # TODO: 수락 항 + 잔여 항
+
+def expected_tokens(alpha, k):
+    return 1.0  # TODO
+
+def speedup(alpha, k, c):
+    return 1.0  # TODO
+
+def best_k(alpha, c, k_max=20):
+    return 1, 1.0  # TODO
+
+p = np.array([0.50, 0.20, 0.15, 0.10, 0.05])
+q = np.array([0.30, 0.30, 0.20, 0.10, 0.10])
+print(acceptance_rate(p, q), output_distribution(p, q))
+`,
+      tests: py`
+import numpy as np
+p = np.array([0.50, 0.20, 0.15, 0.10, 0.05])
+q = np.array([0.30, 0.30, 0.20, 0.10, 0.10])
+
+@test("수락률 = Σmin(p, q) = 0.8")
+def _():
+    assert approx(acceptance_rate(p, q), 0.8), f"결과: {acceptance_rate(p, q)}"
+
+@test("출력 분포가 정확히 목표 분포 p다")
+def _():
+    out = output_distribution(p, q)
+    assert approx(out, p), f"결과: {np.round(out, 4)}"
+
+@test("무작위 p, q 50쌍에서도 출력 분포 = p, q = p이면 수락률 1")
+def _():
+    rng = np.random.default_rng(0)
+    for _ in range(50):
+        pp, qq = rng.dirichlet(np.ones(6)), rng.dirichlet(np.ones(6))
+        assert approx(output_distribution(pp, qq), pp)
+    assert approx(acceptance_rate(p, p), 1.0) and approx(output_distribution(p, p), p)
+
+@test("기대 토큰 수: α=0.8, k=4 → 3.3616, α=1이면 k+1")
+def _():
+    assert approx(expected_tokens(0.8, 4), 3.3616), f"결과: {expected_tokens(0.8, 4)}"
+    assert approx(expected_tokens(0.6, 1), 1.6)
+    assert approx(expected_tokens(1.0, 4), 5.0)
+
+@test("c=0.1, α=0.8에서 최적 k=6, 약 2.47배")
+def _():
+    assert approx(speedup(0.8, 4, 0.1), 3.3616 / 1.4)
+    k, s = best_k(0.8, 0.1)
+    assert k == 6 and approx(s, 2.4703, 1e-3), f"결과: k={k}, 속도 {s}"
+`,
+      hints: [
+        "`acceptance_rate`는 `np.minimum(p, q).sum()`입니다.",
+        "`output_distribution`: 수락 항은 `q * np.minimum(1, p / q)`(= `np.minimum(p, q)`), 잔여는 `res = np.maximum(p - q, 0)`입니다. `res.sum() > 0`일 때만 `(1 - alpha) * res / res.sum()`을 더합니다.",
+        "`expected_tokens`는 `alpha == 1`이면 `k + 1`, 아니면 `(1 - alpha ** (k + 1)) / (1 - alpha)`입니다. `best_k`는 `max(((k, speedup(alpha, k, c)) for k in range(1, k_max + 1)), key=lambda t: t[1])`입니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def acceptance_rate(p, q):
+    return float(np.minimum(p, q).sum())
+
+def output_distribution(p, q):
+    p, q = np.asarray(p, dtype=float), np.asarray(q, dtype=float)
+    out = q * np.minimum(1, p / q)
+    res = np.maximum(p - q, 0)
+    if res.sum() > 0:
+        out = out + (1 - acceptance_rate(p, q)) * res / res.sum()
+    return out
+
+def expected_tokens(alpha, k):
+    if alpha == 1:
+        return k + 1
+    return (1 - alpha ** (k + 1)) / (1 - alpha)
+
+def speedup(alpha, k, c):
+    return expected_tokens(alpha, k) / (k * c + 1)
+
+def best_k(alpha, c, k_max=20):
+    return max(((k, speedup(alpha, k, c)) for k in range(1, k_max + 1)), key=lambda t: t[1])
+
+p = np.array([0.50, 0.20, 0.15, 0.10, 0.05])
+q = np.array([0.30, 0.30, 0.20, 0.10, 0.10])
+print(acceptance_rate(p, q), output_distribution(p, q))
 `,
     },
   ],
@@ -835,21 +1265,6 @@ for T in (0.5, 1.0, 2.0):
       explanation: "logit 자체는 그대로이고 $T$로 나눈 뒤 softmax합니다. $T$가 작으면 격차가 커져 1등이 86.5%를 가져가고, $T = 2$면 격차가 줄어 42.9%로 분포가 평평해집니다.",
     },
     {
-      kind: "predict",
-      id: "w6-drill-incremental",
-      tier: "core",
-      sectionId: "rl-basics",
-      code: py`
-est, n = 0.0, 0
-for r in [1, 0, 1, 1]:
-    n += 1
-    est += (r - est) / n
-    print(round(est, 3))
-`,
-      expected: "1.0\n0.5\n0.667\n0.75",
-      explanation: "점진적 평균 갱신은 보상을 모두 저장하지 않고도 지금까지의 평균과 정확히 같습니다: 1, (1+0)/2, 2/3, 3/4. 슬롯머신 실습의 `est[a] += (r - est[a]) / cnt[a]`가 이 식입니다.",
-    },
-    {
       kind: "descriptive",
       id: "w6-drill-bidirectional",
       tier: "core",
@@ -878,6 +1293,114 @@ for r in [1, 0, 1, 1]:
       modelAnswer:
         "bigram은 바로 앞 단어 하나만 보고 다음 단어를 고릅니다. '는' 다음에 '일본'이 올 확률, '의' 다음에 '수도'가 올 확률을 각각 배울 뿐, '파리'와 '프랑스'가 함께 나와야 한다는 긴 거리의 관계는 담을 수 없습니다. 그래서 학습 문장의 조각들을 그럴듯하게 이어 붙이면 문법적으로 완벽한 거짓이 만들어집니다. 문장 전체를 외우면 학습한 문장만 그대로 재생하므로 거짓은 사라지지만, 본 적 없는 새 문장을 만들거나 새로운 질문에 답하는 일반화 능력을 잃습니다. 실제 LLM은 그 사이에서 긴 문맥을 보며 패턴을 일반화하기 때문에 드물게 본 사실에서 비슷한 조합 오류가 생깁니다.",
       keyPoints: ["bigram은 바로 앞 단어 하나만 본다", "조각을 이어 붙여 문법적으로 완벽한 거짓을 만든다", "통째로 외우면 거짓은 없지만 새 문장을 못 만든다(일반화 상실)", "LLM은 일반화의 대가로 드문 사실에서 조합 오류가 생긴다"],
+    },
+    {
+      kind: "predict",
+      id: "w6-drill-incremental",
+      tier: "supplement",
+      sectionId: "rl-basics",
+      code: py`
+est, n = 0.0, 0
+for r in [1, 0, 1, 1]:
+    n += 1
+    est += (r - est) / n
+    print(round(est, 3))
+`,
+      expected: "1.0\n0.5\n0.667\n0.75",
+      explanation: "점진적 평균 갱신은 보상을 모두 저장하지 않고도 지금까지의 평균과 정확히 같습니다: 1, (1+0)/2, 2/3, 3/4. 슬롯머신 실습의 `est[a] += (r - est[a]) / cnt[a]`가 이 식입니다.",
+    },
+    {
+      kind: "choice",
+      id: "w6-drill-majority-flip",
+      tier: "supplement",
+      sectionId: "test-time-compute",
+      question: "어떤 수학 문제에서 모델의 한 번 정답률이 45%이고, 틀릴 때는 거의 항상 같은 오답(흔한 계산 실수)을 냅니다. 표본을 40개로 늘려 다수결하면?",
+      choices: [
+        "정답률이 오히려 떨어진다. 오답이 한 곳에 몰려 그 오답이 다수를 차지하기 쉬워진다",
+        "정답률이 거의 100%로 오른다",
+        "정답률은 45% 그대로다",
+        "다수결은 표본 수와 무관하다",
+      ],
+      answer: 0,
+      explanation:
+        "오답이 한 갈래로 몰리면 사실상 정답·오답 두 갈래이고 $p < 0.5$이므로, 표본을 늘릴수록 다수결이 오답을 확정합니다. 오답이 여러 갈래로 흩어질 때만 정답이 최다 득표로 이길 수 있습니다.",
+    },
+    {
+      kind: "predict",
+      id: "w6-drill-verifier-limit",
+      tier: "supplement",
+      sectionId: "test-time-compute",
+      code: py`
+p, tpr = 0.3, 0.9
+for fpr in (0.1, 0.05):
+    a, b = p * tpr, (1 - p) * fpr
+    print(round(a / (a + b), 3))
+print(round(1 - (1 - p) ** 4, 3))
+`,
+      expected: "0.794\n0.885\n0.76",
+      explanation:
+        "best-of-n의 한계는 검증기의 정밀도 $\\frac{p\\cdot\\text{TPR}}{p\\cdot\\text{TPR} + (1-p)\\cdot\\text{FPR}}$입니다. FPR을 0.1에서 0.05로 반으로 줄이면 한계가 0.794에서 0.885로 오르고, 이는 표본을 아무리 늘려도 얻을 수 없는 향상입니다. 마지막 줄은 완벽한 검증기로 4개 중 고를 때의 정답률 $1 - 0.7^4$입니다.",
+    },
+    {
+      kind: "choice",
+      id: "w6-drill-dpo-beta-limit",
+      tier: "advanced",
+      sectionId: "dpo-derivation",
+      question: "KL 규제 최적 정책 $\\pi^*(y) \\propto \\pi_{ref}(y)\\,e^{r(y)/\\beta}$에서 $\\beta \\to 0$이면 정책은 어떻게 되고, 그것이 왜 위험한가?",
+      choices: [
+        "보상이 가장 큰 응답 하나에 몰린다. 보상모델의 오차까지 그대로 쫓게 되어 보상 해킹이 일어난다",
+        "기준 모델과 같아진다. 아무것도 배우지 못한다",
+        "균등분포가 된다. 응답이 무작위가 된다",
+        "변하지 않는다. $\\beta$는 학습 속도만 바꾼다",
+      ],
+      answer: 0,
+      explanation:
+        "$\\beta$가 작으면 $e^{r/\\beta}$에서 가장 큰 보상의 항이 나머지를 압도해 정책이 argmax로 갑니다. 보상모델은 사람 선호의 근사일 뿐이라, 그 근사가 틀린 응답에 확률을 몰 수 있습니다. 반대로 $\\beta \\to \\infty$면 $\\pi^* \\to \\pi_{ref}$입니다.",
+    },
+    {
+      kind: "predict",
+      id: "w6-drill-baseline",
+      tier: "advanced",
+      sectionId: "policy-gradient",
+      code: py`
+import numpy as np
+r = np.array([1.0, 1.5, 2.0])
+pi = np.ones(3) / 3
+G = np.eye(3) - pi                     # a번째 행 = ∇log π(a)
+for b in (0.0, 1.5, 10.0):
+    mean = (pi * (r - b)) @ G          # 기준선 b를 뺀 REINFORCE 추정의 기대값
+    print(b, [round(float(x), 3) + 0.0 for x in mean])
+`,
+      expected: "0.0 [-0.167, 0.0, 0.167]\n1.5 [-0.167, 0.0, 0.167]\n10.0 [-0.167, 0.0, 0.167]",
+      explanation:
+        "기준선이 0이든 평균 보상(1.5)이든 10이든 기대값은 정확한 기울기 $[-1/6, 0, 1/6]$으로 같습니다. $\\mathbb{E}[b\\,\\nabla\\log\\pi] = b\\,\\nabla\\sum_a\\pi(a) = 0$이기 때문입니다. 기준선이 바꾸는 것은 분산뿐이라, 평균 보상이면 성분별 분산이 약 0.24로 가장 작고 10이면 15 이상으로 커집니다.",
+    },
+    {
+      kind: "choice",
+      id: "w6-drill-ppo-zero-grad",
+      tier: "advanced",
+      sectionId: "policy-gradient",
+      question: "PPO($\\varepsilon = 0.2$)에서 이점이 양수($A > 0$)인 행동의 확률비가 이미 $\\rho = 1.5$가 되었습니다. 이 샘플이 이번 갱신에서 정책에 주는 기울기는?",
+      choices: [
+        "0. 클리핑된 값 $1.2A$가 선택되어 $\\theta$와 무관한 상수가 된다",
+        "확률을 더 올리는 방향으로 평소보다 크게",
+        "확률을 내리는 방향",
+        "$\\rho$에 비례해 1.5배",
+      ],
+      answer: 0,
+      explanation:
+        "$\\min(1.5A, 1.2A) = 1.2A$는 $\\theta$에 의존하지 않으므로 기울기가 0입니다. 좋은 행동이라도 $1+\\varepsilon$배를 넘으면 더 밀지 않아, 같은 데이터로 여러 번 갱신해도 정책이 멀리 가지 않습니다.",
+    },
+    {
+      kind: "descriptive",
+      id: "w6-drill-spec-design",
+      tier: "advanced",
+      sectionId: "speculative-decoding",
+      question:
+        "70B 모델로 코드 자동완성 서비스를 운영하는 팀이 지연시간을 줄이려고 1B 모델을 초안으로 쓰는 투기적 디코딩을 검토합니다. \"초안 모델이 작으니 품질이 떨어질 것\"이라는 우려에 답하고, 이득을 결정하는 요인과 이득이 줄어드는 조건, 도입 전에 측정할 것을 제안하십시오.",
+      modelAnswer:
+        "수락-거절 규칙(확률 $\\min(1, p/q)$로 수락, 거절 시 $(p-q)_+$에서 다시 뽑기)을 따르면 출력 분포는 $\\min(p, q) + (p - q)_+ = p$로 70B 모델에서 직접 뽑은 것과 정확히 같으므로 품질 저하는 없습니다(그리디라면 초안이 argmax와 같을 때만 수락해 출력이 완전히 같습니다). 초안이 바꾸는 것은 속도뿐입니다. 이득은 수락률 $\\alpha = \\sum\\min(p, q)$, 초안 길이 $k$, 초안 비용 비율 $c$로 정해지며 속도 향상은 약 $\\frac{1-\\alpha^{k+1}}{(1-\\alpha)(kc+1)}$입니다. 코드는 괄호·들여쓰기·반복 패턴처럼 예측하기 쉬운 토큰이 많아 $\\alpha$가 높은 편이라 유리합니다. 반대로 요청을 큰 배치로 묶어 GPU가 이미 연산 병목이면 검증 위치의 계산이 공짜가 아니고, 사내 전용 API처럼 초안이 모르는 영역에서는 $\\alpha$가 낮아 이득이 작습니다. 도입 전에는 실제 요청 표본에서 위치별 수락률을 재고, $k$를 바꿔 가며 배치 크기별 토큰당 지연시간과 처리량을 측정해 최적 $k$를 정하겠습니다. 초안 모델을 같은 계열(같은 토크나이저)로 고르거나 서비스 데이터로 증류하면 $\\alpha$를 높일 수 있습니다.",
+      keyPoints: ["수락-거절 규칙은 출력 분포를 정확히 보존한다(품질 저하 없음)", "속도는 수락률·초안 길이·초안 비용으로 결정", "큰 배치(연산 병목)·낮은 수락률에서는 이득 감소", "실제 요청으로 수락률과 배치별 지연시간을 측정해 k 결정"],
     },
   ],
 
