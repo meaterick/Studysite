@@ -3,7 +3,7 @@ import { AiHierarchy, MlLoop, NumpyAxis, BayesFrequency, DotProductAngle } from 
 import { ConfusionMatrix, DataSplitDiagram, SigmoidCurve, LearningCurves } from "./w2";
 import { ComputationalGraph, MlpDiagram, XorHidden } from "./w3";
 import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
-import { TransformerDecoderBlock, TokenizerBpe } from "./w5";
+import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
 import { LlmPipeline, ScalingLawPlot } from "./w6";
 import { RagPipeline, AgentLoop } from "./w7";
 import { NistFramework, CapstoneTimeline } from "./w8";
@@ -33,7 +33,10 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "conv-channels": ConvChannels,
   "resnet-skip": ResNetSkip,
   "transfer-learning": TransferLearning,
+  "rnn-gradient-decay": GradientDecay,
   "attention-qkv": InteractiveAttention,
+  "causal-mask": CausalMask,
+  "positional-waves": PositionalWaves,
   "transformer-decoder-block": TransformerDecoderBlock,
   "tokenizer-bpe": TokenizerBpe,
   "llm-pipeline": LlmPipeline,
