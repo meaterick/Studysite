@@ -14,7 +14,7 @@ export interface StageRequirement {
 
 /**
  * 단계 페이지 하단에 고정되는 진행 막대.
- * 긴 학습 자료를 읽는 동안에도 남은 확인 문제(필수)·서술형(선택)과 완료 버튼이 항상 보이게 한다.
+ * 긴 학습 자료를 읽는 동안에도 남은 확인 문제와 완료 버튼이 항상 보이게 한다.
  */
 export default function StageFooter({
   slug,
@@ -86,7 +86,7 @@ export default function StageFooter({
                 href={nextHref}
                 className="rounded-lg bg-[var(--series-blue)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
               >
-                {nextLabel ?? (isLast ? "백지공부·과제로 이동" : "다음 단계로")} →
+                {nextLabel ?? (isLast ? "적용과 복습으로" : "다음 단계로")} →
               </Link>
             )
           ) : ready ? (
@@ -96,7 +96,7 @@ export default function StageFooter({
               disabled={pending}
               className="rounded-lg bg-[var(--series-blue)] px-4 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
             >
-              {pending ? "저장 중…" : isLast ? "단계 완료 · 백지공부와 과제로" : "단계 완료 · 다음 단계로"}
+              {pending ? "저장 중…" : isLast ? "단계 완료 · 적용과 복습으로" : "단계 완료 · 다음 단계로"}
             </button>
           ) : (
             <a
@@ -113,7 +113,7 @@ export default function StageFooter({
               title="이 단계는 미완료로 남고, 나중에 돌아와 마칠 수 있습니다."
               className="text-xs font-bold text-ink-muted underline-offset-2 hover:text-ink-secondary hover:underline"
             >
-              {isLast ? "미완료로 두고 백지공부로 →" : "미완료로 두고 다음 단계로 →"}
+              {isLast ? "미완료로 두고 적용과 복습으로 →" : "미완료로 두고 다음 단계로 →"}
             </Link>
           )}
         </div>

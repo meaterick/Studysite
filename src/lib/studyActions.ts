@@ -124,9 +124,9 @@ export async function completeSection(slug: string, sectionId: string) {
     s.completedAt ??= new Date().toISOString();
   });
   const next = nextSectionAfter(week, section);
-  // 핵심 단계는 다음 핵심 단계로, 마지막 핵심 단계면 주차 마무리 안내로 간다. 보충·심화 단계는 다음 선택 단계(없으면 기록 화면)로 간다.
+  // 핵심 단계는 다음 핵심 단계로, 마지막 핵심 단계면 적용과 복습(완료 안내)으로 간다. 보충·심화 단계는 다음 선택 단계(없으면 기록 화면)로 간다.
   if (next) redirect(`/weeks/${slug}/sections/${next.id}`);
-  redirect(section.tier === "core" ? `/weeks/${slug}?finished=1` : `/weeks/${slug}#record-heading`);
+  redirect(section.tier === "core" ? `/weeks/${slug}/apply?finished=1` : `/weeks/${slug}#record-heading`);
 }
 
 // ─── 백지공부 ───────────────────────────────────────────────────────────

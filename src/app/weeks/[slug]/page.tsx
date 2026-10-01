@@ -45,13 +45,13 @@ export default async function WeekOverviewPage({
   const nextOptional = status.sections.find((r) => r.section.tier !== "core" && r.access === "upcoming")?.section;
 
   return (
-    <WeekFrame week={week} status={status}>
+    <WeekFrame week={week} status={status} record={record}>
       <div className="space-y-10">
         {finished && status.coreDone && (
           <div className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
             <p className="font-black text-ink">이번 주의 핵심 과정을 모두 마쳤습니다. 주차 학습 완료입니다.</p>
             <p className="mt-1 text-sm text-ink-secondary">
-              자료를 닫고 <strong>백지공부</strong>로 배운 내용을 떠올려 본 뒤, <strong>과제</strong>를 이 사이트에서 작성해 제출하십시오. 제출한 과제는 운영자가 채점하고 피드백을 남깁니다.
+              <strong>적용과 복습</strong>에서 백지공부로 배운 내용을 떠올려 본 뒤, 과제를 작성해 제출하십시오. 제출한 과제는 운영자가 채점하고 피드백을 남깁니다.
               여유가 있다면 <strong>보충 과정</strong>으로 폭을 넓히고 <strong>심화 과정</strong>에 도전해 심화 달성 기록을 남겨 보십시오.
             </p>
           </div>
@@ -66,7 +66,7 @@ export default async function WeekOverviewPage({
 
         <section aria-labelledby="continue-heading" className="rounded-xl border border-[var(--border-hairline)] bg-card p-5 sm:p-6">
           <h2 id="continue-heading" className="text-sm font-bold text-ink-muted">
-            {current ? "이어서 학습하기" : "핵심 과정 완료 · 주차 마무리"}
+            {current ? "이어서 학습하기" : "핵심 과정 완료 · 적용과 복습"}
           </h2>
           {current ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
@@ -87,12 +87,12 @@ export default async function WeekOverviewPage({
             </div>
           ) : (
             <div className="mt-2 space-y-3">
-              <div className="flex flex-wrap gap-3">
-                <Link href={`/weeks/${slug}/worksheet`} className="rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
-                  백지공부 작성 →
-                </Link>
-                <Link href={`/weeks/${slug}/assignment`} className="rounded-lg border border-[var(--border-hairline)] px-5 py-2.5 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]">
-                  과제 작성 →
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <p className="text-sm text-ink-secondary">
+                  백지공부와 과제(필수), 서술형·코딩 실습·추가 퀴즈·복습 노트(추가 활동)가 기다리고 있습니다.
+                </p>
+                <Link href={`/weeks/${slug}/apply`} className="shrink-0 rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
+                  적용과 복습으로 →
                 </Link>
               </div>
               {nextOptional && (
@@ -155,7 +155,7 @@ export default async function WeekOverviewPage({
           </div>
           <p className="mb-5 text-sm text-ink-muted">
             단계는 <strong>핵심(초심자)</strong>, <strong>보충(중급자)</strong>, <strong>심화(전문가)</strong>로 나뉩니다. <strong>핵심 단계만 마치면 이번 주가 완료</strong>되고,
-            보충은 선택, 심화는 별도의 달성 기록으로 남습니다. 각 단계는 학습 → 실습 → 확인 문제 순서로 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다.
+            보충은 선택, 심화는 별도의 달성 기록으로 남습니다. 각 단계는 학습 → 따라 해 보기 → 객관식 확인 문제 순서로 짧게 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다. 서술형·코딩 실습 같은 적용 활동은 <strong>적용과 복습</strong>에 모여 있습니다.
             {status.mode === "warn"
               ? " 핵심 단계를 순서대로 학습하는 것을 권장하지만, 필요하면 건너뛰고 먼저 볼 수도 있습니다."
               : " 앞의 핵심 단계를 마쳐야 다음 핵심 단계가 열리고, 보충·심화 단계는 핵심 단계를 모두 마치면 열립니다."}
@@ -202,42 +202,23 @@ export default async function WeekOverviewPage({
           </section>
         )}
 
-        {lab && (lab.exercisesTotal > 0 || lab.quizTotal > 0) && (
-          <section aria-labelledby="practice-lab-heading">
-            <h2 id="practice-lab-heading" className="mb-1 text-xl font-black text-ink">직접 풀어 보기: 코딩 실습 · 퀴즈</h2>
-            <p className="mb-4 text-sm text-ink-muted">
-              단계를 학습하는 중에도 언제든 풀 수 있습니다. 브라우저에서 바로 채점되며, 단계 완료 조건과는 별개입니다.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FinaleCard
-                href={`/weeks/${slug}/lab`}
-                locked={false}
-                title="코딩 실습"
-                desc="TODO가 비어 있는 시작 코드를 직접 채우고 자동 채점을 받습니다. 단계별 힌트와 초기화, 통과 후 모범 답안 비교를 제공합니다."
-                state={`통과 ${lab.exercisesPassed}/${lab.exercisesTotal}`}
-                done={lab.exercisesTotal > 0 && lab.exercisesPassed === lab.exercisesTotal}
-              />
-              <FinaleCard
-                href={`/weeks/${slug}/drill`}
-                locked={false}
-                title="퀴즈"
-                desc="객관식, 코드 출력 예측, 서술형 문제로 코드를 읽고 설명하는 힘을 점검합니다."
-                state={`완료 ${lab.quizDone}/${lab.quizTotal}${lab.quizWeak > 0 ? ` · 다시 볼 문항 ${lab.quizWeak}` : ""}`}
-                done={lab.quizTotal > 0 && lab.quizDone === lab.quizTotal}
-              />
-            </div>
-          </section>
-        )}
-
-        <section aria-labelledby="finale-heading">
-          <h2 id="finale-heading" className="mb-1 text-xl font-black text-ink">마무리: 백지공부 · 과제</h2>
+        <section aria-labelledby="apply-heading">
+          <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="apply-heading" className="text-xl font-black text-ink">적용과 복습</h2>
+            <Link href={`/weeks/${slug}/apply`} className="text-sm font-bold text-[var(--series-blue)] hover:underline">
+              한눈에 보기 →
+            </Link>
+          </div>
           <p className="mb-4 text-sm text-ink-muted">
             {status.coreDone
               ? "핵심 단계를 모두 마쳤습니다. 백지공부로 떠올려 본 뒤 과제를 진행하십시오."
               : status.mode === "lock"
-                ? "이번 주의 핵심 단계를 모두 마치면 열립니다."
-                : `핵심 단계를 모두 마친 뒤에 하는 것을 권장합니다. 아직 끝내지 않은 핵심 단계가 ${status.tiers.core.total - status.tiers.core.done}개 있지만 지금 열어 볼 수 있습니다.`}
+                ? "백지공부와 과제는 이번 주의 핵심 단계를 모두 마치면 열립니다. 추가 활동은 언제든 할 수 있습니다."
+                : `백지공부와 과제는 핵심 단계를 모두 마친 뒤에 하는 것을 권장합니다. 아직 끝내지 않은 핵심 단계가 ${status.tiers.core.total - status.tiers.core.done}개 있습니다.`}
           </p>
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-black text-ink">
+            <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">필수</span> 진행률에 들어가는 활동
+          </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <FinaleCard
               href={`/weeks/${slug}/worksheet`}
@@ -260,6 +241,31 @@ export default async function WeekOverviewPage({
               done={status.assignment.status !== "none"}
             />
           </div>
+          {lab && (lab.exercisesTotal > 0 || lab.quizTotal > 0) && (
+            <>
+              <h3 className="mb-2 mt-5 flex items-center gap-2 text-sm font-black text-ink">
+                <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가</span> 실력을 다지는 활동
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <FinaleCard
+                  href={`/weeks/${slug}/lab`}
+                  locked={false}
+                  title="코딩 실습"
+                  desc="TODO가 비어 있는 시작 코드를 직접 채우고 자동 채점을 받습니다. 단계별 힌트와 초기화, 통과 후 모범 답안 비교를 제공합니다."
+                  state={`통과 ${lab.exercisesPassed}/${lab.exercisesTotal}`}
+                  done={lab.exercisesTotal > 0 && lab.exercisesPassed === lab.exercisesTotal}
+                />
+                <FinaleCard
+                  href={`/weeks/${slug}/descriptive`}
+                  locked={false}
+                  title="서술형 · 추가 퀴즈"
+                  desc="개념을 자신의 말로 설명하고, 객관식·코드 출력 예측 문제로 한 번 더 점검합니다."
+                  state={`퀴즈 완료 ${lab.quizDone}/${lab.quizTotal}${lab.quizWeak > 0 ? ` · 다시 볼 문항 ${lab.quizWeak}` : ""}`}
+                  done={lab.quizTotal > 0 && lab.quizDone === lab.quizTotal}
+                />
+              </div>
+            </>
+          )}
         </section>
       </div>
     </WeekFrame>
@@ -336,8 +342,7 @@ function SectionRow({
         </p>
         <p className="mt-1 text-xs text-ink-muted">
           <span className="sr-only">{style.label} · </span>약 {section.minutes}분 · 확인 문제 {progress.checksTotal}개
-          {progress.quizTotal > 0 && ` · 서술형 ${progress.quizTotal}개(선택)`}
-          {progress.hasPractice && " · 실습 포함"}
+          {progress.hasPractice && " · 따라 해 보기 포함"}
           {access === "current" && progress.checksDone > 0 && ` · 확인 문제 ${progress.checksDone}/${progress.checksTotal}`}
         </p>
       </div>
