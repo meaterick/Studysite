@@ -6,20 +6,16 @@ import { WEEKS, getWeek } from "@/content/weeks";
 import { getSection, getWeekOutline, nextSectionAfter } from "@/content/sections";
 import { TIER_INFO, TIER_ORDER, sectionLabel } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
-import { quizAnswers } from "@/content/quizAnswers";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import CheckQuestion from "@/components/section/CheckQuestion";
-import DescriptiveQuestion from "@/components/section/DescriptiveQuestion";
 import StageFooter from "@/components/section/StageFooter";
 import { loadWeekPage } from "@/lib/weekPage";
 import { canOpenSection, sectionProgress, unfinishedBefore, type WeekStatus } from "@/lib/study";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
 import PracticeDoneButton from "@/components/section/PracticeDoneButton";
-import { readLabState, readSectionState } from "@/lib/learningStore";
+import { readSectionState } from "@/lib/learningStore";
 import { getWeekLab } from "@/content/labs";
-import CodingExercise from "@/components/lab/CodingExercise";
-import { exerciseView } from "@/lib/labView";
 
 export function generateStaticParams() {
   return WEEKS.flatMap((w) => getWeekOutline(w).sections.map((s) => ({ slug: w.slug, sectionId: s.id })));
@@ -39,8 +35,7 @@ export async function generateMetadata({
 
 const PART_LINKS = [
   { id: "learn", label: "학습" },
-  { id: "practice", label: "실습" },
-  { id: "lab", label: "TODO 실습" },
+  { id: "practice", label: "따라 해 보기" },
   { id: "check", label: "확인 문제" },
 ];
 
@@ -58,21 +53,19 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const prev = sections[section.order - 2];
   const next = sections[section.order];
   const continueTo = nextSectionAfter(week, section);
-  const answers = quizAnswers.find((a) => a.week === week.number)?.answers ?? {};
-  const questionText = new Map(week.quiz.map((q) => [q.id, q.question]));
   const hasPractice = section.practice.length > 0;
+  // 서술형·코딩 실습·추가 퀴즈는 "적용과 복습"에서 한다. 단계 화면에는 이어지는 활동의 개수와 링크만 둔다.
   const lab = getWeekLab(slug);
-  const labExercises = lab?.exercises.filter((e) => e.sectionId === sectionId) ?? [];
-  const labQuizCount = lab?.quiz.filter((q) => q.sectionId === sectionId).length ?? 0;
-  const labState = readLabState(record, slug);
+  const related = {
+    descriptive: section.meta.quizIds.length + (lab?.quiz.filter((q) => q.sectionId === sectionId && q.kind === "descriptive").length ?? 0),
+    lab: lab?.exercises.filter((e) => e.sectionId === sectionId).length ?? 0,
+    drill: lab?.quiz.filter((q) => q.sectionId === sectionId && q.kind !== "descriptive").length ?? 0,
+  };
 
-  const requirements = [
-    { label: "확인 문제", done: progress.checksDone, total: progress.checksTotal },
-    ...(progress.quizTotal > 0 ? [{ label: "서술형", done: progress.quizDone, total: progress.quizTotal, optional: true }] : []),
-  ];
+  const requirements = [{ label: "확인 문제", done: progress.checksDone, total: progress.checksTotal }];
 
   const isCore = section.tier === "core";
-  const endHref = isCore ? `/weeks/${slug}?finished=1` : `/weeks/${slug}#record-heading`;
+  const endHref = isCore ? `/weeks/${slug}/apply?finished=1` : `/weeks/${slug}#record-heading`;
   let finishHref: string | undefined;
   if (progress.completed) finishHref = continueTo ? `/weeks/${slug}/sections/${continueTo.id}` : endHref;
   // warn 모드: 이 단계를 끝내지 않아도 같은 갈래의 다음 단계(핵심 마지막이면 백지공부)로 넘어갈 수 있다.
@@ -81,7 +74,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
       ? continueTo
         ? `/weeks/${slug}/sections/${continueTo.id}`
         : isCore
-          ? `/weeks/${slug}/worksheet`
+          ? `/weeks/${slug}/apply`
           : `/weeks/${slug}`
       : undefined;
   const footerNextLabel = continueTo ? undefined : isCore ? undefined : "주차 개요로";
@@ -89,7 +82,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const practiceDone = !!state.practiceDoneAt || !!state.practiceDone;
 
   return (
-    <WeekFrame week={week} status={status}>
+    <WeekFrame week={week} status={status} record={record}>
       <StageLayout
         done={status.tiers.core.done}
         total={status.tiers.core.total}
@@ -127,7 +120,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
           <nav aria-label="이 단계의 구성" className="mt-5 flex flex-wrap items-center gap-2 text-xs font-bold">
             <span className="text-ink-muted">바로 가기</span>
-            {PART_LINKS.filter((s) => (s.id !== "practice" || hasPractice) && (s.id !== "lab" || labExercises.length > 0)).map((s) => (
+            {PART_LINKS.filter((s) => s.id !== "practice" || hasPractice).map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
@@ -146,8 +139,8 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             <section id="practice" aria-labelledby="practice-heading" className="mt-12 scroll-mt-24">
               <StepHeading
                 id="practice-heading"
-                title="실습"
-                desc="방금 배운 내용을 코드와 손계산으로 직접 확인합니다. 코드는 이 페이지에서 바로 실행할 수 있습니다."
+                title="따라 해 보기"
+                desc="방금 배운 내용을 완성된 예제 코드와 손계산으로 직접 확인합니다. 코드는 이 페이지에서 바로 실행할 수 있습니다."
               />
               <div className="rounded-xl border border-[var(--series-orange)]/40 p-4 sm:p-5">
                 <BlocksRenderer blocks={section.practice} docKey={`${slug}:${sectionId}:practice`} interactiveCode />
@@ -156,33 +149,11 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             </section>
           )}
 
-          {labExercises.length > 0 && (
-            <section id="lab" aria-labelledby="lab-heading" className="mt-12 scroll-mt-24">
-              <StepHeading
-                id="lab-heading"
-                title="TODO 실습"
-                desc="위의 실습 코드는 완성된 예제입니다. 이번에는 핵심 줄이 비어 있는 코드를 직접 채우고 채점해 봅니다. 코드는 브라우저 안에서만 실행되며, 단계 완료 조건은 아닙니다."
-              />
-              <div className="space-y-5">
-                {labExercises.map((ex) => (
-                  <CodingExercise key={ex.id} view={exerciseView(week, ex, labState, status, isAdmin)} />
-                ))}
-              </div>
-              {labQuizCount > 0 && (
-                <p className="mt-4 text-sm">
-                  <Link href={`/weeks/${slug}/drill`} className="font-bold text-[var(--series-blue)] hover:underline">
-                    이 단계와 관련된 퀴즈 {labQuizCount}문항 풀어 보기 →
-                  </Link>
-                </p>
-              )}
-            </section>
-          )}
-
           <section id="check" aria-labelledby="check-heading" className="mt-12 scroll-mt-24">
             <StepHeading
               id="check-heading"
               title="확인 문제"
-              desc="객관식 문제를 모두 맞히면 이 단계가 완료됩니다. 틀린 문제는 다시 풀 수 있습니다. 서술형 문항은 선택이지만, 직접 써 보고 모범답안과 비교하면 훨씬 오래 기억됩니다."
+              desc="방금 배운 내용을 빠르게 확인하는 객관식 문제입니다. 모두 맞히면 이 단계가 완료되고, 틀린 문제는 다시 풀 수 있습니다."
             />
             <div className="space-y-4">
               {section.meta.checks.map((check, i) => {
@@ -205,24 +176,12 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
                   />
                 );
               })}
-              {section.meta.quizIds.map((quizId, i) => {
-                const saved = state.answers[quizId];
-                return (
-                  <DescriptiveQuestion
-                    key={quizId}
-                    slug={slug}
-                    sectionId={sectionId}
-                    quizId={quizId}
-                    index={i}
-                    question={<Inline text={questionText.get(quizId) ?? ""} />}
-                    savedText={saved?.text}
-                    review={saved?.review}
-                    modelAnswer={saved ? <Inline text={answers[quizId] ?? "(모범답안 준비 중)"} /> : undefined}
-                  />
-                );
-              })}
             </div>
           </section>
+
+          {related.descriptive + related.lab + related.drill > 0 && (
+            <RelatedActivities slug={slug} sectionId={sectionId} related={related} />
+          )}
 
           {section.meta.references && section.meta.references.length > 0 && (
             <section aria-labelledby="refs-heading" className="mt-10">
@@ -316,17 +275,13 @@ function StageList({
         ];
       })}
       <li className="mt-2 border-t border-[var(--border-hairline)] pt-2">
-        {status.finaleOpen || isAdmin ? (
-          <Link href={`/weeks/${slug}/worksheet`} className="flex gap-2 rounded-md px-2 py-1 text-sm text-ink-secondary hover:bg-[var(--surface-card-2)]">
-            <span aria-hidden="true" className="w-5 text-center">✎</span>
-            백지공부 · 과제
-          </Link>
-        ) : (
-          <span className="flex gap-2 px-2 py-1 text-sm text-ink-muted">
-            <span aria-hidden="true" className="w-5 text-center">🔒</span>
-            백지공부 · 과제 (핵심 단계를 마치면 열림)
+        <Link href={`/weeks/${slug}/apply`} className="flex gap-2 rounded-md px-2 py-1.5 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]">
+          <span aria-hidden="true" className="w-5 text-center">
+            →
           </span>
-        )}
+          적용과 복습
+          <span className="font-medium text-ink-muted">· 백지공부·과제</span>
+        </Link>
       </li>
     </ol>
   );
@@ -378,5 +333,44 @@ function StageListItem({
         <span className="flex gap-2 px-2 py-1.5 text-sm text-ink-muted">{label}</span>
       )}
     </li>
+  );
+}
+
+/** 단계 끝: 이 단계와 이어지는 적용 활동(서술형·코딩 실습·추가 퀴즈) 안내. 단계 완료와는 별개다. */
+function RelatedActivities({
+  slug,
+  sectionId,
+  related,
+}: {
+  slug: string;
+  sectionId: string;
+  related: { descriptive: number; lab: number; drill: number };
+}) {
+  const links = [
+    { n: related.descriptive, label: "서술형", unit: "문항", href: `/weeks/${slug}/descriptive#sec-${sectionId}` },
+    { n: related.lab, label: "코딩 실습", unit: "개", href: `/weeks/${slug}/lab` },
+    { n: related.drill, label: "추가 퀴즈", unit: "문항", href: `/weeks/${slug}/drill` },
+  ].filter((l) => l.n > 0);
+  return (
+    <aside aria-labelledby="related-heading" className="mt-10 rounded-xl border border-dashed border-[var(--border-strong)] p-4 sm:p-5">
+      <h3 id="related-heading" className="text-sm font-black text-ink">
+        이 단계와 이어지는 적용 활동 <span className="font-bold text-ink-muted">· 추가 활동</span>
+      </h3>
+      <p className="mt-1 text-sm text-ink-muted">
+        단계 학습은 확인 문제까지면 충분합니다. 설명하고 코드로 옮기는 연습은 <strong className="text-ink-secondary">적용과 복습</strong>에서 이어서 할 수 있습니다.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {links.map((l) => (
+          <Link
+            key={l.label}
+            href={l.href}
+            className="rounded-full border border-[var(--border-hairline)] bg-card px-3 py-1.5 text-xs font-bold text-ink-secondary transition hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
+          >
+            {l.label} {l.n}
+            {l.unit} →
+          </Link>
+        ))}
+      </div>
+    </aside>
   );
 }

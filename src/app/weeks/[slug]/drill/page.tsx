@@ -6,15 +6,14 @@ import { WEEKS, getWeek } from "@/content/weeks";
 import { getWeekLab } from "@/content/labs";
 import { getWeekOutline } from "@/content/sections";
 import type { LabQuizItem } from "@/content/types";
-import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
-import { parseMarkdown } from "@/content/markdown";
+import { Inline } from "@/components/MarkdownBlocks";
+import NextActivity from "@/components/NextActivity";
 import WeekFrame from "@/components/WeekFrame";
 import DrillChoice from "@/components/lab/DrillChoice";
 import DrillPredict from "@/components/lab/DrillPredict";
-import DrillDescriptive from "@/components/lab/DrillDescriptive";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readLabState, type LabQuizState } from "@/lib/learningStore";
-import { labProgress, QUIZ_KIND_LABEL, quizItemDone, quizItemWeak } from "@/lib/labView";
+import { QUIZ_KIND_LABEL, quizItemDone, quizItemWeak } from "@/lib/labView";
 import { sectionLabel, TIER_INFO, TIER_ORDER } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
 
@@ -25,24 +24,27 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const week = getWeek(slug);
-  return week ? { title: `${week.number}주차 퀴즈` } : {};
+  return week ? { title: `${week.number}주차 추가 퀴즈` } : {};
 }
 
-const KIND_ORDER: LabQuizItem["kind"][] = ["choice", "predict", "descriptive"];
-const KIND_DESC: Record<LabQuizItem["kind"], string> = {
+// 서술형 문항은 "서술형" 페이지에서 단계별 서술형과 함께 모아 보여 준다.
+type DrillKind = Exclude<LabQuizItem["kind"], "descriptive">;
+const KIND_ORDER: DrillKind[] = ["choice", "predict"];
+const KIND_DESC: Record<DrillKind, string> = {
   choice: "보기 중 하나를 고릅니다. 두 번 틀리면 해설이 공개됩니다.",
   predict: "코드를 실행하지 말고 출력을 예측해 적습니다. 공백 차이는 무시하고 비교하며, 정답이 공개되면 직접 실행해 확인할 수 있습니다.",
-  descriptive: "자신의 말로 쓴 뒤 모범답안·핵심 요소와 비교해 스스로 평가합니다.",
 };
 
-/** 퀴즈: 객관식·코드 출력 예측·서술형. 정답 비교는 서버가 하고, 정답·해설은 공개 조건을 만족한 뒤에만 내려보낸다. */
+/** 추가 퀴즈: 객관식·코드 출력 예측. 정답 비교는 서버가 하고, 정답·해설은 공개 조건을 만족한 뒤에만 내려보낸다. */
 export default async function WeekDrillPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { week, record, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}/drill`);
   const lab = getWeekLab(slug);
   if (!lab) notFound();
   const state = readLabState(record, slug);
-  const progress = labProgress(slug, state);
+  const items = lab.quiz.filter((q) => q.kind !== "descriptive");
+  const doneCount = items.filter((q) => quizItemDone(q, state.quiz[q.id])).length;
+  const weakCount = items.filter((q) => quizItemWeak(q, state.quiz[q.id])).length;
   const sections = new Map(getWeekOutline(week).sections.map((s) => [s.id, s]));
 
   const footer = (item: LabQuizItem, weak: boolean): ReactNode => {
@@ -107,42 +109,26 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
         />
       );
     }
-    return (
-      <DrillDescriptive
-        key={item.id}
-        slug={slug}
-        itemId={item.id}
-        label={label}
-        question={<Inline text={item.question} />}
-        savedText={s?.text}
-        review={s?.review}
-        checkedPoints={s?.checkedPoints}
-        modelAnswer={s?.text ? <BlocksRenderer blocks={parseMarkdown(item.modelAnswer)} /> : undefined}
-        keyPoints={s?.text ? item.keyPoints.map((p, i) => <Inline key={i} text={p} />) : undefined}
-        footer={footer(item, weak)}
-      />
-    );
+    return null;
   };
 
   return (
-    <WeekFrame week={week} status={status}>
+    <WeekFrame week={week} status={status} record={record} apply="drill">
       <div className="space-y-10">
         <section aria-labelledby="drill-intro">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="drill-intro" className="text-xl font-black text-ink">
-                퀴즈
+              <h2 id="drill-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
+                추가 퀴즈 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가 활동</span>
               </h2>
               <p className="mt-1 text-sm text-ink-muted">
-                단계 끝의 확인 문제와 별도로, 코드를 읽고 결과를 예측하거나 설명하는 문제로 이번 주 내용을 점검합니다. 단계 완료 조건과는 무관합니다.
+                단계 끝의 확인 문제보다 한 걸음 더 나아간 문제입니다. 개념을 다른 상황에 적용하고, 코드를 읽고 결과를 예측해 봅니다. 주차 완료 조건과는 무관합니다.
               </p>
             </div>
-            {progress && (
-              <p className="rounded-full bg-[var(--surface-card-2)] px-3 py-1 text-sm font-bold text-ink-secondary">
-                완료 {progress.quizDone}/{progress.quizTotal}
-                {progress.quizWeak > 0 && <span className="ml-2 text-[var(--status-critical)]">다시 볼 문항 {progress.quizWeak}</span>}
-              </p>
-            )}
+            <p className="rounded-full bg-[var(--surface-card-2)] px-3 py-1 text-sm font-bold text-ink-secondary">
+              완료 {doneCount}/{items.length}
+              {weakCount > 0 && <span className="ml-2 text-[var(--status-critical)]">다시 볼 문항 {weakCount}</span>}
+            </p>
           </div>
           <ul className="mt-4 space-y-1 text-sm text-ink-muted">
             {KIND_ORDER.map((kind) => (
@@ -153,16 +139,16 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           </ul>
           <nav aria-label="단계 구분" className="mt-4 flex flex-wrap gap-2 text-xs font-bold">
             {TIER_ORDER.map((tier) => {
-              const items = lab.quiz.filter((q) => q.tier === tier);
-              if (items.length === 0) return null;
-              const done = items.filter((q) => quizItemDone(q, state.quiz[q.id])).length;
+              const inTier = items.filter((q) => q.tier === tier);
+              if (inTier.length === 0) return null;
+              const done = inTier.filter((q) => quizItemDone(q, state.quiz[q.id])).length;
               return (
                 <a
                   key={tier}
                   href={`#tier-${tier}`}
                   className="rounded-full border border-[var(--border-hairline)] px-3 py-1 text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
                 >
-                  {TIER_INFO[tier].label} {done}/{items.length}
+                  {TIER_INFO[tier].label} {done}/{inTier.length}
                 </a>
               );
             })}
@@ -170,14 +156,14 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
         </section>
 
         {TIER_ORDER.map((tier) => {
-          const items = KIND_ORDER.flatMap((kind) => lab.quiz.filter((q) => q.tier === tier && q.kind === kind));
-          if (items.length === 0) return null;
+          const tierItems = KIND_ORDER.flatMap((kind) => items.filter((q) => q.tier === tier && q.kind === kind));
+          if (tierItems.length === 0) return null;
           const counters: Partial<Record<LabQuizItem["kind"], number>> = {};
           return (
             <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-heading`} className="scroll-mt-24">
               <div className="mb-4 border-b border-[var(--border-hairline)] pb-2">
                 <h2 id={`tier-${tier}-heading`} className="flex flex-wrap items-center gap-2 text-lg font-black text-ink">
-                  {TIER_INFO[tier].label} 문항 ({items.length}) <TierBadge tier={tier} />
+                  {TIER_INFO[tier].label} 문항 ({tierItems.length}) <TierBadge tier={tier} />
                 </h2>
                 <p className="mt-0.5 text-sm text-ink-muted">
                   {tier === "core"
@@ -188,7 +174,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
                 </p>
               </div>
               <div className="space-y-4">
-                {items.map((item) => {
+                {tierItems.map((item) => {
                   counters[item.kind] = (counters[item.kind] ?? 0) + 1;
                   return render(item, counters[item.kind]! - 1);
                 })}
@@ -197,11 +183,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           );
         })}
 
-        <p className="text-sm">
-          <Link href={`/weeks/${slug}/lab`} className="font-bold text-[var(--series-blue)] hover:underline">
-            ← 코딩 실습으로
-          </Link>
-        </p>
+        <NextActivity slug={slug} href="worksheet" label="백지공부 (필수)" desc="이제 자료를 덮고 이번 주 내용을 스스로 떠올려 적어 봅니다." />
       </div>
     </WeekFrame>
   );

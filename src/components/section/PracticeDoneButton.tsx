@@ -30,7 +30,7 @@ export default function PracticeDoneButton({ slug, sectionId, done }: { slug: st
             : "border border-[var(--border-hairline)] text-ink-secondary hover:border-[var(--series-orange)]"
         }`}
       >
-        {done ? "✓ 실습을 마쳤습니다" : "실습을 마쳤으면 눌러 주십시오"}
+        {done ? "✓ 따라 해 봤습니다" : "다 따라 해 봤으면 눌러 주십시오"}
       </button>
       <span className="text-xs text-ink-muted">
         {done ? "다시 누르면 취소됩니다." : "단계 완료 조건은 아니며, 내 진도의 실습 완료율에 반영됩니다."}

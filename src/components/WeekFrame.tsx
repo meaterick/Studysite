@@ -1,20 +1,31 @@
 import type { ReactNode } from "react";
 import type { WeekMeta } from "@/content/types";
 import type { WeekStatus } from "@/lib/study";
+import type { LearningRecord } from "@/lib/learningStore";
+import { applySummary, type ApplyKey } from "@/lib/applyView";
 import WeekTabs from "./WeekTabs";
+import ApplyNav from "./ApplyNav";
 import ProgressRing from "./ProgressRing";
 import DifficultyBadge from "./DifficultyBadge";
 
-/** 주차 머리글 + 탭. 잠금 상태가 페이지마다 최신이어야 해서 레이아웃이 아니라 각 페이지가 렌더링한다. */
+/**
+ * 주차 머리글 + 학습 흐름 탭(개요 · 단계 학습 · 적용과 복습). 진행 상태가 페이지마다 최신이어야 해서
+ * 레이아웃이 아니라 각 페이지가 렌더링한다. apply를 주면 적용과 복습의 하위 메뉴도 함께 보여 준다.
+ */
 export default function WeekFrame({
   week,
   status,
+  record,
+  apply,
   children,
 }: {
   week: WeekMeta;
   status: WeekStatus;
+  record: LearningRecord;
+  apply?: ApplyKey | "hub";
   children: ReactNode;
 }) {
+  const summary = applySummary(week, record, status);
   return (
     <>
       <div className="mb-6 flex items-start justify-between gap-4">
@@ -47,7 +58,14 @@ export default function WeekFrame({
           <p className="mt-1 text-[11px] font-bold text-ink-muted">진행률</p>
         </div>
       </div>
-      <WeekTabs slug={week.slug} finaleLocked={!status.finaleOpen} finaleUnfinished={!status.coreDone} />
+      <WeekTabs
+        slug={week.slug}
+        stageSub={`핵심 ${status.tiers.core.done}/${status.tiers.core.total} 완료`}
+        stageDone={status.coreDone}
+        applySub={`필수 ${summary.requiredDone}/${summary.requiredTotal} 완료`}
+        applyDone={summary.requiredDone === summary.requiredTotal}
+      />
+      {apply && <ApplyNav slug={week.slug} summary={summary} active={apply} />}
       {children}
     </>
   );

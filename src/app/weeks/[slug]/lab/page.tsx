@@ -11,6 +11,7 @@ import { readLabState } from "@/lib/learningStore";
 import { exerciseView, labProgress } from "@/lib/labView";
 import { TIER_INFO, TIER_ORDER } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
+import NextActivity from "@/components/NextActivity";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -40,13 +41,13 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
   })).filter((g) => g.exercises.length > 0);
 
   return (
-    <WeekFrame week={week} status={status}>
+    <WeekFrame week={week} status={status} record={record} apply="lab">
       <div className="space-y-10">
         <section aria-labelledby="lab-intro" className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="lab-intro" className="text-xl font-black text-ink">
-                코딩 실습
+              <h2 id="lab-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
+                코딩 실습 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가 활동</span>
               </h2>
               <p className="mt-1 text-sm text-ink-muted">
                 단계에서 배운 내용을 직접 코드로 옮겨 봅니다. 문제를 읽고 <strong className="text-[var(--series-orange)]">TODO</strong>를 채운 뒤 채점하면, 채점 코드가 결과를 항목별로 검사합니다.
@@ -60,7 +61,7 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-[var(--series-blue)]/40 bg-card p-4 text-sm text-ink-secondary">
-              <p className="font-black text-[var(--series-blue)]">완성 예제 (학습 자료 속 코드 셀)</p>
+              <p className="font-black text-[var(--series-blue)]">완성 예제 (단계 학습 속 코드 셀)</p>
               <p className="mt-1">이미 완성된 코드입니다. 그대로 실행해 결과를 확인하고, 숫자를 바꿔 가며 관찰합니다. 채점은 없습니다.</p>
             </div>
             <div className="rounded-xl border border-[var(--series-orange)]/40 bg-card p-4 text-sm text-ink-secondary">
@@ -73,7 +74,7 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
             <li>▶ 실행(Shift+Enter)은 내 코드만 실행해 출력을 보여 주고, ✓ 채점(Ctrl+Enter)은 빈 실행 환경에서 내 코드를 실행한 뒤 채점 항목을 검사합니다.</li>
             <li>막히면 힌트를 한 단계씩 열어 보십시오. 모범 답안은 통과하거나, 채점해 본 뒤 힌트를 모두 보면 열립니다. 초기화를 누르면 시작 코드로 돌아갑니다.</li>
             <li>실습은 핵심(초심자) · 보충(중급자) · 심화(전문가)로 나뉩니다. 핵심 실습부터 풀고, 여유가 있으면 보충·심화에 도전하십시오.</li>
-            <li>코딩 실습은 단계 완료 조건이 아닙니다. 심화 실습을 통과하면 심화 달성 기록에 반영됩니다.</li>
+            <li>코딩 실습은 주차 완료 조건이 아닙니다. 심화 실습을 통과하면 심화 달성 기록에 반영됩니다.</li>
           </ul>
         </section>
 
@@ -107,18 +108,16 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
           );
         })}
 
-        <section className="grid gap-3 sm:grid-cols-2">
-          <Link href={`/weeks/${slug}/drill`} className="block rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]">
-            <p className="font-black text-ink">퀴즈로 점검하기 →</p>
-            <p className="mt-1 text-sm text-ink-muted">객관식·코드 출력 예측·서술형으로 이번 주 내용을 확인합니다.</p>
-          </Link>
-          <Link href={`/weeks/${slug}/assignment#challenges`} className="block rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]">
-            <p className="font-black text-ink">과제 심화 문제 →</p>
-            <p className="mt-1 text-sm text-ink-muted">
-              과제 페이지에서 자동 채점되는 심화(전문가) 문제{progress ? ` ${progress.challengesTotal}개` : ""}에 도전합니다.
-            </p>
-          </Link>
-        </section>
+        {progress && progress.challengesTotal > 0 && (
+          <p className="text-sm text-ink-muted">
+            더 도전하고 싶다면{" "}
+            <Link href={`/weeks/${slug}/assignment#challenges`} className="font-bold text-[var(--series-blue)] hover:underline">
+              과제 페이지의 심화 문제 {progress.challengesTotal}개
+            </Link>
+            도 자동 채점됩니다.
+          </p>
+        )}
+        <NextActivity slug={slug} href="drill" label="추가 퀴즈" desc="객관식·코드 출력 예측 문제로 이해를 한 번 더 점검합니다." />
       </div>
     </WeekFrame>
   );

@@ -52,7 +52,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
   const labStats = labProgress(slug, labState);
 
   return (
-    <WeekFrame week={week} status={status}>
+    <WeekFrame week={week} status={status} record={record} apply="assignment">
       <MarkFeedbackSeen hasNew={hasUnseenGrade} slug={slug} />
       {!isAdmin && (
         <UnfinishedWarning
@@ -103,7 +103,9 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
         </section>
 
         <section aria-labelledby="overview-heading">
-          <p className="text-sm font-bold text-[var(--series-blue)]">{week.number}주차 과제</p>
+          <p className="flex items-center gap-2 text-sm font-bold text-[var(--series-blue)]">
+            {week.number}주차 과제 <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">필수</span>
+          </p>
           <h2 id="overview-heading" className="mt-1 text-2xl font-black text-ink">
             {spec.title}
           </h2>
