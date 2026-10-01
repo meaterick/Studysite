@@ -36,6 +36,9 @@ function fail(msg: string) {
   console.error(`✗ ${msg}`);
 }
 
+/** CPython 기준 채점 1회의 허용 시간(초). */
+const SLOW_SECS = 4;
+
 function runPython(source: string, timeoutMs = 300_000): { stdout: string; stderr: string; status: number | null } {
   const file = path.join(tmp, `run-${checks++}.py`);
   fs.writeFileSync(file, source.replaceAll("/course/", `${courseDir}/`));
@@ -64,7 +67,7 @@ for (const [slug, lab] of Object.entries(LABS)) {
 
   for (const ex of [...lab.exercises, ...lab.assignment.challenges]) {
     const t0 = Date.now();
-    const good = runPython(printLastExpression(buildGradeProgram(ex.solution, ex.tests)));
+    const good = runPython(printLastExpression(buildGradeProgram(ex.solution, ex.tests)), 60_000);
     const report = parseGradeReport(lastLine(good.stdout));
     if (!report) fail(`${ex.id}: 모범 답안 채점 결과를 읽지 못함\n${good.stderr.slice(-800)}`);
     else if (report.error) fail(`${ex.id}: 모범 답안 실행 오류 — ${report.error}`);
@@ -73,7 +76,14 @@ for (const [slug, lab] of Object.entries(LABS)) {
       const bad = report.tests.filter((t) => !t.ok);
       if (bad.length) fail(`${ex.id}: 모범 답안이 통과하지 못한 항목 — ${bad.map((t) => `${t.name}: ${t.message}`).join(" / ")}`);
     }
-    const starter = runPython(printLastExpression(buildGradeProgram(ex.starter, ex.tests)));
+    const goodSecs = (Date.now() - t0) / 1000;
+    const t1 = Date.now();
+    const starter = runPython(printLastExpression(buildGradeProgram(ex.starter, ex.tests)), 60_000);
+    const starterSecs = (Date.now() - t1) / 1000;
+    // 브라우저(Pyodide)는 CPython보다 몇 배 느리고 채점은 30초가 지나면 강제 중단되므로, 여기서 넉넉히 여유를 둔다.
+    for (const [label, secs] of [["모범 답안", goodSecs], ["시작 코드", starterSecs]] as const) {
+      if (secs > SLOW_SECS) fail(`${ex.id}: ${label} 채점이 ${secs.toFixed(1)}s 걸림(기준 ${SLOW_SECS}s) — 브라우저에서 시간 초과될 수 있음`);
+    }
     const sReport = parseGradeReport(lastLine(starter.stdout));
     if (!sReport) fail(`${ex.id}: 시작 코드 채점 결과를 읽지 못함\n${starter.stderr.slice(-800)}`);
     else if (!sReport.error && sReport.tests.every((t) => t.ok)) fail(`${ex.id}: 시작 코드가 모든 채점 항목을 통과함(TODO 없이도 통과)`);

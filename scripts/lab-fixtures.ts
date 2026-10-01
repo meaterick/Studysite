@@ -66,4 +66,11 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
     ],
     "example-code": [["# TODO: 직접 고른 Query를 하나 이상 추가합니다.", '"먹었다의 Key와 같은 Query": [1, 1, 0, -1],']],
   },
+  "week-6": {
+    "decoding-code": [["q = p  # TODO: 필터 flt를 적용합니다.", "q = flt(p)"]],
+    "scaling-code": [
+      ["N = 0.0  # TODO", "N = (C / 120) ** 0.5"],
+      ["D = 0.0  # TODO", "D = 20 * N"],
+    ],
+  },
 };
