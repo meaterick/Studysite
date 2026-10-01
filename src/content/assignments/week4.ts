@@ -176,7 +176,7 @@ GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8
 
 P0, stats0 = init_params(BASE, np.random.default_rng(0)), {}
 loss0, _, _ = evaluate(P0, stats0, BASE, X_val, y_val)
-print(f"초기 손실 {loss0:.3f} (기대값 ln 10 = {np.log(10):.3f})")
+print(f"초기 손실 {loss0:.3f} (기댓값 ln 10 = {np.log(10):.3f})")
 
 base = train()
 h = base["hist"]

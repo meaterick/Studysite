@@ -1111,7 +1111,7 @@ const sections: Record<string, SectionMeta> = {
           "제곱 오차가 대칭이라서"
         ],
         "answer": 0,
-        "explanation": "독립이면 곱의 기대값이 기대값의 곱이 되고 $\\mathbb{E}[\\varepsilon] = 0$이라 교차항이 사라진다."
+        "explanation": "독립이면 곱의 기댓값이 기댓값의 곱이 되고 $\\mathbb{E}[\\varepsilon] = 0$이라 교차항이 사라진다."
       },
       {
         "id": "w2-bias-variance-theory-c2",
@@ -1197,7 +1197,7 @@ const sections: Record<string, SectionMeta> = {
           "C를 더 크게 하면 0.6을 넘을 것이다"
         ],
         "answer": 0,
-        "explanation": "잡음이 있는 점수 여러 개 중 최댓값의 기대값은 참값보다 크다. 한 실험에서 고른 모델의 검증 점수 평균은 0.573이었지만 새 데이터 정확도는 0.496이었다."
+        "explanation": "잡음이 있는 점수 여러 개 중 최댓값의 기댓값은 참값보다 크다. 한 실험에서 고른 모델의 검증 점수 평균은 0.573이었지만 새 데이터 정확도는 0.496이었다."
       },
       {
         "id": "w2-model-evaluation-stats-c2",

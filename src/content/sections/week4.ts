@@ -266,7 +266,7 @@ const sections: Record<string, SectionMeta> = {
           "학습 때 모든 뉴런을 켠다"
         ],
         "answer": 1,
-        "explanation": "학습 때 $1/(1-p)$로 미리 보정해 기대값을 맞춰두므로, 평가 때는 아무것도 하지 않아도 된다."
+        "explanation": "학습 때 $1/(1-p)$로 미리 보정해 기댓값을 맞춰두므로, 평가 때는 아무것도 하지 않아도 된다."
       },
       {
         "id": "w4-regularization-c2",
