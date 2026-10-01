@@ -1,4 +1,4 @@
-import DiagramFrame, { colors, ink, inkMuted, card2Bg } from "./DiagramFrame";
+import DiagramFrame, { colors, ink, inkMuted, inkSecondary, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
 
 export function RagPipeline() {
@@ -104,6 +104,89 @@ export function AgentLoop() {
         return <Arrow key={i} x1={x1} y1={y1} x2={x2} y2={y2} color={colors.orange} strokeWidth={1.4} />;
       })}
       <Label x={cx} y={cy + 4} text="max_steps까지 반복" color={inkMuted} />
+    </DiagramFrame>
+  );
+}
+
+export function ChunkOverlap() {
+  // 슬라이딩 윈도우 청킹: size 글자씩 자르되 overlap만큼 겹쳐 다음 조각을 시작한다.
+  const x0 = 30;
+  const scale = 0.5; // 글자 1개 = 0.5px
+  const total = 1000;
+  const size = 200;
+  const step = 160;
+  const starts = [0, 160, 320, 480, 640, 800];
+  const px = (c: number) => x0 + c * scale;
+  return (
+    <DiagramFrame
+      title="겹치게 자르는 청킹 (size 200, overlap 40)"
+      caption="1,000자 문서를 200자씩 자르되 다음 조각은 160자 뒤(200 − 40)에서 시작한다. 그래서 조각은 6개가 되고, 이웃한 두 조각은 40자(진한 부분)를 함께 갖는다. 경계에 걸린 문장도 적어도 한 조각에는 온전히 남는다."
+      viewBox="0 0 640 250"
+      minWidth={500}
+    >
+      <rect x={px(0)} y={30} width={total * scale} height={22} rx={4} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={px(total / 2)} y={45} textAnchor="middle" fontSize={11} fill={ink}>
+        원본 문서 1,000자
+      </text>
+      {[0, 200, 400, 600, 800, 1000].map((c) => (
+        <text key={c} x={px(c)} y={24} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {c}
+        </text>
+      ))}
+      {starts.map((s, i) => {
+        const end = Math.min(s + size, total);
+        const y = 70 + i * 26;
+        return (
+          <g key={s}>
+            <rect x={px(s)} y={y} width={(end - s) * scale} height={20} rx={4} fill={colors.blue} fillOpacity={0.22} stroke={colors.blue} />
+            {i > 0 && <rect x={px(s)} y={y} width={40 * scale} height={20} rx={4} fill={colors.orange} fillOpacity={0.75} />}
+            <text x={px(end) + 6} y={y + 14} fontSize={10.5} fill={ink}>
+              조각 {i} ({s}~{end})
+            </text>
+          </g>
+        );
+      })}
+      <text x={px(step) - 6} y={110} textAnchor="end" fontSize={10} fill={colors.orange} fontWeight={700}>
+        겹치는 40자 →
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function LethalTrifecta() {
+  // 세 능력이 한 에이전트에 모두 모이면 유출 경로가 생긴다. 하나만 끊어도 경로가 닫힌다.
+  const circles = [
+    { cx: 250, cy: 150, label: "개인 데이터 접근", sub: "메일함·내부 문서", color: colors.blue, lx: 150, ly: 30 },
+    { cx: 390, cy: 150, label: "신뢰하지 않는 콘텐츠", sub: "외부 메일·웹페이지", color: colors.orange, lx: 490, ly: 30 },
+    { cx: 320, cy: 250, label: "바깥으로 내보내기", sub: "메일 발송·웹 요청·이미지 링크", color: colors.violet, lx: 320, ly: 368 },
+  ];
+  return (
+    <DiagramFrame
+      title="치명적 삼박자(lethal trifecta)"
+      caption="세 능력이 한 에이전트에 모두 있으면, 외부 콘텐츠에 숨은 지시가 개인 데이터를 읽어 바깥으로 내보내게 만들 수 있다(가운데). 셋 중 하나만 없애도 이 경로는 닫힌다."
+      viewBox="0 0 640 392"
+      minWidth={480}
+    >
+      {circles.map((c) => (
+        <circle key={c.label} cx={c.cx} cy={c.cy} r={95} fill={c.color} fillOpacity={0.14} stroke={c.color} strokeWidth={2} />
+      ))}
+      {circles.map((c) => (
+        <g key={`${c.label}-t`}>
+          <text x={c.lx} y={c.ly} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={c.color}>
+            {c.label}
+          </text>
+          <text x={c.lx} y={c.ly + 15} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+            {c.sub}
+          </text>
+        </g>
+      ))}
+      <circle cx={320} cy={185} r={26} fill={colors.red} fillOpacity={0.85} />
+      <text x={320} y={182} textAnchor="middle" fontSize={11} fontWeight={700} fill="#fff">
+        유출
+      </text>
+      <text x={320} y={196} textAnchor="middle" fontSize={10} fontWeight={700} fill="#fff">
+        가능
+      </text>
     </DiagramFrame>
   );
 }

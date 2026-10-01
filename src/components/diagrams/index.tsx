@@ -5,7 +5,7 @@ import { ComputationalGraph, MlpDiagram, XorHidden } from "./w3";
 import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
 import { LlmPipeline, ScalingLawPlot, AttentionPatterns, LoraDiagram } from "./w6";
-import { RagPipeline, AgentLoop } from "./w7";
+import { RagPipeline, AgentLoop, ChunkOverlap, LethalTrifecta } from "./w7";
 import { NistFramework, CapstoneTimeline } from "./w8";
 import { PhaseRoadmap, DifficultyCurve } from "./shared";
 import InteractiveGradientDescent from "./InteractiveGradientDescent";
@@ -45,6 +45,8 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "lora-diagram": LoraDiagram,
   "decoding-temperature": InteractiveDecodingTemperature,
   "rag-pipeline": RagPipeline,
+  "chunk-overlap": ChunkOverlap,
+  "lethal-trifecta": LethalTrifecta,
   "agent-loop": AgentLoop,
   "nist-framework": NistFramework,
   "capstone-timeline": CapstoneTimeline,
