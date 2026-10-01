@@ -23,7 +23,7 @@ export default function WeekCard({
   /** 핵심 단계 완료 수(주차 완료 기준) */
   coreDone: number;
   coreTotal: number;
-  /** 단계 학습 예상 시간(분) */
+  /** 학습 자료 예상 시간(분) */
   minutes?: number;
   /** 로그인하지 않은 방문자: 진도 대신 로그인 안내를 보이고, 누르면 로그인 페이지로 보낸다. */
   locked?: boolean;

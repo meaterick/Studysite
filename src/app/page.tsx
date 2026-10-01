@@ -37,7 +37,7 @@ const OUTCOMES = [
   "프롬프트, RAG, 에이전트로 문제를 해결하고, 평가 데이터셋으로 성능을 측정할 수 있습니다.",
 ];
 
-// 과제·백지공부에 드는 시간(예상). 단계 학습 시간은 콘텐츠 분량으로 계산한다.
+// 과제·백지공부에 드는 시간(예상). 학습 자료 시간은 콘텐츠 분량으로 계산한다.
 const ASSIGNMENT_HOURS = { min: 2, max: 3 };
 const WORKSHEET_HOURS = 0.5;
 
@@ -61,7 +61,7 @@ export default async function Home() {
   };
   const totalStages = WEEKS.reduce((n, w) => n + getWeekOutline(w).sections.length, 0);
   const codeCells = WEEKS.reduce((n, w) => n + (w.conceptsMd.match(/^```python\s*$/gm)?.length ?? 0), 0);
-  // 주당 예상 시간 = 핵심 단계 학습(콘텐츠 분량으로 계산) + 백지공부 + 과제. 보충·심화는 선택이라 넣지 않는다.
+  // 주당 예상 시간 = 핵심 학습 자료(콘텐츠 분량으로 계산) + 백지공부 + 과제. 보충·심화는 선택이라 넣지 않는다.
   const studyHours = WEEKS.map((w) => getWeekOutline(w).sections.filter((s) => s.tier === "core").reduce((sum, s) => sum + s.minutes, 0) / 60);
   const weeklyMin = Math.floor(Math.min(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.min);
   const weeklyMax = Math.ceil(Math.max(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.max);
@@ -145,7 +145,7 @@ export default async function Home() {
               },
               {
                 q: "일주일에 얼마나 걸리나요?",
-                a: `주 ${weeklyMin}~${weeklyMax}시간: 핵심 단계 학습 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). 보충·심화 단계는 선택이라 이 시간에 넣지 않았습니다.`,
+                a: `주 ${weeklyMin}~${weeklyMax}시간: 핵심 학습 자료 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). 보충·심화 단계는 선택이라 이 시간에 넣지 않았습니다.`,
               },
               {
                 q: "비용이 드나요? 누가 이용할 수 있나요?",
