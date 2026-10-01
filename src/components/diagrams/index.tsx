@@ -4,7 +4,7 @@ import { ConfusionMatrix, DataSplitDiagram, SigmoidCurve, LearningCurves } from 
 import { ComputationalGraph, MlpDiagram, XorHidden } from "./w3";
 import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
-import { LlmPipeline, ScalingLawPlot } from "./w6";
+import { LlmPipeline, ScalingLawPlot, AttentionPatterns, LoraDiagram } from "./w6";
 import { RagPipeline, AgentLoop } from "./w7";
 import { NistFramework, CapstoneTimeline } from "./w8";
 import { PhaseRoadmap, DifficultyCurve } from "./shared";
@@ -40,7 +40,9 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "transformer-decoder-block": TransformerDecoderBlock,
   "tokenizer-bpe": TokenizerBpe,
   "llm-pipeline": LlmPipeline,
+  "attention-patterns": AttentionPatterns,
   "scaling-law-plot": ScalingLawPlot,
+  "lora-diagram": LoraDiagram,
   "decoding-temperature": InteractiveDecodingTemperature,
   "rag-pipeline": RagPipeline,
   "agent-loop": AgentLoop,
