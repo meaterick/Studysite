@@ -8,7 +8,7 @@ import { TIER_INFO, TIER_ORDER, sectionLabel } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
-import CheckQuestion from "@/components/section/CheckQuestion";
+import CheckSequence from "@/components/section/CheckSequence";
 import StageFooter from "@/components/section/StageFooter";
 import { loadWeekPage } from "@/lib/weekPage";
 import { canOpenSection, sectionProgress, unfinishedBefore, type WeekStatus } from "@/lib/study";
@@ -139,30 +139,25 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             <StepHeading
               id="check-heading"
               title="확인 문제"
-              desc="방금 배운 내용을 빠르게 확인하는 객관식 문제입니다. 모두 맞히면 이 단계가 완료되고, 틀린 문제는 다시 풀 수 있습니다."
+              desc="방금 배운 내용을 확인하는 객관식 문제입니다. 한 문제씩 풀고, 맞히면 해설을 읽은 뒤 다음 문제로 넘어갑니다. 모두 맞히면 이 단계를 완료할 수 있습니다."
             />
-            <div className="space-y-4">
-              {section.meta.checks.map((check, i) => {
+            <CheckSequence
+              slug={slug}
+              sectionId={sectionId}
+              completed={progress.completed}
+              items={section.meta.checks.map((check) => {
                 const checkState = state.checks[check.id] ?? null;
                 const reveal = !!checkState && (checkState.correct || checkState.wrong.length >= 2);
-                return (
-                  <CheckQuestion
-                    key={check.id}
-                    slug={slug}
-                    sectionId={sectionId}
-                    checkId={check.id}
-                    index={i}
-                    question={<Inline text={check.question} />}
-                    choices={check.choices.map((c, j) => (
-                      <Inline key={j} text={c} />
-                    ))}
-                    state={checkState}
-                    explanation={reveal ? <Inline text={check.explanation} /> : undefined}
-                    correctIndex={checkState?.correct ? check.answer : undefined}
-                  />
-                );
+                return {
+                  checkId: check.id,
+                  question: <Inline text={check.question} />,
+                  choices: check.choices.map((c, j) => <Inline key={j} text={c} />),
+                  state: checkState,
+                  explanation: reveal ? <Inline text={check.explanation} /> : undefined,
+                  correctIndex: checkState?.correct ? check.answer : undefined,
+                };
               })}
-            </div>
+            />
           </section>
 
           {related.descriptive + related.lab + related.drill > 0 && (
