@@ -14,7 +14,10 @@ import { loadWeekPage } from "@/lib/weekPage";
 import { canOpenSection, sectionProgress, unfinishedBefore, type WeekStatus } from "@/lib/study";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
 import PracticeDoneButton from "@/components/section/PracticeDoneButton";
-import { readSectionState } from "@/lib/learningStore";
+import { readLabState, readSectionState } from "@/lib/learningStore";
+import { getWeekLab } from "@/content/labs";
+import CodingExercise from "@/components/lab/CodingExercise";
+import { exerciseView } from "@/lib/labView";
 
 export function generateStaticParams() {
   return WEEKS.flatMap((w) => getWeekOutline(w).sections.map((s) => ({ slug: w.slug, sectionId: s.id })));
@@ -35,6 +38,7 @@ export async function generateMetadata({
 const PART_LINKS = [
   { id: "learn", label: "학습" },
   { id: "practice", label: "실습" },
+  { id: "lab", label: "TODO 실습" },
   { id: "check", label: "확인 문제" },
 ];
 
@@ -53,6 +57,10 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const answers = quizAnswers.find((a) => a.week === week.number)?.answers ?? {};
   const questionText = new Map(week.quiz.map((q) => [q.id, q.question]));
   const hasPractice = section.practice.length > 0;
+  const lab = getWeekLab(slug);
+  const labExercises = lab?.exercises.filter((e) => e.sectionId === sectionId) ?? [];
+  const labQuizCount = lab?.quiz.filter((q) => q.sectionId === sectionId).length ?? 0;
+  const labState = readLabState(record, slug);
 
   const requirements = [
     { label: "확인 문제", done: progress.checksDone, total: progress.checksTotal },
@@ -97,7 +105,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
           <nav aria-label="이 단계의 구성" className="mt-5 flex flex-wrap items-center gap-2 text-xs font-bold">
             <span className="text-ink-muted">바로 가기</span>
-            {PART_LINKS.filter((s) => s.id !== "practice" || hasPractice).map((s) => (
+            {PART_LINKS.filter((s) => (s.id !== "practice" || hasPractice) && (s.id !== "lab" || labExercises.length > 0)).map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
@@ -123,6 +131,28 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
                 <BlocksRenderer blocks={section.practice} docKey={`${slug}:${sectionId}:practice`} interactiveCode />
               </div>
               <PracticeDoneButton slug={slug} sectionId={sectionId} done={practiceDone} />
+            </section>
+          )}
+
+          {labExercises.length > 0 && (
+            <section id="lab" aria-labelledby="lab-heading" className="mt-12 scroll-mt-24">
+              <StepHeading
+                id="lab-heading"
+                title="TODO 실습"
+                desc="위의 실습 코드는 완성된 예제입니다. 이번에는 핵심 줄이 비어 있는 코드를 직접 채우고 채점해 봅니다. 코드는 브라우저 안에서만 실행되며, 단계 완료 조건은 아닙니다."
+              />
+              <div className="space-y-5">
+                {labExercises.map((ex) => (
+                  <CodingExercise key={ex.id} view={exerciseView(week, ex, labState, status, isAdmin)} />
+                ))}
+              </div>
+              {labQuizCount > 0 && (
+                <p className="mt-4 text-sm">
+                  <Link href={`/weeks/${slug}/drill`} className="font-bold text-[var(--series-blue)] hover:underline">
+                    이 단계와 관련된 퀴즈 {labQuizCount}문항 풀어 보기 →
+                  </Link>
+                </p>
+              )}
             </section>
           )}
 

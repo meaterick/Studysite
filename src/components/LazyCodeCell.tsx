@@ -51,6 +51,7 @@ export default function LazyCodeCell({
     <div ref={ref}>
       <CodeBlock
         lang="python"
+        label="Python · 완성 예제"
         code={starterCode}
         action={
           <button

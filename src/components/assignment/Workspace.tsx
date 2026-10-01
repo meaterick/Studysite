@@ -14,6 +14,7 @@ import {
 import { saveAssignmentDraft, submitAssignmentWork } from "@/lib/assignmentActions";
 import { forceStop, onRuntimeReset, preloadPyodide, resetNamespace, runPython, writeRuntimeFiles, type RunStatus } from "@/lib/pyRunner";
 import AnswerCell from "./AnswerCell";
+import AutoTestPanel, { type AutoTestView } from "@/components/lab/AutoTestPanel";
 import { formatTime } from "@/lib/datetime";
 
 // Monaco 편집기는 무겁기 때문에 작업 공간이 열릴 때 별도 청크로 불러온다.
@@ -86,6 +87,7 @@ export default function Workspace({
   savedAt,
   courseDocs,
   resubmit,
+  autoTests,
 }: {
   slug: string;
   spec: AssignmentSpec;
@@ -94,6 +96,8 @@ export default function Workspace({
   savedAt?: string;
   courseDocs?: { path: string; content: string }[];
   resubmit: boolean;
+  /** 작업 공간 이름공간에서 실행하는 자동 테스트(src/content/labs) */
+  autoTests?: AutoTestView[];
 }) {
   const ns = `assignment:${slug}`;
   const [draft, setDraft] = useState<AssignmentDraft>(initialDraft);
@@ -299,7 +303,7 @@ export default function Workspace({
     [ensureFiles, ns, updateCell]
   );
 
-  const runAll = async () => {
+  const runAll = async (): Promise<boolean> => {
     setRunningAll(true);
     try {
       for (const task of spec.tasks) {
@@ -308,11 +312,12 @@ export default function Workspace({
           const ok = await runCell(task.id, cell.id);
           if (!ok) {
             setNotice(`"${task.title}"의 코드 셀에서 오류가 발생해 전체 실행을 멈췄습니다.`);
-            return;
+            return false;
           }
         }
       }
       setNotice("모든 코드 셀을 순서대로 실행했습니다.");
+      return true;
     } finally {
       setRunningAll(false);
     }
@@ -403,6 +408,14 @@ export default function Workspace({
                   </li>
                 );
               })}
+              {autoTests && autoTests.length > 0 && (
+                <li className="border-t border-[var(--border-hairline)] pt-1">
+                  <a href="#autotests" className="flex gap-2 rounded-md px-2 py-1.5 text-sm text-ink-secondary hover:bg-[var(--surface-card-2)]">
+                    <span aria-hidden="true" className="w-4">✓</span>
+                    자동 테스트
+                  </a>
+                </li>
+              )}
               <li className="border-t border-[var(--border-hairline)] pt-1">
                 <a href="#submit" className="flex gap-2 rounded-md px-2 py-1.5 text-sm font-bold text-[var(--series-blue)] hover:bg-[var(--surface-card-2)]">
                   <span aria-hidden="true" className="w-4">→</span>
@@ -560,6 +573,12 @@ export default function Workspace({
             </section>
           );
         })}
+
+        {autoTests && autoTests.length > 0 && (
+          <div id="autotests" className="scroll-mt-32">
+            <AutoTestPanel ns={ns} tests={autoTests} beforeRun={runAll} disabled={busy} />
+          </div>
+        )}
 
         <section id="submit" aria-labelledby="submit-heading" className="scroll-mt-32 rounded-xl border border-[var(--border-hairline)] bg-card p-5">
           <h3 id="submit-heading" className="text-lg font-black text-ink">

@@ -158,7 +158,7 @@ export default function CodeCell({
   return (
     <div ref={containerRef} className="not-prose overflow-hidden rounded-lg border border-[var(--border-hairline)]">
       <div className="flex items-center justify-between border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1.5">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">Python · 편집·실행 가능</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">Python · 완성 예제 · 편집·실행 가능</span>
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleReset}

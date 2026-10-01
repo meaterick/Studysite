@@ -25,6 +25,8 @@ export default function WeekTabs({
   const tabs: Tab[] = [
     { href: base, label: "개요", match: (p) => p === base },
     { href: `${base}/continue`, label: "단계 학습", match: (p) => p.startsWith(`${base}/sections/`) },
+    { href: `${base}/lab`, label: "코딩 실습", match: (p) => p === `${base}/lab` },
+    { href: `${base}/drill`, label: "퀴즈", match: (p) => p === `${base}/drill` },
     { href: `${base}/worksheet`, label: "백지공부", locked: finaleLocked, warn: !finaleLocked && finaleUnfinished, match: (p) => p === `${base}/worksheet` },
     { href: `${base}/assignment`, label: "과제", locked: finaleLocked, warn: !finaleLocked && finaleUnfinished, match: (p) => p === `${base}/assignment` },
     { href: `${base}/quiz`, label: "복습 노트", match: (p) => p === `${base}/quiz` },

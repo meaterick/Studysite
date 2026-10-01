@@ -122,6 +122,90 @@ export interface AssignmentSpec {
   provideCourseDocs?: boolean;
 }
 
+// ─── 코딩 실습·퀴즈·과제 자동 테스트 (src/content/labs) ───────────────────────
+// 학습 자료의 완성 예제와 달리, 학습자가 TODO를 직접 채우고 브라우저(Pyodide)에서 자동 채점받는다.
+// 사용자 코드는 서버에서 실행하지 않는다. 퀴즈의 정답 비교만 서버 액션이 한다.
+
+/** 채점 코드에서 쓰는 도우미: `@test("이름")`으로 검사 항목을 정의하고, `approx(a, b)`·`output`(내 코드의 표준 출력)을 쓸 수 있다. */
+export interface CodingExercise {
+  /** 전역에서 고유한 id (진도·코드 저장 키). 한 번 정하면 바꾸지 않는다. */
+  id: string;
+  /** 연결된 단계 id(conceptsMd의 {#id}). 과제 심화 문제는 생략한다. */
+  sectionId?: string;
+  title: string;
+  /** 1 쉬움 · 2 보통 · 3 어려움 */
+  level: 1 | 2 | 3;
+  /** 문제 설명(마크다운) */
+  prompt: string;
+  /** `TODO`가 들어 있는 시작 코드 */
+  starter: string;
+  /** 채점 코드. 학습자 코드를 실행한 이름공간에서 이어서 실행한다. */
+  tests: string;
+  /** 단계별 힌트. 앞에서부터 하나씩 공개한다. */
+  hints: string[];
+  /** 모범 답안 코드. 통과했거나 힌트를 모두 본 뒤에 볼 수 있다. */
+  solution: string;
+}
+
+export type LabQuizItem =
+  | {
+      kind: "choice";
+      id: string;
+      sectionId: string;
+      question: string;
+      choices: string[];
+      /** 0부터 시작하는 정답 번호 (서버에서만 비교) */
+      answer: number;
+      explanation: string;
+    }
+  | {
+      kind: "predict";
+      id: string;
+      sectionId: string;
+      /** 생략하면 "출력 결과를 예측해 적으십시오." */
+      question?: string;
+      /** 출력을 예측할 Python 코드 */
+      code: string;
+      /** 정확한 출력(공백 차이는 무시하고 비교) */
+      expected: string;
+      /** 표기만 다른 정답(예: 0.5와 .5) */
+      alternatives?: string[];
+      explanation: string;
+    }
+  | {
+      kind: "descriptive";
+      id: string;
+      sectionId: string;
+      question: string;
+      modelAnswer: string;
+      /** 자기 점검용 핵심 요소 */
+      keyPoints: string[];
+    };
+
+/** 과제 작업 공간의 코드를 대상으로 브라우저에서 실행하는 자동 테스트 */
+export interface AssignmentAutoTest {
+  id: string;
+  /** 대상 과제 항목(AssignmentTaskSpec.id) */
+  taskId: string;
+  title: string;
+  /** 과제 이름공간(학습자가 실행한 셀의 변수)에서 실행하는 코드. assert가 실패하면 미통과 */
+  code: string;
+  /** 미통과일 때 보여 줄 도움말 */
+  hint?: string;
+}
+
+export interface WeekLab {
+  exercises: CodingExercise[];
+  quiz: LabQuizItem[];
+  assignment: {
+    /** 무엇을 만들어 내야 하는지 한눈에 보는 요구사항 */
+    requirements: string[];
+    autoTests: AssignmentAutoTest[];
+    /** 자동 채점되는 심화 문제(제출과 별개, 선택) */
+    challenges: CodingExercise[];
+  };
+}
+
 export interface WeekSection {
   id: string;
   /** 1부터 시작하는 단계 번호 */

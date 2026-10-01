@@ -60,7 +60,44 @@ export interface LearningRecord {
   feedbackSeenAt?: string;
   /** 피드백함 밖(과제 화면)에서 확인한 채점 키("<제출 id>:<채점 시각>") */
   seenGrades?: string[];
+  /** 주차 slug → 코딩 실습·퀴즈 기록 (src/content/labs). 단계 완료 조건과는 무관하다. */
+  labs?: Record<string, LabWeekState>;
   updatedAt?: string;
+}
+
+/** 코딩 실습 하나의 기록. 채점은 브라우저에서 하므로 학습자가 보고한 결과다. */
+export interface LabExerciseState {
+  /** 채점 횟수 */
+  attempts: number;
+  /** 지금까지 가장 많이 통과한 채점 항목 수 / 전체 항목 수 */
+  bestPassed: number;
+  total: number;
+  /** 열어 본 힌트 수 */
+  hintsUsed: number;
+  /** 처음으로 모든 항목을 통과한 시각 */
+  passedAt?: string;
+  solutionViewedAt?: string;
+  lastGradedAt?: string;
+}
+
+export interface LabQuizState {
+  attempts: number;
+  correct?: boolean;
+  /** 객관식: 고른 오답 번호 */
+  wrong?: number[];
+  /** 출력 예측: 마지막으로 낸 답 / 정답 공개 여부 */
+  lastAnswer?: string;
+  revealed?: boolean;
+  /** 서술형: 답안과 자기평가, 스스로 확인한 핵심 요소 번호 */
+  text?: string;
+  answeredAt?: string;
+  review?: QuizReviewStatus;
+  checkedPoints?: number[];
+}
+
+export interface LabWeekState {
+  exercises: Record<string, LabExerciseState>;
+  quiz: Record<string, LabQuizState>;
 }
 
 type LearningFile = Record<string, Partial<LearningRecord>>;
@@ -140,6 +177,20 @@ export function ensureSectionState(record: LearningRecord, slug: string, section
 
 export function readSectionState(record: LearningRecord, slug: string, sectionId: string): SectionState {
   return { ...emptySectionState(), ...record.sections[slug]?.[sectionId] };
+}
+
+/** 코딩 실습·퀴즈 기록을 꺼내되, 없으면 만들어서 연결해 둔다(수정용). */
+export function ensureLabState(record: LearningRecord, slug: string): LabWeekState {
+  const labs = (record.labs ??= {});
+  const state = (labs[slug] ??= { exercises: {}, quiz: {} });
+  state.exercises ??= {};
+  state.quiz ??= {};
+  return state;
+}
+
+export function readLabState(record: LearningRecord, slug: string): LabWeekState {
+  const saved = record.labs?.[slug];
+  return { exercises: saved?.exercises ?? {}, quiz: saved?.quiz ?? {} };
 }
 
 export function readWorksheetState(record: LearningRecord, slug: string): WorksheetState {
