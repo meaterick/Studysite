@@ -4,6 +4,7 @@ import { getWeekOutline } from "@/content/sections";
 import { readSectionState, readWorksheetState, type LearningRecord } from "./learningStore";
 import { listUserSubmissions } from "./submissionStore";
 import { findConversation, unreadCount } from "./chatStore";
+import { sectionLabel } from "@/content/tiers";
 
 // 스터디원 한 명에게 온 피드백을 한곳에 모은다(피드백함·진도 대시보드·헤더 배지가 같이 쓴다).
 // - 운영자 피드백: 채점 결과, 재제출 요청, 과제별 코멘트, 운영자 채팅
@@ -39,7 +40,9 @@ export interface FeedbackItem {
 export interface ReviewItem {
   weekNumber: number;
   weekSlug: string;
-  sectionNumber: number;
+  sectionId: string;
+  /** "핵심 3" 같은 단계 이름표 */
+  sectionLabel: string;
   sectionTitle: string;
   wrongChecks: number;
   /** 틀린 적 있지만 지금은 맞힌 문제 수 */
@@ -126,7 +129,8 @@ export function memberFeedback(userId: string, record: LearningRecord): MemberFe
         review.push({
           weekNumber: week.number,
           weekSlug: week.slug,
-          sectionNumber: section.number,
+          sectionId: section.id,
+          sectionLabel: sectionLabel(section),
           sectionTitle: section.title,
           wrongChecks,
           recovered,

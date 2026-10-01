@@ -4,9 +4,14 @@ import { getWeekOutline } from "@/content/sections";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import { loadWeekPage } from "@/lib/weekPage";
-import { ASSIGNMENT_STATUS_LABEL } from "@/lib/study";
+import { ASSIGNMENT_STATUS_LABEL, type WeekStatus } from "@/lib/study";
 import { readLabState } from "@/lib/learningStore";
 import { labProgress } from "@/lib/labView";
+import { tierRecord, type TierRecord } from "@/lib/achievement";
+import TierBadge from "@/components/TierBadge";
+import { TIER_INFO, TIER_ORDER, sectionLabel, splitTierPrefix } from "@/content/tiers";
+
+type WeekStatusRow = WeekStatus["sections"][number];
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -31,37 +36,43 @@ export default async function WeekOverviewPage({
   const { week, record, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}`);
   const lab = labProgress(slug, readLabState(record, slug));
   const { intro } = getWeekOutline(week);
-  const totalMinutes = status.sections.reduce((sum, r) => sum + r.section.minutes, 0);
+  const minutesOf = (rows: typeof status.sections) => rows.reduce((sum, r) => sum + r.section.minutes, 0);
+  const coreMinutes = minutesOf(status.sections.filter((r) => r.section.tier === "core"));
   const current = status.currentSection;
+  const supplementRecord = tierRecord(week, record, status, "supplement");
+  const advancedRecord = tierRecord(week, record, status, "advanced");
+  // 핵심을 마친 뒤 이어서 볼 만한 선택 단계(보충 먼저, 그다음 심화)
+  const nextOptional = status.sections.find((r) => r.section.tier !== "core" && r.access === "upcoming")?.section;
 
   return (
     <WeekFrame week={week} status={status}>
       <div className="space-y-10">
-        {finished && status.allSectionsDone && (
+        {finished && status.coreDone && (
           <div className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
-            <p className="font-black text-ink">이번 주의 모든 단계를 마쳤습니다.</p>
+            <p className="font-black text-ink">이번 주의 핵심 과정을 모두 마쳤습니다. 주차 학습 완료입니다.</p>
             <p className="mt-1 text-sm text-ink-secondary">
               자료를 닫고 <strong>백지공부</strong>로 배운 내용을 떠올려 본 뒤, <strong>과제</strong>를 이 사이트에서 작성해 제출하십시오. 제출한 과제는 운영자가 채점하고 피드백을 남깁니다.
+              여유가 있다면 <strong>보충 과정</strong>으로 폭을 넓히고 <strong>심화 과정</strong>에 도전해 심화 달성 기록을 남겨 보십시오.
             </p>
           </div>
         )}
         {locked && (
           <div className="rounded-xl border-l-4 border-[var(--status-serious)] bg-[color-mix(in_srgb,var(--status-serious)_12%,transparent)] px-5 py-3 text-sm text-ink-secondary">
             {locked === "finale"
-              ? "백지공부와 과제는 이번 주의 모든 단계를 마친 뒤에 열립니다."
-              : "아직 열리지 않은 단계입니다. 앞 단계를 먼저 마쳐 주십시오."}
+              ? "백지공부와 과제는 이번 주의 핵심 단계를 모두 마친 뒤에 열립니다."
+              : "아직 열리지 않은 단계입니다. 앞의 핵심 단계를 먼저 마쳐 주십시오. 보충·심화 단계는 핵심 단계를 모두 마치면 열립니다."}
           </div>
         )}
 
         <section aria-labelledby="continue-heading" className="rounded-xl border border-[var(--border-hairline)] bg-card p-5 sm:p-6">
           <h2 id="continue-heading" className="text-sm font-bold text-ink-muted">
-            {current ? "이어서 학습하기" : "주차 마무리"}
+            {current ? "이어서 학습하기" : "핵심 과정 완료 · 주차 마무리"}
           </h2>
           {current ? (
             <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-lg font-black text-ink">
-                  {current.number}단계 · {current.title}
+                  {sectionLabel(current)}단계 · {current.title}
                 </p>
                 <p className="mt-1 text-sm text-ink-secondary">
                   <Inline text={current.meta.goal} /> · 약 {current.minutes}분
@@ -71,17 +82,27 @@ export default async function WeekOverviewPage({
                 href={`/weeks/${slug}/sections/${current.id}`}
                 className="shrink-0 rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
               >
-                {status.sectionsDone === 0 ? "1단계부터 시작" : "이어서 학습"} →
+                {status.tiers.core.done === 0 ? "핵심 1단계부터 시작" : "이어서 학습"} →
               </Link>
             </div>
           ) : (
-            <div className="mt-2 flex flex-wrap gap-3">
-              <Link href={`/weeks/${slug}/worksheet`} className="rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
-                백지공부 작성 →
-              </Link>
-              <Link href={`/weeks/${slug}/assignment`} className="rounded-lg border border-[var(--border-hairline)] px-5 py-2.5 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]">
-                과제 작성 →
-              </Link>
+            <div className="mt-2 space-y-3">
+              <div className="flex flex-wrap gap-3">
+                <Link href={`/weeks/${slug}/worksheet`} className="rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
+                  백지공부 작성 →
+                </Link>
+                <Link href={`/weeks/${slug}/assignment`} className="rounded-lg border border-[var(--border-hairline)] px-5 py-2.5 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]">
+                  과제 작성 →
+                </Link>
+              </div>
+              {nextOptional && (
+                <p className="text-sm text-ink-secondary">
+                  더 나아가기:{" "}
+                  <Link href={`/weeks/${slug}/sections/${nextOptional.id}`} className="font-bold text-[var(--series-blue)] hover:underline">
+                    {sectionLabel(nextOptional)}단계 · {nextOptional.title} →
+                  </Link>
+                </p>
+              )}
             </div>
           )}
         </section>
@@ -89,11 +110,19 @@ export default async function WeekOverviewPage({
         <section id="goals" aria-labelledby="goals-heading">
           <h2 id="goals-heading" className="mb-3 text-xl font-black text-ink">학습 목표</h2>
           <ul className="list-disc space-y-1.5 pl-5 text-[15px] text-ink-secondary">
-            {week.objectives.map((o, i) => (
-              <li key={i}>
-                <Inline text={o} />
-              </li>
-            ))}
+            {week.objectives.map((o, i) => {
+              const { tier, text } = splitTierPrefix(o);
+              return (
+                <li key={i}>
+                  {tier && (
+                    <span className="mr-1.5 align-middle">
+                      <TierBadge tier={tier} compact />
+                    </span>
+                  )}
+                  <Inline text={text} />
+                </li>
+              );
+            })}
           </ul>
         </section>
 
@@ -119,68 +148,59 @@ export default async function WeekOverviewPage({
           <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="roadmap-heading" className="text-xl font-black text-ink">학습 단계</h2>
             <p className="text-sm text-ink-muted">
-              {status.sectionsTotal}단계 · 예상 학습 시간 약 {Math.round(totalMinutes / 60 * 10) / 10}시간
+              핵심 {status.tiers.core.total}단계 · 약 {Math.round((coreMinutes / 60) * 10) / 10}시간
+              {status.tiers.supplement.total + status.tiers.advanced.total > 0 &&
+                ` · 선택 ${status.tiers.supplement.total + status.tiers.advanced.total}단계`}
             </p>
           </div>
-          <p className="mb-4 text-sm text-ink-muted">
-            각 단계는 <strong>학습 → 실습 → 확인 문제</strong> 순서로 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다.
+          <p className="mb-5 text-sm text-ink-muted">
+            단계는 <strong>핵심(초심자)</strong>, <strong>보충(중급자)</strong>, <strong>심화(전문가)</strong>로 나뉩니다. <strong>핵심 단계만 마치면 이번 주가 완료</strong>되고,
+            보충은 선택, 심화는 별도의 달성 기록으로 남습니다. 각 단계는 학습 → 실습 → 확인 문제 순서로 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다.
             {status.mode === "warn"
-              ? " 순서대로 학습하는 것을 권장하지만, 필요하면 끝내지 않은 단계를 건너뛰고 먼저 볼 수도 있습니다."
-              : " 앞 단계를 마쳐야 다음 단계가 열립니다."}
+              ? " 핵심 단계를 순서대로 학습하는 것을 권장하지만, 필요하면 건너뛰고 먼저 볼 수도 있습니다."
+              : " 앞의 핵심 단계를 마쳐야 다음 핵심 단계가 열리고, 보충·심화 단계는 핵심 단계를 모두 마치면 열립니다."}
             {isAdmin && status.mode === "lock" && " 운영자는 잠금과 관계없이 모든 단계를 열람할 수 있습니다."}
           </p>
-          <ol className="space-y-2">
-            {status.sections.map(({ section, access, progress }) => {
-              const style = ACCESS_STYLE[access];
-              const openable = access !== "locked" || isAdmin;
-              const body = (
-                <div className="flex items-start gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-black"
-                    style={{ borderColor: style.ring, color: access === "locked" ? "var(--text-muted)" : style.ring }}
-                  >
-                    {access === "completed" ? "✓" : section.number}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className={`font-bold ${access === "locked" ? "text-ink-muted" : "text-ink"}`}>
-                      {section.number}. {section.title}
-                    </p>
-                    <p className="mt-0.5 text-sm text-ink-muted">
-                      <Inline text={section.meta.goal} />
-                    </p>
-                    <p className="mt-1 text-xs text-ink-muted">
-                      <span className="sr-only">{style.label} · </span>약 {section.minutes}분 · 확인 문제 {progress.checksTotal}개
-                      {progress.quizTotal > 0 && ` · 서술형 ${progress.quizTotal}개(선택)`}
-                      {progress.hasPractice && " · 실습 포함"}
-                      {access === "current" && progress.checksDone > 0 &&
-                        ` · 확인 문제 ${progress.checksDone}/${progress.checksTotal}`}
-                    </p>
+          <div className="space-y-8">
+            {TIER_ORDER.map((tier) => {
+              const rows = status.sections.filter((r) => r.section.tier === tier);
+              if (rows.length === 0) return null;
+              const info = TIER_INFO[tier];
+              const count = status.tiers[tier];
+              return (
+                <div key={tier} aria-labelledby={`track-${tier}`}>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <h3 id={`track-${tier}`} className="text-lg font-black text-ink">
+                      {info.course}
+                    </h3>
+                    <TierBadge tier={tier} />
+                    <span className="text-xs font-bold text-ink-muted">
+                      {count.done}/{count.total}단계 완료 · 약 {Math.round((minutesOf(rows) / 60) * 10) / 10}시간
+                      {info.required ? " · 주차 완료 조건" : " · 선택"}
+                    </span>
                   </div>
-                  <span className="shrink-0 text-xs font-bold" style={{ color: access === "locked" ? "var(--text-muted)" : style.ring }}>
-                    {style.icon} {style.label}
-                  </span>
+                  <p className="mb-3 text-sm text-ink-muted">{info.summary}</p>
+                  <ol className="space-y-2">
+                    {rows.map(({ section, access, progress }) => (
+                      <SectionRow key={section.id} slug={slug} section={section} access={access} progress={progress} isAdmin={isAdmin} />
+                    ))}
+                  </ol>
                 </div>
               );
-              return (
-                <li key={section.id}>
-                  {openable ? (
-                    <Link
-                      href={`/weeks/${slug}/sections/${section.id}`}
-                      className={`block rounded-xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
-                        access === "current" ? "border-[var(--series-blue)]" : "border-[var(--border-hairline)]"
-                      }`}
-                    >
-                      {body}
-                    </Link>
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-[var(--border-hairline)] p-4 opacity-80">{body}</div>
-                  )}
-                </li>
-              );
             })}
-          </ol>
+          </div>
         </section>
+
+        {(supplementRecord.total > 0 || advancedRecord.total > 0) && (
+          <section aria-labelledby="record-heading">
+            <h2 id="record-heading" className="mb-1 text-xl font-black text-ink">보충 · 심화 기록</h2>
+            <p className="mb-4 text-sm text-ink-muted">주차 완료와 별개로 쌓이는 선택 과정의 기록입니다. 심화 단계·심화 실습·과제 심화 문제를 모두 마치면 이번 주 <strong>심화 달성</strong>이 표시됩니다.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {supplementRecord.total > 0 && <RecordCard record={supplementRecord} />}
+              {advancedRecord.total > 0 && <RecordCard record={advancedRecord} />}
+            </div>
+          </section>
+        )}
 
         {lab && (lab.exercisesTotal > 0 || lab.quizTotal > 0) && (
           <section aria-labelledby="practice-lab-heading">
@@ -212,11 +232,11 @@ export default async function WeekOverviewPage({
         <section aria-labelledby="finale-heading">
           <h2 id="finale-heading" className="mb-1 text-xl font-black text-ink">마무리: 백지공부 · 과제</h2>
           <p className="mb-4 text-sm text-ink-muted">
-            {status.mode === "lock"
-              ? "이번 주의 모든 단계를 마치면 열립니다."
-              : status.allSectionsDone
-                ? "모든 단계를 마쳤습니다. 백지공부로 떠올려 본 뒤 과제를 진행하십시오."
-                : `모든 단계를 마친 뒤에 하는 것을 권장합니다. 아직 끝내지 않은 단계가 ${status.sectionsTotal - status.sectionsDone}개 있지만 지금 열어 볼 수 있습니다.`}
+            {status.coreDone
+              ? "핵심 단계를 모두 마쳤습니다. 백지공부로 떠올려 본 뒤 과제를 진행하십시오."
+              : status.mode === "lock"
+                ? "이번 주의 핵심 단계를 모두 마치면 열립니다."
+                : `핵심 단계를 모두 마친 뒤에 하는 것을 권장합니다. 아직 끝내지 않은 핵심 단계가 ${status.tiers.core.total - status.tiers.core.done}개 있지만 지금 열어 볼 수 있습니다.`}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <FinaleCard
@@ -279,5 +299,102 @@ function FinaleCard({
     <Link href={href} className="block rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]">
       {inner}
     </Link>
+  );
+}
+
+function SectionRow({
+  slug,
+  section,
+  access,
+  progress,
+  isAdmin,
+}: {
+  slug: string;
+  section: WeekStatusRow["section"];
+  access: WeekStatusRow["access"];
+  progress: WeekStatusRow["progress"];
+  isAdmin: boolean;
+}) {
+  const style = ACCESS_STYLE[access];
+  const openable = access !== "locked" || isAdmin;
+  const color = TIER_INFO[section.tier].color;
+  const body = (
+    <div className="flex items-start gap-3">
+      <span
+        aria-hidden="true"
+        className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-black"
+        style={{ borderColor: access === "completed" ? style.ring : color, color: access === "locked" ? "var(--text-muted)" : access === "completed" ? style.ring : color }}
+      >
+        {access === "completed" ? "✓" : section.number}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className={`font-bold ${access === "locked" ? "text-ink-muted" : "text-ink"}`}>
+          {sectionLabel(section)}. {section.title}
+        </p>
+        <p className="mt-0.5 text-sm text-ink-muted">
+          <Inline text={section.meta.goal} />
+        </p>
+        <p className="mt-1 text-xs text-ink-muted">
+          <span className="sr-only">{style.label} · </span>약 {section.minutes}분 · 확인 문제 {progress.checksTotal}개
+          {progress.quizTotal > 0 && ` · 서술형 ${progress.quizTotal}개(선택)`}
+          {progress.hasPractice && " · 실습 포함"}
+          {access === "current" && progress.checksDone > 0 && ` · 확인 문제 ${progress.checksDone}/${progress.checksTotal}`}
+        </p>
+      </div>
+      <span className="shrink-0 text-xs font-bold" style={{ color: access === "locked" ? "var(--text-muted)" : style.ring }}>
+        {style.icon} {access === "upcoming" && section.tier !== "core" ? "선택" : style.label}
+      </span>
+    </div>
+  );
+  return (
+    <li>
+      {openable ? (
+        <Link
+          href={`/weeks/${slug}/sections/${section.id}`}
+          className={`block rounded-xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
+            access === "current" ? "border-[var(--series-blue)]" : "border-[var(--border-hairline)]"
+          }`}
+        >
+          {body}
+        </Link>
+      ) : (
+        <div className="rounded-xl border border-dashed border-[var(--border-hairline)] p-4 opacity-80">{body}</div>
+      )}
+    </li>
+  );
+}
+
+function RecordCard({ record }: { record: TierRecord }) {
+  const info = TIER_INFO[record.tier];
+  const rows = [
+    { label: "단계", c: record.sections },
+    { label: "코딩 실습", c: record.labs },
+    ...(record.tier === "advanced" ? [{ label: "과제 심화 문제", c: record.challenges }] : []),
+    { label: "퀴즈", c: record.quiz },
+  ].filter((r) => r.c.total > 0);
+  return (
+    <div
+      className="rounded-xl border bg-card p-4"
+      style={{ borderColor: record.complete ? info.color : "var(--border-hairline)" }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-center gap-2 font-black text-ink">
+          {info.course} <TierBadge tier={record.tier} compact />
+        </p>
+        <span className="text-xs font-bold" style={{ color: record.complete ? info.color : "var(--text-muted)" }}>
+          {record.complete ? (record.tier === "advanced" ? "✦ 심화 달성" : "✓ 보충 완료") : `${record.earned}/${record.total}`}
+        </span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm text-ink-secondary">
+        {rows.map((r) => (
+          <li key={r.label} className="flex justify-between gap-2">
+            <span>{r.label}</span>
+            <span className={r.c.done === r.c.total ? "font-bold text-[var(--status-good)]" : "text-ink-muted"}>
+              {r.c.done}/{r.c.total}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

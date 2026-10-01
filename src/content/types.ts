@@ -1,3 +1,7 @@
+import type { Tier } from "./tiers";
+
+export type { Tier };
+
 export type Block =
   | { type: "heading"; level: 2 | 3; text: string; id?: string }
   | { type: "paragraph"; text: string }
@@ -33,6 +37,8 @@ export interface SectionReference {
 
 /** conceptsMd의 `## 제목 {#id}` 하나에 대응하는 단계 부가 정보 */
 export interface SectionMeta {
+  /** 단계 구분: core(핵심·초심자, 주차 완료 조건) / supplement(보충·중급자) / advanced(심화·전문가) */
+  tier: Tier;
   /** 이 단계를 마치면 할 수 있게 되는 것 (한 문장) */
   goal: string;
   /** 자동 채점 객관식 확인 문제 */
@@ -97,8 +103,8 @@ export type AssignmentCellSpec =
 export interface AssignmentTaskSpec {
   id: string;
   title: string;
-  /** 선택(심화) 과제면 true — 제출 필수 조건에서 제외된다 */
-  optional?: boolean;
+  /** core(필수, 채점 기준이 다루는 범위) / supplement·advanced(선택 — 제출 필수 조건에서 제외된다) */
+  tier: Tier;
   /** 과제 설명(마크다운) */
   instructions: string;
   cells: AssignmentCellSpec[];
@@ -133,8 +139,8 @@ export interface CodingExercise {
   /** 연결된 단계 id(conceptsMd의 {#id}). 과제 심화 문제는 생략한다. */
   sectionId?: string;
   title: string;
-  /** 1 쉬움 · 2 보통 · 3 어려움 */
-  level: 1 | 2 | 3;
+  /** 핵심(초심자) · 보충(중급자) · 심화(전문가). 과제 심화 문제는 advanced */
+  tier: Tier;
   /** 문제 설명(마크다운) */
   prompt: string;
   /** `TODO`가 들어 있는 시작 코드 */
@@ -151,6 +157,7 @@ export type LabQuizItem =
   | {
       kind: "choice";
       id: string;
+      tier: Tier;
       sectionId: string;
       question: string;
       choices: string[];
@@ -161,6 +168,7 @@ export type LabQuizItem =
   | {
       kind: "predict";
       id: string;
+      tier: Tier;
       sectionId: string;
       /** 생략하면 "출력 결과를 예측해 적으십시오." */
       question?: string;
@@ -175,6 +183,7 @@ export type LabQuizItem =
   | {
       kind: "descriptive";
       id: string;
+      tier: Tier;
       sectionId: string;
       question: string;
       modelAnswer: string;
@@ -208,8 +217,11 @@ export interface WeekLab {
 
 export interface WeekSection {
   id: string;
-  /** 1부터 시작하는 단계 번호 */
+  tier: Tier;
+  /** 같은 구분(핵심·보충·심화) 안에서 1부터 시작하는 번호 */
   number: number;
+  /** 주차 전체에서 1부터 시작하는 순서(본문 순서 = 핵심 → 보충 → 심화) */
+  order: number;
   title: string;
   /** 설명 단계 블록 */
   learn: Block[];

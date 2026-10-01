@@ -1,7 +1,10 @@
 import type { WeekLab } from "../types";
 import { py } from "./util";
 
-// 3주차: 뉴런·MLP 순전파, 손 역전파, 자동미분용 파이썬 문법, micrograd backward, 최적화기, 초기화, 정규화 층, 2층 신경망 역전파
+// 3주차 코딩 실습
+//   핵심: 뉴런·MLP 순전파, 손 역전파, 자동미분용 파이썬 문법, micrograd backward, 최적화기, 초기화, 2층 신경망 역전파
+//   보충: BatchNorm·LayerNorm, 역드롭아웃·학습률 스케줄·조기 종료
+//   심화: 이원수 순방향 모드와 JVP·VJP, AdamW, 기울기 흐름·클리핑
 const VALUE_BASE = py`
 import math
 
@@ -41,7 +44,7 @@ const week3: WeekLab = {
       id: "w3-lab-mlp-forward",
       sectionId: "neurons-mlp",
       title: "뉴런·층 계산과 \"비선형이 없으면 한 층\" 증명",
-      level: 1,
+      tier: "core",
       prompt: `
 1. \`neuron(x, w, b)\`: ReLU 뉴런 $\\max(0, w \\cdot x + b)$
 2. \`layer(x, W, b)\`: 선형 층 $Wx + b$ (W의 shape은 (출력, 입력))
@@ -135,7 +138,7 @@ print("두 층:", layer(layer(x, W1, b1), W2, b2), " 합친 한 층:", None if W
       id: "w3-lab-backprop",
       sectionId: "backprop",
       title: "덧셈·곱셈 노드로 손 역전파, 그리고 층 하나의 δxᵀ",
-      level: 2,
+      tier: "core",
       prompt: `
 1. \`backprop(w, x, c)\`: $L = (wx + c)^2$을 $u = wx$, $v = u + c$, $L = v^2$로 쪼개 역전파한 $(\\partial L/\\partial w, \\partial L/\\partial x, \\partial L/\\partial c)$. 덧셈 노드는 기울기를 그대로 나눠 주고, 곱셈 노드는 **상대방의 값**을 곱해 전달합니다.
 2. \`layer_grad(W, x)\`: $z = Wx$, $L = \\sum z^2$일 때 $\\dfrac{\\partial L}{\\partial W} = \\delta x^\\top$ ($\\delta = 2z$). 결과 shape은 W와 같아야 합니다.
@@ -225,7 +228,7 @@ print(backprop(2.0, 3.0, 1.0))
       id: "w3-lab-money",
       sectionId: "python-for-autograd",
       title: "연산자 오버로딩·클로저·재귀로 계산 기록 남기기",
-      level: 1,
+      tier: "core",
       prompt: `
 「자동미분 엔진을 읽기 위한 파이썬 문법」 실습의 \`Money\`를 완성합니다. 다음 단계 \`Value\`와 구조가 같습니다.
 
@@ -343,7 +346,7 @@ print(vat(a + b) if vat else "make_tax 미완성")
       id: "w3-lab-micrograd",
       sectionId: "micrograd",
       title: "micrograd의 backward()와 국소 미분 채우기",
-      level: 3,
+      tier: "core",
       prompt: `
 덧셈·곱셈만 있는 \`Value\`에 세 가지를 직접 구현합니다.
 
@@ -469,7 +472,7 @@ print(a.grad, b.grad)
       id: "w3-lab-optimizers",
       sectionId: "optimizers",
       title: "Momentum과 Adam 한 스텝 구현하기",
-      level: 2,
+      tier: "core",
       prompt: `
 최적화기를 "상태를 받아 새 상태를 돌려주는 함수"로 구현합니다.
 
@@ -565,7 +568,7 @@ print("Momentum 100스텝:", np.round(w, 3))
       id: "w3-lab-init",
       sectionId: "init-stability",
       title: "He·Xavier 초기화와 층별 활성화 분산 추적",
-      level: 2,
+      tier: "core",
       prompt: `
 $\\mathrm{Var}(z) \\approx \\text{fan\\_in} \\cdot \\mathrm{Var}(w) \\cdot \\mathrm{Var}(x)$에서 나온 초기화 규칙을 구현하고 실험합니다.
 
@@ -654,92 +657,10 @@ for name, s in [("He", he), ("1.5배", he * 1.5), ("0.8배", he * 0.8)]:
 `,
     },
     {
-      id: "w3-lab-norm",
-      sectionId: "normalization",
-      title: "BatchNorm과 LayerNorm: 같은 숫자, 다른 축",
-      level: 2,
-      prompt: `
-두 정규화 층을 \`gamma\`, \`beta\`까지 포함해 구현합니다(\`eps=1e-5\`).
-
-- \`batch_norm(z, gamma, beta)\`: 배치 축(axis=0)으로 특징마다 평균·분산을 구해 정규화
-- \`layer_norm(z, gamma, beta)\`: **마지막 축**으로 샘플(토큰)마다 평균·분산을 구해 정규화. (B, T, d) 모양의 Transformer 텐서에도 그대로 동작해야 합니다.
-
-정규화한 뒤 \`gamma * 정규화값 + beta\`를 돌려줍니다.
-`,
-      starter: py`
-import numpy as np
-
-def batch_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
-    z = np.asarray(z, dtype=float)
-    # TODO: axis=0 평균·분산
-    return z
-
-def layer_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
-    z = np.asarray(z, dtype=float)
-    # TODO: 마지막 축 평균·분산 (keepdims=True)
-    return z
-
-z = np.array([[2.0, 4.0], [6.0, 8.0]])
-print("BN:\n", np.round(batch_norm(z), 3))
-print("LN:\n", np.round(layer_norm(z), 3))
-`,
-      tests: py`
-import numpy as np
-z = np.array([[2.0, 4.0], [6.0, 8.0]])
-
-@test("BN: 특징(열)마다 평균 0 → [[-1, -1], [1, 1]]")
-def _():
-    assert approx(batch_norm(z), [[-1, -1], [1, 1]], 1e-4), f"결과: {batch_norm(z)}"
-
-@test("LN: 샘플(행)마다 평균 0 → [[-1, 1], [-1, 1]]")
-def _():
-    assert approx(layer_norm(z), [[-1, 1], [-1, 1]], 1e-4), f"결과: {layer_norm(z)}"
-
-@test("배치가 1개면 BN은 0이 되지만 LN은 의미 있는 값")
-def _():
-    one = np.array([[3.0, 7.0, 1.0]])
-    assert approx(batch_norm(one), [[0, 0, 0]]) and np.abs(layer_norm(one)).max() > 0.5
-
-@test("gamma·beta로 원래 값을 되돌릴 수 있다")
-def _():
-    x = np.array([[1.0, 5.0, 9.0], [2.0, 2.0, 8.0]])
-    mu, sd = x.mean(axis=1, keepdims=True), np.sqrt(x.var(axis=1, keepdims=True) + 1e-5)
-    assert approx(layer_norm(x, gamma=sd, beta=mu), x, 1e-6)
-
-@test("(B, T, d) 텐서: 토큰마다 평균 0, 표준편차 1")
-def _():
-    h = np.random.default_rng(0).normal(5, 3, size=(2, 3, 4))
-    out = layer_norm(h)
-    assert np.shape(out) == (2, 3, 4) and approx(out.mean(axis=-1), np.zeros((2, 3))) and approx(out.std(axis=-1), np.ones((2, 3)), 1e-3)
-`,
-      hints: [
-        "BN: `mu, var = z.mean(axis=0), z.var(axis=0)`, LN: `z.mean(axis=-1, keepdims=True)`, `z.var(axis=-1, keepdims=True)`",
-        "정규화는 `(z - mu) / np.sqrt(var + eps)`입니다.",
-        "마지막에 `gamma * z_hat + beta`를 돌려줍니다. LN에서 keepdims를 빼면 (B, T) 모양 평균을 (B, T, d)에서 뺄 때 브로드캐스팅이 어긋납니다.",
-      ],
-      solution: py`
-import numpy as np
-
-def batch_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
-    z = np.asarray(z, dtype=float)
-    mu, var = z.mean(axis=0), z.var(axis=0)
-    return gamma * (z - mu) / np.sqrt(var + eps) + beta
-
-def layer_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
-    z = np.asarray(z, dtype=float)
-    mu, var = z.mean(axis=-1, keepdims=True), z.var(axis=-1, keepdims=True)
-    return gamma * (z - mu) / np.sqrt(var + eps) + beta
-
-z = np.array([[2.0, 4.0], [6.0, 8.0]])
-print("BN:\n", np.round(batch_norm(z), 3))
-print("LN:\n", np.round(layer_norm(z), 3))
-`,
-    },
-    {
       id: "w3-lab-twolayer",
       sectionId: "pytorch-core",
       title: "autograd 없이 2층 신경망의 backward 작성하기",
-      level: 3,
+      tier: "core",
       prompt: `
 「PyTorch가 대신해주는 것들」 실습의 2층 신경망에서 \`backward\`를 직접 작성합니다. 순전파는 $z_1 = XW_1 + b_1$, $h = \\mathrm{ReLU}(z_1)$, $z_2 = hW_2 + b_2$, $p = \\sigma(z_2)$, 손실은 평균 이진 교차 엔트로피입니다.
 
@@ -865,12 +786,538 @@ for epoch in range(1001):
         print(f"epoch {epoch:4d}: loss = {loss_fn(p, Y):.4f}, 정확도 = {np.mean((p >= 0.5) == Y):.3f}")
 `,
     },
+    {
+      id: "w3-lab-norm",
+      sectionId: "normalization",
+      title: "BatchNorm과 LayerNorm: 같은 숫자, 다른 축",
+      tier: "supplement",
+      prompt: `
+두 정규화 층을 \`gamma\`, \`beta\`까지 포함해 구현합니다(\`eps=1e-5\`).
+
+- \`batch_norm(z, gamma, beta)\`: 배치 축(axis=0)으로 특징마다 평균·분산을 구해 정규화
+- \`layer_norm(z, gamma, beta)\`: **마지막 축**으로 샘플(토큰)마다 평균·분산을 구해 정규화. (B, T, d) 모양의 Transformer 텐서에도 그대로 동작해야 합니다.
+
+정규화한 뒤 \`gamma * 정규화값 + beta\`를 돌려줍니다.
+`,
+      starter: py`
+import numpy as np
+
+def batch_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
+    z = np.asarray(z, dtype=float)
+    # TODO: axis=0 평균·분산
+    return z
+
+def layer_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
+    z = np.asarray(z, dtype=float)
+    # TODO: 마지막 축 평균·분산 (keepdims=True)
+    return z
+
+z = np.array([[2.0, 4.0], [6.0, 8.0]])
+print("BN:\n", np.round(batch_norm(z), 3))
+print("LN:\n", np.round(layer_norm(z), 3))
+`,
+      tests: py`
+import numpy as np
+z = np.array([[2.0, 4.0], [6.0, 8.0]])
+
+@test("BN: 특징(열)마다 평균 0 → [[-1, -1], [1, 1]]")
+def _():
+    assert approx(batch_norm(z), [[-1, -1], [1, 1]], 1e-4), f"결과: {batch_norm(z)}"
+
+@test("LN: 샘플(행)마다 평균 0 → [[-1, 1], [-1, 1]]")
+def _():
+    assert approx(layer_norm(z), [[-1, 1], [-1, 1]], 1e-4), f"결과: {layer_norm(z)}"
+
+@test("배치가 1개면 BN은 0이 되지만 LN은 의미 있는 값")
+def _():
+    one = np.array([[3.0, 7.0, 1.0]])
+    assert approx(batch_norm(one), [[0, 0, 0]]) and np.abs(layer_norm(one)).max() > 0.5
+
+@test("gamma·beta로 원래 값을 되돌릴 수 있다")
+def _():
+    x = np.array([[1.0, 5.0, 9.0], [2.0, 2.0, 8.0]])
+    mu, sd = x.mean(axis=1, keepdims=True), np.sqrt(x.var(axis=1, keepdims=True) + 1e-5)
+    assert approx(layer_norm(x, gamma=sd, beta=mu), x, 1e-6)
+
+@test("(B, T, d) 텐서: 토큰마다 평균 0, 표준편차 1")
+def _():
+    h = np.random.default_rng(0).normal(5, 3, size=(2, 3, 4))
+    out = layer_norm(h)
+    assert np.shape(out) == (2, 3, 4) and approx(out.mean(axis=-1), np.zeros((2, 3))) and approx(out.std(axis=-1), np.ones((2, 3)), 1e-3)
+`,
+      hints: [
+        "BN: `mu, var = z.mean(axis=0), z.var(axis=0)`, LN: `z.mean(axis=-1, keepdims=True)`, `z.var(axis=-1, keepdims=True)`",
+        "정규화는 `(z - mu) / np.sqrt(var + eps)`입니다.",
+        "마지막에 `gamma * z_hat + beta`를 돌려줍니다. LN에서 keepdims를 빼면 (B, T) 모양 평균을 (B, T, d)에서 뺄 때 브로드캐스팅이 어긋납니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def batch_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
+    z = np.asarray(z, dtype=float)
+    mu, var = z.mean(axis=0), z.var(axis=0)
+    return gamma * (z - mu) / np.sqrt(var + eps) + beta
+
+def layer_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
+    z = np.asarray(z, dtype=float)
+    mu, var = z.mean(axis=-1, keepdims=True), z.var(axis=-1, keepdims=True)
+    return gamma * (z - mu) / np.sqrt(var + eps) + beta
+
+z = np.array([[2.0, 4.0], [6.0, 8.0]])
+print("BN:\n", np.round(batch_norm(z), 3))
+print("LN:\n", np.round(layer_norm(z), 3))
+`,
+    },
+    {
+      id: "w3-lab-regularize",
+      sectionId: "dl-regularization",
+      title: "역드롭아웃·학습률 스케줄·조기 종료 구현",
+      tier: "supplement",
+      prompt: `
+「딥러닝 학습 기법」 단계의 세 도구를 함수로 만듭니다.
+
+1. \`dropout(h, p, rng, training)\`: \`training=True\`면 각 원소를 확률 \`p\`로 0으로 만들고 살아남은 값은 $\\frac{1}{1-p}$배(역드롭아웃) 합니다. \`training=False\`면 \`h\`를 그대로 돌려줍니다. 마스크는 \`rng.random(h.shape) >= p\`로 만듭니다.
+2. \`lr_at(step, total, warmup, lr_max, lr_min)\`: \`step < warmup\`이면 $\\eta_{\\max}\\cdot\\frac{\\text{step}+1}{\\text{warmup}}$, 그 뒤에는 코사인 감쇠 $\\eta_{\\min} + \\frac{1}{2}(\\eta_{\\max} - \\eta_{\\min})(1 + \\cos(\\pi\\cdot\\frac{\\text{step} - \\text{warmup}}{\\text{total} - \\text{warmup}}))$
+3. \`early_stop_epoch(val_losses, patience)\`: 검증 손실을 앞에서부터 보다가 최솟값이 \`patience\`번 연속으로 갱신되지 않으면 멈춘다고 할 때, **최종 모델로 고를 에폭 번호**(그때까지의 최솟값 위치, 0부터)를 돌려줍니다.
+`,
+      starter: py`
+import numpy as np
+
+def dropout(h, p, rng, training=True):
+    # TODO: training이면 마스크를 곱하고 1/(1-p)배, 아니면 그대로
+    return h
+
+def lr_at(step, total=1000, warmup=100, lr_max=1e-3, lr_min=1e-5):
+    # TODO: 선형 워밍업 뒤 코사인 감쇠
+    return lr_max
+
+def early_stop_epoch(val_losses, patience=3):
+    best, best_epoch, waited = float("inf"), 0, 0
+    for epoch, loss in enumerate(val_losses):
+        pass  # TODO: 최솟값을 갱신하면 기록하고 waited=0, 아니면 waited += 1, patience에 닿으면 멈춤
+    return best_epoch
+
+rng = np.random.default_rng(0)
+h = np.ones((4, 5))
+print(dropout(h, 0.5, rng))
+print({s: round(lr_at(s), 6) for s in (0, 99, 100, 550, 999)})
+print(early_stop_epoch([0.9, 0.7, 0.6, 0.62, 0.61, 0.65, 0.5], patience=3))
+`,
+      tests: py`
+import numpy as np
+
+@test("학습 중: 꺼진 칸은 0, 살아남은 칸은 1/(1-p)배")
+def _():
+    rng = np.random.default_rng(1)
+    out = dropout(np.ones((200, 50)), 0.2, rng, training=True)
+    vals = set(np.round(np.unique(out), 6).tolist())
+    assert vals <= {0.0, 1.25}, f"값의 종류: {sorted(vals)[:5]}"
+    assert abs((out == 0).mean() - 0.2) < 0.02, f"꺼진 비율 {(out == 0).mean():.3f}"
+
+@test("역드롭아웃은 평균을 유지한다")
+def _():
+    h = np.random.default_rng(2).random((5000, 40))
+    out = dropout(h, 0.5, np.random.default_rng(3), training=True)
+    assert abs(out.mean() - h.mean()) < 0.01, f"{h.mean():.4f} → {out.mean():.4f}"
+
+@test("평가 때는 그대로 통과")
+def _():
+    h = np.arange(6.0).reshape(2, 3)
+    assert np.array_equal(dropout(h, 0.5, np.random.default_rng(0), training=False), h)
+
+@test("워밍업 구간: 0스텝 1e-5, 99스텝 1e-3")
+def _():
+    assert approx(lr_at(0), 1e-5) and approx(lr_at(99), 1e-3) and approx(lr_at(49), 5e-4)
+
+@test("코사인 구간: 시작 1e-3, 중간 (max+min)/2, 끝 근처 1e-5")
+def _():
+    assert approx(lr_at(100), 1e-3) and approx(lr_at(550), 0.5 * (1e-3 + 1e-5)) and abs(lr_at(1000) - 1e-5) < 1e-9
+
+@test("조기 종료: patience 3이면 2에폭을 고르고, 뒤의 0.5는 보지 못한다")
+def _():
+    losses = [0.9, 0.7, 0.6, 0.62, 0.61, 0.65, 0.5]
+    assert early_stop_epoch(losses, patience=3) == 2, f"결과: {early_stop_epoch(losses, 3)}"
+    assert early_stop_epoch(losses, patience=5) == 6, f"patience 5: {early_stop_epoch(losses, 5)}"
+    assert early_stop_epoch([1.0, 0.9, 0.8], patience=2) == 2
+`,
+      hints: [
+        "`mask = rng.random(h.shape) >= p`를 만든 뒤 `h * mask / (1 - p)`를 돌려줍니다.",
+        "`progress = (step - warmup) / (total - warmup)`, `lr_min + 0.5 * (lr_max - lr_min) * (1 + np.cos(np.pi * progress))`",
+        "반복문 안에서 `if loss < best: best, best_epoch, waited = loss, epoch, 0` / `else: waited += 1` 다음 `if waited >= patience: break`입니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def dropout(h, p, rng, training=True):
+    if not training:
+        return h
+    mask = rng.random(h.shape) >= p
+    return h * mask / (1 - p)
+
+def lr_at(step, total=1000, warmup=100, lr_max=1e-3, lr_min=1e-5):
+    if step < warmup:
+        return lr_max * (step + 1) / warmup
+    progress = (step - warmup) / (total - warmup)
+    return lr_min + 0.5 * (lr_max - lr_min) * (1 + np.cos(np.pi * progress))
+
+def early_stop_epoch(val_losses, patience=3):
+    best, best_epoch, waited = float("inf"), 0, 0
+    for epoch, loss in enumerate(val_losses):
+        if loss < best:
+            best, best_epoch, waited = loss, epoch, 0
+        else:
+            waited += 1
+            if waited >= patience:
+                break
+    return best_epoch
+
+rng = np.random.default_rng(0)
+h = np.ones((4, 5))
+print(dropout(h, 0.5, rng))
+print({s: round(lr_at(s), 6) for s in (0, 99, 100, 550, 999)})
+print(early_stop_epoch([0.9, 0.7, 0.6, 0.62, 0.61, 0.65, 0.5], patience=3))
+`,
+    },
+    {
+      id: "w3-lab-dual",
+      sectionId: "autodiff-theory",
+      title: "이원수 순방향 모드와 JVP·VJP",
+      tier: "advanced",
+      prompt: `
+「자동미분의 두 모드」 단계의 두 도구를 구현합니다.
+
+1. \`Dual\` 클래스: 값 \`val\`과 미분 \`dot\`을 함께 들고 다니며 \`+\`, \`*\`(숫자와의 연산 포함)를 지원합니다. 곱은 $(a + b\\varepsilon)(c + d\\varepsilon) = ac + (ad + bc)\\varepsilon$입니다. \`dsin\`, \`dexp\`는 연쇄법칙으로 \`dot\`에 $\\cos$, $\\exp$를 곱합니다.
+2. \`derivative(f, x)\`: \`f(Dual(x, 1.0)).dot\`
+3. 행렬 사슬 $y = W_3 W_2 W_1 x$(선형, 출력 벡터)에 대해 \`jvp(Ws, v)\` $= W_3 W_2 W_1 v$와 \`vjp(Ws, u)\` $= u^\\top W_3 W_2 W_1$(결과는 입력 차원의 1차원 배열)을 **행렬을 미리 곱하지 않고** 벡터를 한 층씩 통과시켜 계산합니다.
+`,
+      starter: py`
+import math
+import numpy as np
+
+class Dual:
+    def __init__(self, val, dot=0.0):
+        self.val, self.dot = val, dot
+    def __add__(self, o):
+        o = o if isinstance(o, Dual) else Dual(o)
+        return Dual(0.0, 0.0)  # TODO
+    __radd__ = __add__
+    def __mul__(self, o):
+        o = o if isinstance(o, Dual) else Dual(o)
+        return Dual(0.0, 0.0)  # TODO
+    __rmul__ = __mul__
+
+def dsin(d): return Dual(0.0, 0.0)  # TODO
+def dexp(d): return Dual(0.0, 0.0)  # TODO
+
+def derivative(f, x):
+    return 0.0  # TODO
+
+def jvp(Ws, v):
+    return v  # TODO: W1부터 차례로 곱한다
+
+def vjp(Ws, u):
+    return u  # TODO: 마지막 층부터 거꾸로 W.T를 곱한다
+
+print(derivative(lambda x: x * dsin(x) + dexp(x), 1.0))
+`,
+      tests: py`
+import math
+import numpy as np
+
+@test("다항식의 미분: f(x) = 3x² + 2x + 1, f'(2) = 14")
+def _():
+    assert approx(derivative(lambda x: 3 * x * x + 2 * x + 1, 2.0), 14.0)
+
+@test("x·sin x + eˣ의 미분이 해석적 값과 1e-12 이내")
+def _():
+    got = derivative(lambda x: x * dsin(x) + dexp(x), 1.0)
+    exact = math.sin(1) + math.cos(1) + math.exp(1)
+    assert abs(got - exact) < 1e-12, f"{got} vs {exact}"
+
+@test("값(val)도 함께 정확히 계산한다")
+def _():
+    d = (lambda x: x * dsin(x) + dexp(x))(Dual(1.0, 1.0))
+    assert approx(d.val, math.sin(1) + math.e)
+
+@test("JVP·VJP가 미리 곱한 야코비안과 같다")
+def _():
+    rng = np.random.default_rng(0)
+    Ws = [rng.normal(size=(5, 4)), rng.normal(size=(3, 5)), rng.normal(size=(2, 3))]
+    J = Ws[2] @ Ws[1] @ Ws[0]
+    v, u = rng.normal(size=4), rng.normal(size=2)
+    assert approx(jvp(Ws, v), J @ v) and approx(vjp(Ws, u), u @ J)
+
+@test("출력이 1개면 VJP 한 번 = JVP를 입력 차원만큼 반복한 결과")
+def _():
+    rng = np.random.default_rng(1)
+    Ws = [rng.normal(size=(6, 8)), rng.normal(size=(1, 6))]
+    by_jvp = np.array([jvp(Ws, e)[0] for e in np.eye(8)])
+    assert approx(vjp(Ws, np.array([1.0])), by_jvp)
+`,
+      hints: [
+        "덧셈은 `Dual(self.val + o.val, self.dot + o.dot)`, 곱셈은 `Dual(self.val * o.val, self.dot * o.val + self.val * o.dot)`입니다.",
+        "`dsin(d)`는 `Dual(math.sin(d.val), math.cos(d.val) * d.dot)`. `derivative`는 씨앗 `dot=1.0`을 넣고 결과의 `.dot`을 읽습니다.",
+        "`jvp`는 `for W in Ws: v = W @ v`, `vjp`는 `for W in reversed(Ws): u = W.T @ u`입니다.",
+      ],
+      solution: py`
+import math
+import numpy as np
+
+class Dual:
+    def __init__(self, val, dot=0.0):
+        self.val, self.dot = val, dot
+    def __add__(self, o):
+        o = o if isinstance(o, Dual) else Dual(o)
+        return Dual(self.val + o.val, self.dot + o.dot)
+    __radd__ = __add__
+    def __mul__(self, o):
+        o = o if isinstance(o, Dual) else Dual(o)
+        return Dual(self.val * o.val, self.dot * o.val + self.val * o.dot)
+    __rmul__ = __mul__
+
+def dsin(d): return Dual(math.sin(d.val), math.cos(d.val) * d.dot)
+def dexp(d): return Dual(math.exp(d.val), math.exp(d.val) * d.dot)
+
+def derivative(f, x):
+    return f(Dual(x, 1.0)).dot
+
+def jvp(Ws, v):
+    for W in Ws:
+        v = W @ v
+    return v
+
+def vjp(Ws, u):
+    for W in reversed(Ws):
+        u = W.T @ u
+    return u
+
+print(derivative(lambda x: x * dsin(x) + dexp(x), 1.0))
+`,
+    },
+    {
+      id: "w3-lab-adamw",
+      sectionId: "adam-theory",
+      title: "편향 보정 Adam과 분리된 가중치 감쇠(AdamW)",
+      tier: "advanced",
+      prompt: `
+「Adam의 이론」 단계의 결론을 최적화기로 구현해 확인합니다.
+
+1. \`adam_step(w, g, state, lr, lam, decoupled, b1=0.9, b2=0.999, eps=1e-8)\`: \`state\`는 \`{"t": 0, "m": 0, "v": 0}\` 딕셔너리(배열도 가능)입니다. \`t\`를 1 늘리고,
+   - \`decoupled=False\`(Adam + L2)면 기울기를 \`g + lam * w\`로 바꿔 $m, v$를 갱신하고 편향 보정한 $\\hat m/(\\sqrt{\\hat v}+\\epsilon)$로 갱신합니다.
+   - \`decoupled=True\`(AdamW)면 $m, v$에는 \`g\`만 쓰고, 갱신 뒤에 \`w -= lr * lam * w\`를 따로 적용합니다.
+
+   새 \`w\`를 돌려줍니다(\`state\`는 제자리에서 갱신).
+2. \`bias_corrected_m(gs, b1)\`: 기울기 리스트 \`gs\`를 차례로 넣었을 때의 보정 전 $m_t$와 보정 후 $\\hat m_t$의 마지막 값 \`(m, m_hat)\`
+`,
+      starter: py`
+import numpy as np
+
+def adam_step(w, g, state, lr=1e-3, lam=0.0, decoupled=False, b1=0.9, b2=0.999, eps=1e-8):
+    state["t"] += 1
+    t = state["t"]
+    # TODO: decoupled 여부에 따라 기울기를 정하고 m, v를 갱신한 뒤 편향 보정해 w를 갱신합니다.
+    return w
+
+def bias_corrected_m(gs, b1=0.9):
+    m = 0.0
+    # TODO
+    return m, m
+
+def run(lam, decoupled, steps=1000):
+    w, state = 1.0, {"t": 0, "m": 0.0, "v": 0.0}
+    for _ in range(steps):
+        w = adam_step(w, 0.0, state, lr=1e-3, lam=lam, decoupled=decoupled)   # 데이터 기울기 0
+    return w
+
+for lam in (1e-4, 1e-2, 1.0):
+    print(lam, round(run(lam, False), 4), round(run(lam, True), 4))
+print(bias_corrected_m([2.0, 2.0, 2.0]))
+`,
+      tests: py`
+import numpy as np
+
+def run(lam, decoupled, steps=1000):
+    w, state = 1.0, {"t": 0, "m": 0.0, "v": 0.0}
+    for _ in range(steps):
+        w = adam_step(w, 0.0, state, lr=1e-3, lam=lam, decoupled=decoupled)
+    return w
+
+@test("첫 스텝은 기울기 크기와 무관하게 약 lr만큼 움직인다")
+def _():
+    for g in (5.0, 0.01):
+        w = adam_step(0.0, g, {"t": 0, "m": 0.0, "v": 0.0}, lr=0.1)
+        assert approx(w, -0.1, 1e-6), f"g={g}: w={w}"
+
+@test("Adam + L2: 데이터 기울기 0인 파라미터가 λ와 무관하게 똑같이 줄어든다")
+def _():
+    vals = [run(lam, False) for lam in (1e-4, 1e-2, 1.0)]
+    assert max(vals) - min(vals) < 1e-3 and vals[0] < 0.5, f"결과: {vals}"
+
+@test("AdamW: (1 - ηλ)^1000 ≈ e^(-λ)")
+def _():
+    for lam in (1e-4, 1e-2, 1.0):
+        assert approx(run(lam, True), (1 - 1e-3 * lam) ** 1000, 1e-6), f"λ={lam}: {run(lam, True)}"
+
+@test("배열 파라미터에도 동작한다")
+def _():
+    w = np.array([1.0, -2.0])
+    st = {"t": 0, "m": np.zeros(2), "v": np.zeros(2)}
+    w2 = adam_step(w, np.array([0.5, -3.0]), st, lr=0.01)
+    assert approx(w2, [0.99, -1.99], 1e-6) and st["t"] == 1
+
+@test("편향 보정: 기울기가 계속 2면 m̂ = 2, m = 2(1 - 0.9^t)")
+def _():
+    m, m_hat = bias_corrected_m([2.0, 2.0, 2.0])
+    assert approx(m, 2 * (1 - 0.9 ** 3)) and approx(m_hat, 2.0), f"{(m, m_hat)}"
+`,
+      hints: [
+        "`grad = g if decoupled else g + lam * w`로 정한 뒤 `state[\"m\"] = b1 * state[\"m\"] + (1 - b1) * grad`, `v`도 같은 꼴(제곱)입니다.",
+        "`m_hat = state[\"m\"] / (1 - b1 ** t)`, `v_hat = state[\"v\"] / (1 - b2 ** t)`, `w = w - lr * m_hat / (np.sqrt(v_hat) + eps)`.",
+        "`decoupled`이면 마지막에 `w = w - lr * lam * w`를 한 번 더 합니다. 편향 보정 함수는 반복문 뒤 `t = len(gs)`로 `m / (1 - b1 ** t)`입니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def adam_step(w, g, state, lr=1e-3, lam=0.0, decoupled=False, b1=0.9, b2=0.999, eps=1e-8):
+    state["t"] += 1
+    t = state["t"]
+    grad = g if decoupled else g + lam * w
+    state["m"] = b1 * state["m"] + (1 - b1) * grad
+    state["v"] = b2 * state["v"] + (1 - b2) * grad ** 2
+    m_hat = state["m"] / (1 - b1 ** t)
+    v_hat = state["v"] / (1 - b2 ** t)
+    w = w - lr * m_hat / (np.sqrt(v_hat) + eps)
+    if decoupled:
+        w = w - lr * lam * w
+    return w
+
+def bias_corrected_m(gs, b1=0.9):
+    m = 0.0
+    for g in gs:
+        m = b1 * m + (1 - b1) * g
+    return m, m / (1 - b1 ** len(gs))
+
+def run(lam, decoupled, steps=1000):
+    w, state = 1.0, {"t": 0, "m": 0.0, "v": 0.0}
+    for _ in range(steps):
+        w = adam_step(w, 0.0, state, lr=1e-3, lam=lam, decoupled=decoupled)
+    return w
+
+for lam in (1e-4, 1e-2, 1.0):
+    print(lam, round(run(lam, False), 4), round(run(lam, True), 4))
+print(bias_corrected_m([2.0, 2.0, 2.0]))
+`,
+    },
+    {
+      id: "w3-lab-gradflow",
+      sectionId: "gradient-flow",
+      title: "깊은 망의 기울기 노름과 잔차 연결·클리핑",
+      tier: "advanced",
+      prompt: `
+「기울기 흐름의 수학」 단계의 실험을 구현합니다.
+
+1. \`clip_by_norm(grads, c)\`: 배열 리스트의 전체 노름 $\\sqrt{\\sum \\lVert g_i\\rVert^2}$가 \`c\`를 넘으면 모두에 $c/\\lVert g\\rVert$를 곱한 새 리스트를, 아니면 그대로를 돌려줍니다. \`(새 리스트, 원래 노름)\` 튜플입니다.
+2. \`input_grad_norm(scale, residual, depth, width=64, seed=0)\`: 본문 실습처럼 \`rng.normal(0, scale / sqrt(width), (width, width))\` 가중치를 \`depth\`개 만들고, 무작위 입력으로 순전파(\`residual\`이면 $h \\leftarrow h + \\tanh(Wh)$, 아니면 $h \\leftarrow \\tanh(Wh)$)한 뒤, 출력 쪽 기울기 \`np.ones(width) / sqrt(width)\`를 입력 쪽까지 역전파해 그 노름을 돌려줍니다. 난수는 가중치 \`depth\`개, 입력 순서로 뽑습니다.
+`,
+      starter: py`
+import numpy as np
+
+def clip_by_norm(grads, c):
+    total = 0.0  # TODO: 전체 노름
+    return grads, total
+
+def input_grad_norm(scale, residual, depth, width=64, seed=0):
+    rng = np.random.default_rng(seed)
+    Ws = [rng.normal(0, scale / np.sqrt(width), (width, width)) for _ in range(depth)]
+    h = rng.normal(size=width)
+    pre = []
+    for W in Ws:
+        z = W @ h
+        pre.append(z)
+        h = h + np.tanh(z) if residual else np.tanh(z)
+    g = np.ones(width) / np.sqrt(width)
+    # TODO: 거꾸로 순회하며 g ← Wᵀ((1 - tanh² z) * g), residual이면 g를 더한다
+    return float(np.linalg.norm(g))
+
+for res in (False, True):
+    print(res, [f"{input_grad_norm(0.5, res, d):.2e}" for d in (10, 30, 50)])
+`,
+      tests: py`
+import numpy as np
+
+@test("클리핑: 노름 130 → 5, 방향 유지")
+def _():
+    out, total = clip_by_norm([np.array([30.0, -40.0]), np.array([120.0])], 5.0)
+    new = np.sqrt(sum(np.sum(g ** 2) for g in out))
+    assert approx(total, 130.0) and approx(new, 5.0), f"{total} → {new}"
+    assert approx(out[0] / np.linalg.norm(out[0]), [0.6, -0.8])
+
+@test("임계값보다 작으면 그대로")
+def _():
+    g = [np.array([0.3, 0.4])]
+    out, total = clip_by_norm(g, 5.0)
+    assert approx(total, 0.5) and approx(out[0], g[0])
+
+@test("기울기가 수치미분과 일치한다(얕은 망)")
+def _():
+    rng = np.random.default_rng(0)
+    width, depth = 4, 3
+    Ws = [rng.normal(0, 1 / np.sqrt(width), (width, width)) for _ in range(depth)]
+    h0 = rng.normal(size=width)
+    def out(h):
+        for W in Ws:
+            h = h + np.tanh(W @ h)
+        return np.ones(width) @ h / np.sqrt(width)
+    num = np.array([(out(h0 + 1e-6 * e) - out(h0 - 1e-6 * e)) / 2e-6 for e in np.eye(width)])
+    assert approx(input_grad_norm(1.0, True, depth, width=width, seed=0), np.linalg.norm(num), 1e-5)
+
+@test("작은 초기화의 일반 망은 50층에서 기울기가 사라진다")
+def _():
+    assert input_grad_norm(0.5, False, 50) < 1e-12
+
+@test("같은 초기화에 잔차 연결을 더하면 50층에서도 0.1 이상")
+def _():
+    assert input_grad_norm(0.5, True, 50) > 0.1
+`,
+      hints: [
+        "`total = np.sqrt(sum(np.sum(g ** 2) for g in grads))`, `factor = min(1.0, c / (total + 1e-12))`입니다.",
+        "`for W, z in zip(reversed(Ws), reversed(pre)):` 안에서 `back = W.T @ ((1 - np.tanh(z) ** 2) * g)`를 구합니다.",
+        "`g = g + back if residual else back`. 잔차 연결이면 원래 기울기가 그대로 지나가는 경로가 생깁니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def clip_by_norm(grads, c):
+    total = float(np.sqrt(sum(np.sum(g ** 2) for g in grads)))
+    factor = min(1.0, c / (total + 1e-12))
+    return [g * factor for g in grads], total
+
+def input_grad_norm(scale, residual, depth, width=64, seed=0):
+    rng = np.random.default_rng(seed)
+    Ws = [rng.normal(0, scale / np.sqrt(width), (width, width)) for _ in range(depth)]
+    h = rng.normal(size=width)
+    pre = []
+    for W in Ws:
+        z = W @ h
+        pre.append(z)
+        h = h + np.tanh(z) if residual else np.tanh(z)
+    g = np.ones(width) / np.sqrt(width)
+    for W, z in zip(reversed(Ws), reversed(pre)):
+        back = W.T @ ((1 - np.tanh(z) ** 2) * g)
+        g = g + back if residual else back
+    return float(np.linalg.norm(g))
+
+for res in (False, True):
+    print(res, [f"{input_grad_norm(0.5, res, d):.2e}" for d in (10, 30, 50)])
+`,
+    },
   ],
 
   quiz: [
     {
       kind: "choice",
       id: "w3-drill-shapes",
+      tier: "core",
       sectionId: "neurons-mlp",
       question: "입력 배치 `X`의 shape이 `(32, 3)`, `W1`이 `(3, 4)`일 때 `X @ W1 + b1`이 동작하려면 `b1`의 shape과 결과 shape은?",
       choices: ["`b1`: (4,), 결과: (32, 4)", "`b1`: (32,), 결과: (32, 4)", "`b1`: (3,), 결과: (32, 3)", "`b1`: (4, 32), 결과: (4, 32)"],
@@ -881,6 +1328,7 @@ for epoch in range(1001):
     {
       kind: "choice",
       id: "w3-drill-missing-backward",
+      tier: "core",
       sectionId: "micrograd",
       question: "`Value.__mul__`에서 `out._backward = _backward` 줄을 빠뜨린 채 `L = (a * b + c).relu()`에 `L.backward()`를 실행하면?",
       choices: [
@@ -896,6 +1344,7 @@ for epoch in range(1001):
     {
       kind: "choice",
       id: "w3-drill-adam-nocorrect",
+      tier: "core",
       sectionId: "optimizers",
       question: "Adam($\\beta_1 = 0.9$, $\\beta_2 = 0.999$)에서 편향 보정 없이 $m_1/\\sqrt{s_1}$로 첫 스텝을 밟으면 이동량은 학습률 $\\eta$의 약 몇 배인가?",
       choices: ["정확히 1배", "약 3.16배 ($0.1 / \\sqrt{0.001}$)", "약 0.1배", "0배 (움직이지 않음)"],
@@ -906,6 +1355,7 @@ for epoch in range(1001):
     {
       kind: "choice",
       id: "w3-drill-zero-grad-order",
+      tier: "core",
       sectionId: "pytorch-core",
       question: "PyTorch 학습 루프를 `loss.backward()` → `optimizer.zero_grad()` → `optimizer.step()` 순서로 쓰면?",
       choices: [
@@ -921,6 +1371,7 @@ for epoch in range(1001):
     {
       kind: "predict",
       id: "w3-drill-closure",
+      tier: "core",
       sectionId: "python-for-autograd",
       code: py`
 def make_counter():
@@ -941,6 +1392,7 @@ print(a(), a(), b(), a())
     {
       kind: "predict",
       id: "w3-drill-chain",
+      tier: "core",
       sectionId: "backprop",
       code: py`
 w, x, c = 2.0, 3.0, 1.0
@@ -959,6 +1411,7 @@ print(L, dw, dx, dv)
     {
       kind: "predict",
       id: "w3-drill-explode",
+      tier: "core",
       sectionId: "init-stability",
       code: py`
 print(round(1.5 ** 10, 1), round(0.8 ** 10, 3))
@@ -969,8 +1422,42 @@ print(round(1.2 ** 15, 1))
         "층마다 표준편차가 1.5배씩 커지면 10층 뒤 약 57.7배(폭발), 0.8배씩 줄면 약 0.107배(소실)가 됩니다. 1.2배씩 15층이면 약 15.4배입니다. 층 하나의 작은 어긋남이 깊이만큼 거듭제곱되어 커진다는 것이 초기화가 중요한 이유입니다.",
     },
     {
+      kind: "descriptive",
+      id: "w3-drill-xx-plus-x",
+      tier: "core",
+      sectionId: "micrograd",
+      question:
+        "`x = Value(3.0); y = x * x + x; y.backward()`에서 `x.grad`가 7이 되는 과정을, 계산 그래프의 노드와 `_backward` 호출 순서로 설명하십시오. `+=` 대신 `=`를 쓰면 몇이 되는지도 적습니다.",
+      modelAnswer:
+        "그래프는 $m = x \\cdot x$(곱셈), $y = m + x$(덧셈) 두 노드입니다. 위상정렬 역순으로 먼저 $y$의 grad를 1로 두고 덧셈 노드의 `_backward`가 $m$과 $x$에 각각 1을 더합니다(x.grad = 1). 다음으로 곱셈 노드의 `_backward`가 실행되는데, 두 피연산자가 모두 $x$라서 `self.grad += o.data * out.grad`(3)와 `o.grad += self.data * out.grad`(3)가 같은 $x$에 두 번 더해져 1 + 3 + 3 = 7이 됩니다. `=`를 쓰면 마지막 대입만 남아 덧셈 경로의 1이 지워지고 3이 됩니다. 같은 변수가 여러 경로로 쓰일 때 기울기는 모든 경로의 합이라는 연쇄법칙을 `+=`가 구현합니다.",
+      keyPoints: ["그래프: m = x·x, y = m + x", "덧셈 노드가 x에 1을 전달", "곱셈 노드가 x에 3을 두 번 전달", "합 7 (경로별 기울기의 합)", "=를 쓰면 마지막 값 3만 남는다"],
+    },
+    {
+      kind: "descriptive",
+      id: "w3-drill-sgd-vs-adam",
+      tier: "core",
+      sectionId: "optimizers",
+      question:
+        "협곡 모양 손실 실습에서 학습률을 잘 고른 SGD(0.04)가 Adam보다 정확했던 이유와, 그럼에도 실무에서 Adam을 기본값으로 쓰는 이유를 함께 설명하십시오.",
+      modelAnswer:
+        "협곡 손실은 단순한 2차 함수라, 두 방향의 배율 $(1 - 2\\eta)$, $(1 - 20\\eta)$가 모두 1보다 작으면서 가장 빨리 줄어드는 학습률(0.04 근처)을 고르면 SGD가 정확히 최솟값으로 수렴합니다. Adam은 방향마다 기울기 크기로 나눠 비슷한 보폭(약 $\\eta$)으로 움직이므로 최솟값 근처에서도 보폭이 줄지 않아 진동하거나(0.3), 100스텝 안에 도착하지 못합니다(0.1). 그래도 Adam을 기본값으로 쓰는 이유는 기울기 스케일이 층·파라미터마다 크게 다른 실제 신경망에서 학습률 하나로도 안정적으로 학습되어 튜닝 부담이 적기 때문입니다. 성능을 끝까지 짜내야 할 때는 SGD+Momentum을 튜닝하기도 합니다.",
+      keyPoints: ["2차 함수에서는 잘 고른 학습률의 SGD가 정확히 수렴", "Adam은 보폭이 기울기 크기와 무관해 최솟값 근처에서 진동", "Adam은 기울기 스케일에 둔감해 튜닝이 쉽다", "Adam이 항상 가장 빠르거나 정확한 것은 아니다"],
+    },
+    {
+      kind: "descriptive",
+      id: "w3-drill-relu-mask",
+      tier: "core",
+      sectionId: "pytorch-core",
+      question:
+        "2층 신경망의 `backward`에서 `dz1 = (dz2 @ W2.T) * (z1 > 0)`의 `* (z1 > 0)`을 지우면 gradient check와 학습이 어떻게 됩니까? 이유를 ReLU의 국소 미분으로 설명하십시오.",
+      modelAnswer:
+        "ReLU의 국소 미분은 입력이 양수면 1, 음수면 0입니다. 마스크를 지우면 순전파에서 0을 출력한(손실에 전혀 영향을 주지 않은) 뉴런에도 기울기가 흘러가, $W_1$, $b_1$의 기울기가 실제 기울기와 달라집니다. 그래서 수치미분과 비교하는 gradient check에서 W1·b1 항목의 상대오차가 크게 나와 버그가 드러납니다. W2·b2는 마스크와 무관해 여전히 통과합니다. 틀린 기울기로 학습하면 손실이 덜 줄거나 불안정해집니다.",
+      keyPoints: ["ReLU의 국소 미분은 양수 1, 음수 0", "0을 낸 뉴런에도 기울기가 흘러가 틀린 값이 된다", "W1·b1의 gradient check가 실패한다", "W2·b2는 영향을 받지 않는다"],
+    },
+    {
       kind: "predict",
       id: "w3-drill-fp16",
+      tier: "supplement",
       sectionId: "pytorch-practice",
       code: py`
 import numpy as np
@@ -983,34 +1470,84 @@ print(((g * 1024).astype(np.float16) == 0).tolist())
         "FP16이 표현하는 가장 작은 양수는 약 $6 \\times 10^{-8}$이라 `2e-8`, `1e-9`는 0으로 사라집니다(underflow). 1024배 키운 뒤 변환하면 각각 약 $2 \\times 10^{-5}$, $10^{-6}$이 되어 살아남습니다. 이것이 혼합 정밀도 학습의 loss scaling입니다.",
     },
     {
-      kind: "descriptive",
-      id: "w3-drill-xx-plus-x",
-      sectionId: "micrograd",
-      question:
-        "`x = Value(3.0); y = x * x + x; y.backward()`에서 `x.grad`가 7이 되는 과정을, 계산 그래프의 노드와 `_backward` 호출 순서로 설명하십시오. `+=` 대신 `=`를 쓰면 몇이 되는지도 적습니다.",
-      modelAnswer:
-        "그래프는 $m = x \\cdot x$(곱셈), $y = m + x$(덧셈) 두 노드입니다. 위상정렬 역순으로 먼저 $y$의 grad를 1로 두고 덧셈 노드의 `_backward`가 $m$과 $x$에 각각 1을 더합니다(x.grad = 1). 다음으로 곱셈 노드의 `_backward`가 실행되는데, 두 피연산자가 모두 $x$라서 `self.grad += o.data * out.grad`(3)와 `o.grad += self.data * out.grad`(3)가 같은 $x$에 두 번 더해져 1 + 3 + 3 = 7이 됩니다. `=`를 쓰면 마지막 대입만 남아 덧셈 경로의 1이 지워지고 3이 됩니다. 같은 변수가 여러 경로로 쓰일 때 기울기는 모든 경로의 합이라는 연쇄법칙을 `+=`가 구현합니다.",
-      keyPoints: ["그래프: m = x·x, y = m + x", "덧셈 노드가 x에 1을 전달", "곱셈 노드가 x에 3을 두 번 전달", "합 7 (경로별 기울기의 합)", "=를 쓰면 마지막 값 3만 남는다"],
+      kind: "choice",
+      id: "w3-drill-dropout-eval",
+      tier: "supplement",
+      sectionId: "dl-regularization",
+      question: "드롭아웃을 넣은 모델을 검증할 때 `model.eval()`을 빼먹고 `model.train()` 상태로 평가하면?",
+      choices: [
+        "평가 때도 뉴런이 무작위로 꺼져 같은 입력에 대한 예측이 매번 달라지고 성능이 낮게 측정된다",
+        "아무 차이도 없다",
+        "드롭아웃 확률이 자동으로 0이 된다",
+        "학습률이 바뀐다",
+      ],
+      answer: 0,
+      explanation:
+        "드롭아웃은 학습 모드에서만 동작하도록 만든 층입니다. 평가 모드로 바꾸지 않으면 매번 다른 부분망으로 예측해 결과가 흔들리고 앙상블 효과도 얻지 못합니다. BatchNorm도 같은 이유로 `model.eval()`이 필요합니다.",
+    },
+    {
+      kind: "predict",
+      id: "w3-drill-warmup",
+      tier: "supplement",
+      sectionId: "dl-regularization",
+      code: py`
+import math
+lr_max, warmup, total = 1e-3, 10, 110
+def lr(step):
+    if step < warmup:
+        return lr_max * (step + 1) / warmup
+    return 0.5 * lr_max * (1 + math.cos(math.pi * (step - warmup) / (total - warmup)))
+print(round(lr(4) * 1e4, 2), round(lr(10) * 1e4, 2), round(lr(60) * 1e4, 2), round(lr(110) * 1e4, 2))
+`,
+      expected: "5.0 10.0 5.0 0.0",
+      explanation:
+        "4스텝은 워밍업 중이라 $10^{-3}\\times 5/10 = 5\\times10^{-4}$, 10스텝은 코사인의 시작이라 $10^{-3}$, 60스텝은 코사인 구간의 정확히 중간이라 절반인 $5\\times10^{-4}$, 110스텝은 끝이라 0입니다(출력은 $10^4$배 한 값).",
+    },
+    {
+      kind: "predict",
+      id: "w3-drill-dual",
+      tier: "advanced",
+      sectionId: "autodiff-theory",
+      code: py`
+class Dual:
+    def __init__(self, val, dot):
+        self.val, self.dot = val, dot
+    def __mul__(self, o):
+        return Dual(self.val * o.val, self.dot * o.val + self.val * o.dot)
+x = Dual(3.0, 1.0)
+y = x * x * x
+print(y.val, y.dot)
+`,
+      expected: "27.0 27.0",
+      explanation:
+        "$x = 3 + \\varepsilon$를 세제곱하면 $27 + 27\\varepsilon$입니다($\\varepsilon^2 = 0$). 값 $3^3 = 27$과 미분 $3x^2 = 27$이 함께 나옵니다. 곱 하나마다 곱의 미분법을 적용하는 것이 순방향 모드 자동미분의 전부입니다.",
+    },
+    {
+      kind: "choice",
+      id: "w3-drill-adamw",
+      tier: "advanced",
+      sectionId: "adam-theory",
+      question: "AdamW에서 학습률 $\\eta = 10^{-3}$, 가중치 감쇠 $\\lambda = 0.1$일 때, 기울기 항과 별도로 매 스텝 가중치에 곱해지는 값과 그 성질은?",
+      choices: [
+        "$0.9999$배이며, 모든 파라미터에 기울기 크기와 무관하게 같은 비율로 걸린다",
+        "$0.9$배이며, 기울기가 큰 파라미터에만 걸린다",
+        "$\\sqrt{\\hat v}$에 따라 파라미터마다 다르다",
+        "감쇠는 적용되지 않는다",
+      ],
+      answer: 0,
+      explanation:
+        "AdamW는 $w \\leftarrow w - \\eta\\lambda w$를 갱신에서 따로 적용하므로 $1 - 10^{-3}\\times 0.1 = 0.9999$배가 모든 파라미터에 똑같이 걸립니다. Adam + L2에서는 감쇠 항이 $\\sqrt{\\hat v}$로 나눠져 파라미터마다 강도가 달라집니다.",
     },
     {
       kind: "descriptive",
-      id: "w3-drill-sgd-vs-adam",
-      sectionId: "optimizers",
+      id: "w3-drill-residual",
+      tier: "advanced",
+      sectionId: "gradient-flow",
       question:
-        "협곡 모양 손실 실습에서 학습률을 잘 고른 SGD(0.04)가 Adam보다 정확했던 이유와, 그럼에도 실무에서 Adam을 기본값으로 쓰는 이유를 함께 설명하십시오.",
+        "50층짜리 tanh 망을 작은 초기화로 학습시켰더니 앞쪽 층의 가중치가 전혀 바뀌지 않았습니다. 원인을 야코비안의 곱으로 진단하고, 잔차 연결이 이를 어떻게 바꾸는지 식으로 보이십시오. 잔차 연결만으로 충분하지 않을 수 있는 이유와 보완책도 적으십시오.",
       modelAnswer:
-        "협곡 손실은 단순한 2차 함수라, 두 방향의 배율 $(1 - 2\\eta)$, $(1 - 20\\eta)$가 모두 1보다 작으면서 가장 빨리 줄어드는 학습률(0.04 근처)을 고르면 SGD가 정확히 최솟값으로 수렴합니다. Adam은 방향마다 기울기 크기로 나눠 비슷한 보폭(약 $\\eta$)으로 움직이므로 최솟값 근처에서도 보폭이 줄지 않아 진동하거나(0.3), 100스텝 안에 도착하지 못합니다(0.1). 그래도 Adam을 기본값으로 쓰는 이유는 기울기 스케일이 층·파라미터마다 크게 다른 실제 신경망에서 학습률 하나로도 안정적으로 학습되어 튜닝 부담이 적기 때문입니다. 성능을 끝까지 짜내야 할 때는 SGD+Momentum을 튜닝하기도 합니다.",
-      keyPoints: ["2차 함수에서는 잘 고른 학습률의 SGD가 정확히 수렴", "Adam은 보폭이 기울기 크기와 무관해 최솟값 근처에서 진동", "Adam은 기울기 스케일에 둔감해 튜닝이 쉽다", "Adam이 항상 가장 빠르거나 정확한 것은 아니다"],
-    },
-    {
-      kind: "descriptive",
-      id: "w3-drill-relu-mask",
-      sectionId: "pytorch-core",
-      question:
-        "2층 신경망의 `backward`에서 `dz1 = (dz2 @ W2.T) * (z1 > 0)`의 `* (z1 > 0)`을 지우면 gradient check와 학습이 어떻게 됩니까? 이유를 ReLU의 국소 미분으로 설명하십시오.",
-      modelAnswer:
-        "ReLU의 국소 미분은 입력이 양수면 1, 음수면 0입니다. 마스크를 지우면 순전파에서 0을 출력한(손실에 전혀 영향을 주지 않은) 뉴런에도 기울기가 흘러가, $W_1$, $b_1$의 기울기가 실제 기울기와 달라집니다. 그래서 수치미분과 비교하는 gradient check에서 W1·b1 항목의 상대오차가 크게 나와 버그가 드러납니다. W2·b2는 마스크와 무관해 여전히 통과합니다. 틀린 기울기로 학습하면 손실이 덜 줄거나 불안정해집니다.",
-      keyPoints: ["ReLU의 국소 미분은 양수 1, 음수 0", "0을 낸 뉴런에도 기울기가 흘러가 틀린 값이 된다", "W1·b1의 gradient check가 실패한다", "W2·b2는 영향을 받지 않는다"],
+        "입력 쪽 기울기는 $J_1^\\top\\cdots J_{50}^\\top g$이고 각 $J_l = \\mathrm{diag}(1-\\tanh^2 z_l)W_l$이 벡터를 평균적으로 줄이면(작은 초기화, tanh 미분이 1 이하) 그 비율이 50번 곱해져 기울기가 지수적으로 사라집니다(실습에서 $10^{-16}$). 앞쪽 층의 가중치 기울기는 이 사라진 신호에 비례하므로 갱신되지 않습니다. 잔차 연결 $h_l = h_{l-1} + F(h_{l-1})$은 야코비안을 $I + \\partial F/\\partial h$로 바꾸어 역전파가 $g_{l-1} = g_l + (\\partial F/\\partial h)^\\top g_l$이 되므로, 원래 기울기가 그대로 전달되는 경로가 층마다 생깁니다. 다만 '1 + 작은 값'을 수백 번 곱하면 기울기와 활성화가 서서히 커질 수 있으므로(실습에서 50층에 약 7.8), 잔차 가지를 0 근처로 초기화하거나 $1/\\sqrt{L}$로 줄이고, LayerNorm 같은 정규화 층과 기울기 클리핑을 함께 씁니다.",
+      keyPoints: ["기울기 = 야코비안 전치의 곱, 비율이 지수적으로 누적", "tanh 미분이 1 이하이고 작은 초기화가 줄이는 쪽으로 작용", "잔차 연결의 야코비안 $I + \\partial F/\\partial h$: 기울기의 직접 경로", "보완: 잔차 가지 축소·정규화 층·클리핑"],
     },
   ],
 
@@ -1020,7 +1557,7 @@ print(((g * 1024).astype(np.float16) == 0).tolist())
       "`Neuron`·`Layer`·`MLP`로 make_moons(100개)를 학습해 훈련 정확도 90% 이상을 달성하고 손실 곡선과 결정경계를 그린다.",
       "학습한 MLP의 파라미터 5개에 대해 역전파 기울기와 중앙차분의 상대오차 표를 만든다.",
       "노드 4~6개짜리 계산 그래프를 직접 설계해 손 계산 표와 `Value` 결과를 비교한다.",
-      "같은 구조의 NumPy 구현과 정확도·속도를 비교하고, `Value` 구현이 느린 이유를 세 가지 이상 설명한다.",
+      "(보충) 같은 구조의 NumPy 구현과 정확도·속도를 비교하고, `Value` 구현이 느린 이유를 세 가지 이상 설명한다.",
     ],
     autoTests: [
       {
@@ -1084,7 +1621,7 @@ for i in (0, len(params) // 2, len(params) - 1):
       {
         id: "w3-ch-softmax-ce",
         title: "Value에 log를 추가해 소프트맥스 교차 엔트로피 만들기",
-        level: 3,
+        tier: "advanced",
         prompt: `
 다중 분류 손실을 \`Value\`의 기본 연산만으로 조립합니다. \`exp\`와 \`__truediv__\`는 완성되어 있습니다.
 
@@ -1231,7 +1768,7 @@ print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logi
       {
         id: "w3-ch-deep-grads",
         title: "깊은 망의 층별 기울기 크기 측정과 기울기 클리핑",
-        level: 3,
+        tier: "advanced",
         prompt: `
 깊이 20인 MLP에서 기울기가 층을 거슬러 올라가며 어떻게 변하는지 직접 측정합니다.
 

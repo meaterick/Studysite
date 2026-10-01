@@ -6,6 +6,8 @@ import { findUserById } from "@/lib/userStore";
 import { listUserSubmissions } from "@/lib/submissionStore";
 import { ASSIGNMENT_STATUS_LABEL, weekStatus } from "@/lib/study";
 import { WEEKS } from "@/content/weeks";
+import { sectionLabel, type Tier } from "@/content/tiers";
+import { tierRecord } from "@/lib/achievement";
 import { Inline } from "@/components/MarkdownBlocks";
 import ProgressRing from "@/components/ProgressRing";
 import { formatDateTime, formatDate } from "@/lib/datetime";
@@ -23,8 +25,8 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
     const submission = submissions.find((s) => s.weekSlug === week.slug);
     return { week, submission, status: weekStatus(week, learning, submission) };
   });
-  const sectionsDone = rows.reduce((sum, r) => sum + r.status.sectionsDone, 0);
-  const sectionsTotal = rows.reduce((sum, r) => sum + r.status.sectionsTotal, 0);
+  const sum = (tier: Tier, key: "done" | "total") => rows.reduce((acc, r) => acc + r.status.tiers[tier][key], 0);
+  const advancedWeeks = rows.filter((r) => tierRecord(r.week, learning, r.status, "advanced").complete).length;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
@@ -32,8 +34,12 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
       <h1 className="mt-5 text-3xl font-black text-ink">{member.name}님의 학습 현황</h1>
       <p className="mt-2 text-sm text-ink-secondary">{member.email} · 가입일 {formatDate(member.createdAt)}</p>
 
-      <div className="my-8 grid gap-3 sm:grid-cols-3">
-        <Stat label="완료한 단계" value={`${sectionsDone} / ${sectionsTotal}`} />
+      <div className="my-8 grid gap-3 sm:grid-cols-2">
+        <Stat label="핵심 단계(주차 완료 기준)" value={`${sum("core", "done")} / ${sum("core", "total")}`} />
+        <Stat
+          label="보충 · 심화 단계"
+          value={`보충 ${sum("supplement", "done")}/${sum("supplement", "total")} · 심화 ${sum("advanced", "done")}/${sum("advanced", "total")}${advancedWeeks > 0 ? ` · 심화 달성 ${advancedWeeks}주` : ""}`}
+        />
         <Stat label="과제 제출" value={`${submissions.length} / ${WEEKS.length}주차`} />
         <Stat label="마지막 학습 기록" value={learning.updatedAt ? formatDateTime(learning.updatedAt) : "아직 없음"} />
       </div>
@@ -49,7 +55,8 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
                 <div className="min-w-0 flex-1">
                   <h2 className="font-black text-ink">{week.number}주차 · {week.title}</h2>
                   <p className="mt-1 text-xs text-ink-secondary">
-                    단계 {status.sectionsDone}/{status.sectionsTotal} · 백지공부 {status.worksheetSubmitted ? "제출" : "미제출"} · 과제{" "}
+                    핵심 {status.tiers.core.done}/{status.tiers.core.total} · 보충 {status.tiers.supplement.done}/{status.tiers.supplement.total} · 심화{" "}
+                    {status.tiers.advanced.done}/{status.tiers.advanced.total} · 백지공부 {status.worksheetSubmitted ? "제출" : "미제출"} · 과제{" "}
                     {ASSIGNMENT_STATUS_LABEL[status.assignment.status]}
                     {status.assignment.status === "graded" && ` ${status.assignment.score}/${status.assignment.maxScore}점`}
                   </p>
@@ -78,7 +85,7 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
                       const weak = section.meta.quizIds.filter((q) => state.answers[q]?.review === "incorrect").length;
                       return (
                         <tr key={section.id} className="border-t border-[var(--border-hairline)] text-ink-secondary">
-                          <td className="py-1.5 pr-2">{section.number}. {section.title}</td>
+                          <td className="py-1.5 pr-2">{sectionLabel(section)}. {section.title}</td>
                           <td className="py-1.5 pr-2">{access === "completed" ? "✓ 완료" : access === "current" ? "진행 중" : "—"}</td>
                           <td className="py-1.5 pr-2">
                             {progress.checksDone}/{progress.checksTotal}

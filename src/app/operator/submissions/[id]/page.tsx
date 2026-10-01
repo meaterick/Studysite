@@ -52,7 +52,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
       </p>
       <h1 className="mt-1 text-3xl font-black text-ink">{student?.name ?? "(탈퇴한 사용자)"}님의 과제</h1>
       <p className="mt-2 text-sm text-ink-secondary">
-        {student?.email} · 단계 {status.sectionsDone}/{status.sectionsTotal} · 백지공부 {worksheet.submittedAt ? "제출" : "미제출"} · 제출{" "}
+        {student?.email} · 핵심 단계 {status.tiers.core.done}/{status.tiers.core.total} · 백지공부 {worksheet.submittedAt ? "제출" : "미제출"} · 제출{" "}
         {submission.versions.length}회
         {student && (
           <>

@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getWeek } from "@/content/weeks";
-import { getSection, getWeekOutline } from "@/content/sections";
+import { getSection, nextSectionAfter } from "@/content/sections";
 import { requireUser } from "./dal";
 import { consumeRate, RateLimitError, RATE_LIMIT_MESSAGE, RATE_RULES, type RateRule } from "./rateLimit";
 import {
@@ -123,9 +123,10 @@ export async function completeSection(slug: string, sectionId: string) {
     const s = ensureSectionState(r, slug, sectionId);
     s.completedAt ??= new Date().toISOString();
   });
-  const { sections } = getWeekOutline(week);
-  const next = sections[section.number]; // number는 1부터 시작하므로 다음 단계의 인덱스와 같다
-  redirect(next ? `/weeks/${slug}/sections/${next.id}` : `/weeks/${slug}?finished=1`);
+  const next = nextSectionAfter(week, section);
+  // 핵심 단계는 다음 핵심 단계로, 마지막 핵심 단계면 주차 마무리 안내로 간다. 보충·심화 단계는 다음 선택 단계(없으면 기록 화면)로 간다.
+  if (next) redirect(`/weeks/${slug}/sections/${next.id}`);
+  redirect(section.tier === "core" ? `/weeks/${slug}?finished=1` : `/weeks/${slug}#record-heading`);
 }
 
 // ─── 백지공부 ───────────────────────────────────────────────────────────

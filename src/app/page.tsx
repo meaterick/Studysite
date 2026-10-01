@@ -61,8 +61,8 @@ export default async function Home() {
   };
   const totalStages = WEEKS.reduce((n, w) => n + getWeekOutline(w).sections.length, 0);
   const codeCells = WEEKS.reduce((n, w) => n + (w.conceptsMd.match(/^```python\s*$/gm)?.length ?? 0), 0);
-  // 주당 예상 시간 = 단계 학습(콘텐츠 분량으로 계산) + 백지공부 + 과제
-  const studyHours = WEEKS.map((w) => getWeekOutline(w).sections.reduce((sum, s) => sum + s.minutes, 0) / 60);
+  // 주당 예상 시간 = 핵심 단계 학습(콘텐츠 분량으로 계산) + 백지공부 + 과제. 보충·심화는 선택이라 넣지 않는다.
+  const studyHours = WEEKS.map((w) => getWeekOutline(w).sections.filter((s) => s.tier === "core").reduce((sum, s) => sum + s.minutes, 0) / 60);
   const weeklyMin = Math.floor(Math.min(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.min);
   const weeklyMax = Math.ceil(Math.max(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.max);
   const studyMin = Math.floor(Math.min(...studyHours));
@@ -145,7 +145,7 @@ export default async function Home() {
               },
               {
                 q: "일주일에 얼마나 걸리나요?",
-                a: `주 ${weeklyMin}~${weeklyMax}시간: 단계 학습 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). 뒤 주차로 갈수록 과제 비중이 커집니다.`,
+                a: `주 ${weeklyMin}~${weeklyMax}시간: 핵심 단계 학습 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). 보충·심화 단계는 선택이라 이 시간에 넣지 않았습니다.`,
               },
               {
                 q: "비용이 드나요? 누가 이용할 수 있나요?",
@@ -196,7 +196,7 @@ export default async function Home() {
             ))}
           </ol>
           <p className="mt-6 text-sm text-[var(--j-3)]">
-            단계마다 학습 → 실습 → 확인 문제 순서로 진행하고, 모든 단계를 마친 뒤 백지공부와 과제로 한 주를 마무리합니다.
+            단계마다 학습 → 실습 → 확인 문제 순서로 진행합니다. 단계는 핵심(초심자)·보충(중급자)·심화(전문가)로 나뉘고, 핵심 단계만 마치면 백지공부와 과제로 한 주를 마무리할 수 있습니다. 보충은 폭을, 심화는 깊이를 더하는 선택 과정입니다.
           </p>
         </div>
       ),

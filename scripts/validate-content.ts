@@ -17,6 +17,7 @@
  * 실패 시 0이 아닌 코드로 종료하므로 CI(build 이전 단계)에 그대로 연결할 수 있다.
  */
 import fs from "fs";
+import { TIER_INFO, TIER_ORDER } from "../src/content/tiers";
 import path from "path";
 import katex from "katex";
 import { WEEKS } from "../src/content/weeks";
@@ -163,7 +164,8 @@ function checkLab(week: (typeof WEEKS)[number], label: string) {
     if (challenge && e.sectionId) fail(`${ectx}: 과제 심화 문제에는 sectionId를 두지 않음`);
     if (!challenge && (!e.sectionId || !sectionIds.has(e.sectionId))) fail(`${ectx}: sectionId "${e.sectionId}"에 해당하는 단계가 없음`);
     if (!e.title.trim()) fail(`${ectx}: title이 비어 있음`);
-    if (![1, 2, 3].includes(e.level)) fail(`${ectx}: level은 1~3`);
+    if (!TIER_ORDER.includes(e.tier)) fail(`${ectx}: tier는 core·supplement·advanced 중 하나`);
+    if (challenge && e.tier !== "advanced") fail(`${ectx}: 과제 심화 문제의 tier는 advanced`);
     checkBlocks(parseMarkdown(e.prompt), `${ectx} prompt`);
     if (!e.starter.includes("TODO")) fail(`${ectx}: 시작 코드에 TODO 표시가 없음`);
     if (!/@test\(/.test(e.tests)) fail(`${ectx}: 채점 코드에 @test 항목이 없음`);
@@ -171,12 +173,20 @@ function checkLab(week: (typeof WEEKS)[number], label: string) {
     if (e.hints.length < 2) fail(`${ectx}: 힌트가 2개 미만`);
     e.hints.forEach((h) => checkInlineMath(h, `${ectx} 힌트`));
   }
+  // 세 구분 모두에 실습과 퀴즈가 있어야 초심자·중급자·전문가가 각자 풀 문제가 생긴다(해당 구분의 단계가 있을 때).
+  const outlineTiers = new Set(getWeekOutline(week).sections.map((s) => s.tier));
+  for (const tier of TIER_ORDER) {
+    if (!outlineTiers.has(tier)) continue;
+    if (!lab.exercises.some((e) => e.tier === tier)) warn(`${ctx}: ${TIER_INFO[tier].label} 실습이 없음`);
+    if (!lab.quiz.some((q) => q.tier === tier)) warn(`${ctx}: ${TIER_INFO[tier].label} 퀴즈가 없음`);
+  }
   const kinds = new Set(lab.quiz.map((q) => q.kind));
   for (const kind of ["choice", "predict", "descriptive"] as const) if (!kinds.has(kind)) warn(`${ctx}: 퀴즈에 ${kind} 문항이 없음`);
   for (const q of lab.quiz) {
     const qctx = `${ctx} ${q.id}`;
     checkId(q.id, "퀴즈");
     if (!sectionIds.has(q.sectionId)) fail(`${qctx}: sectionId "${q.sectionId}"에 해당하는 단계가 없음`);
+    if (!TIER_ORDER.includes(q.tier)) fail(`${qctx}: tier는 core·supplement·advanced 중 하나`);
     if (q.kind === "choice") {
       if (q.choices.length < 3) fail(`${qctx}: 선택지가 3개 미만`);
       if (new Set(q.choices).size !== q.choices.length) fail(`${qctx}: 선택지 중복`);
@@ -210,7 +220,11 @@ function checkAssignment(week: (typeof WEEKS)[number], label: string) {
   if (!spec.title.trim()) fail(`${ctx}: title이 비어 있음`);
   checkBlocks(parseMarkdown(spec.summary), `${ctx} summary`);
   if (spec.tasks.length === 0) fail(`${ctx}: 과제 항목(tasks)이 없음`);
-  if (!spec.tasks.some((t) => !t.optional)) fail(`${ctx}: 필수 과제 항목이 하나도 없음`);
+  if (!spec.tasks.some((t) => t.tier === "core")) fail(`${ctx}: 핵심(필수) 과제 항목이 하나도 없음`);
+  // 핵심 과제 → 보충 → 심화 순서로 둔다(화면 순서 = 권장 순서).
+  const taskTierRank = spec.tasks.map((t) => TIER_ORDER.indexOf(t.tier));
+  if (taskTierRank.some((r) => r < 0)) fail(`${ctx}: 과제 항목 tier는 core·supplement·advanced 중 하나`);
+  if (taskTierRank.some((r, i) => i > 0 && r < taskTierRank[i - 1])) fail(`${ctx}: 과제 항목은 핵심 → 보충 → 심화 순서여야 함`);
   const ID = /^[A-Za-z0-9_-]{1,64}$/;
   const taskIds = new Set<string>();
   const cellIds = new Set<string>();
@@ -263,6 +277,12 @@ function checkSections(week: (typeof WEEKS)[number], label: string) {
   for (const key of Object.keys(week.sections)) {
     if (!ids.has(key)) fail(`${label}: sections/week${week.number}.ts의 "${key}"에 대응하는 ## 단계가 없음 (유령 항목)`);
   }
+  // 단계 구분: 모든 단계에 tier가 있고, 본문은 핵심 → 보충 → 심화 순서로 쓴다. 핵심 단계가 하나 이상 있어야 주차를 완료할 수 있다.
+  const outline = getWeekOutline(week).sections;
+  const ranks = outline.map((s) => TIER_ORDER.indexOf(week.sections[s.id]?.tier));
+  if (ranks.some((r) => r < 0)) fail(`${label}: tier가 없거나 잘못된 단계가 있음 (core·supplement·advanced)`);
+  if (ranks.some((r, i) => i > 0 && r < ranks[i - 1])) fail(`${label}: 본문 단계 순서가 핵심 → 보충 → 심화가 아님`);
+  if (!outline.some((s) => s.tier === "core")) fail(`${label}: 핵심 단계가 하나도 없음`);
   const quizIds = new Set(week.quiz.map((q) => q.id));
   const assigned = new Map<string, string>();
   const checkIds = new Set<string>();

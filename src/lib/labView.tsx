@@ -1,6 +1,7 @@
 import "server-only";
 import type { CodingExercise, LabQuizItem, WeekMeta } from "@/content/types";
-import { getWeekLab, LEVEL_LABEL } from "@/content/labs";
+import { getWeekLab } from "@/content/labs";
+import { sectionLabel } from "@/content/tiers";
 import { getWeekOutline } from "@/content/sections";
 import { parseMarkdown } from "@/content/markdown";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
@@ -18,9 +19,10 @@ function lockReason(ex: CodingExercise, status: WeekStatus, isAdmin: boolean): s
   if (isAdmin) return undefined;
   if (ex.sectionId) {
     const row = status.sections.find((r) => r.section.id === ex.sectionId);
-    return row?.access === "locked" ? `${row.section.number}단계를 열면 풀 수 있습니다.` : undefined;
+    if (row?.access !== "locked") return undefined;
+    return row.section.tier === "core" ? `${sectionLabel(row.section)}단계를 열면 풀 수 있습니다.` : "핵심 단계를 모두 마치면 풀 수 있습니다.";
   }
-  return status.finaleOpen ? undefined : "모든 단계를 마치면 풀 수 있습니다.";
+  return status.finaleOpen ? undefined : "핵심 단계를 모두 마치면 풀 수 있습니다.";
 }
 
 export function exerciseView(week: WeekMeta, ex: CodingExercise, lab: LabWeekState, status: WeekStatus, isAdmin: boolean): ExerciseView {
@@ -30,13 +32,12 @@ export function exerciseView(week: WeekMeta, ex: CodingExercise, lab: LabWeekSta
     slug: week.slug,
     id: ex.id,
     title: ex.title,
-    level: ex.level,
-    levelLabel: LEVEL_LABEL[ex.level],
+    tier: ex.tier,
     prompt: <BlocksRenderer blocks={parseMarkdown(ex.prompt)} />,
     starter: ex.starter,
     tests: ex.tests,
     hints: ex.hints.map((h, i) => <Inline key={i} text={h} />),
-    section: section ? { number: section.number, title: section.title, href: `/weeks/${week.slug}/sections/${section.id}` } : undefined,
+    section: section ? { label: sectionLabel(section), title: section.title, href: `/weeks/${week.slug}/sections/${section.id}` } : undefined,
     state: {
       attempts: state?.attempts ?? 0,
       bestPassed: state?.bestPassed ?? 0,

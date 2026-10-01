@@ -6,16 +6,17 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "sequence-embedding": {
+    "tier": "core",
     "goal": "텍스트를 숫자로 바꾸는 절차(전처리·토큰화·어휘 사전)를 설명하고, One-hot의 두 한계를 Word Embedding·Word2Vec이 어떻게 해결하는지 말할 수 있다.",
     "checks": [
       {
         "id": "w5-sequence-embedding-c1",
-        "question": "어휘 크기가 $|V| = 50{,}000$일 때 One-hot 표현에서 서로 다른 두 단어 벡터의 내적은?",
+        "question": "어휘 크기가 $|V| = 50{}000$일 때 One-hot 표현에서 서로 다른 두 단어 벡터의 내적은?",
         "choices": [
           "항상 0",
           "항상 1",
           "두 단어의 의미가 비슷할수록 크다",
-          "$50{,}000$"
+          "$50{}000$"
         ],
         "answer": 0,
         "explanation": "One-hot 벡터는 서로 다른 자리에만 1이 있으므로 내적이 항상 0이다. 그래서 어떤 두 단어도 \"비슷하다\"는 정보를 담을 수 없다."
@@ -63,6 +64,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "rnn-bptt": {
+    "tier": "core",
     "goal": "RNN의 재귀식 $h_t = f(Wx_t + Uh_{t-1} + b)$과 파라미터 공유를 설명하고, BPTT에서 야코비안이 $T-k$번 곱해져 기울기가 소실·폭발하는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -120,70 +122,8 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
-  "lstm-gru": {
-    "goal": "LSTM의 forget·input·output 게이트와 셀 상태, GRU의 update·reset 게이트를 설명하고, $c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde{c}_t$가 기울기 소실을 완화하는 이유를 말할 수 있다.",
-    "checks": [
-      {
-        "id": "w5-lstm-gru-c1",
-        "question": "LSTM에서 \"이전 셀 상태 $c_{t-1}$ 중 얼마를 계속 기억할지\"를 정하는 것은?",
-        "choices": [
-          "input gate $i_t$",
-          "forget gate $f_t$",
-          "output gate $o_t$",
-          "후보 $\\tilde{c}_t$"
-        ],
-        "answer": 1,
-        "explanation": "forget gate가 0에 가까우면 그 성분의 기억을 지우고, 1에 가까우면 유지한다."
-      },
-      {
-        "id": "w5-lstm-gru-c2",
-        "question": "LSTM 셀 상태 경로가 RNN보다 기울기 소실에 강한 핵심 이유는?",
-        "choices": [
-          "게이트가 많아 파라미터가 많기 때문에",
-          "셀 상태가 행렬곱·tanh 대신 성분별 곱과 덧셈으로 갱신되어, $f_t \\approx 1$이면 기울기가 거의 그대로 전달되기 때문에",
-          "시그모이드가 항상 1을 출력하기 때문에",
-          "은닉 상태를 사용하지 않기 때문에"
-        ],
-        "answer": 1,
-        "explanation": "실습에서 forget bias를 올려 $f$를 1에 가깝게 하자 40스텝 전의 영향이 살아남았다. 반대로 $f \\approx 0.5$면 RNN보다도 빨리 사라졌다."
-      },
-      {
-        "id": "w5-lstm-gru-c3",
-        "question": "GRU와 LSTM의 비교로 옳은 것은?",
-        "choices": [
-          "GRU는 게이트 3개, 상태 2개를 쓴다",
-          "GRU는 게이트 2개(update, reset)와 상태 1개로, 같은 크기에서 파라미터가 LSTM의 약 3/4이다",
-          "GRU는 게이트가 없다",
-          "GRU가 항상 LSTM보다 정확하다"
-        ],
-        "answer": 1,
-        "explanation": "실습의 파라미터 수는 GRU 1008, LSTM 1344로 3:4다. 성능 차이는 태스크마다 엇갈린다."
-      }
-    ],
-    "quizIds": [
-      "w5-q17",
-      "w5-q18",
-      "w5-q19"
-    ],
-    "references": [
-      {
-        "title": "Chris Olah — Understanding LSTM Networks",
-        "url": "https://colah.github.io/posts/2015-08-Understanding-LSTMs/",
-        "note": "LSTM 게이트를 그림으로 설명하는 가장 유명한 글 (영문)"
-      },
-      {
-        "title": "d2l.ai — Long Short-Term Memory (LSTM)",
-        "url": "https://d2l.ai/chapter_recurrent-modern/lstm.html",
-        "note": "수식과 구현을 함께 (한국어판: ko.d2l.ai)"
-      },
-      {
-        "title": "Jozefowicz et al. (2015) — An Empirical Exploration of Recurrent Network Architectures",
-        "url": "https://proceedings.mlr.press/v37/jozefowicz15.pdf",
-        "note": "forget bias를 1로 초기화하는 관행의 근거 (심화)"
-      }
-    ]
-  },
   "seq2seq-attention": {
+    "tier": "core",
     "goal": "Seq2Seq의 Encoder–Decoder 구조와 Teacher Forcing을 설명하고, 고정 크기 문맥 벡터의 병목이 Attention으로 이어진 이유와 RNN 대비 Self-Attention의 경로 길이·연산량($O(1)$ vs $O(n)$, $O(n^2)$)을 비교할 수 있다.",
     "checks": [
       {
@@ -242,6 +182,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "self-attention": {
+    "tier": "core",
     "goal": "$\\text{softmax}(QK^\\top/\\sqrt{d_k})V$의 각 부분($QK^\\top$, softmax, $\\sqrt{d_k}$, Value 가중합)이 왜 필요한지 설명하고, 작은 예제를 손과 코드로 계산할 수 있다.",
     "checks": [
       {
@@ -317,6 +258,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "multi-head-causal": {
+    "tier": "core",
     "goal": "멀티헤드 attention의 split–attention–concat–$W^O$ 과정을 shape과 함께 추적하고, causal mask가 필요한 이유와 올바르게 적용됐는지 검사하는 방법을 설명할 수 있다.",
     "checks": [
       {
@@ -374,6 +316,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "transformer-block": {
+    "tier": "core",
     "goal": "마스크 없는 Self-Attention이 순열 등변(불변이 아니다) 연산이라 위치 인코딩이 필요한 이유와 causal mask가 이를 어떻게 바꾸는지 설명하고, 사인·코사인 위치 인코딩과 GPT형 디코더 블록(Attention + MLP, 잔차·정규화)의 역할 분담을 말할 수 있다.",
     "checks": [
       {
@@ -443,6 +386,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "bpe": {
+    "tier": "core",
     "goal": "BPE가 가장 잦은 쌍을 반복 병합해 어휘를 만드는 과정을 직접 따라가고, 이 방식이 OOV 완화·한국어 토큰 수·철자 세기 약점으로 이어지는 이유를 설명할 수 있다.",
     "checks": [
       {
@@ -503,7 +447,72 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
+  "lstm-gru": {
+    "tier": "supplement",
+    "goal": "LSTM의 forget·input·output 게이트와 셀 상태, GRU의 update·reset 게이트를 설명하고, $c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde{c}_t$가 기울기 소실을 완화하는 이유를 말할 수 있다.",
+    "checks": [
+      {
+        "id": "w5-lstm-gru-c1",
+        "question": "LSTM에서 \"이전 셀 상태 $c_{t-1}$ 중 얼마를 계속 기억할지\"를 정하는 것은?",
+        "choices": [
+          "input gate $i_t$",
+          "forget gate $f_t$",
+          "output gate $o_t$",
+          "후보 $\\tilde{c}_t$"
+        ],
+        "answer": 1,
+        "explanation": "forget gate가 0에 가까우면 그 성분의 기억을 지우고, 1에 가까우면 유지한다."
+      },
+      {
+        "id": "w5-lstm-gru-c2",
+        "question": "LSTM 셀 상태 경로가 RNN보다 기울기 소실에 강한 핵심 이유는?",
+        "choices": [
+          "게이트가 많아 파라미터가 많기 때문에",
+          "셀 상태가 행렬곱·tanh 대신 성분별 곱과 덧셈으로 갱신되어, $f_t \\approx 1$이면 기울기가 거의 그대로 전달되기 때문에",
+          "시그모이드가 항상 1을 출력하기 때문에",
+          "은닉 상태를 사용하지 않기 때문에"
+        ],
+        "answer": 1,
+        "explanation": "실습에서 forget bias를 올려 $f$를 1에 가깝게 하자 40스텝 전의 영향이 살아남았다. 반대로 $f \\approx 0.5$면 RNN보다도 빨리 사라졌다."
+      },
+      {
+        "id": "w5-lstm-gru-c3",
+        "question": "GRU와 LSTM의 비교로 옳은 것은?",
+        "choices": [
+          "GRU는 게이트 3개, 상태 2개를 쓴다",
+          "GRU는 게이트 2개(update, reset)와 상태 1개로, 같은 크기에서 파라미터가 LSTM의 약 3/4이다",
+          "GRU는 게이트가 없다",
+          "GRU가 항상 LSTM보다 정확하다"
+        ],
+        "answer": 1,
+        "explanation": "실습의 파라미터 수는 GRU 1008, LSTM 1344로 3:4다. 성능 차이는 태스크마다 엇갈린다."
+      }
+    ],
+    "quizIds": [
+      "w5-q17",
+      "w5-q18",
+      "w5-q19"
+    ],
+    "references": [
+      {
+        "title": "Chris Olah — Understanding LSTM Networks",
+        "url": "https://colah.github.io/posts/2015-08-Understanding-LSTMs/",
+        "note": "LSTM 게이트를 그림으로 설명하는 가장 유명한 글 (영문)"
+      },
+      {
+        "title": "d2l.ai — Long Short-Term Memory (LSTM)",
+        "url": "https://d2l.ai/chapter_recurrent-modern/lstm.html",
+        "note": "수식과 구현을 함께 (한국어판: ko.d2l.ai)"
+      },
+      {
+        "title": "Jozefowicz et al. (2015) — An Empirical Exploration of Recurrent Network Architectures",
+        "url": "https://proceedings.mlr.press/v37/jozefowicz15.pdf",
+        "note": "forget bias를 1로 초기화하는 관행의 근거 (심화)"
+      }
+    ]
+  },
   "kv-cache-rope": {
+    "tier": "supplement",
     "goal": "생성 시 KV 캐시가 무엇을 저장하고 무엇을 새로 계산하는지, 왜 결과가 같은지 설명하고, 메모리 비용을 계산하며, RoPE가 회전으로 상대 거리만 반영하는 원리를 말할 수 있다.",
     "checks": [
       {
@@ -578,6 +587,239 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
+  "transformer-params": {
+    "tier": "supplement",
+    "goal": "디코더 블록의 파라미터가 약 $12d^2$인 이유를 부품별로 세고, 토큰당 연산량 $2N$·학습 연산량 $6ND$, 추론 가중치·학습 상태·KV 캐시 메모리를 계산할 수 있다.",
+    "checks": [
+      {
+        "id": "w5-transformer-params-c1",
+        "question": "은닉 차원 $d$인 디코더 블록 하나에서 MLP($d \\to 4d \\to d$)의 가중치 수는? (편향 제외)",
+        "choices": [
+          "$8d^2$",
+          "$4d^2$",
+          "$12d^2$",
+          "$16d^2$"
+        ],
+        "answer": 0,
+        "explanation": "$d \\times 4d$와 $4d \\times d$ 두 행렬이라 $8d^2$다. attention은 $Q, K, V, W^O$ 네 개로 $4d^2$이므로 블록 파라미터의 3분의 2가 MLP에 있다."
+      },
+      {
+        "id": "w5-transformer-params-c2",
+        "question": "파라미터 70억 개 모델을 1조 토큰으로 학습하는 데 드는 연산량은 대략?",
+        "choices": [
+          "$4.2\\times10^{22}$ FLOPs",
+          "$7\\times10^{21}$ FLOPs",
+          "$1.4\\times10^{22}$ FLOPs",
+          "$7\\times10^{12}$ FLOPs"
+        ],
+        "answer": 0,
+        "explanation": "학습은 토큰당 약 $6N$ FLOPs이므로 $6 \\times 7\\times10^9 \\times 10^{12} = 4.2\\times10^{22}$이다."
+      },
+      {
+        "id": "w5-transformer-params-c3",
+        "question": "7B 모델을 fp16으로 추론할 때 가중치만의 메모리는 대략?",
+        "choices": [
+          "14GB",
+          "7GB",
+          "28GB",
+          "112GB"
+        ],
+        "answer": 0,
+        "explanation": "파라미터당 2바이트이므로 약 14GB다. 학습(혼합 정밀도 Adam)이면 파라미터당 약 16바이트로 약 112GB가 된다."
+      }
+    ],
+    "quizIds": [
+      "w5-q23"
+    ],
+    "references": [
+      {
+        "title": "Kaplan et al. (2020) — Scaling Laws for Neural Language Models, 2.1절",
+        "url": "https://arxiv.org/abs/2001.08361",
+        "note": "파라미터 수와 FLOPs 계산의 표준 근사 (영문)"
+      },
+      {
+        "title": "EleutherAI — Transformer Math 101",
+        "url": "https://blog.eleuther.ai/transformer-math/",
+        "note": "학습 메모리·연산량 계산 정리 (영문)"
+      }
+    ]
+  },
+  "efficient-attention": {
+    "tier": "advanced",
+    "goal": "최댓값을 빼는 안전한 softmax와 온라인 softmax 갱신식을 유도·구현하고, FlashAttention이 GPU 메모리 계층에서 HBM 왕복을 줄여 빨라지는 이유와 한계를 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w5-efficient-attention-c1",
+        "question": "softmax를 계산할 때 점수에서 최댓값을 빼는 이유는?",
+        "choices": [
+          "값은 같으면서 $\\exp$가 넘치지 않게(지수가 0 이하가 되게) 하려고",
+          "확률의 합을 1로 만들려고",
+          "기울기를 크게 하려고",
+          "온도를 낮추려고"
+        ],
+        "answer": 0,
+        "explanation": "$e^{s_i - m}/\\sum_j e^{s_j - m}$은 분자·분모에 같은 $e^{-m}$을 곱한 것이라 값이 같고, 지수가 모두 0 이하라 오버플로가 없다."
+      },
+      {
+        "id": "w5-efficient-attention-c2",
+        "question": "온라인 softmax에서 새 블록의 최댓값 $m'$이 이전 최댓값 $m$보다 클 때 이전 누적값 $\\ell$, $a$에 곱하는 값은?",
+        "choices": [
+          "$e^{m - m'}$",
+          "$e^{m' - m}$",
+          "$m/m'$",
+          "1"
+        ],
+        "answer": 0,
+        "explanation": "이전 값들은 $e^{s_j - m}$ 기준이었으므로 새 기준 $e^{s_j - m'}$으로 바꾸려면 $e^{m - m'}$을 곱한다. 이 보정 덕분에 결과가 정확하다."
+      },
+      {
+        "id": "w5-efficient-attention-c3",
+        "question": "FlashAttention이 표준 attention보다 빠른 주된 이유는?",
+        "choices": [
+          "점수 행렬을 HBM에 쓰고 읽는 왕복을 없애 메모리 병목을 줄이기 때문",
+          "FLOPs를 $O(n)$으로 줄이기 때문",
+          "근사 계산을 하기 때문",
+          "softmax를 생략하기 때문"
+        ],
+        "answer": 0,
+        "explanation": "attention은 메모리 대역폭에 묶이는 연산이다. 타일을 SRAM에서만 처리해 $n\\times n$ 행렬을 HBM에 만들지 않는다. FLOPs와 결과는 그대로다."
+      }
+    ],
+    "quizIds": [
+      "w5-q24"
+    ],
+    "references": [
+      {
+        "title": "Dao et al. (2022) — FlashAttention",
+        "url": "https://arxiv.org/abs/2205.14135",
+        "note": "IO를 고려한 정확한 attention (영문)"
+      },
+      {
+        "title": "Milakov & Gimelshein (2018) — Online normalizer calculation for softmax",
+        "url": "https://arxiv.org/abs/1805.02867",
+        "note": "온라인 softmax (영문)"
+      }
+    ]
+  },
+  "linear-attention": {
+    "tier": "advanced",
+    "goal": "attention을 커널 가중평균으로 쓰고 결합법칙으로 선형 어텐션을 유도하며, 인과적 선형 어텐션이 고정 크기 상태의 RNN과 같아짐을 구현으로 확인하고 그 대가를 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w5-linear-attention-c1",
+        "question": "커널을 $\\phi(q)^\\top\\phi(k)$로 쪼갤 수 있을 때 선형 어텐션이 연산량을 줄이는 핵심 아이디어는?",
+        "choices": [
+          "$(\\phi(Q)\\phi(K)^\\top)V$ 대신 $\\phi(Q)(\\phi(K)^\\top V)$로 결합 순서를 바꾼다",
+          "softmax를 근사 없이 계산한다",
+          "토큰 수를 줄인다",
+          "헤드 수를 늘린다"
+        ],
+        "answer": 0,
+        "explanation": "$\\phi(K)^\\top V$는 $d\\times d$로 모든 query가 공유한다. 연산량이 $O(n^2d)$에서 $O(nd^2)$가 된다."
+      },
+      {
+        "id": "w5-linear-attention-c2",
+        "question": "인과적 선형 어텐션을 생성할 때 토큰마다 저장·갱신하는 것은?",
+        "choices": [
+          "$S_t = S_{t-1} + \\phi(k_t)v_t^\\top$와 $z_t$라는 고정 크기 상태",
+          "지금까지의 모든 K, V(KV 캐시)",
+          "$n\\times n$ 점수 행렬",
+          "아무것도 없다"
+        ],
+        "answer": 0,
+        "explanation": "고정 크기 상태를 누적하는 RNN이다. KV 캐시처럼 문맥 길이에 비례해 커지지 않는다."
+      },
+      {
+        "id": "w5-linear-attention-c3",
+        "question": "선형 어텐션이 softmax attention보다 약한 과제로 가장 알맞은 것은?",
+        "choices": [
+          "먼 과거의 특정 토큰을 정확히 복사·검색하는 과제",
+          "짧은 문장 분류",
+          "단어 임베딩 학습",
+          "덧셈 두 자리"
+        ],
+        "answer": 0,
+        "explanation": "과거 전체를 $d\\times d$ 상태에 압축하므로 Seq2Seq와 같은 정보 병목이 생긴다. softmax attention은 모든 K, V를 그대로 들고 있어 정확히 다시 꺼낼 수 있다."
+      }
+    ],
+    "quizIds": [
+      "w5-q25"
+    ],
+    "references": [
+      {
+        "title": "Katharopoulos et al. (2020) — Transformers are RNNs",
+        "url": "https://arxiv.org/abs/2006.16236",
+        "note": "선형 어텐션과 RNN의 등가성 (영문)"
+      },
+      {
+        "title": "Gu & Dao (2023) — Mamba",
+        "url": "https://arxiv.org/abs/2312.00752",
+        "note": "선택적 상태공간 모델: 게이트 있는 순환 구조의 현대판 (영문)"
+      }
+    ]
+  },
+  "position-extrapolation": {
+    "tier": "advanced",
+    "goal": "사인파 위치 인코딩의 회전 성질을 덧셈 정리로 증명하고, RoPE가 학습 길이를 넘어 실패하는 이유를 성분별 파장으로 설명하며, 위치 보간의 원리와 대가를 계산할 수 있다.",
+    "checks": [
+      {
+        "id": "w5-position-extrapolation-c1",
+        "question": "사인파 위치 인코딩에서 $PE(p+k)$와 $PE(p)$의 관계로 옳은 것은?",
+        "choices": [
+          "$k$에만 의존하는 회전 행렬로 $PE(p+k) = R_k\\,PE(p)$",
+          "$PE(p+k) = PE(p) + PE(k)$",
+          "$PE(p+k) = k\\,PE(p)$",
+          "관계가 없다"
+        ],
+        "answer": 0,
+        "explanation": "삼각함수 덧셈 정리로 성분 쌍마다 각도 $k\\theta_i$만큼 회전한다. 모델이 선형 변환으로 상대 거리를 읽을 수 있는 이유다."
+      },
+      {
+        "id": "w5-position-extrapolation-c2",
+        "question": "학습 길이 2048인 RoPE 모델에서 파장이 47,000 위치인 성분이 문제를 일으키는 이유는?",
+        "choices": [
+          "학습 중 한 바퀴도 돌지 못해, 2048을 넘는 위치에서 처음 보는 각도가 나오기 때문",
+          "너무 빨리 돌아서",
+          "파장이 짧아서",
+          "그 성분은 쓰이지 않아서"
+        ],
+        "answer": 0,
+        "explanation": "그 성분이 학습 중 본 각도는 $[0, 2048\\theta_i)$뿐이다. 그 너머의 각도에 대한 $q\\cdot k$ 패턴은 배운 적이 없다."
+      },
+      {
+        "id": "w5-position-extrapolation-c3",
+        "question": "문맥을 2048에서 8192로 늘리며 위치 보간(PI)을 할 때의 대가는?",
+        "choices": [
+          "이웃한 위치의 각도 차이가 4분의 1로 줄어 가까운 토큰의 위치 구별이 흐려진다",
+          "파라미터 수가 4배가 된다",
+          "KV 캐시가 사라진다",
+          "상대 위치 성질이 깨진다"
+        ],
+        "answer": 0,
+        "explanation": "모든 위치를 $L/L'$배로 줄이므로 해상도도 같은 배율로 준다. NTK-aware·YaRN은 주파수마다 다르게 늘려 이 대가를 줄인다."
+      }
+    ],
+    "quizIds": [
+      "w5-q26"
+    ],
+    "references": [
+      {
+        "title": "Su et al. (2021) — RoFormer: Enhanced Transformer with Rotary Position Embedding",
+        "url": "https://arxiv.org/abs/2104.09864",
+        "note": "RoPE 원 논문 (영문)"
+      },
+      {
+        "title": "Chen et al. (2023) — Extending Context Window of Large Language Models via Positional Interpolation",
+        "url": "https://arxiv.org/abs/2306.15595",
+        "note": "위치 보간 (영문)"
+      },
+      {
+        "title": "Peng et al. (2023) — YaRN",
+        "url": "https://arxiv.org/abs/2309.00071",
+        "note": "주파수별 보간으로 문맥 확장 (영문)"
+      }
+    ]
+  }
 };
 
 export default sections;

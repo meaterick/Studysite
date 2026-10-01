@@ -37,7 +37,7 @@ export default function SettingsForm({
             <span>
               <span className="font-bold text-ink">미완료 경고 (기본)</span>
               <span className="block text-sm text-ink-secondary">
-                순서는 안내만 합니다. 앞 단계를 끝내지 않아도 다음 단계·백지공부·과제로 넘어갈 수 있고, 끝내지 않은 단계가 있다는 경고를 보여 줍니다.
+                순서는 안내만 합니다. 앞 단계를 끝내지 않아도 다음 단계·백지공부·과제로 넘어갈 수 있고, 끝내지 않은 핵심 단계가 있다는 경고를 보여 줍니다. 보충·심화 단계는 언제든 열 수 있습니다.
               </span>
             </span>
           </label>
@@ -46,7 +46,7 @@ export default function SettingsForm({
             <span>
               <span className="font-bold text-ink">잠금</span>
               <span className="block text-sm text-ink-secondary">
-                앞 단계의 확인 문제를 모두 맞혀야 다음 단계가 열리고, 모든 단계를 마쳐야 백지공부와 과제가 열립니다.
+                앞 핵심 단계의 확인 문제를 모두 맞혀야 다음 핵심 단계가 열리고, 핵심 단계를 모두 마치면 백지공부·과제와 보충·심화 단계가 열립니다.
               </span>
             </span>
           </label>

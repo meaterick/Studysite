@@ -9,6 +9,8 @@ import CodingExercise from "@/components/lab/CodingExercise";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readLabState } from "@/lib/learningStore";
 import { exerciseView, labProgress } from "@/lib/labView";
+import { TIER_INFO, TIER_ORDER } from "@/content/tiers";
+import TierBadge from "@/components/TierBadge";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -28,9 +30,14 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
   if (!lab) notFound();
   const state = readLabState(record, slug);
   const progress = labProgress(slug, state);
-  const groups = getWeekOutline(week)
-    .sections.map((section) => ({ section, exercises: lab.exercises.filter((e) => e.sectionId === section.id) }))
-    .filter((g) => g.exercises.length > 0);
+  // 핵심 → 보충 → 심화 순서로, 같은 구분 안에서는 연결된 단계의 본문 순서대로 보여 준다.
+  const order = new Map(getWeekOutline(week).sections.map((s) => [s.id, s.order]));
+  const groups = TIER_ORDER.map((tier) => ({
+    tier,
+    exercises: lab.exercises
+      .filter((e) => e.tier === tier)
+      .sort((a, b) => (order.get(a.sectionId ?? "") ?? 0) - (order.get(b.sectionId ?? "") ?? 0)),
+  })).filter((g) => g.exercises.length > 0);
 
   return (
     <WeekFrame week={week} status={status}>
@@ -65,27 +72,40 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
             <li>코드는 서버로 보내지 않고 이 브라우저 안의 Python(Pyodide)에서만 실행·채점됩니다. 작성 중인 코드는 이 브라우저에 자동 저장됩니다.</li>
             <li>▶ 실행(Shift+Enter)은 내 코드만 실행해 출력을 보여 주고, ✓ 채점(Ctrl+Enter)은 빈 실행 환경에서 내 코드를 실행한 뒤 채점 항목을 검사합니다.</li>
             <li>막히면 힌트를 한 단계씩 열어 보십시오. 모범 답안은 통과하거나, 채점해 본 뒤 힌트를 모두 보면 열립니다. 초기화를 누르면 시작 코드로 돌아갑니다.</li>
-            <li>코딩 실습은 단계 완료 조건이 아닙니다. 통과 기록은 진도 화면과 이 페이지에만 표시됩니다.</li>
+            <li>실습은 핵심(초심자) · 보충(중급자) · 심화(전문가)로 나뉩니다. 핵심 실습부터 풀고, 여유가 있으면 보충·심화에 도전하십시오.</li>
+            <li>코딩 실습은 단계 완료 조건이 아닙니다. 심화 실습을 통과하면 심화 달성 기록에 반영됩니다.</li>
           </ul>
         </section>
 
-        {groups.map(({ section, exercises }) => (
-          <section key={section.id} aria-labelledby={`lab-${section.id}`}>
-            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-2">
-              <h2 id={`lab-${section.id}`} className="text-lg font-black text-ink">
-                {section.number}단계 · {section.title}
-              </h2>
-              <Link href={`/weeks/${slug}/sections/${section.id}`} className="text-sm font-bold text-[var(--series-blue)] hover:underline">
-                단계 학습 자료 보기 →
-              </Link>
-            </div>
-            <div className="space-y-5">
-              {exercises.map((ex) => (
-                <CodingExercise key={ex.id} view={exerciseView(week, ex, state, status, isAdmin)} />
-              ))}
-            </div>
-          </section>
-        ))}
+        {groups.map(({ tier, exercises }) => {
+          const passed = exercises.filter((e) => state.exercises[e.id]?.passedAt).length;
+          return (
+            <section key={tier} aria-labelledby={`lab-${tier}`}>
+              <div className="mb-3 border-b border-[var(--border-hairline)] pb-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 id={`lab-${tier}`} className="flex flex-wrap items-center gap-2 text-lg font-black text-ink">
+                    {TIER_INFO[tier].label} 실습 <TierBadge tier={tier} />
+                  </h2>
+                  <span className="text-xs font-bold text-ink-muted">
+                    통과 {passed}/{exercises.length}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-sm text-ink-muted">
+                  {tier === "core"
+                    ? "핵심 단계의 개념을 가장 기본적인 코드로 옮겨 보는 실습입니다. 여기서부터 시작하십시오."
+                    : tier === "supplement"
+                      ? "핵심 개념을 실무 도구·다른 방법으로 넓히는 실습입니다."
+                      : "직접 유도하거나 처음부터 구현하는 전문가 수준 실습입니다. 통과하면 심화 달성 기록에 반영됩니다."}
+                </p>
+              </div>
+              <div className="space-y-5">
+                {exercises.map((ex) => (
+                  <CodingExercise key={ex.id} view={exerciseView(week, ex, state, status, isAdmin)} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
         <section className="grid gap-3 sm:grid-cols-2">
           <Link href={`/weeks/${slug}/drill`} className="block rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]">
@@ -95,7 +115,7 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
           <Link href={`/weeks/${slug}/assignment#challenges`} className="block rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]">
             <p className="font-black text-ink">과제 심화 문제 →</p>
             <p className="mt-1 text-sm text-ink-muted">
-              과제 페이지에서 자동 채점되는 심화 문제{progress ? ` ${progress.challengesTotal}개` : ""}에 도전합니다.
+              과제 페이지에서 자동 채점되는 심화(전문가) 문제{progress ? ` ${progress.challengesTotal}개` : ""}에 도전합니다.
             </p>
           </Link>
         </section>

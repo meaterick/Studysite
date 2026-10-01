@@ -89,14 +89,14 @@ export default async function FeedbackPage() {
         ) : (
           <ul className="space-y-2">
             {fb.review.map((r) => (
-              <li key={`${r.weekSlug}:${r.sectionNumber}`}>
+              <li key={`${r.weekSlug}:${r.sectionId}`}>
                 <Link
                   href={r.href}
                   className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--border-hairline)] bg-card px-4 py-3 transition hover:border-[var(--series-blue)]"
                 >
                   <span className="min-w-0 text-sm">
                     <strong className="text-ink">
-                      {r.weekNumber}주차 {r.sectionNumber}단계
+                      {r.weekNumber}주차 {r.sectionLabel}단계
                     </strong>{" "}
                     <span className="text-ink-secondary">{r.sectionTitle}</span>
                   </span>

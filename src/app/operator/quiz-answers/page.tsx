@@ -3,6 +3,7 @@ import { WEEKS } from "@/content/weeks";
 import { getWeekOutline } from "@/content/sections";
 import { requireAdmin } from "@/lib/dal";
 import { Inline } from "@/components/MarkdownBlocks";
+import { sectionLabel } from "@/content/tiers";
 
 export const metadata = { title: "정답·과제 모범 방향" };
 
@@ -38,7 +39,7 @@ export default async function QuizAnswersPage() {
                 {sections.map((section) => (
                   <section key={section.id}>
                     <h2 className="text-sm font-black text-ink">
-                      {section.number}. {section.title}
+                      {sectionLabel(section)}. {section.title}
                     </h2>
                     <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-ink-secondary">
                       {section.meta.checks.map((check) => (

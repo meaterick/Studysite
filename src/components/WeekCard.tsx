@@ -3,6 +3,7 @@ import type { WeekMeta } from "@/content/types";
 import ProgressRing from "./ProgressRing";
 import { loginHref } from "@/lib/returnPath";
 import DifficultyBadge from "./DifficultyBadge";
+import { splitTierPrefix } from "@/content/tiers";
 
 // 학습 목표는 "~한다." 문체로 적혀 있어 카드에서는 "~합니다."로 부드럽게 바꿔 보여준다.
 function politeObjective(text: string): string {
@@ -12,15 +13,16 @@ function politeObjective(text: string): string {
 export default function WeekCard({
   week,
   ratio,
-  sectionsDone,
-  sectionsTotal,
+  coreDone,
+  coreTotal,
   minutes,
   locked = false,
 }: {
   week: WeekMeta;
   ratio: number;
-  sectionsDone: number;
-  sectionsTotal: number;
+  /** 핵심 단계 완료 수(주차 완료 기준) */
+  coreDone: number;
+  coreTotal: number;
   /** 단계 학습 예상 시간(분) */
   minutes?: number;
   /** 로그인하지 않은 방문자: 진도 대신 로그인 안내를 보이고, 누르면 로그인 페이지로 보낸다. */
@@ -51,14 +53,14 @@ export default function WeekCard({
           <span className="font-bold text-[var(--series-blue)]">로그인 후 학습하기 →</span>
         ) : (
           <span>
-            {sectionsDone}/{sectionsTotal}단계 완료
+            핵심 {coreDone}/{coreTotal}단계 완료
           </span>
         )}
       </div>
       {week.objectives[0] && (
         <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-2">
           <p className="text-xs font-bold text-[var(--series-blue)]">이번 주 목표</p>
-          <p className="mt-0.5 text-[15px] leading-relaxed text-ink-secondary sm:text-sm">{politeObjective(week.objectives[0])}</p>
+          <p className="mt-0.5 text-[15px] leading-relaxed text-ink-secondary sm:text-sm">{politeObjective(splitTierPrefix(week.objectives[0]).text)}</p>
           {week.objectives.length > 1 && (
             <p className="mt-1 hidden text-xs text-ink-muted sm:block">목표 {week.objectives.length - 1}개 더</p>
           )}

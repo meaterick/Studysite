@@ -39,4 +39,3 @@ export function findLabQuizItem(slug: string, id: string): LabQuizItem | undefin
   return LABS[slug]?.quiz.find((q) => q.id === id);
 }
 
-export const LEVEL_LABEL: Record<CodingExercise["level"], string> = { 1: "쉬움", 2: "보통", 3: "어려움" };

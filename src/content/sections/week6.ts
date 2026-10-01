@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "pretraining": {
+    "tier": "core",
     "goal": "사전학습의 다음 토큰 예측 손실 $L = -\\frac{1}{T}\\sum_t \\log P(x_t \\mid x_{<t})$과 perplexity $e^L$의 의미를 설명하고, 라벨 없이 학습 데이터가 만들어지는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -62,6 +63,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "architectures": {
+    "tier": "core",
     "goal": "BERT(Encoder-only, MLM)·GPT(Decoder-only, 다음 토큰 예측)·T5(Encoder-Decoder, text-to-text)의 차이와 대형 LLM이 Decoder-only로 수렴한 이유를 설명하고, 창발 능력과 그에 대한 반론을 말할 수 있다.",
     "checks": [
       {
@@ -126,6 +128,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "scaling-laws": {
+    "tier": "core",
     "goal": "$L(N, D) \\approx E + A/N^\\alpha + B/D^\\beta$, $C \\approx 6ND$, $D \\approx 20N$을 이용해 컴퓨트 예산에서 최적 모델 크기와 데이터 양을 계산하고, 실무의 과잉학습(overtraining)과 스케일링 법칙이 경험적 적합이라는 한계를 설명할 수 있다.",
     "checks": [
       {
@@ -199,6 +202,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "finetuning-efficiency": {
+    "tier": "core",
     "goal": "SFT의 역할과 풀 파인튜닝의 메모리 비용을 설명하고, LoRA($\\Delta W = BA$)·QLoRA·지식 증류·양자화가 각각 무엇을 줄이는지 계산과 함께 말할 수 있다.",
     "checks": [
       {
@@ -211,7 +215,7 @@ const sections: Record<string, SectionMeta> = {
           "4096분의 1"
         ],
         "answer": 1,
-        "explanation": "$2 \\times 4096 \\times 16 = 131{,}072$개, 원래는 $4096^2 \\approx 1{,}678$만 개이므로 $4096 / (2 \\times 16) = 128$분의 1."
+        "explanation": "$2 \\times 4096 \\times 16 = 131{}072$개, 원래는 $4096^2 \\approx 1{}678$만 개이므로 $4096 / (2 \\times 16) = 128$분의 1."
       },
       {
         "id": "w6-finetuning-efficiency-c2",
@@ -262,67 +266,8 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
-  "rl-basics": {
-    "goal": "Agent·Environment·State·Action·Reward·Policy·Return과 MDP, 벨만 방정식, 탐색–활용 트레이드오프를 설명하고, 가치 기반(Q-Learning·DQN)과 정책 기반(Policy Gradient·Actor-Critic·PPO) 방법을 구분할 수 있다.",
-    "checks": [
-      {
-        "id": "w6-rl-basics-c1",
-        "question": "RLHF에서 \"Action\"에 해당하는 것은?",
-        "choices": [
-          "사람이 매긴 점수",
-          "다음에 생성할 토큰을 고르는 것",
-          "보상모델의 파라미터",
-          "프롬프트 데이터셋"
-        ],
-        "answer": 1,
-        "explanation": "State는 지금까지의 토큰 시퀀스, Action은 다음 토큰 선택, Reward는 응답에 대한 선호 점수다."
-      },
-      {
-        "id": "w6-rl-basics-c2",
-        "question": "$\\gamma = 0.9$이고 한 스텝 뒤 목표 지점에서 보상 1을 받는다면, 목표 두 칸 전 상태에서 최선 행동의 Q값은? (중간 보상 0)",
-        "choices": [
-          "1",
-          "0.9",
-          "0.81",
-          "0.5"
-        ],
-        "answer": 1,
-        "explanation": "한 칸 전: 1, 두 칸 전: $0 + 0.9 \\times 1 = 0.9$. 실습의 복도에서 칸 2의 값이다."
-      },
-      {
-        "id": "w6-rl-basics-c3",
-        "question": "PPO는 어느 계열의 알고리즘인가?",
-        "choices": [
-          "표 기반 Q-Learning",
-          "DQN",
-          "정책 경사 기반의 Actor-Critic",
-          "지도학습"
-        ],
-        "answer": 2,
-        "explanation": "정책(actor)을 직접 학습하고 가치함수(critic)로 분산을 줄이며, 기존 정책에서 너무 멀리 벗어나지 않게 제약한다."
-      }
-    ],
-    "quizIds": [
-      "w6-q19",
-      "w6-q20",
-      "w6-q21",
-      "w6-q22",
-      "w6-q23"
-    ],
-    "references": [
-      {
-        "title": "OpenAI Spinning Up — Key Concepts in RL",
-        "url": "https://spinningup.openai.com/en/latest/spinningup/rl_intro.html",
-        "note": "강화학습 용어와 수식을 가장 간결하게 정리한 자료 (영문)"
-      },
-      {
-        "title": "Hugging Face Deep RL Course — Unit 1",
-        "url": "https://huggingface.co/learn/deep-rl-course/unit1/introduction",
-        "note": "강화학습 기본 개념을 실습과 함께 배우는 무료 코스 (Unit 2가 Q-Learning)"
-      }
-    ]
-  },
   "rlhf-dpo": {
+    "tier": "core",
     "goal": "SFT·RLHF·DPO의 데이터와 목적함수 차이, 보상모델과 KL 페널티의 역할을 설명하고, DPO 손실을 계산하며 $\\beta$가 클수록 기준 모델 근처에 머무는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -412,6 +357,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "decoding": {
+    "tier": "core",
     "goal": "$\\text{softmax}(z/T)$로 temperature의 효과를 계산하고, greedy·beam search·top-k·top-p·반복 페널티·스톱 토큰의 차이와 지연시간–처리량 트레이드오프를 설명할 수 있다.",
     "checks": [
       {
@@ -473,6 +419,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "hallucination": {
+    "tier": "core",
     "goal": "환각이 사전학습 목적함수, 드물게 등장한 사실, 사후학습·평가 방식, 디코딩, 컨텍스트 창·지식 컷오프 등 여러 요인에서 생긴다는 점을 설명하고, 완화책이 환각을 줄일 뿐 없애지 못하는 이유를 말할 수 있다.",
     "checks": [
       {
@@ -540,6 +487,310 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
+  "rl-basics": {
+    "tier": "supplement",
+    "goal": "Agent·Environment·State·Action·Reward·Policy·Return과 MDP, 벨만 방정식, 탐색–활용 트레이드오프를 설명하고, 가치 기반(Q-Learning·DQN)과 정책 기반(Policy Gradient·Actor-Critic·PPO) 방법을 구분할 수 있다.",
+    "checks": [
+      {
+        "id": "w6-rl-basics-c1",
+        "question": "RLHF에서 \"Action\"에 해당하는 것은?",
+        "choices": [
+          "사람이 매긴 점수",
+          "다음에 생성할 토큰을 고르는 것",
+          "보상모델의 파라미터",
+          "프롬프트 데이터셋"
+        ],
+        "answer": 1,
+        "explanation": "State는 지금까지의 토큰 시퀀스, Action은 다음 토큰 선택, Reward는 응답에 대한 선호 점수다."
+      },
+      {
+        "id": "w6-rl-basics-c2",
+        "question": "$\\gamma = 0.9$이고 한 스텝 뒤 목표 지점에서 보상 1을 받는다면, 목표 두 칸 전 상태에서 최선 행동의 Q값은? (중간 보상 0)",
+        "choices": [
+          "1",
+          "0.9",
+          "0.81",
+          "0.5"
+        ],
+        "answer": 1,
+        "explanation": "한 칸 전: 1, 두 칸 전: $0 + 0.9 \\times 1 = 0.9$. 실습의 복도에서 칸 2의 값이다."
+      },
+      {
+        "id": "w6-rl-basics-c3",
+        "question": "PPO는 어느 계열의 알고리즘인가?",
+        "choices": [
+          "표 기반 Q-Learning",
+          "DQN",
+          "정책 경사 기반의 Actor-Critic",
+          "지도학습"
+        ],
+        "answer": 2,
+        "explanation": "정책(actor)을 직접 학습하고 가치함수(critic)로 분산을 줄이며, 기존 정책에서 너무 멀리 벗어나지 않게 제약한다."
+      }
+    ],
+    "quizIds": [
+      "w6-q19",
+      "w6-q20",
+      "w6-q21",
+      "w6-q22",
+      "w6-q23"
+    ],
+    "references": [
+      {
+        "title": "OpenAI Spinning Up — Key Concepts in RL",
+        "url": "https://spinningup.openai.com/en/latest/spinningup/rl_intro.html",
+        "note": "강화학습 용어와 수식을 가장 간결하게 정리한 자료 (영문)"
+      },
+      {
+        "title": "Hugging Face Deep RL Course — Unit 1",
+        "url": "https://huggingface.co/learn/deep-rl-course/unit1/introduction",
+        "note": "강화학습 기본 개념을 실습과 함께 배우는 무료 코스 (Unit 2가 Q-Learning)"
+      }
+    ]
+  },
+  "test-time-compute": {
+    "tier": "supplement",
+    "goal": "연쇄 사고가 계산량을 늘리는 원리를 설명하고, 자기일관성(다수결)의 정답률을 이항분포로, 검증기를 쓰는 best-of-n의 정답률과 그 한계를 TPR·FPR로 계산할 수 있다.",
+    "checks": [
+      {
+        "id": "w6-test-time-compute-c1",
+        "question": "한 번 풀 때 정답률이 0.4이고 답이 정답·오답 두 갈래인 문제를, 독립적으로 101번 풀어 다수결하면 정답률은?",
+        "choices": [
+          "약 0.02로 떨어진다",
+          "약 0.98로 오른다",
+          "0.4 그대로다",
+          "정확히 0.5가 된다"
+        ],
+        "answer": 0,
+        "explanation": "$p < 0.5$면 과반이 오답일 확률이 $n$과 함께 1로 가므로 다수결 정답률은 0으로 간다. 다수결은 대체로 맞히는 문제를 확실하게 만들 뿐이다."
+      },
+      {
+        "id": "w6-test-time-compute-c2",
+        "question": "정답 확률 $p = 0.3$, 검증기 TPR 0.9, FPR 0.5일 때 best-of-n의 정답률이 $n$을 아무리 늘려도 넘지 못하는 값에 가장 가까운 것은?",
+        "choices": [
+          "약 0.44",
+          "약 0.79",
+          "1.0",
+          "0.3"
+        ],
+        "answer": 0,
+        "explanation": "통과한 후보가 정답일 확률은 $\\frac{0.27}{0.27 + 0.35} \\approx 0.435$다. 표본을 늘려도 검증기의 정밀도가 한계를 정한다."
+      },
+      {
+        "id": "w6-test-time-compute-c3",
+        "question": "보상모델을 검증기로 쓰는 best-of-n에서 $n$을 지나치게 키울 때의 위험으로 가장 알맞은 것은?",
+        "choices": [
+          "보상모델은 높게 평가하지만 실제로는 틀린 후보를 고르게 된다(보상 해킹)",
+          "다수결이 불가능해진다",
+          "온도가 0이 된다",
+          "모델 파라미터가 바뀐다"
+        ],
+        "answer": 0,
+        "explanation": "후보가 많을수록 보상모델의 오차를 파고드는 후보가 나올 기회가 늘어난다. 학습 중의 보상 해킹이 추론 시간에도 일어난다."
+      }
+    ],
+    "quizIds": [
+      "w6-q28"
+    ],
+    "references": [
+      {
+        "title": "Wang et al. (2022) — Self-Consistency Improves Chain of Thought Reasoning in Language Models",
+        "url": "https://arxiv.org/abs/2203.11171",
+        "note": "자기일관성(다수결) 원 논문 (영문)"
+      },
+      {
+        "title": "Snell et al. (2024) — Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters",
+        "url": "https://arxiv.org/abs/2408.03314",
+        "note": "추론 시간 계산의 최적 배분과 난이도의 역할 (영문)"
+      },
+      {
+        "title": "Gao et al. (2023) — Scaling Laws for Reward Model Overoptimization",
+        "url": "https://arxiv.org/abs/2210.10760",
+        "note": "best-of-n과 RL에서의 보상모델 과최적화 (영문)"
+      }
+    ]
+  },
+  "dpo-derivation": {
+    "tier": "advanced",
+    "goal": "KL 규제 보상 최대화의 최적 정책 $\\pi^* \\propto \\pi_{ref}e^{r/\\beta}$를 유도하고, 보상의 재매개변수화와 Bradley–Terry 모델에서 분배함수가 소거되어 DPO 손실이 나오는 과정을 설명하며, 그 가정이 깨질 때의 약점을 말할 수 있다.",
+    "checks": [
+      {
+        "id": "w6-dpo-derivation-c1",
+        "question": "목적함수 $\\mathbb{E}_\\pi[r] - \\beta D_{KL}(\\pi \\Vert \\pi_{ref})$를 최대화하는 정책은?",
+        "choices": [
+          "$\\pi^*(y) \\propto \\pi_{ref}(y)\\,e^{r(y)/\\beta}$",
+          "보상이 가장 큰 응답 하나에 확률 1",
+          "$\\pi_{ref}$ 그대로",
+          "$\\pi^*(y) \\propto r(y)$"
+        ],
+        "answer": 0,
+        "explanation": "목적함수가 $\\beta\\log Z - \\beta D_{KL}(\\pi \\Vert \\pi^*)$로 다시 쓰이므로 KL이 0이 되는 $\\pi^*$가 유일한 최적해다. 보상 최댓값 하나에 몰리는 것은 $\\beta \\to 0$인 극한이다."
+      },
+      {
+        "id": "w6-dpo-derivation-c2",
+        "question": "DPO 유도에서 계산할 수 없는 분배함수 $Z(x)$가 손실에서 사라지는 이유는?",
+        "choices": [
+          "선호 확률이 같은 프롬프트의 두 응답 보상의 차이만 보므로 $\\beta\\log Z(x)$가 빼기에서 소거된다",
+          "$Z$가 항상 1이라서",
+          "$\\beta$를 0으로 두기 때문",
+          "보상모델이 $Z$를 대신 계산하기 때문"
+        ],
+        "answer": 0,
+        "explanation": "Bradley–Terry는 $\\sigma(r(y_w) - r(y_l))$이고, 두 보상 모두 같은 $\\beta\\log Z(x)$를 포함하므로 차이에서 상쇄된다."
+      },
+      {
+        "id": "w6-dpo-derivation-c3",
+        "question": "DPO 학습 중 선호 응답 $y_w$의 로그확률까지 떨어질 수 있는 이유로 가장 알맞은 것은?",
+        "choices": [
+          "손실이 두 응답 로그확률 비율의 차이만 제약하므로, 둘이 함께 내려가도 차이가 벌어지면 손실이 준다",
+          "학습률이 음수라서",
+          "기준 모델이 함께 학습되기 때문",
+          "Bradley–Terry 모델이 틀렸기 때문"
+        ],
+        "answer": 0,
+        "explanation": "관측한 쌍의 차이만 보므로 확률이 데이터에 없는 다른 응답으로 새어 나갈 수 있다. 오프라인 학습이라 그 응답들을 직접 보지 못한다."
+      }
+    ],
+    "quizIds": [
+      "w6-q29"
+    ],
+    "references": [
+      {
+        "title": "Rafailov et al. (2023) — Direct Preference Optimization: Your Language Model is Secretly a Reward Model",
+        "url": "https://arxiv.org/abs/2305.18290",
+        "note": "DPO 원 논문, 4절과 부록 A의 유도 (영문)"
+      },
+      {
+        "title": "Azar et al. (2023) — A General Theoretical Paradigm to Understand Learning from Human Preferences",
+        "url": "https://arxiv.org/abs/2310.12036",
+        "note": "DPO의 과적합 분석과 IPO (영문)"
+      }
+    ]
+  },
+  "policy-gradient": {
+    "tier": "advanced",
+    "goal": "로그 미분 트릭으로 정책 경사를 유도하고, 기준선이 편향 없이 분산을 줄이는 이유를 증명하며, PPO 클리핑 목적함수의 비대칭과 RLHF에서 PPO가 쓰는 부품(KL 벌점·가치함수)을 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w6-policy-gradient-c1",
+        "question": "정책 경사 $\\nabla\\mathbb{E}_{a\\sim\\pi}[R] = \\mathbb{E}_{a\\sim\\pi}[R\\,\\nabla\\log\\pi(a)]$가 RLHF에 특히 유용한 이유는?",
+        "choices": [
+          "보상을 미분할 필요 없이 모델의 로그확률과 응답당 보상 숫자만으로 기울기를 추정할 수 있어서",
+          "분산이 0이라서",
+          "보상모델이 필요 없어서",
+          "정책이 결정적이어서"
+        ],
+        "answer": 0,
+        "explanation": "보상은 사람 판정이나 보상모델 점수라 응답에 대해 미분할 수 없다. 로그 미분 트릭은 미분을 정책의 로그확률 쪽으로 옮긴다."
+      },
+      {
+        "id": "w6-policy-gradient-c2",
+        "question": "REINFORCE에서 보상에서 기준선 $b$(행동과 무관한 값)를 빼도 기울기 추정의 기대값이 변하지 않는 이유는?",
+        "choices": [
+          "$\\mathbb{E}[b\\,\\nabla\\log\\pi] = b\\,\\nabla\\sum_a\\pi(a) = b\\,\\nabla 1 = 0$이라서",
+          "$b$가 항상 0이라서",
+          "분산이 줄어서",
+          "PPO가 보정해 주어서"
+        ],
+        "answer": 0,
+        "explanation": "확률의 합은 항상 1이라 그 기울기는 0이다. 그래서 $b$는 평균을 바꾸지 않고, 평균 보상 근처로 잡으면 분산만 줄인다."
+      },
+      {
+        "id": "w6-policy-gradient-c3",
+        "question": "PPO($\\varepsilon = 0.2$)에서 이점이 음수($A = -1$)인 행동의 확률비가 $\\rho = 1.5$로 커졌을 때 목적함수 항의 값은?",
+        "choices": [
+          "$-1.5$ (손해를 자르지 않는다)",
+          "$-1.2$",
+          "$-0.8$",
+          "0"
+        ],
+        "answer": 0,
+        "explanation": "$\\min(\\rho A, \\text{clip}(\\rho)A) = \\min(-1.5, -1.2) = -1.5$다. 나쁜 행동의 확률이 올라간 손해는 비관적으로 그대로 반영해 되돌리게 한다."
+      }
+    ],
+    "quizIds": [
+      "w6-q30"
+    ],
+    "references": [
+      {
+        "title": "Schulman et al. (2017) — Proximal Policy Optimization Algorithms",
+        "url": "https://arxiv.org/abs/1707.06347",
+        "note": "PPO 클리핑 목적함수 (영문)"
+      },
+      {
+        "title": "OpenAI Spinning Up — Intro to Policy Optimization",
+        "url": "https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html",
+        "note": "정책 경사 정리와 기준선 유도 (영문)"
+      },
+      {
+        "title": "Shao et al. (2024) — DeepSeekMath (GRPO)",
+        "url": "https://arxiv.org/abs/2402.03300",
+        "note": "묶음 평균을 기준선으로 쓰는 GRPO (영문)"
+      }
+    ]
+  },
+  "speculative-decoding": {
+    "tier": "advanced",
+    "goal": "투기적 샘플링의 수락-거절 규칙이 목표 분포를 정확히 보존함을 증명하고, 수락률 $\\alpha = \\sum\\min(p, q)$와 초안 길이·초안 비용에 따른 기대 속도 향상을 계산하며, 이득이 줄어드는 조건을 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w6-speculative-decoding-c1",
+        "question": "초안 토큰 $x \\sim q$를 확률 $\\min(1, p(x)/q(x))$로 수락하고 거절되면 $(p - q)_+$를 정규화한 분포에서 다시 뽑을 때, 최종 출력의 분포는?",
+        "choices": [
+          "정확히 목표 분포 $p$",
+          "$p$와 $q$의 평균",
+          "초안 분포 $q$",
+          "$\\min(p, q)$를 정규화한 분포"
+        ],
+        "answer": 0,
+        "explanation": "$P(x) = \\min(p(x), q(x)) + (p(x) - q(x))_+ = p(x)$다. 초안의 품질은 속도만 바꾸고 분포는 바꾸지 않는다."
+      },
+      {
+        "id": "w6-speculative-decoding-c2",
+        "question": "$p$ = [0.5, 0.2, 0.15, 0.1, 0.05], $q$ = [0.3, 0.3, 0.2, 0.1, 0.1]일 때 한 토큰의 수락률은?",
+        "choices": [
+          "0.80",
+          "0.50",
+          "0.65",
+          "1.00"
+        ],
+        "answer": 0,
+        "explanation": "$\\sum\\min(p, q) = 0.3 + 0.2 + 0.15 + 0.1 + 0.05 = 0.80$이고, 이는 $1 - \\text{TV}(p, q)$와 같다."
+      },
+      {
+        "id": "w6-speculative-decoding-c3",
+        "question": "투기적 디코딩의 이득이 가장 작아지는 상황은?",
+        "choices": [
+          "배치를 크게 묶어 GPU가 이미 연산 병목인 서버에서, 초안이 자주 틀리는 전문 영역을 생성할 때",
+          "배치 1의 대화형 서비스에서 초안이 목표와 비슷할 때",
+          "그리디 디코딩을 쓸 때",
+          "초안 모델이 매우 작을 때"
+        ],
+        "answer": 0,
+        "explanation": "검증 위치의 계산이 공짜인 것은 메모리 병목일 때뿐이다. 연산 병목이거나 수락률이 낮으면 초안 비용을 회수하지 못한다."
+      }
+    ],
+    "quizIds": [
+      "w6-q31"
+    ],
+    "references": [
+      {
+        "title": "Leviathan et al. (2023) — Fast Inference from Transformers via Speculative Decoding",
+        "url": "https://arxiv.org/abs/2211.17192",
+        "note": "투기적 디코딩 원 논문 (영문)"
+      },
+      {
+        "title": "Chen et al. (2023) — Accelerating Large Language Model Decoding with Speculative Sampling",
+        "url": "https://arxiv.org/abs/2302.01318",
+        "note": "수락-거절 규칙의 증명 (영문)"
+      },
+      {
+        "title": "Cai et al. (2024) — Medusa",
+        "url": "https://arxiv.org/abs/2401.10774",
+        "note": "여러 토큰 예측 머리를 이용한 변형 (영문)"
+      }
+    ]
+  }
 };
 
 export default sections;

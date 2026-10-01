@@ -7,8 +7,8 @@ import { useEffect, useRef } from "react";
 type Tab = { href: string; label: string; locked?: boolean; warn?: boolean; match: (path: string) => boolean };
 
 /**
- * finaleLocked: 백지공부·과제가 잠겨 있음(lock 모드에서 단계 미완료).
- * finaleUnfinished: 열려 있지만 아직 끝내지 않은 단계가 있음(warn 모드) → 작은 경고 점으로 표시.
+ * finaleLocked: 백지공부·과제가 잠겨 있음(lock 모드에서 핵심 단계 미완료).
+ * finaleUnfinished: 열려 있지만 아직 끝내지 않은 핵심 단계가 있음(warn 모드) → 작은 경고 점으로 표시.
  */
 export default function WeekTabs({
   slug,
@@ -53,9 +53,9 @@ export default function WeekTabs({
               aria-current={active ? "page" : undefined}
               title={
                 tab.locked
-                  ? "이번 주의 모든 단계를 마치면 열립니다"
+                  ? "이번 주의 핵심 단계를 모두 마치면 열립니다"
                   : tab.warn
-                    ? "아직 끝내지 않은 단계가 있습니다. 모든 단계를 마친 뒤에 하는 것을 권장합니다."
+                    ? "아직 끝내지 않은 핵심 단계가 있습니다. 핵심 단계를 마친 뒤에 하는 것을 권장합니다."
                     : undefined
               }
               className={`-mb-px shrink-0 border-b-2 px-3 py-2.5 text-sm font-bold transition-colors sm:px-4 ${
@@ -70,7 +70,7 @@ export default function WeekTabs({
               {tab.warn && (
                 <>
                   <span aria-hidden="true" className="ml-1 inline-block h-1.5 w-1.5 -translate-y-1.5 rounded-full bg-[var(--status-warning)]" />
-                  <span className="sr-only"> (앞 단계 미완료)</span>
+                  <span className="sr-only"> (핵심 단계 미완료)</span>
                 </>
               )}
             </Link>

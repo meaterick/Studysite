@@ -23,6 +23,7 @@ import { getWeekLab } from "@/content/labs";
 import CodingExercise from "@/components/lab/CodingExercise";
 import { readLabState } from "@/lib/learningStore";
 import { autoTestViews, exerciseView, labProgress } from "@/lib/labView";
+import { sectionLabel } from "@/content/tiers";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -55,10 +56,10 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
       <MarkFeedbackSeen hasNew={hasUnseenGrade} slug={slug} />
       {!isAdmin && (
         <UnfinishedWarning
-          context="과제는 모든 단계를 마친 뒤에 하는 것을 권장합니다."
+          context="과제는 핵심 단계를 모두 마친 뒤에 하는 것을 권장합니다."
           items={status.sections
-            .filter((r) => r.access !== "completed")
-            .map((r) => ({ number: r.section.number, title: r.section.title, href: `/weeks/${slug}/sections/${r.section.id}` }))}
+            .filter((r) => r.section.tier === "core" && r.access !== "completed")
+            .map((r) => ({ label: sectionLabel(r.section), title: r.section.title, href: `/weeks/${slug}/sections/${r.section.id}` }))}
         />
       )}
       <div className="space-y-10">

@@ -5,6 +5,7 @@ import { Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readSectionState } from "@/lib/learningStore";
+import { sectionLabel } from "@/content/tiers";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -44,7 +45,7 @@ export default async function WeekReviewPage({ params }: { params: Promise<{ slu
             <details key={section.id} open={weakCount > 0} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
               <summary className="cursor-pointer">
                 <span className="font-black text-ink">
-                  {section.number}단계 · {section.title}
+                  {sectionLabel(section)}단계 · {section.title}
                 </span>
                 <span className="ml-2 text-xs text-ink-muted">
                   {access === "locked" ? "잠김" : access === "completed" ? "완료" : access === "upcoming" ? "미완료" : "진행 중"}

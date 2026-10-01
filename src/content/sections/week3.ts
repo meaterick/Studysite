@@ -6,6 +6,7 @@ import type { SectionMeta } from "../types";
 
 const sections: Record<string, SectionMeta> = {
   "neurons-mlp": {
+    "tier": "core",
     "goal": "뉴런 하나의 계산과 MLP의 순전파를 행렬 모양까지 추적하고, 비선형 활성화 함수(ReLU·GELU)가 왜 반드시 필요한지 설명할 수 있다.",
     "checks": [
       {
@@ -63,6 +64,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "backprop": {
+    "tier": "core",
     "goal": "계산 그래프의 덧셈·곱셈·max 노드 규칙으로 역전파를 손으로 수행하고, 한 층의 $\\partial L/\\partial W = \\delta x^\\top$을 수치미분으로 검산할 수 있다.",
     "checks": [
       {
@@ -121,6 +123,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "python-for-autograd": {
+    "tier": "core",
     "goal": "클래스와 `__init__`, 연산자 오버로딩, 클로저, 재귀, set/reversed를 읽고 써서 자동미분 엔진 코드를 이해할 준비를 한다.",
     "checks": [
       {
@@ -175,6 +178,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "micrograd": {
+    "tier": "core",
     "goal": "Value 클래스가 계산 그래프를 기록하고 위상정렬 역순으로 `_backward`를 실행하는 원리를 설명하고, 새 연산을 추가해 gradient check로 검증할 수 있다.",
     "checks": [
       {
@@ -231,6 +235,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "optimizers": {
+    "tier": "core",
     "goal": "SGD·Momentum·Adam의 갱신식을 쓰고 Adam 첫 스텝을 손으로 계산하며, 최적화기의 장단점을 실험 결과로 판단할 수 있다.",
     "checks": [
       {
@@ -287,6 +292,7 @@ const sections: Record<string, SectionMeta> = {
     ]
   },
   "init-stability": {
+    "tier": "core",
     "goal": "기울기 소실·폭발과 죽은 ReLU를 설명하고, $\\mathrm{Var}(z) \\approx \\text{fan\\_in}\\cdot\\mathrm{Var}(w)\\cdot\\mathrm{Var}(x)$로 He·Xavier 초기화를 유도하며 대칭성 문제를 확인할 수 있다.",
     "checks": [
       {
@@ -345,7 +351,68 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
+  "pytorch-core": {
+    "tier": "core",
+    "goal": "Tensor·Autograd·nn.Module·Optimizer·Dataset·학습 루프가 손으로 구현한 역전파·경사하강법의 어느 부분을 대신하는지 대응시키고, NumPy로 2층 신경망을 끝까지 학습시킬 수 있다.",
+    "checks": [
+      {
+        "id": "w3-pytorch-core-c1",
+        "question": "PyTorch 학습 루프의 올바른 순서는?",
+        "choices": [
+          "step → backward → zero_grad → forward",
+          "forward → loss → zero_grad → backward → step",
+          "backward → forward → step",
+          "zero_grad → step → forward → backward"
+        ],
+        "answer": 1,
+        "explanation": "기울기를 초기화한 뒤 backward로 새로 채우고 step으로 갱신한다(zero_grad는 backward 전이면 된다)."
+      },
+      {
+        "id": "w3-pytorch-core-c2",
+        "question": "`nn.Module`을 상속한 클래스에서 `backward` 메서드를 직접 작성하지 않아도 되는 이유는?",
+        "choices": [
+          "PyTorch가 수치미분을 쓰기 때문에",
+          "`forward` 안의 텐서 연산이 autograd에 기록되어 `loss.backward()`가 자동으로 역전파하기 때문에",
+          "backward가 필요 없는 모델만 만들 수 있어서",
+          "GPU가 대신 계산해서"
+        ],
+        "answer": 1,
+        "explanation": "각 연산이 `grad_fn`으로 그래프를 기록한다. 우리가 만든 Value의 `_prev`, `_backward`와 같은 원리다."
+      },
+      {
+        "id": "w3-pytorch-core-c3",
+        "question": "검증 루프에서 `model.eval()`과 `torch.no_grad()`의 역할을 올바르게 짝지은 것은?",
+        "choices": [
+          "eval: 계산 그래프 기록 중지 / no_grad: 드롭아웃 끄기",
+          "eval: BatchNorm·Dropout을 평가 모드로 / no_grad: 계산 그래프를 기록하지 않아 메모리 절약",
+          "둘 다 학습률을 0으로",
+          "둘 다 같은 기능"
+        ],
+        "answer": 1,
+        "explanation": "eval은 층의 동작 모드를, no_grad는 autograd 기록 여부를 바꾼다. 둘은 서로 다른 스위치다."
+      }
+    ],
+    "quizIds": [
+      "w3-q11",
+      "w3-q12",
+      "w3-q13",
+      "w3-q16"
+    ],
+    "references": [
+      {
+        "title": "PyTorch Tutorials — Learn the Basics",
+        "url": "https://pytorch.org/tutorials/beginner/basics/intro.html",
+        "note": "Tensor → Dataset → Model → Autograd → Optimization 순서의 공식 튜토리얼"
+      },
+      {
+        "title": "Dive into Deep Learning (한국어) — 다층 퍼셉트론",
+        "url": "https://ko.d2l.ai/chapter_deep-learning-basics/mlp.html",
+        "note": "MLP를 처음부터 구현하고 프레임워크로 옮기는 과정"
+      }
+    ]
+  },
   "normalization": {
+    "tier": "supplement",
     "goal": "BatchNorm과 LayerNorm이 평균·분산을 계산하는 축의 차이를 작은 예제로 계산하고, Transformer가 LayerNorm을 쓰는 이유를 설명할 수 있다.",
     "checks": [
       {
@@ -413,66 +480,8 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
-  "pytorch-core": {
-    "goal": "Tensor·Autograd·nn.Module·Optimizer·Dataset·학습 루프가 손으로 구현한 역전파·경사하강법의 어느 부분을 대신하는지 대응시키고, NumPy로 2층 신경망을 끝까지 학습시킬 수 있다.",
-    "checks": [
-      {
-        "id": "w3-pytorch-core-c1",
-        "question": "PyTorch 학습 루프의 올바른 순서는?",
-        "choices": [
-          "step → backward → zero_grad → forward",
-          "forward → loss → zero_grad → backward → step",
-          "backward → forward → step",
-          "zero_grad → step → forward → backward"
-        ],
-        "answer": 1,
-        "explanation": "기울기를 초기화한 뒤 backward로 새로 채우고 step으로 갱신한다(zero_grad는 backward 전이면 된다)."
-      },
-      {
-        "id": "w3-pytorch-core-c2",
-        "question": "`nn.Module`을 상속한 클래스에서 `backward` 메서드를 직접 작성하지 않아도 되는 이유는?",
-        "choices": [
-          "PyTorch가 수치미분을 쓰기 때문에",
-          "`forward` 안의 텐서 연산이 autograd에 기록되어 `loss.backward()`가 자동으로 역전파하기 때문에",
-          "backward가 필요 없는 모델만 만들 수 있어서",
-          "GPU가 대신 계산해서"
-        ],
-        "answer": 1,
-        "explanation": "각 연산이 `grad_fn`으로 그래프를 기록한다. 우리가 만든 Value의 `_prev`, `_backward`와 같은 원리다."
-      },
-      {
-        "id": "w3-pytorch-core-c3",
-        "question": "검증 루프에서 `model.eval()`과 `torch.no_grad()`의 역할을 올바르게 짝지은 것은?",
-        "choices": [
-          "eval: 계산 그래프 기록 중지 / no_grad: 드롭아웃 끄기",
-          "eval: BatchNorm·Dropout을 평가 모드로 / no_grad: 계산 그래프를 기록하지 않아 메모리 절약",
-          "둘 다 학습률을 0으로",
-          "둘 다 같은 기능"
-        ],
-        "answer": 1,
-        "explanation": "eval은 층의 동작 모드를, no_grad는 autograd 기록 여부를 바꾼다. 둘은 서로 다른 스위치다."
-      }
-    ],
-    "quizIds": [
-      "w3-q11",
-      "w3-q12",
-      "w3-q13",
-      "w3-q16"
-    ],
-    "references": [
-      {
-        "title": "PyTorch Tutorials — Learn the Basics",
-        "url": "https://pytorch.org/tutorials/beginner/basics/intro.html",
-        "note": "Tensor → Dataset → Model → Autograd → Optimization 순서의 공식 튜토리얼"
-      },
-      {
-        "title": "Dive into Deep Learning (한국어) — 다층 퍼셉트론",
-        "url": "https://ko.d2l.ai/chapter_deep-learning-basics/mlp.html",
-        "note": "MLP를 처음부터 구현하고 프레임워크로 옮기는 과정"
-      }
-    ]
-  },
   "pytorch-practice": {
+    "tier": "supplement",
     "goal": "GPU·CUDA가 행렬 연산을 가속하는 원리와 혼합 정밀도의 underflow·loss scaling을 설명하고, 같은 모델을 NumPy와 PyTorch로 풀어 비교할 수 있다.",
     "checks": [
       {
@@ -529,6 +538,239 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
+  "dl-regularization": {
+    "tier": "supplement",
+    "goal": "가중치 감쇠를 갱신식으로 설명하고, 역드롭아웃·조기 종료·워밍업+코사인 학습률 스케줄을 구현하며, 신경망의 과적합이 검증 손실에서 먼저 드러나는 이유를 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w3-dl-regularization-c1",
+        "question": "학습 중 드롭아웃 확률 $p = 0.2$로 뉴런을 끌 때 역드롭아웃(inverted dropout)은 살아남은 값을 어떻게 하는가?",
+        "choices": [
+          "$1/(1-0.2) = 1.25$배 한다",
+          "$0.8$배 한다",
+          "그대로 둔다",
+          "평가 때 $0.8$배 한다"
+        ],
+        "answer": 0,
+        "explanation": "학습 중 평균이 $(1-p)$배로 줄어드는 것을 $1/(1-p)$배로 되돌려 평균을 유지한다. 그러면 평가 때는 드롭아웃을 끄기만 하면 되고 아무 보정도 필요 없다."
+      },
+      {
+        "id": "w3-dl-regularization-c2",
+        "question": "훈련 정확도는 계속 오르고 검증 정확도는 그대로인데, 검증 손실(교차 엔트로피)만 크게 오르고 있다. 가장 알맞은 해석은?",
+        "choices": [
+          "모델이 틀린 검증 샘플에 대해 점점 더 확신하고 있다(과신, 과적합의 신호)",
+          "모델이 더 좋아지고 있다",
+          "학습률이 너무 작다",
+          "검증 데이터에 버그가 있다"
+        ],
+        "answer": 0,
+        "explanation": "교차 엔트로피는 확신하며 틀린 예측에 큰 벌점을 준다. 실습에서 정확도 0.87은 그대로인데 검증 손실이 0.32에서 0.95로 올랐다. 조기 종료·가중치 감쇠·드롭아웃이 이를 막는다."
+      },
+      {
+        "id": "w3-dl-regularization-c3",
+        "question": "SGD에서 학습률 $\\eta = 0.1$, 가중치 감쇠 $\\lambda = 0.01$이면 기울기 항과 별도로 매 스텝 가중치에 곱해지는 값은?",
+        "choices": [
+          "$0.999$",
+          "$0.99$",
+          "$0.9$",
+          "$1.001$"
+        ],
+        "answer": 0,
+        "explanation": "$w \\leftarrow (1 - \\eta\\lambda)w - \\eta g$이므로 $1 - 0.1 \\times 0.01 = 0.999$배다."
+      }
+    ],
+    "quizIds": [
+      "w3-q19"
+    ],
+    "references": [
+      {
+        "title": "Srivastava et al. (2014) — Dropout",
+        "url": "https://jmlr.org/papers/v15/srivastava14a.html",
+        "note": "드롭아웃 원 논문 (영문)"
+      },
+      {
+        "title": "Dive into Deep Learning — 5.6 Dropout, 12.11 Learning Rate Scheduling",
+        "url": "https://d2l.ai/",
+        "note": "드롭아웃·학습률 스케줄을 코드와 함께 (영문, 무료)"
+      }
+    ]
+  },
+  "autodiff-theory": {
+    "tier": "advanced",
+    "goal": "야코비안-벡터 곱(JVP)과 벡터-야코비안 곱(VJP)으로 순방향·역방향 자동미분의 비용을 비교하고, 이원수로 순방향 모드를 구현하며, 그레이디언트 체크포인팅의 메모리·계산 거래를 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w3-autodiff-theory-c1",
+        "question": "파라미터 100만 개, 출력(손실) 1개인 신경망의 기울기 전체를 구할 때 각 모드가 지나가야 하는 횟수는?",
+        "choices": [
+          "순방향 100만 번, 역방향 1번",
+          "순방향 1번, 역방향 100만 번",
+          "둘 다 1번",
+          "둘 다 100만 번"
+        ],
+        "answer": 0,
+        "explanation": "순방향 모드(JVP)는 입력 방향마다 한 번, 역방향 모드(VJP)는 출력마다 한 번 지나간다. 손실이 스칼라라서 역방향이 압도적으로 유리하다."
+      },
+      {
+        "id": "w3-autodiff-theory-c2",
+        "question": "이원수 $a + b\\varepsilon$($\\varepsilon^2 = 0$)으로 $f(x) = x^2$을 $x = 3$에서 계산하면 $(3 + \\varepsilon)^2$의 $\\varepsilon$ 계수는?",
+        "choices": [
+          "6",
+          "9",
+          "3",
+          "1"
+        ],
+        "answer": 0,
+        "explanation": "$(3+\\varepsilon)^2 = 9 + 6\\varepsilon + \\varepsilon^2 = 9 + 6\\varepsilon$. $\\varepsilon$ 계수가 $f'(3) = 6$이다. 근사가 아닌 정확한 미분이다."
+      },
+      {
+        "id": "w3-autodiff-theory-c3",
+        "question": "층 400개인 망에서 그레이디언트 체크포인팅을 20층 간격으로 하면 얻는 것과 잃는 것은?",
+        "choices": [
+          "저장할 활성화가 약 400개에서 40개 수준으로 줄고, 순전파를 대략 한 번 더 계산한다",
+          "메모리와 계산이 모두 준다",
+          "기울기가 근사값이 된다",
+          "메모리는 같고 계산만 준다"
+        ],
+        "answer": 0,
+        "explanation": "체크포인트 $L/k$개와 다시 계산하는 구간 $k$개만 메모리에 두므로 $k = \\sqrt{L}$에서 $O(\\sqrt{L})$이다. 대가는 구간마다 순전파를 다시 하는 계산이고, 기울기는 정확히 같다."
+      }
+    ],
+    "quizIds": [
+      "w3-q20"
+    ],
+    "references": [
+      {
+        "title": "Baydin et al. (2018) — Automatic Differentiation in Machine Learning: a Survey",
+        "url": "https://jmlr.org/papers/v18/17-468.html",
+        "note": "순방향·역방향 모드의 표준 정리 (영문)"
+      },
+      {
+        "title": "Chen et al. (2016) — Training Deep Nets with Sublinear Memory Cost",
+        "url": "https://arxiv.org/abs/1604.06174",
+        "note": "그레이디언트 체크포인팅 (영문, 연구 논문)"
+      }
+    ]
+  },
+  "adam-theory": {
+    "tier": "advanced",
+    "goal": "Adam 편향 보정을 $\\mathbb{E}[m_t] = (1-\\beta_1^t)\\mathbb{E}[g]$로 유도하고, Adam에서 L2 정규화와 가중치 감쇠가 달라지는 이유와 AdamW, 학습률 워밍업의 필요성을 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w3-adam-theory-c1",
+        "question": "$\\beta_1 = 0.9$, 기울기가 항상 $g$일 때 $t = 2$의 $m_2$는? ($m_0 = 0$)",
+        "choices": [
+          "$0.19g$",
+          "$0.1g$",
+          "$0.81g$",
+          "$g$"
+        ],
+        "answer": 0,
+        "explanation": "$m_1 = 0.1g$, $m_2 = 0.9 \\times 0.1g + 0.1g = 0.19g = (1 - 0.9^2)g$. 그래서 $1 - \\beta_1^t$로 나누면 정확히 $g$가 된다."
+      },
+      {
+        "id": "w3-adam-theory-c2",
+        "question": "Adam에 L2 항 $\\lambda w$를 기울기로 더할 때 생기는 문제로 옳은 것은?",
+        "choices": [
+          "감쇠 항도 $\\sqrt{\\hat v}$로 나눠져 파라미터마다 감쇠 강도가 달라지고 $\\lambda$의 의미가 흐려진다",
+          "Adam이 SGD와 똑같아진다",
+          "학습률이 자동으로 0이 된다",
+          "편향 보정이 불가능해진다"
+        ],
+        "answer": 0,
+        "explanation": "기울기가 큰 파라미터는 감쇠가 약해지고, 데이터 기울기가 0인 파라미터는 $\\lambda$와 무관하게 약 $\\eta$씩 줄어든다(실습: $\\lambda$를 1만 배 바꿔도 같은 0.2577). AdamW는 감쇠를 갱신에서 따로 적용한다."
+      },
+      {
+        "id": "w3-adam-theory-c3",
+        "question": "Transformer 학습에서 처음 수천 스텝 동안 학습률을 0 근처에서 서서히 올리는(워밍업) 주된 이유는?",
+        "choices": [
+          "초반 $\\hat v$ 추정이 불안정해 일부 파라미터의 유효 학습률이 폭주할 수 있어서",
+          "GPU 예열이 필요해서",
+          "데이터를 섞는 데 시간이 걸려서",
+          "손실이 처음에 0이라서"
+        ],
+        "answer": 0,
+        "explanation": "몇 개의 기울기로 추정한 $\\hat v$는 분산이 커서 $\\eta/\\sqrt{\\hat v}$가 매우 커질 수 있다(RAdam의 분석). 워밍업은 그동안 걸음을 작게 유지한다."
+      }
+    ],
+    "quizIds": [
+      "w3-q21"
+    ],
+    "references": [
+      {
+        "title": "Kingma & Ba (2015) — Adam: A Method for Stochastic Optimization",
+        "url": "https://arxiv.org/abs/1412.6980",
+        "note": "편향 보정 유도가 2~3절에 있다 (영문)"
+      },
+      {
+        "title": "Loshchilov & Hutter (2019) — Decoupled Weight Decay Regularization",
+        "url": "https://arxiv.org/abs/1711.05101",
+        "note": "AdamW (영문, 연구 논문)"
+      },
+      {
+        "title": "Liu et al. (2020) — On the Variance of the Adaptive Learning Rate and Beyond",
+        "url": "https://arxiv.org/abs/1908.03265",
+        "note": "워밍업이 필요한 이유와 RAdam (영문)"
+      }
+    ]
+  },
+  "gradient-flow": {
+    "tier": "advanced",
+    "goal": "역전파되는 기울기를 야코비안 전치의 곱으로 쓰고 소실·폭발을 특이값으로 설명하며, 잔차 연결이 기울기 경로를 보존하는 이유와 노름 기준 기울기 클리핑을 구현할 수 있다.",
+    "checks": [
+      {
+        "id": "w3-gradient-flow-c1",
+        "question": "층마다 기울기 노름을 평균 0.8배로 줄이는 망에서 50층을 거슬러 내려가면 기울기는 대략?",
+        "choices": [
+          "$10^{-5}$배",
+          "$0.4$배",
+          "$10^{-2}$배",
+          "그대로"
+        ],
+        "answer": 0,
+        "explanation": "$0.8^{50} \\approx 1.4 \\times 10^{-5}$. 행렬 곱의 사슬에서는 작은 비율 차이가 지수적으로 누적된다."
+      },
+      {
+        "id": "w3-gradient-flow-c2",
+        "question": "잔차 연결 $h_l = h_{l-1} + F(h_{l-1})$에서 $h_{l-1}$에 대한 야코비안은?",
+        "choices": [
+          "$I + \\partial F/\\partial h$",
+          "$\\partial F/\\partial h$",
+          "$I$",
+          "$2I$"
+        ],
+        "answer": 0,
+        "explanation": "항등 경로의 야코비안 $I$가 더해지므로, 기울기는 층마다 원래 값이 그대로 전달되는 길을 가진다. 실습에서 같은 작은 초기화라도 잔차 망은 50층에서 기울기가 사라지지 않았다."
+      },
+      {
+        "id": "w3-gradient-flow-c3",
+        "question": "전체 기울기 노름이 130이고 클리핑 임계값이 5일 때 노름 기준 클리핑의 결과로 옳은 것은?",
+        "choices": [
+          "모든 기울기에 $5/130$을 곱해 방향은 유지하고 노름만 5로 만든다",
+          "각 원소를 $[-5, 5]$로 자른다",
+          "기울기를 0으로 만든다",
+          "학습률을 5로 바꾼다"
+        ],
+        "answer": 0,
+        "explanation": "$g \\leftarrow g \\cdot c/\\lVert g\\rVert$. 원소별 자르기와 달리 방향이 왜곡되지 않는다."
+      }
+    ],
+    "quizIds": [
+      "w3-q22"
+    ],
+    "references": [
+      {
+        "title": "Pascanu, Mikolov & Bengio (2013) — On the difficulty of training recurrent neural networks",
+        "url": "https://arxiv.org/abs/1211.5063",
+        "note": "기울기 소실·폭발의 분석과 노름 클리핑 (영문)"
+      },
+      {
+        "title": "He et al. (2016) — Identity Mappings in Deep Residual Networks",
+        "url": "https://arxiv.org/abs/1603.05027",
+        "note": "잔차 연결이 기울기를 직접 전달하는 이유 (영문)"
+      }
+    ]
+  }
 };
 
 export default sections;

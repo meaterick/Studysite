@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { WEEKS, getWeek } from "@/content/weeks";
-import { getSection, getWeekOutline } from "@/content/sections";
+import { getSection, getWeekOutline, nextSectionAfter } from "@/content/sections";
+import { TIER_INFO, TIER_ORDER, sectionLabel } from "@/content/tiers";
+import TierBadge from "@/components/TierBadge";
 import { quizAnswers } from "@/content/quizAnswers";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
@@ -32,7 +34,7 @@ export async function generateMetadata({
   const week = getWeek(slug);
   const section = week ? getSection(week, sectionId) : undefined;
   if (!week || !section) return {};
-  return { title: `${week.number}주차 ${section.number}단계 · ${section.title}` };
+  return { title: `${week.number}주차 ${sectionLabel(section)}단계 · ${section.title}` };
 }
 
 const PART_LINKS = [
@@ -52,8 +54,10 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const { sections } = getWeekOutline(week);
   const state = readSectionState(record, slug, sectionId);
   const progress = sectionProgress(section, state);
-  const prev = sections[section.number - 2];
-  const next = sections[section.number];
+  // 이전·다음 링크는 본문 순서(핵심 → 보충 → 심화)를 따르고, 완료 후 이동은 같은 갈래 안에서 이어진다.
+  const prev = sections[section.order - 2];
+  const next = sections[section.order];
+  const continueTo = nextSectionAfter(week, section);
   const answers = quizAnswers.find((a) => a.week === week.number)?.answers ?? {};
   const questionText = new Map(week.quiz.map((q) => [q.id, q.question]));
   const hasPractice = section.practice.length > 0;
@@ -67,19 +71,28 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
     ...(progress.quizTotal > 0 ? [{ label: "서술형", done: progress.quizDone, total: progress.quizTotal, optional: true }] : []),
   ];
 
+  const isCore = section.tier === "core";
+  const endHref = isCore ? `/weeks/${slug}?finished=1` : `/weeks/${slug}#record-heading`;
   let finishHref: string | undefined;
-  if (progress.completed) finishHref = next ? `/weeks/${slug}/sections/${next.id}` : `/weeks/${slug}?finished=1`;
-  // warn 모드: 이 단계를 끝내지 않아도 다음 단계(마지막이면 백지공부)로 넘어갈 수 있다.
+  if (progress.completed) finishHref = continueTo ? `/weeks/${slug}/sections/${continueTo.id}` : endHref;
+  // warn 모드: 이 단계를 끝내지 않아도 같은 갈래의 다음 단계(핵심 마지막이면 백지공부)로 넘어갈 수 있다.
   const skipHref =
-    status.mode === "warn" && !progress.completed ? (next ? `/weeks/${slug}/sections/${next.id}` : `/weeks/${slug}/worksheet`) : undefined;
+    status.mode === "warn" && !progress.completed
+      ? continueTo
+        ? `/weeks/${slug}/sections/${continueTo.id}`
+        : isCore
+          ? `/weeks/${slug}/worksheet`
+          : `/weeks/${slug}`
+      : undefined;
+  const footerNextLabel = continueTo ? undefined : isCore ? undefined : "주차 개요로";
   const skipped = isAdmin ? [] : unfinishedBefore(status, sectionId);
   const practiceDone = !!state.practiceDoneAt || !!state.practiceDone;
 
   return (
     <WeekFrame week={week} status={status}>
       <StageLayout
-        done={status.sectionsDone}
-        total={status.sectionsTotal}
+        done={status.tiers.core.done}
+        total={status.tiers.core.total}
         list={<StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />}
       >
         <article className="min-w-0">
@@ -89,12 +102,21 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             </p>
           )}
           <UnfinishedWarning
-            context="이 단계 앞에"
-            items={skipped.map((s) => ({ number: s.number, title: s.title, href: `/weeks/${slug}/sections/${s.id}` }))}
+            context={isCore ? "이 단계 앞에" : "보충·심화 단계는 핵심 단계를 마친 뒤에 보는 것을 권장합니다."}
+            items={skipped.map((s) => ({ label: sectionLabel(s), title: s.title, href: `/weeks/${slug}/sections/${s.id}` }))}
           />
-          <p className="text-sm font-bold text-[var(--series-blue)]">
-            {sections.length}단계 중 {section.number}단계 · 약 {section.minutes}분
+          <p className="flex flex-wrap items-center gap-2 text-sm font-bold" style={{ color: TIER_INFO[section.tier].color }}>
+            <TierBadge tier={section.tier} />
+            <span>
+              {TIER_INFO[section.tier].course} {status.tiers[section.tier].total}단계 중 {section.number}단계 · 약 {section.minutes}분
+            </span>
           </p>
+          {!isCore && (
+            <p className="mt-2 text-xs text-ink-muted">
+              선택 단계입니다. 주차 완료에는 필요하지 않으며,{" "}
+              {section.tier === "advanced" ? "마치면 이번 주 심화 달성 기록에 반영됩니다." : "마치면 보충 기록에 반영됩니다."}
+            </p>
+          )}
           <h2 className="mt-1 text-2xl font-black leading-snug text-ink">{section.title}</h2>
           {section.meta.goal && (
             <p className="mt-3 rounded-lg border-l-4 border-[var(--series-blue)] bg-[color-mix(in_srgb,var(--series-blue)_7%,transparent)] px-4 py-2.5 text-[15px] text-ink-secondary">
@@ -221,7 +243,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
           <nav aria-label="단계 이동" className="mt-10 flex items-center justify-between gap-4 text-sm font-bold">
             {prev ? (
               <Link href={`/weeks/${slug}/sections/${prev.id}`} className="text-ink-secondary hover:text-[var(--series-blue)]">
-                ← {prev.number}단계 · {prev.title}
+                ← {sectionLabel(prev)}단계 · {prev.title}
               </Link>
             ) : (
               <Link href={`/weeks/${slug}`} className="text-ink-secondary hover:text-[var(--series-blue)]">
@@ -230,7 +252,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             )}
             {next && (progress.completed || isAdmin || status.mode === "warn") ? (
               <Link href={`/weeks/${slug}/sections/${next.id}`} className="text-right text-ink-secondary hover:text-[var(--series-blue)]">
-                {next.number}단계 · {next.title} →
+                {sectionLabel(next)}단계 · {next.title} →
                 {!progress.completed && !isAdmin && <span className="block text-xs font-medium text-ink-muted">이 단계는 미완료로 남습니다</span>}
               </Link>
             ) : (
@@ -244,8 +266,9 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             requirements={requirements}
             ready={progress.ready}
             completed={progress.completed}
-            isLast={!next}
+            isLast={!continueTo && isCore}
             nextHref={finishHref}
+            nextLabel={footerNextLabel}
             skipHref={skipHref}
           />
         </article>
@@ -278,42 +301,19 @@ function StageList({
 }) {
   return (
     <ol className="mt-3 max-h-[60vh] space-y-1 overflow-y-auto pr-1">
-      {status.sections.map(({ section: s, access }) => {
-        const active = s.id === sectionId;
-        const label = (
-          <>
-            <span aria-hidden="true" className="w-5 shrink-0 text-center">
-              {access === "completed" ? "✓" : access === "locked" ? "🔒" : access === "upcoming" ? "○" : "▶"}
-            </span>
-            <span className="min-w-0">
-              {s.number}. {s.title}
-            </span>
-            <span className="sr-only">
-              {access === "completed" ? " (완료)" : access === "locked" ? " (잠김)" : access === "upcoming" ? " (미완료)" : " (진행할 차례)"}
-            </span>
-          </>
-        );
-        return (
-          <li key={s.id}>
-            {access !== "locked" || isAdmin ? (
-              <Link
-                href={`/weeks/${slug}/sections/${s.id}`}
-                aria-current={active ? "page" : undefined}
-                className={`flex gap-2 rounded-md px-2 py-1.5 text-sm transition ${
-                  active
-                    ? "bg-[color-mix(in_srgb,var(--series-blue)_10%,transparent)] font-bold text-[var(--series-blue)]"
-                    : access === "completed"
-                      ? "text-[var(--status-good)] hover:bg-[var(--surface-card-2)]"
-                      : "text-ink-secondary hover:bg-[var(--surface-card-2)]"
-                }`}
-              >
-                {label}
-              </Link>
-            ) : (
-              <span className="flex gap-2 px-2 py-1.5 text-sm text-ink-muted">{label}</span>
-            )}
-          </li>
-        );
+      {TIER_ORDER.flatMap((tier) => {
+        const rows = status.sections.filter((r) => r.section.tier === tier);
+        if (rows.length === 0) return [];
+        const info = TIER_INFO[tier];
+        return [
+          <li key={`h-${tier}`} className="px-2 pb-0.5 pt-2 text-[11px] font-black first:pt-0" style={{ color: info.color }}>
+            {info.course} · {info.audience}
+            {!info.required && <span className="font-medium text-ink-muted"> (선택)</span>}
+          </li>,
+          ...rows.map(({ section: s, access }) => (
+            <StageListItem key={s.id} slug={slug} section={s} access={access} active={s.id === sectionId} isAdmin={isAdmin} />
+          )),
+        ];
       })}
       <li className="mt-2 border-t border-[var(--border-hairline)] pt-2">
         {status.finaleOpen || isAdmin ? (
@@ -324,10 +324,59 @@ function StageList({
         ) : (
           <span className="flex gap-2 px-2 py-1 text-sm text-ink-muted">
             <span aria-hidden="true" className="w-5 text-center">🔒</span>
-            백지공부 · 과제 (모든 단계를 마치면 열림)
+            백지공부 · 과제 (핵심 단계를 마치면 열림)
           </span>
         )}
       </li>
     </ol>
+  );
+}
+
+function StageListItem({
+  slug,
+  section: s,
+  access,
+  active,
+  isAdmin,
+}: {
+  slug: string;
+  section: WeekStatus["sections"][number]["section"];
+  access: WeekStatus["sections"][number]["access"];
+  active: boolean;
+  isAdmin: boolean;
+}) {
+  const label = (
+    <>
+      <span aria-hidden="true" className="w-5 shrink-0 text-center">
+        {access === "completed" ? "✓" : access === "locked" ? "🔒" : access === "upcoming" ? "○" : "▶"}
+      </span>
+      <span className="min-w-0">
+        {s.number}. {s.title}
+      </span>
+      <span className="sr-only">
+        {access === "completed" ? " (완료)" : access === "locked" ? " (잠김)" : access === "upcoming" ? " (미완료)" : " (진행할 차례)"}
+      </span>
+    </>
+  );
+  return (
+    <li>
+      {access !== "locked" || isAdmin ? (
+        <Link
+          href={`/weeks/${slug}/sections/${s.id}`}
+          aria-current={active ? "page" : undefined}
+          className={`flex gap-2 rounded-md px-2 py-1.5 text-sm transition ${
+            active
+              ? "bg-[color-mix(in_srgb,var(--series-blue)_10%,transparent)] font-bold text-[var(--series-blue)]"
+              : access === "completed"
+                ? "text-[var(--status-good)] hover:bg-[var(--surface-card-2)]"
+                : "text-ink-secondary hover:bg-[var(--surface-card-2)]"
+          }`}
+        >
+          {label}
+        </Link>
+      ) : (
+        <span className="flex gap-2 px-2 py-1.5 text-sm text-ink-muted">{label}</span>
+      )}
+    </li>
   );
 }

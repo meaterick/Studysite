@@ -8,11 +8,14 @@ import CellOutputs from "./CellOutputs";
 import UserMarkdown from "./UserMarkdown";
 import { formatDateTime } from "@/lib/datetime";
 import AutoTestPanel, { type AutoTestView } from "@/components/lab/AutoTestPanel";
+import TierBadge from "@/components/TierBadge";
+import type { Tier } from "@/content/tiers";
 
 export interface NotebookViewTask {
   id: string;
   title: string;
   optional: boolean;
+  tier: Tier;
   intro?: ReactNode;
   prompts: Record<string, ReactNode>;
   labels: Record<string, string>;
@@ -112,7 +115,10 @@ export default function NotebookView({
           <section key={task.id} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
             <h4 className="font-black text-ink">
               과제 {i + 1}. {task.title}
-              {task.optional && <span className="ml-2 text-xs font-bold text-ink-muted">(선택)</span>}
+              <span className="ml-2 align-middle">
+                <TierBadge tier={task.tier} compact />
+              </span>
+              {task.optional && <span className="ml-1 text-xs font-bold text-ink-muted">(선택)</span>}
             </h4>
             {task.intro && (
               <details className="mt-2">
