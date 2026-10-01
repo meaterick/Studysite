@@ -73,4 +73,41 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ["D = 0.0  # TODO", "D = 20 * N"],
     ],
   },
+  "week-7": {
+    "golden-code": [
+      [
+        "# TODO: 나머지 17문항을 추가합니다. (쉬운 질문 10개, 어려운 질문 10개, 자료에 없는 질문 3개 이상)",
+        [
+          ["perplexity는 무엇을 재는 지표인가?", "week6", "perplexity", "easy"],
+          ["LoRA는 어떻게 학습 파라미터를 줄이나?", "week6", "LoRA", "easy"],
+          ["합성곱 층은 무엇을 학습하나?", "week4", "합성곱", "easy"],
+          ["잔차 연결은 왜 쓰나?", "week4", "잔차 연결", "easy"],
+          ["역전파는 무엇을 계산하나?", "week3", "역전파", "easy"],
+          ["과적합이란 무엇인가?", "week2", "과적합", "easy"],
+          ["Recall@k는 무엇을 재나?", "week7", "Recall@k", "easy"],
+          ["Human-in-the-loop은 언제 필요한가?", "week7", "Human-in-the-loop", "easy"],
+          ["데이터 드리프트란 무엇인가?", "week8", "드리프트", "easy"],
+          ["학습률이 너무 크면 경사하강법은 어떻게 되나?", "week1", "학습률", "hard"],
+          ["공정성 지표들을 동시에 만족시키기 어려운 이유는?", "week8", "공정성", "hard"],
+          ["Self-Attention이 RNN보다 병렬화에 유리한 이유는?", "week5", "Self-Attention", "hard"],
+          ["CNN에서 과적합을 줄이는 방법 두 가지는?", "week4", "과적합", "hard"],
+          ["LoRA와 양자화를 함께 쓰면 무엇이 좋아지나?", "week6", "LoRA", "hard"],
+          ["깊은 신경망의 역전파에서 기울기가 작아지는 이유는?", "week3", "역전파", "hard"],
+          ["다음 오프라인 모임 장소는 어디인가?", null, null, "hard"],
+          ["동아리 회비는 얼마인가?", null, null, "hard"],
+        ]
+          .map(([q, src, ev, lv]) =>
+            src ? `dict(q="${q}", source="${src}", evidence="${ev}", answer="${ev}", level="${lv}"),` : `dict(q="${q}", source=None, evidence=None, answer=None, level="${lv}"),`,
+          )
+          .join("\n    "),
+      ],
+    ],
+    "scenario-code": [
+      [
+        "# TODO: 질문을 두 개 더 추가합니다.",
+        '"과적합을 줄이려면 어떻게 해야 하나요?",\n    "RAG에서 청크 크기는 어떻게 정하나요?",',
+      ],
+      ["after = RAG(docs, chunk_size=500)   # TODO: 개선한 설정으로 바꿉니다.", "after = RAG(docs, chunk_size=300)"],
+    ],
+  },
 };
