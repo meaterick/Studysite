@@ -59,3 +59,11 @@ export function tierBadgeText(tier: Tier): string {
 export function sectionLabel(section: { tier: Tier; number: number }): string {
   return `${TIER_INFO[section.tier].label} ${section.number}`;
 }
+
+const PREFIX_TIER: Record<string, Tier> = { 핵심: "core", 보충: "supplement", 심화: "advanced" };
+
+/** 학습 목표 문장 앞의 "[핵심]"·"[보충]"·"[심화]" 표시를 떼어 구분과 본문으로 나눈다. 표시가 없으면 tier는 undefined. */
+export function splitTierPrefix(text: string): { tier?: Tier; text: string } {
+  const m = text.match(/^\[(핵심|보충|심화)\]\s*/);
+  return m ? { tier: PREFIX_TIER[m[1]], text: text.slice(m[0].length) } : { text };
+}

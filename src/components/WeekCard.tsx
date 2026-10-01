@@ -3,6 +3,7 @@ import type { WeekMeta } from "@/content/types";
 import ProgressRing from "./ProgressRing";
 import { loginHref } from "@/lib/returnPath";
 import DifficultyBadge from "./DifficultyBadge";
+import { splitTierPrefix } from "@/content/tiers";
 
 // 학습 목표는 "~한다." 문체로 적혀 있어 카드에서는 "~합니다."로 부드럽게 바꿔 보여준다.
 function politeObjective(text: string): string {
@@ -59,7 +60,7 @@ export default function WeekCard({
       {week.objectives[0] && (
         <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-2">
           <p className="text-xs font-bold text-[var(--series-blue)]">이번 주 목표</p>
-          <p className="mt-0.5 text-[15px] leading-relaxed text-ink-secondary sm:text-sm">{politeObjective(week.objectives[0])}</p>
+          <p className="mt-0.5 text-[15px] leading-relaxed text-ink-secondary sm:text-sm">{politeObjective(splitTierPrefix(week.objectives[0]).text)}</p>
           {week.objectives.length > 1 && (
             <p className="mt-1 hidden text-xs text-ink-muted sm:block">목표 {week.objectives.length - 1}개 더</p>
           )}

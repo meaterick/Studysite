@@ -1,7 +1,10 @@
 import type { WeekLab } from "../types";
 import { py } from "./util";
 
-// 1주차: 손실·격자 탐색, 파이썬 기초, NumPy 축, 내적·코사인, 기저 좌표, 베이즈(자연 빈도), 엔트로피, 경사하강법
+// 1주차 코딩 실습
+//   핵심: 손실·격자 탐색, 파이썬 기초, NumPy 축, 내적·코사인, 행렬-벡터 곱, 베이즈(자연 빈도), 경사하강법
+//   보충: 평균·분산 기록기 클래스, 기저 좌표·행렬 곱, 표준화·중심극한정리
+//   심화: 거듭제곱법·저랭크 근사, MLE·MAP, 엔트로피, 조건수
 const week1: WeekLab = {
   exercises: [
     {
@@ -158,12 +161,12 @@ print(label_students({"민수": 88, "지현": 95, "도윤": 67}))
       id: "w1-lab-axis",
       sectionId: "dev-tools",
       title: "NumPy 축(axis)과 브로드캐스팅",
-      tier: "supplement",
+      tier: "core",
       prompt: `
 학생 4명, 과목 3개짜리 점수표로 축과 브로드캐스팅을 연습합니다. **반복문 없이** NumPy 연산만 씁니다.
 
 1. \`subject_means(scores)\`: 과목별 평균, shape \`(과목 수,)\`
-2. \`center_by_student(scores)\`: 학생(행)마다 자기 평균을 빼서 각 행의 평균이 0이 되게 합니다. 「개발 환경과 NumPy 첫걸음」 실습의 "해볼 것"처럼 \`keepdims=True\`가 필요합니다.
+2. \`center_by_student(scores)\`: 학생(행)마다 자기 평균을 빼서 각 행의 평균이 0이 되게 합니다. 「NumPy 첫걸음: 배열·축·브로드캐스팅」 실습의 "해볼 것"처럼 \`keepdims=True\`가 필요합니다.
 3. \`count_high(scores, threshold)\`: \`threshold\` 이상인 칸의 개수(불리언 배열 활용)
 `,
       starter: py`
@@ -337,6 +340,407 @@ print("king과 가장 비슷한 단어:", most_similar([0.9, 0.8, 0.1], words))
 `,
     },
     {
+      id: "w1-lab-matvec",
+      sectionId: "vectors",
+      title: "행렬-벡터 곱으로 신경망 한 층 계산하기",
+      tier: "core",
+      prompt: `
+「벡터: 내적과 코사인 유사도」의 "행렬-벡터 곱"을 순수 파이썬 리스트로 구현합니다. 행렬 $W$는 행(리스트)들의 리스트입니다.
+
+1. \`matvec(W, x)\`: $Wx$의 $i$번째 성분은 $W$의 $i$번째 행과 $x$의 내적입니다. **행의 길이와 $x$의 길이가 다르면 곱할 수 없으므로 \`None\`**을 돌려줍니다.
+2. \`dense(W, x, b)\`: 신경망 한 층의 계산 $Wx + b$. 출력 뉴런마다 "자기 가중치 행과 입력의 내적 + 자기 편향"을 계산하는 것과 같습니다.
+
+$W$가 $3 \\times 2$이면 길이 2인 입력을 길이 3인 출력으로 옮긴다는 점, 즉 **결과의 길이는 $W$의 행 개수**라는 점을 출력으로 확인해 보십시오.
+`,
+      starter: py`
+def matvec(W, x):
+    """W(행 리스트)와 x의 곱 Wx. 행의 길이와 x의 길이가 다르면 None"""
+    result = []
+    for row in W:
+        # TODO 1: row의 길이가 x의 길이와 다르면 None을 돌려줍니다.
+        # TODO 2: row와 x의 내적을 result에 추가합니다.
+        pass
+    return result
+
+def dense(W, x, b):
+    """신경망 한 층의 계산 Wx + b (b의 길이 = W의 행 개수)"""
+    # TODO: matvec(W, x)의 각 성분에 b의 같은 자리 값을 더한 리스트를 돌려줍니다.
+    return []
+
+W = [[1, 2],
+     [3, 4],
+     [0, -1]]                              # 3×2 행렬
+print(matvec(W, [1, 1]))                   # 기대: [3, 7, -1]
+print(matvec(W, [1, 1, 1]))                # 기대: None (열 2개 ≠ 길이 3)
+print(dense(W, [1, 1], [0.5, -7, 1]))      # 기대: [3.5, 0, 0]
+`,
+      tests: py`
+W = [[1, 2], [3, 4], [0, -1]]
+
+@test("W(3×2) @ [1, 1] == [3, 7, -1]")
+def _():
+    assert matvec(W, [1, 1]) == [3, 7, -1], f"결과: {matvec(W, [1, 1])}"
+
+@test("본문 실습 5: [[1, 2], [3, 4]] @ [2, -1] == [0, 2]")
+def _():
+    assert matvec([[1, 2], [3, 4]], [2, -1]) == [0, 2], f"결과: {matvec([[1, 2], [3, 4]], [2, -1])}"
+
+@test("단위행렬을 곱하면 x가 그대로 나온다")
+def _():
+    assert matvec([[1, 0], [0, 1]], [5, -3]) == [5, -3]
+
+@test("결과의 길이는 W의 행 개수: (1×3) @ 길이 3 → 길이 1")
+def _():
+    assert matvec([[1, 2, 3]], [1, 0, -1]) == [-2], f"결과: {matvec([[1, 2, 3]], [1, 0, -1])}"
+
+@test("크기가 맞지 않으면 None")
+def _():
+    assert matvec(W, [1, 1, 1]) is None, f"결과: {matvec(W, [1, 1, 1])}"
+
+@test("dense: Wx + b == [3.5, 0, 0]")
+def _():
+    got = dense(W, [1, 1], [0.5, -7, 1])
+    assert got is not None and len(got) == 3 and approx(got, [3.5, 0, 0]), f"결과: {got}"
+`,
+      hints: [
+        "`if len(row) != len(x): return None`을 반복문 안 맨 앞에 둡니다.",
+        "내적은 `sum(w * v for w, v in zip(row, x))`입니다. 이 값을 `result.append(...)`로 쌓습니다.",
+        "`dense`는 `[y + bi for y, bi in zip(matvec(W, x), b)]` 한 줄로 쓸 수 있습니다.",
+      ],
+      solution: py`
+def matvec(W, x):
+    result = []
+    for row in W:
+        if len(row) != len(x):
+            return None
+        result.append(sum(w * v for w, v in zip(row, x)))
+    return result
+
+def dense(W, x, b):
+    return [y + bi for y, bi in zip(matvec(W, x), b)]
+
+W = [[1, 2],
+     [3, 4],
+     [0, -1]]
+print(matvec(W, [1, 1]))
+print(matvec(W, [1, 1, 1]))
+print(dense(W, [1, 1], [0.5, -7, 1]))
+`,
+    },
+    {
+      id: "w1-lab-bayes",
+      sectionId: "probability",
+      title: "베이즈 정리를 사람 수(자연 빈도)로 계산하기",
+      tier: "core",
+      prompt: `
+확률 공식 대신 "1만 명이 검사를 받는다면 몇 명이 어디에 들어가는가"로 베이즈 정리를 계산합니다(자연 빈도). 확률로 생각할 때보다 기저율의 효과가 훨씬 잘 보입니다.
+
+1. \`frequency_table(N, prevalence, sensitivity, false_pos)\`: 실제 환자 수, 건강한 사람 수, 환자 중 양성(TP), 건강한 사람 중 양성(FP)을 셉니다.
+2. \`posterior_from_table(table)\`: 양성 판정을 받은 사람 중 실제 환자의 비율 $P(\\text{병} \\mid \\text{양성})$
+`,
+      starter: py`
+def frequency_table(N, prevalence, sensitivity, false_pos):
+    sick = N * prevalence          # 실제 환자 수
+    healthy = 0  # TODO: 건강한 사람 수
+    tp = 0       # TODO: 환자 중 양성으로 나오는 사람 수 (민감도)
+    fp = 0       # TODO: 건강한 사람 중 양성으로 나오는 사람 수 (위양성률)
+    return {"sick": sick, "healthy": healthy, "tp": tp, "fp": fp, "positive": tp + fp}
+
+def posterior_from_table(table):
+    # TODO: 양성 판정을 받은 사람 중 실제 환자의 비율
+    return 0.0
+
+for prev in (0.01, 0.10):
+    t = frequency_table(10_000, prev, 0.99, 0.05)
+    print(f"유병률 {prev:.0%}: 양성 {t['positive']:.0f}명 중 환자 {t['tp']:.0f}명 → P(병|양성) = {posterior_from_table(t):.1%}")
+`,
+      tests: py`
+@test("1만 명, 유병률 1% → 환자 100명, TP 99명, FP 495명")
+def _():
+    t = frequency_table(10_000, 0.01, 0.99, 0.05)
+    assert approx(t["sick"], 100) and approx(t["healthy"], 9900), f"표: {t}"
+    assert approx(t["tp"], 99) and approx(t["fp"], 495), f"표: {t}"
+
+@test("P(병|양성) = 99/594 ≈ 0.1667")
+def _():
+    got = posterior_from_table(frequency_table(10_000, 0.01, 0.99, 0.05))
+    assert approx(got, 99 / 594), f"결과: {got}"
+
+@test("유병률 10%면 0.6875")
+def _():
+    got = posterior_from_table(frequency_table(10_000, 0.10, 0.99, 0.05))
+    assert approx(got, 0.6875), f"결과: {got}"
+
+@test("사람 수 N이 바뀌어도 사후확률은 같다")
+def _():
+    a = posterior_from_table(frequency_table(1_000, 0.02, 0.9, 0.1))
+    b = posterior_from_table(frequency_table(1_000_000, 0.02, 0.9, 0.1))
+    assert approx(a, b) and approx(a, 0.018 / (0.018 + 0.098)), f"{a} vs {b}"
+`,
+      hints: [
+        "건강한 사람 수는 `N - sick`입니다.",
+        "TP는 `sick * sensitivity`, FP는 `healthy * false_pos`입니다.",
+        "사후확률은 `table[\"tp\"] / table[\"positive\"]`입니다. 분모에 FP가 들어간다는 것이 기저율 효과의 핵심입니다.",
+      ],
+      solution: py`
+def frequency_table(N, prevalence, sensitivity, false_pos):
+    sick = N * prevalence
+    healthy = N - sick
+    tp = sick * sensitivity
+    fp = healthy * false_pos
+    return {"sick": sick, "healthy": healthy, "tp": tp, "fp": fp, "positive": tp + fp}
+
+def posterior_from_table(table):
+    return table["tp"] / table["positive"]
+
+for prev in (0.01, 0.10):
+    t = frequency_table(10_000, prev, 0.99, 0.05)
+    print(f"유병률 {prev:.0%}: 양성 {t['positive']:.0f}명 중 환자 {t['tp']:.0f}명 → P(병|양성) = {posterior_from_table(t):.1%}")
+`,
+    },
+    {
+      id: "w1-lab-gd",
+      sectionId: "gradient-descent",
+      title: "경사하강법 함수와 학습률 진단기",
+      tier: "core",
+      prompt: `
+「미분과 경사하강법」의 갱신식 $w \\leftarrow w - \\eta \\, \\dfrac{dL}{dw}$을 어떤 손실에도 쓸 수 있는 함수로 만들고, 배율 $(1 - 2\\eta)$로 학습률을 진단합니다.
+
+1. \`gradient_descent(grad, w0, lr, steps)\`: 기울기 함수 \`grad\`를 받아 \`steps\`번 갱신하고, **매 스텝 갱신 뒤의 $w$**를 담은 리스트를 돌려줍니다.
+2. \`diagnose(lr)\`: $L(w) = (w-3)^2$에서 오차 $w - 3$이 매 스텝 $(1 - 2\\eta)$배가 된다는 사실을 이용해 \`"수렴"\`, \`"진동하며 수렴"\`, \`"발산"\` 중 하나를 돌려줍니다. 배율의 절댓값이 1 이상이면 0으로 줄지 않으므로 \`"발산"\`으로 분류합니다.
+`,
+      starter: py`
+def gradient_descent(grad, w0, lr, steps):
+    """w ← w - lr * grad(w)를 steps번 반복하고, 매 스텝 뒤의 w를 담은 리스트를 돌려준다"""
+    w, history = w0, []
+    for _ in range(steps):
+        # TODO: 갱신식을 적용하고 history에 w를 추가합니다.
+        pass
+    return history
+
+def diagnose(lr):
+    """L(w) = (w-3)² 에서 학습률 lr의 수렴 양상: "수렴" / "진동하며 수렴" / "발산" """
+    factor = 1 - 2 * lr
+    # TODO: factor의 부호와 크기로 판단합니다.
+    return ""
+
+grad = lambda w: 2 * (w - 3)
+print([round(w, 4) for w in gradient_descent(grad, 0.0, 0.1, 5)])
+for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
+    print(f"lr={lr}: {diagnose(lr)}")
+`,
+      tests: py`
+grad = lambda w: 2 * (w - 3)
+
+@test("첫 스텝: w0=0, lr=0.1 → 0.6")
+def _():
+    h = gradient_descent(grad, 0.0, 0.1, 1)
+    assert len(h) == 1 and approx(h[0], 0.6), f"history: {h}"
+
+@test("30스텝 뒤 3에 가까워진다")
+def _():
+    h = gradient_descent(grad, 0.0, 0.1, 30)
+    assert len(h) == 30 and abs(h[-1] - 3) < 0.01, f"마지막 w: {h[-1] if h else None}"
+
+@test("오차가 매 스텝 (1 - 2·lr)배가 된다 (lr=0.2)")
+def _():
+    errs = [w - 3 for w in gradient_descent(grad, 0.0, 0.2, 3)]
+    assert approx(errs, [-1.8, -1.08, -0.648]), f"오차: {errs}"
+
+@test("다른 손실의 기울기도 받는다: L = w² + 4w + 1")
+def _():
+    h = gradient_descent(lambda w: 2 * w + 4, 1.0, 0.1, 1)
+    assert approx(h[0], 0.4), f"history: {h}"
+
+@test("진단: 0.1 수렴, 0.9 진동하며 수렴, 1.1 발산")
+def _():
+    got = [diagnose(lr) for lr in (0.1, 0.9, 1.1)]
+    assert got == ["수렴", "진동하며 수렴", "발산"], f"결과: {got}"
+
+@test("경계값: 0.5는 한 번에 도착(수렴), 1.0은 제자리 진동(발산)")
+def _():
+    assert diagnose(0.5) == "수렴" and diagnose(1.0) == "발산", f"{diagnose(0.5)}, {diagnose(1.0)}"
+`,
+      hints: [
+        "반복문 안에서 `w = w - lr * grad(w)`로 갱신한 뒤 `history.append(w)`를 합니다.",
+        "배율이 0 이상 1 미만이면 같은 부호로 줄어들고, -1과 0 사이면 부호가 번갈아 바뀌며 줄어듭니다.",
+        "`if abs(factor) >= 1: return \"발산\"`을 먼저 검사하고, 그다음 `factor < 0`이면 진동하며 수렴, 아니면 수렴입니다.",
+      ],
+      solution: py`
+def gradient_descent(grad, w0, lr, steps):
+    w, history = w0, []
+    for _ in range(steps):
+        w = w - lr * grad(w)
+        history.append(w)
+    return history
+
+def diagnose(lr):
+    factor = 1 - 2 * lr
+    if abs(factor) >= 1:
+        return "발산"
+    if factor < 0:
+        return "진동하며 수렴"
+    return "수렴"
+
+grad = lambda w: 2 * (w - 3)
+print([round(w, 4) for w in gradient_descent(grad, 0.0, 0.1, 5)])
+for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
+    print(f"lr={lr}: {diagnose(lr)}")
+`,
+    },
+    {
+      id: "w1-lab-runningstats",
+      sectionId: "python-advanced",
+      title: "평균과 분산을 함께 유지하는 기록기 클래스",
+      tier: "supplement",
+      prompt: `
+「Python 한 걸음 더: 클래스와 예외 처리」 실습의 \`RunningMean\`을 넓혀, 값을 저장하지 않고 **평균과 분산**을 함께 유지하는 \`RunningStats\` 클래스를 만듭니다. 학습 중 손실이나 배치 통계(4주차 배치 정규화)를 기록할 때 실제로 쓰는 방법입니다.
+
+분산을 "제곱의 평균 − 평균의 제곱"으로 구하면 값이 클 때 큰 수끼리 빼면서 자릿수가 사라져 **음수 분산**까지 나옵니다. 그래서 웰퍼드(Welford) 방법으로 갱신합니다. 새 값 $x$가 들어오면
+
+$$n \\leftarrow n + 1,\\quad \\delta = x - \\bar x_{\\text{이전}},\\quad \\bar x \\leftarrow \\bar x + \\frac{\\delta}{n},\\quad M_2 \\leftarrow M_2 + \\delta\\,(x - \\bar x_{\\text{새}})$$
+
+이고, 분산(모분산)은 $M_2 / n$입니다.
+
+1. \`update(x)\`: \`x\`가 숫자(\`int\`, \`float\`)가 아니면 **상태를 바꾸지 않고** \`TypeError\`를 일으킵니다. 숫자면 위 식으로 갱신하고 새 평균을 돌려줍니다.
+2. \`variance()\`: 값이 하나도 없으면 \`ValueError\`, 있으면 $M_2 / n$
+3. \`reset()\`: 처음 상태로 되돌립니다.
+`,
+      starter: py`
+class RunningStats:
+    """값을 하나씩 받아 평균과 분산을 유지한다(값을 모두 저장하지 않는다)."""
+    def __init__(self):
+        self.n = 0
+        self.mean = 0.0
+        self.m2 = 0.0          # 평균과의 차이 제곱의 합 (= 분산 × n)
+
+    def update(self, x):
+        # TODO 1: x가 int나 float가 아니면 TypeError를 일으킵니다. (isinstance 활용)
+        # TODO 2: 웰퍼드 방법으로 n, mean, m2를 갱신합니다.
+        return self.mean
+
+    def variance(self):
+        # TODO 3: 값이 하나도 없으면 ValueError, 아니면 m2 / n
+        return 0.0
+
+    def reset(self):
+        # TODO 4: 처음 상태로 되돌립니다.
+        pass
+
+s = RunningStats()
+for v in [2, 4, 4, 4, 5, 5, 7, 9]:
+    s.update(v)
+print("평균", s.mean, "분산", s.variance())          # 기대: 5.0, 4.0
+
+big = RunningStats()
+for v in [1e9 + 4, 1e9 + 7, 1e9 + 13, 1e9 + 16]:
+    big.update(v)
+print("큰 값의 분산", big.variance())                 # 기대: 22.5 (단순 공식은 -128.0)
+try:
+    s.update("0.3")
+except TypeError as e:
+    print("TypeError:", e)
+`,
+      tests: py`
+@test("update가 매번 새 평균을 돌려준다: 0.9 → 0.8 → 0.6667 → 0.55")
+def _():
+    s = RunningStats()
+    got = [s.update(v) for v in [0.9, 0.7, 0.4, 0.2]]
+    assert approx(got, [0.9, 0.8, 2.0 / 3, 0.55], 1e-4), f"결과: {got}"
+
+@test("[2, 4, 4, 4, 5, 5, 7, 9]의 평균 5, 분산 4")
+def _():
+    s = RunningStats()
+    for v in [2, 4, 4, 4, 5, 5, 7, 9]:
+        s.update(v)
+    assert approx(s.mean, 5.0) and approx(s.variance(), 4.0), f"평균 {s.mean}, 분산 {s.variance()}"
+
+@test("10억 근처의 값에서도 분산이 정확하다(22.5)")
+def _():
+    s = RunningStats()
+    for v in [1e9 + 4, 1e9 + 7, 1e9 + 13, 1e9 + 16]:
+        s.update(v)
+    assert approx(s.variance(), 22.5, 1e-6), f"분산: {s.variance()}"
+
+@test("값이 없으면 variance()가 ValueError")
+def _():
+    try:
+        RunningStats().variance()
+    except ValueError:
+        return
+    raise AssertionError("ValueError가 발생하지 않았습니다.")
+
+@test("숫자가 아니면 TypeError, 상태는 그대로")
+def _():
+    s = RunningStats()
+    s.update(1.0)
+    try:
+        s.update("0.3")
+    except TypeError:
+        assert s.n == 1 and approx(s.mean, 1.0), f"n={s.n}, mean={s.mean}: 상태가 바뀌었습니다."
+        return
+    raise AssertionError("TypeError가 발생하지 않았습니다.")
+
+@test("reset 뒤에는 처음부터 다시 센다")
+def _():
+    s = RunningStats()
+    for v in [10, 20]:
+        s.update(v)
+    s.reset()
+    s.update(3)
+    assert s.n == 1 and approx(s.mean, 3) and approx(s.variance(), 0.0), f"n={s.n}, mean={s.mean}"
+
+@test("두 객체는 상태를 공유하지 않는다")
+def _():
+    a, b = RunningStats(), RunningStats()
+    a.update(5)
+    assert a.n == 1 and b.n == 0
+`,
+      hints: [
+        "`if not isinstance(x, (int, float)): raise TypeError(\"숫자만 기록할 수 있습니다\")`를 `update` 맨 앞에 두면, 예외가 나도 아래의 갱신 코드가 실행되지 않아 상태가 그대로입니다.",
+        "순서가 중요합니다. `self.n += 1` → `delta = x - self.mean` → `self.mean += delta / self.n` → `self.m2 += delta * (x - self.mean)`. 마지막 줄의 `self.mean`은 이미 갱신된 새 평균입니다.",
+        "`variance`는 `if self.n == 0: raise ValueError(...)` 뒤에 `return self.m2 / self.n`입니다. `reset`은 `self.__init__()`을 다시 불러도 됩니다.",
+      ],
+      solution: py`
+class RunningStats:
+    def __init__(self):
+        self.n = 0
+        self.mean = 0.0
+        self.m2 = 0.0
+
+    def update(self, x):
+        if not isinstance(x, (int, float)):
+            raise TypeError(f"숫자만 기록할 수 있습니다: {x!r}")
+        self.n += 1
+        delta = x - self.mean
+        self.mean += delta / self.n
+        self.m2 += delta * (x - self.mean)
+        return self.mean
+
+    def variance(self):
+        if self.n == 0:
+            raise ValueError("아직 값이 하나도 없습니다")
+        return self.m2 / self.n
+
+    def reset(self):
+        self.__init__()
+
+s = RunningStats()
+for v in [2, 4, 4, 4, 5, 5, 7, 9]:
+    s.update(v)
+print("평균", s.mean, "분산", s.variance())
+
+big = RunningStats()
+for v in [1e9 + 4, 1e9 + 7, 1e9 + 13, 1e9 + 16]:
+    big.update(v)
+print("큰 값의 분산", big.variance())
+try:
+    s.update("0.3")
+except TypeError as e:
+    print("TypeError:", e)
+`,
+    },
+    {
       id: "w1-lab-coords",
       sectionId: "basis-matrix",
       title: "기저 좌표와 행렬 곱 직접 계산하기",
@@ -434,81 +838,326 @@ print("AB =", matmul(A, B), " BA =", matmul(B, A))
 `,
     },
     {
-      id: "w1-lab-bayes",
-      sectionId: "probability",
-      title: "베이즈 정리를 사람 수(자연 빈도)로 계산하기",
-      tier: "core",
+      id: "w1-lab-standardize",
+      sectionId: "distributions",
+      title: "표준화와 중심극한정리를 숫자로 확인하기",
+      tier: "supplement",
       prompt: `
-확률 공식 대신 "1만 명이 검사를 받는다면 몇 명이 어디에 들어가는가"로 베이즈 정리를 계산합니다(자연 빈도). 확률로 생각할 때보다 기저율의 효과가 훨씬 잘 보입니다.
+「연속 확률분포: 균등분포와 정규분포」의 68-95-99.7 규칙과 중심극한정리를 함수로 만들어 확인합니다. 반복문 없이 NumPy 연산만 씁니다.
 
-1. \`frequency_table(N, prevalence, sensitivity, false_pos)\`: 실제 환자 수, 건강한 사람 수, 환자 중 양성(TP), 건강한 사람 중 양성(FP)을 셉니다.
-2. \`posterior_from_table(table)\`: 양성 판정을 받은 사람 중 실제 환자의 비율 $P(\\text{병} \\mid \\text{양성})$
+1. \`standardize(x)\`: $z = \\dfrac{x - \\mu}{\\sigma}$로 바꿔 평균 0, 표준편차 1이 되게 합니다(z 점수). 2주차부터 특징 표준화에 그대로 씁니다.
+2. \`within_k_sigma(x, k)\`: 평균에서 $k$ 표준편차 **안**($|z| < k$)에 든 값의 비율
+3. \`uniform_sums(m, size, seed)\`: $U(0,1)$ 난수 $m$개의 합을 \`size\`번 만든 배열. 합의 평균은 $m/2$, 분산은 $m/12$입니다.
+
+$m = 12$이면 $\\pm 1\\sigma$ 안 비율이 정규분포의 약 0.68에 가깝지만, $m = 1$(균등분포 그대로)이면 약 0.58로 다릅니다. 몇 개를 더해야 종 모양이 되는지 출력으로 확인해 보십시오.
 `,
       starter: py`
-def frequency_table(N, prevalence, sensitivity, false_pos):
-    sick = N * prevalence          # 실제 환자 수
-    healthy = 0  # TODO: 건강한 사람 수
-    tp = 0       # TODO: 환자 중 양성으로 나오는 사람 수 (민감도)
-    fp = 0       # TODO: 건강한 사람 중 양성으로 나오는 사람 수 (위양성률)
-    return {"sick": sick, "healthy": healthy, "tp": tp, "fp": fp, "positive": tp + fp}
+import numpy as np
 
-def posterior_from_table(table):
-    # TODO: 양성 판정을 받은 사람 중 실제 환자의 비율
-    return 0.0
+def standardize(x):
+    """평균 0, 표준편차 1이 되도록 바꾼 배열(z 점수)"""
+    x = np.asarray(x, dtype=float)
+    return x  # TODO: (x - 평균) / 표준편차
 
-for prev in (0.01, 0.10):
-    t = frequency_table(10_000, prev, 0.99, 0.05)
-    print(f"유병률 {prev:.0%}: 양성 {t['positive']:.0f}명 중 환자 {t['tp']:.0f}명 → P(병|양성) = {posterior_from_table(t):.1%}")
+def within_k_sigma(x, k):
+    """평균에서 k 표준편차 안에 든 값의 비율"""
+    return 0.0  # TODO: standardize 결과의 절댓값이 k보다 작은 비율 (불리언 배열의 평균)
+
+def uniform_sums(m, size, seed=0):
+    """U(0,1) 난수 m개의 합을 size번 만든 배열, shape (size,)"""
+    rng = np.random.default_rng(seed)
+    return np.zeros(size)  # TODO: rng.random((size, m))을 행마다 더합니다.
+
+print(np.round(standardize([2, 4, 4, 4, 5, 5, 7, 9]), 2))
+for m in (1, 2, 12):
+    sums = uniform_sums(m, 100_000)
+    ratios = [round(float(within_k_sigma(sums, k)), 3) for k in (1, 2, 3)]
+    print(f"m={m:2d}: 평균 {sums.mean():.3f}, 표준편차 {sums.std():.3f}, ±1·2·3σ 안 비율 {ratios}")
 `,
       tests: py`
-@test("1만 명, 유병률 1% → 환자 100명, TP 99명, FP 495명")
-def _():
-    t = frequency_table(10_000, 0.01, 0.99, 0.05)
-    assert approx(t["sick"], 100) and approx(t["healthy"], 9900), f"표: {t}"
-    assert approx(t["tp"], 99) and approx(t["fp"], 495), f"표: {t}"
+import numpy as np
 
-@test("P(병|양성) = 99/594 ≈ 0.1667")
+@test("standardize([2, 4, 4, 4, 5, 5, 7, 9]): 평균 5, 표준편차 2로 바꾼 z 점수")
 def _():
-    got = posterior_from_table(frequency_table(10_000, 0.01, 0.99, 0.05))
-    assert approx(got, 99 / 594), f"결과: {got}"
+    z = standardize([2, 4, 4, 4, 5, 5, 7, 9])
+    assert approx(z, [-1.5, -0.5, -0.5, -0.5, 0, 0, 1, 2]), f"결과: {z}"
 
-@test("유병률 10%면 0.6875")
+@test("표준화 결과는 평균 0, 표준편차 1")
 def _():
-    got = posterior_from_table(frequency_table(10_000, 0.10, 0.99, 0.05))
-    assert approx(got, 0.6875), f"결과: {got}"
+    z = np.asarray(standardize(np.random.default_rng(1).normal(170, 6, 1000)))
+    assert approx(z.mean(), 0.0, 1e-9) and approx(z.std(), 1.0, 1e-9), f"평균 {z.mean()}, 표준편차 {z.std()}"
 
-@test("사람 수 N이 바뀌어도 사후확률은 같다")
+@test("단위를 바꿔도(3x + 10) z 점수는 같다")
 def _():
-    a = posterior_from_table(frequency_table(1_000, 0.02, 0.9, 0.1))
-    b = posterior_from_table(frequency_table(1_000_000, 0.02, 0.9, 0.1))
-    assert approx(a, b) and approx(a, 0.018 / (0.018 + 0.098)), f"{a} vs {b}"
+    x = np.array([1.0, 3.0, 4.0, 8.0])
+    assert approx(standardize(3 * x + 10), standardize(x))
+
+@test("within_k_sigma([2, 4, 4, 4, 5, 5, 7, 9], 1) == 5/8")
+def _():
+    assert approx(within_k_sigma([2, 4, 4, 4, 5, 5, 7, 9], 1), 0.625), f"결과: {within_k_sigma([2, 4, 4, 4, 5, 5, 7, 9], 1)}"
+
+@test("균등분포 12개의 합: shape (size,), 평균 ≈ 6, 표준편차 ≈ 1")
+def _():
+    s = np.asarray(uniform_sums(12, 100_000))
+    assert s.shape == (100_000,), f"shape: {s.shape}"
+    assert abs(s.mean() - 6) < 0.02 and abs(s.std() - 1) < 0.02, f"평균 {s.mean():.3f}, 표준편차 {s.std():.3f}"
+
+@test("중심극한정리: 12개의 합은 ±1σ ≈ 0.68, ±2σ ≈ 0.95")
+def _():
+    s = uniform_sums(12, 100_000)
+    r1, r2 = within_k_sigma(s, 1), within_k_sigma(s, 2)
+    assert abs(r1 - 0.68) < 0.01 and abs(r2 - 0.955) < 0.01, f"±1σ {r1:.3f}, ±2σ {r2:.3f}"
+
+@test("하나만이면(균등분포) ±1σ 안 비율 ≈ 2/√12 ≈ 0.577")
+def _():
+    r1 = within_k_sigma(uniform_sums(1, 100_000), 1)
+    assert abs(r1 - 2 / 12 ** 0.5) < 0.01, f"±1σ {r1:.3f}"
 `,
       hints: [
-        "건강한 사람 수는 `N - sick`입니다.",
-        "TP는 `sick * sensitivity`, FP는 `healthy * false_pos`입니다.",
-        "사후확률은 `table[\"tp\"] / table[\"positive\"]`입니다. 분모에 FP가 들어간다는 것이 기저율 효과의 핵심입니다.",
+        "`(x - x.mean()) / x.std()`가 z 점수입니다. `np.std`의 기본값은 모표준편차(n으로 나눔)입니다.",
+        "`np.abs(standardize(x)) < k`는 True/False 배열이고, 그 평균(`.mean()`)이 True의 비율입니다.",
+        "`rng.random((size, m))`은 (size, m) 모양의 균등 난수입니다. 행마다 더하려면 `.sum(axis=1)`입니다.",
       ],
       solution: py`
-def frequency_table(N, prevalence, sensitivity, false_pos):
-    sick = N * prevalence
-    healthy = N - sick
-    tp = sick * sensitivity
-    fp = healthy * false_pos
-    return {"sick": sick, "healthy": healthy, "tp": tp, "fp": fp, "positive": tp + fp}
+import numpy as np
 
-def posterior_from_table(table):
-    return table["tp"] / table["positive"]
+def standardize(x):
+    x = np.asarray(x, dtype=float)
+    return (x - x.mean()) / x.std()
 
-for prev in (0.01, 0.10):
-    t = frequency_table(10_000, prev, 0.99, 0.05)
-    print(f"유병률 {prev:.0%}: 양성 {t['positive']:.0f}명 중 환자 {t['tp']:.0f}명 → P(병|양성) = {posterior_from_table(t):.1%}")
+def within_k_sigma(x, k):
+    return float(np.mean(np.abs(standardize(x)) < k))
+
+def uniform_sums(m, size, seed=0):
+    rng = np.random.default_rng(seed)
+    return rng.random((size, m)).sum(axis=1)
+
+print(np.round(standardize([2, 4, 4, 4, 5, 5, 7, 9]), 2))
+for m in (1, 2, 12):
+    sums = uniform_sums(m, 100_000)
+    ratios = [round(float(within_k_sigma(sums, k)), 3) for k in (1, 2, 3)]
+    print(f"m={m:2d}: 평균 {sums.mean():.3f}, 표준편차 {sums.std():.3f}, ±1·2·3σ 안 비율 {ratios}")
+`,
+    },
+    {
+      id: "w1-lab-power",
+      sectionId: "rank-eigen",
+      title: "거듭제곱법과 저랭크 근사(에카르트-영 정리)",
+      tier: "advanced",
+      prompt: `
+「계수·노름·고유값·SVD」의 두 아이디어를 \`np.linalg.eig\` 없이 확인합니다.
+
+**1. 거듭제곱법(power iteration).** 임의의 벡터 $v$를 고유벡터들의 합 $v = \\sum_i c_i u_i$로 쓰면 $A^k v = \\sum_i c_i \\lambda_i^k u_i$입니다. 절댓값이 가장 큰 고유값 $\\lambda_1$의 성분이 나머지보다 $(\\lambda_1/\\lambda_i)^k$배씩 빨리 커지므로, $v \\leftarrow Av / \\lVert Av \\rVert$를 반복하면 $v$는 $u_1$ 방향으로 모입니다. 그때 고유값은 레일리 몫 $\\lambda = v^\\top A v$($v$는 단위벡터)입니다. 구글 PageRank, 신경망 가중치의 최대 특이값을 추정하는 스펙트럼 정규화가 이 방법을 씁니다.
+
+**2. 저랭크 근사.** \`low_rank(M, r)\`는 SVD $M = U\\Sigma V^\\top$에서 큰 특이값 $r$개만 남긴 $U_r \\Sigma_r V_r^\\top$입니다. 에카르트-영 정리에 따르면 이것이 랭크 $r$ 행렬 중 $M$에 가장 가까운 행렬이고, 오차의 프로베니우스 노름은 버린 특이값들로 정해집니다.
+
+$$\\lVert M - M_r \\rVert_F = \\sqrt{\\sigma_{r+1}^2 + \\cdots + \\sigma_n^2}$$
+
+2주차 PCA가 "분산이 작은 방향을 버려도 정보 손실이 작다"고 말하는 근거입니다.
+`,
+      starter: py`
+import numpy as np
+
+def power_iteration(A, iters=100, seed=0):
+    """절댓값이 가장 큰 고유값과 그 단위 고유벡터를 거듭제곱법으로 구한다. 반환: (고유값, 고유벡터)"""
+    A = np.asarray(A, dtype=float)
+    v = np.random.default_rng(seed).normal(size=A.shape[0])
+    for _ in range(iters):
+        pass  # TODO: v에 A를 곱한 뒤 길이 1로 정규화합니다.
+    lam = 0.0  # TODO: 레일리 몫 v·(A v)
+    return lam, v
+
+def low_rank(M, r):
+    """M의 특이값 중 큰 r개만 남긴 근사 행렬"""
+    M = np.asarray(M, dtype=float)
+    U, S, Vt = np.linalg.svd(M, full_matrices=False)
+    return np.zeros_like(M)  # TODO: U의 앞 r개 열 · diag(S의 앞 r개) · Vt의 앞 r개 행
+
+lam, v = power_iteration([[2, 1], [1, 2]])
+print("최대 고유값:", round(lam, 6), " 고유벡터:", np.round(v, 4))
+
+M = np.array([[3.0, 1.0], [1.0, 3.0], [0.0, 2.0]])
+S = np.linalg.svd(M, compute_uv=False)
+print("특이값:", np.round(S, 4))
+print("랭크 1 근사 오차:", round(float(np.linalg.norm(M - low_rank(M, 1))), 4), " 버린 특이값:", round(float(S[1]), 4))
+`,
+      tests: py`
+import numpy as np
+
+@test("[[2, 1], [1, 2]]의 최대 고유값 3, 고유벡터 ∝ [1, 1]")
+def _():
+    lam, v = power_iteration([[2, 1], [1, 2]])
+    assert approx(lam, 3.0), f"고유값: {lam}"
+    assert approx(np.abs(v), [2 ** -0.5, 2 ** -0.5], 1e-6), f"고유벡터: {v}"
+
+@test("3×3 대칭행렬: A v = λ v이고 λ는 가장 큰 고유값")
+def _():
+    A = np.array([[4.0, 1.0, 0.0], [1.0, 3.0, 1.0], [0.0, 1.0, 2.0]])
+    lam, v = power_iteration(A, iters=200)
+    assert approx(lam, np.linalg.eigvalsh(A).max(), 1e-6), f"고유값: {lam}"
+    assert approx(A @ v, lam * v, 1e-6) and approx(np.linalg.norm(v), 1.0), "A v ≠ λ v 이거나 단위벡터가 아닙니다."
+
+@test("full rank까지 남기면 원래 행렬 그대로")
+def _():
+    M = np.array([[3.0, 1.0], [1.0, 3.0], [0.0, 2.0]])
+    assert approx(low_rank(M, 2), M), "랭크 2 근사가 원래 행렬과 다릅니다."
+
+@test("에카르트-영: 오차 = √(버린 특이값 제곱의 합), 랭크 = r")
+def _():
+    M = np.random.default_rng(1).normal(size=(6, 4))
+    S = np.linalg.svd(M, compute_uv=False)
+    for r in (1, 2, 3):
+        Mr = np.asarray(low_rank(M, r))
+        assert Mr.shape == M.shape, f"shape: {Mr.shape}"
+        assert np.linalg.matrix_rank(Mr) == r, f"r={r}: 랭크 {np.linalg.matrix_rank(Mr)}"
+        assert approx(np.linalg.norm(M - Mr), np.sqrt(np.sum(S[r:] ** 2))), f"r={r}: 오차가 이론값과 다릅니다."
+
+@test("SVD 근사가 '앞 r개 열만 남기기'보다 낫다")
+def _():
+    M = np.random.default_rng(2).normal(size=(5, 5))
+    naive = M.copy()
+    naive[:, 2:] = 0                       # 열 두 개만 남긴 랭크 2 행렬
+    assert np.linalg.norm(M - low_rank(M, 2)) < np.linalg.norm(M - naive)
+`,
+      hints: [
+        "반복문 안에서 `v = A @ v` 다음 `v = v / np.linalg.norm(v)`입니다. 정규화하지 않으면 값이 $\\lambda_1^k$로 커져 넘칩니다.",
+        "레일리 몫은 `lam = v @ A @ v`입니다. `v`가 단위벡터이므로 분모 `v @ v`는 1입니다.",
+        "`U[:, :r] @ np.diag(S[:r]) @ Vt[:r]`가 랭크 r 근사입니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def power_iteration(A, iters=100, seed=0):
+    A = np.asarray(A, dtype=float)
+    v = np.random.default_rng(seed).normal(size=A.shape[0])
+    for _ in range(iters):
+        v = A @ v
+        v = v / np.linalg.norm(v)
+    lam = float(v @ A @ v)
+    return lam, v
+
+def low_rank(M, r):
+    M = np.asarray(M, dtype=float)
+    U, S, Vt = np.linalg.svd(M, full_matrices=False)
+    return U[:, :r] @ np.diag(S[:r]) @ Vt[:r]
+
+lam, v = power_iteration([[2, 1], [1, 2]])
+print("최대 고유값:", round(lam, 6), " 고유벡터:", np.round(v, 4))
+
+M = np.array([[3.0, 1.0], [1.0, 3.0], [0.0, 2.0]])
+S = np.linalg.svd(M, compute_uv=False)
+print("특이값:", np.round(S, 4))
+print("랭크 1 근사 오차:", round(float(np.linalg.norm(M - low_rank(M, 1))), 4), " 버린 특이값:", round(float(S[1]), 4))
+`,
+    },
+    {
+      id: "w1-lab-mle",
+      sectionId: "mle-map",
+      title: "MLE·MAP의 닫힌 해와 분산 추정의 편향",
+      tier: "advanced",
+      prompt: `
+「이산확률분포와 가능도: MLE와 MAP」에서 격자 탐색으로 찾은 값을 **닫힌 형태의 해**로 구하고, 최대가능도 추정이 언제 치우치는지 확인합니다.
+
+1. \`bernoulli_mle(xs)\`: 0/1 관측의 MLE $\\hat p = k/n$
+2. \`beta_map(k, n, a, b)\`: 사전분포 $\\text{Beta}(a, b)$의 로그 $(a-1)\\log p + (b-1)\\log(1-p)$를 로그가능도에 더해 미분하면
+$$\\hat p_{\\text{MAP}} = \\frac{k + a - 1}{n + a + b - 2}$$
+   입니다. $a = b = 1$(균등 사전)이면 MLE와 같고, $\\text{Beta}(2,2)$는 "앞면·뒷면을 한 번씩 더 본 것"처럼 작동합니다.
+3. \`gaussian_mle(xs)\`: 정규분포의 MLE는 $\\hat\\mu = \\bar x$, $\\hat\\sigma^2 = \\frac{1}{n}\\sum_i (x_i - \\bar x)^2$입니다(\`n\`으로 나눔).
+4. \`mean_mle_var(n, trials, seed)\`: $\\mathcal{N}(0, 1)$에서 크기 $n$인 표본을 \`trials\`번 뽑아 \`gaussian_mle\`의 분산 추정치를 평균 냅니다. 참값 1이 아니라 $\\frac{n-1}{n}$에 가깝게 나옵니다. $\\hat\\mu$를 같은 데이터로 추정해 $\\bar x$가 데이터 쪽으로 붙기 때문이며, 그래서 표본분산은 $n - 1$로 나눕니다(베셀 보정).
+`,
+      starter: py`
+import numpy as np
+
+def bernoulli_mle(xs):
+    return 0.0  # TODO: 1의 비율
+
+def beta_map(k, n, a=2, b=2):
+    return 0.0  # TODO: (k + a - 1) / (n + a + b - 2)
+
+def gaussian_mle(xs):
+    """반환: (평균, n으로 나눈 분산)"""
+    return 0.0, 0.0  # TODO
+
+def mean_mle_var(n, trials=5000, seed=0):
+    rng = np.random.default_rng(seed)
+    total = 0.0
+    for _ in range(trials):
+        sample = rng.normal(0, 1, n)
+        # TODO: gaussian_mle(sample)의 분산을 total에 더합니다.
+    return total / trials
+
+print("MLE:", bernoulli_mle([1, 1, 0, 1, 0, 1, 1, 1, 0, 1]))
+print("MAP Beta(2,2):", beta_map(7, 10), " 3번 중 3번:", bernoulli_mle([1, 1, 1]), "→", beta_map(3, 3))
+print("정규 MLE:", gaussian_mle([2, 4, 4, 4, 5, 5, 7, 9]))
+for n in (2, 5, 20):
+    print(f"n={n:2d}: 분산 MLE의 평균 {mean_mle_var(n):.3f}  (n-1)/n = {(n - 1) / n:.3f}")
+`,
+      tests: py`
+@test("베르누이 MLE: 10번 중 7번 → 0.7")
+def _():
+    assert approx(bernoulli_mle([1, 1, 0, 1, 0, 1, 1, 1, 0, 1]), 0.7)
+
+@test("Beta(2,2) MAP: 7/10 → 8/12, 3/3 → 0.8")
+def _():
+    assert approx(beta_map(7, 10, 2, 2), 8 / 12) and approx(beta_map(3, 3, 2, 2), 0.8), f"{beta_map(7, 10, 2, 2)}, {beta_map(3, 3, 2, 2)}"
+
+@test("균등 사전 Beta(1,1)이면 MAP = MLE")
+def _():
+    assert approx(beta_map(7, 10, 1, 1), 0.7) and approx(beta_map(3, 3, 1, 1), 1.0)
+
+@test("데이터가 많아지면 사전의 영향이 줄어든다")
+def _():
+    assert abs(beta_map(700, 1000) - 0.7) < 1e-3 < abs(beta_map(7, 10) - 0.7)
+
+@test("정규분포 MLE: [2, 4, 4, 4, 5, 5, 7, 9] → (5, 4)")
+def _():
+    mu, var = gaussian_mle([2, 4, 4, 4, 5, 5, 7, 9])
+    assert approx(mu, 5.0) and approx(var, 4.0), f"결과: {(mu, var)}"
+
+@test("분산 MLE는 (n-1)/n만큼 작게 치우친다 (n=5 → ≈ 0.8)")
+def _():
+    got = mean_mle_var(5, trials=5000, seed=0)
+    assert abs(got - 0.8) < 0.03, f"평균: {got:.3f}"
+    assert abs(mean_mle_var(2, trials=5000, seed=1) - 0.5) < 0.03
+`,
+      hints: [
+        "`bernoulli_mle`는 `sum(xs) / len(xs)`입니다.",
+        "`gaussian_mle`는 평균 `mu = sum(xs) / len(xs)`를 먼저 구하고 `sum((x - mu) ** 2 for x in xs) / len(xs)`를 계산합니다. NumPy를 쓰면 `np.mean`, `np.var`(기본이 n으로 나눔)입니다.",
+        "`mean_mle_var`의 반복문 안은 `total += gaussian_mle(sample)[1]`입니다.",
+      ],
+      solution: py`
+import numpy as np
+
+def bernoulli_mle(xs):
+    return sum(xs) / len(xs)
+
+def beta_map(k, n, a=2, b=2):
+    return (k + a - 1) / (n + a + b - 2)
+
+def gaussian_mle(xs):
+    mu = sum(xs) / len(xs)
+    return mu, sum((x - mu) ** 2 for x in xs) / len(xs)
+
+def mean_mle_var(n, trials=5000, seed=0):
+    rng = np.random.default_rng(seed)
+    total = 0.0
+    for _ in range(trials):
+        sample = rng.normal(0, 1, n)
+        total += gaussian_mle(sample)[1]
+    return total / trials
+
+print("MLE:", bernoulli_mle([1, 1, 0, 1, 0, 1, 1, 1, 0, 1]))
+print("MAP Beta(2,2):", beta_map(7, 10), " 3번 중 3번:", bernoulli_mle([1, 1, 1]), "→", beta_map(3, 3))
+print("정규 MLE:", gaussian_mle([2, 4, 4, 4, 5, 5, 7, 9]))
+for n in (2, 5, 20):
+    print(f"n={n:2d}: 분산 MLE의 평균 {mean_mle_var(n):.3f}  (n-1)/n = {(n - 1) / n:.3f}")
 `,
     },
     {
       id: "w1-lab-entropy",
       sectionId: "entropy",
       title: "엔트로피·교차 엔트로피·KL 발산 구현",
-      tier: "supplement",
+      tier: "advanced",
       prompt: `
 「엔트로피·교차 엔트로피·KL 발산」의 세 정의를 밑이 2인 로그(비트)로 구현합니다.
 
@@ -595,93 +1244,135 @@ print("KL(fair‖biased) =", kl(fair, biased), " KL(biased‖fair) =", kl(biased
 `,
     },
     {
-      id: "w1-lab-gd",
-      sectionId: "gradient-descent",
-      title: "경사하강법 함수와 학습률 진단기",
-      tier: "supplement",
+      id: "w1-lab-condition",
+      sectionId: "gd-convergence",
+      title: "조건수로 학습률과 수렴 스텝 수 예측하기",
+      tier: "advanced",
       prompt: `
-「미분과 경사하강법」의 갱신식 $w \\leftarrow w - \\eta \\, \\dfrac{dL}{dw}$을 어떤 손실에도 쓸 수 있는 함수로 만들고, 배율 $(1 - 2\\eta)$로 학습률을 진단합니다.
+「경사하강법의 수렴 조건과 조건수」의 결론을 함수로 만들어, **실제로 돌려 보지 않고** 학습률의 상한과 필요한 스텝 수를 예측합니다. 이차 손실 $L(w) = \\frac{1}{2}(w - w^*)^\\top H (w - w^*)$에서 방향별 곡률은 헤세 행렬 $H$의 고유값입니다.
 
-1. \`gradient_descent(grad, w0, lr, steps)\`: 기울기 함수 \`grad\`를 받아 \`steps\`번 갱신하고, **매 스텝 갱신 뒤의 $w$**를 담은 리스트를 돌려줍니다.
-2. \`diagnose(lr)\`: $L(w) = (w-3)^2$에서 오차 $w - 3$이 매 스텝 $(1 - 2\\eta)$배가 된다는 사실을 이용해 \`"수렴"\`, \`"진동하며 수렴"\`, \`"발산"\` 중 하나를 돌려줍니다. 배율의 절댓값이 1 이상이면 0으로 줄지 않으므로 \`"발산"\`으로 분류합니다.
+1. \`curvatures(H)\`: 대칭행렬 $H$의 고유값(오름차순)
+2. \`max_stable_lr(a)\` $= 2 / a_{\\max}$, \`best_lr(a)\` $= 2 / (a_{\\max} + a_{\\min})$
+3. \`contraction(lr, a)\` $= \\max_i |1 - \\eta a_i|$: 한 스텝에 오차가 최대 몇 배가 되는가. 1 이상이면 발산합니다.
+4. \`steps_needed(a, eps)\`: \`best_lr\`에서 오차가 처음으로 $\\varepsilon$배 **미만**이 되는 스텝 수 $t$, 즉 $\\rho^t < \\varepsilon$인 가장 작은 $t$ ($\\rho$는 그때의 \`contraction\`). $\\rho = 0$이면 1스텝입니다.
+5. \`newton_step(H, g, w)\` $= w - H^{-1} g$ (\`np.linalg.solve\`로 역행렬 없이 계산)
+
+본문의 결과(조건수 1·10·100·1000에서 1·69·691·6908스텝, \`lr=0.11\`에서 발산)를 공식만으로 다시 얻는 것이 목표입니다.
 `,
       starter: py`
-def gradient_descent(grad, w0, lr, steps):
-    """w ← w - lr * grad(w)를 steps번 반복하고, 매 스텝 뒤의 w를 담은 리스트를 돌려준다"""
-    w, history = w0, []
-    for _ in range(steps):
-        # TODO: 갱신식을 적용하고 history에 w를 추가합니다.
-        pass
-    return history
+import math
+import numpy as np
 
-def diagnose(lr):
-    """L(w) = (w-3)² 에서 학습률 lr의 수렴 양상: "수렴" / "진동하며 수렴" / "발산" """
-    factor = 1 - 2 * lr
-    # TODO: factor의 부호와 크기로 판단합니다.
-    return ""
+def curvatures(H):
+    return np.zeros(len(H))  # TODO: 대칭행렬의 고유값 (np.linalg.eigvalsh)
 
-grad = lambda w: 2 * (w - 3)
-print([round(w, 4) for w in gradient_descent(grad, 0.0, 0.1, 5)])
-for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
-    print(f"lr={lr}: {diagnose(lr)}")
+def max_stable_lr(a):
+    return 0.0  # TODO
+
+def best_lr(a):
+    return 0.0  # TODO
+
+def contraction(lr, a):
+    return 0.0  # TODO: max |1 - lr * a_i|
+
+def steps_needed(a, eps=1e-6):
+    rho = contraction(best_lr(a), a)
+    # TODO: rho == 0이면 1, 아니면 rho ** t < eps 인 가장 작은 t
+    return 0
+
+def newton_step(H, g, w):
+    return np.asarray(w, dtype=float)  # TODO: w - H⁻¹ g
+
+a = [2.0, 20.0]          # L = (w1 - 1)² + 10(w2 + 2)²의 곡률
+print("안정 상한:", max_stable_lr(a), " 최선:", round(best_lr(a), 4))
+for lr in (0.05, 0.09, 0.11):
+    print(f"lr={lr}: 배율 {contraction(lr, a):.2f}")
+for kappa in (1, 10, 100, 1000):
+    print(f"κ={kappa:5d}: {steps_needed([float(kappa), 1.0])}스텝")
+w = np.array([5.0, 5.0])
+g = np.array([2 * (w[0] - 1), 20 * (w[1] + 2)])
+print("뉴턴 1스텝:", newton_step(np.diag(a), g, w))
 `,
       tests: py`
-grad = lambda w: 2 * (w - 3)
+import numpy as np
 
-@test("첫 스텝: w0=0, lr=0.1 → 0.6")
+@test("헤세 행렬 [[3, 1], [1, 3]]의 곡률 = [2, 4]")
 def _():
-    h = gradient_descent(grad, 0.0, 0.1, 1)
-    assert len(h) == 1 and approx(h[0], 0.6), f"history: {h}"
+    assert approx(curvatures([[3.0, 1.0], [1.0, 3.0]]), [2.0, 4.0]), f"결과: {curvatures([[3.0, 1.0], [1.0, 3.0]])}"
 
-@test("30스텝 뒤 3에 가까워진다")
+@test("곡률 [2, 20]: 안정 상한 0.1, 최선 학습률 2/22")
 def _():
-    h = gradient_descent(grad, 0.0, 0.1, 30)
-    assert len(h) == 30 and abs(h[-1] - 3) < 0.01, f"마지막 w: {h[-1] if h else None}"
+    assert approx(max_stable_lr([2, 20]), 0.1) and approx(best_lr([2, 20]), 2 / 22)
 
-@test("오차가 매 스텝 (1 - 2·lr)배가 된다 (lr=0.2)")
+@test("본문 실험과 일치: lr=0.09 수렴(배율 < 1), lr=0.11 발산(배율 1.2)")
 def _():
-    errs = [w - 3 for w in gradient_descent(grad, 0.0, 0.2, 3)]
-    assert approx(errs, [-1.8, -1.08, -0.648]), f"오차: {errs}"
+    assert contraction(0.09, [2, 20]) < 1, f"0.09: {contraction(0.09, [2, 20])}"
+    assert approx(contraction(0.11, [2, 20]), 1.2), f"0.11: {contraction(0.11, [2, 20])}"
 
-@test("다른 손실의 기울기도 받는다: L = w² + 4w + 1")
+@test("최선 학습률의 배율 = (κ-1)/(κ+1)")
 def _():
-    h = gradient_descent(lambda w: 2 * w + 4, 1.0, 0.1, 1)
-    assert approx(h[0], 0.4), f"history: {h}"
+    for amax, amin in [(20.0, 2.0), (100.0, 1.0), (7.0, 3.0)]:
+        k = amax / amin
+        assert approx(contraction(best_lr([amax, amin]), [amax, amin]), (k - 1) / (k + 1)), f"{amax}, {amin}"
 
-@test("진단: 0.1 수렴, 0.9 진동하며 수렴, 1.1 발산")
+@test("필요 스텝 수: κ = 1·10·100·1000 → 1·69·691·6908")
 def _():
-    got = [diagnose(lr) for lr in (0.1, 0.9, 1.1)]
-    assert got == ["수렴", "진동하며 수렴", "발산"], f"결과: {got}"
+    got = [steps_needed([float(k), 1.0]) for k in (1, 10, 100, 1000)]
+    assert got == [1, 69, 691, 6908], f"결과: {got}"
 
-@test("경계값: 0.5는 한 번에 도착(수렴), 1.0은 제자리 진동(발산)")
+@test("예측이 실제 경사하강법 시뮬레이션과 같다 (κ = 50)")
 def _():
-    assert diagnose(0.5) == "수렴" and diagnose(1.0) == "발산", f"{diagnose(0.5)}, {diagnose(1.0)}"
+    a = np.array([50.0, 1.0])
+    lr, err, t = 2 / 51, np.ones(2), 0
+    while np.abs(err).max() >= 1e-6:
+        err, t = (1 - lr * a) * err, t + 1
+    assert steps_needed([50.0, 1.0]) == t, f"예측 {steps_needed([50.0, 1.0])}, 실제 {t}"
+
+@test("뉴턴 방법은 한 스텝에 (1, -2)에 도착한다")
+def _():
+    w = np.array([5.0, 5.0])
+    g = np.array([2 * (w[0] - 1), 20 * (w[1] + 2)])
+    assert approx(newton_step(np.diag([2.0, 20.0]), g, w), [1.0, -2.0])
 `,
       hints: [
-        "반복문 안에서 `w = w - lr * grad(w)`로 갱신한 뒤 `history.append(w)`를 합니다.",
-        "배율이 0 이상 1 미만이면 같은 부호로 줄어들고, -1과 0 사이면 부호가 번갈아 바뀌며 줄어듭니다.",
-        "`if abs(factor) >= 1: return \"발산\"`을 먼저 검사하고, 그다음 `factor < 0`이면 진동하며 수렴, 아니면 수렴입니다.",
+        "`np.linalg.eigvalsh(np.asarray(H, dtype=float))`는 대칭행렬의 고유값을 오름차순으로 돌려줍니다.",
+        "`contraction`은 `max(abs(1 - lr * ai) for ai in a)`입니다. `best_lr`에서는 가장 가파른 방향과 가장 완만한 방향의 배율 절댓값이 같아집니다.",
+        "$\\rho^t < \\varepsilon$의 양변에 로그를 취하면 $t > \\ln\\varepsilon / \\ln\\rho$입니다($\\ln\\rho < 0$이라 부등호가 뒤집힘). 그런 가장 작은 정수는 `math.floor(math.log(eps) / math.log(rho)) + 1`입니다.",
       ],
       solution: py`
-def gradient_descent(grad, w0, lr, steps):
-    w, history = w0, []
-    for _ in range(steps):
-        w = w - lr * grad(w)
-        history.append(w)
-    return history
+import math
+import numpy as np
 
-def diagnose(lr):
-    factor = 1 - 2 * lr
-    if abs(factor) >= 1:
-        return "발산"
-    if factor < 0:
-        return "진동하며 수렴"
-    return "수렴"
+def curvatures(H):
+    return np.linalg.eigvalsh(np.asarray(H, dtype=float))
 
-grad = lambda w: 2 * (w - 3)
-print([round(w, 4) for w in gradient_descent(grad, 0.0, 0.1, 5)])
-for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
-    print(f"lr={lr}: {diagnose(lr)}")
+def max_stable_lr(a):
+    return 2 / max(a)
+
+def best_lr(a):
+    return 2 / (max(a) + min(a))
+
+def contraction(lr, a):
+    return max(abs(1 - lr * ai) for ai in a)
+
+def steps_needed(a, eps=1e-6):
+    rho = contraction(best_lr(a), a)
+    if rho == 0:
+        return 1
+    return math.floor(math.log(eps) / math.log(rho)) + 1
+
+def newton_step(H, g, w):
+    return np.asarray(w, dtype=float) - np.linalg.solve(np.asarray(H, dtype=float), np.asarray(g, dtype=float))
+
+a = [2.0, 20.0]
+print("안정 상한:", max_stable_lr(a), " 최선:", round(best_lr(a), 4))
+for lr in (0.05, 0.09, 0.11):
+    print(f"lr={lr}: 배율 {contraction(lr, a):.2f}")
+for kappa in (1, 10, 100, 1000):
+    print(f"κ={kappa:5d}: {steps_needed([float(kappa), 1.0])}스텝")
+w = np.array([5.0, 5.0])
+g = np.array([2 * (w[0] - 1), 20 * (w[1] + 2)])
+print("뉴턴 1스텝:", newton_step(np.diag(a), g, w))
 `,
     },
   ],
@@ -724,17 +1415,6 @@ for lr in (0.01, 0.1, 0.5, 0.9, 1.1):
       answer: 1,
       explanation:
         "배율은 $1 - 2\\eta = 1 - 1.5 = -0.5$입니다. 절댓값이 1보다 작으니 수렴하지만, 음수이므로 최솟값을 매번 건너뛰며 좌우로 진동합니다. $\\eta = 0.5$이면 배율이 0이라 한 번에 도착하고, $\\eta > 1$이면 절댓값이 1을 넘어 발산합니다.",
-    },
-    {
-      kind: "choice",
-      id: "w1-drill-entropy-mask",
-      tier: "core",
-      sectionId: "entropy",
-      question: "엔트로피 구현의 `p = p[p > 0]` 줄을 지우고 `entropy([1.0, 0.0])`을 계산하면?",
-      choices: ["0.0이 정상적으로 나온다", "`nan`이 나온다. $0 \\cdot \\log 0$이 `0 * -inf = nan`이 되기 때문이다", "1.0이 나온다", "`ZeroDivisionError`가 발생한다"],
-      answer: 1,
-      explanation:
-        "NumPy에서 `np.log2(0)`은 `-inf`이고 `0 * -inf`는 `nan`입니다. 수학에서는 극한으로 $0 \\cdot \\log 0 = 0$이라 정의하므로, 코드에서도 확률이 0인 항을 빼고 더해야 정의와 같아집니다.",
     },
     {
       kind: "predict",
@@ -823,15 +1503,159 @@ for step in range(3):
       keyPoints: ["1%: TP 99명, FP 495명", "10%: TP 990명, FP 450명", "사후확률 = TP / (TP + FP)", "기저율이 낮으면 FP의 절대 수가 TP보다 많아진다"],
     },
     {
-      kind: "descriptive",
-      id: "w1-drill-diagnose-limit",
+      kind: "choice",
+      id: "w1-drill-chain",
       tier: "core",
       sectionId: "gradient-descent",
+      question: "입력 $x$, 정답 $y$인 데이터 한 점의 손실 $L(w) = (wx - y)^2$을 $w$로 미분한 결과는?",
+      choices: ["$2(wx - y)$", "$2(wx - y)\\,x$", "$2wx$", "$(wx - y)\\,x^2$"],
+      answer: 1,
+      explanation:
+        "안쪽을 $u = wx - y$로 두면 $L = u^2$입니다. 연쇄법칙으로 $\\dfrac{dL}{dw} = \\dfrac{dL}{du}\\cdot\\dfrac{du}{dw} = 2u \\cdot x = 2(wx-y)x$입니다. $2(wx-y)$만 쓰면 안쪽 함수의 미분 $x$를 빠뜨린 것입니다. $x=2,\\ y=6,\\ w=1$이면 $2(2-6)\\cdot 2 = -16$입니다.",
+    },
+    {
+      kind: "predict",
+      id: "w1-drill-matvec",
+      tier: "core",
+      sectionId: "vectors",
+      code: py`
+import numpy as np
+W = np.array([[1, 2],
+              [3, 4],
+              [0, -1]])
+x = np.array([1, 1])
+print(W @ x, (W @ x).shape)
+`,
+      expected: "[ 3  7 -1] (3,)",
+      explanation:
+        "$Wx$의 각 성분은 $W$의 한 행과 $x$의 내적이라 $[1+2,\\ 3+4,\\ 0-1] = [3, 7, -1]$입니다. $3 \\times 2$ 행렬에 길이 2인 벡터를 곱하면 결과의 길이는 행 개수인 3입니다. NumPy는 정수 배열의 자릿수를 맞춰 출력하므로 `[ 3  7 -1]`처럼 공백이 들어갑니다.",
+    },
+    {
+      kind: "predict",
+      id: "w1-drill-class-self",
+      tier: "supplement",
+      sectionId: "python-advanced",
+      code: py`
+class Counter:
+    def __init__(self):
+        self.n = 0
+
+    def add(self, k=1):
+        self.n += k
+        return self
+
+a = Counter()
+b = Counter()
+a.add().add(5)
+b.add()
+print(a.n, b.n)
+`,
+      expected: "6 1",
+      explanation:
+        "`add`가 `self`(호출한 객체 자신)를 돌려주므로 `a.add().add(5)`는 `a`에 1을 더한 뒤 같은 `a`에 5를 더합니다. `a`와 `b`는 같은 클래스로 만든 별개의 객체라 `self.n`을 따로 가지므로 `b.n`은 1입니다.",
+    },
+    {
+      kind: "predict",
+      id: "w1-drill-matmul-order",
+      tier: "supplement",
+      sectionId: "basis-matrix",
+      code: py`
+import numpy as np
+A = np.array([[1, 2], [0, 1]])
+B = np.array([[1, 0], [3, 1]])
+print((A @ B)[0, 0], (B @ A)[0, 0])
+`,
+      expected: "7 1",
+      explanation:
+        "$(AB)_{00}$은 $A$의 첫 행 $[1, 2]$와 $B$의 첫 열 $[1, 3]$의 내적이라 $1 + 6 = 7$, $(BA)_{00}$은 $B$의 첫 행 $[1, 0]$과 $A$의 첫 열 $[1, 0]$의 내적이라 1입니다. 행렬 곱은 순서를 바꾸면 결과가 달라집니다($AB \\ne BA$).",
+    },
+    {
+      kind: "choice",
+      id: "w1-drill-68",
+      tier: "supplement",
+      sectionId: "distributions",
+      question: "성인 키가 평균 170cm, 표준편차 6cm인 정규분포를 따른다고 하자. 키가 164cm 이상 176cm 미만인 사람의 비율에 가장 가까운 것은?",
+      choices: ["약 50%", "약 68%", "약 95%", "약 99.7%"],
+      answer: 1,
+      explanation:
+        "164~176cm는 $\\mu \\pm \\sigma$ 구간입니다. 정규분포에서는 약 68%가 $\\mu \\pm \\sigma$, 약 95%가 $\\mu \\pm 2\\sigma$(158~182cm), 약 99.7%가 $\\mu \\pm 3\\sigma$ 안에 듭니다. 거꾸로 말해 키가 182cm 이상인 사람은 약 2.5%입니다.",
+    },
+    {
+      kind: "descriptive",
+      id: "w1-drill-reproduce",
+      tier: "supplement",
+      sectionId: "dev-env",
       question:
-        "`diagnose(lr)`가 학습률만 보고 수렴 여부를 판정할 수 있는 이유는 무엇입니까? 또 이 방법을 신경망 손실에 그대로 쓸 수 없는 이유를 변수가 두 개인 실습(협곡 모양 손실)과 연결해 설명하십시오.",
+        "내 컴퓨터에서 잘 돌던 노트북을 동료가 실행했더니 숫자가 다르게 나오거나 오류가 났습니다. 원인이 될 수 있는 것을 세 가지 들고, 각각을 막는 방법을 이번 주에 배운 도구로 설명하십시오.",
       modelAnswer:
-        "$L = (w-3)^2$은 기울기가 오차에 비례하는 2차 함수라, 어느 위치에서든 오차가 정확히 $(1-2\\eta)$배가 됩니다. 그래서 배율만 보면 수렴·진동·발산을 판정할 수 있습니다. 그러나 실제 손실은 곡률(2차 미분)이 위치와 방향마다 다릅니다. 변수가 두 개인 실습에서도 가파른 방향의 배율은 $(1-20\\eta)$, 완만한 방향은 $(1-2\\eta)$로 달라 같은 학습률이 한 방향에서는 발산하고 다른 방향에서는 느리게 수렴했습니다. 신경망에서는 이런 방향이 수백만 개이고 학습 중에 곡률도 바뀌므로 하나의 배율로 판단할 수 없습니다.",
+        "첫째, 라이브러리 버전 차이입니다. 같은 함수도 버전에 따라 기본값이나 동작이 다르므로, 프로젝트마다 가상환경(venv)을 만들고 `pip freeze > requirements.txt`로 버전을 고정해 함께 공유합니다. 둘째, 난수입니다. 데이터 생성·초기화·섞기에 난수를 쓰면 실행마다 결과가 달라지므로 `np.random.default_rng(42)`처럼 시드를 고정합니다. 셋째, Jupyter의 실행 순서입니다. 셀을 위아래로 오가며 실행하면 화면에 없는 변수 상태에 의존하게 되므로, 공유 전에 커널을 재시작하고 처음부터 모두 실행(Restart & Run All)해 확인합니다. 코드는 Git으로 커밋해 어떤 버전으로 실행했는지 남깁니다.",
+      keyPoints: ["라이브러리 버전 → venv와 requirements.txt로 고정", "난수 → 시드 고정", "Jupyter 셀 실행 순서·숨은 상태 → 재시작 후 처음부터 실행", "Git으로 코드 버전 기록(데이터 경로 등 환경 차이도 인정)"],
+    },
+    {
+      kind: "choice",
+      id: "w1-drill-entropy-mask",
+      tier: "advanced",
+      sectionId: "entropy",
+      question: "엔트로피 구현의 `p = p[p > 0]` 줄을 지우고 `entropy([1.0, 0.0])`을 계산하면?",
+      choices: ["0.0이 정상적으로 나온다", "`nan`이 나온다. $0 \\cdot \\log 0$이 `0 * -inf = nan`이 되기 때문이다", "1.0이 나온다", "`ZeroDivisionError`가 발생한다"],
+      answer: 1,
+      explanation:
+        "NumPy에서 `np.log2(0)`은 `-inf`이고 `0 * -inf`는 `nan`입니다. 수학에서는 극한으로 $0 \\cdot \\log 0 = 0$이라 정의하므로, 코드에서도 확률이 0인 항을 빼고 더해야 정의와 같아집니다.",
+    },
+    {
+      kind: "descriptive",
+      id: "w1-drill-diagnose-limit",
+      tier: "advanced",
+      sectionId: "gd-convergence",
+      question:
+        "`diagnose(lr)`가 학습률만 보고 수렴 여부를 판정할 수 있는 이유는 무엇입니까? 또 이 방법을 신경망 손실에 그대로 쓸 수 없는 이유를 「경사하강법의 수렴 조건과 조건수」 단계의 두 방향 실험($L = (w_1-1)^2 + 10(w_2+2)^2$)과 연결해 설명하십시오.",
+      modelAnswer:
+        "$L = (w-3)^2$은 기울기가 오차에 비례하는 2차 함수라, 어느 위치에서든 오차가 정확히 $(1-2\\eta)$배가 됩니다. 그래서 배율만 보면 수렴·진동·발산을 판정할 수 있습니다. 그러나 실제 손실은 곡률(2차 미분)이 위치와 방향마다 다릅니다. 두 방향 실험에서도 가파른 방향의 배율은 $(1-20\\eta)$, 완만한 방향은 $(1-2\\eta)$로 달라 같은 학습률이 한 방향에서는 발산하고 다른 방향에서는 느리게 수렴했습니다. 신경망에서는 이런 방향이 수백만 개이고 학습 중에 곡률도 바뀌므로 하나의 배율로 판단할 수 없습니다.",
       keyPoints: ["2차 함수라 오차가 항상 같은 배율로 줄어든다", "곡률은 위치·방향마다 다르다", "협곡 실습의 배율 $(1-20\\eta)$와 $(1-2\\eta)$", "가장 가파른 방향이 학습률 상한을 정한다"],
+    },
+    {
+      kind: "predict",
+      id: "w1-drill-eig",
+      tier: "advanced",
+      sectionId: "rank-eigen",
+      code: py`
+import numpy as np
+A = np.array([[2.0, 1.0],
+              [1.0, 2.0]])
+vals = np.linalg.eigvalsh(A)
+print(vals, round(float(np.prod(vals)), 6), np.trace(A))
+`,
+      expected: "[1. 3.] 3.0 4.0",
+      explanation:
+        "$A$의 고유값은 $[1,1]$ 방향의 3과 $[1,-1]$ 방향의 1이며, 대칭행렬용 `eigvalsh`는 오름차순으로 돌려줍니다. 고유값의 곱은 행렬식($2\\cdot 2 - 1\\cdot 1 = 3$), 합은 대각합(trace, $2 + 2 = 4$)과 같습니다. 이 두 성질로 $2 \\times 2$ 행렬의 고유값을 손으로 검산할 수 있습니다.",
+    },
+    {
+      kind: "choice",
+      id: "w1-drill-map",
+      tier: "advanced",
+      sectionId: "mle-map",
+      question: "동전을 3번 던져 3번 모두 앞면이 나왔다. 앞면 확률 $p$의 MLE와, 사전분포 $\\text{Beta}(2,2)$를 쓴 MAP 추정치는?",
+      choices: ["MLE 1.0, MAP 0.8", "MLE 1.0, MAP 1.0", "MLE 0.75, MAP 0.8", "MLE 0.8, MAP 0.6"],
+      answer: 0,
+      explanation:
+        "MLE는 $k/n = 3/3 = 1.0$으로 \"뒷면은 절대 나오지 않는다\"는 극단적인 결론입니다. $\\text{Beta}(a,b)$ 사전의 MAP는 $\\dfrac{k+a-1}{n+a+b-2} = \\dfrac{3+1}{3+2} = 0.8$로, 앞면과 뒷면을 한 번씩 더 본 것처럼 작동해 데이터가 적을 때의 과신을 완화합니다.",
+    },
+    {
+      kind: "descriptive",
+      id: "w1-drill-kappa",
+      tier: "advanced",
+      sectionId: "gd-convergence",
+      question:
+        "특징이 나이(0~100)와 연봉(0~1억 원) 두 개인 선형회귀를 경사하강법으로 학습했더니, 발산하지 않는 학습률로는 나이의 가중치가 거의 움직이지 않았습니다. 평균제곱오차의 헤세 행렬과 조건수로 원인을 설명하고, 해결책 두 가지를 각각의 원리와 함께 제시하십시오.",
+      modelAnswer:
+        "평균제곱오차 $L = \\frac{1}{n}\\lVert Xw - y\\rVert^2$의 헤세 행렬은 $H = \\frac{2}{n}X^\\top X$이고, 대각 성분은 각 특징 제곱의 평균에 비례합니다. 연봉의 크기는 $10^8$, 나이는 $10^2$ 정도라 곡률이 $10^{16}$ 대 $10^4$ 수준으로 차이 나며 조건수 $\\kappa$가 약 $10^{12}$입니다. 발산하지 않으려면 $\\eta < 2/a_{\\max}$로 연봉 방향에 맞춰야 하는데, 그러면 나이 방향의 배율 $1 - \\eta a_{\\min}$이 사실상 1이라 나이의 가중치가 움직이지 않습니다. 해결책 하나는 특징 표준화로, 각 특징을 평균 0·표준편차 1로 바꾸면 대각 곡률이 같아져 $\\kappa$가 특징 간 상관으로만 정해지는 작은 값이 됩니다. 다른 하나는 곡률에 맞춰 방향마다 걸음을 바꾸는 방법으로, Adam처럼 파라미터별로 기울기 크기를 정규화하는 적응형 최적화기나, 이 문제처럼 작은 이차 문제라면 뉴턴 방법·정규방정식(최소제곱 해)을 쓰면 조건수의 영향을 받지 않습니다.",
+      keyPoints: [
+        "헤세 행렬 $H = \\frac{2}{n}X^\\top X$, 곡률이 특징 스케일의 제곱에 비례",
+        "조건수 κ가 매우 크다(스케일 차이의 제곱)",
+        "학습률은 가장 가파른 방향이 정하고 완만한 방향은 배율이 1에 가깝다",
+        "해결 1: 특징 표준화로 κ를 줄인다",
+        "해결 2: Adam(방향별 걸음)·뉴턴/정규방정식 등 곡률을 반영하는 방법",
+      ],
     },
   ],
 
@@ -839,8 +1663,8 @@ for step in range(3):
     requirements: [
       "`grad`의 TODO 두 줄을 직접 유도한 편미분으로 채우고, 학습 결과 $w \\approx 2$, $b \\approx 1$을 얻는다.",
       "학습률 0.001·0.01·0.1·0.5의 loss 곡선을 로그 축 그래프 하나에 그리고, 수렴 속도와 안정성을 비교해 설명한다.",
-      "`np.linalg.lstsq` 해석해와 경사하강법 결과의 차이를 출력하고, 차이의 원인을 설명한다.",
       "`posterior`를 완성해 유병률 0.1%·1%·10%·30%의 사후확률을 계산하고 기저율의 영향을 설명한다.",
+      "(보충) `np.linalg.lstsq` 해석해와 경사하강법 결과의 차이를 출력하고, 차이의 원인을 설명한다.",
       "시드(42)를 고정해, 실행 환경을 초기화한 뒤 처음부터 실행해도 같은 결과가 나온다.",
     ],
     autoTests: [

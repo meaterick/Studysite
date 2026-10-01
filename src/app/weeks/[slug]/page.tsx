@@ -9,7 +9,7 @@ import { readLabState } from "@/lib/learningStore";
 import { labProgress } from "@/lib/labView";
 import { tierRecord, type TierRecord } from "@/lib/achievement";
 import TierBadge from "@/components/TierBadge";
-import { TIER_INFO, TIER_ORDER, sectionLabel } from "@/content/tiers";
+import { TIER_INFO, TIER_ORDER, sectionLabel, splitTierPrefix } from "@/content/tiers";
 
 type WeekStatusRow = WeekStatus["sections"][number];
 
@@ -110,11 +110,19 @@ export default async function WeekOverviewPage({
         <section id="goals" aria-labelledby="goals-heading">
           <h2 id="goals-heading" className="mb-3 text-xl font-black text-ink">학습 목표</h2>
           <ul className="list-disc space-y-1.5 pl-5 text-[15px] text-ink-secondary">
-            {week.objectives.map((o, i) => (
-              <li key={i}>
-                <Inline text={o} />
-              </li>
-            ))}
+            {week.objectives.map((o, i) => {
+              const { tier, text } = splitTierPrefix(o);
+              return (
+                <li key={i}>
+                  {tier && (
+                    <span className="mr-1.5 align-middle">
+                      <TierBadge tier={tier} compact />
+                    </span>
+                  )}
+                  <Inline text={text} />
+                </li>
+              );
+            })}
           </ul>
         </section>
 

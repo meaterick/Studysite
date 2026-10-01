@@ -133,13 +133,13 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Stanford CS229 Lecture Notes",
         "url": "https://cs229.stanford.edu/main_notes.pdf",
-        "note": "1장 지도학습 도입부: 같은 용어를 수학적으로 정의 (영문, 심화)"
+        "note": "1장 지도학습 도입부: 같은 용어를 수학적으로 정의 (영문, 수식 중심)"
       }
     ]
   },
   "python-basics": {
     "tier": "core",
-    "goal": "변수·자료형·제어문·함수·리스트/튜플/집합/딕셔너리·클래스·예외 처리를 읽고, 짧은 함수를 직접 작성할 수 있다.",
+    "goal": "변수·자료형·제어문·함수·리스트/튜플/집합/딕셔너리·리스트 컴프리헨션을 읽고, 짧은 함수를 직접 작성할 수 있다.",
     "checks": [
       {
         "id": "w1-python-basics-c1",
@@ -196,7 +196,7 @@ const sections: Record<string, SectionMeta> = {
   },
   "dev-tools": {
     "tier": "core",
-    "goal": "가상환경·Colab·Git의 역할을 구분하고, NumPy 배열의 shape·axis·브로드캐스팅을 예측해 계산할 수 있다.",
+    "goal": "NumPy 배열을 만들고 원소별 연산·shape·axis·브로드캐스팅의 결과를 실행 전에 예측할 수 있다.",
     "checks": [
       {
         "id": "w1-dev-tools-c1",
@@ -223,16 +223,16 @@ const sections: Record<string, SectionMeta> = {
         "explanation": "브로드캐스팅은 뒤쪽 축부터 크기를 비교한다. 3과 3이 맞으므로 `(3,)`이 4개 행 모두에 복제되어 적용된다. 반대로 `(4,)`를 빼려 하면 3≠4라 오류가 난다."
       },
       {
-        "id": "w1-dev-tools-c3",
-        "question": "프로젝트 A와 B가 서로 다른 버전의 라이브러리를 필요로 할 때 충돌을 막아주는 도구는?",
+        "id": "w1-dev-tools-c4",
+        "question": "`a = np.array([1, 2, 3])`일 때 `a * a`의 결과는?",
         "choices": [
-          "Git",
-          "가상환경(venv)",
-          "Jupyter Notebook",
-          "Matplotlib"
+          "`[1, 4, 9]`",
+          "`14`",
+          "`[2, 4, 6]`",
+          "`[1, 2, 3, 1, 2, 3]`"
         ],
-        "answer": 1,
-        "explanation": "가상환경은 프로젝트마다 독립된 패키지 설치 공간을 만든다. Git은 코드 변경 이력 관리, Jupyter는 셀 단위 대화형 실행 환경이다."
+        "answer": 0,
+        "explanation": "NumPy 배열끼리의 `*`는 같은 자리끼리 곱하는 원소별 연산이다. 같은 자리끼리 곱해 **모두 더한** 내적은 `a @ a = 14`로 따로 쓴다. 리스트의 `*`(반복)와도 다르다."
       }
     ],
     "quizIds": [],
@@ -246,17 +246,12 @@ const sections: Record<string, SectionMeta> = {
         "title": "NumPy Broadcasting",
         "url": "https://numpy.org/doc/stable/user/basics.broadcasting.html",
         "note": "브로드캐스팅 규칙을 그림으로 설명: 실습의 오류 원인을 확인할 때"
-      },
-      {
-        "title": "Pro Git (한국어판)",
-        "url": "https://git-scm.com/book/ko/v2",
-        "note": "2장 Git의 기초만 읽어도 과제 제출에 충분"
       }
     ]
   },
   "vectors": {
     "tier": "core",
-    "goal": "내적과 코사인 유사도를 손으로 계산하고, 코사인 유사도가 \"방향의 비슷함\"만 재는 이유를 설명할 수 있다.",
+    "goal": "내적·코사인 유사도를 손으로 계산하고, 코사인 유사도가 방향의 비슷함만 재는 이유와 행렬-벡터 곱이 \"행마다 내적\"임을 설명할 수 있다.",
     "checks": [
       {
         "id": "w1-vectors-c1",
@@ -293,6 +288,18 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "코사인 유사도는 내적을 두 벡터의 길이로 나누므로 크기의 영향이 사라진다. 그래서 문서 길이가 달라도 주제의 유사도를 공정하게 비교할 수 있다."
+      },
+      {
+        "id": "w1-vectors-c4",
+        "question": "$W = \\begin{bmatrix}1 & 0\\\\ 2 & 1\\end{bmatrix}$, $x = [3, 4]$일 때 $Wx$는?",
+        "choices": [
+          "$[3, 10]$",
+          "$[11, 4]$",
+          "$[3, 4]$",
+          "$[7, 7]$"
+        ],
+        "answer": 0,
+        "explanation": "$Wx$는 $W$의 각 행과 $x$의 내적이다. 첫 행 $[1, 0]\\cdot[3, 4] = 3$, 둘째 행 $[2, 1]\\cdot[3, 4] = 10$. 열과 내적한 $[11, 4]$는 $W^\\top x$다."
       }
     ],
     "quizIds": [
@@ -309,124 +316,6 @@ const sections: Record<string, SectionMeta> = {
         "title": "Mathematics for Machine Learning (무료 PDF)",
         "url": "https://mml-book.github.io/",
         "note": "3장 해석기하: 내적·노름·각도의 정식 정의"
-      }
-    ]
-  },
-  "basis-matrix": {
-    "tier": "core",
-    "goal": "선형독립·기저·좌표의 관계를 설명하고, 행렬 곱이 함수 합성이라 순서를 바꾸면 결과가 달라지는 이유를 계산으로 보일 수 있다.",
-    "checks": [
-      {
-        "id": "w1-basis-matrix-c1",
-        "question": "기저 $b_1 = [1, 1]$, $b_2 = [1, -1]$로 벡터 $[5, 1]$을 나타낸 좌표 $(c_1, c_2)$는?",
-        "choices": [
-          "$(5, 1)$",
-          "$(3, 2)$",
-          "$(2, 3)$",
-          "$(4, 1)$"
-        ],
-        "answer": 1,
-        "explanation": "$c_1 + c_2 = 5$, $c_1 - c_2 = 1$을 풀면 $c_1 = 3$, $c_2 = 2$. 검산: $3[1,1] + 2[1,-1] = [5, 1]$."
-      },
-      {
-        "id": "w1-basis-matrix-c2",
-        "question": "다음 중 $\\mathbb{R}^2$의 기저가 **될 수 없는** 벡터 쌍은?",
-        "choices": [
-          "$[1, 0], [0, 1]$",
-          "$[1, 1], [1, -1]$",
-          "$[1, 2], [2, 4]$",
-          "$[2, 0], [1, 3]$"
-        ],
-        "answer": 2,
-        "explanation": "$[2,4] = 2[1,2]$이므로 두 벡터가 선형종속이다. 같은 직선 위의 벡터만으로는 평면 전체를 표현할 수 없다."
-      },
-      {
-        "id": "w1-basis-matrix-c3",
-        "question": "$(AB)x$를 계산할 때 $x$에 먼저 적용되는 변환과, $(AB)^\\top$을 올바르게 쓴 것은?",
-        "choices": [
-          "$A$가 먼저 / $A^\\top B^\\top$",
-          "$B$가 먼저 / $B^\\top A^\\top$",
-          "$A$가 먼저 / $B^\\top A^\\top$",
-          "$B$가 먼저 / $A^\\top B^\\top$"
-        ],
-        "answer": 1,
-        "explanation": "$(AB)x = A(Bx)$이므로 오른쪽의 $B$가 먼저 적용된다(함수 합성). 전치하면 순서가 뒤집혀 $(AB)^\\top = B^\\top A^\\top$이 되고, 이는 3주차 역전파에서 기울기가 거꾸로 흐르는 모양과 같다."
-      }
-    ],
-    "quizIds": [
-      "w1-q16",
-      "w1-q8"
-    ],
-    "references": [
-      {
-        "title": "3Blue1Brown — Linear combinations, span, and basis vectors",
-        "url": "https://www.3blue1brown.com/lessons/span",
-        "note": "기저가 좌표계라는 말의 의미를 애니메이션으로"
-      },
-      {
-        "title": "3Blue1Brown — Matrix multiplication as composition",
-        "url": "https://www.3blue1brown.com/lessons/matrix-multiplication",
-        "note": "행렬 곱 = 변환의 합성, 순서가 중요한 이유"
-      }
-    ]
-  },
-  "rank-eigen": {
-    "tier": "core",
-    "goal": "rank와 L1/L2 노름을 계산하고, 고유값·고유벡터를 특성방정식으로 구하며 SVD가 PCA로 이어지는 흐름을 설명할 수 있다.",
-    "checks": [
-      {
-        "id": "w1-rank-eigen-c1",
-        "question": "행렬 $\\begin{bmatrix}1 & 2\\\\ 3 & 6\\end{bmatrix}$의 rank와 역행렬 존재 여부는?",
-        "choices": [
-          "rank 2, 역행렬 있음",
-          "rank 1, 역행렬 없음",
-          "rank 1, 역행렬 있음",
-          "rank 0, 역행렬 없음"
-        ],
-        "answer": 1,
-        "explanation": "두 번째 행이 첫 번째 행의 3배라 선형독립인 행이 1개뿐이다. full rank가 아니면 변환이 정보를 짜부라뜨리므로 역행렬이 없다(행렬식 $1\\cdot6 - 2\\cdot3 = 0$)."
-      },
-      {
-        "id": "w1-rank-eigen-c2",
-        "question": "$A = \\begin{bmatrix}2 & 1\\\\ 1 & 2\\end{bmatrix}$에서 고유값 3에 대응하는 고유벡터는?",
-        "choices": [
-          "$[1, -1]$",
-          "$[1, 1]$",
-          "$[1, 0]$",
-          "$[2, 1]$"
-        ],
-        "answer": 1,
-        "explanation": "$A[1,1]^\\top = [3, 3]^\\top = 3[1,1]^\\top$. 참고로 $[1,-1]$은 고유값 1에 대응한다."
-      },
-      {
-        "id": "w1-rank-eigen-c3",
-        "question": "$a = [-3, 4]$의 L1 노름과 L2 노름은?",
-        "choices": [
-          "L1 $= 1$, L2 $= 5$",
-          "L1 $= 7$, L2 $= 5$",
-          "L1 $= 7$, L2 $= 25$",
-          "L1 $= 5$, L2 $= 7$"
-        ],
-        "answer": 1,
-        "explanation": "L1은 절댓값의 합 $|-3| + |4| = 7$, L2는 $\\sqrt{9 + 16} = 5$. 부호는 절댓값·제곱 때문에 영향이 없다."
-      }
-    ],
-    "quizIds": [
-      "w1-q17",
-      "w1-q18",
-      "w1-q19",
-      "w1-q20"
-    ],
-    "references": [
-      {
-        "title": "3Blue1Brown — Eigenvectors and eigenvalues",
-        "url": "https://www.3blue1brown.com/lessons/eigenvalues",
-        "note": "변환 후에도 방향이 유지되는 벡터를 시각적으로"
-      },
-      {
-        "title": "CS229 Linear Algebra Review",
-        "url": "https://cs229.stanford.edu/section/cs229-linalg.pdf",
-        "note": "rank·노름·고유값분해·대칭행렬 정리 (영문, 심화)"
       }
     ]
   },
@@ -487,8 +376,373 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
-  "mle-map": {
+  "gradient-descent": {
     "tier": "core",
+    "goal": "미분·기울기의 의미를 설명하고, 연쇄법칙으로 손실의 기울기를 구해 경사하강법 갱신을 손과 코드로 계산하며, 학습률에 따른 수렴·진동·발산을 배율 $(1-2\\eta)$로 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w1-gradient-descent-c1",
+        "question": "$L(w) = (w-3)^2$, $w_0 = 0$, $\\eta = 0.1$일 때 첫 스텝 후의 $w_1$은?",
+        "choices": [
+          "$0.3$",
+          "$0.6$",
+          "$-0.6$",
+          "$3$"
+        ],
+        "answer": 1,
+        "explanation": "$dL/dw = 2(w-3) = -6$이므로 $w_1 = 0 - 0.1\\times(-6) = 0.6$."
+      },
+      {
+        "id": "w1-gradient-descent-c2",
+        "question": "$L(w) = (w-3)^2$에서 $\\eta = 0.5$로 경사하강법을 하면?",
+        "choices": [
+          "발산한다",
+          "한 스텝 만에 정확히 $w = 3$에 도착한다",
+          "3의 양쪽을 영원히 진동한다",
+          "전혀 움직이지 않는다"
+        ],
+        "answer": 1,
+        "explanation": "오차 $w-3$이 매 스텝 $(1-2\\eta) = 0$배가 되므로 한 번에 0이 된다. 실제 문제에서는 최적 학습률을 모르므로 이런 일은 드물다."
+      },
+      {
+        "id": "w1-gradient-descent-c3",
+        "question": "기울기 벡터 $\\nabla L$에 대한 설명으로 옳은 것은?",
+        "choices": [
+          "함수가 가장 가파르게 **감소**하는 방향을 가리킨다",
+          "함수가 가장 가파르게 **증가**하는 방향을 가리키므로, 경사하강법은 $-\\nabla L$ 방향으로 움직인다",
+          "항상 길이가 1이다",
+          "파라미터가 하나일 때만 정의된다"
+        ],
+        "answer": 1,
+        "explanation": "기울기는 가장 가파른 증가 방향이다. 손실을 줄이려면 그 반대 방향으로 이동한다: $\\theta \\leftarrow \\theta - \\eta\\nabla_\\theta L$."
+      },
+      {
+        "id": "w1-gradient-descent-c4",
+        "question": "$L(w) = (wx - y)^2$에서 $x = 2$, $y = 6$, $w = 1$일 때 $dL/dw$는?",
+        "choices": [
+          "$-16$",
+          "$-8$",
+          "$16$",
+          "$-4$"
+        ],
+        "answer": 0,
+        "explanation": "연쇄법칙: $dL/dw = 2(wx - y)\\cdot x = 2 \\times (2 - 6) \\times 2 = -16$. 바깥(제곱)의 미분 $2(wx-y)$에 안쪽 $wx - y$의 미분 $x$를 곱한다. $x$를 곱하는 것을 빠뜨리면 $-8$이 된다."
+      }
+    ],
+    "quizIds": [
+      "w1-q3",
+      "w1-q4",
+      "w1-q31"
+    ],
+    "references": [
+      {
+        "title": "3Blue1Brown — Gradient descent, how neural networks learn",
+        "url": "https://www.3blue1brown.com/lessons/gradient-descent",
+        "note": "신경망 학습 관점에서 본 경사하강법"
+      },
+      {
+        "title": "Dive into Deep Learning — Gradient Descent",
+        "url": "https://d2l.ai/chapter_optimization/gd.html",
+        "note": "학습률과 수렴을 코드와 그래프로 (영문, 한국어판은 ko.d2l.ai)"
+      }
+    ]
+  },
+  "python-advanced": {
+    "tier": "supplement",
+    "goal": "클래스로 상태와 동작을 묶고 `self`의 의미를 설명하며, `raise`·`try`/`except`로 오류를 일으키고 다룰 수 있다.",
+    "checks": [
+      {
+        "id": "w1-python-advanced-c1",
+        "question": "`class Perceptron:` 안에 정의한 `def predict(self, x):`를 `p.predict(3)`으로 호출할 때 `self`가 가리키는 것은?",
+        "choices": [
+          "메서드를 호출한 객체 `p` 자신",
+          "클래스 이름 `Perceptron`이라는 문자열",
+          "첫 번째 인자 `3`",
+          "모든 객체가 함께 쓰는 전역 변수"
+        ],
+        "answer": 0,
+        "explanation": "파이썬은 `p.predict(3)`을 `Perceptron.predict(p, 3)`처럼 실행한다. 그래서 `self`는 호출한 객체이고, `self.w`는 그 객체만의 속성이다."
+      },
+      {
+        "id": "w1-python-advanced-c2",
+        "question": "`p1 = Perceptron(w=2, b=1)`, `p2 = Perceptron(w=5, b=0)`일 때 `print(p1.predict(1), p2.predict(1))`의 출력은? (`predict`는 `self.w * x + self.b`)",
+        "choices": [
+          "`3 5`",
+          "`3 3`",
+          "`5 5`",
+          "`7 5`"
+        ],
+        "answer": 0,
+        "explanation": "같은 클래스로 만든 객체라도 속성은 각자 따로 가진다. $2 \\cdot 1 + 1 = 3$, $5 \\cdot 1 + 0 = 5$."
+      },
+      {
+        "id": "w1-python-advanced-c3",
+        "question": "`try:` 블록에서 `ZeroDivisionError`가 발생했는데 `except KeyError:`만 있다면 어떻게 되는가?",
+        "choices": [
+          "예외가 잡히지 않고 프로그램이 멈춘다(호출한 쪽으로 전달된다)",
+          "`except KeyError:` 블록이 실행된다",
+          "오류를 무시하고 다음 줄을 실행한다",
+          "`None`이 자동으로 반환된다"
+        ],
+        "answer": 0,
+        "explanation": "`except` 뒤에 적은 종류의 예외만 잡는다. 종류가 다르면 예외는 그대로 위로 전달되어, 아무도 잡지 않으면 프로그램이 멈춘다."
+      }
+    ],
+    "quizIds": [
+      "w1-q28"
+    ],
+    "references": [
+      {
+        "title": "Python 자습서 — 클래스",
+        "url": "https://docs.python.org/ko/3/tutorial/classes.html",
+        "note": "9.3 \"클래스와의 첫 만남\"까지만 읽어도 충분"
+      },
+      {
+        "title": "Python 자습서 — 에러와 예외",
+        "url": "https://docs.python.org/ko/3/tutorial/errors.html",
+        "note": "try/except/raise와 예외 종류"
+      }
+    ]
+  },
+  "dev-env": {
+    "tier": "supplement",
+    "goal": "모듈·패키지·가상환경, Jupyter·Colab, Git의 add·commit·push 흐름이 각각 어떤 문제를 해결하는지 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w1-dev-tools-c3",
+        "question": "프로젝트 A와 B가 서로 다른 버전의 라이브러리를 필요로 할 때 충돌을 막아주는 도구는?",
+        "choices": [
+          "Git",
+          "가상환경(venv)",
+          "Jupyter Notebook",
+          "Matplotlib"
+        ],
+        "answer": 1,
+        "explanation": "가상환경은 프로젝트마다 독립된 패키지 설치 공간을 만든다. Git은 코드 변경 이력 관리, Jupyter는 셀 단위 대화형 실행 환경이다."
+      },
+      {
+        "id": "w1-dev-env-c2",
+        "question": "작업한 내용을 GitHub 원격 저장소에 올리기까지의 올바른 순서는?",
+        "choices": [
+          "`git add` → `git commit` → `git push`",
+          "`git push` → `git add` → `git commit`",
+          "`git commit` → `git push` → `git add`",
+          "`git clone` → `git push` → `git add`"
+        ],
+        "answer": 0,
+        "explanation": "`add`로 기록할 변경을 고르고(스테이징), `commit`으로 하나의 기록으로 저장한 뒤, `push`로 원격 저장소에 올린다."
+      },
+      {
+        "id": "w1-dev-env-c3",
+        "question": "이 사이트의 브라우저 실행 환경보다 Google Colab을 쓰는 편이 나은 경우는?",
+        "choices": [
+          "GPU가 필요하거나 그래프를 화면에 그려 보고 싶을 때",
+          "짧은 코드 셀 하나를 바로 실행해 볼 때",
+          "설치 없이 파이썬을 써 보고 싶을 때",
+          "NumPy 배열 연산을 연습할 때"
+        ],
+        "answer": 0,
+        "explanation": "이 사이트의 코드는 브라우저(Pyodide) 안에서 화면 없이 실행되고 GPU를 쓰지 않는다. 큰 모델 학습이나 그래프 시각화는 Colab이 적합하다."
+      }
+    ],
+    "quizIds": [
+      "w1-q29"
+    ],
+    "references": [
+      {
+        "title": "Pro Git (한국어판)",
+        "url": "https://git-scm.com/book/ko/v2",
+        "note": "2장 Git의 기초만 읽어도 과제 제출에 충분"
+      },
+      {
+        "title": "Python 문서 — venv: 가상 환경 만들기",
+        "url": "https://docs.python.org/ko/3/library/venv.html",
+        "note": "가상환경 생성·활성화 방법"
+      },
+      {
+        "title": "Google Colab 소개",
+        "url": "https://colab.research.google.com/notebooks/intro.ipynb",
+        "note": "셀 실행, GPU 런타임 설정"
+      }
+    ]
+  },
+  "basis-matrix": {
+    "tier": "supplement",
+    "goal": "선형독립·기저·좌표의 관계를 설명하고, 행렬 곱이 함수 합성이라 순서를 바꾸면 결과가 달라지는 이유를 계산으로 보일 수 있다.",
+    "checks": [
+      {
+        "id": "w1-basis-matrix-c1",
+        "question": "기저 $b_1 = [1, 1]$, $b_2 = [1, -1]$로 벡터 $[5, 1]$을 나타낸 좌표 $(c_1, c_2)$는?",
+        "choices": [
+          "$(5, 1)$",
+          "$(3, 2)$",
+          "$(2, 3)$",
+          "$(4, 1)$"
+        ],
+        "answer": 1,
+        "explanation": "$c_1 + c_2 = 5$, $c_1 - c_2 = 1$을 풀면 $c_1 = 3$, $c_2 = 2$. 검산: $3[1,1] + 2[1,-1] = [5, 1]$."
+      },
+      {
+        "id": "w1-basis-matrix-c2",
+        "question": "다음 중 $\\mathbb{R}^2$의 기저가 **될 수 없는** 벡터 쌍은?",
+        "choices": [
+          "$[1, 0], [0, 1]$",
+          "$[1, 1], [1, -1]$",
+          "$[1, 2], [2, 4]$",
+          "$[2, 0], [1, 3]$"
+        ],
+        "answer": 2,
+        "explanation": "$[2,4] = 2[1,2]$이므로 두 벡터가 선형종속이다. 같은 직선 위의 벡터만으로는 평면 전체를 표현할 수 없다."
+      },
+      {
+        "id": "w1-basis-matrix-c3",
+        "question": "$(AB)x$를 계산할 때 $x$에 먼저 적용되는 변환과, $(AB)^\\top$을 올바르게 쓴 것은?",
+        "choices": [
+          "$A$가 먼저 / $A^\\top B^\\top$",
+          "$B$가 먼저 / $B^\\top A^\\top$",
+          "$A$가 먼저 / $B^\\top A^\\top$",
+          "$B$가 먼저 / $A^\\top B^\\top$"
+        ],
+        "answer": 1,
+        "explanation": "$(AB)x = A(Bx)$이므로 오른쪽의 $B$가 먼저 적용된다(함수 합성). 전치하면 순서가 뒤집혀 $(AB)^\\top = B^\\top A^\\top$이 되고, 이는 3주차 역전파에서 기울기가 거꾸로 흐르는 모양과 같다."
+      }
+    ],
+    "quizIds": [
+      "w1-q16",
+      "w1-q8"
+    ],
+    "references": [
+      {
+        "title": "3Blue1Brown — Linear combinations, span, and basis vectors",
+        "url": "https://www.3blue1brown.com/lessons/span",
+        "note": "기저가 좌표계라는 말의 의미를 애니메이션으로"
+      },
+      {
+        "title": "3Blue1Brown — Matrix multiplication as composition",
+        "url": "https://www.3blue1brown.com/lessons/matrix-multiplication",
+        "note": "행렬 곱 = 변환의 합성, 순서가 중요한 이유"
+      }
+    ]
+  },
+  "distributions": {
+    "tier": "supplement",
+    "goal": "균등분포와 정규분포의 모양을 비교하고, $\\mu$·$\\sigma$의 역할과 68-95-99.7 규칙, 중심극한정리의 직관을 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w1-distributions-c1",
+        "question": "정규분포 $\\mathcal{N}(\\mu, \\sigma^2)$에서 $\\sigma$만 두 배로 키우면?",
+        "choices": [
+          "종의 중심이 오른쪽으로 이동한다",
+          "종이 더 넓고 완만해진다",
+          "종이 더 좁고 뾰족해진다",
+          "균등분포로 바뀐다"
+        ],
+        "answer": 1,
+        "explanation": "$\\mu$는 중심의 위치, $\\sigma$는 퍼짐의 정도를 정한다. $\\sigma$가 커지면 값이 넓게 흩어진다."
+      },
+      {
+        "id": "w1-distributions-c2",
+        "question": "평균 170cm, 표준편차 6cm인 정규분포를 따르는 키에서, 158cm~182cm 사이에 드는 비율은 약 몇 %인가?",
+        "choices": [
+          "약 68%",
+          "약 95%",
+          "약 99.7%",
+          "약 50%"
+        ],
+        "answer": 1,
+        "explanation": "158~182cm는 $\\mu \\pm 2\\sigma$(170 ± 12)이므로 68-95-99.7 규칙에 따라 약 95%다."
+      },
+      {
+        "id": "w1-distributions-c3",
+        "question": "중심극한정리가 말하는 것과 가장 가까운 것은?",
+        "choices": [
+          "모든 데이터는 원래 정규분포를 따른다",
+          "서로 독립인 여러 작은 요인을 더한 값은, 각 요인의 분포와 상관없이 정규분포에 가까워진다",
+          "표본을 많이 모으면 분산이 0이 된다",
+          "균등분포와 정규분포는 같은 분포다"
+        ],
+        "answer": 1,
+        "explanation": "측정 오차처럼 여러 작은 원인이 더해진 결과가 종 모양이 되는 이유다. 실습에서 균등분포 12개의 합이 $\\mathcal{N}(6, 1)$에 가까워지는 것을 확인했다."
+      }
+    ],
+    "quizIds": [
+      "w1-q9"
+    ],
+    "references": [
+      {
+        "title": "3Blue1Brown — But what is the Central Limit Theorem?",
+        "url": "https://www.3blue1brown.com/lessons/clt",
+        "note": "주사위 합이 종 모양이 되는 과정을 시각적으로"
+      },
+      {
+        "title": "Seeing Theory — Probability Distributions",
+        "url": "https://seeing-theory.brown.edu/probability-distributions/index.html",
+        "note": "여러 분포의 모양을 파라미터를 바꾸며 직접 보기"
+      }
+    ]
+  },
+  "rank-eigen": {
+    "tier": "advanced",
+    "goal": "rank와 L1/L2 노름을 계산하고, 고유값·고유벡터를 특성방정식으로 구하며 SVD가 PCA로 이어지는 흐름을 설명할 수 있다.",
+    "checks": [
+      {
+        "id": "w1-rank-eigen-c1",
+        "question": "행렬 $\\begin{bmatrix}1 & 2\\\\ 3 & 6\\end{bmatrix}$의 rank와 역행렬 존재 여부는?",
+        "choices": [
+          "rank 2, 역행렬 있음",
+          "rank 1, 역행렬 없음",
+          "rank 1, 역행렬 있음",
+          "rank 0, 역행렬 없음"
+        ],
+        "answer": 1,
+        "explanation": "두 번째 행이 첫 번째 행의 3배라 선형독립인 행이 1개뿐이다. full rank가 아니면 변환이 정보를 짜부라뜨리므로 역행렬이 없다(행렬식 $1\\cdot6 - 2\\cdot3 = 0$)."
+      },
+      {
+        "id": "w1-rank-eigen-c2",
+        "question": "$A = \\begin{bmatrix}2 & 1\\\\ 1 & 2\\end{bmatrix}$에서 고유값 3에 대응하는 고유벡터는?",
+        "choices": [
+          "$[1, -1]$",
+          "$[1, 1]$",
+          "$[1, 0]$",
+          "$[2, 1]$"
+        ],
+        "answer": 1,
+        "explanation": "$A[1,1]^\\top = [3, 3]^\\top = 3[1,1]^\\top$. 참고로 $[1,-1]$은 고유값 1에 대응한다."
+      },
+      {
+        "id": "w1-rank-eigen-c3",
+        "question": "$a = [-3, 4]$의 L1 노름과 L2 노름은?",
+        "choices": [
+          "L1 $= 1$, L2 $= 5$",
+          "L1 $= 7$, L2 $= 5$",
+          "L1 $= 7$, L2 $= 25$",
+          "L1 $= 5$, L2 $= 7$"
+        ],
+        "answer": 1,
+        "explanation": "L1은 절댓값의 합 $|-3| + |4| = 7$, L2는 $\\sqrt{9 + 16} = 5$. 부호는 절댓값·제곱 때문에 영향이 없다."
+      }
+    ],
+    "quizIds": [
+      "w1-q17",
+      "w1-q18",
+      "w1-q19",
+      "w1-q20"
+    ],
+    "references": [
+      {
+        "title": "3Blue1Brown — Eigenvectors and eigenvalues",
+        "url": "https://www.3blue1brown.com/lessons/eigenvalues",
+        "note": "변환 후에도 방향이 유지되는 벡터를 시각적으로"
+      },
+      {
+        "title": "CS229 Linear Algebra Review",
+        "url": "https://cs229.stanford.edu/section/cs229-linalg.pdf",
+        "note": "rank·노름·고유값분해·대칭행렬 정리 (영문, 수식 중심)"
+      }
+    ]
+  },
+  "mle-map": {
+    "tier": "advanced",
     "goal": "베르누이·이항분포를 구분하고, 확률과 가능도의 차이를 설명하며 로그가능도 미분으로 MLE를, 사전분포를 더해 MAP를 구할 수 있다.",
     "checks": [
       {
@@ -547,65 +801,8 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
-  "distributions": {
-    "tier": "core",
-    "goal": "균등분포와 정규분포의 모양을 비교하고, $\\mu$·$\\sigma$의 역할과 68-95-99.7 규칙, 중심극한정리의 직관을 설명할 수 있다.",
-    "checks": [
-      {
-        "id": "w1-distributions-c1",
-        "question": "정규분포 $\\mathcal{N}(\\mu, \\sigma^2)$에서 $\\sigma$만 두 배로 키우면?",
-        "choices": [
-          "종의 중심이 오른쪽으로 이동한다",
-          "종이 더 넓고 완만해진다",
-          "종이 더 좁고 뾰족해진다",
-          "균등분포로 바뀐다"
-        ],
-        "answer": 1,
-        "explanation": "$\\mu$는 중심의 위치, $\\sigma$는 퍼짐의 정도를 정한다. $\\sigma$가 커지면 값이 넓게 흩어진다."
-      },
-      {
-        "id": "w1-distributions-c2",
-        "question": "평균 170cm, 표준편차 6cm인 정규분포를 따르는 키에서, 158cm~182cm 사이에 드는 비율은 약 몇 %인가?",
-        "choices": [
-          "약 68%",
-          "약 95%",
-          "약 99.7%",
-          "약 50%"
-        ],
-        "answer": 1,
-        "explanation": "158~182cm는 $\\mu \\pm 2\\sigma$(170 ± 12)이므로 68-95-99.7 규칙에 따라 약 95%다."
-      },
-      {
-        "id": "w1-distributions-c3",
-        "question": "중심극한정리가 말하는 것과 가장 가까운 것은?",
-        "choices": [
-          "모든 데이터는 원래 정규분포를 따른다",
-          "서로 독립인 여러 작은 요인을 더한 값은, 각 요인의 분포와 상관없이 정규분포에 가까워진다",
-          "표본을 많이 모으면 분산이 0이 된다",
-          "균등분포와 정규분포는 같은 분포다"
-        ],
-        "answer": 1,
-        "explanation": "측정 오차처럼 여러 작은 원인이 더해진 결과가 종 모양이 되는 이유다. 실습에서 균등분포 12개의 합이 $\\mathcal{N}(6, 1)$에 가까워지는 것을 확인했다."
-      }
-    ],
-    "quizIds": [
-      "w1-q9"
-    ],
-    "references": [
-      {
-        "title": "3Blue1Brown — But what is the Central Limit Theorem?",
-        "url": "https://www.3blue1brown.com/lessons/clt",
-        "note": "주사위 합이 종 모양이 되는 과정을 시각적으로"
-      },
-      {
-        "title": "Seeing Theory — Probability Distributions",
-        "url": "https://seeing-theory.brown.edu/probability-distributions/index.html",
-        "note": "여러 분포의 모양을 파라미터를 바꾸며 직접 보기"
-      }
-    ]
-  },
   "entropy": {
-    "tier": "core",
+    "tier": "advanced",
     "goal": "엔트로피·교차 엔트로피·KL 발산을 동전 예제로 계산하고, 교차 엔트로피가 분류 손실로 쓰이는 이유와 KL의 비대칭성을 설명할 수 있다.",
     "checks": [
       {
@@ -657,69 +854,63 @@ const sections: Record<string, SectionMeta> = {
       }
     ]
   },
-  "gradient-descent": {
-    "tier": "core",
-    "goal": "미분·기울기의 의미를 설명하고, 경사하강법 갱신을 손과 코드로 계산하며 학습률에 따른 수렴·진동·발산을 배율 $(1-2\\eta)$로 설명할 수 있다.",
+  "gd-convergence": {
+    "tier": "advanced",
+    "goal": "곡률로부터 학습률의 안정 조건 $0 < \\eta < 2/a$를 유도하고, 조건수 $\\kappa$가 경사하강법의 수렴 속도를 정하는 이유와 뉴턴 방법의 장단점을 설명할 수 있다.",
     "checks": [
       {
-        "id": "w1-gradient-descent-c1",
-        "question": "$L(w) = (w-3)^2$, $w_0 = 0$, $\\eta = 0.1$일 때 첫 스텝 후의 $w_1$은?",
+        "id": "w1-gd-convergence-c1",
+        "question": "곡률이 $a = 8$인 이차 손실 $\\frac{a}{2}(w - w^*)^2$에서 경사하강법이 수렴하는 학습률의 범위는?",
         "choices": [
-          "$0.3$",
-          "$0.6$",
-          "$-0.6$",
-          "$3$"
+          "$0 < \\eta < 0.25$",
+          "$0 < \\eta < 0.125$",
+          "$0 < \\eta < 1$",
+          "$0 < \\eta < 2$"
         ],
-        "answer": 1,
-        "explanation": "$dL/dw = 2(w-3) = -6$이므로 $w_1 = 0 - 0.1\\times(-6) = 0.6$."
+        "answer": 0,
+        "explanation": "오차가 매 스텝 $(1 - \\eta a)$배가 되므로 $|1 - 8\\eta| < 1$, 즉 $0 < \\eta < 2/8 = 0.25$다. $\\eta = 1/8$이면 한 스텝에 도착한다."
       },
       {
-        "id": "w1-gradient-descent-c2",
-        "question": "$L(w) = (w-3)^2$에서 $\\eta = 0.5$로 경사하강법을 하면?",
+        "id": "w1-gd-convergence-c2",
+        "question": "두 방향의 곡률이 100과 1인 이차 손실에 고정 학습률 경사하강법을 쓸 때 가장 큰 문제는?",
         "choices": [
-          "발산한다",
-          "한 스텝 만에 정확히 $w = 3$에 도착한다",
-          "3의 양쪽을 영원히 진동한다",
-          "전혀 움직이지 않는다"
+          "안정하려면 학습률을 $2/100$ 아래로 잡아야 해서, 곡률 1인 방향이 매우 느리게 수렴한다",
+          "곡률이 큰 방향이 먼저 발산하므로 학습률을 키워야 한다",
+          "두 방향의 기울기가 서로 상쇄되어 움직이지 않는다",
+          "곡률과 학습률은 관계가 없다"
         ],
-        "answer": 1,
-        "explanation": "오차 $w-3$이 매 스텝 $(1-2\\eta) = 0$배가 되므로 한 번에 0이 된다. 실제 문제에서는 최적 학습률을 모르므로 이런 일은 드물다."
+        "answer": 0,
+        "explanation": "가장 가파른 방향이 학습률의 상한을 정하고($\\eta < 2/a_{\\max}$), 그 작은 학습률로는 완만한 방향의 배율 $1 - \\eta a_{\\min}$이 1에 가깝다. 조건수 $\\kappa = 100$이 클수록 느려진다."
       },
       {
-        "id": "w1-gradient-descent-c3",
-        "question": "기울기 벡터 $\\nabla L$에 대한 설명으로 옳은 것은?",
+        "id": "w1-gd-convergence-c3",
+        "question": "뉴턴 방법을 수억 개 파라미터의 신경망 학습에 그대로 쓰지 않는 가장 큰 이유는?",
         "choices": [
-          "함수가 가장 가파르게 **감소**하는 방향을 가리킨다",
-          "함수가 가장 가파르게 **증가**하는 방향을 가리키므로, 경사하강법은 $-\\nabla L$ 방향으로 움직인다",
-          "항상 길이가 1이다",
-          "파라미터가 하나일 때만 정의된다"
+          "헤세 행렬이 $n \\times n$이라 저장과 역행렬 계산 비용이 감당할 수 없이 크다",
+          "이차 함수에서도 수렴하지 않는다",
+          "기울기를 계산할 수 없다",
+          "학습률을 아주 크게 잡아야 한다"
         ],
-        "answer": 1,
-        "explanation": "기울기는 가장 가파른 증가 방향이다. 손실을 줄이려면 그 반대 방향으로 이동한다: $\\theta \\leftarrow \\theta - \\eta\\nabla_\\theta L$."
+        "answer": 0,
+        "explanation": "뉴턴 방법은 곡률을 써서 조건수의 영향을 없애지만, 파라미터 $n$개의 헤세 행렬은 원소가 $n^2$개다. $n = 10^8$이면 $10^{16}$개라 불가능하다. 그래서 딥러닝은 Adam 같은 근사적 방법을 쓴다."
       }
     ],
     "quizIds": [
-      "w1-q3",
-      "w1-q4"
+      "w1-q30"
     ],
     "references": [
       {
-        "title": "3Blue1Brown — Gradient descent, how neural networks learn",
-        "url": "https://www.3blue1brown.com/lessons/gradient-descent",
-        "note": "신경망 학습 관점에서 본 경사하강법"
-      },
-      {
-        "title": "Dive into Deep Learning — Gradient Descent",
-        "url": "https://d2l.ai/chapter_optimization/gd.html",
-        "note": "학습률과 수렴을 코드와 그래프로 (영문, 한국어판은 ko.d2l.ai)"
-      },
-      {
         "title": "Distill — Why Momentum Really Works",
         "url": "https://distill.pub/2017/momentum/",
-        "note": "실습 2의 \"방향마다 가파름이 다른\" 문제를 인터랙티브로 (심화)"
+        "note": "실습의 \"방향마다 가파름이 다른\" 두 방향 문제와 모멘텀을 인터랙티브로 확인"
+      },
+      {
+        "title": "Boyd & Vandenberghe — Convex Optimization",
+        "url": "https://web.stanford.edu/~boyd/cvxbook/",
+        "note": "9.3절 경사하강법의 수렴 분석, 9.5절 뉴턴 방법"
       }
     ]
-  },
+  }
 };
 
 export default sections;

@@ -7,7 +7,7 @@ import WeekFrame from "@/components/WeekFrame";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readSectionState, readWorksheetState } from "@/lib/learningStore";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
-import { sectionLabel } from "@/content/tiers";
+import { sectionLabel, splitTierPrefix, TIER_INFO } from "@/content/tiers";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -55,11 +55,15 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
       </ol>
       <p className="mt-4 text-xs font-bold text-ink-muted">이번 주 학습 목표</p>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink-secondary">
-        {week.objectives.map((o) => (
-          <li key={o}>
-            <Inline text={o} />
-          </li>
-        ))}
+        {week.objectives.map((o) => {
+          const { tier, text } = splitTierPrefix(o);
+          return (
+            <li key={o}>
+              {tier && <span className="font-bold">[{TIER_INFO[tier].label}] </span>}
+              <Inline text={text} />
+            </li>
+          );
+        })}
       </ul>
     </section>
   ) : undefined;
