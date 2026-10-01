@@ -959,7 +959,7 @@ const sections: Record<string, SectionMeta> = {
           "rank 0, 역행렬 없음"
         ],
         "answer": 1,
-        "explanation": "두 번째 행이 첫 번째 행의 3배라 선형독립인 행이 1개뿐이다. full rank가 아니면 변환이 정보를 짜부라뜨리므로 역행렬이 없다(행렬식 $1\\cdot6 - 2\\cdot3 = 0$)."
+        "explanation": "두 번째 행이 첫 번째 행의 3배라 선형독립인 행이 1개뿐이다. full rank가 아니면 변환이 공간을 낮은 차원으로 찌그러뜨려 되돌릴 수 없으므로 역행렬이 없다(행렬식 $1\\cdot6 - 2\\cdot3 = 0$)."
       },
       {
         "id": "w1-rank-eigen-c2",
