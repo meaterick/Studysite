@@ -75,6 +75,16 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
     ],
   },
   "week-7": {
+    "hybrid-code": [
+      [
+        "        # TODO: char와 word를 각각 순위(1부터)로 바꿔, 점수가 0보다 큰 조각에만 1 / (self.rrf_k + 순위)를 더합니다.",
+        [
+          "        for s in (char, word):",
+          '            rank = np.argsort(np.argsort(-s, kind="stable"), kind="stable") + 1',
+          "            fused += np.where(s > 0, 1 / (self.rrf_k + rank), 0)",
+        ].join("\n"),
+      ],
+    ],
     "golden-code": [
       [
         "# TODO: 나머지 17문항을 추가합니다. (쉬운 질문 10개, 어려운 질문 10개, 자료에 없는 질문 3개 이상)",

@@ -4,12 +4,15 @@ import type { AssignmentSpec } from "../types";
 // 학습 자료는 작업 공간의 가상 파일 시스템(/course/week1.md … /course/week8.md)으로 제공된다.
 // 임베딩 모델과 LLM 대신 TF-IDF 검색과 추출형 답변(근거 문장 선택)을 쓰므로 모든 실험이 브라우저에서 돈다.
 // 즉 RAG의 청킹·색인·검색·근거 선택·거절까지를 구현·평가하고, LLM 생성 단계는 실패 분석에서 가정으로만 다룬다.
+// 핵심: rag·golden·evaluate·refusal·failure·scenario(채점 대상) / 보충: hybrid / 심화: advanced
 const week7Assignment: AssignmentSpec = {
   title: "스터디 QA 봇과 평가 리포트",
   summary: `
 이 사이트의 1~8주차 학습 자료를 문서 집합으로 삼아 RAG 방식의 QA 봇을 만들고 체계적으로 평가합니다. 브라우저에서는 임베딩 모델과 LLM을 내려받을 수 없으므로 두 부품을 바꿔 끼웁니다. 검색은 신경망 임베딩 대신 **TF-IDF(문자 n-gram) 벡터**로, 답변은 LLM 생성 대신 검색된 조각에서 질문과 가장 비슷한 문장을 그대로 골라 오는 **추출형**으로 합니다. 즉 청킹 → 색인 → 검색 → 근거 선택 → 거절 판단까지는 실제 RAG와 같고, 마지막의 LLM 생성 단계만 빠져 있습니다. 그래서 이 과제의 평가는 주로 **검색 품질**과 **근거 선택·거절**을 재는 것이며, 생성 단계에서 생기는 실패(근거 무시, 오독)는 실패 분석에서 "LLM이었다면"을 가정해 논의합니다.
 
-직접 만든 골든셋 20문항으로 검색·답변·거절 성능을 재고, 실패 원인을 분석해 개선합니다. 임베딩 검색이나 하이브리드 검색을 직접 비교해 보고 싶다면 심화 과제나 Colab을 이용합니다.
+직접 만든 골든셋 20문항으로 검색·답변·거절 성능을 재고, 실패 원인을 분석해 개선합니다. 하이브리드 검색은 보충 항목에서, 신경망 임베딩 검색은 Colab에서 비교해 볼 수 있습니다.
+
+**핵심** 항목 여섯 개는 핵심 과정만으로 풀 수 있고, 채점 기준도 이 여섯 항목만 봅니다. **보충**(하이브리드 검색)과 **심화**(평가의 통계·채점관 보정·인젝션 방어 설계) 항목은 선택이며 점수 대신 피드백을 받습니다.
 `,
   provideCourseDocs: true,
   tasks: [
@@ -286,14 +289,69 @@ for q in questions:
       ],
     },
     {
+      id: "hybrid",
+      tier: "supplement",
+      title: "보충: 하이브리드 검색(RRF)은 항상 이기는가",
+      instructions: `
+「임베딩과 벡터 검색」의 RRF로, 지금의 글자 n-gram 검색기에 단어 단위 TF-IDF 검색기를 더한 \`HybridRAG\`를 완성합니다. 두 검색기의 점수를 각각 순위(1부터)로 바꾸고, 점수가 0보다 큰 조각에만 $1/(k + \\text{순위})$를 더합니다. 두 검색기 모두 희소(sparse) 검색이라 Dense + Sparse 하이브리드와 같지는 않지만, 성격이 다른 두 순위를 합치는 원리는 같습니다.
+
+골든셋에서 글자 검색기(\`indexes[500]\`)와 Recall@k·MRR·정확도를 비교하고, 결과가 좋아졌는지 나빠졌는지와 그 이유를 적습니다. 한국어의 조사("기준은"과 "기준"은 단어 단위로는 서로 다른 단어다)와 두 검색기의 실력 차이를 생각해 보십시오. 이어서 검색기마다 가중치를 두는 가중 RRF, 단어 끝의 조사를 떼는 전처리, RRF 상수 $k$ 중 하나를 바꿔 다시 비교합니다. 하이브리드도 측정 없이 "당연히 낫다"고 가정하지 않는 것이 이 항목의 목표입니다.
+`,
+      cells: [
+        {
+          kind: "code",
+          id: "hybrid-code",
+          label: "글자 + 단어 검색기의 RRF 하이브리드",
+          starter: `from sklearn.feature_extraction.text import TfidfVectorizer
+
+class HybridRAG(RAG):
+    """글자 n-gram 검색(RAG)에 단어 단위 TF-IDF 검색을 더하고, 두 순위를 RRF로 합칩니다."""
+    def __init__(self, docs, chunk_size=500, threshold=0.08, rrf_k=60):
+        super().__init__(docs, chunk_size, threshold)
+        self.rrf_k = rrf_k
+        self.word_vec = TfidfVectorizer(analyzer="word", sublinear_tf=True)
+        self.word_matrix = self.word_vec.fit_transform(self.chunks)
+
+    def scores(self, question):
+        char = (self.matrix @ self.vec.transform([question]).T).toarray().ravel()
+        word = (self.word_matrix @ self.word_vec.transform([question]).T).toarray().ravel()
+        return char, word
+
+    def search(self, question, k=3):
+        char, word = self.scores(question)
+        fused = np.zeros(len(self.chunks))
+        # TODO: char와 word를 각각 순위(1부터)로 바꿔, 점수가 0보다 큰 조각에만 1 / (self.rrf_k + 순위)를 더합니다.
+        top = np.argsort(-fused, kind="stable")[:k]
+        return [(int(i), float(char[i])) for i in top]   # 거절 판단에는 글자 유사도를 그대로 씁니다.
+
+hybrid = HybridRAG(docs, chunk_size=500)
+print(f"{'검색기':8}{'k':>3}{'Recall@k':>10}{'MRR':>8}{'정확도':>8}")
+for name, r in [("글자", indexes[500]), ("하이브리드", hybrid)]:
+    for k in (1, 3, 5):
+        rec, mrr, acc = evaluate(r, GOLDEN, k)
+        print(f"{name:8}{k:>3}{rec:>10.2f}{mrr:>8.2f}{acc:>8.2f}")
+
+# 개선 실험: 가중 RRF, 조사 떼기 전처리, rrf_k 중 하나를 바꾼 검색기를 아래에 만들어 같은 표로 비교합니다.
+`,
+        },
+        {
+          kind: "text",
+          id: "hybrid-answer",
+          prompt: "두 검색기의 결과를 비교하고, 하이브리드가 좋아지거나 나빠진 이유와 시도한 개선의 효과를 적어 주십시오.",
+          minChars: 150,
+        },
+      ],
+    },
+    {
       id: "advanced",
       tier: "advanced",
-      title: "심화: 하이브리드 검색·자동 채점관",
+      title: "심화: 평가의 통계 · 채점관 보정 · 인젝션 방어 설계",
       instructions: `
-다음 중 하나 이상을 골라 실험합니다.
+다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않습니다.
 
-- 단어 단위 TF-IDF와 문자 n-gram TF-IDF의 순위를 RRF(Reciprocal Rank Fusion)로 합친 검색을 구현하고 Recall@k·MRR을 비교합니다. 둘 다 희소(sparse) 검색이라 학습 자료의 Dense + Sparse 하이브리드와 같지는 않지만, 성격이 다른 두 검색기의 순위를 합친다는 RRF의 원리는 같습니다.
-- 답변을 자동으로 채점하는 규칙 기반 채점관을 만들고, 직접 매긴 점수와의 일치율(또는 Cohen's κ)을 계산해 이 채점관을 믿어도 되는지 판단합니다.
+- 「LLM 평가의 통계」: 가장 좋은 설정의 Recall@3와 정확도에 윌슨 95% 구간을 붙이고, 두 설정(예: 청크 500과 1000, 또는 글자 검색과 하이브리드)의 문항별 정답 여부로 McNemar p값과 짝지은 부트스트랩 구간을 구합니다. 골든셋을 설정을 고르는 개발용과 보고용으로 나눠, 아홉 가지 설정 중 최고를 고른 점수에 선택 편향이 얼마나 섞이는지도 확인합니다.
+- 답변을 자동으로 채점하는 규칙 기반 채점관을 만들고, 직접 매긴 점수와의 Cohen's κ, 채점관의 민감도·특이도를 계산해 이 채점관을 믿어도 되는지 판단합니다. 채점관이 매긴 정확도를 Rogan–Gladen으로 보정해 직접 채점한 정확도와 비교합니다.
+- 「프롬프트 인젝션을 설계로 막기」: 조각마다 출처 꼬리표(학습 자료 / 외부 공지)를 달고, 신뢰하지 않는 출처의 문장은 봇의 답변으로 내지 않고 "외부 자료" 표시와 함께 인용만 하는 정책을 구현합니다. 실패 분석의 인젝션 테스트에서 지시문이 더 이상 답으로 나오지 않는지, 정상 질문의 정확도는 얼마나 변하는지 비교합니다.
 `,
       cells: [
         { kind: "code", id: "advanced-code", label: "심화 실험", starter: `# 선택한 심화 실험을 이 셀에서 진행합니다.\n` },
