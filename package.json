@@ -14,6 +14,8 @@
     "check:labs": "tsx scripts/check-labs.ts"
   },
   "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/noto-sans-kr": "^5.3.0",
     "@monaco-editor/react": "^4.7.0",
     "idb": "^8.0.3",
     "jose": "^6.2.12",
