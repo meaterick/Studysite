@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { AiHierarchy, MlLoop, NumpyAxis, BayesFrequency, DotProductAngle } from "./w1";
 import { ConfusionMatrix, DataSplitDiagram, SigmoidCurve, LearningCurves } from "./w2";
-import { ComputationalGraph, MlpDiagram } from "./w3";
+import { ComputationalGraph, MlpDiagram, XorHidden } from "./w3";
 import { ResNetSkip, TransferLearning } from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe } from "./w5";
 import { LlmPipeline, ScalingLawPlot } from "./w6";
@@ -28,6 +28,7 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "learning-curves": LearningCurves,
   "computational-graph": ComputationalGraph,
   "mlp-diagram": MlpDiagram,
+  "xor-hidden": XorHidden,
   "conv-operation": InteractiveConv,
   "resnet-skip": ResNetSkip,
   "transfer-learning": TransferLearning,
