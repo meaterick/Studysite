@@ -101,7 +101,7 @@ const sections: Record<string, SectionMeta> = {
           "인코딩 없이 문자열 그대로"
         ],
         "answer": 1,
-        "explanation": "순서가 없는 명목형 변수에 정수를 붙이면 모델이 \"대구가 서울의 2배\" 같은 없는 크기 관계를 배울 수 있다."
+        "explanation": "순서가 없는 명목형 변수에 정수를 붙이면 모델이 \"대구(2)가 부산(1)의 2배\" 같은 없는 크기 관계를 배울 수 있다."
       },
       {
         "id": "w2-features-c2",
