@@ -14,7 +14,7 @@ const week4: WeekLab = {
 2. \`conv_params(k, c_in, c_out)\`: $k \\times k$ 커널, 입력 채널 \`c_in\`, 출력 채널 \`c_out\`인 합성곱층의 파라미터 수(편향 포함)
 3. \`fc_params(n_in, n_out)\`: 완전연결층의 파라미터 수(편향 포함)
 
-본문 예제처럼 3×3 conv(3→64)는 1,792개, 같은 출력 수의 FC층(224×224×3 → 64)은 9,633,856개여야 합니다.
+본문 예제처럼 $3 \\times 3$ conv(3→64)는 1,792개, 같은 출력 수의 FC층($224 \\times 224 \\times 3 \\to 64$)은 9,633,856개여야 합니다.
 `,
       starter: py`
 import numpy as np
@@ -114,7 +114,7 @@ print(conv_params(3, 3, 64), fc_params(224 * 224 * 3, 64))
       title: "반복문 없는 풀링과 수용영역 계산기",
       level: 2,
       prompt: `
-1. \`max_pool(a)\`, \`avg_pool(a)\`: 2×2 영역, stride 2 풀링을 **반복문 없이** \`reshape\`와 \`axis\`로 구현합니다. (H, W)를 (H/2, 2, W/2, 2)로 바꾸면 블록 내부가 1번·3번 축이 됩니다.
+1. \`max_pool(a)\`, \`avg_pool(a)\`: $2 \\times 2$ 영역, stride 2 풀링을 **반복문 없이** \`reshape\`와 \`axis\`로 구현합니다. (H, W)를 (H/2, 2, W/2, 2)로 바꾸면 블록 내부가 1번·3번 축이 됩니다.
 2. \`receptive_field(layers)\`: \`(커널, 보폭)\` 리스트를 받아 마지막 층 한 칸이 입력에서 보는 범위를 돌려줍니다. 층마다 $r \\leftarrow r + (k-1)\\,j$, $j \\leftarrow j \\cdot s$로 갱신합니다($r = j = 1$에서 시작).
 `,
       starter: py`
@@ -285,9 +285,9 @@ print(f"50층 plain: {plain_grad(local):.2e}, residual: {residual_grad(small):.3
       title: "ViT처럼 이미지를 패치 토큰으로 자르기",
       level: 2,
       prompt: `
-1. \`patchify(img, P)\`: (H, W) 이미지를 P×P 패치로 잘라, 패치를 **왼쪽 위부터 행 순서대로** 한 줄씩 편 (패치 수, P·P) 행렬을 돌려줍니다. 반복문 없이 \`reshape\`와 \`transpose\`로 씁니다.
+1. \`patchify(img, P)\`: (H, W) 이미지를 $P \\times P$ 패치로 잘라, 패치를 **왼쪽 위부터 행 순서대로** 한 줄씩 편 (패치 수, P·P) 행렬을 돌려줍니다. 반복문 없이 \`reshape\`와 \`transpose\`로 씁니다.
 2. \`n_tokens(img_size, patch)\`: 정사각 이미지에서 나오는 패치 토큰 수
-3. \`vgg_compare(C)\`: 채널 C일 때 (3×3 conv 세 층의 가중치 수, 7×7 conv 한 층의 가중치 수)
+3. \`vgg_compare(C)\`: 채널 C일 때 ($3 \\times 3$ conv 세 층의 가중치 수, $7 \\times 7$ conv 한 층의 가중치 수)
 
 첫 번째 패치 토큰은 \`img[:P, :P]\`를 편 것과 같아야 합니다.
 `,
@@ -722,7 +722,7 @@ for k, s in [(3, 1), (3, 1), (2, 2), (3, 1)]:
     print(r, j)
 `,
       expected: "3 1\n5 1\n6 2\n10 2",
-      explanation: "3×3 conv 두 층으로 수용영역이 3, 5가 되고, 2×2 풀링(보폭 2)이 6으로 늘리면서 점프를 2로 만듭니다. 그 뒤의 3×3 conv는 $(3-1) \\times 2 = 4$만큼 넓혀 10이 됩니다. 같은 conv라도 뒤쪽 층일수록 수용영역을 더 크게 넓힙니다.",
+      explanation: "$3 \\times 3$ conv 두 층으로 수용영역이 3, 5가 되고, $2 \\times 2$ 풀링(보폭 2)이 6으로 늘리면서 점프를 2로 만듭니다. 그 뒤의 $3 \\times 3$ conv는 $(3-1) \\times 2 = 4$만큼 넓혀 10이 됩니다. 같은 conv라도 뒤쪽 층일수록 수용영역을 더 크게 넓힙니다.",
     },
     {
       kind: "predict",
@@ -733,7 +733,7 @@ print((224 // 16) ** 2, (224 // 32) ** 2)
 print(3 * (9 * 64 * 64), 49 * 64 * 64)
 `,
       expected: "196 49\n110592 200704",
-      explanation: "224×224 이미지를 16×16 패치로 자르면 $14 \\times 14 = 196$개, 32×32 패치면 $7 \\times 7 = 49$개 토큰입니다. 3×3 conv 세 층은 7×7 conv 한 층과 수용영역이 같지만 파라미터는 약 55%만 씁니다.",
+      explanation: "$224 \\times 224$ 이미지를 $16 \\times 16$ 패치로 자르면 $14 \\times 14 = 196$개, $32 \\times 32$ 패치면 $7 \\times 7 = 49$개 토큰입니다. $3 \\times 3$ conv 세 층은 $7 \\times 7$ conv 한 층과 수용영역이 같지만 파라미터는 약 55%만 씁니다.",
     },
     {
       kind: "descriptive",
@@ -825,7 +825,7 @@ for n, k, s, p, expect in [(8, 3, 2, 1, 4), (32, 5, 1, 2, 32), (32, 5, 2, 2, 16)
 실제 CNN의 합성곱은 입력이 여러 채널입니다. \`conv2d_multi(x, w, b, stride, pad)\`를 구현합니다.
 
 - \`x\`: (C_in, H, W), \`w\`: (C_out, C_in, K, K), \`b\`: (C_out,) → 출력 (C_out, H_out, W_out)
-- 출력의 한 칸은 **모든 입력 채널**에 걸친 K×K 창과 필터의 원소별 곱의 합 + 편향입니다.
+- 출력의 한 칸은 **모든 입력 채널**에 걸친 $K \\times K$ 창과 필터의 원소별 곱의 합 + 편향입니다.
 
 출력 위치(i, j)에 대한 반복문 두 개만 쓰고, 채널과 필터 축은 \`np.tensordot\`(또는 \`np.einsum\`)으로 한 번에 계산합니다. 채점은 네 겹 반복문 참조 구현과 비교합니다.
 `,
@@ -916,7 +916,7 @@ print(conv2d_multi(x, w, np.zeros(4), pad=1).shape)
         title: "Max Pooling의 역전파: 승자에게만 기울기를",
         level: 3,
         prompt: `
-Max Pooling은 파라미터가 없지만 역전파는 해야 합니다. 2×2(stride 2) 풀링의 순전파·역전파를 구현합니다.
+Max Pooling은 파라미터가 없지만 역전파는 해야 합니다. $2 \\times 2$(stride 2) 풀링의 순전파·역전파를 구현합니다.
 
 1. \`maxpool_forward(a)\`: 풀링 결과와, 역전파에 쓸 **각 블록 최댓값의 위치**(마스크)를 돌려줍니다.
 2. \`maxpool_backward(dout, mask)\`: 상류 기울기 \`dout\`(풀링 출력 크기)을 블록 안에서 최댓값이었던 자리에만 전달하고 나머지는 0으로 둡니다(ReLU처럼 승자독식).

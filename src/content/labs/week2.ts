@@ -330,7 +330,7 @@ print("손실 =", bce_loss(p, y), " 훈련 정확도 =", np.mean((p >= 0.5) == y
 「알고리즘 지도 ①」의 두 예제를 라이브러리 없이 구현합니다.
 
 1. \`knn_predict(X_train, y_train, x, k)\`: 유클리드 거리가 가장 가까운 $k$개의 다수결 클래스를 돌려줍니다(\`np.argsort\`, \`np.bincount\` 활용).
-2. \`naive_bayes(priors, likelihoods)\`: 클래스마다 사전확률 × 단어별 조건부확률의 곱을 구한 뒤 합이 1이 되도록 정규화한 사후확률 딕셔너리를 돌려줍니다. 특징이 서로 조건부 독립이라는 "나이브" 가정이 곱셈 한 줄에 들어 있습니다.
+2. \`naive_bayes(priors, likelihoods)\`: 클래스마다 사전확률과 단어별 조건부확률을 모두 곱한 값을 구한 뒤 합이 1이 되도록 정규화한 사후확률 딕셔너리를 돌려줍니다. 특징이 서로 조건부 독립이라는 "나이브" 가정이 곱셈 한 줄에 들어 있습니다.
 `,
       starter: py`
 import numpy as np
@@ -424,7 +424,7 @@ print(naive_bayes({"스팸": 0.3, "정상": 0.7}, {"스팸": [0.6, 0.4], "정상
 
 1. \`gini(counts)\` $= 1 - \\sum_i p_i^2$ (클래스별 개수 리스트를 받음)
 2. \`split_gain(parent, children)\`: 부모 지니에서 자식 지니의 **샘플 수 가중평균**을 뺀 정보이득
-3. \`best_threshold(x, y)\`: 특징 하나 \`x\`에서 "x ≤ t / x > t"로 나눌 때 가중 지니가 가장 작은 $t$를 찾습니다. 후보는 정렬한 서로 다른 값들의 **중간점**입니다.
+3. \`best_threshold(x, y)\`: 특징 하나 \`x\`에서 $x \\le t$ / $x > t$로 나눌 때 가중 지니가 가장 작은 $t$를 찾습니다. 후보는 정렬한 서로 다른 값들의 **중간점**입니다.
 `,
       starter: py`
 import numpy as np
@@ -1188,7 +1188,7 @@ print("sklearn  :", np.round(sk.coef_[0], 3), round(float(sk.intercept_[0]), 3))
 1. \`decompose(preds, truth)\`: \`preds\`의 shape은 (데이터셋 수, 평가 점 수)입니다. 평가 점마다 $\\text{bias}^2 = (\\bar{\\hat y} - f)^2$, $\\text{variance} = \\overline{(\\hat y - \\bar{\\hat y})^2}$를 구한 뒤 점들에 대해 평균낸 \`(bias2, variance)\`를 돌려줍니다.
 2. \`simulate(degree, n_sets, seed)\`: \`n_sets\`개의 훈련 데이터(각 30점, 잡음 표준편차 0.3)에 \`np.polyfit\`으로 \`degree\`차 다항식을 맞추고, 평가 점 \`X_EVAL\`에서의 예측 배열을 돌려줍니다.
 
-차수 1(과소적합)과 9(과적합)의 편향²·분산을 비교해 보십시오.
+차수 1(과소적합)과 9(과적합)의 편향$^2$·분산을 비교해 보십시오.
 `,
         starter: py`
 import numpy as np
@@ -1243,7 +1243,7 @@ def _():
     assert v9 > 3 * v1, f"분산: 차수1 {v1:.4f}, 차수9 {v9:.4f}"
 `,
         hints: [
-          "편향²은 `np.mean((mean_pred - truth) ** 2)`입니다.",
+          "편향$^2$은 `np.mean((mean_pred - truth) ** 2)`입니다.",
           "분산은 `np.mean((preds - mean_pred) ** 2)`처럼 데이터셋 축과 평가 점 축 모두에 대해 평균냅니다.",
           "`coef = np.polyfit(x, y, degree)` 다음 `preds.append(np.polyval(coef, X_EVAL))`입니다.",
         ],

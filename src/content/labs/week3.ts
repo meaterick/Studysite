@@ -570,7 +570,7 @@ print("Momentum 100스텝:", np.round(w, 3))
 $\\mathrm{Var}(z) \\approx \\text{fan\\_in} \\cdot \\mathrm{Var}(w) \\cdot \\mathrm{Var}(x)$에서 나온 초기화 규칙을 구현하고 실험합니다.
 
 1. \`he_std(fan_in)\` $= \\sqrt{2/\\text{fan\\_in}}$ (ReLU용), \`xavier_std(fan_in, fan_out)\` $= \\sqrt{2/(\\text{fan\\_in} + \\text{fan\\_out})}$
-2. \`activation_stds(std, n_layers, width, seed)\`: 표준정규 입력(샘플 1000개 × width)을 \`n_layers\`개의 "선형(가중치 표준편차 std) → ReLU" 층에 통과시키며, **입력과 각 층 출력**의 표준편차를 리스트로 돌려줍니다(길이 n_layers + 1).
+2. \`activation_stds(std, n_layers, width, seed)\`: 표준정규 입력(샘플 1000개, 특징 width개)을 \`n_layers\`개의 "선형(가중치 표준편차 std) → ReLU" 층에 통과시키며, **입력과 각 층 출력**의 표준편차를 리스트로 돌려줍니다(길이 n_layers + 1).
 
 He 초기화면 층을 지나도 표준편차가 거의 일정하고, 1.5배로 키우면 층마다 약 1.5배씩 불어나야 합니다.
 `,
@@ -830,7 +830,7 @@ def _():
       hints: [
         "출력층: `dW2 = h.T @ dz2`, `db2 = dz2.sum(axis=0)`",
         "은닉층으로 내려보내기: `dz1 = (dz2 @ W2.T) * (z1 > 0)`. ReLU가 0을 낸 자리는 기울기도 0입니다.",
-        "입력층: `dW1 = X.T @ dz1`, `db1 = dz1.sum(axis=0)`. 패턴은 언제나 \"(입력)ᵀ × δ\"입니다.",
+        "입력층: `dW1 = X.T @ dz1`, `db1 = dz1.sum(axis=0)`. 패턴은 언제나 \"(그 층의 입력).T @ (그 층 출력의 기울기)\"입니다.",
       ],
       solution: py`
 import numpy as np
@@ -1235,7 +1235,7 @@ print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logi
         prompt: `
 깊이 20인 MLP에서 기울기가 층을 거슬러 올라가며 어떻게 변하는지 직접 측정합니다.
 
-1. \`layer_grad_norms(depth, width, act, std, seed)\`: 입력(샘플 64개 × width)을 \`depth\`개의 "선형(표준편차 std, 편향 없음) → 활성화(\`"tanh"\` 또는 \`"relu"\`)" 층에 통과시킨 뒤, 손실 $L = \\text{mean}(\\text{출력})$에서 역전파하며 **각 층 입력에 대한 기울기 $\\partial L/\\partial h_l$의 노름**을 첫 층부터 순서대로 리스트로 돌려줍니다(길이 depth).
+1. \`layer_grad_norms(depth, width, act, std, seed)\`: 입력(샘플 64개, 특징 width개)을 \`depth\`개의 "선형(표준편차 std, 편향 없음) → 활성화(\`"tanh"\` 또는 \`"relu"\`)" 층에 통과시킨 뒤, 손실 $L = \\text{mean}(\\text{출력})$에서 역전파하며 **각 층 입력에 대한 기울기 $\\partial L/\\partial h_l$의 노름**을 첫 층부터 순서대로 리스트로 돌려줍니다(길이 depth).
 2. \`clip_by_norm(g, max_norm)\`: 노름이 \`max_norm\`을 넘으면 방향은 그대로 두고 크기만 \`max_norm\`으로 줄입니다.
 
 tanh에 작은 초기화를 쓰면 앞쪽 층의 기울기가 사라지고, ReLU + He 초기화면 비교적 일정하게 유지되는지 확인합니다.
@@ -1301,8 +1301,8 @@ def _():
     assert approx(clip_by_norm(np.array([0.3, 0.4]), 5.0), [0.3, 0.4])
 `,
         hints: [
-          "tanh의 국소 미분은 $1 - \\tanh^2(z)$, ReLU는 `(z > 0)`입니다. `g = g * 국소미분`이 ∂L/∂z입니다.",
-          "`h = z_prev_act @ W`이므로 ∂L/∂(입력) = ∂L/∂z @ W.T입니다. `g = g @ W.T`",
+          "tanh의 국소 미분은 $1 - \\tanh^2(z)$, ReLU는 `(z > 0)`입니다. `g = g * 국소미분`이 $\\partial L / \\partial z$입니다.",
+          "`h = z_prev_act @ W`이므로 입력에 대한 기울기는 $\\partial L / \\partial z$에 `W.T`를 곱한 값입니다. `g = g @ W.T`",
           "`norm = np.linalg.norm(g)`, `return g * min(1.0, max_norm / norm)`. 0으로 나누지 않도록 norm이 0이면 그대로 돌려줍니다.",
         ],
         solution: py`

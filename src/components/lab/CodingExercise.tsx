@@ -58,7 +58,13 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
   const uid = useUserScope();
   const storeKey = `${uid}::lab:${view.id}`;
   const total = countTests(view.tests);
-  const [code, setCode] = useState(view.starter);
+  const [code, setCodeState] = useState(view.starter);
+  // 실행·채점은 렌더를 기다리지 않고 편집기의 최신 내용을 읽는다(마지막 입력 직후 Ctrl+Enter를 눌러도 이전 코드로 채점하지 않도록).
+  const codeRef = useRef(view.starter);
+  const setCode = useCallback((next: string) => {
+    codeRef.current = next;
+    setCodeState(next);
+  }, []);
   const [loaded, setLoaded] = useState(false);
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState<"run" | "grade" | null>(null);
@@ -85,7 +91,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     return () => {
       cancelled = true;
     };
-  }, [storeKey, view.starter]);
+  }, [storeKey, view.starter, setCode]);
 
   // 화면 근처에 오면 편집기를 활성화하고 Pyodide를 미리 준비한다.
   useEffect(() => {
@@ -112,7 +118,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => saveCellCode(storeKey, next), 400);
     },
-    [storeKey]
+    [storeKey, setCode]
   );
 
   const execute = useCallback(async (program: string, ns: string, onStream?: RunHandlers["onStream"]) => {
@@ -147,7 +153,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     setNotice(null);
     const collected: NotebookOutput[] = [];
     setOutputs([]);
-    const { res, timedOut } = await execute(code, `lab-run:${view.id}`, (name, text) => {
+    const { res, timedOut } = await execute(codeRef.current, `lab-run:${view.id}`, (name, text) => {
       collected.push({ type: "stream", name, text });
       setOutputs([...collected]);
     });
@@ -157,7 +163,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     setOutputs([...collected]);
     if (timedOut) setNotice(`실행 시간이 ${TIME_LIMIT_MS / 1000}초를 넘어 중단했습니다. 끝나지 않는 반복문이 없는지 확인하십시오.`);
     setBusy(null);
-  }, [busy, code, execute, view.id]);
+  }, [busy, execute, view.id]);
 
   const handleGrade = useCallback(async () => {
     if (busy) return;
@@ -165,7 +171,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     setNotice(null);
     setOutputs([]);
     setReport(null);
-    const { res, timedOut } = await execute(buildGradeProgram(code, view.tests), `lab-grade:${view.id}`);
+    const { res, timedOut } = await execute(buildGradeProgram(codeRef.current, view.tests), `lab-grade:${view.id}`);
     const rep = res.ok ? parseGradeReport(res.result) : null;
     setBusy(null);
     if (!rep) {
@@ -192,7 +198,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     } catch {
       setNotice("채점 결과를 서버에 기록하지 못했습니다. 결과는 이 화면에서만 보입니다.");
     }
-  }, [busy, code, execute, total, view.id, view.slug, view.tests]);
+  }, [busy, execute, total, view.id, view.slug, view.tests]);
 
   const handleStop = () => {
     forceStop();

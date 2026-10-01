@@ -110,4 +110,24 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ["after = RAG(docs, chunk_size=500)   # TODO: 개선한 설정으로 바꿉니다.", "after = RAG(docs, chunk_size=300)"],
     ],
   },
+  "week-8": {
+    "code-experiment": [
+      [
+        "# baseline과 제안 방법을 같은 조건에서 비교합니다.",
+        [
+          "from sklearn.datasets import load_digits",
+          "from sklearn.model_selection import train_test_split",
+          "from sklearn.dummy import DummyClassifier",
+          "from sklearn.linear_model import LogisticRegression",
+          "X, y = load_digits(return_X_y=True)",
+          "results = {'baseline': [], '로지스틱 회귀': []}",
+          "for s in range(3):",
+          "    Xtr, Xte, ytr, yte = train_test_split(X / 16.0, y, test_size=0.3, random_state=SEED + s)",
+          "    results['baseline'].append(DummyClassifier().fit(Xtr, ytr).score(Xte, yte))",
+          "    results['로지스틱 회귀'].append(LogisticRegression(max_iter=500).fit(Xtr, ytr).score(Xte, yte))",
+          "print({k: (round(float(np.mean(v)), 3), round(float(np.std(v, ddof=1)), 3)) for k, v in results.items()})",
+        ].join("\n"),
+      ],
+    ],
+  },
 };
