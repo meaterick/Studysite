@@ -2,6 +2,9 @@
 
 :root {
   color-scheme: light;
+  /* 글꼴(layout.tsx에서 @fontsource로 불러온다) */
+  --font-sans-kr: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono-code: "JetBrains Mono", ui-monospace, monospace;
   --surface-page: #f9f9f7;
   --surface-card: #fcfcfb;
   --surface-card-2: #f2f1ee;
