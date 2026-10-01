@@ -8,7 +8,7 @@ const STEPS = [
   {
     name: "이해",
     desc: "단계별로 개념 설명과 그림을 보며 원리를 이해합니다.",
-    where: "단계 학습",
+    where: "학습 자료",
     color: colors.blue,
   },
   {

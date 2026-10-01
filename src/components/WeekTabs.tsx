@@ -9,7 +9,7 @@ const APPLY_PATHS = ["/apply", "/descriptive", "/lab", "/drill", "/worksheet", "
 type Tab = { href: string; step: number; label: string; sub?: string; done?: boolean; match: (path: string) => boolean };
 
 /**
- * 주차 메뉴: 개요 → 단계 학습 → 적용과 복습, 세 단계로 이어지는 흐름을 번호와 함께 보여 준다.
+ * 주차 메뉴: 개요 → 학습 자료 → 적용과 복습, 세 단계로 이어지는 흐름을 번호와 함께 보여 준다.
  * stageSub / applySub: 탭 아래 작은 진행 상태(예: "핵심 3/7", "필수 1/2")
  */
 export default function WeekTabs({
@@ -21,7 +21,7 @@ export default function WeekTabs({
   applyDone,
 }: {
   slug: string;
-  /** 단계 학습 탭이 바로 가는 주소(지금 학습할 단계) */
+  /** 학습 자료 탭이 바로 가는 주소(지금 학습할 단계) */
   stageHref: string;
   stageSub: string;
   stageDone: boolean;
@@ -32,7 +32,7 @@ export default function WeekTabs({
   const base = `/weeks/${slug}`;
   const tabs: Tab[] = [
     { href: base, step: 1, label: "개요", sub: "목표 · 단계 지도", match: (p) => p === base },
-    { href: stageHref, step: 2, label: "단계 학습", sub: stageSub, done: stageDone, match: (p) => p.startsWith(`${base}/sections/`) },
+    { href: stageHref, step: 2, label: "학습 자료", sub: stageSub, done: stageDone, match: (p) => p.startsWith(`${base}/sections/`) },
     {
       href: `${base}/apply`,
       step: 3,

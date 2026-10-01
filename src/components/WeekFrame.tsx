@@ -9,7 +9,7 @@ import ProgressRing from "./ProgressRing";
 import DifficultyBadge from "./DifficultyBadge";
 
 /**
- * 주차 머리글 + 학습 흐름 탭(개요 · 단계 학습 · 적용과 복습). 진행 상태가 페이지마다 최신이어야 해서
+ * 주차 머리글 + 학습 흐름 탭(개요 · 학습 자료 · 적용과 복습). 진행 상태가 페이지마다 최신이어야 해서
  * 레이아웃이 아니라 각 페이지가 렌더링한다. apply를 주면 적용과 복습의 하위 메뉴도 함께 보여 준다.
  */
 export default function WeekFrame({
