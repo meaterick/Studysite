@@ -6,7 +6,7 @@ import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
 import { LlmPipeline, ScalingLawPlot, AttentionPatterns, LoraDiagram } from "./w6";
 import { RagPipeline, AgentLoop, ChunkOverlap, LethalTrifecta } from "./w7";
-import { NistFramework, CapstoneTimeline } from "./w8";
+import { NistFramework, CapstoneTimeline, FairnessGrid, DeployStrategies } from "./w8";
 import { PhaseRoadmap, DifficultyCurve } from "./shared";
 import InteractiveGradientDescent from "./InteractiveGradientDescent";
 import InteractiveBiasVariance from "./InteractiveBiasVariance";
@@ -48,7 +48,9 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "chunk-overlap": ChunkOverlap,
   "lethal-trifecta": LethalTrifecta,
   "agent-loop": AgentLoop,
+  "fairness-grid": FairnessGrid,
   "nist-framework": NistFramework,
+  "deploy-strategies": DeployStrategies,
   "capstone-timeline": CapstoneTimeline,
   "phase-roadmap": PhaseRoadmap,
   "difficulty-curve": DifficultyCurve,
