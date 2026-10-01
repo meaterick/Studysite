@@ -27,7 +27,18 @@ const LANG_LABEL: Record<string, string> = {
   text: "Text",
 };
 
-export default function CodeBlock({ lang, code, action }: { lang?: string; code: string; action?: ReactNode }) {
+export default function CodeBlock({
+  lang,
+  code,
+  action,
+  label,
+}: {
+  lang?: string;
+  code: string;
+  action?: ReactNode;
+  /** 머리글의 언어 표시 대신 쓸 문구 */
+  label?: string;
+}) {
   const lines = highlightCode(code, lang);
   const showLineNumbers = lines.length > 3;
 
@@ -35,7 +46,7 @@ export default function CodeBlock({ lang, code, action }: { lang?: string; code:
     <div className="not-prose overflow-hidden rounded-lg border border-[var(--border-hairline)]">
       <div className="flex items-center justify-between border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1">
         <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">
-          {lang ? LANG_LABEL[lang.toLowerCase()] ?? lang : "Code"}
+          {label ?? (lang ? LANG_LABEL[lang.toLowerCase()] ?? lang : "Code")}
         </span>
         <div className="flex items-center gap-1.5">
           <CopyButton text={code} />

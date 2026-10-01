@@ -16,6 +16,7 @@ import GradeForm from "@/components/assignment/GradeForm";
 import ChatPanel from "@/components/chat/ChatPanel";
 import { conversationView } from "@/lib/chatView";
 import { formatDateTime } from "@/lib/datetime";
+import { autoTestViews } from "@/lib/labView";
 
 export const metadata = { title: "과제 채점" };
 
@@ -83,6 +84,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
                   taskComments={currentGrade?.taskComments}
                   runKey={`${submission.id}:${latest.version}`}
                   courseDocs={courseDocs}
+                  autoTests={autoTestViews(week)}
                 />
               ) : (
                 <p className="text-sm text-ink-muted">이 제출본에는 작업 공간 기록이 없습니다(이전 방식으로 제출한 과제).</p>

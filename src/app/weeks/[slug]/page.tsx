@@ -5,6 +5,8 @@ import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import { loadWeekPage } from "@/lib/weekPage";
 import { ASSIGNMENT_STATUS_LABEL } from "@/lib/study";
+import { readLabState } from "@/lib/learningStore";
+import { labProgress } from "@/lib/labView";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -26,7 +28,8 @@ export default async function WeekOverviewPage({
 }) {
   const { slug } = await params;
   const { finished, locked } = await searchParams;
-  const { week, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}`);
+  const { week, record, status, isAdmin } = await loadWeekPage(slug, `/weeks/${slug}`);
+  const lab = labProgress(slug, readLabState(record, slug));
   const { intro } = getWeekOutline(week);
   const totalMinutes = status.sections.reduce((sum, r) => sum + r.section.minutes, 0);
   const current = status.currentSection;
@@ -178,6 +181,33 @@ export default async function WeekOverviewPage({
             })}
           </ol>
         </section>
+
+        {lab && (lab.exercisesTotal > 0 || lab.quizTotal > 0) && (
+          <section aria-labelledby="practice-lab-heading">
+            <h2 id="practice-lab-heading" className="mb-1 text-xl font-black text-ink">직접 풀어 보기: 코딩 실습 · 퀴즈</h2>
+            <p className="mb-4 text-sm text-ink-muted">
+              단계를 학습하는 중에도 언제든 풀 수 있습니다. 브라우저에서 바로 채점되며, 단계 완료 조건과는 별개입니다.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FinaleCard
+                href={`/weeks/${slug}/lab`}
+                locked={false}
+                title="코딩 실습"
+                desc="TODO가 비어 있는 시작 코드를 직접 채우고 자동 채점을 받습니다. 단계별 힌트와 초기화, 통과 후 모범 답안 비교를 제공합니다."
+                state={`통과 ${lab.exercisesPassed}/${lab.exercisesTotal}`}
+                done={lab.exercisesTotal > 0 && lab.exercisesPassed === lab.exercisesTotal}
+              />
+              <FinaleCard
+                href={`/weeks/${slug}/drill`}
+                locked={false}
+                title="퀴즈"
+                desc="객관식, 코드 출력 예측, 서술형 문제로 코드를 읽고 설명하는 힘을 점검합니다."
+                state={`완료 ${lab.quizDone}/${lab.quizTotal}${lab.quizWeak > 0 ? ` · 다시 볼 문항 ${lab.quizWeak}` : ""}`}
+                done={lab.quizTotal > 0 && lab.quizDone === lab.quizTotal}
+              />
+            </div>
+          </section>
+        )}
 
         <section aria-labelledby="finale-heading">
           <h2 id="finale-heading" className="mb-1 text-xl font-black text-ink">마무리: 백지공부 · 과제</h2>

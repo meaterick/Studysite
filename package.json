@@ -10,7 +10,8 @@
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
     "lint": "eslint",
-    "validate:content": "tsx scripts/validate-content.ts"
+    "validate:content": "tsx scripts/validate-content.ts",
+    "check:labs": "tsx scripts/check-labs.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

@@ -7,6 +7,7 @@ import { resetNamespace, runPython, writeRuntimeFiles } from "@/lib/pyRunner";
 import CellOutputs from "./CellOutputs";
 import UserMarkdown from "./UserMarkdown";
 import { formatDateTime } from "@/lib/datetime";
+import AutoTestPanel, { type AutoTestView } from "@/components/lab/AutoTestPanel";
 
 export interface NotebookViewTask {
   id: string;
@@ -27,6 +28,7 @@ export default function NotebookView({
   taskComments,
   runKey,
   courseDocs,
+  autoTests,
 }: {
   tasks: NotebookViewTask[];
   notebook: AssignmentDraft;
@@ -35,12 +37,14 @@ export default function NotebookView({
   runKey: string;
   /** 과제 코드가 읽는 학습 자료 파일(7주차) */
   courseDocs?: { path: string; content: string }[];
+  /** 다시 실행한 이름공간에서 돌릴 자동 테스트(운영자 화면) */
+  autoTests?: AutoTestView[];
 }) {
   const [fresh, setFresh] = useState<Record<string, NotebookOutput[]>>({});
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
 
-  const rerun = async () => {
+  const rerun = async (): Promise<boolean> => {
     setRunning(true);
     setFresh({});
     const ns = `review:${runKey}`;
@@ -72,6 +76,7 @@ export default function NotebookView({
         }
       }
       setProgress("다시 실행을 마쳤습니다. 각 셀 아래에 새 실행 결과가 함께 표시됩니다.");
+      return true;
     } finally {
       setRunning(false);
     }
@@ -90,6 +95,16 @@ export default function NotebookView({
         </button>
         {progress && <p className="text-xs text-ink-muted">{progress}</p>}
       </div>
+      {autoTests && autoTests.length > 0 && (
+        <AutoTestPanel
+          ns={`review:${runKey}`}
+          tests={autoTests}
+          beforeRun={rerun}
+          beforeRunLabel="▶ 처음부터 다시 실행 후 테스트"
+          disabled={running}
+          note="제출된 코드를 빈 실행 환경에서 다시 실행한 뒤 같은 자동 테스트를 돌려, 학습자 화면의 결과가 재현되는지 확인합니다. 자동 테스트는 채점 기준의 일부만 확인합니다."
+        />
+      )}
       {tasks.map((task, i) => {
         const cells = notebook.tasks[task.id]?.cells ?? [];
         const comment = taskComments?.[task.id];

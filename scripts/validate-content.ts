@@ -9,6 +9,9 @@
  *   5. 단계 구조: 모든 `##` 단계에 고유한 {#id}가 있고, sections/weekN.ts의 메타(목표·확인 문제·서술형
  *      배정)와 1:1로 대응하는가. 확인 문제의 정답 번호가 유효한가, 서술형 퀴즈가 정확히 한 단계에만
  *      배정되었는가, 외부 자료 링크가 https인가
+ *   6. 코딩 실습·퀴즈·과제 자동 테스트(labs/weekN.ts): id가 전체에서 유일한가, 연결한 단계·과제 항목이 있는가,
+ *      시작 코드에 TODO가 있고 채점 코드에 @test 항목이 있는가, 객관식 정답 번호가 유효한가 등
+ *      (모범 답안이 실제로 채점을 통과하는지는 npm run check:labs가 Python으로 실행해 확인한다)
  *
  * 사용법: npm run validate:content
  * 실패 시 0이 아닌 코드로 종료하므로 CI(build 이전 단계)에 그대로 연결할 수 있다.
@@ -20,6 +23,7 @@ import { WEEKS } from "../src/content/weeks";
 import { quizAnswers } from "../src/content/quizAnswers";
 import { parseMarkdown } from "../src/content/markdown";
 import { getWeekOutline } from "../src/content/sections";
+import { LABS } from "../src/content/labs";
 import type { Block } from "../src/content/types";
 
 const ROOT = path.join(__dirname, "..");
@@ -107,6 +111,8 @@ function checkBlocks(blocks: Block[], context: string) {
   }
 }
 
+const labIds = new Set<string>();
+
 for (const week of WEEKS) {
   const label = `week${week.number}`;
   const ans = quizAnswers.find((a) => a.week === week.number);
@@ -131,6 +137,71 @@ for (const week of WEEKS) {
   checkBlocks(parseMarkdown(week.conceptsMd), `${label} conceptsMd`);
   checkSections(week, label);
   checkAssignment(week, label);
+  checkLab(week, label);
+}
+
+function checkLab(week: (typeof WEEKS)[number], label: string) {
+  const lab = LABS[week.slug];
+  const ctx = `${label} 실습`;
+  if (!lab) {
+    fail(`${ctx}: labs/week${week.number}.ts가 LABS에 등록되지 않음`);
+    return;
+  }
+  const sectionIds = new Set(getWeekOutline(week).sections.map((s) => s.id));
+  const taskIds = new Set(week.assignment.tasks.map((t) => t.id));
+  const ID = /^w\d+-[a-z0-9-]+$/;
+  const checkId = (id: string, where: string) => {
+    if (!ID.test(id)) fail(`${ctx} ${where}: id "${id}" 형식이 잘못됨 (예: w1-lab-name)`);
+    if (labIds.has(id)) fail(`${ctx} ${where}: id "${id}" 중복 (모든 주차에서 유일해야 함)`);
+    labIds.add(id);
+  };
+  const exercises = [...lab.exercises.map((e) => ({ e, challenge: false })), ...lab.assignment.challenges.map((e) => ({ e, challenge: true }))];
+  if (lab.exercises.length === 0) warn(`${ctx}: 코딩 실습 문제가 없음`);
+  for (const { e, challenge } of exercises) {
+    const ectx = `${ctx} ${e.id}`;
+    checkId(e.id, challenge ? "심화 문제" : "실습");
+    if (challenge && e.sectionId) fail(`${ectx}: 과제 심화 문제에는 sectionId를 두지 않음`);
+    if (!challenge && (!e.sectionId || !sectionIds.has(e.sectionId))) fail(`${ectx}: sectionId "${e.sectionId}"에 해당하는 단계가 없음`);
+    if (!e.title.trim()) fail(`${ectx}: title이 비어 있음`);
+    if (![1, 2, 3].includes(e.level)) fail(`${ectx}: level은 1~3`);
+    checkBlocks(parseMarkdown(e.prompt), `${ectx} prompt`);
+    if (!e.starter.includes("TODO")) fail(`${ectx}: 시작 코드에 TODO 표시가 없음`);
+    if (!/@test\(/.test(e.tests)) fail(`${ectx}: 채점 코드에 @test 항목이 없음`);
+    if (!e.solution.trim()) fail(`${ectx}: 모범 답안이 비어 있음`);
+    if (e.hints.length < 2) fail(`${ectx}: 힌트가 2개 미만`);
+    e.hints.forEach((h) => checkInlineMath(h, `${ectx} 힌트`));
+  }
+  const kinds = new Set(lab.quiz.map((q) => q.kind));
+  for (const kind of ["choice", "predict", "descriptive"] as const) if (!kinds.has(kind)) warn(`${ctx}: 퀴즈에 ${kind} 문항이 없음`);
+  for (const q of lab.quiz) {
+    const qctx = `${ctx} ${q.id}`;
+    checkId(q.id, "퀴즈");
+    if (!sectionIds.has(q.sectionId)) fail(`${qctx}: sectionId "${q.sectionId}"에 해당하는 단계가 없음`);
+    if (q.kind === "choice") {
+      if (q.choices.length < 3) fail(`${qctx}: 선택지가 3개 미만`);
+      if (new Set(q.choices).size !== q.choices.length) fail(`${qctx}: 선택지 중복`);
+      if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.choices.length) fail(`${qctx}: 정답 번호가 범위를 벗어남`);
+      [q.question, q.explanation, ...q.choices].forEach((t) => checkInlineMath(t, qctx));
+      if (!q.explanation.trim()) fail(`${qctx}: 해설이 비어 있음`);
+    } else if (q.kind === "predict") {
+      if (!q.code.trim() || !q.expected.trim()) fail(`${qctx}: 코드 또는 정답 출력이 비어 있음`);
+      if (!q.explanation.trim()) fail(`${qctx}: 해설이 비어 있음`);
+      checkInlineMath(q.explanation, qctx);
+      if (q.question) checkInlineMath(q.question, qctx);
+    } else {
+      if (!q.modelAnswer.trim()) fail(`${qctx}: 모범답안이 비어 있음`);
+      if (q.keyPoints.length < 2) fail(`${qctx}: 핵심 요소가 2개 미만`);
+      [q.question, q.modelAnswer, ...q.keyPoints].forEach((t) => checkInlineMath(t, qctx));
+    }
+  }
+  if (lab.assignment.requirements.length === 0) warn(`${ctx}: 과제 요구사항이 없음`);
+  lab.assignment.requirements.forEach((r) => checkInlineMath(r, `${ctx} 요구사항`));
+  for (const t of lab.assignment.autoTests) {
+    checkId(t.id, "자동 테스트");
+    if (!taskIds.has(t.taskId)) fail(`${ctx} ${t.id}: taskId "${t.taskId}"에 해당하는 과제 항목이 없음`);
+    if (!t.code.trim() || !t.title.trim()) fail(`${ctx} ${t.id}: 코드 또는 제목이 비어 있음`);
+    if (t.hint) checkInlineMath(t.hint, `${ctx} ${t.id}`);
+  }
 }
 
 function checkAssignment(week: (typeof WEEKS)[number], label: string) {

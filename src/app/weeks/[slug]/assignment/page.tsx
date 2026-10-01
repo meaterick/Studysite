@@ -19,6 +19,10 @@ import { dueDateEnd, getSettings } from "@/lib/settingsStore";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
 import MarkFeedbackSeen from "@/components/feedback/MarkFeedbackSeen";
 import { isGradeUnseen } from "@/lib/feedback";
+import { getWeekLab } from "@/content/labs";
+import CodingExercise from "@/components/lab/CodingExercise";
+import { readLabState } from "@/lib/learningStore";
+import { autoTestViews, exerciseView, labProgress } from "@/lib/labView";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -42,6 +46,9 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
   const unread = unreadCount(findConversation(user.id), "member");
   const viewTasks = notebookViewTasks(spec, false);
   const courseDocs = courseDocFiles(spec);
+  const lab = getWeekLab(slug);
+  const labState = readLabState(record, slug);
+  const labStats = labProgress(slug, labState);
 
   return (
     <WeekFrame week={week} status={status}>
@@ -102,6 +109,19 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
           <div className="mt-3">
             <BlocksRenderer blocks={parseMarkdown(spec.summary)} />
           </div>
+          {lab && lab.assignment.requirements.length > 0 && (
+            <div className="mt-5 rounded-xl border border-[var(--series-aqua)]/50 bg-card p-4">
+              <h3 className="text-sm font-black text-ink">요구사항</h3>
+              <p className="mt-0.5 text-xs text-ink-muted">제출 전에 하나씩 확인하십시오. 표시한 항목은 작업 공간 아래의 자동 테스트로도 일부 확인할 수 있습니다.</p>
+              <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-ink-secondary">
+                {lab.assignment.requirements.map((r, i) => (
+                  <li key={i}>
+                    <Inline text={r} />
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
             <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
               <h3 className="text-sm font-black text-ink">채점 기준 ({week.assignmentMaxScore}점)</h3>
@@ -144,8 +164,34 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
             savedAt={savedDraft?.updatedAt}
             courseDocs={courseDocs}
             resubmit={!!submission}
+            autoTests={autoTestViews(week)}
           />
         </section>
+
+        {lab && lab.assignment.challenges.length > 0 && (
+          <section id="challenges" aria-labelledby="challenges-heading" className="scroll-mt-24">
+            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+              <div>
+                <h2 id="challenges-heading" className="text-xl font-black text-ink">
+                  심화 문제 (자동 채점)
+                </h2>
+                <p className="mt-1 text-sm text-ink-muted">
+                  과제 내용을 한 걸음 더 확장하는 선택 문제입니다. 제출본과는 별개로 이 자리에서 바로 채점되며, 점수에는 들어가지 않습니다. 과제의 심화 항목으로 발전시켜 제출해도 좋습니다.
+                </p>
+              </div>
+              {labStats && (
+                <p className="rounded-full bg-[var(--surface-card-2)] px-3 py-1 text-sm font-bold text-ink-secondary">
+                  통과 {labStats.challengesPassed}/{labStats.challengesTotal}
+                </p>
+              )}
+            </div>
+            <div className="space-y-5">
+              {lab.assignment.challenges.map((ex) => (
+                <CodingExercise key={ex.id} view={exerciseView(week, ex, labState, status, isAdmin)} />
+              ))}
+            </div>
+          </section>
+        )}
 
 
         {submission && (
