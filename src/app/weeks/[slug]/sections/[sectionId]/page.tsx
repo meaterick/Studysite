@@ -8,14 +8,15 @@ import { TIER_INFO, TIER_ORDER, sectionLabel } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
-import CheckQuestion from "@/components/section/CheckQuestion";
+import CheckSequence from "@/components/section/CheckSequence";
 import StageFooter from "@/components/section/StageFooter";
 import { loadWeekPage } from "@/lib/weekPage";
 import { canOpenSection, sectionProgress, unfinishedBefore, type WeekStatus } from "@/lib/study";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
-import PracticeDoneButton from "@/components/section/PracticeDoneButton";
 import { readSectionState } from "@/lib/learningStore";
 import { getWeekLab } from "@/content/labs";
+import { cookies } from "next/headers";
+import { STAGE_LIST_COOKIE } from "@/lib/stageListCookie";
 
 export function generateStaticParams() {
   return WEEKS.flatMap((w) => getWeekOutline(w).sections.map((s) => ({ slug: w.slug, sectionId: s.id })));
@@ -35,7 +36,6 @@ export async function generateMetadata({
 
 const PART_LINKS = [
   { id: "learn", label: "학습" },
-  { id: "practice", label: "따라 해 보기" },
   { id: "check", label: "확인 문제" },
 ];
 
@@ -53,7 +53,6 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const prev = sections[section.order - 2];
   const next = sections[section.order];
   const continueTo = nextSectionAfter(week, section);
-  const hasPractice = section.practice.length > 0;
   // 서술형·코딩 실습·추가 퀴즈는 "적용과 복습"에서 한다. 단계 화면에는 이어지는 활동의 개수와 링크만 둔다.
   const lab = getWeekLab(slug);
   const related = {
@@ -79,13 +78,14 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
       : undefined;
   const footerNextLabel = continueTo ? undefined : isCore ? undefined : "주차 개요로";
   const skipped = isAdmin ? [] : unfinishedBefore(status, sectionId);
-  const practiceDone = !!state.practiceDoneAt || !!state.practiceDone;
+  const listCollapsed = (await cookies()).get(STAGE_LIST_COOKIE)?.value === "1";
 
   return (
     <WeekFrame week={week} status={status} record={record}>
       <StageLayout
         done={status.tiers.core.done}
         total={status.tiers.core.total}
+        initialCollapsed={listCollapsed}
         list={<StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />}
       >
         <article className="min-w-0">
@@ -120,7 +120,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
           <nav aria-label="이 단계의 구성" className="mt-5 flex flex-wrap items-center gap-2 text-xs font-bold">
             <span className="text-ink-muted">바로 가기</span>
-            {PART_LINKS.filter((s) => s.id !== "practice" || hasPractice).map((s) => (
+            {PART_LINKS.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
@@ -135,48 +135,29 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
             <BlocksRenderer blocks={section.learn} docKey={`${slug}:${sectionId}`} interactiveCode />
           </section>
 
-          {hasPractice && (
-            <section id="practice" aria-labelledby="practice-heading" className="mt-12 scroll-mt-24">
-              <StepHeading
-                id="practice-heading"
-                title="따라 해 보기"
-                desc="방금 배운 내용을 완성된 예제 코드와 손계산으로 직접 확인합니다. 코드는 이 페이지에서 바로 실행할 수 있습니다."
-              />
-              <div className="rounded-xl border border-[var(--series-orange)]/40 p-4 sm:p-5">
-                <BlocksRenderer blocks={section.practice} docKey={`${slug}:${sectionId}:practice`} interactiveCode />
-              </div>
-              <PracticeDoneButton slug={slug} sectionId={sectionId} done={practiceDone} />
-            </section>
-          )}
-
           <section id="check" aria-labelledby="check-heading" className="mt-12 scroll-mt-24">
             <StepHeading
               id="check-heading"
               title="확인 문제"
-              desc="방금 배운 내용을 빠르게 확인하는 객관식 문제입니다. 모두 맞히면 이 단계가 완료되고, 틀린 문제는 다시 풀 수 있습니다."
+              desc="방금 배운 내용을 확인하는 객관식 문제입니다. 한 문제씩 풀고, 맞히면 해설을 읽은 뒤 다음 문제로 넘어갑니다. 모두 맞히면 이 단계를 완료할 수 있습니다."
             />
-            <div className="space-y-4">
-              {section.meta.checks.map((check, i) => {
+            <CheckSequence
+              slug={slug}
+              sectionId={sectionId}
+              completed={progress.completed}
+              items={section.meta.checks.map((check) => {
                 const checkState = state.checks[check.id] ?? null;
                 const reveal = !!checkState && (checkState.correct || checkState.wrong.length >= 2);
-                return (
-                  <CheckQuestion
-                    key={check.id}
-                    slug={slug}
-                    sectionId={sectionId}
-                    checkId={check.id}
-                    index={i}
-                    question={<Inline text={check.question} />}
-                    choices={check.choices.map((c, j) => (
-                      <Inline key={j} text={c} />
-                    ))}
-                    state={checkState}
-                    explanation={reveal ? <Inline text={check.explanation} /> : undefined}
-                    correctIndex={checkState?.correct ? check.answer : undefined}
-                  />
-                );
+                return {
+                  checkId: check.id,
+                  question: <Inline text={check.question} />,
+                  choices: check.choices.map((c, j) => <Inline key={j} text={c} />),
+                  state: checkState,
+                  explanation: reveal ? <Inline text={check.explanation} /> : undefined,
+                  correctIndex: checkState?.correct ? check.answer : undefined,
+                };
               })}
-            </div>
+            />
           </section>
 
           {related.descriptive + related.lab + related.drill > 0 && (

@@ -61,7 +61,7 @@ export default function CheckQuestion({
       <legend className="sr-only">확인 문제 {index + 1}</legend>
       <div className="mb-3 flex items-start gap-2">
         <span className="mt-0.5 shrink-0 rounded-md bg-[var(--surface-card-2)] px-2 py-0.5 text-xs font-black text-ink-secondary">
-          문제 {index + 1}
+          Q{index + 1}
         </span>
         <div className="text-[15px] font-medium text-ink">{question}</div>
       </div>

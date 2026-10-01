@@ -44,13 +44,6 @@ export function parseMarkdownUncached(source: string): Block[] {
       continue;
     }
 
-    // Practice marker — 단계를 "설명"과 "실습" 단계로 나누는 경계
-    if (/^\[\[practice\]\]$/i.test(trimmed)) {
-      flushParagraph();
-      blocks.push({ type: "practice" });
-      i++;
-      continue;
-    }
 
     // Diagram marker
     const diagramMatch = trimmed.match(/^\[\[diagram:([a-z0-9-]+)\]\]$/i);
@@ -147,7 +140,14 @@ export function parseMarkdownUncached(source: string): Block[] {
         i++;
       }
       i++; // skip closing :::
-      blocks.push({ type: "callout", tone, title, text: bodyLines.join(" ").trim() });
+      blocks.push({
+        type: "callout",
+        tone,
+        title,
+        text: bodyLines.join(" ").trim(),
+        // 상자 안에서도 표·목록·코드·수식·여러 문단을 쓸 수 있게 본문을 다시 블록으로 해석한다.
+        blocks: parseMarkdownUncached(bodyLines.join("\n")),
+      });
       continue;
     }
 

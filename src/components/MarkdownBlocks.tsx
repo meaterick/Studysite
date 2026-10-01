@@ -202,14 +202,17 @@ export function BlocksRenderer({
                     {b.title || style.icon}
                   </p>
                 )}
-                <p className="text-ink-secondary">
-                  <Inline text={b.text} />
-                </p>
+                {b.blocks.length === 1 && b.blocks[0].type === "paragraph" ? (
+                  <p className="text-ink-secondary">
+                    <Inline text={b.text} />
+                  </p>
+                ) : (
+                  // 표·목록·여러 문단이 든 상자: 본문 블록을 그대로 그린다(상자 안의 코드는 실행 셀이 아닌 정적 블록).
+                  <BlocksRenderer blocks={b.blocks} docKey={docKey ? `${docKey}:box${i}` : undefined} />
+                )}
               </div>
             );
           }
-          case "practice":
-            return null;
           case "diagram": {
             const Diagram = DIAGRAMS[b.id];
             if (!Diagram) return null;

@@ -43,7 +43,31 @@ const sections: Record<string, SectionMeta> = {
           "0이 된다"
         ],
         "answer": 1,
-        "explanation": "$W_{10}\\cdots W_1 x$는 결국 행렬 하나로 합쳐지므로 단일 선형 변환과 같다. 실습에서 `np.allclose`가 True로 확인되었다."
+        "explanation": "$W_{10}\\cdots W_1 x$는 결국 행렬 하나로 합쳐지므로 단일 선형 변환과 같다. 코드로 두 결과를 비교하면 `np.allclose`가 True다."
+      },
+      {
+        "id": "w3-neurons-mlp-c4",
+        "question": "위 XOR 신경망($h_1 = \\mathrm{ReLU}(x_1 + x_2)$, $h_2 = \\mathrm{ReLU}(x_1 + x_2 - 1)$, 출력 $h_1 - 2h_2$)에 $(1, 1)$을 넣으면 출력은?",
+        "choices": [
+          "0",
+          "1",
+          "2",
+          "−1"
+        ],
+        "answer": 0,
+        "explanation": "$h_1 = \\mathrm{ReLU}(2) = 2$, $h_2 = \\mathrm{ReLU}(1) = 1$이므로 출력은 $2 - 2 \\cdot 1 = 0$이다. 두 입력이 모두 1이면 XOR은 0이다."
+      },
+      {
+        "id": "w3-neurons-mlp-c5",
+        "question": "입력 3 → 은닉 4 → 출력 1인 MLP(편향 포함)의 파라미터 수는?",
+        "choices": [
+          "21",
+          "12",
+          "16",
+          "19"
+        ],
+        "answer": 0,
+        "explanation": "$W_1$ 12개 + $b_1$ 4개 + $W_2$ 4개 + $b_2$ 1개 = 21개다. 층마다 입력 수와 출력 수의 곱에 편향(출력 수)을 더한다."
       }
     ],
     "quizIds": [
@@ -102,6 +126,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "연쇄법칙 자체는 오래된 도구다. 계산 그래프 위에서 중간 결과를 재사용해, 파라미터 수만큼 순전파를 반복하는 수치미분과 달리 한 번의 역방향 순회로 끝낸다."
+      },
+      {
+        "id": "w3-backprop-c4",
+        "question": "$z = e^a$ 노드에서 $a = 0$이고 상류 기울기가 $g = 3$이면 $\\partial L/\\partial a$는?",
+        "choices": [
+          "3",
+          "0",
+          "1",
+          "$e^3$"
+        ],
+        "answer": 0,
+        "explanation": "지수 함수의 국소 미분은 자기 자신 $e^a$이고, $a = 0$이면 $e^0 = 1$이다. 상류 기울기 3을 곱하면 3이다."
+      },
+      {
+        "id": "w3-backprop-c5",
+        "question": "시그모이드 노드의 출력이 $z = 0.5$일 때 국소 미분 $\\partial z/\\partial a$는?",
+        "choices": [
+          "0.25",
+          "0.5",
+          "1",
+          "0"
+        ],
+        "answer": 0,
+        "explanation": "$z(1 - z) = 0.5 \\times 0.5 = 0.25$로, 이것이 시그모이드 국소 미분의 최댓값이다. 그래서 시그모이드를 깊게 쌓으면 기울기가 빠르게 줄어든다."
       }
     ],
     "quizIds": [
@@ -161,6 +209,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "종료 조건이 없으면 무한히 자기 자신을 호출하다 `RecursionError`가 난다."
+      },
+      {
+        "id": "w3-python-for-autograd-c4",
+        "question": "`f = lambda x, y: x * y + 1`일 때 `f(3, 4)`의 결과는?",
+        "choices": [
+          "13",
+          "12",
+          "7",
+          "오류"
+        ],
+        "answer": 0,
+        "explanation": "`lambda x, y: x * y + 1`은 `def f(x, y): return x * y + 1`과 같다. $3 \\times 4 + 1 = 13$이다."
+      },
+      {
+        "id": "w3-python-for-autograd-c5",
+        "question": "Value의 `__add__`에서 `o = o if isinstance(o, Value) else Value(o)`를 쓰는 이유는?",
+        "choices": [
+          "`Value(2.0) + 3`처럼 일반 숫자가 들어와도 Value로 감싸 같은 방식으로 계산하려고",
+          "덧셈을 빠르게 하려고",
+          "기울기를 0으로 초기화하려고",
+          "재귀를 멈추려고"
+        ],
+        "answer": 0,
+        "explanation": "일반 숫자에는 `.data`, `.grad`가 없다. 숫자를 Value로 감싸 두면 덧셈과 역전파 코드를 한 가지로 쓸 수 있다."
       }
     ],
     "quizIds": [],
@@ -215,7 +287,31 @@ const sections: Record<string, SectionMeta> = {
           "$\\cosh z$"
         ],
         "answer": 1,
-        "explanation": "$\\frac{d}{dz}\\tanh z = 1 - \\tanh^2 z$. 실습에서 이 식으로 채운 역전파가 수치미분과 $10^{-11}$ 수준까지 일치했다."
+        "explanation": "$\\frac{d}{dz}\\tanh z = 1 - \\tanh^2 z$. 이 식으로 채운 역전파는 수치미분과 $10^{-11}$ 수준까지 일치한다."
+      },
+      {
+        "id": "w3-micrograd-c4",
+        "question": "Value로 만든 학습 루프에서 매 스텝 `w.grad = 0.0`으로 되돌리지 않으면 어떻게 되는가?",
+        "choices": [
+          "기울기가 `+=`로 이전 스텝 값 위에 쌓여 갈수록 커지고 학습이 불안정해진다",
+          "기울기가 항상 0이 된다",
+          "아무 차이가 없다",
+          "순전파가 계산되지 않는다"
+        ],
+        "answer": 0,
+        "explanation": "`_backward`는 기울기를 누적한다(여러 경로를 합치기 위해). 스텝이 바뀌면 지난 기울기는 버려야 하므로 0으로 초기화한다. PyTorch의 `zero_grad()`와 같은 역할이다."
+      },
+      {
+        "id": "w3-micrograd-c5",
+        "question": "`loss.backward()`를 호출한 직후 채워지는 것은?",
+        "choices": [
+          "그래프에 있는 모든 Value의 `.grad`(손실에 대한 기울기)",
+          "모든 Value의 `.data`",
+          "갱신된 파라미터 값",
+          "새 계산 그래프"
+        ],
+        "answer": 0,
+        "explanation": "`backward()`는 기울기만 계산한다. 파라미터를 바꾸는 것은 그 뒤의 갱신 코드(`w.data -= lr * w.grad`)이고, PyTorch에서는 `optimizer.step()`이 맡는다."
       }
     ],
     "quizIds": [
@@ -264,7 +360,7 @@ const sections: Record<string, SectionMeta> = {
       },
       {
         "id": "w3-optimizers-c3",
-        "question": "실습 결과를 바탕으로 가장 적절한 결론은?",
+        "question": "SGD·Momentum·Adam을 비교할 때 가장 적절한 결론은?",
         "choices": [
           "Adam은 모든 문제에서 SGD보다 빠르다",
           "같은 학습률이면 Momentum이 SGD보다 유리하지만, 잘 튜닝된 SGD가 단순한 문제에서 가장 정확할 수도 있다",
@@ -273,6 +369,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "최적화기 선택은 \"정답\"이 아니라 트레이드오프다. Adam은 학습률에 덜 민감한 좋은 기본값이고, 튜닝 여유가 있으면 SGD+Momentum이 이기는 경우도 많다."
+      },
+      {
+        "id": "w3-optimizers-c4",
+        "question": "데이터가 2,000개이고 배치 크기가 50이면 한 에폭은 몇 번의 반복(갱신)인가?",
+        "choices": [
+          "40번",
+          "50번",
+          "2,000번",
+          "1번"
+        ],
+        "answer": 0,
+        "explanation": "한 에폭은 데이터를 한 바퀴 보는 것이므로 $2000 / 50 = 40$번의 미니배치 갱신이다."
+      },
+      {
+        "id": "w3-optimizers-c5",
+        "question": "Momentum($\\beta = 0.9$, $v_0 = 0$, $v \\leftarrow \\beta v + g$)에서 기울기가 세 번 연속 $g = 1$이면 $v_3$은?",
+        "choices": [
+          "2.71",
+          "3",
+          "1",
+          "0.729"
+        ],
+        "answer": 0,
+        "explanation": "$v_1 = 1$, $v_2 = 0.9 + 1 = 1.9$, $v_3 = 1.71 + 1 = 2.71$이다. 같은 방향이 계속되면 최대 $1/(1 - \\beta) = 10$배까지 커진다."
       }
     ],
     "quizIds": [
@@ -329,7 +449,31 @@ const sections: Record<string, SectionMeta> = {
           "학습률에 따라 자동으로 달라진다"
         ],
         "answer": 1,
-        "explanation": "대칭성이 깨지지 않는다. 실습 2에서 200스텝 뒤에도 세 열이 완전히 같았다. 작은 무작위 값으로 시작해야 한다."
+        "explanation": "대칭성이 깨지지 않는다. 실제로 200스텝을 학습해도 세 열이 완전히 같게 남는다. 작은 무작위 값으로 시작해야 한다."
+      },
+      {
+        "id": "w3-init-stability-c4",
+        "question": "fan_in = 256, fan_out = 256인 tanh 층에 Xavier 초기화 $\\mathrm{Var}(W) = 2/(\\text{fan\\_in} + \\text{fan\\_out})$를 쓰면 가중치의 표준편차는?",
+        "choices": [
+          "0.0625",
+          "0.125",
+          "0.0039",
+          "0.088"
+        ],
+        "answer": 0,
+        "explanation": "$\\mathrm{Var}(W) = 2/512 = 1/256$이므로 표준편차는 $1/16 = 0.0625$다. 0.088은 같은 층의 He 초기화($\\sqrt{2/256}$) 값이다."
+      },
+      {
+        "id": "w3-init-stability-c5",
+        "question": "폭 256인 ReLU 층 10개를 표준편차 1인 가중치로 초기화하면 마지막 층 활성화의 크기는 대략 어떻게 되는가?",
+        "choices": [
+          "층마다 약 11배씩 커져 천문학적으로 커진다",
+          "1 근처로 유지된다",
+          "정확히 0이 된다",
+          "층마다 절반으로 줄어든다"
+        ],
+        "answer": 0,
+        "explanation": "$\\mathrm{Var}(z) \\approx \\text{fan\\_in} \\cdot \\mathrm{Var}(w) \\cdot \\mathrm{Var}(x)$이고 ReLU가 절반을 깎으므로 분산이 층마다 약 128배, 표준편차는 약 11배가 된다. 10층이면 $10^{10}$ 규모다."
       }
     ],
     "quizIds": [
@@ -390,6 +534,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "eval은 층의 동작 모드를, no_grad는 autograd 기록 여부를 바꾼다. 둘은 서로 다른 스위치다."
+      },
+      {
+        "id": "w3-pytorch-core-c4",
+        "question": "예측 `pred`의 shape이 `(64, 1)`이고 정답 `y`의 shape이 `(64,)`일 때 `((pred - y) ** 2).mean()`의 문제는?",
+        "choices": [
+          "브로드캐스팅으로 `(64, 64)` 차이 행렬이 만들어져 엉뚱한 값을 평균 낸다",
+          "오류가 나서 실행이 멈춘다",
+          "정확히 원하는 MSE가 계산된다",
+          "기울기가 계산되지 않는다"
+        ],
+        "answer": 0,
+        "explanation": "오른쪽부터 비교하면 1과 64(1이 복제), 64와 없음이라 `(64, 64)`가 된다. 오류 없이 틀린 손실이 계산되는 조용한 버그라 shape을 맞춰야 한다."
+      },
+      {
+        "id": "w3-pytorch-core-c5",
+        "question": "학습 중 손실을 기록할 때 `losses.append(loss)` 대신 `losses.append(loss.item())`을 쓰는 이유는?",
+        "choices": [
+          "텐서를 그대로 모으면 계산 그래프가 해제되지 않아 메모리가 계속 늘어나기 때문",
+          "`.item()`이 손실을 더 정확하게 만들기 때문",
+          "`.item()`이 역전파를 실행하기 때문",
+          "리스트에는 텐서를 넣을 수 없기 때문"
+        ],
+        "answer": 0,
+        "explanation": "손실 텐서는 자신을 만든 계산 그래프를 참조한다. `.item()`은 파이썬 숫자만 꺼내 그래프와의 연결을 끊는다."
       }
     ],
     "quizIds": [
@@ -462,6 +630,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 2,
         "explanation": "LayerNorm은 마지막 축($d_{model}$)만 본다. 같은 문장의 다른 토큰도 참고하지 않으므로, 문장 길이·패딩·배치 구성이 바뀌어도, 생성 중에 토큰이 추가되어도 기존 토큰의 결과가 변하지 않는다. 두 번째 선택지는 BatchNorm을 시퀀스에 적용한 방식에 가깝다."
+      },
+      {
+        "id": "w3-normalization-c5",
+        "question": "$z = \\begin{pmatrix}2 & 4\\\\ 6 & 8\\end{pmatrix}$(행 = 샘플)에서 BatchNorm이 특징 2(둘째 열)에 대해 계산하는 평균과 분산은?",
+        "choices": [
+          "평균 6, 분산 4",
+          "평균 7, 분산 1",
+          "평균 5, 분산 5",
+          "평균 3, 분산 1"
+        ],
+        "answer": 0,
+        "explanation": "BN은 같은 특징의 샘플들(4와 8)로 계산한다: 평균 6, 분산 $\\frac{(4-6)^2 + (8-6)^2}{2} = 4$. 평균 7·분산 1은 LN의 샘플 2 통계다."
+      },
+      {
+        "id": "w3-normalization-c6",
+        "question": "NumPy에서 shape `(B, d)`인 배열에 LayerNorm의 평균을 구하는 코드는?",
+        "choices": [
+          "`z.mean(axis=1, keepdims=True)`",
+          "`z.mean(axis=0)`",
+          "`z.mean()`",
+          "`z.mean(axis=0, keepdims=True)`"
+        ],
+        "answer": 0,
+        "explanation": "LN은 샘플(행)마다 특징 축으로 평균을 낸다. `axis=1`이고, 각 행에서 빼려면 `keepdims=True`로 `(B, 1)` 모양을 남긴다. `axis=0`은 BatchNorm 쪽이다."
       }
     ],
     "quizIds": [
@@ -494,7 +686,7 @@ const sections: Record<string, SectionMeta> = {
           "정밀도가 항상 더 높아서"
         ],
         "answer": 1,
-        "explanation": "행렬 곱의 각 원소 계산은 서로 독립이라 병렬화에 최적이다. 실습에서 벡터화만으로도 파이썬 반복문보다 수백 배 빨랐다."
+        "explanation": "행렬 곱의 각 원소 계산은 서로 독립이라 병렬화에 최적이다. 벡터화만으로도 파이썬 반복문보다 수백 배 빨라질 수 있다."
       },
       {
         "id": "w3-pytorch-practice-c2",
@@ -519,6 +711,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "두 방법의 수학은 같다. autograd가 미분 공식 자리를, optimizer가 갱신 코드를 대신하므로 모델이 복잡해져도 루프는 그대로다."
+      },
+      {
+        "id": "w3-pytorch-practice-c4",
+        "question": "BF16이 FP16보다 대형 모델 학습에서 선호되는 주된 이유는?",
+        "choices": [
+          "FP32와 같은 지수 범위를 가져 loss scaling 없이도 underflow·overflow가 드물기 때문",
+          "FP16보다 유효숫자가 많아 더 정밀하기 때문",
+          "메모리를 FP16의 절반만 쓰기 때문",
+          "CPU에서만 동작하기 때문"
+        ],
+        "answer": 0,
+        "explanation": "BF16은 지수 8비트(FP32와 같음), 가수 7비트로 범위가 넓고 정밀도가 낮다. FP16은 정밀도는 더 높지만 범위가 좁아 작은 기울기가 사라지기 쉽다. 둘 다 16비트라 메모리는 같다."
+      },
+      {
+        "id": "w3-pytorch-practice-c5",
+        "question": "FP16에서 기울기 $10^{-8}$은 0이 된다. loss scaling으로 손실을 1024배 키우면 이 기울기는?",
+        "choices": [
+          "약 $10^{-5}$가 되어 FP16에서 살아남고, 갱신 전에 1024로 다시 나눈다",
+          "여전히 0이다",
+          "inf가 된다",
+          "1024가 된다"
+        ],
+        "answer": 0,
+        "explanation": "기울기도 손실과 같은 배율로 커져 약 $1.02 \\times 10^{-5}$가 되고, 이는 FP16이 (비정규수로) 표현할 수 있다. 갱신 직전에 배율을 되돌린다."
       }
     ],
     "quizIds": [
@@ -564,7 +780,7 @@ const sections: Record<string, SectionMeta> = {
           "검증 데이터에 버그가 있다"
         ],
         "answer": 0,
-        "explanation": "교차 엔트로피는 확신하며 틀린 예측에 큰 벌점을 준다. 실습에서 정확도 0.87은 그대로인데 검증 손실이 0.32에서 0.95로 올랐다. 조기 종료·가중치 감쇠·드롭아웃이 이를 막는다."
+        "explanation": "교차 엔트로피는 확신하며 틀린 예측에 큰 벌점을 준다. 예를 들어 정확도는 0.87 그대로인데 검증 손실이 0.32에서 0.95로 오를 수 있다. 조기 종료·가중치 감쇠·드롭아웃이 이를 막는다."
       },
       {
         "id": "w3-dl-regularization-c3",
@@ -577,6 +793,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "$w \\leftarrow (1 - \\eta\\lambda)w - \\eta g$이므로 $1 - 0.1 \\times 0.01 = 0.999$배다."
+      },
+      {
+        "id": "w3-dl-regularization-c4",
+        "question": "조기 종료(patience = 3)로 학습 중 검증 손실이 에폭별로 $0.50, 0.42, 0.40, 0.41, 0.43, 0.44$였다. 어느 시점의 모델을 최종으로 쓰는가?",
+        "choices": [
+          "3번째 에폭(검증 손실 0.40)",
+          "6번째 에폭(마지막)",
+          "1번째 에폭",
+          "4번째 에폭"
+        ],
+        "answer": 0,
+        "explanation": "0.40 이후 세 번(0.41, 0.43, 0.44) 연속 개선이 없어 6번째 에폭 뒤에 멈추고, 검증 손실이 가장 낮았던 3번째 에폭의 체크포인트를 쓴다."
+      },
+      {
+        "id": "w3-dl-regularization-c5",
+        "question": "역드롭아웃($p = 0.5$)을 쓴 모델을 평가할 때 해야 할 일은?",
+        "choices": [
+          "아무것도 하지 않는다. 드롭아웃을 끄고 전체 망을 그대로 쓴다(`model.eval()`)",
+          "모든 활성화를 0.5배 한다",
+          "모든 활성화를 2배 한다",
+          "평가 때도 절반을 끈다"
+        ],
+        "answer": 0,
+        "explanation": "학습 중 살아남은 값을 이미 $1/(1-p) = 2$배 해 평균을 맞췄으므로, 평가 때는 보정 없이 전체 뉴런을 쓴다."
       }
     ],
     "quizIds": [
@@ -634,6 +874,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "체크포인트 $L/k$개와 다시 계산하는 구간 $k$개만 메모리에 두므로 $k = \\sqrt{L}$에서 $O(\\sqrt{L})$이다. 대가는 구간마다 순전파를 다시 하는 계산이고, 기울기는 정확히 같다."
+      },
+      {
+        "id": "w3-autodiff-theory-c4",
+        "question": "이원수로 $f(x) = 2x^2$을 $x = 1$에서 계산할 때, $x = 1 + \\varepsilon$을 넣은 결과는?",
+        "choices": [
+          "$2 + 4\\varepsilon$",
+          "$2 + 2\\varepsilon$",
+          "$4 + 2\\varepsilon$",
+          "$2 + \\varepsilon$"
+        ],
+        "answer": 0,
+        "explanation": "$2(1 + \\varepsilon)^2 = 2(1 + 2\\varepsilon + \\varepsilon^2) = 2 + 4\\varepsilon$($\\varepsilon^2 = 0$). 값 2와 미분 $f'(1) = 4$를 함께 얻는다."
+      },
+      {
+        "id": "w3-autodiff-theory-c5",
+        "question": "입력 1개, 출력 1,000개인 함수의 모든 출력에 대한 미분을 구할 때 유리한 자동미분 모드는?",
+        "choices": [
+          "순방향 모드(1번이면 된다)",
+          "역방향 모드(1번이면 된다)",
+          "둘 다 1,000번 필요하다",
+          "수치미분만 가능하다"
+        ],
+        "answer": 0,
+        "explanation": "순방향은 입력 차원만큼, 역방향은 출력 차원만큼 지나간다. 입력이 1개면 순방향 한 번으로 출력 1,000개의 미분을 모두 얻는다."
       }
     ],
     "quizIds": [
@@ -678,7 +942,7 @@ const sections: Record<string, SectionMeta> = {
           "편향 보정이 불가능해진다"
         ],
         "answer": 0,
-        "explanation": "기울기가 큰 파라미터는 감쇠가 약해지고, 데이터 기울기가 0인 파라미터는 $\\lambda$와 무관하게 약 $\\eta$씩 줄어든다(실습: $\\lambda$를 1만 배 바꿔도 같은 0.2577). AdamW는 감쇠를 갱신에서 따로 적용한다."
+        "explanation": "기울기가 큰 파라미터는 감쇠가 약해지고, 데이터 기울기가 0인 파라미터는 $\\lambda$와 무관하게 약 $\\eta$씩 줄어든다(예: $\\lambda$를 1만 배 바꿔도 이동량이 같다). AdamW는 감쇠를 갱신에서 따로 적용한다."
       },
       {
         "id": "w3-adam-theory-c3",
@@ -691,6 +955,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "몇 개의 기울기로 추정한 $\\hat v$는 분산이 커서 $\\eta/\\sqrt{\\hat v}$가 매우 커질 수 있다(RAdam의 분석). 워밍업은 그동안 걸음을 작게 유지한다."
+      },
+      {
+        "id": "w3-adam-theory-c4",
+        "question": "$\\beta_2 = 0.999$에서 편향 보정 없이 Adam을 쓰면 $t = 100$에서 $v_t$는 실제의 약 몇 배로 작게 잡히는가?",
+        "choices": [
+          "약 0.095배",
+          "약 0.65배",
+          "거의 1배",
+          "약 0.001배"
+        ],
+        "answer": 0,
+        "explanation": "$\\mathbb{E}[v_t] = (1 - \\beta_2^t)\\mathbb{E}[g^2]$이고 $1 - 0.999^{100} \\approx 0.095$다. $\\sqrt{v}$가 약 0.31배라 걸음이 약 3배로 부풀려진다."
+      },
+      {
+        "id": "w3-adam-theory-c5",
+        "question": "AdamW에서 가중치 감쇠가 적용되는 방식으로 옳은 것은?",
+        "choices": [
+          "기울기와 분리해 갱신 단계에서 모든 파라미터에 같은 비율 $(1 - \\eta\\lambda)$로 건다",
+          "기울기에 $\\lambda w$를 더한 뒤 $\\sqrt{\\hat v}$로 나눈다",
+          "학습률을 매 스텝 $\\lambda$배 줄인다",
+          "편향 보정 분모에 $\\lambda$를 더한다"
+        ],
+        "answer": 0,
+        "explanation": "Adam에 L2를 기울기로 넣으면 $\\sqrt{\\hat v}$로 나눠져 감쇠 강도가 파라미터마다 달라진다. AdamW는 감쇠를 기울기에서 떼어 내 같은 비율로 적용한다."
       }
     ],
     "quizIds": [
@@ -740,7 +1028,7 @@ const sections: Record<string, SectionMeta> = {
           "$2I$"
         ],
         "answer": 0,
-        "explanation": "항등 경로의 야코비안 $I$가 더해지므로, 기울기는 층마다 원래 값이 그대로 전달되는 길을 가진다. 실습에서 같은 작은 초기화라도 잔차 망은 50층에서 기울기가 사라지지 않았다."
+        "explanation": "항등 경로의 야코비안 $I$가 더해지므로, 기울기는 층마다 원래 값이 그대로 전달되는 길을 가진다. 같은 작은 초기화라도 잔차 망은 50층에서 기울기가 사라지지 않는다."
       },
       {
         "id": "w3-gradient-flow-c3",
@@ -753,6 +1041,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "$g \\leftarrow g \\cdot c/\\lVert g\\rVert$. 원소별 자르기와 달리 방향이 왜곡되지 않는다."
+      },
+      {
+        "id": "w3-gradient-flow-c4",
+        "question": "클리핑 임계값이 5인데 전체 기울기 노름이 3이라면 노름 기준 클리핑의 결과는?",
+        "choices": [
+          "아무것도 바꾸지 않는다",
+          "노름을 5로 키운다",
+          "모든 기울기에 $5/3$을 곱한다",
+          "기울기를 0으로 만든다"
+        ],
+        "answer": 0,
+        "explanation": "클리핑은 노름이 임계값을 **넘을 때만** 줄이는 안전장치다. 임계값 이하의 기울기는 그대로 둔다."
+      },
+      {
+        "id": "w3-gradient-flow-c5",
+        "question": "기울기 $[30, 40]$(노름 50)을 원소마다 $[-5, 5]$로 자르는 방식과 노름 5로 클리핑하는 방식의 결과를 바르게 짝지은 것은?",
+        "choices": [
+          "원소별: $[5, 5]$(방향이 바뀜) / 노름: $[3, 4]$(방향 유지)",
+          "원소별: $[3, 4]$ / 노름: $[5, 5]$",
+          "둘 다 $[3, 4]$",
+          "둘 다 $[5, 5]$"
+        ],
+        "answer": 0,
+        "explanation": "원소별 자르기는 각 성분을 5로 잘라 $[5, 5]$가 되어 방향이 45도로 바뀐다. 노름 클리핑은 $50 \\to 5$, 즉 0.1배를 곱해 $[3, 4]$로 방향을 유지한다."
       }
     ],
     "quizIds": [

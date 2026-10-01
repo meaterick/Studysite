@@ -14,12 +14,15 @@ type Tab = { href: string; step: number; label: string; sub?: string; done?: boo
  */
 export default function WeekTabs({
   slug,
+  stageHref,
   stageSub,
   stageDone,
   applySub,
   applyDone,
 }: {
   slug: string;
+  /** 단계 학습 탭이 바로 가는 주소(지금 학습할 단계) */
+  stageHref: string;
   stageSub: string;
   stageDone: boolean;
   applySub: string;
@@ -29,7 +32,7 @@ export default function WeekTabs({
   const base = `/weeks/${slug}`;
   const tabs: Tab[] = [
     { href: base, step: 1, label: "개요", sub: "목표 · 단계 지도", match: (p) => p === base },
-    { href: `${base}/continue`, step: 2, label: "단계 학습", sub: stageSub, done: stageDone, match: (p) => p.startsWith(`${base}/sections/`) },
+    { href: stageHref, step: 2, label: "단계 학습", sub: stageSub, done: stageDone, match: (p) => p.startsWith(`${base}/sections/`) },
     {
       href: `${base}/apply`,
       step: 3,

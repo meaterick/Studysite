@@ -104,8 +104,8 @@ function checkImage(block: Extract<Block, { type: "image" }>, context: string) {
 function checkBlocks(blocks: Block[], context: string) {
   for (const b of blocks) {
     if (b.type === "math") checkTex(b.tex, context);
-    else if (b.type === "heading" || b.type === "paragraph" || (b.type === "callout" && b.text))
-      checkInlineMath(b.text, context);
+    else if (b.type === "callout") checkBlocks(b.blocks, context);
+    else if (b.type === "heading" || b.type === "paragraph") checkInlineMath(b.text, context);
     else if (b.type === "list") b.items.forEach((it) => checkInlineMath(it, context));
     else if (b.type === "table") b.rows.flat().forEach((c) => checkInlineMath(c, context));
     else if (b.type === "image") checkImage(b, context);
@@ -313,8 +313,7 @@ function checkSections(week: (typeof WEEKS)[number], label: string) {
     for (const r of meta.references ?? []) {
       if (!/^https:\/\//.test(r.url)) fail(`${ctx}: 외부 자료 링크가 https가 아님 — ${r.url}`);
     }
-    if (section.practice.length === 0) warn(`${ctx}: [[practice]] 실습 단계가 없음`);
-    if (section.learn.filter((b) => b.type === "practice").length > 0) fail(`${ctx}: [[practice]]가 두 번 이상 있음`);
+    if (JSON.stringify(section.learn).includes("[[practice]]")) fail(`${ctx}: 없어진 [[practice]] 표시가 남아 있음`);
   }
   for (const q of quizIds) if (!assigned.has(q)) fail(`${label}: 서술형 "${q}"가 어떤 단계에도 배정되지 않음`);
 }

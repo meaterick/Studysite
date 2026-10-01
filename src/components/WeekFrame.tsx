@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { WeekMeta } from "@/content/types";
-import type { WeekStatus } from "@/lib/study";
+import { continueHref, type WeekStatus } from "@/lib/study";
 import type { LearningRecord } from "@/lib/learningStore";
 import { applySummary, type ApplyKey } from "@/lib/applyView";
 import WeekTabs from "./WeekTabs";
@@ -60,6 +60,7 @@ export default function WeekFrame({
       </div>
       <WeekTabs
         slug={week.slug}
+        stageHref={continueHref(week.slug, status)}
         stageSub={`핵심 ${status.tiers.core.done}/${status.tiers.core.total} 완료`}
         stageDone={status.coreDone}
         applySub={`필수 ${summary.requiredDone}/${summary.requiredTotal} 완료`}

@@ -23,7 +23,6 @@ export interface SectionProgress {
   checksTotal: number;
   quizDone: number;
   quizTotal: number;
-  hasPractice: boolean;
   ready: boolean;
   completed: boolean;
 }
@@ -33,7 +32,6 @@ export function sectionProgress(section: WeekSection, state: SectionState): Sect
   const checksDone = section.meta.checks.filter((c) => state.checks[c.id]?.correct).length;
   const quizTotal = section.meta.quizIds.length;
   const quizDone = section.meta.quizIds.filter((id) => !!state.answers[id]?.review).length;
-  const hasPractice = section.practice.length > 0;
   // 서술형은 선택 사항이라 완료 조건에 넣지 않는다(진행 표시에는 quizDone/quizTotal로 보여 준다).
   const ready = checksDone === checksTotal;
   return {
@@ -41,7 +39,6 @@ export function sectionProgress(section: WeekSection, state: SectionState): Sect
     checksTotal,
     quizDone,
     quizTotal,
-    hasPractice,
     ready,
     completed: !!state.completedAt,
   };
@@ -170,3 +167,11 @@ export const ASSIGNMENT_STATUS_LABEL: Record<WeekStatus["assignment"]["status"],
   graded: "채점 완료",
   revision: "재제출 요청",
 };
+
+/**
+ * "단계 학습"으로 들어가는 주소: 지금 학습할 차례인 단계, 핵심을 모두 끝냈으면 적용과 복습.
+ * 탭·버튼이 이 주소로 바로 가게 해서, 리다이렉트 페이지를 거치며 빈 화면이 잠깐 보이지 않게 한다.
+ */
+export function continueHref(slug: string, status: WeekStatus): string {
+  return status.currentSection ? `/weeks/${slug}/sections/${status.currentSection.id}` : `/weeks/${slug}/apply`;
+}

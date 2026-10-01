@@ -1,12 +1,12 @@
 import type { ComponentType } from "react";
-import { AiHierarchy, MlLoop } from "./w1";
-import { ConfusionMatrix, DataSplitDiagram } from "./w2";
-import { ComputationalGraph, MlpDiagram } from "./w3";
-import { ResNetSkip, TransferLearning } from "./w4";
-import { TransformerDecoderBlock, TokenizerBpe } from "./w5";
-import { LlmPipeline, ScalingLawPlot } from "./w6";
-import { RagPipeline, AgentLoop } from "./w7";
-import { NistFramework, CapstoneTimeline } from "./w8";
+import { AiHierarchy, MlLoop, NumpyAxis, BayesFrequency, DotProductAngle } from "./w1";
+import { ConfusionMatrix, DataSplitDiagram, SigmoidCurve, LearningCurves } from "./w2";
+import { ComputationalGraph, MlpDiagram, XorHidden } from "./w3";
+import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
+import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
+import { LlmPipeline, ScalingLawPlot, AttentionPatterns, LoraDiagram } from "./w6";
+import { RagPipeline, AgentLoop, ChunkOverlap, LethalTrifecta } from "./w7";
+import { NistFramework, CapstoneTimeline, FairnessGrid, DeployStrategies } from "./w8";
 import { PhaseRoadmap, DifficultyCurve } from "./shared";
 import InteractiveGradientDescent from "./InteractiveGradientDescent";
 import InteractiveBiasVariance from "./InteractiveBiasVariance";
@@ -17,24 +17,40 @@ import InteractiveDecodingTemperature from "./InteractiveDecodingTemperature";
 export const DIAGRAMS: Record<string, ComponentType> = {
   "ai-hierarchy": AiHierarchy,
   "ml-loop": MlLoop,
+  "numpy-axis": NumpyAxis,
+  "bayes-frequency": BayesFrequency,
+  "dot-product-angle": DotProductAngle,
   "gradient-descent-curve": InteractiveGradientDescent,
   "bias-variance-curve": InteractiveBiasVariance,
   "confusion-matrix": ConfusionMatrix,
   "data-split": DataSplitDiagram,
+  "sigmoid-curve": SigmoidCurve,
+  "learning-curves": LearningCurves,
   "computational-graph": ComputationalGraph,
   "mlp-diagram": MlpDiagram,
+  "xor-hidden": XorHidden,
   "conv-operation": InteractiveConv,
+  "conv-channels": ConvChannels,
   "resnet-skip": ResNetSkip,
   "transfer-learning": TransferLearning,
+  "rnn-gradient-decay": GradientDecay,
   "attention-qkv": InteractiveAttention,
+  "causal-mask": CausalMask,
+  "positional-waves": PositionalWaves,
   "transformer-decoder-block": TransformerDecoderBlock,
   "tokenizer-bpe": TokenizerBpe,
   "llm-pipeline": LlmPipeline,
+  "attention-patterns": AttentionPatterns,
   "scaling-law-plot": ScalingLawPlot,
+  "lora-diagram": LoraDiagram,
   "decoding-temperature": InteractiveDecodingTemperature,
   "rag-pipeline": RagPipeline,
+  "chunk-overlap": ChunkOverlap,
+  "lethal-trifecta": LethalTrifecta,
   "agent-loop": AgentLoop,
+  "fairness-grid": FairnessGrid,
   "nist-framework": NistFramework,
+  "deploy-strategies": DeployStrategies,
   "capstone-timeline": CapstoneTimeline,
   "phase-roadmap": PhaseRoadmap,
   "difficulty-curve": DifficultyCurve,

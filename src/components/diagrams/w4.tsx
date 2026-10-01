@@ -76,3 +76,43 @@ export function TransferLearning() {
     </DiagramFrame>
   );
 }
+
+export function ConvChannels() {
+  // 다채널 합성곱: 커널 하나는 입력 채널 수만큼 깊이를 갖고, 그 결과는 출력 채널 하나다. 커널 수 = 출력 채널 수.
+  const layer = (x: number, y: number, w: number, h: number, depth: number, color: string, label: string, sub: string) => (
+    <g>
+      {Array.from({ length: depth }, (_, d) => (
+        <rect key={d} x={x + d * 8} y={y - d * 8} width={w} height={h} rx={3} fill={color} fillOpacity={0.12 + d * 0.06} stroke={color} />
+      ))}
+      <text x={x + w / 2 + (depth - 1) * 4} y={y + h + 20} textAnchor="middle" fontSize={12} fontWeight={700} fill={ink}>
+        {label}
+      </text>
+      <text x={x + w / 2 + (depth - 1) * 4} y={y + h + 36} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        {sub}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="채널이 여러 개일 때의 합성곱"
+      caption="RGB 입력처럼 채널이 3개면 커널 하나도 3×3×3 크기다. 세 채널에서 곱한 값을 모두 더해 출력의 한 칸을 만든다. 이런 커널을 64개 쓰면 출력 채널도 64개가 되고, 파라미터는 (3×3×3 + 편향 1) × 64 = 1,792개다."
+      viewBox="0 0 680 230"
+      minWidth={500}
+    >
+      <ArrowDefs />
+      {layer(30, 60, 110, 110, 3, colors.blue, "입력 H × W × 3", "R · G · B 채널")}
+      <text x={195} y={112} textAnchor="middle" fontSize={20} fontWeight={700} fill={ink}>
+        ⊛
+      </text>
+      {layer(230, 90, 46, 46, 3, colors.orange, "커널 3 × 3 × 3", "× 64개")}
+      <text x={232} y={52} fontSize={10.5} fill={inkSecondary}>
+        커널 하나 = 입력 채널 수만큼의 깊이
+      </text>
+      <Arrow x1={320} y1={115} x2={380} y2={115} />
+      <text x={350} y={104} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        채널 합
+      </text>
+      {layer(410, 50, 100, 100, 6, colors.violet, "출력 H′ × W′ × 64", "커널 하나 → 출력 채널 하나")}
+    </DiagramFrame>
+  );
+}

@@ -44,6 +44,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "원문을 한 칸 밀면 (문맥, 다음 토큰) 쌍이 자동으로 생긴다. 자기지도학습이다."
+      },
+      {
+        "id": "w6-pretraining-c4",
+        "question": "모델이 세 정답 토큰에 각각 0.5, 0.25, 0.125의 확률을 줬다면 perplexity는?",
+        "choices": [
+          "4",
+          "3",
+          "8",
+          "0.29"
+        ],
+        "answer": 0,
+        "explanation": "$L = (\\ln 2 + \\ln 4 + \\ln 8)/3 = 2\\ln 2$이므로 $e^{L} = 4$다. 정답 확률 역수(2, 4, 8)의 기하평균과 같다."
+      },
+      {
+        "id": "w6-pretraining-c5",
+        "question": "토큰 1,000개짜리 문서 하나에서 만들어지는 다음 토큰 예측 문제의 수와 학습 방식은?",
+        "choices": [
+          "999개이며, causal mask 덕분에 한 번의 순전파로 동시에 학습한다",
+          "1개이며, 문서 전체를 보고 마지막 토큰만 맞힌다",
+          "1,000개이며, 토큰마다 순전파를 따로 한다",
+          "사람이 정답을 붙인 만큼만 생긴다"
+        ],
+        "answer": 0,
+        "explanation": "첫 토큰을 제외한 모든 토큰이 \"앞부분을 보고 맞힐 정답\"이 되어 999개다. causal mask가 각 위치가 앞만 보게 막아 주므로 모든 위치를 한꺼번에 계산할 수 있다."
       }
     ],
     "quizIds": [
@@ -101,6 +125,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "손실은 매끄럽게 줄어도 이산적인 지표로 재면 계단처럼 보일 수 있다(Schaeffer et al., 2023)."
+      },
+      {
+        "id": "w6-architectures-c4",
+        "question": "이메일이 스팸인지 아닌지 분류하는 모델을 적은 데이터로 미세조정하려 한다. 세 구조 중 전통적으로 가장 자연스러운 선택은?",
+        "choices": [
+          "Encoder-only(BERT)",
+          "Decoder-only(GPT)만 가능",
+          "Encoder-Decoder(T5)만 가능",
+          "세 구조 모두 분류에는 쓸 수 없다"
+        ],
+        "answer": 0,
+        "explanation": "분류는 문장 전체를 이해하는 과제라 양방향으로 문맥을 보는 BERT 계열이 전통적으로 잘 맞는다. 다만 큰 Decoder-only 모델도 프롬프트로 분류를 할 수 있다."
+      },
+      {
+        "id": "w6-architectures-c5",
+        "question": "GPT와 BERT의 차이를 attention 마스크로 설명하면?",
+        "choices": [
+          "GPT는 대각선 위(미래)를 가리고, BERT는 모든 토큰이 서로를 볼 수 있다",
+          "BERT는 대각선 위를 가리고, GPT는 모든 토큰을 본다",
+          "둘 다 마스크를 쓰지 않는다",
+          "GPT는 짝수 위치만, BERT는 홀수 위치만 본다"
+        ],
+        "answer": 0,
+        "explanation": "GPT는 다음 토큰 예측을 위해 causal mask로 미래를 가리고, BERT는 가려진 단어를 앞뒤 문맥으로 맞히기 위해 양방향으로 모두 본다."
       }
     ],
     "quizIds": [
@@ -165,7 +213,7 @@ const sections: Record<string, SectionMeta> = {
           "데이터가 부족해서"
         ],
         "answer": 1,
-        "explanation": "학습은 한 번이지만 추론은 계속된다. 실습에서 8B 모델은 최적점보다 손실이 약 0.02 높을 뿐이었다."
+        "explanation": "학습은 한 번이지만 추론은 계속된다. Chinchilla 식으로 계산하면 같은 컴퓨트에서 8B 모델은 최적점보다 손실이 약 0.02 높을 뿐이다."
       },
       {
         "id": "w6-scaling-laws-c4",
@@ -178,6 +226,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "스케일링 법칙은 사전학습 손실에 대한 경험적 적합이다. 지수·상수는 구조·데이터 분포·학습률 스케줄에 따라 달라지고(Kaplan과 Chinchilla의 최적 비율이 다른 이유 중 하나), 다운스트림 능력은 손실만으로 직접 예측되지 않는다. $E$도 곡선을 맞춰 얻은 추정치다."
+      },
+      {
+        "id": "w6-scaling-laws-c5",
+        "question": "컴퓨트 예산 $C = 1.2 \\times 10^{22}$ FLOPs에서 $C \\approx 6ND$, $D \\approx 20N$을 따르면 최적 모델 크기 $N$은?",
+        "choices": [
+          "약 100억(10B)",
+          "약 10억(1B)",
+          "약 1,000억(100B)",
+          "약 2,000억(200B)"
+        ],
+        "answer": 0,
+        "explanation": "$C = 6N \\cdot 20N = 120N^2$이므로 $N^2 = 10^{20}$, $N = 10^{10}$이다. 이때 $D = 20N = 2{,}000$억 토큰이다."
+      },
+      {
+        "id": "w6-scaling-laws-c6",
+        "question": "손실의 모델 크기 항 $A/N^{\\alpha}$에서 $\\alpha = 0.34$일 때 $N$을 10배로 키우면 이 항은 약 몇 배가 되는가?",
+        "choices": [
+          "약 0.46배",
+          "약 0.1배",
+          "약 0.34배",
+          "약 0.9배"
+        ],
+        "answer": 0,
+        "explanation": "$10^{-0.34} \\approx 0.46$이다. 멱법칙이라 10배 키울 때마다 같은 비율로 줄며, 로그-로그 그래프에서 직선이 되는 이유다."
       }
     ],
     "quizIds": [
@@ -197,7 +269,7 @@ const sections: Record<string, SectionMeta> = {
       {
         "title": "Besiroglu et al. (2024) — Chinchilla Scaling: A replication attempt",
         "url": "https://arxiv.org/abs/2404.10102",
-        "note": "실습에 쓴 수정 상수의 출처 (심화)"
+        "note": "Chinchilla 식의 수정 상수 출처 (심화)"
       }
     ]
   },
@@ -239,7 +311,43 @@ const sections: Record<string, SectionMeta> = {
           "학습 파라미터 수가 줄어든다"
         ],
         "answer": 1,
-        "explanation": "실습에서 상대 오차가 INT8 약 1%에서 INT4 약 16%로 커졌다. 블록 단위 스케일 등으로 이 오차를 줄인다."
+        "explanation": "정규분포 가중치로 실험하면 상대 오차가 INT8 약 1%에서 INT4 약 16%로 커진다. 블록 단위 스케일 등으로 이 오차를 줄인다."
+      },
+      {
+        "id": "w6-finetuning-efficiency-c4",
+        "question": "LoRA에서 $B$를 0으로 초기화하는 이유는?",
+        "choices": [
+          "학습 시작 시 $\\Delta W = BA = 0$이라 모델이 원래 모델과 똑같은 출력에서 출발하게 하려고",
+          "$B$는 학습하지 않는 고정 행렬이라서",
+          "메모리를 아끼려고",
+          "$A$와 $B$가 같아지지 않게 하려고"
+        ],
+        "answer": 0,
+        "explanation": "$B = 0$이면 $BA = 0$이라 처음에는 사전학습 모델과 완전히 같다. 학습하면서 필요한 만큼만 원래 가중치를 고친다. ($A$까지 0이면 기울기가 0이 되어 학습이 시작되지 않으므로 $A$는 무작위로 둔다.)"
+      },
+      {
+        "id": "w6-finetuning-efficiency-c5",
+        "question": "가중치의 최대 절댓값이 1.27일 때 INT8 대칭 양자화(최댓값 127)의 눈금 간격과, 가중치 0.5가 저장되는 정수는?",
+        "choices": [
+          "간격 0.01, 정수 50",
+          "간격 0.1, 정수 5",
+          "간격 127, 정수 64",
+          "간격 0.01, 정수 127"
+        ],
+        "answer": 0,
+        "explanation": "눈금 간격은 $1.27 / 127 = 0.01$이고 $0.5 / 0.01 = 50$이다. 계산할 때는 $50 \\times 0.01 = 0.5$로 되돌린다."
+      },
+      {
+        "id": "w6-finetuning-efficiency-c6",
+        "question": "SFT에서 손실을 보통 어느 토큰에 계산하는가?",
+        "choices": [
+          "응답(assistant) 부분 토큰",
+          "질문(user) 부분 토큰",
+          "특수 토큰만",
+          "문서의 첫 토큰만"
+        ],
+        "answer": 0,
+        "explanation": "질문을 따라 쓰는 법이 아니라 질문에 답하는 법을 배우게 하려고 응답 부분에만 손실을 계산하는 것이 일반적이다."
       }
     ],
     "quizIds": [
@@ -329,6 +437,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "DPO는 정책의 로그확률 비율을 암묵적 보상으로 써서 보상모델과 PPO 루프를 없앴다. 이상적인 가정(Bradley–Terry 선호, 충분한 데이터)에서 같은 KL-정규화 목적함수의 최적해를 겨냥하지만, 오프라인 학습이라 실제 결과는 PPO와 다를 수 있고 선호 응답의 확률까지 함께 내려가는 현상도 보고된다."
+      },
+      {
+        "id": "w6-rlhf-dpo-c6",
+        "question": "보상모델이 두 응답에 같은 점수를 매겼다면, Bradley–Terry 모델이 말하는 \"사람이 첫 응답을 고를 확률\"은?",
+        "choices": [
+          "0.5",
+          "0",
+          "1",
+          "점수의 크기에 따라 다르다"
+        ],
+        "answer": 0,
+        "explanation": "$\\sigma(r_w - r_l) = \\sigma(0) = 0.5$다. Bradley–Terry는 점수의 차이만 보므로 두 점수가 얼마든 같기만 하면 반반이다."
+      },
+      {
+        "id": "w6-rlhf-dpo-c7",
+        "question": "$\\lambda = 0.1$일 때 보상 9, KL 20인 응답의 목적함수 값 $r - \\lambda \\cdot KL$은?",
+        "choices": [
+          "7.0",
+          "8.9",
+          "9.0",
+          "−11"
+        ],
+        "answer": 0,
+        "explanation": "$9 - 0.1 \\times 20 = 7.0$이다. 보상 8, KL 1인 응답(7.9)보다 낮아서, 보상이 더 높아도 기준 모델에서 크게 벗어난 응답은 선택되지 않는다."
       }
     ],
     "quizIds": [
@@ -394,7 +526,31 @@ const sections: Record<string, SectionMeta> = {
           "다양한 출력을 만들기 때문에"
         ],
         "answer": 1,
-        "explanation": "실습에서 그리디는 \"나는 그냥 그냥…\"(0.021), 빔 서치는 \"오늘 밥을 먹었다\"(0.342)를 골랐다."
+        "explanation": "예를 들어 작은 확률표 언어모델에서 그리디는 \"나는 그냥 그냥…\"(0.021), 빔 서치는 \"오늘 밥을 먹었다\"(0.342)를 고른다."
+      },
+      {
+        "id": "w6-decoding-c4",
+        "question": "첫 토큰 후보가 {그: 0.5, 한: 0.4}이고, \"그\" 다음 최선의 토큰 확률은 0.4, \"한\" 다음 최선은 0.9다. 빔 너비 2인 빔 서치가 고르는 두 토큰 시퀀스의 확률은?",
+        "choices": [
+          "0.36",
+          "0.20",
+          "0.50",
+          "0.90"
+        ],
+        "answer": 0,
+        "explanation": "\"그\" 경로의 최선은 $0.5 \\times 0.4 = 0.20$, \"한\" 경로의 최선은 $0.4 \\times 0.9 = 0.36$이다. 그리디는 첫 스텝에서 \"그\"를 골라 0.20에 머물지만 빔 서치는 0.36을 찾는다."
+      },
+      {
+        "id": "w6-decoding-c5",
+        "question": "첫 토큰까지 0.5초, 이후 초당 40토큰을 생성하는 서버에서 400토큰짜리 답을 다 받는 데 걸리는 시간은?",
+        "choices": [
+          "10.5초",
+          "10초",
+          "0.5초",
+          "20.5초"
+        ],
+        "answer": 0,
+        "explanation": "$0.5 + 400 / 40 = 10.5$초다. 첫 토큰까지의 시간(TTFT)과 토큰당 생성 속도를 나눠 보는 것이 서빙 지연시간의 기본이다."
       }
     ],
     "quizIds": [
@@ -469,6 +625,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 2,
         "explanation": "검색이 엉뚱한 문서를 가져오거나 모델이 근거를 무시·오독하면 RAG에서도 환각이 생긴다. 모델이 만든 인용도 가짜이거나 주장을 뒷받침하지 않을 수 있다. temperature 0은 가장 확률이 높은 토큰을 고를 뿐, 그 토큰이 사실이라는 보장은 없다."
+      },
+      {
+        "id": "w6-hallucination-c5",
+        "question": "4지선다에서 정답 1점, 오답 $-1/3$점, \"모르겠다\" 0점일 때 정말 모르는 문제를 찍는 것의 기대 점수는?",
+        "choices": [
+          "0점",
+          "0.25점",
+          "−0.25점",
+          "0.5점"
+        ],
+        "answer": 0,
+        "explanation": "$0.25 \\times 1 + 0.75 \\times (-1/3) = 0$이다. 오답에 감점이 없으면 찍기(0.25점)가 보류(0점)보다 유리해서 모델이 추측하도록 길들여진다."
+      },
+      {
+        "id": "w6-hallucination-c6",
+        "question": "모델이 \"90% 확신\"이라고 답한 문제 100개 중 실제로 60개만 맞았다. 이 모델의 상태는?",
+        "choices": [
+          "과신(overconfident): 확신이 실제 정답률보다 높다",
+          "보정이 잘 됐다",
+          "과소신뢰(underconfident)",
+          "정답률이 높아 문제없다"
+        ],
+        "answer": 0,
+        "explanation": "보정된 모델이라면 90% 확신한 답의 약 90%가 맞아야 한다. 60%만 맞았으니 확신이 실제보다 높은 과신 상태다."
       }
     ],
     "quizIds": [
@@ -513,7 +693,7 @@ const sections: Record<string, SectionMeta> = {
           "0.5"
         ],
         "answer": 1,
-        "explanation": "한 칸 전: 1, 두 칸 전: $0 + 0.9 \\times 1 = 0.9$. 실습의 복도에서 칸 2의 값이다."
+        "explanation": "한 칸 전: 1, 두 칸 전: $0 + 0.9 \\times 1 = 0.9$. 목표 바로 앞 두 칸의 값이 이렇게 정해진다."
       },
       {
         "id": "w6-rl-basics-c3",
@@ -526,6 +706,42 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 2,
         "explanation": "정책(actor)을 직접 학습하고 가치함수(critic)로 분산을 줄이며, 기존 정책에서 너무 멀리 벗어나지 않게 제약한다."
+      },
+      {
+        "id": "w6-rl-basics-c4",
+        "question": "보상이 차례로 $r_0 = 1$, $r_1 = 0$, $r_2 = 2$이고 $\\gamma = 0.5$일 때 이득 $G_0$은?",
+        "choices": [
+          "1.5",
+          "3",
+          "2",
+          "1.25"
+        ],
+        "answer": 0,
+        "explanation": "$G_0 = 1 + 0.5 \\times 0 + 0.5^2 \\times 2 = 1 + 0 + 0.5 = 1.5$다."
+      },
+      {
+        "id": "w6-rl-basics-c5",
+        "question": "행동이 3개인 $\\varepsilon$-탐욕 정책($\\varepsilon = 0.1$)에서 현재 최선으로 보이는 행동이 선택될 확률은? (탐색할 때는 3개 중 균등하게 고른다)",
+        "choices": [
+          "약 0.933",
+          "0.9",
+          "0.1",
+          "약 0.333"
+        ],
+        "answer": 0,
+        "explanation": "활용으로 0.9, 탐색 중에 우연히 고를 확률 $0.1 \\times 1/3 \\approx 0.033$을 더해 약 0.933이다."
+      },
+      {
+        "id": "w6-rl-basics-c6",
+        "question": "$\\varepsilon$-탐욕에서 $\\varepsilon = 0$으로 두면 생기기 쉬운 문제는?",
+        "choices": [
+          "처음에 괜찮았던 행동에 갇혀 더 좋은 행동을 영영 발견하지 못한다",
+          "모든 행동을 똑같이 자주 고른다",
+          "보상이 무한히 커진다",
+          "학습이 너무 느리게 수렴한다"
+        ],
+        "answer": 0,
+        "explanation": "탐색이 전혀 없으면 시도해 보지 않은 행동의 가치를 알 수 없다. 처음 보상을 준 행동만 계속 고르게 되어 더 나은 선택지를 놓친다."
       }
     ],
     "quizIds": [
@@ -587,6 +803,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "후보가 많을수록 보상모델의 오차를 파고드는 후보가 나올 기회가 늘어난다. 학습 중의 보상 해킹이 추론 시간에도 일어난다."
+      },
+      {
+        "id": "w6-test-time-compute-c4",
+        "question": "한 번 정답률이 0.8이고 답이 정답·오답 두 갈래인 문제를 독립적으로 3번 풀어 다수결하면 정답률은?",
+        "choices": [
+          "0.896",
+          "0.8",
+          "0.512",
+          "0.992"
+        ],
+        "answer": 0,
+        "explanation": "3번 모두 정답 $0.512$와 정확히 2번 정답 $3 \\times 0.64 \\times 0.2 = 0.384$를 더해 $0.896$이다."
+      },
+      {
+        "id": "w6-test-time-compute-c5",
+        "question": "정답 확률 $p = 0.3$인 후보를 4개 만들고, 정답만 정확히 골라내는 완벽한 검증기로 고르면 정답률은?",
+        "choices": [
+          "약 0.76",
+          "0.3",
+          "약 0.92",
+          "1.2"
+        ],
+        "answer": 0,
+        "explanation": "적어도 하나가 정답일 확률 $1 - 0.7^4 = 1 - 0.2401 \\approx 0.76$이다. 검증기가 완벽하면 이것이 곧 정답률이다."
       }
     ],
     "quizIds": [
@@ -649,6 +889,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "관측한 쌍의 차이만 보므로 확률이 데이터에 없는 다른 응답으로 새어 나갈 수 있다. 오프라인 학습이라 그 응답들을 직접 보지 못한다."
+      },
+      {
+        "id": "w6-dpo-derivation-c4",
+        "question": "$\\pi_{ref} = (0.5, 0.5)$, 보상 $r = (1, 0)$, $\\beta = 1$일 때 최적 정책 $\\pi^*$에서 첫 응답의 확률은?",
+        "choices": [
+          "약 0.731",
+          "0.5",
+          "1",
+          "약 0.269"
+        ],
+        "answer": 0,
+        "explanation": "$\\pi^* \\propto \\pi_{ref}\\,e^{r/\\beta} = (0.5e, 0.5)$이므로 첫 응답은 $e/(e+1) \\approx 0.731$이다."
+      },
+      {
+        "id": "w6-dpo-derivation-c5",
+        "question": "최적 정책 $\\pi^* \\propto \\pi_{ref}\\,e^{r/\\beta}$에서 $\\beta \\to \\infty$이면?",
+        "choices": [
+          "$\\pi^*$가 기준 모델 $\\pi_{ref}$와 같아진다",
+          "보상이 가장 큰 응답에 확률 1이 몰린다",
+          "모든 응답이 균등한 확률을 갖는다",
+          "$\\pi^*$가 정의되지 않는다"
+        ],
+        "answer": 0,
+        "explanation": "$e^{r/\\beta} \\to e^0 = 1$이라 $\\pi^* \\to \\pi_{ref}$다. KL 규제가 무한히 강해 기준 모델에서 전혀 벗어나지 않는다. 반대로 $\\beta \\to 0$이면 보상 최댓값에 몰린다."
       }
     ],
     "quizIds": [
@@ -706,6 +970,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "$\\min(\\rho A, \\text{clip}(\\rho)A) = \\min(-1.5, -1.2) = -1.5$다. 나쁜 행동의 확률이 올라간 손해는 비관적으로 그대로 반영해 되돌리게 한다."
+      },
+      {
+        "id": "w6-policy-gradient-c4",
+        "question": "PPO($\\varepsilon = 0.2$)에서 이점이 양수($A = +1$)인 행동의 확률비가 $\\rho = 1.5$일 때 목적함수 항의 값은?",
+        "choices": [
+          "1.2",
+          "1.5",
+          "0.8",
+          "−1.5"
+        ],
+        "answer": 0,
+        "explanation": "$\\min(1.5 \\times 1,\\ \\text{clip}(1.5, 0.8, 1.2) \\times 1) = \\min(1.5, 1.2) = 1.2$다. 좋은 행동이라도 확률을 1.2배 넘게 올리는 이득은 인정하지 않는다."
+      },
+      {
+        "id": "w6-policy-gradient-c5",
+        "question": "GRPO에서 같은 프롬프트의 응답 4개 보상이 $[1, 0, 0, 1]$일 때, 평균만 뺀 첫 응답의 이점은?",
+        "choices": [
+          "+0.5",
+          "+1",
+          "0",
+          "−0.5"
+        ],
+        "answer": 0,
+        "explanation": "묶음 평균 0.5를 기준선으로 빼므로 $1 - 0.5 = +0.5$다(표준편차 0.5로 더 나누면 +1). critic 없이 묶음 평균이 기준선 역할을 한다."
       }
     ],
     "quizIds": [
@@ -768,6 +1056,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "검증 위치의 계산이 공짜인 것은 메모리 병목일 때뿐이다. 연산 병목이거나 수락률이 낮으면 초안 비용을 회수하지 못한다."
+      },
+      {
+        "id": "w6-speculative-decoding-c4",
+        "question": "수락률 $\\alpha = 0.8$, 초안 $k = 4$개일 때 큰 모델 한 번 호출당 기대 생성 토큰 수는?",
+        "choices": [
+          "약 3.36개",
+          "4개",
+          "5개",
+          "0.8개"
+        ],
+        "answer": 0,
+        "explanation": "$(1 - \\alpha^{k+1})/(1 - \\alpha) = (1 - 0.8^5)/0.2 = (1 - 0.328)/0.2 \\approx 3.36$이다."
+      },
+      {
+        "id": "w6-speculative-decoding-c5",
+        "question": "위 조건($\\alpha = 0.8$, $k = 4$)에서 초안 모델 한 스텝 비용이 큰 모델의 0.05배라면 실제 속도 향상은 약?",
+        "choices": [
+          "2.8배",
+          "3.36배",
+          "4배",
+          "1.2배"
+        ],
+        "answer": 0,
+        "explanation": "기대 토큰 3.36개를 얻는 데 드는 비용이 $4 \\times 0.05 + 1 = 1.2$(큰 모델 호출 단위)이므로 $3.36 / 1.2 = 2.8$배다."
       }
     ],
     "quizIds": [

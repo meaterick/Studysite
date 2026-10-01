@@ -44,6 +44,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "어디서나 같은 패턴 검출기를 쓰므로 위치가 바뀌어도 같은 패턴을 찾을 수 있고(평행이동 등변성), 파라미터 수가 크게 줄어든다."
+      },
+      {
+        "id": "w4-convolution-c4",
+        "question": "입력이 $32 \\times 32 \\times 3$이고 $5 \\times 5$ 커널을 10개 쓰는 합성곱층(padding 0, stride 1)의 출력 shape은?",
+        "choices": [
+          "$28 \\times 28 \\times 10$",
+          "$28 \\times 28 \\times 3$",
+          "$32 \\times 32 \\times 10$",
+          "$28 \\times 28 \\times 30$"
+        ],
+        "answer": 0,
+        "explanation": "공간 크기는 $32 - 5 + 1 = 28$이고, 커널 하나가 (입력 채널 3개를 모두 합쳐) 출력 채널 하나를 만들므로 출력 채널은 커널 수인 10이다."
+      },
+      {
+        "id": "w4-convolution-c5",
+        "question": "입력 채널 3, 출력 채널 64인 $3 \\times 3$ 합성곱에서 커널 **하나**의 가중치 개수는?",
+        "choices": [
+          "27개",
+          "9개",
+          "576개",
+          "1,728개"
+        ],
+        "answer": 0,
+        "explanation": "커널 하나는 입력 채널 수만큼의 깊이를 가져 $3 \\times 3 \\times 3 = 27$개다. 이런 커널이 64개라 전체 가중치는 1,728개(편향 포함 1,792개)다."
       }
     ],
     "quizIds": [
@@ -102,6 +126,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "풀링은 고정된 규칙으로 정보를 버리고, strided convolution은 그 선택까지 가중치로 학습한다. 대신 풀링은 파라미터가 없어 가볍다."
+      },
+      {
+        "id": "w4-pooling-receptive-field-c4",
+        "question": "$3 \\times 3$ conv(stride 2) 다음에 $3 \\times 3$ conv(stride 1)를 쌓았을 때의 수용영역은?",
+        "choices": [
+          "7",
+          "5",
+          "6",
+          "9"
+        ],
+        "answer": 0,
+        "explanation": "첫 층 뒤 $r = 3$, $j = 2$이고, 둘째 층은 $r = 3 + (3 - 1) \\times 2 = 7$이다. stride 1만 두 번이면 5였을 것이다."
+      },
+      {
+        "id": "w4-pooling-receptive-field-c5",
+        "question": "GAP(Global Average Pooling)가 $7 \\times 7 \\times 512$ 특징 지도에 하는 일은?",
+        "choices": [
+          "채널마다 $7 \\times 7$개 값의 평균을 내 길이 512인 벡터를 만든다",
+          "각 위치에서 512개 채널의 평균을 내 $7 \\times 7$ 지도를 만든다",
+          "최댓값 하나만 남긴다",
+          "$2 \\times 2$ 영역마다 평균을 낸다"
+        ],
+        "answer": 0,
+        "explanation": "GAP는 채널마다 공간 전체를 평균 내 \"이 특징이 이미지 전체에 얼마나 나타났는가\"를 숫자 하나로 요약한다. 그래서 출력이 채널 수만큼의 벡터가 된다."
       }
     ],
     "quizIds": [
@@ -161,6 +209,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "shortcut 경로가 항상 1을 더해주므로 $F'$가 작아도 기울기가 1 근처로 전달된다."
+      },
+      {
+        "id": "w4-resnet-c4",
+        "question": "잔차 연결 없이 블록마다 기울기가 0.5배가 되는 망과, 잔차 연결로 블록마다 $1.01$배가 되는 망에서 50블록을 거친 기울기는 각각 대략?",
+        "choices": [
+          "$10^{-15}$ 수준 / 약 1.6배",
+          "둘 다 약 1",
+          "약 25 / 약 50",
+          "둘 다 0"
+        ],
+        "answer": 0,
+        "explanation": "$0.5^{50} \\approx 8.9 \\times 10^{-16}$이고 $1.01^{50} \\approx 1.64$다. 곱셈이 50번 반복되면 1보다 조금만 작아도 사라지고, 1 근처면 유지된다."
+      },
+      {
+        "id": "w4-resnet-c5",
+        "question": "해상도를 절반으로 줄이고 채널을 두 배로 늘리는 잔차 블록에서 지름길(shortcut)에 $1 \\times 1$ 합성곱(stride 2)을 넣는 이유는?",
+        "choices": [
+          "$x$의 채널 수와 해상도를 $F(x)$와 같게 맞춰야 덧셈을 할 수 있어서",
+          "수용영역을 넓히려고",
+          "비선형성을 추가하려고",
+          "파라미터를 0으로 만들려고"
+        ],
+        "answer": 0,
+        "explanation": "$F(x) + x$는 원소별 덧셈이라 shape이 같아야 한다. $1 \\times 1$ 합성곱은 채널 수를, stride 2는 해상도를 맞춘다."
       }
     ],
     "quizIds": [
@@ -219,6 +291,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "평가 때는 학습 중 모아둔 이동평균(running mean/var)을 써야 한다."
+      },
+      {
+        "id": "w4-regularization-c4",
+        "question": "\"좌회전\", \"우회전\" 표지판을 구분하는 모델에 좌우 반전 증강을 쓰면 안 되는 이유는?",
+        "choices": [
+          "반전하면 좌회전 표지가 우회전처럼 보여 라벨이 바뀌기 때문",
+          "반전은 계산이 너무 오래 걸려서",
+          "표지판 데이터에는 증강이 필요 없어서",
+          "반전이 이미지 크기를 바꿔서"
+        ],
+        "answer": 0,
+        "explanation": "증강은 라벨을 보존하는 변환만 써야 한다. 방향 자체가 의미인 데이터에서 반전은 다른 클래스의 이미지를 같은 라벨로 학습시키는 셈이다."
+      },
+      {
+        "id": "w4-regularization-c5",
+        "question": "`T.Normalize(mean, std)`의 `mean`, `std`는 어떤 데이터로 계산해 어디에 쓰는가?",
+        "choices": [
+          "훈련 데이터로 계산한 채널별 평균·표준편차를 훈련·평가 데이터 모두에 쓴다",
+          "평가 데이터로 따로 계산해 평가에만 쓴다",
+          "이미지마다 새로 계산한다",
+          "항상 0과 1이다"
+        ],
+        "answer": 0,
+        "explanation": "2주차의 \"훈련 데이터로만 fit\" 원칙과 같다. 평가 데이터의 통계를 쓰면 정보가 새고, 이미지마다 다르게 정규화하면 같은 픽셀 값의 의미가 달라진다."
       }
     ],
     "quizIds": [
@@ -277,6 +373,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "적은 데이터로 모든 층을 조정하면 과적합되기 쉽다. 데이터가 늘수록 작은 학습률의 파인튜닝을 고려한다."
+      },
+      {
+        "id": "w4-transfer-diagnostics-c4",
+        "question": "일반 사진과 비슷한 꽃 사진이 수만 장 있다. ImageNet 사전학습 모델로 가장 높은 성능을 노릴 때 알맞은 방식은?",
+        "choices": [
+          "전체 층을 작은 학습률로 파인튜닝한다",
+          "마지막 층만 학습하고 나머지는 얼린다",
+          "사전학습 가중치를 버리고 처음부터 학습한다",
+          "학습률을 처음 학습 때보다 10배 크게 잡는다"
+        ],
+        "answer": 0,
+        "explanation": "데이터가 충분하고 원래 데이터와 비슷하면 전체를 조금씩 조정해 성능을 끌어올릴 수 있다. 큰 학습률은 사전학습된 지식을 망가뜨린다."
+      },
+      {
+        "id": "w4-transfer-diagnostics-c5",
+        "question": "10클래스 분류 모델을 처음 실행했더니 초기 손실이 23이 나왔다. 가장 먼저 의심할 것은?",
+        "choices": [
+          "초기화나 손실 계산이 잘못됐다($\\ln 10 \\approx 2.3$이어야 함)",
+          "모델이 너무 작다",
+          "데이터가 부족하다",
+          "학습률이 너무 작다"
+        ],
+        "answer": 0,
+        "explanation": "학습 전 모델은 클래스마다 비슷한 확률(1/10)을 줘야 하므로 손실은 $\\ln 10 \\approx 2.3$ 근처여야 한다. 10배나 크다면 로짓이 비정상적으로 크거나 손실 계산에 버그가 있다."
       }
     ],
     "quizIds": [
@@ -334,6 +454,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 3,
         "explanation": "Semantic Segmentation은 클래스만 칠하므로 두 사람을 구분하지 않는다. 개체까지 구분하는 것이 Instance Segmentation이다."
+      },
+      {
+        "id": "w4-cnn-history-applications-c4",
+        "question": "$32 \\times 32$ 이미지를 $4 \\times 4$ 패치로 자르면 ViT 토큰은 몇 개이고, 패치 하나(RGB)는 몇 개의 숫자인가?",
+        "choices": [
+          "토큰 64개, 패치당 48개",
+          "토큰 8개, 패치당 16개",
+          "토큰 64개, 패치당 16개",
+          "토큰 1024개, 패치당 3개"
+        ],
+        "answer": 0,
+        "explanation": "가로세로 $32/4 = 8$개씩이라 $8 \\times 8 = 64$개이고, 패치 하나는 $4 \\times 4 \\times 3 = 48$개의 숫자다."
+      },
+      {
+        "id": "w4-cnn-history-applications-c5",
+        "question": "ImageNet의 top-5 오류율 15.3%가 뜻하는 것은?",
+        "choices": [
+          "모델이 고른 상위 5개 후보에 정답이 없는 경우가 15.3%다",
+          "정답을 5번째로 맞히는 비율이 15.3%다",
+          "첫 번째 답이 틀린 비율이 15.3%다",
+          "5개 클래스에서만 15.3% 틀린다"
+        ],
+        "answer": 0,
+        "explanation": "top-5 오류는 상위 5개 안에 정답이 없을 때만 오류로 센다. 첫 번째 답만 보는 top-1 오류율보다 항상 낮다."
       }
     ],
     "quizIds": [
@@ -396,6 +540,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "노이즈를 예측하는 편이 원본을 직접 그리는 것보다 안정적으로 학습된다. Forward 과정에는 학습되는 파라미터가 없다."
+      },
+      {
+        "id": "w4-generative-models-c4",
+        "question": "생성자가 감별자를 속이기 쉬운 몇 가지 결과만 반복해서 만드는 \"모드 붕괴\"가 대표적으로 문제 되는 모델은?",
+        "choices": [
+          "GAN",
+          "VAE",
+          "Diffusion",
+          "Autoencoder"
+        ],
+        "answer": 0,
+        "explanation": "GAN의 생성자는 감별자를 속이는 것만 목표로 하므로, 속이기 쉬운 일부 결과에 몰릴 수 있다. 데이터 전체의 다양성을 직접 맞추는 항이 없기 때문이다."
+      },
+      {
+        "id": "w4-generative-models-c5",
+        "question": "같은 품질의 이미지를 만들 때 생성(샘플링)이 가장 느린 방식은?",
+        "choices": [
+          "Diffusion: 노이즈를 수십~수천 단계에 걸쳐 걷어 내야 해서",
+          "GAN: 감별자를 함께 돌려야 해서",
+          "VAE: 인코더를 거쳐야 해서",
+          "모두 같다"
+        ],
+        "answer": 0,
+        "explanation": "VAE와 GAN은 신경망을 한 번 통과하면 결과가 나오지만, 확산 모델은 역확산 단계마다 신경망을 다시 돌린다. 생성 때는 GAN의 감별자도, VAE의 인코더도 쓰지 않는다."
       }
     ],
     "quizIds": [
@@ -456,6 +624,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "$\\text{Dice} = 2\\,\\text{IoU}/(1 + \\text{IoU}) = 1/1.5 = 2/3$. Dice는 항상 IoU 이상이고 순위는 같다."
+      },
+      {
+        "id": "w4-detection-segmentation-c4",
+        "question": "정답 물체 2개에 대해 점수순 판정이 TP, TP, FP인 탐지기의 AP(위 정의)는?",
+        "choices": [
+          "1.0",
+          "0.833",
+          "0.667",
+          "0.5"
+        ],
+        "answer": 0,
+        "explanation": "TP가 나온 첫째·둘째 지점의 Precision이 $1/1$, $2/2$라 $(1 + 1)/2 = 1$이다. 높은 점수의 상자가 모두 맞았으므로 최고점이다."
+      },
+      {
+        "id": "w4-detection-segmentation-c5",
+        "question": "NMS(임계값 0.5)에서 점수가 가장 높은 상자 A와 IoU 0.3인 상자 B는 어떻게 되는가?",
+        "choices": [
+          "지워지지 않고 남는다(다른 물체일 수 있다)",
+          "중복으로 지워진다",
+          "A와 합쳐진다",
+          "점수가 0.3으로 바뀐다"
+        ],
+        "answer": 0,
+        "explanation": "NMS는 확정된 상자와 IoU가 임계값을 **넘는** 상자만 같은 물체의 중복으로 보고 지운다. 0.3이면 따로 남아 다음 단계에서 다시 판단된다."
       }
     ],
     "quizIds": [
@@ -513,6 +705,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "비율이 $\\frac{1}{C_{out}} + \\frac{1}{K^2} = \\frac{1}{256} + \\frac{1}{9} \\approx 0.115$이므로 약 8.7분의 1이다."
+      },
+      {
+        "id": "w4-conv-as-matmul-c4",
+        "question": "$7 \\times 7$ 입력(채널 1)에 $3 \\times 3$ 커널(stride 1, padding 0)을 쓸 때 im2col 행렬의 shape은?",
+        "choices": [
+          "$(25, 9)$",
+          "$(9, 25)$",
+          "$(49, 9)$",
+          "$(25, 25)$"
+        ],
+        "answer": 0,
+        "explanation": "출력이 $5 \\times 5$라 창이 25개이고, 창 하나를 펴면 $3 \\times 3 = 9$개다. 그래서 (창 수, 창 크기) = $(25, 9)$이다."
+      },
+      {
+        "id": "w4-conv-as-matmul-c5",
+        "question": "해상도를 두 배($H, W \\to 2H, 2W$)로 키우면 같은 합성곱층의 파라미터 수와 FLOPs는?",
+        "choices": [
+          "파라미터는 그대로, FLOPs는 4배",
+          "둘 다 4배",
+          "파라미터 4배, FLOPs 그대로",
+          "둘 다 2배"
+        ],
+        "answer": 0,
+        "explanation": "파라미터 $K^2C_{in}C_{out}$은 해상도와 무관하고, FLOPs $2HWK^2C_{in}C_{out}$은 출력 위치 수 $HW$에 비례해 4배가 된다."
       }
     ],
     "quizIds": [
@@ -562,7 +778,7 @@ const sections: Record<string, SectionMeta> = {
           "분산을 0으로 만든다"
         ],
         "answer": 0,
-        "explanation": "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기가 인코더까지 흐른다. 점수 함수 추정보다 분산도 훨씬 작다(실습: 표준편차 0.20 대 0.54)."
+        "explanation": "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기가 인코더까지 흐른다. 점수 함수 추정보다 분산도 훨씬 작다(예: 같은 문제에서 표준편차 약 0.20 대 0.54)."
       },
       {
         "id": "w4-generative-math-c3",
@@ -575,6 +791,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "가우시안을 반복 합성한 결과도 가우시안이라 $q(x_t\\mid x_0) = \\mathcal{N}(\\sqrt{\\bar\\alpha_t}x_0, (1-\\bar\\alpha_t)I)$다. 덕분에 학습 중 임의의 $t$를 한 번에 만들 수 있다."
+      },
+      {
+        "id": "w4-generative-math-c4",
+        "question": "$D_{\\mathrm{KL}}(\\mathcal{N}(\\mu, \\sigma^2)\\,\\|\\,\\mathcal{N}(0, 1))$에서 $\\mu = 1$, $\\sigma = 1$이면 값은?",
+        "choices": [
+          "0.5",
+          "1",
+          "0",
+          "2"
+        ],
+        "answer": 0,
+        "explanation": "$\\frac12(1 + 1 - 1 - \\log 1) = \\frac12$이다. 분산은 맞고 평균만 1 벗어나 $\\frac12\\mu^2$만큼 벌점을 받는다."
+      },
+      {
+        "id": "w4-generative-math-c5",
+        "question": "VAE의 손실에서 KL 항을 빼면 인코더의 분산 $\\sigma^2$은 학습 중 대체로 어떻게 되는가?",
+        "choices": [
+          "0으로 줄어들어 일반 오토인코더처럼 점 하나로 매핑된다",
+          "1로 고정된다",
+          "무한히 커진다",
+          "변하지 않는다"
+        ],
+        "answer": 0,
+        "explanation": "복원만 잘하려면 샘플링 잡음이 없는 편이 유리해 분산을 0으로 줄인다. KL 항이 분산이 1에서 벗어나는 것에 벌점을 줘 잠재공간을 매끄럽게 유지한다."
       }
     ],
     "quizIds": [
@@ -628,7 +868,7 @@ const sections: Record<string, SectionMeta> = {
       },
       {
         "id": "w4-adversarial-examples-c3",
-        "question": "실습에서 $\\varepsilon = 0.1$의 FGSM은 정확도를 0.965에서 0.646으로 떨어뜨렸지만 같은 크기의 무작위 부호 노이즈는 0.965 그대로였다. 가장 알맞은 해석은?",
+        "question": "한 실험에서 $\\varepsilon = 0.1$의 FGSM은 정확도를 0.965에서 0.646으로 떨어뜨렸지만 같은 크기의 무작위 부호 노이즈는 0.965 그대로였다. 가장 알맞은 해석은?",
         "choices": [
           "노이즈의 크기보다 방향(기울기와 맞춘 부호)이 결정적이다",
           "무작위 노이즈가 더 작았다",
@@ -637,6 +877,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "무작위 부호는 $w^\\top\\eta$의 항들이 상쇄되어 효과가 $\\sqrt{n}$ 정도로 작지만, FGSM은 모든 항이 같은 방향으로 더해져 $n$에 비례한다."
+      },
+      {
+        "id": "w4-adversarial-examples-c4",
+        "question": "입력 차원이 100배가 되면, 같은 $\\varepsilon$에서 맞춘 노이즈와 무작위 노이즈의 로짓 변화는 각각 대략 몇 배가 되는가?",
+        "choices": [
+          "맞춘 노이즈 약 100배, 무작위 노이즈 약 10배",
+          "둘 다 약 100배",
+          "둘 다 약 10배",
+          "맞춘 노이즈 약 10배, 무작위 노이즈 약 100배"
+        ],
+        "answer": 0,
+        "explanation": "맞춘 노이즈의 효과 $\\varepsilon\\lVert w\\rVert_1$은 차원에 비례하고, 무작위 부호의 합은 서로 상쇄되어 표준편차가 $\\sqrt{n}$에 비례한다. $\\sqrt{100} = 10$이다."
+      },
+      {
+        "id": "w4-adversarial-examples-c5",
+        "question": "\"우리 모델은 가우시안 노이즈를 섞어도 정확도가 그대로라 강건하다\"는 주장의 허점은?",
+        "choices": [
+          "무작위 노이즈에 대한 성능은 기울기 방향으로 맞춘 최악의 노이즈에 대한 보장이 아니다",
+          "가우시안 노이즈는 너무 강하다",
+          "정확도는 강건성과 무관하다",
+          "노이즈를 섞으면 항상 정확도가 오른다"
+        ],
+        "answer": 0,
+        "explanation": "무작위 노이즈는 효과가 상쇄되어 약하다. 강건성은 FGSM·PGD처럼 손실을 키우는 방향의 공격으로, 허용 교란 크기를 명시해 측정해야 한다."
       }
     ],
     "quizIds": [

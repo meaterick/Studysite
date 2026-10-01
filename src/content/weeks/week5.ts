@@ -63,65 +63,69 @@ const week5: WeekMeta = {
 
 신경망은 숫자만 받아들이므로, 문장을 신경망에 넣으려면 먼저 문자열을 숫자로 바꾸는 절차를 거쳐야 한다. 이 절차는 보통 세 단계로 나뉜다. ① Text Preprocessing(전처리): 대소문자 통일, 특수문자·구두점 제거, 불필요한 공백 정리 등 텍스트를 다루기 좋은 형태로 정제하는 단계. ② 토큰화(Tokenization): 정제된 텍스트를 의미를 가진 최소 단위(토큰)로 잘라내는 단계. 오늘날 GPT 계열이 쓰는 BPE(「토크나이저: BPE」 단계에서 다시 다룬다)가 자리잡기 전에는 공백이나 형태소 분석기를 기준으로 자르는 단어 단위(word-level) 토큰화가 표준이었다. ③ 어휘 사전(Vocabulary) 구축: 말뭉치(corpus) 전체에 등장하는 서로 다른 토큰을 전부 모아 "토큰 $\\to$ 정수 인덱스" 대응표를 만드는 단계. 이렇게 만들어진 어휘 사전의 크기를 흔히 $|V|$로 쓴다.
 
+:::info 사전에 없는 단어와 길이가 다른 문장
+- **\`<unk>\` 토큰**: 단어 단위 어휘 사전은 학습 말뭉치에 있던 단어만 안다. 처음 보는 단어(예: "햄스터")는 보통 \`<unk>\`(unknown)라는 특수 토큰 하나로 뭉뚱그려 바꾼다. 어떤 단어였는지에 대한 정보는 그 순간 사라진다. 이 문제를 OOV(Out-Of-Vocabulary)라 부르고, 「토크나이저: BPE」 단계의 BPE가 이를 완화한다.
+- **\`<pad>\` 토큰**: 여러 문장을 한 번에(배치로) 처리하려면 행렬의 행 길이가 같아야 한다. 그래서 짧은 문장 뒤에 의미 없는 \`<pad>\` 토큰을 채워 가장 긴 문장에 길이를 맞추고, 모델이 이 칸을 무시하도록 따로 표시(마스크)한다.
+:::
+
 이제 각 토큰을 실제 숫자 벡터로 표현할 차례다. 가장 단순한 방법은 One-hot Encoding이다. 어휘 사전 크기가 $|V|$일 때, $i$번째 토큰은 길이 $|V|$짜리 벡터에서 $i$번째 성분만 1이고 나머지는 전부 0인 벡터 $e_i \\in \\mathbb{R}^{|V|}$로 표현한다. 예컨대 어휘가 {고양이, 강아지, 자동차} 세 개뿐이라면 "고양이"는 $[1,0,0]$, "강아지"는 $[0,1,0]$이다. 이 방식은 구현이 간단하다는 것 말고는 두 가지 뚜렷한 한계를 갖는다. 첫째, 벡터의 차원이 어휘 크기 $|V|$와 정확히 같다. 실제 언어모델의 어휘 사전은 보통 수만~수십만 개의 토큰을 담고 있으므로, 토큰 하나를 표현하는 데만 수만 차원짜리 벡터가 필요해진다(차원의 저주). 둘째, 서로 다른 임의의 두 One-hot 벡터를 내적하면 항상 0이 나온다($e_i \\cdot e_j = 0,\\ i \\neq j$). 즉 "고양이"와 "강아지"의 내적도, "고양이"와 "자동차"의 내적도 똑같이 0이라서, 이 표현 방식 자체에는 "고양이가 자동차보다 강아지와 더 비슷하다"는 의미적 유사도를 담을 방법이 전혀 없다. 모든 단어가 서로 정확히 등거리에, 정확히 직교한 채로 놓여 있는 셈이다.
 
 ### Word Embedding과 Word2Vec: 저차원 밀집 벡터로 의미 담기
 
 One-hot 인코딩의 두 한계, 즉 지나치게 큰 차원과 유사도 표현 불가능을 동시에 해결하는 방법이 Word Embedding이다. 아이디어는 각 토큰을 $|V|$차원의 희소(sparse)한 One-hot 벡터 대신, 그보다 훨씬 작은 $d$차원(보통 수백 차원, $d \\ll |V|$)의 밀집(dense) 실수 벡터로 표현하되, 이 벡터를 무작위로 정하는 것이 아니라 데이터로부터 학습한다는 것이다. 이 매핑은 학습 가능한 행렬 $E \\in \\mathbb{R}^{d \\times |V|}$ 하나로 표현할 수 있고, $i$번째 토큰의 임베딩 벡터는 $v_i = E e_i$, 즉 $E$의 $i$번째 열을 그대로 꺼내오는 것과 같다. 학습이 잘 되면 의미가 비슷한 단어일수록 이 $d$차원 공간에서 서로 가까운 위치(작은 유클리드 거리, 또는 1주차에서 다룬 큰 코사인 유사도)에 놓이도록, 그리고 $\\text{왕} - \\text{남자} + \\text{여자} \\approx \\text{여왕}$처럼 벡터 연산이 의미 관계를 어느 정도 반영하도록 벡터들이 배치된다.
 
-이 임베딩을 학습하는 대표적인 방법이 Word2Vec이다. Word2Vec은 "비슷한 문맥에서 등장하는 단어는 비슷한 의미를 가진다"는 분포 가설(distributional hypothesis)에 기반해, 사람이 붙인 정답 레이블 없이 텍스트 자체만으로 임베딩을 학습하는 자기지도학습(self-supervised learning) 방식이다. 그중 Skip-gram 방식은 문장 중앙의 한 단어(중심 단어, center word)를 보고 그 주변 몇 칸 이내에 등장하는 단어(문맥 단어, context word)를 예측하도록 학습한다. 예컨대 "나는 [고양이를] 정말 좋아한다"에서 중심 단어 "고양이를"이 주어지면, 윈도우 크기 2 기준으로 "나는", "정말"이 문맥 단어로 예측 대상이 된다. 구체적으로는 중심 단어 임베딩 $v_c$와 각 어휘 단어의 별도 임베딩 $u_w$ 사이의 내적을 softmax에 통과시켜 $P(w \\mid c) = \\dfrac{\\exp(u_w \\cdot v_c)}{\\sum_{w' \\in V} \\exp(u_{w'} \\cdot v_c)}$로 문맥 단어일 확률을 구하고, 실제 관측된 문맥 단어의 확률이 커지는 방향으로 $v_c$와 $u_w$를 경사하강법으로 갱신한다. 이 과정을 말뭉치 전체에 대해 반복하면 "함께 자주 등장하는 단어일수록 내적이 커야 한다"는 압력이 누적되고, 그 결과 의미가 비슷한 단어들의 벡터가 서로 가까운 방향을 향하게 된다. (반대로 문맥 단어들로부터 중심 단어를 예측하는 CBOW 방식도 있는데, 예측 방향만 반대일 뿐 같은 분포 가설에 기반한다.) 이렇게 학습된 임베딩은 이후 딥러닝 기반 NLP 모델(RNN, Transformer 포함)의 입력층으로 쓰이는 표준 재료가 되었다. Transformer의 임베딩 층도 원리상 이 아이디어의 연장선에 있으며, 다만 오늘날에는 Word2Vec처럼 별도로 미리 학습해두기보다 모델 전체와 함께 한 번에 학습하는 경우가 많다.
-
-[[practice]]
-
-### 실습: One-hot의 한계와 "문맥으로 배우는" 임베딩
-
-Word2Vec을 제대로 학습하려면 큰 말뭉치와 시간이 필요하다. 대신 같은 분포 가설을 선형대수로 구현하는 고전적 방법(단어끼리 **같은 문장에 함께 나온 횟수**를 세고, 그 행렬을 SVD로 저차원으로 압축하기)로 임베딩을 만들어보자. Word2Vec(Skip-gram)이 사실상 이런 동시 등장 통계를 압축하는 것과 깊이 연결되어 있다는 사실도 알려져 있다(Levy & Goldberg, 2014).
+지금까지의 세 단계(토큰화 → 어휘 사전 → 벡터)를 작은 코드로 한 번에 따라가 보자. 사전에 없는 "햄스터"가 0번 \`<unk>\`로 바뀌는 것, 그리고 One-hot 벡터를 곱한 결과 $Ee_i$가 $E$의 $i$번째 열과 똑같다는 것을 확인할 수 있다.
 
 \`\`\`python
 import numpy as np
 
-# 조사를 뺀 아주 작은 말뭉치: 동물 문장과 탈것 문장
-corpus = [
-    "고양이 생선 먹는다", "강아지 고기 먹는다", "고양이 우유 마신다", "강아지 물 마신다",
-    "고양이 소파 잔다", "강아지 마당 잔다", "고양이 강아지 동물", "강아지 귀엽다", "고양이 귀엽다",
-    "자동차 도로 달린다", "버스 도로 달린다", "자동차 기름 넣는다", "버스 기름 넣는다",
-    "자동차 버스 탈것", "버스 정류장 선다", "자동차 주차장 선다",
-    "고양이 자동차 위 잔다",   # 두 무리를 잇는 문장 하나
-]
-sents = [s.split() for s in corpus]
-vocab = sorted({w for s in sents for w in s})
-idx = {w: i for i, w in enumerate(vocab)}
-V = len(vocab)
+sentences = ["나는 고양이 를 좋아한다", "나는 강아지 를 좋아한다", "나는 자동차 를 샀다"]
 
-# 1) One-hot: 서로 다른 단어의 내적은 언제나 0: 유사도를 담을 수 없다
-onehot = np.eye(V)
-print("|V| =", V)
-print("one-hot  고양이·강아지 =", onehot[idx["고양이"]] @ onehot[idx["강아지"]],
-      "/ 고양이·자동차 =", onehot[idx["고양이"]] @ onehot[idx["자동차"]])
+# ① 토큰화: 여기서는 공백 기준으로 자른다
+tokens = [s.split() for s in sentences]
 
-# 2) 같은 문장(윈도우) 안에서 함께 나온 횟수를 센다: "문맥이 비슷하면 의미도 비슷하다"
-C = np.zeros((V, V))
-for s in sents:
-    for i, w in enumerate(s):
-        for j, c in enumerate(s):
-            if i != j:
-                C[idx[w], idx[c]] += 1
+# ② 어휘 사전: 처음 보는 토큰에 차례로 번호를 붙인다. 0번은 사전에 없는 토큰용 <unk>
+vocab = {"<unk>": 0}
+for sent in tokens:
+    for tok in sent:
+        if tok not in vocab:
+            vocab[tok] = len(vocab)
+print("어휘 사전:", vocab)
 
-# 3) SVD로 |V|차원 → d=2차원 밀집 벡터로 압축 (Word2Vec과 목적은 같고, 방법만 선형대수)
-U, S, Vt = np.linalg.svd(C)
-d = 3
-E = U[:, :d] * S[:d]
-def cos(a, b):
-    va, vb = E[idx[a]], E[idx[b]]
-    return va @ vb / (np.linalg.norm(va) * np.linalg.norm(vb))
+def encode(sentence):
+    return [vocab.get(tok, 0) for tok in sentence.split()]   # 없는 단어는 0(<unk>)
 
-print(f"\\n임베딩 차원: {V} → {d}")
-for a, b in [("고양이", "강아지"), ("자동차", "버스"), ("고양이", "자동차"), ("강아지", "버스")]:
-    print(f"cos({a}, {b}) = {cos(a, b):+.2f}")
+print("인코딩:", encode("나는 고양이 를 좋아한다"), encode("나는 햄스터 를 좋아한다"))
+
+# ③ One-hot과 임베딩 행렬
+V, d = len(vocab), 3
+rng = np.random.default_rng(0)
+E = rng.normal(size=(d, V))          # 임베딩 행렬 (d × |V|), 실제로는 학습으로 정해진다
+i = vocab["고양이"]
+e_i = np.zeros(V); e_i[i] = 1        # One-hot 벡터
+print("E @ e_i  =", (E @ e_i).round(3))
+print("E[:, i]  =", E[:, i].round(3))   # 행렬곱 결과가 i번째 열과 똑같다
 \`\`\`
 
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** One-hot에서는 고양이·강아지, 고양이·자동차의 내적이 모두 0이다. 3차원 임베딩에서는 고양이·강아지의 코사인 유사도가 약 0.93, 자동차·버스가 약 0.92로 높고, 동물과 탈것 사이는 훨씬 낮다(고양이·자동차는 두 무리를 잇는 문장 하나 때문에 0.32 정도). 사람이 "비슷하다"고 알려준 적이 없는데, 함께 나오는 단어(먹는다, 도로, 기름 …)가 비슷하다는 사실만으로 유사도가 생겼다. **해볼 것:** \`"고양이 자동차 위 잔다"\` 문장을 지우면 고양이·자동차의 코사인이 어떻게 바뀌는가? 강아지와 버스 문장을 몇 개 더 추가해 보자.
+마지막 두 줄이 같다는 것은 실전에서 중요한 의미가 있다. 수만 차원짜리 One-hot 벡터를 실제로 만들어 행렬곱을 할 필요 없이, 정수 인덱스 $i$로 $E$의 열 하나를 **꺼내 오기만(lookup)** 하면 된다는 뜻이다. PyTorch의 \`nn.Embedding\`이 하는 일이 정확히 이것이다.
+
+:::example 크기를 비교해 보자
+어휘 $|V| = 50{,}000$, 임베딩 차원 $d = 300$이라 하자. One-hot이면 토큰 하나가 50,000차원 벡터인데 그중 49,999개가 0이다. 임베딩을 쓰면 토큰 하나가 300차원 밀집 벡터다. 대신 임베딩 행렬 $E$에는 $300 \\times 50{,}000 = 1{,}500$만 개의 학습할 숫자가 생긴다. 표현은 작아지고, 그 대가로 "학습해야 할 사전"이 생기는 셈이다.
+:::
+
+이 임베딩을 학습하는 대표적인 방법이 Word2Vec이다. Word2Vec은 "비슷한 문맥에서 등장하는 단어는 비슷한 의미를 가진다"는 분포 가설(distributional hypothesis)에 기반해, 사람이 붙인 정답 레이블 없이 텍스트 자체만으로 임베딩을 학습하는 자기지도학습(self-supervised learning) 방식이다. 그중 Skip-gram 방식은 문장 중앙의 한 단어(중심 단어, center word)를 보고 그 주변 몇 칸 이내에 등장하는 단어(문맥 단어, context word)를 예측하도록 학습한다. 예컨대 "나는 [고양이를] 정말 좋아한다"에서 중심 단어 "고양이를"이 주어지면, 윈도우 크기 2 기준으로 "나는", "정말"이 문맥 단어로 예측 대상이 된다. 구체적으로는 중심 단어 임베딩 $v_c$와 각 어휘 단어의 별도 임베딩 $u_w$ 사이의 내적을 softmax에 통과시켜 $P(w \\mid c) = \\dfrac{\\exp(u_w \\cdot v_c)}{\\sum_{w' \\in V} \\exp(u_{w'} \\cdot v_c)}$로 문맥 단어일 확률을 구하고, 실제 관측된 문맥 단어의 확률이 커지는 방향으로 $v_c$와 $u_w$를 경사하강법으로 갱신한다. 이 과정을 말뭉치 전체에 대해 반복하면 "함께 자주 등장하는 단어일수록 내적이 커야 한다"는 압력이 누적되고, 그 결과 의미가 비슷한 단어들의 벡터가 서로 가까운 방향을 향하게 된다. (반대로 문맥 단어들로부터 중심 단어를 예측하는 CBOW 방식도 있는데, 예측 방향만 반대일 뿐 같은 분포 가설에 기반한다.) 이렇게 학습된 임베딩은 이후 딥러닝 기반 NLP 모델(RNN, Transformer 포함)의 입력층으로 쓰이는 표준 재료가 되었다. Transformer의 임베딩 층도 원리상 이 아이디어의 연장선에 있으며, 다만 오늘날에는 Word2Vec처럼 별도로 미리 학습해두기보다 모델 전체와 함께 한 번에 학습하는 경우가 많다.
+
+:::example Skip-gram의 학습 데이터 만들기
+"나는 고양이를 정말 좋아한다"에서 윈도우 크기 1(앞뒤 한 칸)로 (중심 단어, 문맥 단어) 쌍을 뽑으면 다음과 같다.
+
+| 중심 단어 | 문맥 단어 |
+| --- | --- |
+| 나는 | 고양이를 |
+| 고양이를 | 나는, 정말 |
+| 정말 | 고양이를, 좋아한다 |
+| 좋아한다 | 정말 |
+
+모두 6쌍이다. 사람이 정답을 붙이지 않았는데도 문장만으로 "입력 → 정답" 쌍이 저절로 만들어진다. 이것이 자기지도학습이라 불리는 이유다. 말뭉치가 수십억 단어면 이런 쌍도 수십억 개가 생긴다.
 :::
 
 ## RNN과 BPTT: 순서대로 읽기와 기울기 소실 {#rnn-bptt}
@@ -133,6 +137,37 @@ h_t = f(Wx_t + Uh_{t-1} + b)
 \`\`\`
 
 여기서 $f$는 보통 $\\tanh$나 시그모이드 같은 비선형 활성함수이고, $W$는 입력 $x_t$에 곱해지는 가중치 행렬, $U$는 이전 은닉 상태 $h_{t-1}$에 곱해지는 가중치 행렬이다. 핵심은 모든 시점 $t$에서 같은 $W$, $U$, $b$를 그대로 재사용(파라미터 공유)한다는 것이다. 그래서 "순환(recurrent)"이라는 이름이 붙는다. 초기 은닉 상태 $h_0$는 보통 0벡터로 시작하고, 문장 끝까지 이 재귀적 갱신을 반복한 뒤 마지막 은닉 상태 $h_T$(또는 매 시점의 $h_t$ 전체)를 다음 단계(분류층, 디코더 등)의 입력으로 사용한다.
+
+:::example 숫자 하나짜리 RNN을 손으로 두 스텝
+입력과 은닉 상태가 모두 숫자 하나인 RNN을 생각하자. $W = 0.5$, $U = 0.8$, $b = 0$, $f = \\tanh$이고 입력은 $x_1 = 1$, $x_2 = 0.5$다.
+
+- $t = 1$: $h_1 = \\tanh(0.5 \\times 1 + 0.8 \\times 0) = \\tanh(0.5) \\approx 0.462$
+- $t = 2$: $h_2 = \\tanh(0.5 \\times 0.5 + 0.8 \\times 0.462) = \\tanh(0.620) \\approx 0.551$
+
+$h_2$ 안에는 $x_2$뿐 아니라 $h_1$을 통해 $x_1$의 정보도 섞여 있다. 이렇게 "지금까지 읽은 내용"이 은닉 상태 하나에 누적된다. 두 스텝 모두 같은 $W$, $U$를 썼다는 점도 확인하자.
+:::
+
+벡터로 일반화하면 입력 차원이 $d_x$, 은닉 차원이 $d_h$일 때 $W$는 $d_h \\times d_x$, $U$는 $d_h \\times d_h$, $b$는 길이 $d_h$다. 파라미터 수는 $d_h d_x + d_h^2 + d_h$로, **문장 길이 $T$가 식에 전혀 들어가지 않는다.** 아래 코드는 토큰 5개를 차례로 읽으며 은닉 상태가 어떻게 바뀌는지 보여 준다.
+
+\`\`\`python
+import numpy as np
+
+rng = np.random.default_rng(0)
+d_x, d_h, T = 3, 4, 5                 # 입력 차원 3, 은닉 차원 4, 시점 5개
+W = rng.normal(size=(d_h, d_x)) * 0.5  # 입력 → 은닉
+U = rng.normal(size=(d_h, d_h)) * 0.5  # 은닉 → 은닉 (모든 시점이 공유)
+b = np.zeros(d_h)
+
+xs = rng.normal(size=(T, d_x))        # 토큰 5개의 임베딩
+h = np.zeros(d_h)                     # h_0 = 0 벡터
+for t in range(T):
+    h = np.tanh(W @ xs[t] + U @ h + b)   # h_t = tanh(W x_t + U h_{t-1} + b)
+    print(f"t={t + 1}: h = {h.round(3)}")
+
+print("파라미터 수:", W.size + U.size + b.size)   # 4×3 + 4×4 + 4 = 32, 문장 길이와 무관
+\`\`\`
+
+반복문 안의 한 줄이 위 재귀식 그대로다. 문장이 5토큰이든 500토큰이든 반복 횟수만 달라질 뿐 같은 32개의 파라미터를 계속 재사용한다.
 
 이 구조는 가변 길이 시퀀스를 고정된 크기의 파라미터($W$, $U$, $b$)만으로 처리할 수 있다는 점에서 One-hot이나 고정 크기 입력의 한계를 넘어서지만, 결정적인 약점이 하나 있다. $h_t$ 하나에 지금까지 읽은 모든 정보를 압축해 넣어야 하므로, 시퀀스가 길어질수록 먼 과거 시점의 정보가 매 스텝 새로운 정보와 뒤섞이며 점점 희석된다. 이를 장기 의존성(long-term dependency) 문제라 부른다. 예컨대 "그 카페에서 처음 만난 [고양이]는 … (백 단어 생략) … 그 아이는 지금도 그 자리에 앉아 있다"처럼 문장 앞부분의 "고양이"라는 정보가 백 번의 갱신을 거쳐 뒤쪽 "그 아이"를 해석하는 데까지 살아남아야 하는데, RNN의 은닉 상태는 매 스텝 새 정보로 계속 덮어써지기 때문에 이런 장거리 의존관계를 안정적으로 유지하기가 구조적으로 어렵다. 이 문제가 왜 생기는지는 아래 BPTT에서 수식으로 직접 확인한다.
 
@@ -157,63 +192,21 @@ RNN을 학습시키려면 이 재귀 구조에도 역전파를 적용해야 하�
 
 3주차에서 이미 확인했듯이, 여러 항을 연달아 곱하면 각 항이 1보다 조금 작기만 해도 곱이 거듭될수록 전체 값은 지수적으로 0에 가까워진다(기울기 소실). RNN에서는 바로 이 곱셈이 시퀀스 길이만큼, 즉 $T-k$번이나 반복된다는 점이 특히 치명적이다. 문장이 백 토큰이면 야코비안을 백 번 곱하는 셈이므로, 각 항의 크기가 조금만 1보다 작아도 결과는 사실상 0이 되어 먼 과거 시점 $h_k$는 손실에 사실상 아무 영향도 주지 못하는 것처럼 취급된다(이것이 앞서 말한 장기 의존성 문제의 정체다). 반대로 각 항이 1보다 조금 크기만 해도 곱은 지수적으로 발산한다(기울기 폭발). 실무에서는 기울기 폭발 쪽은 기울기 클리핑(3주차 심화 「기울기 흐름의 수학」 참고, gradient clipping, 기울기의 크기가 일정 임계값을 넘으면 그 임계값으로 잘라내는 기법)으로 비교적 쉽게 억누르지만, 기울기 소실은 "이미 0에 가까워진 신호를 다시 키울 방법이 없다"는 점에서 훨씬 근본적인 문제로 남는다.
 
-[[practice]]
+### 곱셈이 쌓이면 얼마나 줄어들까
 
-### 실습: 파라미터 공유와 기울기 소실·폭발을 숫자로 보기
+야코비안은 행렬이지만, 그 "크기"를 숫자 하나 $r$로 단순화해서 생각해 보자. 기울기가 $n$스텝을 거슬러 올라가면 대략 $r^n$배가 된다. 특히 $\\tanh$의 미분은 최댓값이 1(입력이 0일 때)이고 입력이 커지면 0에 가까워지므로, 매 스텝 곱해지는 값이 1보다 작아지기 쉽다.
 
-은닉 차원 16짜리 RNN을 만들고, 시점 $T$의 기울기가 $k$까지 거슬러 갈 때 곱해지는 야코비안 곱 $\\prod \\partial h_t / \\partial h_{t-1}$의 크기(스펙트럼 노름: 기울기가 최대 몇 배로 커지거나 줄어드는가)를 거리별로 재본다. $U$는 모든 특잇값이 같은 값(배율)이 되도록 만들었다.
+[[diagram:rnn-gradient-decay]]
 
 \`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-d_in, d_h = 4, 16
-
-def orthogonal(n, scale):
-    Q, _ = np.linalg.qr(rng.normal(size=(n, n)))
-    return scale * Q                      # 모든 특잇값이 scale인 행렬
-
-W = rng.normal(0, 0.5, (d_h, d_in))
-b = np.zeros(d_h)
-
-def run_rnn(xs, U):
-    """h_t = tanh(W x_t + U h_{t-1} + b): 모든 시점에서 같은 W, U, b를 재사용한다"""
-    h = np.zeros(d_h); hs = []
-    for x in xs:
-        h = np.tanh(W @ x + U @ h + b)
-        hs.append(h)
-    return hs
-
-# 1) 파라미터 공유: 길이가 3이든 50이든 같은 W, U, b로 처리된다
-U = orthogonal(d_h, 0.9)
-for T in [3, 50]:
-    hs = run_rnn(rng.normal(size=(T, d_in)), U)
-    print(f"길이 {T:2d} → 은닉 상태 {len(hs)}개, 각 shape {hs[-1].shape}, 파라미터 수 {W.size + U.size + b.size}")
-
-# 2) BPTT: ∂h_T/∂h_k = Π_{t=k+1..T} diag(1 - h_t²) U  의 크기를 거리 T-k에 따라 재본다
-def jacobian_norm(U, T=60):
-    hs = run_rnn(rng.normal(size=(T, d_in)), U)
-    J = np.eye(d_h); norms = []
-    for t in range(T - 1, 0, -1):              # 뒤에서부터 야코비안을 하나씩 곱해 나간다
-        J = J @ (np.diag(1 - hs[t] ** 2) @ U)
-        norms.append(np.linalg.norm(J, 2))     # 거리 T-t 만큼 떨어진 시점으로 전달되는 기울기의 최대 배율
-    return norms
-
-print("\\n거리(T-k)   U 배율 0.9     U 배율 1.0     U 배율 2.5")
-n09, n10, n25 = jacobian_norm(orthogonal(d_h, 0.9)), jacobian_norm(orthogonal(d_h, 1.0)), jacobian_norm(orthogonal(d_h, 2.5))
-for dist in [1, 5, 10, 20, 40]:
-    print(f"{dist:8d}   {n09[dist-1]:12.2e}   {n10[dist-1]:12.2e}   {n25[dist-1]:12.2e}")
-
-# 3) 기울기 클리핑: 크기가 임계값을 넘으면 방향은 그대로 두고 크기만 줄인다
-g = rng.normal(size=d_h) * 1e3
-clip = 5.0
-g_clipped = g * min(1.0, clip / np.linalg.norm(g))
-print(f"\\n클리핑 전 |g| = {np.linalg.norm(g):.1f}, 후 |g| = {np.linalg.norm(g_clipped):.1f}, "
-      f"방향 코사인 = {g @ g_clipped / (np.linalg.norm(g) * np.linalg.norm(g_clipped)):.3f}")
+# 야코비안의 크기를 숫자 하나(r)로 단순화해, n번 곱했을 때 기울기가 어떻게 되는지 본다
+steps = [1, 10, 20, 50, 100]
+print("곱한 횟수 n:", "".join(f"{n:>11}" for n in steps))
+for r in [0.9, 1.0, 1.1]:
+    print(f"r = {r}:    ", "".join(f"{r ** n:>11.4g}" for n in steps))
 \`\`\`
 
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 길이 3이든 50이든 파라미터 수는 336개로 같다. 이것이 파라미터 공유다. 배율 0.9에서는 거리 40에서 약 $10^{-8}$ 수준으로 기울기가 사라지고, 배율 2.5에서는 거리가 멀수록 오히려 $10^{3}$ 수준까지 커진다(폭발). 눈여겨볼 곳은 **배율 1.0**이다. $U$ 자체는 크기를 바꾸지 않는데도 기울기가 사라지는데, 매 스텝 곱해지는 $\\tanh$의 미분 $1-h_t^2$가 1 이하이기 때문이다. 클리핑은 기울기의 크기만 5로 줄이고 방향(코사인 1.000)은 그대로 둔다. **생각해볼 것:** 폭발은 클리핑으로 막을 수 있는데, 소실은 왜 같은 방법으로 되살릴 수 없을까?
-:::
+$r = 0.9$는 "한 스텝에 10%씩만 줄어든다"는 순한 값인데도 50스텝 뒤에는 0.005배, 100스텝 뒤에는 0.00003배가 된다. 반대로 $r = 1.1$이면 100스텝 뒤 1만 배가 넘는다. 1에서 아주 조금만 벗어나도 결과가 극단으로 갈리기 때문에, 평범한 RNN으로는 긴 문장을 안정적으로 학습하기가 어렵다. 이 문제를 구조로 풀어낸 것이 보충 과정의 「LSTM과 GRU」다.
 
 ## Seq2Seq의 병목과 Attention의 등장 {#seq2seq-attention}
 
@@ -221,9 +214,51 @@ RNN(또는 LSTM/GRU)을 이용해 "입력 문장 하나를 통째로 다른 문�
 
 Decoder를 학습시킬 때 실무에서 거의 항상 쓰는 기법이 Teacher Forcing이다. Decoder가 $t$번째 토큰을 생성한 뒤 $t+1$번째 토큰을 생성할 차례가 되면, 그 입력으로 "방금 모델 자신이 예측한 토큰"이 아니라 "실제 정답 시퀀스의 $t$번째 토큰"을 그대로 넣어준다. 학습 초기의 모델은 예측이 부정확할 수밖에 없는데, 만약 모델 자신의(틀렸을 가능성이 큰) 예측을 다음 입력으로 계속 되먹임하면, 한 스텝에서 발생한 작은 오차가 다음 스텝의 입력을 오염시키고 그 오염된 입력이 또 다음 오차를 낳는 식으로 오류가 눈덩이처럼 불어나 학습 신호 자체가 불안정해진다. 반면 매 스텝의 입력을 정답으로 고정해주면 각 스텝의 예측 오차가 서로 독립적으로 취급되어 학습이 훨씬 안정적이고 빠르게 수렴한다.
 
+:::example Teacher Forcing에서 입력과 정답의 관계
+번역 정답이 "나는 고양이를 좋아한다"일 때, 디코더의 입력과 맞혀야 할 정답은 한 칸씩 어긋나 있다. \`<sos>\`(start of sequence)는 "이제 생성을 시작하라"는 신호, \`<eos>\`(end of sequence)는 "여기서 끝"이라는 신호로 쓰는 특수 토큰이다.
+
+| 스텝 | 디코더 입력 | 맞혀야 할 정답 |
+| --- | --- | --- |
+| 1 | \`<sos>\` | 나는 |
+| 2 | 나는 | 고양이를 |
+| 3 | 고양이를 | 좋아한다 |
+| 4 | 좋아한다 | \`<eos>\` |
+
+스텝 3에서 모델이 "좋아한다" 대신 "싫어한다"라고 잘못 예측했더라도, 스텝 4의 입력으로는 모델의 예측 "싫어한다"가 아니라 정답 "좋아한다"가 들어간다. 즉 입력 열은 모델의 예측과 상관없이 언제나 정답 문장을 한 칸 밀어 놓은 것이다.
+:::
+
+다만 Teacher Forcing에는 대가가 있다. 학습할 때는 언제나 정답을 입력으로 받지만, 실제로 번역할 때(추론)는 정답이 없으니 모델 자신의 예측을 다음 입력으로 써야 한다. 학습 때 한 번도 겪지 못한 "자기 실수가 섞인 입력"을 추론 때 처음 만나게 되는 이 불일치를 **노출 편향(exposure bias)**이라 부른다. 생성 도중 한 번 틀리면 그 뒤가 줄줄이 어긋나는 현상의 한 원인이다.
+
 그러나 이 구조에는 결정적인 한계가 있다. Encoder는 입력 문장이 세 단어든 서른 단어든 관계없이, 그 안의 모든 정보를 언제나 같은 고정 크기의 벡터 $c$ 하나에 욱여넣어야 한다. 문장이 길어질수록 그 안에 담긴 정보량은 늘어나는데 이를 담을 그릇의 크기는 그대로이므로, 문장이 길어질수록 $c$ 안에서 앞부분 토큰들의 정보가 뒤이어 들어오는 정보에 덮이거나 희석되어 유실되는 정도가 심해진다. 이를 Seq2Seq의 병목(bottleneck) 문제라 부른다. 실제로 초기 Seq2Seq 기반 번역 모델은 짧은 문장에서는 준수한 성능을 보이다가도 문장 길이가 일정 수준을 넘어가면 번역 품질이 급격히 떨어지는 현상을 보였다.
 
 **바로 이 병목이 Attention이 등장한 이유다.** Decoder가 문장 전체 정보를 오직 고정 크기 벡터 $c$ 하나에만 의존해야 한다는 제약 자체를 없애면 되지 않을까? 이 발상에서 나온 것이 Attention 메커니즘이다(Bahdanau et al., 2014). Decoder는 매 출력 스텝마다 Encoder가 만들어낸 모든 시점의 은닉 상태 $h_1, \\ldots, h_{T_x}$를 다시 통째로 들여다보고, 지금 이 순간 생성할 토큰과 관련이 큰 시점에는 큰 가중치를, 관련이 적은 시점에는 작은 가중치를 주어 가중합한 벡터를 그때그때 새로 만들어 참고한다. 즉 정보를 압축해 한 번에 건네주는 대신, 필요할 때마다 원본 전체를 다시 조회할 수 있게 한 것이다. 이 아이디어가 이후 Encoder-Decoder 구조를 완전히 벗어나 "한 시퀀스 내부의 토큰들이 서로를 직접 조회한다"는 Self-Attention과 Transformer로 발전한다. 다음 단계부터는 그 Self-Attention을 정확한 수식으로 살펴본다.
+
+Encoder–Decoder Attention을 식으로 쓰면 다음 세 줄이다. 디코더의 현재 상태 $s_t$와 각 인코더 상태 $h_j$의 관련도 점수 $e_{tj}$를 구하고, softmax로 비율 $\\alpha_{tj}$를 만든 뒤, 그 비율로 인코더 상태를 섞어 **이번 스텝만의** 문맥 벡터 $c_t$를 만든다.
+
+\`\`\`math
+e_{tj} = \\text{score}(s_t, h_j), \\qquad \\alpha_{tj} = \\frac{\\exp(e_{tj})}{\\sum_{j'} \\exp(e_{tj'})}, \\qquad c_t = \\sum_j \\alpha_{tj}\\, h_j
+\`\`\`
+
+점수 함수로는 작은 신경망(Bahdanau)이나 단순한 내적 $s_t \\cdot h_j$(Luong)를 쓴다. 아래는 내적을 쓴 장난감 예제다. 원문 "I love cats"를 번역하다가 디코더가 "고양이를"을 만들 차례라고 하자.
+
+\`\`\`python
+import numpy as np
+
+# 인코더가 원문 "I love cats" 세 토큰에 대해 만든 은닉 상태(2차원으로 단순화)
+H = np.array([[1.0, 0.0],    # h1: I
+              [0.0, 1.0],    # h2: love
+              [1.0, 1.0]])   # h3: cats
+s = np.array([2.0, 0.5])     # 디코더가 "고양이를"을 만들 차례의 상태
+
+scores = H @ s                          # 각 인코더 상태와 내적: [2.0, 0.5, 2.5]
+weights = np.exp(scores) / np.exp(scores).sum()
+context = weights @ H                   # 가중합 = 이번 스텝만의 문맥 벡터
+print("점수:", scores)
+print("가중치:", weights.round(3))
+print("문맥 벡터:", context.round(3))
+\`\`\`
+
+디코더 상태와 가장 비슷한 방향을 가진 $h_3$("cats")이 57%로 가장 큰 비율을 받았다. 다음 스텝에서 디코더 상태가 바뀌면 점수도 바뀌어, 매 스텝 원문의 다른 부분을 들여다보게 된다. 고정된 $c$ 하나 대신 스텝마다 새 $c_t$를 만드는 것, 이것이 병목을 푸는 방법이다.
 
 ### 왜 Attention인가: 경로 길이와 병렬화
 
@@ -236,54 +271,6 @@ RNN은 문장을 토큰 순서대로 하나씩 처리하면서, 매 스텝마다
 | 정보 경로 길이 | $O(n)$: 멀리 있는 토큰 정보 손실 | $O(1)$: 모든 토큰이 직접 연결 |
 | 병렬화 | 순차 처리(느림) | 시퀀스 전체 병렬(GPU 친화) |
 | 연산량 | $O(n)$ | $O(n^2)$: 긴 문맥의 비용 문제 |
-
-[[practice]]
-
-### 실습: 고정 크기 벡터의 병목과, 필요할 때마다 다시 보는 Attention
-
-16차원 은닉 상태를 가진 RNN 인코더로 길이 $T$인 문장(토큰 하나 = 4차원 벡터)을 2,000개 읽힌 뒤, **마지막 은닉 상태 $h_T$ 하나만 보고 첫 번째 토큰을 선형회귀로 복원**할 수 있는지 $R^2$로 잰다. 비교를 위해 첫 시점의 은닉 상태 $h_1$을 직접 볼 수 있을 때(= Attention처럼 인코더의 모든 시점을 다시 조회할 수 있을 때)의 복원 정도도 함께 잰다. 인코더는 학습하지 않은 무작위 RNN이지만, "그릇의 크기는 고정인데 담을 양은 늘어난다"는 구조적 문제를 보기에는 충분하다.
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-d_in, d_h, N = 4, 16, 2000
-Q, _ = np.linalg.qr(rng.normal(size=(d_h, d_h)))
-W, U = rng.normal(0, 0.1, (d_h, d_in)), 1.0 * Q
-
-def encode(X):
-    """X: (N, T, d_in) 문장 N개 → 시점별 은닉 상태 (N, T, d_h)"""
-    h = np.zeros((X.shape[0], d_h)); hs = []
-    for t in range(X.shape[1]):
-        h = np.tanh(h @ U.T + X[:, t] @ W.T)
-        hs.append(h)
-    return np.stack(hs, axis=1)
-
-def r2_linear(H, Y):
-    """H로 Y를 선형회귀했을 때의 R² (1이면 완벽 복원, 0이면 전혀 복원 못 함)"""
-    Hb = np.hstack([H, np.ones((len(H), 1))])
-    coef, *_ = np.linalg.lstsq(Hb, Y, rcond=None)
-    return 1 - ((Y - Hb @ coef) ** 2).sum() / ((Y - Y.mean(0)) ** 2).sum()
-
-# 1) 병목: 마지막 은닉 상태 h_T 하나만 보고 "첫 토큰"을 복원할 수 있는가?
-print(f"{'문장 길이 T':>10} {'h_T로 첫 토큰 복원 R²':>22} {'h_1로 복원 R² (attention처럼 직접 조회)':>30}")
-for T in [2, 5, 10, 20, 40]:
-    X = rng.normal(size=(N, T, d_in))
-    H = encode(X)
-    print(f"{T:10d} {r2_linear(H[:, -1], X[:, 0]):22.3f} {r2_linear(H[:, 0], X[:, 0]):30.3f}")
-
-# 2) Attention: 디코더의 현재 상태 s(Query)로 인코더의 모든 h_t(Key=Value)를 다시 훑는다
-X = rng.normal(size=(1, 6, d_in))
-H = encode(X)[0]                                   # (6, d_h): 원문 토큰 6개의 은닉 상태
-for step, s in enumerate([H[1] + 0.1 * rng.normal(size=d_h), H[4] + 0.1 * rng.normal(size=d_h)]):
-    scores = H @ s                                 # 각 시점과의 관련도(내적)
-    a = np.exp(scores - scores.max()); a /= a.sum()
-    context = a @ H                                # 스텝마다 새로 만드는 문맥 벡터
-    print(f"\\n디코더 스텝 {step + 1}: attention 가중치 = {np.round(a, 2)} → 문맥 벡터 shape {context.shape}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** $h_T$로 첫 토큰을 복원하는 $R^2$는 $T=2$일 때 0.99에서 $T=10$에서 약 0.18, $T=40$에서는 거의 0으로 떨어진다. 16차원 벡터 하나에 $40 \\times 4 = 160$개의 숫자를 담을 수는 없다. 반면 $h_1$을 직접 보면 길이와 무관하게 $R^2 \\approx 1$이다. 두 번째 부분에서는 디코더 스텝마다 attention 가중치가 다른 시점(2번째, 5번째 토큰)에 몰리고, 문맥 벡터는 스텝마다 새로 만들어진다. **생각해볼 것:** 은닉 차원을 16에서 64로 늘리면 표의 숫자가 어떻게 바뀔까? 그래도 병목이 "해결"되지 않는 이유는 무엇인가?
-:::
 
 ## Self-Attention: Q·K·V와 스케일링 {#self-attention}
 
@@ -321,45 +308,71 @@ Self-Attention은 입력 시퀀스의 각 토큰 임베딩 $x_i$에 서로 다�
 마지막으로 이 비율대로 Value를 섞어보자. Value를 2차원으로 단순화해서 고양이가=[2,0], 생선을=[0,3], 맛있게=[1,1], 먹었다=[4,0]이라 하면, 출력 $= 0.188 \\times [2,0] + 0.510 \\times [0,3] + 0.114 \\times [1,1] + 0.188 \\times [4,0] \\approx$ **[1.24, 1.65]**. 이 벡터 하나가 바로 "생선을"이라는 토큰이 문장 전체를 한 번 둘러보고 새로 얻은, 문맥이 반영된 표현이다. 위 그림에서 "생선을"을 클릭했을 때 나오는 퍼센트(19%, 51%, 11%, 19%)가 바로 이 계산 결과다.
 :::
 
-[[practice]]
+### 코드로 같은 계산 확인하기
 
-### 실습: 손계산 예제를 코드로 재현하고, $\\sqrt{d_k}$가 없으면 어떻게 되는지 보기
+위에서 손으로 따라간 계산을 NumPy로 그대로 옮겨 보자. \`K @ q\`는 Key 네 개와 Query의 내적을 한 번에 구하는 행렬-벡터 곱이다.
 
 \`\`\`python
 import numpy as np
 
-def softmax(x, axis=-1):
-    x = x - x.max(axis, keepdims=True)
-    e = np.exp(x)
-    return e / e.sum(axis, keepdims=True)
+K = np.array([[1, 0, 0, 0],     # 고양이가
+              [1, 1, 1, 1],     # 생선을
+              [0, 0, 1, 0],     # 맛있게
+              [1, 1, 0, -1]])   # 먹었다
+V = np.array([[2, 0], [0, 3], [1, 1], [4, 0]])
+q = np.array([1, 1, 0, 1])      # "생선을"의 Query
 
-# 1) 본문의 숫자 예제를 그대로 재현: "생선을"이 Query일 때
-tokens = ["고양이가", "생선을", "맛있게", "먹었다"]
-K = np.array([[1, 0, 0, 0], [1, 1, 1, 1], [0, 0, 1, 0], [1, 1, 0, -1]], dtype=float)
-V = np.array([[2, 0], [0, 3], [1, 1], [4, 0]], dtype=float)
-q = np.array([1, 1, 0, 1], dtype=float)
-
-scores = K @ q                          # 내적 점수 [1, 3, 0, 1]
-a = softmax(scores / np.sqrt(len(q)))   # √dk = 2로 나눈 뒤 softmax
-out = a @ V
-print("점수   :", scores)
-print("가중치 :", {t: f"{w:.1%}" for t, w in zip(tokens, a)})
-print("출력   :", out.round(2))
-
-# 2) √dk로 나누지 않으면? dk가 커질수록 내적의 분산이 dk배로 커지고 softmax가 한 곳에 몰린다
-rng = np.random.default_rng(0)
-print(f"\\n{'dk':>5} {'내적의 분산':>10} {'최대 가중치(나누기 X)':>18} {'최대 가중치(√dk로 나눔)':>20}")
-for dk in [4, 64, 512]:
-    Q = rng.normal(size=(2000, dk)); Ks = rng.normal(size=(10, dk))
-    S = Q @ Ks.T                                   # 쿼리 2000개 × 키 10개의 점수
-    raw = softmax(S).max(axis=1).mean()
-    scaled = softmax(S / np.sqrt(dk)).max(axis=1).mean()
-    print(f"{dk:5d} {S.var():10.1f} {raw:18.3f} {scaled:20.3f}")
+scores = K @ q                  # 내적 4개를 한 번에: [1, 3, 0, 1]
+scaled = scores / np.sqrt(4)    # √d_k = 2로 나누기
+weights = np.exp(scaled) / np.exp(scaled).sum()
+print("점수:", scores, "→ 스케일:", scaled)
+print("가중치:", weights.round(3), "합 =", round(weights.sum(), 6))
+print("출력:", (weights @ V).round(2))
 \`\`\`
 
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 점수 \`[1, 3, 0, 1]\`, 가중치 18.8% · 51.0% · 11.4% · 18.8%, 출력 \`[1.24, 1.65]\`로 본문의 손계산과 같다. 두 번째 표에서 내적의 분산은 $d_k$와 거의 같게(4 → 64 → 512) 커지고, 나누지 않으면 최대 가중치가 0.46 → 0.87 → 0.96으로 한 키에 쏠린다(원-핫에 가까워져 기울기가 사라지는 상태). $\\sqrt{d_k}$로 나누면 $d_k$와 무관하게 0.3 안팎으로 유지된다. **해볼 것:** Query를 "맛있게"의 Key와 같은 \`[0, 0, 1, 0]\`으로 바꿔보자. 가중치가 어디로 옮겨가고 출력은 어떻게 바뀌는가? 이것이 과제 3번의 출발점이다.
+손 계산과 같은 가중치(18.8%, 51.0%, 11.4%, 18.8%)와 출력 [1.24, 1.65]가 나온다.
+
+### 모든 Query를 한꺼번에: shape으로 읽기
+
+위 예제는 Query 하나("생선을")만 계산했다. 실제로는 네 토큰이 모두 Query가 되어 동시에 계산한다. 그래서 수식의 각 단계를 shape으로 읽을 수 있어야 한다. 토큰 $n$개, Query·Key 차원 $d_k$, Value 차원 $d_v$라 하면 다음과 같다.
+
+| 단계 | 계산 | shape | 의미 |
+| --- | --- | --- | --- |
+| ① | $Q$, $K$ | $(n, d_k)$ | 토큰마다 질문지·색인표 하나씩 |
+| ② | $QK^\\top$ | $(n, n)$ | 모든 토큰 쌍의 점수표 |
+| ③ | $\\div \\sqrt{d_k}$, 행별 softmax | $(n, n)$ | 각 행의 합이 1인 비율표 |
+| ④ | $\\times V$ | $(n, d_v)$ | 토큰마다 새 표현 하나씩 |
+
+③의 softmax는 **행마다** 따로 적용한다는 점이 중요하다. 한 행은 "한 Query가 모든 토큰에 나눠 주는 관심"이라 그 행 안에서만 합이 1이 된다.
+
+:::tip softmax는 모든 점수에 같은 수를 더해도 결과가 같다
+점수 $[1, 3, 0, 1]$에 모두 10을 더한 $[11, 13, 10, 11]$을 softmax에 넣어도 결과는 똑같다. $e^{s_i + c} = e^{s_i}e^c$에서 $e^c$가 분자와 분모에 똑같이 곱해져 약분되기 때문이다. softmax는 점수의 **차이**에만 반응한다. 「멀티헤드 Attention과 Causal Mask」 단계의 코드가 최댓값을 빼고 계산하는 것도 이 성질 덕분이다. 반면 점수에 같은 수를 **곱하면**(예: 10배) 차이도 10배가 되어 결과가 더 뾰족해진다. $\\sqrt{d_k}$로 나누는 것이 바로 이 "곱하기" 쪽을 조절하는 일이다.
 :::
+
+### $\\sqrt{d_k}$의 효과를 숫자로 보기
+
+무작위 $q$, $k$ 1만 쌍의 내적 분산을 직접 재 보고, 같은 점수를 크게 키웠을 때 softmax가 어떻게 변하는지도 비교해 보자.
+
+\`\`\`python
+import numpy as np
+
+rng = np.random.default_rng(0)
+for dk in [4, 64, 512]:
+    q = rng.normal(size=(10000, dk))
+    k = rng.normal(size=(10000, dk))
+    dots = (q * k).sum(axis=1)                 # 무작위 q·k 1만 쌍
+    print(f"d_k={dk:3d}: 내적 분산 {dots.var():7.1f},  √d_k로 나눈 뒤 분산 {(dots / np.sqrt(dk)).var():.2f}")
+
+def softmax(x):
+    e = np.exp(x - x.max())
+    return e / e.sum()
+
+s = rng.normal(size=8)                         # 분산 1인 점수 8개
+print("스케일 맞춘 점수 → softmax:", softmax(s).round(2))
+print("√512배로 커진 점수 → softmax:", softmax(s * np.sqrt(512)).round(2))
+\`\`\`
+
+내적의 분산이 $d_k$와 거의 같고(4, 65, 510), $\\sqrt{d_k}$로 나누면 1 근처로 돌아온다. 아래 두 줄은 같은 점수의 softmax다. 스케일이 맞으면 여러 토큰에 관심이 고루 나뉘지만, $\\sqrt{512} \\approx 22.6$배로 커진 점수에서는 두 칸만 남고 나머지가 전부 0이 된다. 이렇게 거의 원-핫이 된 softmax는 기울기가 거의 0이라 학습이 멈춘다.
 
 ## 멀티헤드 Attention과 Causal Mask {#multi-head-causal}
 
@@ -382,9 +395,29 @@ width: 1335
 height: 731
 \`\`\`
 
+:::example $d = 512$, $h = 8$일 때 shape 따라가기
+토큰 $n$개를 넣으면 각 단계의 shape은 다음과 같다.
+
+| 단계 | shape |
+| --- | --- |
+| 입력 $X$ | $(n, 512)$ |
+| $Q = XW_q$ ($K$, $V$도 같음) | $(n, 512)$ |
+| 헤드로 나누기: $512 = 8 \\times 64$ | $(8, n, 64)$ |
+| 헤드별 점수 $QK^\\top$ | $(8, n, n)$ |
+| 헤드별 출력 (가중치 $\\times V$) | $(8, n, 64)$ |
+| 이어붙이기(concat) | $(n, 512)$ |
+| $W^O$ 곱하기 $(512 \\times 512)$ | $(n, 512)$ |
+
+헤드 수를 바꿔도 $W_q, W_k, W_v, W^O$는 모두 $512 \\times 512$ 그대로라 파라미터 수($4d^2$)는 변하지 않는다. 바뀌는 것은 $512$차원을 몇 조각으로 나눠 쓰느냐뿐이다.
+:::
+
 ### Causal mask: 미래를 가리는 장치
 
 Causal mask는 미래 토큰을 보지 못하도록 점수 행렬 $QK^\\top$의 상삼각 원소(자기 자신보다 뒤에 있는 토큰에 대한 점수)를 $-\\infty$로 치환하는 장치다. GPT는 "다음 토큰 예측"으로 학습하는데, $i$번째 위치에서 $i+1$번째 이후의 정답 토큰 정보를 attention을 통해 미리 참조할 수 있다면 학습 시점에 레이블 누출(label leakage)이 발생해, 모델이 실제로 다음 토큰을 예측하는 능력이 아니라 정답을 그대로 복사하는 지름길만 학습하게 된다. $-\\infty$를 넣은 칸은 softmax를 거치고 나면 정확히 0이 되므로, 미래 토큰에 대한 attention 가중치는 항상 0으로 강제된다. 결과적으로 각 토큰은 자기 자신과 그 이전에 나온 토큰들만 볼 수 있고, 이 제약 덕분에 학습이 끝난 모델을 그대로 "왼쪽에서 오른쪽으로 한 토큰씩 생성하는" 용도로도 쓸 수 있게 된다.
+
+[[diagram:causal-mask]]
+
+그림의 오른쪽 행렬을 행 단위로 읽어 보자. 첫 행("고양이가")은 볼 수 있는 토큰이 자기 자신뿐이라 100%를 자기에게 준다. 둘째 행("생선을")은 앞의 두 토큰 사이에서 40% : 60%로 나눈다. 마지막 행만 네 토큰 모두를 본다. 학습 때는 이 네 행이 한 번에 계산되므로, 문장 하나로 "1개를 보고 다음 맞히기", "2개를 보고 다음 맞히기", … 네 가지 예측 문제를 동시에 학습하는 셈이다.
 
 개념은 이미 다 나왔으니, 이제 코드로 직접 확인할 차례다. 아래 코드는 순수 NumPy만 사용하므로 설치나 GPU 없이 이 페이지에서 바로 ▶ 실행 버튼을 눌러 실행해 볼 수 있다. 다만 처음부터 멀티헤드까지 한꺼번에 구현하면 복잡하니, 먼저 head 하나짜리(단일 헤드) self-attention부터 손으로 작성해 보자. 라이브러리 뒤에 숨지 않고 $QK^\\top$부터 softmax까지 직접 구현해보면, 위에서 숫자로 따라간 예제가 코드 안에서 정확히 어떤 줄에 해당하는지 눈으로 확인할 수 있다.
 
@@ -489,67 +522,43 @@ print(CausalSelfAttention(64, 4)(torch.randn(2, 10, 64)).shape)   # (2, 10, 64)
 
 이번엔 batch까지 있는 실전 shape이다. x는 (B, T, D) = (배치 크기, 문장 길이, 임베딩 차원)이다. \`self.qkv\`라는 Linear 하나로 Q, K, V를 한꺼번에 만든 뒤 \`chunk(3, -1)\`로 셋으로 쪼개는 것은, 세 번 따로 행렬곱을 하는 대신 한 번의 큰 행렬곱으로 처리해 속도를 아끼는 흔한 구현 요령일 뿐, 수학적으로는 앞의 NumPy 코드의 \`X @ Wq\`, \`X @ Wk\`, \`X @ Wv\`와 완전히 같은 일이다. 그다음 \`.view(B, T, h, D//h).transpose(1, 2)\`가 하는 일이 이번 코드에서 가장 헷갈리는 부분인데, 풀어서 보면 이렇다. (B, T, D) 모양의 텐서를 D차원을 \`h개의 머리 × 머리당 차원(dh = D/h)\`으로 다시 자른 뒤, 머리 축(h)을 앞으로 끌어와 (B, h, T, dh) 모양으로 바꾼다. 배치 축 B가 하나 더 있다는 점만 빼면 앞의 멀티헤드 NumPy 코드에서 \`split_heads\`가 하던 조작과 정확히 같다. 이렇게 만들면 \`F.scaled_dot_product_attention\`이 h개의 머리 각각에 대해 (T, dh) 크기의 attention을 독립적으로, 그러나 한꺼번에 병렬로 계산해준다. 이것이 바로 위에서 설명한 "여러 명의 전문가가 동시에 문장을 읽는다"는 비유가 실제 텐서 연산으로 구현된 모습이다. \`is_causal=True\`는 NumPy 코드에서 우리가 직접 만들었던 -1e9 마스킹을 내부적으로 대신 처리해주는 옵션이다. 마지막으로 \`transpose(1, 2).reshape(B, T, D)\`는 h개로 나눴던 머리들을 다시 하나로 이어붙여(concat) 원래 모양으로 되돌리는 과정이고, 그 뒤에 곱해지는 \`self.o\`가 바로 본문에서 말한 $W^O$다.
 
-:::example 심화 실습 (선택)
-Karpathy nanoGPT 스타일: tiny Shakespeare 또는 한국어 텍스트로 문자 단위 GPT(약 10M 파라미터)를 학습하고 샘플을 생성해 본다. 실행은 Colab GPU에서 5~10분.
-:::
+### 마스크가 제대로 걸렸는지 검사하기
 
-[[practice]]
-
-### 실습: 구현이 맞는지 스스로 검사하는 세 가지 테스트
-
-구현을 "돌아간다"에서 끝내지 말고, **맞다는 증거**를 코드로 남기는 습관을 들이자. 아래 세 검사는 과제의 "구현 정확성" 채점 항목과 같다.
+causal mask는 한 줄만 틀려도(예: \`np.triu(..., 1)\`을 \`np.triu(..., 0)\`으로 써서 자기 자신까지 가리거나, 마스크를 빼먹거나) 에러 없이 조용히 잘못된 모델을 만든다. 가장 확실한 검사는 정의 그대로 확인하는 것이다. **마지막 토큰을 다른 값으로 바꿔도 앞 토큰들의 출력은 변하지 않아야 한다.**
 
 \`\`\`python
 import numpy as np
 
-def softmax(x, axis=-1):
-    x = x - x.max(axis, keepdims=True)
+def softmax(x):
+    x = x - x.max(-1, keepdims=True)
     e = np.exp(x)
-    return e / e.sum(axis, keepdims=True)
+    return e / e.sum(-1, keepdims=True)
 
-def attention(Q, K, V, causal=True):
+def attention(X, Wq, Wk, Wv, causal):
+    Q, K, V = X @ Wq, X @ Wk, X @ Wv
     S = Q @ K.T / np.sqrt(K.shape[-1])
     if causal:
         S = np.where(np.triu(np.ones_like(S), 1) == 1, -1e9, S)
     return softmax(S) @ V
 
-def multi_head_attention(X, Wq, Wk, Wv, Wo, n_heads, causal=True):
-    n, d = X.shape
-    dk = d // n_heads
-    split = lambda M: M.reshape(n, n_heads, dk).transpose(1, 0, 2)     # (n, d) → (h, n, dk)
-    Qh, Kh, Vh = split(X @ Wq), split(X @ Wk), split(X @ Wv)
-    S = Qh @ Kh.transpose(0, 2, 1) / np.sqrt(dk)                        # (h, n, n)
-    if causal:
-        S = np.where(np.triu(np.ones((n, n)), 1) == 1, -1e9, S)
-    heads = softmax(S) @ Vh                                             # (h, n, dk)
-    return heads.transpose(1, 0, 2).reshape(n, d) @ Wo                  # (n, d)
-
 rng = np.random.default_rng(0)
-n, d, h = 6, 8, 2
+n, d = 5, 8
 X = rng.normal(size=(n, d))
-Wq, Wk, Wv, Wo = (rng.normal(size=(d, d)) for _ in range(4))
+Wq, Wk, Wv = (rng.normal(size=(d, d)) for _ in range(3))
 
-# 검사 1) 벡터화한 멀티헤드 == 헤드를 하나씩 따로 계산해 이어붙인 결과
-dk = d // h
-per_head = [attention(X @ Wq[:, i*dk:(i+1)*dk], X @ Wk[:, i*dk:(i+1)*dk], X @ Wv[:, i*dk:(i+1)*dk]) for i in range(h)]
-loop_version = np.concatenate(per_head, axis=1) @ Wo
-fast_version = multi_head_attention(X, Wq, Wk, Wv, Wo, h)
-print("검사 1: 벡터화 == 헤드별 반복:", np.allclose(fast_version, loop_version))
+X2 = X.copy()
+X2[-1] = rng.normal(size=d)            # 마지막(미래) 토큰만 다른 단어로 바꾼다
 
-# 검사 2) causal: 마지막 토큰(미래)을 바꿔도 앞 토큰들의 출력은 그대로여야 한다
-X2 = X.copy(); X2[-1] = rng.normal(size=d)
-out1, out2 = multi_head_attention(X, Wq, Wk, Wv, Wo, h), multi_head_attention(X2, Wq, Wk, Wv, Wo, h)
-print("검사 2: 앞 5개 토큰 출력 불변:", np.allclose(out1[:-1], out2[:-1]),
-      "/ 마지막 토큰 출력은 변함:", not np.allclose(out1[-1], out2[-1]))
-
-# 검사 3) 마스크를 끄면? 미래 토큰이 과거 출력에 새어 들어온다 (학습 때의 부정행위)
-o1 = multi_head_attention(X, Wq, Wk, Wv, Wo, h, causal=False)
-o2 = multi_head_attention(X2, Wq, Wk, Wv, Wo, h, causal=False)
-print("검사 3: 마스크 없이 첫 토큰 출력 변화량:", np.abs(o1[0] - o2[0]).max().round(3))
+for causal in [True, False]:
+    a, b = attention(X, Wq, Wk, Wv, causal), attention(X2, Wq, Wk, Wv, causal)
+    same = np.allclose(a[:-1], b[:-1])  # 앞의 4개 토큰 출력이 그대로인가?
+    print(f"causal={causal}: 앞 토큰 출력이 변하지 않았나? {same}")
 \`\`\`
 
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 검사 1과 2는 \`True\`, 마지막 토큰 출력은 바뀐다(\`True\`). 검사 3에서는 마스크를 끄자 미래 토큰을 바꿨을 뿐인데 **첫 번째 토큰의 출력**이 크게(10 이상) 변한다. 학습 때 이런 일이 생기면 모델은 다음 토큰을 "예측"하는 대신 보고 베낀다. **해볼 것:** \`np.triu(..., 1)\`을 \`np.triu(..., 0)\`으로 바꾸면 대각선(자기 자신)까지 가려진다. 첫 번째 토큰의 행은 어떻게 되는가? 검사 2가 이런 실수를 잡아내는지 확인해 보자.
+마스크를 쓰면 \`True\`, 빼면 \`False\`가 나온다. 마스크가 없으면 앞 토큰들도 바뀐 마지막 토큰을 참조하므로 출력이 달라진다. 직접 attention을 구현했다면 이런 테스트를 하나 두는 습관이 좋다.
+
+:::example 심화 실습 (선택)
+Karpathy nanoGPT 스타일: tiny Shakespeare 또는 한국어 텍스트로 문자 단위 GPT(약 10M 파라미터)를 학습하고 샘플을 생성해 본다. 실행은 Colab GPU에서 5~10분.
 :::
 
 ## 위치 인코딩과 Transformer 디코더 블록 {#transformer-block}
@@ -571,61 +580,96 @@ Attention 하나만으로는 아직 부족한 것이 하나 남아 있다. 마�
 
 GPT 같은 디코더는 사정이 조금 다르다. causal mask 때문에 $i$번째 토큰은 자기 앞의 토큰들만 볼 수 있어서, 순서를 바꾸면 각 토큰이 볼 수 있는 토큰 집합 자체가 달라진다. 그래서 causal mask를 쓰면 순열 등변성이 깨지고, 실제로 위치 인코딩 없이(NoPE) 학습한 디코더 언어모델도 위치 정보를 어느 정도 스스로 알아낸다는 보고가 있다(Haviv et al., 2022). 그래도 명시적인 위치 정보를 넣는 편이 학습이 안정적이고 긴 문맥에서도 유리해서, 대부분의 모델은 위치 정보를 따로 넣어 준다. 그 방법이 위치 인코딩(positional encoding)이다. 각 토큰의 임베딩에 위치 인덱스마다 고유하게 정해지는 위치 벡터를 더해줌으로써, 모델이 토큰의 내용 정보뿐 아니라 그 토큰이 문장에서 몇 번째 자리에 있는지도 함께 알 수 있게 만든다.
 
-원 논문은 사인·코사인 파동으로 번호표를 만들었는데, 위치 $pos$의 $2i$번째·$2i+1$번째 성분을 각각 $\\sin(pos/10000^{2i/d})$, $\\cos(pos/10000^{2i/d})$로 정한다. 즉 서로 다른 주파수의 사인·코사인 파동을 여러 개 겹쳐서 각 위치마다 고유한 값의 조합(벡터 패턴)이 나오게 만든 방식이다. 이후에는 번호표 자체를 학습 가능한 파라미터로 두는 방식이나, 절대 위치 대신 두 토큰 사이의 상대적 거리만 반영하는 RoPE(회전 위치 인코딩) 같은 상대 위치 방식이 등장해 현재 주류로 자리 잡았다. Attention 층이 "이 문장 안에서 어떤 토큰들이 서로 관련 있는가"를 계산하는 역할이라면, 그다음에 오는 MLP(2층짜리 완전연결 신경망으로, 보통 $d$차원을 $4d$로 넓혔다가 다시 $d$로 좁힌다)는 각 토큰의 표현을 독립적으로 받아 "이 정보를 갖고 무엇을 더 알 수 있는가"를 처리하는 역할을 맡는다. 실제로 전체 파라미터의 상당 부분(약 2/3)이 이 MLP에 몰려 있어서, 최근 해석가능성 연구에서는 이 부분을 모델이 사실 관계 같은 지식을 저장해두는 "저장소"에 가깝다고 해석하기도 한다. 정리하면 한 블록 안에서 Attention은 "누구를 참고할지 찾는" 역할을, MLP는 "찾은 정보로 무엇을 계산할지" 역할을 나누어 맡고 있는 셈이다.
+원 논문은 사인·코사인 파동으로 번호표를 만들었는데, 위치 $pos$의 $2i$번째·$2i+1$번째 성분을 각각 $\\sin(pos/10000^{2i/d})$, $\\cos(pos/10000^{2i/d})$로 정한다. 즉 서로 다른 주파수의 사인·코사인 파동을 여러 개 겹쳐서 각 위치마다 고유한 값의 조합(벡터 패턴)이 나오게 만든 방식이다. 이후에는 번호표 자체를 학습 가능한 파라미터로 두는 방식이나, 절대 위치 대신 두 토큰 사이의 상대적 거리만 반영하는 RoPE(회전 위치 인코딩) 같은 상대 위치 방식이 등장해 현재 주류로 자리 잡았다.
 
-[[practice]]
+[[diagram:positional-waves]]
 
-### 실습: 위치 인코딩이 없으면 순서를 구별하지 못한다
+식을 직접 계산해 보면 감이 온다. 위치 $pos = 1$의 첫 두 성분($i = 0$)은 $\\sin(1) \\approx 0.841$, $\\cos(1) \\approx 0.540$이고, $pos = 2$는 $\\sin(2) \\approx 0.909$, $\\cos(2) \\approx -0.416$이다. 성분 번호 $i$가 커질수록 분모 $10000^{2i/d}$가 커져 파동이 느려진다. 아래 코드는 위치 인코딩을 만들고, 앞에서 말한 "위치 정보가 없으면 순서를 바꿔도 단어의 출력이 같다"는 사실과 "위치 인코딩을 더하면 달라진다"는 사실을 직접 확인한다.
 
 \`\`\`python
 import numpy as np
 
-def softmax(x, axis=-1):
-    x = x - x.max(axis, keepdims=True)
-    e = np.exp(x)
-    return e / e.sum(axis, keepdims=True)
+def attention(X, Wq, Wk, Wv):               # 마스크 없는 단일 헤드 attention
+    S = (X @ Wq) @ (X @ Wk).T / np.sqrt(Wk.shape[1])
+    A = np.exp(S - S.max(1, keepdims=True)); A /= A.sum(1, keepdims=True)
+    return A @ (X @ Wv)
 
-def self_attention(X, Wq, Wk, Wv):          # 마스크 없는 (인코더형) self-attention
-    Q, K, V = X @ Wq, X @ Wk, X @ Wv
-    return softmax(Q @ K.T / np.sqrt(K.shape[-1])) @ V
+def sinusoidal_pe(n, d):
+    pos = np.arange(n)[:, None]              # (n, 1): 위치 0, 1, 2, ...
+    i = np.arange(0, d, 2)[None, :]          # (1, d/2): 짝수 성분 번호 0, 2, 4, ...
+    angle = pos / 10000 ** (i / d)
+    pe = np.zeros((n, d))
+    pe[:, 0::2], pe[:, 1::2] = np.sin(angle), np.cos(angle)
+    return pe
 
 rng = np.random.default_rng(0)
 d = 8
 emb = {w: rng.normal(size=d) for w in ["고양이가", "생선을", "먹었다"]}
 Wq, Wk, Wv = (rng.normal(size=(d, d)) for _ in range(3))
+s1 = np.stack([emb["고양이가"], emb["생선을"], emb["먹었다"]])
+s2 = np.stack([emb["먹었다"], emb["생선을"], emb["고양이가"]])   # 순서를 뒤집은 문장
 
-s1 = ["고양이가", "생선을", "먹었다"]
-s2 = ["먹었다", "생선을", "고양이가"]
-X1 = np.stack([emb[w] for w in s1]); X2 = np.stack([emb[w] for w in s2])
+# 위치 정보 없이: '고양이가'의 출력(s1의 0번 행, s2의 2번 행)이 같은가?
+print("PE 없이 같은가?", np.allclose(attention(s1, Wq, Wk, Wv)[0], attention(s2, Wq, Wk, Wv)[2]))
 
-# 1) 위치 정보가 없으면: 순서를 뒤집어도 "각 단어의 출력"은 똑같다 (순서만 바뀜)
-o1, o2 = self_attention(X1, Wq, Wk, Wv), self_attention(X2, Wq, Wk, Wv)
-print("위치 인코딩 없음: '고양이가'의 출력이 두 문장에서 같은가?", np.allclose(o1[0], o2[2]))
-
-# 2) 사인·코사인 위치 인코딩 (Vaswani et al., 2017)
-def sinusoidal_pe(n, d):
-    pos = np.arange(n)[:, None]
-    i = np.arange(0, d, 2)[None, :]
-    angle = pos / (10000 ** (i / d))
-    pe = np.zeros((n, d))
-    pe[:, 0::2], pe[:, 1::2] = np.sin(angle), np.cos(angle)
-    return pe
-
-PE = sinusoidal_pe(3, d)
-o1, o2 = self_attention(X1 + PE, Wq, Wk, Wv), self_attention(X2 + PE, Wq, Wk, Wv)
-print("위치 인코딩 추가: '고양이가'의 출력이 두 문장에서 같은가?", np.allclose(o1[0], o2[2]))
-print("위치 0~2의 PE 앞 4성분:\\n", PE[:, :4].round(3))
-
-# 3) 블록 하나의 파라미터는 어디에 몰려 있나? (편향·LayerNorm 제외)
-d_model = 768                                  # GPT-2 small
-attn = 4 * d_model * d_model                   # Wq, Wk, Wv, Wo
-mlp = 2 * d_model * (4 * d_model)              # d → 4d → d
-print(f"\\nd_model={d_model}: Attention {attn:,}개, MLP {mlp:,}개 → MLP 비중 {mlp / (attn + mlp):.0%}")
+pe = sinusoidal_pe(3, d)
+print("PE 더하면 같은가?", np.allclose(attention(s1 + pe, Wq, Wk, Wv)[0], attention(s2 + pe, Wq, Wk, Wv)[2]))
+print("위치 0, 1, 2의 PE 앞 4성분:\\n", pe[:, :4].round(3))
 \`\`\`
 
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 위치 인코딩이 없으면 "고양이가 생선을 먹었다"와 "먹었다 생선을 고양이가"에서 '고양이가'의 출력이 **완전히 같다**(\`True\`). 마스크 없는 attention은 단어의 자리만 바꿔 같은 계산을 한다(순열 등변). 사인·코사인 위치 인코딩을 더하면 \`False\`가 된다. 위치 0의 PE는 \`[0, 1, 0, 1]\`로 시작하고 위치가 커질수록 앞쪽 성분(빠른 파동)부터 빠르게 변한다. GPT-2 small 크기에서 MLP가 블록 파라미터의 약 67%(2/3)를 차지한다. **생각해볼 것:** 문장 전체의 출력을 평균낸 벡터(문장 표현)는 위치 인코딩 없이 두 문장에서 같을까, 다를까? 코드로 확인해 보자(평균을 내면 순서가 사라지므로 순열 불변이 된다). **해볼 것:** \`self_attention\`의 점수 행렬에 causal mask(자기보다 뒤 토큰의 점수를 $-\\infty$로)를 씌우면, 위치 인코딩이 없어도 '고양이가'의 출력이 두 문장에서 달라진다. 첫 문장에서는 자기 자신만, 둘째 문장에서는 세 단어를 모두 보기 때문이다.
-:::
+위치 인코딩이 없으면 두 문장에서 "고양이가"의 출력이 정확히 같고(\`True\`), 위치 벡터를 더하면 같은 단어라도 자리가 달라 출력이 달라진다(\`False\`). 마지막 출력의 첫 행이 $[0, 1, 0, 1]$인 것은 $\\sin 0 = 0$, $\\cos 0 = 1$이기 때문이다.
+
+### Attention과 MLP의 역할 분담
+
+Attention 층이 "이 문장 안에서 어떤 토큰들이 서로 관련 있는가"를 계산하는 역할이라면, 그다음에 오는 MLP(2층짜리 완전연결 신경망으로, 보통 $d$차원을 $4d$로 넓혔다가 다시 $d$로 좁힌다)는 각 토큰의 표현을 독립적으로 받아 "이 정보를 갖고 무엇을 더 알 수 있는가"를 처리하는 역할을 맡는다. 실제로 전체 파라미터의 상당 부분(약 2/3)이 이 MLP에 몰려 있어서, 최근 해석가능성 연구에서는 이 부분을 모델이 사실 관계 같은 지식을 저장해두는 "저장소"에 가깝다고 해석하기도 한다. 정리하면 한 블록 안에서 Attention은 "누구를 참고할지 찾는" 역할을, MLP는 "찾은 정보로 무엇을 계산할지" 역할을 나누어 맡고 있는 셈이다.
+
+### 잔차 연결과 LayerNorm: 블록을 깊이 쌓기 위한 장치
+
+맨 위 그림의 블록에는 Attention과 MLP 말고도 두 가지 부품이 반복해서 나온다.
+
+- **잔차 연결(residual connection)**: 각 부품의 출력을 입력에 **더한다.** $h = x + \\text{Attention}(x)$처럼 쓰면, 부품은 입력을 통째로 새로 만드는 대신 "입력에 더할 수정분"만 배우면 된다. 4주차 ResNet에서 본 것처럼 역전파 때 더하기 경로로 기울기가 그대로 흘러, 블록을 수십 개 쌓아도 기울기가 사라지지 않는다.
+- **LayerNorm(층 정규화)**: 토큰 **하나**의 $d$개 성분에 대해 평균을 빼고 표준편차로 나눠 평균 0, 분산 1로 맞춘다(그 뒤 학습되는 $\\gamma$, $\\beta$로 다시 스케일·이동). 4주차의 배치 정규화가 "배치 안의 여러 샘플"에 걸쳐 평균을 내는 것과 달리, 토큰마다 혼자 정규화하므로 배치 크기나 문장 길이에 영향을 받지 않는다. 층을 거치며 값의 크기가 들쭉날쭉해지는 것을 막아 학습을 안정시킨다.
+
+GPT 계열은 부품 **앞에** 정규화를 두는 Pre-LN 방식을 쓴다. 블록 하나를 식 두 줄로 쓰면 다음과 같다.
+
+\`\`\`math
+h = x + \\text{Attention}(\\text{LN}(x)), \\qquad \\text{out} = h + \\text{MLP}(\\text{LN}(h))
+\`\`\`
+
+이 두 줄을 그대로 코드로 옮겨 보자.
+
+\`\`\`python
+import numpy as np
+
+def layer_norm(x, eps=1e-5):
+    # 토큰(행)마다 d개 성분의 평균을 0, 분산을 1로 맞춘다 (학습되는 γ, β는 생략)
+    mu = x.mean(-1, keepdims=True)
+    var = x.var(-1, keepdims=True)
+    return (x - mu) / np.sqrt(var + eps)
+
+def causal_attention(x, Wq, Wk, Wv, Wo):
+    S = (x @ Wq) @ (x @ Wk).T / np.sqrt(x.shape[1])
+    S = np.where(np.triu(np.ones_like(S), 1) == 1, -1e9, S)
+    A = np.exp(S - S.max(1, keepdims=True)); A /= A.sum(1, keepdims=True)
+    return (A @ (x @ Wv)) @ Wo
+
+def mlp(x, W1, W2):
+    return np.maximum(0, x @ W1) @ W2        # d → 4d → d (활성함수는 ReLU로 단순화)
+
+rng = np.random.default_rng(0)
+n, d = 4, 8
+x = rng.normal(size=(n, d))
+Wq, Wk, Wv, Wo = (rng.normal(size=(d, d)) * 0.3 for _ in range(4))
+W1, W2 = rng.normal(size=(d, 4 * d)) * 0.3, rng.normal(size=(4 * d, d)) * 0.3
+
+h = x + causal_attention(layer_norm(x), Wq, Wk, Wv, Wo)   # ① 정규화 → attention → 잔차 더하기
+out = h + mlp(layer_norm(h), W1, W2)                       # ② 정규화 → MLP → 잔차 더하기
+print("입력", x.shape, "→ attention 뒤", h.shape, "→ 블록 출력", out.shape)
+print("LayerNorm 뒤 토큰별 평균:", layer_norm(x).mean(-1).round(3) + 0.0)
+print("LayerNorm 뒤 토큰별 표준편차:", layer_norm(x).std(-1).round(3))
+\`\`\`
+
+입력, attention 뒤, 블록 출력의 shape이 모두 $(4, 8)$로 같다. 그래서 똑같은 블록을 원하는 만큼 겹쳐 쌓을 수 있다. 아래 두 줄은 LayerNorm을 거친 뒤 토큰마다 평균 0, 표준편차 1이 됐음을 보여 준다.
 
 ## 토크나이저: BPE {#bpe}
 
@@ -697,6 +741,40 @@ print(vocab)
 
 실행해보면 1번째 병합이 \`'w'+'e'\`인 것부터 눈에 띈다. "newer"와 "newest"에 공통으로 들어있는 "we"가 이 작은 말뭉치 안에서 가장 자주 붙어 나오는 쌍이기 때문이다(빈도가 가장 큰 쌍부터 합친다는 규칙을 그대로 따른 결과다). 두 번 반복된 "low"는 6번째 병합에서 \`'low'\`, 7번째 병합에서 \`'low</w>'\`라는 조각 하나로 완전히 뭉쳐지지만("low" 출력 결과가 \`['low</w>']\` 한 조각인 것을 확인해보라), "lower"는 \`['lo', 'wer</w>']\`로, "lowest"는 \`['lo', 'wes', 't', '</w>']\`로 서로 다르게 쪼개진다. 자주 나오는 만큼 우선적으로 뭉쳐지는 조각과, 병합 순서상 뒤로 밀려 상대적으로 잘게 남는 조각이 갈린다는 것을 직접 눈으로 확인할 수 있다.
 
+### 학습한 규칙으로 새 단어 토큰화하기
+
+BPE를 "학습"한다는 것은 결국 **병합 규칙의 목록과 그 순서**를 얻는 것이다. 새 단어를 토큰화할 때는 그 단어를 글자로 쪼갠 뒤, 학습 때 생긴 순서 그대로 규칙을 하나씩 적용하면 된다. 위 코드가 출력한 8개의 병합 규칙을 그대로 가져와 처음 보는 단어에 적용해 보자.
+
+\`\`\`python
+# 위 코드가 학습한 병합 규칙 8개 (순서가 중요하다)
+merges = [("w", "e"), ("l", "o"), ("we", "r"), ("wer", "</w>"),
+          ("n", "e"), ("lo", "w"), ("low", "</w>"), ("we", "s")]
+
+def merge_pair(tokens, pair):
+    out, i = [], 0
+    while i < len(tokens):
+        if i < len(tokens) - 1 and (tokens[i], tokens[i + 1]) == pair:
+            out.append(tokens[i] + tokens[i + 1]); i += 2
+        else:
+            out.append(tokens[i]); i += 1
+    return out
+
+def encode(word):
+    tokens = list(word) + ["</w>"]
+    for pair in merges:                # 학습할 때 생긴 순서 그대로 병합을 적용한다
+        tokens = merge_pair(tokens, pair)
+    return tokens
+
+for w in ["lower", "slow", "slower", "renew", "west"]:
+    print(f"{w:6s} -> {encode(w)}")
+\`\`\`
+
+학습 말뭉치에 없던 "slow", "slower", "west"도 \`<unk>\` 없이 이미 아는 조각들의 조합으로 표현된다. "renew"처럼 아는 조각이 거의 없는 단어는 글자 단위에 가깝게 잘게 쪼개진다. 어떤 단어든 최악의 경우 글자 단위까지는 쪼갤 수 있으니 OOV가 크게 줄어든다.
+
+:::info 바이트 수준 BPE: OOV가 아예 없는 이유
+그래도 학습 때 한 번도 못 본 **글자**(이모지, 희귀 한자 등)가 나오면 어떻게 할까? GPT-2 이후 대부분의 LLM은 글자 대신 **바이트**에서 출발하는 바이트 수준(byte-level) BPE를 쓴다. 컴퓨터의 모든 텍스트는 UTF-8로 인코딩하면 0~255의 바이트 열이 되므로, 기본 어휘 256개만 있으면 어떤 문자열이든 표현할 수 있다. 예컨대 한글 한 글자 "안"은 UTF-8로 3바이트다. 그 위에 병합 규칙을 쌓으므로 어휘 크기는 "256 + 병합 횟수"(+ 특수 토큰 몇 개)가 된다. 한국어가 학습 데이터에 적으면 병합이 덜 일어나 글자 하나가 여러 토큰으로 쪼개지기도 하는데, 이것이 한국어 토큰 수가 많아지는 또 하나의 이유다.
+:::
+
 실제 tiktoken 같은 라이브러리는 이 코드와 완전히 같은 병합 알고리즘을 단지 (1) 몇 개가 아니라 수백 GB의 실제 텍스트에 대해, (2) 몇 번이 아니라 수만~십만 번(cl100k_base 기준 약 10만 개) 반복해서 학습해둔 것뿐이다. 학습에 쓰인 텍스트가 압도적으로 영어 위주였기 때문에, 위에서 "결과적 현상"으로 정리했던 한국어 토큰 수 증가나 숫자·철자 처리의 어려움도 결국 지금 우리가 손으로 확인한 것과 같은 원리(자주 등장한 조합일수록 먼저, 더 크게 뭉쳐진다)에서 비롯된다. 실제 라이브러리로 이 현상을 눈으로 직접 재현해보고 싶다면 아래 코드를 Colab에 붙여넣어 실행해보라.
 
 \`\`\`python-colab
@@ -708,59 +786,6 @@ for s in ["Hello world", "안녕하세요 반갑습니다", "strawberry", "12345
     ids = enc.encode(s)
     print(s, len(ids), [enc.decode([i]) for i in ids])
 \`\`\`
-
-[[practice]]
-
-### 실습: 학습된 병합 규칙으로 새 단어를 토큰화하기
-
-이렇게 학습된 병합 규칙(\`merges\`)은 훈련 데이터에 없던 새 단어에도 그대로 적용할 수 있다. 아래 코드는 위의 학습 과정을 함수로 정리한 뒤, 병합 규칙을 **학습된 순서대로** 새 단어에 적용한다(encode). 마지막 부분은 GPT 계열이 쓰는 byte-level BPE의 출발점인 UTF-8 바이트 수를 비교한다.
-
-\`\`\`python
-from collections import Counter
-
-def merge_pair(tokens, pair):
-    merged, i = [], 0
-    while i < len(tokens):
-        if i < len(tokens) - 1 and (tokens[i], tokens[i + 1]) == pair:
-            merged.append(tokens[i] + tokens[i + 1]); i += 2
-        else:
-            merged.append(tokens[i]); i += 1
-    return merged
-
-def train_bpe(words, n_merges):
-    corpus = [list(w) + ["</w>"] for w in words]
-    merges = []
-    for _ in range(n_merges):
-        pairs = Counter((t[i], t[i + 1]) for t in corpus for i in range(len(t) - 1))
-        if not pairs:
-            break
-        best = pairs.most_common(1)[0][0]
-        merges.append(best)
-        corpus = [merge_pair(t, best) for t in corpus]
-    return merges
-
-def bpe_encode(word, merges):
-    tokens = list(word) + ["</w>"]
-    for pair in merges:                      # 학습 때 병합된 순서 그대로 적용한다
-        tokens = merge_pair(tokens, pair)
-    return tokens
-
-words = ["low", "low", "lower", "lowest", "newer", "newer", "newest"]
-merges = train_bpe(words, n_merges=8)
-
-# 1) 학습 때 본 적 없는 단어도 아는 조각으로 쪼개진다 (OOV 완화)
-for w in ["slow", "lowering", "newest", "banana"]:
-    print(f"{w:9s} -> {bpe_encode(w, merges)}")
-
-# 2) GPT 계열의 byte-level BPE는 UTF-8 "바이트"에서 출발한다
-#    영어 알파벳은 1글자 = 1바이트, 한글은 1글자 = 3바이트
-for s in ["hello", "안녕하세요", "strawberry"]:
-    print(f"{s!r}: 글자 {len(s)}개, UTF-8 바이트 {len(s.encode('utf-8'))}개")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** "slow"는 학습 데이터에 한 번도 등장하지 않았는데도 \`['s', 'low</w>']\`로, 학습 때 만들어진 "low" 조각을 재사용해 잘린다. BPE가 "본 적 없는 단어라도 처리를 못 하는 일은 없다(OOV 완화)"고 말하는 원리다. "lowering"은 \`['lo', 'wer', 'i', 'n', 'g', '</w>']\`처럼 앞부분만 학습된 조각을 쓰고, 전혀 다른 "banana"는 글자 단위로 흩어진다. 한글 5글자는 UTF-8로 15바이트라, 바이트에서 출발하는 토크나이저에서는 병합이 충분히 학습되지 않은 한국어가 더 많은 토큰으로 쪼개지기 쉽다. **해볼 것:** \`words\`에 \`"lowering"\`을 여러 번 넣고 \`n_merges\`를 15로 늘려 다시 학습하면 "lowering"의 토큰 수가 어떻게 줄어드는가?
-:::
 
 ## LSTM과 GRU: 게이트로 기억을 통제하다 {#lstm-gru}
 
@@ -786,6 +811,49 @@ Forget gate $f_t$는 "이전 셀 상태 $c_{t-1}$ 중 얼마를 계속 기억할
 
 이 구조가 장기 의존성에 유리한 이유는 $c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde{c}_t$라는 갱신식 자체에 있다. RNN의 $h_t = f(Wh_{t-1} + \\cdots)$처럼 매 스텝 행렬을 곱하고 비선형함수를 통과시키는 대신, LSTM의 셀 상태는 이전 값에 (성분별) 곱셈과 덧셈만을 거친다. forget gate $f_t$가 1에 가까운 값을 유지하도록 학습되면 $c_{t-1}$의 정보는 거의 그대로 $c_t$에 전달되고, 역전파 시 이 경로를 타고 흐르는 기울기도 매 스텝 작은 값을 반복해서 곱하는 대신 거의 손실 없이 먼 과거까지 전달될 수 있다. BPTT에서 문제가 됐던 "지수적으로 작아지는 곱셈의 반복"을, 곱셈이 아닌 덧셈 위주의 경로 하나를 별도로 마련해 우회하는 셈이다.
 
+:::example 셀 상태를 숫자로 한 스텝
+성분 하나만 보자. 이전 셀 상태 $c_{t-1} = 2.0$, forget gate $f_t = 0.9$, input gate $i_t = 0.5$, 새 후보 $\\tilde{c}_t = 0.4$라면
+
+$$c_t = 0.9 \\times 2.0 + 0.5 \\times 0.4 = 1.8 + 0.2 = 2.0$$
+
+옛 기억의 90%를 남기고 새 정보를 조금 더했다. 극단적인 경우도 보자. $f_t = 1$, $i_t = 0$이면 $c_t = c_{t-1}$로 기억이 그대로 보존되고, $f_t = 0$, $i_t = 1$이면 과거를 모두 지우고 새 후보로 덮어쓴다.
+
+기울기 쪽에서는 셀 상태 경로를 따라 한 스텝 거슬러 올라갈 때 대략 $f_t$가 곱해진다. $f_t = 0.99$를 유지하면 50스텝 뒤에도 $0.99^{50} \\approx 0.61$배가 남는다. 「RNN과 BPTT」 단계에서 $0.9^{50} \\approx 0.005$였던 것과 비교해 보라. 게다가 $f_t$는 고정된 값이 아니라 입력을 보고 게이트가 정하므로, "기억할 때"와 "잊을 때"를 모델이 스스로 고를 수 있다.
+:::
+
+아래 코드는 LSTM 셀을 다섯 스텝 돌리며 forget gate와 셀 상태를 출력한다. 실전 구현처럼 게이트 4개의 가중치를 행렬 하나에 쌓아 한 번에 곱한 뒤 잘라 쓴다. forget gate 편향을 크게 잡아 두는 것도 실제로 쓰이는 요령이다(학습 초기에 "일단 기억을 유지"하는 쪽에서 출발한다).
+
+\`\`\`python
+import numpy as np
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+rng = np.random.default_rng(0)
+d_x, d_h = 3, 2
+# 게이트 4개(f, i, c~, o)의 가중치를 한 행렬에 쌓아 둔다: (4·d_h, d_x + d_h)
+Wall = rng.normal(size=(4 * d_h, d_x + d_h)) * 0.5
+ball = np.zeros(4 * d_h)
+ball[:d_h] = 3.0                      # forget gate 편향을 크게: 처음엔 "기억을 유지"하는 쪽으로
+
+def lstm_step(x, h, c):
+    z = Wall @ np.concatenate([x, h]) + ball
+    f, i, o = sigmoid(z[:d_h]), sigmoid(z[d_h:2 * d_h]), sigmoid(z[3 * d_h:])
+    c_tilde = np.tanh(z[2 * d_h:3 * d_h])
+    c = f * c + i * c_tilde           # 옛 기억 × f  +  새 후보 × i
+    h = o * np.tanh(c)
+    return h, c, f
+
+h, c = np.zeros(d_h), np.array([1.0, -1.0])    # 셀에 기억 [1, -1]이 들어 있다고 하자
+for t in range(5):
+    h, c, f = lstm_step(rng.normal(size=d_x), h, c)
+    print(f"t={t + 1}: f = {f.round(2)}, c = {c.round(2)}")
+
+print("파라미터 수:", Wall.size + ball.size)   # 4 × (d_h·(d_x + d_h) + d_h) = 48
+\`\`\`
+
+$f$가 1에 가까워서, 처음 넣은 기억 $[1, -1]$의 부호와 크기가 여러 스텝이 지나도 크게 흐트러지지 않는다. 파라미터 수는 게이트(와 후보) 4개가 각각 $d_h \\times (d_x + d_h)$ 가중치와 $d_h$개 편향을 가지므로 $4(d_h(d_x + d_h) + d_h)$다. 같은 크기의 단순 RNN보다 4배 많다.
+
 \`\`\`image
 src: /images/week5/lstm-cell.png
 alt: LSTM 셀 내부 구조도: forget/input/output 게이트와 셀 상태, 은닉 상태의 흐름
@@ -805,64 +873,6 @@ z_t = \\sigma(W_z x_t + U_z h_{t-1}), \\qquad r_t = \\sigma(W_r x_t + U_r h_{t-1
 \`\`\`
 
 LSTM과 비교하면 GRU는 게이트가 3개에서 2개로, 상태가 2개($c_t$, $h_t$)에서 1개($h_t$)로 줄어 학습할 파라미터 수가 더 적다. 그만큼 학습이 빠르고 데이터가 적을 때 과적합에 덜 취약하다는 실용적 이점이 있는 반면, 셀 상태를 별도로 유지하는 LSTM 쪽이 아주 긴 시퀀스에서는 표현력 면에서 약간 더 유리하다고 보고되기도 한다. 실무에서는 두 구조의 성능 차이가 태스크에 따라 엇갈리는 경우가 많아, 파라미터 수와 학습 속도를 고려해 GRU를 기본값으로 먼저 시도해보는 경우가 흔하다.
-
-[[practice]]
-
-### 실습: forget gate가 1에 가까우면 기억이 살아남는다
-
-같은 입력 40스텝을 RNN과 LSTM에 넣고, **첫 시점의 상태를 아주 조금(eps) 바꿨을 때 40스텝 뒤의 상태가 얼마나 따라 바뀌는지**를 잰다. 이 비율이 곧 먼 과거까지 전달되는 기울기의 크기다. LSTM은 forget gate의 편향(forget bias)을 바꿔가며 비교한다.
-
-\`\`\`python
-import numpy as np
-rng = np.random.default_rng(0)
-d_in, d_h, T = 4, 16, 40
-sigmoid = lambda z: 1 / (1 + np.exp(-z))
-
-def init(scale=0.3):
-    return rng.normal(0, scale, (d_h, d_in)), rng.normal(0, scale, (d_h, d_h))
-
-# RNN 파라미터와 LSTM 게이트 4세트(forget, input, 후보, output)
-W, U = init()
-Wf, Uf = init(); Wi, Ui = init(); Wc, Uc = init(); Wo, Uo = init()
-xs = rng.normal(size=(T, d_in))
-
-def rnn(h0):
-    h = h0
-    for x in xs:
-        h = np.tanh(W @ x + U @ h)
-    return h
-
-def lstm(c0, forget_bias):
-    h, c = np.zeros(d_h), c0
-    fs = []
-    for x in xs:
-        f = sigmoid(Wf @ x + Uf @ h + forget_bias)   # forget gate: 옛 기억을 얼마나 남길까
-        i = sigmoid(Wi @ x + Ui @ h)                 # input gate: 새 후보를 얼마나 쓸까
-        c_tilde = np.tanh(Wc @ x + Uc @ h)           # 새 후보 정보
-        c = f * c + i * c_tilde                      # 곱셈 한 번 + 덧셈: 행렬곱·tanh를 거치지 않는다
-        o = sigmoid(Wo @ x + Uo @ h)                 # output gate: 무엇을 밖으로 내보낼까
-        h = o * np.tanh(c)
-        fs.append(f.mean())
-    return c, np.mean(fs)
-
-# 첫 시점의 기억을 아주 조금(eps) 바꿨을 때, 40스텝 뒤의 상태가 얼마나 따라 바뀌는가?
-# = 기울기가 40스텝을 거슬러 올라가며 살아남는 정도 (유한 차분으로 잰 ∂상태_T / ∂상태_0)
-eps = 1e-6
-e0 = np.zeros(d_h); e0[0] = eps
-print(f"RNN  : |Δh_T| / eps = {np.linalg.norm(rnn(e0) - rnn(np.zeros(d_h))) / eps:.2e}")
-for fb in [0.0, 1.0, 2.0, 3.0, 4.0]:
-    c1, fmean = lstm(e0, fb)
-    c0, _ = lstm(np.zeros(d_h), fb)
-    print(f"LSTM (forget bias {fb:.0f}, 평균 f = {fmean:.2f}): |Δc_T| / eps = {np.linalg.norm(c1 - c0) / eps:.2e}")
-
-# 파라미터 수: 게이트 하나 = (d_h × d_in) + (d_h × d_h) + d_h
-per_gate = d_h * d_in + d_h * d_h + d_h
-print(f"\\n파라미터 수 (d_in={d_in}, d_h={d_h})  RNN {per_gate}, GRU {3 * per_gate}, LSTM {4 * per_gate}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** RNN은 약 $10^{-4}$로 첫 시점의 영향이 거의 사라진다. LSTM도 forget bias가 0이면(평균 $f \\approx 0.5$) $10^{-8}$ 수준으로 RNN보다 오히려 나쁘지만, bias를 2 이상으로 올려 $f$가 0.87~0.98이 되면 영향이 $10^{-1}$~$10^{1}$ 수준으로 살아남는다. 게이트 구조 **자체**가 아니라 "$f_t \\approx 1$로 유지되는 덧셈 경로"가 장기 기억의 핵심이라는 뜻이다. 그래서 실제 구현들은 forget bias를 1 이상으로 초기화하는 관행이 있다(Jozefowicz et al., 2015). 파라미터 수는 RNN : GRU : LSTM = 1 : 3 : 4 로, 게이트(후보 포함) 하나마다 RNN 한 개 분량이 든다. **해볼 것:** \`T\`를 100으로 늘려 forget bias 2와 4의 차이가 어떻게 벌어지는지 보자.
-:::
 
 ## 생성할 때의 Transformer: KV 캐시와 RoPE {#kv-cache-rope}
 
@@ -888,8 +898,49 @@ for t in range(1, 11):  # t번째 토큰을 생성하는 스텝
 
 10번째 스텝만 봐도 캐시가 없을 때는 첫 스텝의 10배에 달하는 K, V를 다시 계산하고 있지만, 캐시가 있으면 매 스텝 계산량이 토큰 하나 분량으로 항상 고정된다. 문장이 수백~수천 토큰까지 길어지는 실제 대화라면 이 차이는 결코 무시할 수 없는 크기로 벌어진다.
 
+### 캐시를 써도 결과가 정말 같은가
+
+"과거 토큰의 K, V는 뒤에 무엇이 오든 변하지 않는다"는 말이 맞다면, 한 토큰씩 캐시를 쌓아 가며 계산한 결과는 학습 때처럼 전체를 한 번에 계산한 결과와 같아야 한다. 직접 확인해 보자.
+
+\`\`\`python
+import numpy as np
+
+def softmax(x):
+    e = np.exp(x - x.max(-1, keepdims=True))
+    return e / e.sum(-1, keepdims=True)
+
+rng = np.random.default_rng(0)
+n, d = 6, 8
+X = rng.normal(size=(n, d))                      # 토큰 6개
+Wq, Wk, Wv = (rng.normal(size=(d, d)) for _ in range(3))
+
+# (1) 한 번에: 학습할 때처럼 causal mask로 전체를 계산
+S = (X @ Wq) @ (X @ Wk).T / np.sqrt(d)
+S = np.where(np.triu(np.ones((n, n)), 1) == 1, -1e9, S)
+full = softmax(S) @ (X @ Wv)
+
+# (2) 한 토큰씩: 생성할 때처럼 K, V를 캐시에 쌓아 가며 계산
+K_cache, V_cache, outs = [], [], []
+for t in range(n):
+    x = X[t]                                     # 이번 스텝의 새 토큰 하나
+    q, k, v = x @ Wq, x @ Wk, x @ Wv             # 새로 계산하는 것은 이 셋뿐
+    K_cache.append(k); V_cache.append(v)         # 캐시 뒤에 이어 붙이기
+    K, V = np.array(K_cache), np.array(V_cache)  # (t+1, d): 지금까지의 모든 K, V
+    outs.append(softmax(q @ K.T / np.sqrt(d)) @ V)   # 마스크가 필요 없다: 캐시엔 과거만 있다
+print("두 방식의 결과가 같은가?", np.allclose(full, np.array(outs)))
+print("마지막 스텝의 캐시 크기:", K.shape)
+\`\`\`
+
+\`True\`가 나온다. 한 토큰씩 계산할 때는 마스크도 필요 없다. 캐시에는 언제나 과거와 현재 토큰만 들어 있어서 "미래를 가린다"는 일이 저절로 지켜지기 때문이다.
+
+:::info 프리필(prefill)과 디코드(decode)
+실제 생성은 두 단계로 나뉜다. 먼저 **프리필**에서 사용자가 보낸 프롬프트 전체를 학습 때처럼 한 번에 병렬로 처리해 캐시를 채운다. 그다음 **디코드**에서 위 코드의 반복문처럼 토큰을 하나씩 만들며 캐시에 덧붙인다. 프리필은 계산이 많지만 병렬이라 빠르고, 디코드는 토큰마다 캐시 전체를 메모리에서 읽어야 해서 메모리 속도에 묶인다. 긴 프롬프트를 넣으면 첫 글자가 나오기까지 잠깐 기다리고, 그 뒤로는 일정한 속도로 글자가 나오는 이유다.
+:::
+
 :::example KV 캐시는 메모리를 얼마나 차지하는가
 대략적인 규모를 가늠하기 위해, 레이어 32개, 헤드 32개, 헤드당 차원 128인 모델을 시퀀스 길이 2048, 배치 크기 1로 돌린다고 하자. 캐시해야 할 것은 레이어마다, 헤드마다, 토큰 하나마다 Key와 Value 벡터(각각 128차원) 두 개다. 전체 원소 개수는 \`레이어 수 × 헤드 수 × 헤드당 차원 × 시퀀스 길이 × 2(K와 V) × 배치 크기\` $= 32 \\times 32 \\times 128 \\times 2048 \\times 2 \\times 1 \\approx$ **5억 3천만 개**다. 여기에 흔히 쓰는 fp16(원소 하나당 2바이트)을 곱하면 약 **1.07GB**가 나온다. 배치 크기를 8로 늘리면(즉 동시에 8명이 대화 중이면) 이 숫자는 그대로 8배로 불어나 8GB를 넘는다. 실제 서비스에서 "동시 사용자가 늘어날수록 GPU 메모리가 모자라진다"는 현상의 정체 상당 부분이 바로 이 KV 캐시다. 연산량(FLOPs)을 아끼는 대신 메모리를 그만큼 소비하는, 전형적인 시간-공간 트레이드오프인 셈이다.
+
+이 메모리를 줄이려고 나온 구조가 **GQA(Grouped-Query Attention)**다. Query 헤드는 32개 그대로 두되 K, V 헤드는 8개만 두고 Query 헤드 4개가 K·V 헤드 하나를 같이 쓰게 하면, 캐시는 K·V 헤드 수에 비례하므로 위 예의 1.07GB가 4분의 1인 약 0.27GB로 줄어든다. K·V 헤드를 하나만 두는 극단적인 경우를 MQA(Multi-Query Attention)라 한다.
 :::
 
 ### RoPE: 회전으로 상대 거리를 담는 위치 인코딩
@@ -900,59 +951,31 @@ RoPE의 회전이 왜 상대 거리만 남기는지, 학습 길이보다 긴 문
 
 시계로 비유해 보자. 두 사람이 각자 시계 사진을 한 장씩 보여주면, 우리는 사진 속 바늘 각도의 **차이**만으로 두 시각이 몇 시간 떨어져 있는지 알 수 있다. 두 사람이 똑같이 3시간씩 늦게 찍었더라도(두 바늘을 같은 각도만큼 더 돌려도) 그 차이는 변하지 않는다. RoPE에서 각 토큰의 Query와 Key는 위치만큼 돌아간 시계 바늘이고, attention 점수(내적)는 두 바늘 사이의 각도, 즉 두 토큰의 **상대 거리**에만 반응한다.
 
-[[practice]]
+### 2차원에서 직접 돌려 보기
 
-### 실습: KV 캐시가 "같은 답을 더 싸게" 내는지, RoPE가 상대 거리만 보는지 검증하기
+RoPE의 원리는 2차원 벡터 하나로 충분히 확인할 수 있다. 2차원 벡터를 각도 $\\phi$만큼 돌리는 회전 행렬은
+
+\`\`\`math
+R(\\phi) = \\begin{pmatrix} \\cos\\phi & -\\sin\\phi \\\\ \\sin\\phi & \\cos\\phi \\end{pmatrix}
+\`\`\`
+
+이다. 위치 $m$의 Query는 $R(m\\theta)q$, 위치 $n$의 Key는 $R(n\\theta)k$로 돌린 뒤 내적한다. 실제 RoPE는 $d$차원 벡터를 두 성분씩 짝지어 쌍마다 서로 다른 $\\theta$로 이 회전을 적용할 뿐이다.
 
 \`\`\`python
 import numpy as np
 
-def softmax(x, axis=-1):
-    x = x - x.max(axis, keepdims=True)
-    e = np.exp(x)
-    return e / e.sum(axis, keepdims=True)
+def rotate(v, angle):                            # 2차원 벡터를 angle(라디안)만큼 회전
+    c, s = np.cos(angle), np.sin(angle)
+    return np.array([c * v[0] - s * v[1], s * v[0] + c * v[1]])
 
-rng = np.random.default_rng(0)
-n, d = 8, 16
-X = rng.normal(size=(n, d))                     # 이미 만들어진 토큰 8개의 임베딩
-Wq, Wk, Wv = (rng.normal(size=(d, d)) / np.sqrt(d) for _ in range(3))
-
-# 1) 학습 방식: 문장 전체를 한 번에, causal mask로 계산
-Q, K, V = X @ Wq, X @ Wk, X @ Wv
-S = np.where(np.triu(np.ones((n, n)), 1) == 1, -1e9, Q @ K.T / np.sqrt(d))
-full = softmax(S) @ V
-
-# 2) 생성 방식 + KV 캐시: 토큰이 하나씩 들어올 때마다 새 토큰의 q, k, v만 계산한다
-K_cache, V_cache, outputs = [], [], []
-kv_computed = 0
-for t in range(n):
-    x = X[t]
-    q, k, v = x @ Wq, x @ Wk, x @ Wv            # 새 토큰 하나 분량만 계산
-    K_cache.append(k); V_cache.append(v); kv_computed += 1
-    Kc, Vc = np.stack(K_cache), np.stack(V_cache)   # 지금까지의 "회의록"
-    a = softmax(Kc @ q / np.sqrt(d))                  # 마스크가 필요 없다: 캐시에는 과거만 있다
-    outputs.append(a @ Vc)
-print("KV 캐시로 한 토큰씩 계산 == 한 번에 계산:", np.allclose(np.stack(outputs), full))
-print("K,V 계산 횟수: 캐시 사용:", kv_computed, "/ 캐시 없이 매 스텝 재계산:", sum(range(1, n + 1)))
-
-# 3) RoPE: (x, y) 쌍을 위치 × θ 만큼 회전시킨다
-def rope(v, pos, theta=0.3):
-    out = v.copy()
-    for i in range(0, len(v), 2):
-        ang = pos * theta / (10000 ** (i / len(v)))   # 성분 쌍마다 회전 속도가 다르다
-        c, s = np.cos(ang), np.sin(ang)
-        out[i], out[i + 1] = c * v[i] - s * v[i + 1], s * v[i] + c * v[i + 1]
-    return out
-
-q, k = rng.normal(size=d), rng.normal(size=d)
-print("\\n위치 (m, n)      m-n   회전 후 q·k")
-for m, p in [(5, 3), (12, 10), (102, 100), (3, 5), (10, 5)]:
-    print(f"({m:3d}, {p:3d})  {m - p:5d}   {rope(q, m) @ rope(k, p):+.6f}")
+theta = 0.3
+q, k = np.array([1.0, 0.5]), np.array([0.8, -0.2])
+for m, n in [(3, 1), (10, 8), (52, 50), (5, 1)]:
+    score = rotate(q, m * theta) @ rotate(k, n * theta)   # 위치 m의 q, 위치 n의 k
+    print(f"m={m:2d}, n={n:2d} (거리 {m - n}): 점수 = {score:.4f}")
 \`\`\`
 
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 토큰을 하나씩 넣으며 KV 캐시로 계산한 출력이 문장 전체를 causal mask로 한 번에 계산한 출력과 \`allclose\`로 **완전히 같다**. 캐시는 근사가 아니라 같은 계산의 재배치다. 8토큰을 생성하는 동안 K, V 계산은 캐시 없이 36번, 캐시로 8번이다. RoPE 표에서 위치 쌍 (5, 3), (12, 10), (102, 100)은 거리가 모두 2라서 점수가 소수점 여섯째 자리까지 같고, 거리가 다른 (3, 5)나 (10, 5)는 값이 다르다. **해볼 것:** RoPE 대신 절대 위치 벡터를 \`q + pe[m]\`, \`k + pe[n]\`처럼 더하는 방식으로 바꿔 같은 표를 만들어보자. 거리가 같아도 점수가 달라지는가?
-:::
+위치가 (3, 1), (10, 8), (52, 50)으로 전혀 다르지만 거리가 2로 같으면 점수가 정확히 같다. 거리가 4로 바뀌어야 점수가 달라진다. 내적은 두 벡터 사이의 각도에만 의존하고, 두 벡터를 각각 $m\\theta$, $n\\theta$만큼 돌리면 그 사이 각도는 원래 각도에서 $(m - n)\\theta$만큼만 바뀌기 때문이다.
 
 ## Transformer의 크기 계산: 파라미터·연산량·메모리 {#transformer-params}
 
@@ -968,6 +991,29 @@ for m, p in [(5, 3), (12, 10), (102, 100), (3, 5), (10, 5)]:
 
 합하면 블록 하나에 약 $12d^2$이고, 그중 **3분의 2가 MLP**에 있다. 층이 $L$개면 본체는 약 $12Ld^2$. 여기에 어휘 크기 $|V|$에 대한 토큰 임베딩 $|V| \\times d$가 더해진다. 출력층(다음 토큰 확률)은 보통 임베딩 행렬을 그대로 재사용한다(weight tying). GPT-2 small($d = 768$, $L = 12$, $|V| = 50{,}257$)에 대입하면 본체 약 8,500만, 임베딩 약 3,900만으로 합계 약 1억 2,400만이다. 작은 모델에서는 임베딩이 3분의 1이나 되지만, $d$와 $L$이 커지면 $12Ld^2$가 압도적이 된다.
 
+이 셈을 코드로 옮겨, 편향과 LayerNorm까지 빠짐없이 세어 보자. GPT-2 small은 학습형 위치 임베딩(최대 1,024위치)도 갖고 있어서 그것까지 더한다.
+
+\`\`\`python
+def count_params(d, L, V, ctx):
+    attn = 4 * d * d + 4 * d                 # Wq, Wk, Wv, Wo와 편향
+    mlp = (d * 4 * d + 4 * d) + (4 * d * d + d)   # d→4d, 4d→d와 편향
+    ln = 2 * 2 * d                           # LayerNorm 2개의 γ, β
+    block = attn + mlp + ln
+    emb = V * d + ctx * d                    # 토큰 임베딩 + 학습형 위치 임베딩
+    return block, L * block, emb, L * block + emb + 2 * d   # 마지막 LayerNorm 포함
+
+block, body, emb, total = count_params(d=768, L=12, V=50257, ctx=1024)
+print(f"블록 하나 {block:,} (12d² = {12 * 768 ** 2:,})")
+print(f"본체 {body:,} + 임베딩 {emb:,} = 합계 {total:,}")
+
+N = 7e9
+print(f"7B 추론 가중치(fp16): {N * 2 / 1e9:.0f} GB")
+print(f"7B 학습 상태(16바이트/파라미터): {N * 16 / 1e9:.0f} GB")
+print(f"7B를 1조 토큰 학습: {6 * N * 1e12:.1e} FLOPs")
+\`\`\`
+
+블록 하나가 $12d^2$보다 약 1만 개 많은 것은 편향과 LayerNorm 몫이다. 합계 124,439,808개는 실제로 공개된 GPT-2 small의 파라미터 수와 정확히 일치한다. 아래 세 줄은 다음 두 절에서 설명할 연산량과 메모리 계산을 미리 해 본 것이다.
+
 ### 연산량: 토큰당 약 $2N$, 학습은 약 $6N$
 
 행렬 곱 $y = Wx$($W$가 $m \\times n$)는 곱셈-덧셈 $mn$번, 즉 $2mn$ FLOPs다. 모델의 모든 가중치가 토큰 하나당 한 번씩 곱해지므로 순전파는 토큰당 약 $2N$ FLOPs($N$ = 임베딩을 제외한 파라미터 수)다. 역전파는 입력 기울기와 가중치 기울기를 각각 구하므로 순전파의 약 2배가 들어, 학습은 토큰당 약 $6N$ FLOPs다. 데이터 $D$토큰으로 학습하는 총 연산량 $C \\approx 6ND$가 6주차 스케일링 법칙의 출발점이다. 여기에 attention 점수 계산이 문맥 길이에 비례해 더해지는데($n$개 토큰에 대해 $O(n^2 d)$), 문맥이 $d$보다 훨씬 길어지기 전에는 가중치 곱셈이 지배한다.
@@ -978,39 +1024,17 @@ for m, p in [(5, 3), (12, 10), (102, 100), (3, 5), (10, 5)]:
 - **학습 상태:** 혼합 정밀도 + Adam이면 파라미터당 약 16바이트(fp16 가중치 2 + fp16 기울기 2 + fp32 원본 가중치 4 + Adam의 $m, v$ 8). 7B 모델이면 활성화를 빼고도 약 112GB라 GPU 여러 장에 나눠야 한다.
 - **KV 캐시:** 토큰마다 층마다 $K, V$ 두 벡터($d$차원)를 저장하므로 $2 \\times L \\times d \\times n \\times$ 바이트 수. 「KV 캐시와 RoPE」 단계의 예처럼 긴 문맥에서는 가중치만큼 커진다. 그래서 GQA(여러 Query 헤드가 K·V 헤드를 공유) 같은 구조가 쓰인다.
 
-[[practice]]
+:::example 7B 모델 하나로 정리
+파라미터 $N = 7 \\times 10^9$인 모델이라면 다음과 같다.
 
-### 실습: GPT-2 small을 부품별로 세기
+| 항목 | 계산 | 결과 |
+| --- | --- | --- |
+| 토큰 하나 생성(순전파) | $2N$ | 약 $1.4 \\times 10^{13}$ FLOPs |
+| 1조 토큰 학습 | $6ND$ | 약 $4.2 \\times 10^{22}$ FLOPs |
+| 추론 가중치 (fp16) | $2N$ 바이트 | 약 14GB |
+| 학습 상태 (혼합 정밀도 + Adam) | $16N$ 바이트 | 약 112GB |
 
-GPT-2 small의 설정으로 부품별 파라미터를 세어 1억 2,400만이 나오는지 확인하고, 토큰당 연산량, 100억 토큰 학습의 총 연산량, 추론·학습·KV 캐시 메모리를 계산한다. 실행 전에 예측해 보자. 층 하나에서 attention과 MLP 중 어느 쪽이 파라미터가 더 많을까?
-
-\`\`\`python
-# GPT형 디코더의 파라미터 수를 부품별로 세기 (GPT-2 small 설정)
-V, n_ctx, d, L = 50_257, 1_024, 768, 12
-
-emb = V * d + n_ctx * d                          # 토큰 임베딩 + 학습형 위치 임베딩
-attn = d * 3 * d + 3 * d + d * d + d             # Q·K·V 투영(편향 포함) + 출력 투영 W^O
-mlp = d * 4 * d + 4 * d + 4 * d * d + d          # d → 4d → d
-ln = 2 * (2 * d)                                 # LayerNorm 두 개(γ, β)
-per_layer = attn + mlp + ln
-total = emb + L * per_layer + 2 * d              # 마지막 LayerNorm, 출력층은 임베딩과 공유(weight tying)
-print(f"층 하나: attention {attn:,} + MLP {mlp:,} + LN {ln:,} = {per_layer:,}  (≈ 12d² = {12 * d * d:,})")
-print(f"전체: 임베딩 {emb:,} + {L}층 {L * per_layer:,} = {total:,} (약 {total / 1e6:.0f}M)")
-
-# 연산량: 토큰 하나를 순전파하는 데 약 2N FLOPs, 학습(순전파+역전파)은 약 6N
-N = total - emb                                  # 임베딩 조회는 곱셈이 거의 없으므로 제외하는 관례
-tokens = 10e9
-print(f"\\n토큰당 순전파 ≈ 2N = {2 * N / 1e9:.2f} GFLOPs, 100억 토큰 학습 ≈ 6N·D = {6 * N * tokens:.2e} FLOPs")
-
-# 메모리: 파라미터·학습 상태·KV 캐시
-print(f"\\n추론용 가중치(fp16, 2바이트): {total * 2 / 2**20:,.0f} MiB")
-print(f"학습 상태(Adam 혼합 정밀도 ≈ 16바이트/파라미터): {total * 16 / 2**30:.2f} GiB")
-kv = 2 * L * d * n_ctx * 2                       # K·V × 층 × d_model × 문맥 × fp16
-print(f"KV 캐시(문맥 {n_ctx}, 배치 1, fp16): {kv / 2**20:.0f} MiB")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 층 하나는 attention 2,362,368 + MLP 4,722,432 + LN 3,072 = 7,087,872개로 $12d^2 = 7{,}077{,}888$과 거의 같고, MLP가 attention의 두 배다. 전체는 124,439,808개(약 124M)로 공개된 GPT-2 small 크기와 같다. 토큰당 순전파는 약 0.17 GFLOPs, 100억 토큰 학습은 약 $5.1\\times10^{18}$ FLOPs다. 추론 가중치(fp16) 약 237MiB, 학습 상태 약 1.85GiB, 문맥 1024의 KV 캐시 약 36MiB다. **해볼 것:** $d = 4096$, $L = 32$, $|V| = 32{,}000$(LLaMA-7B와 비슷한 설정, MLP는 $4d$로 가정)으로 바꿔 파라미터가 약 몇 B가 되는지 계산해 보자.
+추론은 GPU 한 장(24GB 이상)에 들어가지만, 같은 모델을 학습하려면 활성화 메모리를 빼고도 80GB GPU 두 장 이상이 필요하다. "추론은 되는데 학습(파인튜닝)은 안 된다"는 말이 자주 나오는 이유이고, 6주차의 LoRA·양자화가 이 격차를 줄이는 기법이다.
 :::
 
 ## 긴 문맥의 비용: 온라인 softmax와 FlashAttention {#efficient-attention}
@@ -1027,62 +1051,50 @@ $$m' = \\max(m, \\max_{j \\in \\text{블록}} s_j), \\quad \\ell' = \\ell\\,e^{m
 
 마지막에 $a/\\ell$이 정확한 attention 출력이다. 근사가 전혀 없다. 점수 행렬 전체를 메모리에 만들 필요 없이 블록 하나 크기의 작업 공간만 있으면 된다.
 
+:::example 숫자로 한 번 갱신해 보기
+점수가 $[1, 2]$인 첫 블록을 보고 나면 $m = 2$, $\\ell = e^{1-2} + e^{2-2} \\approx 0.368 + 1 = 1.368$이다. 이제 점수가 $[4]$인 블록이 들어온다. 최댓값이 $m' = 4$로 바뀌었으니 이전 $\\ell$에 $e^{m - m'} = e^{-2} \\approx 0.135$를 곱해 새 기준으로 맞추고 새 항을 더한다.
+
+$$\\ell' = 1.368 \\times e^{-2} + e^{4-4} \\approx 0.185 + 1 = 1.185$$
+
+처음부터 세 점수를 다 보고 계산한 $e^{1-4} + e^{2-4} + e^{4-4} \\approx 0.050 + 0.135 + 1 = 1.185$와 같다. 기준(최댓값)을 나중에 바꿔도 $e^{m - m'}$ 한 번 곱하면 과거 합계를 그대로 재활용할 수 있다는 것이 핵심이다.
+:::
+
+이제 코드로, 점수 12개를 4개씩 세 블록으로 나눠 보면서 온라인 결과가 정확한 값과 같은지 확인해 보자.
+
+\`\`\`python
+import numpy as np
+
+rng = np.random.default_rng(0)
+n, d = 12, 4
+s = rng.normal(size=n) * 5                 # Query 하나의 점수 12개
+V = rng.normal(size=(n, d))
+
+# 기준: 점수를 전부 본 뒤 한 번에 계산
+w = np.exp(s - s.max()); w /= w.sum()
+exact = w @ V
+
+# 온라인: 4개씩 블록으로 보며 (m, ℓ, a)만 들고 다닌다
+m, l, a = -np.inf, 0.0, np.zeros(d)
+for start in range(0, n, 4):
+    sb, Vb = s[start:start + 4], V[start:start + 4]
+    m_new = max(m, sb.max())
+    scale = np.exp(m - m_new)              # 기준이 바뀐 만큼 이전 누적값을 보정
+    p = np.exp(sb - m_new)
+    l = l * scale + p.sum()
+    a = a * scale + p @ Vb
+    m = m_new
+    print(f"블록 {start // 4 + 1}: 지금까지 최댓값 m = {m:.3f}")
+
+print("온라인 결과 == 정확한 값?", np.allclose(a / l, exact))
+\`\`\`
+
+세 번째 블록에서는 최댓값이 바뀌지 않아 보정 계수가 $e^0 = 1$이다. 점수 12개 전체를 한 번도 동시에 들고 있지 않았는데도 결과가 정확히 같다(\`True\`).
+
 ### 왜 이것이 빨라지는가: 메모리 계층
 
 GPU에는 크고 느린 메모리(HBM, 수십 GB)와 작고 빠른 메모리(SRAM, 연산 장치 옆의 수십~수백 KB)가 있다. 표준 attention은 $QK^\\top$을 계산해 HBM에 쓰고, 다시 읽어 softmax를 하고, 다시 쓰고, 다시 읽어 $V$와 곱한다. $n \\times n$ 행렬이 HBM을 여러 번 왕복한다. 현대 GPU는 연산 속도에 비해 메모리 대역폭이 훨씬 부족해서, attention은 계산이 아니라 이 왕복에 시간이 묶이는 **메모리 병목(memory-bound)** 연산이다. FlashAttention은 $Q, K, V$를 SRAM에 들어가는 타일로 잘라, 온라인 softmax로 점수를 SRAM 안에서만 만들고 버린다. FLOPs는 같거나(역전파에서 점수를 다시 계산하므로) 오히려 늘지만, HBM 왕복이 크게 줄어 몇 배 빨라지고 메모리는 $O(n^2)$에서 $O(n)$이 된다. 3주차 심화 「자동미분의 두 모드」의 체크포인팅처럼 "다시 계산하는 편이 저장했다 읽는 것보다 싸다"는 같은 철학이다.
 
 $O(n^2)$ 연산 자체는 그대로라는 점도 기억하자. 문맥을 수백만 토큰으로 늘리려면 연산량 자체를 줄이는 다른 아이디어(희소 attention, 다음 단계의 선형 어텐션)가 필요하다.
-
-[[practice]]
-
-### 실습: 온라인 softmax로 attention을 블록 단위로 계산하기
-
-① 최댓값을 빼지 않은 softmax가 큰 점수에서 nan이 되는 것을 확인한다. ② 1000토큰 attention의 한 행을 128개씩 블록으로 나눠 온라인 softmax로 계산해 표준 계산과 같은지 비교한다. ③ 문맥 길이별로 점수 행렬과 타일의 메모리를 비교한다. 실행 전에 ②의 결과가 근사인지 정확히 같은지 예측해 보자.
-
-\`\`\`python
-import numpy as np
-
-def softmax(x):
-    e = np.exp(x - x.max(axis=-1, keepdims=True))
-    return e / e.sum(axis=-1, keepdims=True)
-
-# 1) 최댓값을 빼지 않으면: 큰 점수에서 exp가 넘친다
-s = np.array([1000.0, 999.0, 998.0])
-with np.errstate(over="ignore", invalid="ignore"):
-    naive = np.exp(s) / np.exp(s).sum()
-print("최댓값을 안 뺀 softmax:", naive, "/ 뺀 softmax:", softmax(s).round(4))
-
-# 2) 온라인 softmax로 한 query의 attention을 블록 단위로 계산 (FlashAttention의 핵심)
-def attention_row_online(q, K, V, block=4):
-    m, l = -np.inf, 0.0                       # 지금까지의 최댓값, 지수 합
-    acc = np.zeros(V.shape[1])                # 지금까지의 가중합(정규화 전)
-    for start in range(0, len(K), block):
-        s = K[start:start + block] @ q / np.sqrt(len(q))
-        m_new = max(m, s.max())
-        scale = np.exp(m - m_new)             # 이전 누적값을 새 최댓값 기준으로 다시 맞춘다
-        p = np.exp(s - m_new)
-        l = l * scale + p.sum()
-        acc = acc * scale + p @ V[start:start + block]
-        m = m_new
-    return acc / l
-
-rng = np.random.default_rng(0)
-n, d = 1000, 64
-Q, K, V = rng.normal(size=(n, d)), rng.normal(size=(n, d)), rng.normal(size=(n, d))
-full = softmax(Q @ K.T / np.sqrt(d)) @ V                     # n×n 점수 행렬을 통째로 만든다
-tiled = np.array([attention_row_online(q, K, V, block=128) for q in Q[:50]])
-print("블록 단위 온라인 softmax == 표준 attention:", np.allclose(tiled, full[:50]))
-
-# 3) 메모리: 표준 방식은 n×n 점수 행렬, 타일링은 블록 크기만큼만
-for n_ctx in (2_048, 32_768, 131_072):
-    full_bytes = n_ctx * n_ctx * 2                           # fp16 점수 행렬 하나(헤드 하나)
-    tile_bytes = 128 * 128 * 2
-    print(f"문맥 {n_ctx:>7,}: 점수 행렬 {full_bytes / 2**20:>9,.0f} MiB vs 타일 {tile_bytes / 2**10:.0f} KiB")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 최댓값을 빼지 않으면 \`[nan nan nan]\`, 빼면 \`[0.6652 0.2447 0.09]\`다. 블록 단위 온라인 softmax는 표준 attention과 \`allclose\`로 **정확히 같다**(\`True\`). 점수 행렬은 문맥 2,048에서 8MiB, 32,768에서 2,048MiB, 131,072에서 32,768MiB(헤드 하나, fp16)로 제곱으로 늘지만 타일은 항상 32KiB다. **설명해볼 것:** 블록 순서를 섞어서(예: 뒤 블록부터) 처리해도 결과가 같을까? 온라인 softmax의 갱신식이 순서와 무관한 이유를 생각해 보자.
-:::
 
 ## 선형 어텐션: Attention을 RNN으로 바꾸기 {#linear-attention}
 
@@ -1108,54 +1120,40 @@ $$S_t = S_{t-1} + \\phi(k_t)\\,v_t^\\top, \\qquad z_t = z_{t-1} + \\phi(k_t), \\
 
 이것은 정확히 **고정 크기 상태 $(S_t, z_t)$를 가진 RNN**이다. 학습할 때는 행렬 형태로 병렬 계산하고, 생성할 때는 RNN처럼 토큰 하나당 상태 하나만 갱신한다. 「KV 캐시와 RoPE」 단계의 KV 캐시가 문맥 길이에 비례해 커지는 것과 달리, 상태 크기는 $d \\times d$로 문맥 길이와 무관하다.
 
-하지만 공짜는 없다. 고정 크기 상태에 과거 전체를 압축해 넣는다는 것은 Seq2Seq가 부딪혔던 **정보 병목**(「Seq2Seq의 병목과 Attention의 등장」)이 다시 돌아온다는 뜻이다. softmax attention은 과거의 모든 K, V를 그대로 들고 있어서 아무 토큰이나 정확히 다시 꺼내 볼 수 있지만, 선형 어텐션은 그렇지 못해 정확한 복사·검색 과제에 약하다. 최근의 상태공간 모델(Mamba)과 게이트 선형 어텐션은 상태에 "잊는 게이트"(LSTM의 forget gate와 같은 발상)를 더해 이 한계를 줄이려 한다. RNN → Attention → 선형 어텐션 → 게이트 있는 RNN으로 역사가 한 바퀴 돌아온 셈이다.
-
-[[practice]]
-
-### 실습: 선형 어텐션의 두 얼굴
-
-① 인과적 선형 어텐션을 $n \\times n$ 행렬(마스크 포함)로 계산한 결과와, 상태 $(S, z)$를 토큰마다 갱신하는 RNN으로 계산한 결과가 같은지 확인한다. ② 같은 입력에서 softmax attention과 얼마나 다른지 본다. ③ 문맥 길이별 연산량과 생성 시 저장해야 할 양을 비교한다. 실행 전에 예측해 보자. ①은 근사일까, 정확히 같을까?
+두 형태가 정말 같은 값을 내는지 코드로 확인해 보자. (1)은 학습 때처럼 $n \\times n$ 가중치를 만들고 대각선 위를 0으로 지우는 방식이고, (2)는 생성 때처럼 상태 $S$, $z$만 갱신하는 방식이다.
 
 \`\`\`python
 import numpy as np
 
+def phi(x):                                # elu(x) + 1: 항상 양수
+    return np.where(x > 0, x + 1, np.exp(x))
+
 rng = np.random.default_rng(0)
 n, d = 6, 4
-Q, K, V = rng.normal(size=(n, d)), rng.normal(size=(n, d)), rng.normal(size=(n, d))
-phi = lambda x: np.where(x > 0, x + 1, np.exp(x))           # elu(x) + 1: 항상 양수인 특징 사상
+Q, K, V = (rng.normal(size=(n, d)) for _ in range(3))
+fQ, fK = phi(Q), phi(K)
 
-# 1) 인과적 선형 어텐션을 "n×n 행렬"로: 가중치 φ(q_i)·φ(k_j), j ≤ i
-A = phi(Q) @ phi(K).T
-A = np.tril(A)                                               # causal mask
-quad = (A @ V) / A.sum(axis=1, keepdims=True)
+# (1) 병렬(행렬) 형태: n×n 가중치를 만든 뒤 causal mask
+A = np.tril(fQ @ fK.T)                     # 대각선 위(미래)는 0
+parallel = (A @ V) / A.sum(1, keepdims=True)
 
-# 2) 같은 것을 RNN처럼: 상태 S(d×d)와 z(d)만 들고 토큰을 하나씩 처리
-S, z, rnn = np.zeros((d, d)), np.zeros(d), []
+# (2) RNN 형태: 고정 크기 상태 S(d×d), z(d)만 갱신
+S, z, outs = np.zeros((d, d)), np.zeros(d), []
 for t in range(n):
-    S += np.outer(phi(K[t]), V[t])                           # 상태 갱신: 과거를 고정 크기 행렬에 요약
-    z += phi(K[t])
-    q = phi(Q[t])
-    rnn.append(q @ S / (q @ z))
-print("인과적 선형 어텐션(행렬) == 순환 계산(RNN):", np.allclose(quad, np.array(rnn)))
-
-# 3) softmax attention과는 다르다(근사): 같은 Q, K, V에서 출력 차이
-def softmax(x):
-    e = np.exp(x - x.max(axis=-1, keepdims=True))
-    return e / e.sum(axis=-1, keepdims=True)
-mask = np.triu(np.ones((n, n)), 1) == 1
-soft = softmax(np.where(mask, -np.inf, Q @ K.T / np.sqrt(d))) @ V
-print("softmax 대비 평균 절대 차이:", np.abs(soft - quad).mean().round(3))
-
-# 4) 연산량: softmax O(n²d) vs 선형 O(nd²), 생성 시 상태 크기는 문맥 길이와 무관
-d_head = 128
-for n_ctx in (512, 4_096, 65_536):
-    print(f"n={n_ctx:>6,}: softmax {2 * n_ctx ** 2 * d_head / 1e9:9.2f} GFLOPs, 선형 {2 * n_ctx * d_head ** 2 / 1e9:6.2f} GFLOPs,"
-          f" 생성 시 저장: KV 캐시 {2 * n_ctx * d_head:>10,}개 vs 상태 {d_head * d_head + d_head:,}개")
+    S += np.outer(fK[t], V[t])             # S_t = S_{t-1} + φ(k_t) v_tᵀ
+    z += fK[t]                             # z_t = z_{t-1} + φ(k_t)
+    outs.append(fQ[t] @ S / (fQ[t] @ z))
+print("두 형태의 결과가 같은가?", np.allclose(parallel, np.array(outs)))
+print("상태 크기:", S.shape, "+", z.shape, "(문맥 길이와 무관)")
 \`\`\`
 
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** 행렬 계산과 RNN 계산이 **정확히 같다**(\`True\`). 같은 연산을 다른 순서로 했을 뿐이다. 반면 softmax attention과는 평균 절대 차이가 약 0.16으로 다른 함수다. 연산량은 $n = 65{,}536$에서 softmax 약 1,100 GFLOPs 대 선형 약 2.15 GFLOPs이고, 생성 시 저장할 양은 KV 캐시가 문맥에 비례해 1,677만 개까지 느는 반면 선형 어텐션의 상태는 항상 16,512개다. **설명해볼 것:** "앞에서 3,000번째 토큰의 숫자를 그대로 말하라" 같은 복사 과제에서 두 방식 중 어느 쪽이 유리할지, 저장하는 정보의 양으로 설명해 보자.
+결과가 같다(\`True\`). (2)의 반복문은 토큰이 몇 개든 $4 \\times 4$ 행렬 하나와 길이 4 벡터 하나만 들고 다닌다.
+
+:::example 얼마나 싸지는가
+문맥 $n = 100{,}000$, 차원 $d = 128$이라면 softmax attention은 약 $n^2 d \\approx 1.3 \\times 10^{12}$, 선형 어텐션은 약 $n d^2 \\approx 1.6 \\times 10^{9}$번의 곱셈이 든다. 비율 $n/d \\approx 780$배다. 문맥이 $d$보다 훨씬 길수록 차이가 커진다. 반대로 문맥이 짧아 $n < d$이면 오히려 손해다.
 :::
+
+하지만 공짜는 없다. 고정 크기 상태에 과거 전체를 압축해 넣는다는 것은 Seq2Seq가 부딪혔던 **정보 병목**(「Seq2Seq의 병목과 Attention의 등장」)이 다시 돌아온다는 뜻이다. softmax attention은 과거의 모든 K, V를 그대로 들고 있어서 아무 토큰이나 정확히 다시 꺼내 볼 수 있지만, 선형 어텐션은 그렇지 못해 정확한 복사·검색 과제에 약하다. 최근의 상태공간 모델(Mamba)과 게이트 선형 어텐션은 상태에 "잊는 게이트"(LSTM의 forget gate와 같은 발상)를 더해 이 한계를 줄이려 한다. RNN → Attention → 선형 어텐션 → 게이트 있는 RNN으로 역사가 한 바퀴 돌아온 셈이다.
 
 ## 위치 인코딩의 수학과 길이 외삽 {#position-extrapolation}
 
@@ -1167,11 +1165,30 @@ for n_ctx in (512, 4_096, 65_536):
 
 $$\\begin{pmatrix}\\sin((p+k)\\theta_i)\\\\ \\cos((p+k)\\theta_i)\\end{pmatrix} = \\begin{pmatrix}\\cos k\\theta_i & \\sin k\\theta_i\\\\ -\\sin k\\theta_i & \\cos k\\theta_i\\end{pmatrix}\\begin{pmatrix}\\sin p\\theta_i\\\\ \\cos p\\theta_i\\end{pmatrix}$$
 
-이므로, 위치 $p+k$의 인코딩은 위치 $p$의 인코딩을 **$k$에만 의존하는 회전**으로 얻는다. 절대 위치를 더하는 방식이지만 모델이 선형 변환으로 상대 거리를 읽어낼 수 있는 구조가 처음부터 들어 있었던 셈이다. RoPE는 이 회전을 $q, k$ 자체에 적용해서 내적 $\\langle R_m q, R_n k\\rangle = \\langle q, R_{n-m} k\\rangle$가 **오직 상대 거리 $n - m$**에만 의존하게 만든다(「KV 캐시와 RoPE」 실습에서 확인했다).
+이므로, 위치 $p+k$의 인코딩은 위치 $p$의 인코딩을 **$k$에만 의존하는 회전**으로 얻는다. 절대 위치를 더하는 방식이지만 모델이 선형 변환으로 상대 거리를 읽어낼 수 있는 구조가 처음부터 들어 있었던 셈이다. RoPE는 이 회전을 $q, k$ 자체에 적용해서 내적 $\\langle R_m q, R_n k\\rangle = \\langle q, R_{n-m} k\\rangle$가 **오직 상대 거리 $n - m$**에만 의존하게 만든다.
 
 ### 학습 길이를 넘으면 무엇이 깨지는가
 
 주파수가 $\\theta_i$인 성분은 위치가 $2\\pi/\\theta_i$만큼 지나야 한 바퀴를 돈다(파장). 빠른 성분(작은 $i$)은 몇 위치마다 한 바퀴씩 돌아 학습 중 모든 각도를 수없이 보지만, 느린 성분(큰 $i$)은 파장이 수만 위치라 학습 길이 $L$ 안에서 **한 바퀴도 돌지 못한다**. 그 성분이 학습 중 본 각도는 $[0, L\\theta_i)$뿐이다. $L$을 넘는 위치에서는 처음 보는 각도가 나오고, 모델은 그 각도의 $q \\cdot k$ 패턴을 배운 적이 없어 attention이 엉뚱해진다. 상대 위치만 쓰는 RoPE라도 "학습 때 본 적 없는 거리"는 외삽해야 하는 것이다.
+
+실제 숫자로 확인해 보자. head 차원 128(성분 쌍 64개), 학습 길이 2048인 RoPE 모델에서 성분 쌍마다 파장과 학습 중 회전한 바퀴 수를 계산한다.
+
+\`\`\`python
+import numpy as np
+
+d, L = 128, 2048                         # head 차원 128 → 성분 쌍 64개, 학습 길이 2048
+i = np.arange(d // 2)
+theta = 10000 ** (-2 * i / d)            # 성분 쌍마다의 회전 속도(라디안/위치)
+wavelength = 2 * np.pi / theta           # 한 바퀴 도는 데 필요한 위치 수
+
+for k in [0, 16, 32, 48, 63]:
+    turns = L / wavelength[k]
+    print(f"성분 쌍 {k:2d}: 파장 {wavelength[k]:>9.0f} 위치, 학습 중 {turns:8.2f}바퀴")
+
+print("학습 중 한 바퀴도 못 도는 성분 쌍:", int((wavelength > L).sum()), "/", d // 2)
+\`\`\`
+
+성분 쌍 0은 약 6위치마다 한 바퀴씩, 학습 중 300바퀴 넘게 돌아 모든 각도를 충분히 봤다. 반면 성분 쌍 48 이후는 학습 길이 안에서 3분의 1바퀴도 못 돈다. 64쌍 중 23쌍이 "한 바퀴도 못 돈" 성분이고, 2048을 넘는 위치에서 이 성분들이 처음 보는 각도를 내놓는다.
 
 ### 위치 보간과 그 대가
 
@@ -1179,48 +1196,8 @@ Chen et al.(2023)의 **위치 보간(Position Interpolation)**은 단순하다. 
 
 덧붙여 RoPE에는 **장거리 감쇠**가 있다. 모든 성분이 같은 방향을 가리키는 $q, k$라도 거리가 멀어지면 성분마다 회전 각도가 달라져 $\\cos$들이 서로 상쇄되므로 점수 평균이 줄어든다. 가까운 토큰에 조금 더 주의를 주는 약한 사전 경향이 구조에 들어 있는 셈이다.
 
-[[practice]]
-
-### 실습: 사인파의 회전 성질, 한 바퀴를 못 도는 성분, 위치 보간
-
-$d = 64$, 학습 길이 2,048인 설정에서 ① 사인파 인코딩이 $PE(p + k) = R_k\\,PE(p)$를 만족하는지, ② 몇 개의 성분이 학습 길이 안에 한 바퀴를 돌지 못하는지와 그 성분의 각도가 길이 4,096·8,192에서 얼마나 학습 범위를 벗어나는지, ③ 8,192로 늘리며 위치 보간을 하면 어떻게 되는지, ④ 거리별 RoPE 점수의 평균 감쇠를 확인한다. 실행 전에 예측해 보자. 32개 성분 쌍 중 몇 개가 한 바퀴를 못 돌까?
-
-\`\`\`python
-import numpy as np
-
-d, base, L_train = 64, 10000.0, 2048
-freqs = base ** (-np.arange(0, d, 2) / d)                    # 성분 쌍마다의 회전 속도 θ_i (32개)
-wavelengths = 2 * np.pi / freqs                              # 한 바퀴 도는 데 필요한 위치 수
-
-# 1) 사인파 위치 인코딩의 성질: PE(pos + k)는 PE(pos)를 k에만 의존하는 회전으로 얻는다
-def pe(pos):
-    return np.stack([np.sin(pos * freqs), np.cos(pos * freqs)], axis=1)   # (32, 2): 쌍마다 (sin, cos)
-def rotate(pairs, k):
-    c, s = np.cos(k * freqs), np.sin(k * freqs)
-    sin, cos = pairs[:, 0], pairs[:, 1]
-    return np.stack([sin * c + cos * s, cos * c - sin * s], axis=1)       # 덧셈 정리
-print("PE(37 + 5) == R_5 · PE(37):", np.allclose(pe(42), rotate(pe(37), 5)), " PE(900 + 5) == R_5 · PE(900):", np.allclose(pe(905), rotate(pe(900), 5)))
-
-# 2) 학습 길이보다 파장이 긴 성분: 학습 중 한 바퀴도 돌지 못했다
-slow = wavelengths > L_train
-print(f"\\n성분 쌍 {len(freqs)}개 중 파장 > {L_train}: {slow.sum()}개 (가장 긴 파장 {wavelengths.max():,.0f} 위치)")
-i = np.argmax(slow)                                           # 처음으로 한 바퀴를 못 도는 성분
-for pos in (2_047, 4_096, 8_192):
-    print(f"  위치 {pos:>5}: 그 성분의 각도 {pos * freqs[i]:.2f} rad (학습 중 본 최대 {(L_train - 1) * freqs[i]:.2f} rad)")
-
-# 3) 위치 보간(PI): 위치를 L_train / L_new 배로 줄이면 각도가 학습 범위 안에 머문다
-L_new = 8_192
-scale = (L_train - 1) / (L_new - 1)                          # 마지막 위치가 학습 때의 마지막 위치로 가도록
-print(f"\\n위치 보간: 위치 8191 → {8191 * scale:.2f}, 각도 {8191 * scale * freqs[i]:.2f} rad (범위 안)")
-print(f"대가: 이웃한 두 위치의 가장 빠른 성분 각도 차이 {freqs[0]:.3f} rad → {freqs[0] * scale:.3f} rad로 줄어 가까운 위치를 덜 구별한다")
-
-# 4) RoPE 점수의 장거리 감쇠: q = k = 모든 성분 1일 때 거리별 점수(=Σ cos(거리·θ_i)의 평균)
-for dist in (0, 1, 10, 100, 1000):
-    print(f"거리 {dist:>4}: 평균 점수 {np.mean(np.cos(dist * freqs)):.3f}")
-\`\`\`
-
-:::task 통과 조건과 한 걸음 더
-**예상 결과:** ① 두 위치에서 모두 \`True\`다. ② 32개 중 11개 성분의 파장이 2,048보다 길고(가장 긴 파장 약 47,117), 그중 처음 성분의 각도는 학습 중 최대 4.85rad였는데 위치 4,096에서 9.71, 8,192에서 19.43rad로 학습 범위를 크게 벗어난다. ③ 위치 보간을 하면 위치 8,191이 2,047로 옮겨져 각도가 4.85rad로 범위 안에 머물지만, 가장 빠른 성분의 이웃 위치 각도 차이가 1.0에서 0.25rad로 줄어 가까운 위치 구별이 흐려진다. ④ 점수 평균은 거리 0에서 1.0, 10에서 약 0.66, 1000에서 약 0.28로 줄어든다. **설명해볼 것:** NTK-aware 보간처럼 느린 성분만 크게 늘리고 빠른 성분은 그대로 두면 ③의 대가가 어떻게 줄어드는지 설명해 보자.
+:::example 위치 보간을 숫자로
+학습 길이 $L = 2048$을 $L' = 8192$로 늘린다면 모든 위치에 $L/L' = 1/4$을 곱한다. 위치 6000은 1500으로, 위치 8191은 약 2047.75로 옮겨져 학습 범위 $[0, 2048)$ 안에 들어온다. 대신 위치 100과 101의 간격도 1에서 0.25로 줄어, 이웃 토큰 사이의 각도 차이가 4분의 1이 된다. 빠른 성분이 맡던 "바로 옆 토큰 구별"이 그만큼 흐려지는 것이 보간의 대가다.
 :::
 
 `,
