@@ -10,7 +10,8 @@ export type Block =
   | { type: "code"; lang?: string; code: string }
   | { type: "formula"; code: string }
   | { type: "math"; tex: string }
-  | { type: "callout"; tone: CalloutTone; title?: string; text: string }
+  /** text: 본문을 한 줄로 이은 것(검색·분량 계산용). blocks: 본문을 블록으로 다시 해석한 것(표·목록·코드·수식 지원) */
+  | { type: "callout"; tone: CalloutTone; title?: string; text: string; blocks: Block[] }
   | { type: "diagram"; id: string }
   | { type: "image"; src: string; alt: string; caption?: string; credit?: string; width: number; height: number };
 

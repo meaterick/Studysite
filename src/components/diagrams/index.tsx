@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { AiHierarchy, MlLoop } from "./w1";
+import { AiHierarchy, MlLoop, NumpyAxis, BayesFrequency, DotProductAngle } from "./w1";
 import { ConfusionMatrix, DataSplitDiagram } from "./w2";
 import { ComputationalGraph, MlpDiagram } from "./w3";
 import { ResNetSkip, TransferLearning } from "./w4";
@@ -17,6 +17,9 @@ import InteractiveDecodingTemperature from "./InteractiveDecodingTemperature";
 export const DIAGRAMS: Record<string, ComponentType> = {
   "ai-hierarchy": AiHierarchy,
   "ml-loop": MlLoop,
+  "numpy-axis": NumpyAxis,
+  "bayes-frequency": BayesFrequency,
+  "dot-product-angle": DotProductAngle,
   "gradient-descent-curve": InteractiveGradientDescent,
   "bias-variance-curve": InteractiveBiasVariance,
   "confusion-matrix": ConfusionMatrix,

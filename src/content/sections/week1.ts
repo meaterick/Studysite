@@ -56,6 +56,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "AI ⊃ ML ⊃ DL은 방법 기준의 포함관계이고, 생성형 AI는 기능 기준의 범주라 두 분류가 겹친다. 오늘날의 생성형 AI는 대부분 딥러닝이지만, n-gram·HMM 같은 통계 모델도 새 문장을 생성하고, CNN 분류기처럼 생성하지 않는 딥러닝 모델도 많다."
+      },
+      {
+        "id": "w1-ai-landscape-c5",
+        "question": "데이터 $(1, 2), (2, 4), (3, 7)$과 모델 $f_\\theta(x) = \\theta x$에서 $\\theta = 1$일 때 평균제곱오차(MSE)는?",
+        "choices": [
+          "7",
+          "21",
+          "3",
+          "1"
+        ],
+        "answer": 0,
+        "explanation": "예측은 1, 2, 3이고 오차는 $-1, -2, -4$다. 제곱하면 $1 + 4 + 16 = 21$이고, 데이터 3개로 나누면 MSE는 7이다."
+      },
+      {
+        "id": "w1-ai-landscape-c6",
+        "question": "\"입력 + 정답(출력) → 규칙\"으로 요약되는 방식은?",
+        "choices": [
+          "머신러닝",
+          "규칙 기반(전통적) 프로그래밍",
+          "하드웨어 설계",
+          "데이터베이스 검색"
+        ],
+        "answer": 0,
+        "explanation": "전통적 프로그래밍은 사람이 규칙을 적어 입력을 출력으로 바꾸고, 머신러닝은 입력과 정답을 보고 규칙(파라미터)을 찾아낸다."
       }
     ],
     "quizIds": [
@@ -115,6 +139,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "추론은 학습이 끝나 고정된 파라미터로 새 입력의 출력을 계산하는 과정이다. ChatGPT에 질문할 때 서버에서 일어나는 일이 추론이다."
+      },
+      {
+        "id": "w1-ai-terms-c4",
+        "question": "다음 중 **하이퍼파라미터**인 것은?",
+        "choices": [
+          "학습률 $\\eta$",
+          "선형회귀 직선의 기울기",
+          "신경망의 가중치",
+          "데이터의 레이블"
+        ],
+        "answer": 0,
+        "explanation": "학습률은 학습을 시작하기 전에 사람이 정하는 값이다. 기울기와 가중치는 학습이 데이터에서 찾아내는 파라미터이고, 레이블은 데이터의 정답이다."
+      },
+      {
+        "id": "w1-ai-terms-c5",
+        "question": "\"이 집은 얼마에 팔릴까?\"를 예측하는 문제의 유형은?",
+        "choices": [
+          "회귀",
+          "분류",
+          "생성",
+          "비지도학습"
+        ],
+        "answer": 0,
+        "explanation": "답이 연속된 숫자 하나(가격)이므로 회귀다. 답이 정해진 보기 중 하나라면 분류, 새 결과물이면 생성이다."
       }
     ],
     "quizIds": [
@@ -176,6 +224,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "`b = a`는 복사본을 만드는 것이 아니라 같은 리스트 객체에 이름표를 하나 더 붙인다. 복사본이 필요하면 `a.copy()`를 쓴다."
+      },
+      {
+        "id": "w1-python-basics-c4",
+        "question": "`print(list(range(1, 5)))`의 출력은?",
+        "choices": [
+          "`[1, 2, 3, 4]`",
+          "`[1, 2, 3, 4, 5]`",
+          "`[0, 1, 2, 3, 4]`",
+          "`[2, 3, 4, 5]`"
+        ],
+        "answer": 0,
+        "explanation": "`range(시작, 끝)`은 시작부터 끝 **직전**까지 만든다. 슬라이싱 `[1:3]`에서 3번이 빠지는 것과 같은 규칙이다."
+      },
+      {
+        "id": "w1-python-basics-c5",
+        "question": "`print(\"점수: \" + 90)`을 실행하면 어떤 오류가 나고, 어떻게 고치는가?",
+        "choices": [
+          "`TypeError`: 문자열과 정수는 `+`로 이을 수 없으니 `f\"점수: {90}\"`처럼 쓴다",
+          "`NameError`: 90을 정의해야 한다",
+          "`IndexError`: 문자열 범위를 벗어났다",
+          "오류 없이 `점수: 90`이 출력된다"
+        ],
+        "answer": 0,
+        "explanation": "`+`는 문자열끼리는 이어 붙이고 숫자끼리는 더한다. 둘을 섞으면 어느 쪽인지 정할 수 없어 `TypeError`가 난다. f-string이나 `str(90)`으로 자료형을 맞춘다."
       }
     ],
     "quizIds": [
@@ -233,6 +305,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "NumPy 배열끼리의 `*`는 같은 자리끼리 곱하는 원소별 연산이다. 같은 자리끼리 곱해 **모두 더한** 내적은 `a @ a = 14`로 따로 쓴다. 리스트의 `*`(반복)와도 다르다."
+      },
+      {
+        "id": "w1-dev-tools-c5",
+        "question": "shape이 `(2, 3)`인 배열과 shape이 `(2, 1)`인 배열을 더한 결과의 shape은?",
+        "choices": [
+          "`(2, 3)`",
+          "`(2, 1)`",
+          "`(2, 4)`",
+          "오류가 난다"
+        ],
+        "answer": 0,
+        "explanation": "오른쪽 끝부터 비교하면 3과 1(1이므로 복제), 2와 2(같음)라 맞춰진다. $(2, 1)$ 배열이 열 방향으로 복제되어 $(2, 3)$이 된다."
+      },
+      {
+        "id": "w1-dev-tools-c6",
+        "question": "shape `(2, 3)` 배열 `x`의 각 **행**에서 그 행의 평균을 빼는 올바른 코드는?",
+        "choices": [
+          "`x - x.mean(axis=1, keepdims=True)`",
+          "`x - x.mean(axis=1)`",
+          "`x - x.mean(axis=0, keepdims=True)`",
+          "`x - x.mean()`"
+        ],
+        "answer": 0,
+        "explanation": "`x.mean(axis=1)`은 shape `(2,)`라 `(2, 3)`과 오른쪽 끝(3과 2)이 맞지 않는다. `keepdims=True`로 `(2, 1)`을 만들어야 행마다 빠진다. `axis=0`은 열 평균이다."
       }
     ],
     "quizIds": [],
@@ -300,6 +396,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "$Wx$는 $W$의 각 행과 $x$의 내적이다. 첫 행 $[1, 0]\\cdot[3, 4] = 3$, 둘째 행 $[2, 1]\\cdot[3, 4] = 10$. 열과 내적한 $[11, 4]$는 $W^\\top x$다."
+      },
+      {
+        "id": "w1-vectors-c5",
+        "question": "벡터 $[6, 8]$의 길이 $|a|$는?",
+        "choices": [
+          "10",
+          "14",
+          "48",
+          "100"
+        ],
+        "answer": 0,
+        "explanation": "$\\sqrt{6^2 + 8^2} = \\sqrt{100} = 10$이다. 성분을 그냥 더한 14는 L1 노름이고, 제곱근을 씌우기 전의 100은 길이의 제곱이다."
+      },
+      {
+        "id": "w1-vectors-c6",
+        "question": "$a = [1, 2]$, $b = [2, -1]$의 내적과, 두 벡터의 관계로 옳은 것은?",
+        "choices": [
+          "내적 0, 서로 직교한다",
+          "내적 4, 같은 방향이다",
+          "내적 −4, 반대 방향이다",
+          "내적 0, 같은 벡터다"
+        ],
+        "answer": 0,
+        "explanation": "$1 \\cdot 2 + 2 \\cdot (-1) = 0$이다. 내적이 0이면 $\\cos\\theta = 0$, 즉 두 벡터는 90도를 이루어 서로 직교한다."
       }
     ],
     "quizIds": [
@@ -358,6 +478,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "$E[X] = (1+2+3+4+5+6)/6 = 21/6 = 3.5$. 기대값은 실제로 나올 수 없는 값일 수도 있다."
+      },
+      {
+        "id": "w1-probability-c4",
+        "question": "공정한 동전을 두 번 던질 때, 두 번 모두 앞면이 나올 확률은?",
+        "choices": [
+          "$1/4$",
+          "$1/2$",
+          "$1/3$",
+          "$1$"
+        ],
+        "answer": 0,
+        "explanation": "두 번의 던지기는 서로 독립이므로 확률을 곱한다: $\\frac12 \\times \\frac12 = \\frac14$. 가능한 결과(앞앞, 앞뒤, 뒤앞, 뒤뒤) 넷 중 하나라고 세어도 같다."
+      },
+      {
+        "id": "w1-probability-c5",
+        "question": "1만 명 중 환자가 10%이고 민감도 99%, 위양성률 5%인 검사에서 양성이 나왔을 때 실제 환자일 확률에 가장 가까운 것은?",
+        "choices": [
+          "약 69%",
+          "약 17%",
+          "약 99%",
+          "약 10%"
+        ],
+        "answer": 0,
+        "explanation": "환자 1,000명 중 양성 990명, 건강한 9,000명 중 양성 450명이다. 양성 1,440명 중 환자는 990명이므로 $990/1440 \\approx 68.8\\%$다."
       }
     ],
     "quizIds": [
@@ -427,6 +571,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "연쇄법칙: $dL/dw = 2(wx - y)\\cdot x = 2 \\times (2 - 6) \\times 2 = -16$. 바깥(제곱)의 미분 $2(wx-y)$에 안쪽 $wx - y$의 미분 $x$를 곱한다. $x$를 곱하는 것을 빠뜨리면 $-8$이 된다."
+      },
+      {
+        "id": "w1-gradient-descent-c5",
+        "question": "$L(w) = 3w^2 + 2w$에서 $w = 1$일 때 $\\dfrac{dL}{dw}$는?",
+        "choices": [
+          "8",
+          "5",
+          "6",
+          "11"
+        ],
+        "answer": 0,
+        "explanation": "$\\frac{d}{dw}3w^2 = 6w$, $\\frac{d}{dw}2w = 2$이므로 $\\frac{dL}{dw} = 6w + 2$이고, $w = 1$을 넣으면 8이다."
+      },
+      {
+        "id": "w1-gradient-descent-c6",
+        "question": "경사하강법으로 갱신하다가 $\\frac{dL}{dw} = 0$인 지점에 도착하면 어떻게 되는가?",
+        "choices": [
+          "갱신량이 0이 되어 멈춘다. 그 지점은 최솟값일 수도, 극소점이나 안장점일 수도 있다",
+          "반드시 전체 최솟값에 도착한 것이다",
+          "학습률이 자동으로 커져 계속 움직인다",
+          "손실이 무한대가 된다"
+        ],
+        "answer": 0,
+        "explanation": "$w \\leftarrow w - \\eta \\cdot 0$이므로 더 이상 움직이지 않는다. 볼록 함수라면 그곳이 최솟값이지만, 일반적인 손실에서는 극소점이나 안장점에서도 기울기가 0이다."
       }
     ],
     "quizIds": [
@@ -486,6 +654,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "`except` 뒤에 적은 종류의 예외만 잡는다. 종류가 다르면 예외는 그대로 위로 전달되어, 아무도 잡지 않으면 프로그램이 멈춘다."
+      },
+      {
+        "id": "w1-python-advanced-c4",
+        "question": "위 `RunningMean`에 `add(2)`, `add(4)`, `add(9)`를 차례로 호출한 뒤 `result()`의 값은?",
+        "choices": [
+          "5.0",
+          "15",
+          "9",
+          "3"
+        ],
+        "answer": 0,
+        "explanation": "세 값의 평균 $(2 + 4 + 9)/3 = 5$다. 갱신식은 값을 저장하지 않고도 매 단계 정확한 평균(2 → 3 → 5)을 유지한다."
+      },
+      {
+        "id": "w1-python-advanced-c5",
+        "question": "함수 안에서 `raise ValueError(\"빈 리스트\")`를 실행했고, 호출한 쪽이 `try:`와 `except ValueError as e: print(e)`로 감쌌다면?",
+        "choices": [
+          "`빈 리스트`가 출력되고 프로그램은 계속 실행된다",
+          "프로그램이 즉시 멈춘다",
+          "`ValueError`라는 글자만 출력된다",
+          "아무 일도 일어나지 않는다"
+        ],
+        "answer": 0,
+        "explanation": "`raise`한 예외는 호출한 쪽으로 전달되고, 종류가 맞는 `except`가 잡는다. `e`에는 예외를 만들 때 넣은 메시지가 들어 있다."
       }
     ],
     "quizIds": [
@@ -543,6 +735,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "이 사이트의 코드는 브라우저(Pyodide) 안에서 화면 없이 실행되고 GPU를 쓰지 않는다. 큰 모델 학습이나 그래프 시각화는 Colab이 적합하다."
+      },
+      {
+        "id": "w1-dev-env-c4",
+        "question": "Git 저장소에 **올리지 말고** `.gitignore`에 넣어야 하는 것으로 가장 알맞은 것은?",
+        "choices": [
+          "API 키가 들어 있는 `.env` 파일",
+          "`requirements.txt`",
+          "분석 코드가 담긴 `.py` 파일",
+          "프로젝트 설명 `README.md`"
+        ],
+        "answer": 0,
+        "explanation": "비밀값은 공개되면 즉시 악용될 수 있고, 한 번 올라가면 기록에 남는다. `requirements.txt`와 코드, README는 공유해야 하는 파일이다."
+      },
+      {
+        "id": "w1-dev-env-c5",
+        "question": "`pip install -r requirements.txt`가 하는 일은?",
+        "choices": [
+          "파일에 적힌 패키지(와 버전)를 한 번에 설치한다",
+          "설치된 패키지를 모두 지운다",
+          "가상환경을 새로 만든다",
+          "코드를 GitHub에 올린다"
+        ],
+        "answer": 0,
+        "explanation": "`pip freeze > requirements.txt`로 저장해 둔 목록을 다른 컴퓨터에서 그대로 설치해, 같은 환경에서 코드를 재현할 수 있게 한다."
       }
     ],
     "quizIds": [
@@ -605,6 +821,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "$(AB)x = A(Bx)$이므로 오른쪽의 $B$가 먼저 적용된다(함수 합성). 전치하면 순서가 뒤집혀 $(AB)^\\top = B^\\top A^\\top$이 되고, 이는 3주차 역전파에서 기울기가 거꾸로 흐르는 모양과 같다."
+      },
+      {
+        "id": "w1-basis-matrix-c4",
+        "question": "$2 \\times 3$ 행렬과 $3 \\times 4$ 행렬을 곱한 결과의 모양은?",
+        "choices": [
+          "$2 \\times 4$",
+          "$3 \\times 3$",
+          "$2 \\times 3$",
+          "곱할 수 없다"
+        ],
+        "answer": 0,
+        "explanation": "안쪽 차원 3이 같아 곱할 수 있고, 바깥 차원 2와 4가 결과의 모양이 된다: $(2 \\times 3)(3 \\times 4) = (2 \\times 4)$."
+      },
+      {
+        "id": "w1-basis-matrix-c5",
+        "question": "$A = \\begin{bmatrix}1 & 2\\\\ 3 & 4\\end{bmatrix}$, $B = \\begin{bmatrix}5 & 6\\\\ 7 & 8\\end{bmatrix}$일 때 $AB$의 1행 1열 성분은?",
+        "choices": [
+          "19",
+          "5",
+          "22",
+          "23"
+        ],
+        "answer": 0,
+        "explanation": "$A$의 1행 $[1, 2]$와 $B$의 1열 $[5, 7]$의 내적이다: $1 \\cdot 5 + 2 \\cdot 7 = 19$. (1행 2열은 $1 \\cdot 6 + 2 \\cdot 8 = 22$.)"
       }
     ],
     "quizIds": [
@@ -663,6 +903,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "측정 오차처럼 여러 작은 원인이 더해진 결과가 종 모양이 되는 이유다. 예를 들어 0~1 균등분포 12개를 더하면 그 합이 $\\mathcal{N}(6, 1)$에 가까워진다."
+      },
+      {
+        "id": "w1-distributions-c4",
+        "question": "평균 170cm, 표준편차 6cm인 분포에서 키 176cm의 z-점수는?",
+        "choices": [
+          "1",
+          "6",
+          "0.5",
+          "−1"
+        ],
+        "answer": 0,
+        "explanation": "$z = (176 - 170)/6 = 1$이다. 평균보다 표준편차 한 개만큼 크다는 뜻이다."
+      },
+      {
+        "id": "w1-distributions-c5",
+        "question": "정규분포를 따르는 키 $X$에 대해 $P(X = 170)$은?",
+        "choices": [
+          "0. 연속분포에서는 구간의 넓이로만 확률을 잰다",
+          "$f(170)$의 값과 같다",
+          "항상 0.5다",
+          "68%다"
+        ],
+        "answer": 0,
+        "explanation": "한 점은 넓이가 0이다. $f(170)$은 확률밀도로, 확률이 아니며 1보다 클 수도 있다. 확률은 $P(169.5 \\le X \\le 170.5)$처럼 구간으로 묻는다."
       }
     ],
     "quizIds": [
@@ -720,6 +984,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "L1은 절댓값의 합 $|-3| + |4| = 7$, L2는 $\\sqrt{9 + 16} = 5$. 부호는 절댓값·제곱 때문에 영향이 없다."
+      },
+      {
+        "id": "w1-rank-eigen-c4",
+        "question": "어떤 행렬을 SVD해 특이값이 $[10, 3, 0.01]$로 나왔다. 이 행렬에 대한 설명으로 가장 알맞은 것은?",
+        "choices": [
+          "큰 특이값 2개만 남긴 rank-2 근사가 원래 행렬과 거의 같다",
+          "세 방향의 정보량이 모두 같다",
+          "이 행렬은 역행렬이 없다(rank 1)",
+          "특이값이 작을수록 중요한 방향이다"
+        ],
+        "answer": 0,
+        "explanation": "특이값은 각 방향이 담은 크기다. 0.01인 방향은 거의 기여하지 않으므로 버려도 오차가 작다(가장 좋은 rank-2 근사). 0이 아니므로 엄밀히는 rank 3이다."
+      },
+      {
+        "id": "w1-rank-eigen-c5",
+        "question": "고유벡터 $v$와 고유값 $\\lambda$의 정의 $Av = \\lambda v$가 뜻하는 것은?",
+        "choices": [
+          "$A$를 곱해도 방향은 그대로이고 길이만 $\\lambda$배가 되는 벡터",
+          "$A$를 곱하면 항상 0이 되는 벡터",
+          "$A$의 첫 번째 열",
+          "$A$를 곱하면 90도 회전하는 벡터"
+        ],
+        "answer": 0,
+        "explanation": "고유벡터는 변환 뒤에도 같은 직선 위에 남는 특별한 방향이고, 고유값은 그 방향의 배율이다(음수면 방향이 뒤집힌다)."
       }
     ],
     "quizIds": [
@@ -780,6 +1068,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "사후 로그밀도는 $15\\log p + 7\\log(1-p)$가 되어 $\\hat p_{\\text{MAP}} = 15/22 \\approx 0.682$. MLE보다 0.5 쪽으로 조금 당겨지고, 데이터가 많아질수록 그 차이는 줄어든다."
+      },
+      {
+        "id": "w1-mle-map-c4",
+        "question": "가능도를 계산할 때 확률들을 곱하는 대신 로그의 합을 쓰는 가장 실용적인 이유는?",
+        "choices": [
+          "작은 확률을 수천 번 곱하면 컴퓨터에서 0이 되어 버리는(언더플로) 문제를 피하려고",
+          "로그를 취하면 최댓값의 위치가 바뀌어 더 정확해져서",
+          "로그가 확률을 1보다 크게 만들어서",
+          "곱셈이 정의되지 않아서"
+        ],
+        "answer": 0,
+        "explanation": "$0.5^{1100}$은 float64에서 0이 되지만 $1100\\log 0.5 \\approx -762$는 문제없이 계산된다. 로그는 단조증가라 최댓값의 위치는 그대로다."
+      },
+      {
+        "id": "w1-mle-map-c5",
+        "question": "분류 모델이 정답 클래스에 확률 $q$를 줄 때 음의 로그가능도 $-\\log q$를 최소화하는 것과 같은 것은?",
+        "choices": [
+          "교차 엔트로피 손실을 최소화하는 것",
+          "평균제곱오차를 최대화하는 것",
+          "정확도를 최소화하는 것",
+          "사전분포를 균등하게 바꾸는 것"
+        ],
+        "answer": 0,
+        "explanation": "정답이 원-핫인 분포 $p$와 예측 $q$의 교차 엔트로피 $-\\sum p\\log q$는 정답 클래스의 $-\\log q$와 같다. 그래서 교차 엔트로피 최소화는 MLE다."
       }
     ],
     "quizIds": [
@@ -840,6 +1152,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 1,
         "explanation": "정답이 원-핫 $[1, 0]$이면 손실은 $-\\log_2 q_0$이다. $q_0$가 작아질수록 손실이 커지므로, 이 손실을 줄이는 학습은 정답 클래스의 확률을 높인다."
+      },
+      {
+        "id": "w1-entropy-c4",
+        "question": "정답 클래스에 확률 0.5를 준 예측의 교차 엔트로피 손실은 비트와 냇으로 각각 얼마인가?",
+        "choices": [
+          "1비트, 약 0.693냇",
+          "0.5비트, 0.5냇",
+          "약 0.693비트, 1냇",
+          "2비트, 약 1.386냇"
+        ],
+        "answer": 0,
+        "explanation": "$-\\log_2 0.5 = 1$비트, $-\\ln 0.5 = \\ln 2 \\approx 0.693$냇이다. 단위만 다르고 같은 양이다."
+      },
+      {
+        "id": "w1-entropy-c5",
+        "question": "모델의 예측 분포 $q$가 정답 분포 $p$와 완전히 같아지면 교차 엔트로피 $H(p, q)$는?",
+        "choices": [
+          "$p$의 엔트로피 $H(p)$와 같아지고 KL 발산은 0이 된다",
+          "0이 된다",
+          "무한대가 된다",
+          "1비트가 된다"
+        ],
+        "answer": 0,
+        "explanation": "$H(p, q) = H(p) + D_{\\mathrm{KL}}(p\\parallel q)$이고 $q = p$면 KL이 0이다. 정답 분포 자체가 불확실하면 $H(p) > 0$이라 손실이 0까지 내려가지는 않는다."
       }
     ],
     "quizIds": [
@@ -893,6 +1229,30 @@ const sections: Record<string, SectionMeta> = {
         ],
         "answer": 0,
         "explanation": "뉴턴 방법은 곡률을 써서 조건수의 영향을 없애지만, 파라미터 $n$개의 헤세 행렬은 원소가 $n^2$개다. $n = 10^8$이면 $10^{16}$개라 불가능하다. 그래서 딥러닝은 Adam 같은 근사적 방법을 쓴다."
+      },
+      {
+        "id": "w1-gd-convergence-c4",
+        "question": "두 방향의 곡률 비가 $\\kappa = 10$일 때, 최선의 고정 학습률로 경사하강법을 하면 오차가 스텝마다 약 몇 배로 줄어드는가?",
+        "choices": [
+          "약 0.82배",
+          "약 0.1배",
+          "약 0.98배",
+          "0배(한 번에 도착)"
+        ],
+        "answer": 0,
+        "explanation": "배율은 $\\frac{\\kappa - 1}{\\kappa + 1} = \\frac{9}{11} \\approx 0.818$이다. $\\kappa = 100$이면 $\\frac{99}{101} \\approx 0.98$로 훨씬 느리다."
+      },
+      {
+        "id": "w1-gd-convergence-c5",
+        "question": "특징의 스케일을 표준화하면 경사하강법이 빨라지는 이유로 가장 알맞은 것은?",
+        "choices": [
+          "방향마다 곡률이 비슷해져 조건수 $\\kappa$가 작아지기 때문",
+          "손실의 최솟값이 0이 되기 때문",
+          "학습률이 자동으로 커지기 때문",
+          "파라미터 수가 줄기 때문"
+        ],
+        "answer": 0,
+        "explanation": "스케일이 크게 다른 특징은 손실을 길쭉한 계곡으로 만든다(큰 $\\kappa$). 표준화하면 등고선이 원에 가까워져 같은 학습률로 모든 방향이 비슷한 속도로 수렴한다."
       }
     ],
     "quizIds": [

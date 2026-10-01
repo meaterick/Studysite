@@ -140,7 +140,14 @@ export function parseMarkdownUncached(source: string): Block[] {
         i++;
       }
       i++; // skip closing :::
-      blocks.push({ type: "callout", tone, title, text: bodyLines.join(" ").trim() });
+      blocks.push({
+        type: "callout",
+        tone,
+        title,
+        text: bodyLines.join(" ").trim(),
+        // 상자 안에서도 표·목록·코드·수식·여러 문단을 쓸 수 있게 본문을 다시 블록으로 해석한다.
+        blocks: parseMarkdownUncached(bodyLines.join("\n")),
+      });
       continue;
     }
 

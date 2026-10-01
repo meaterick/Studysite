@@ -104,8 +104,8 @@ function checkImage(block: Extract<Block, { type: "image" }>, context: string) {
 function checkBlocks(blocks: Block[], context: string) {
   for (const b of blocks) {
     if (b.type === "math") checkTex(b.tex, context);
-    else if (b.type === "heading" || b.type === "paragraph" || (b.type === "callout" && b.text))
-      checkInlineMath(b.text, context);
+    else if (b.type === "callout") checkBlocks(b.blocks, context);
+    else if (b.type === "heading" || b.type === "paragraph") checkInlineMath(b.text, context);
     else if (b.type === "list") b.items.forEach((it) => checkInlineMath(it, context));
     else if (b.type === "table") b.rows.flat().forEach((c) => checkInlineMath(c, context));
     else if (b.type === "image") checkImage(b, context);
