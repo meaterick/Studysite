@@ -14,8 +14,8 @@ export function SubmissionVersionView({ submission, version }: { submission: Sub
     <div className="space-y-3">
       {version.text ? (
         <div>
-          <p className="text-xs font-bold text-ink-muted">제출 메모</p>
-          <pre className="mt-1 max-h-[24rem] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-[var(--border-hairline)] bg-page px-4 py-3 font-[inherit] text-sm leading-relaxed text-ink">
+          <p className="text-xs font-medium text-ink-muted">제출 메모</p>
+          <pre className="mt-2 max-h-[24rem] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-[var(--surface-card-2)] px-4 py-3 font-[inherit] text-sm leading-relaxed text-ink">
             {version.text}
           </pre>
         </div>
@@ -24,11 +24,11 @@ export function SubmissionVersionView({ submission, version }: { submission: Sub
       )}
       {version.links.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-ink-muted">참고 링크</p>
+          <p className="text-xs font-medium text-ink-muted">참고 링크</p>
           <ul className="mt-1 space-y-1 text-sm">
             {version.links.map((link) => (
               <li key={link} className="break-all">
-                <a href={link} target="_blank" rel="noopener noreferrer nofollow" className="text-[var(--series-blue)] hover:underline">
+                <a href={link} target="_blank" rel="noopener noreferrer nofollow" className="text-[var(--accent)] hover:underline">
                   {link}
                 </a>
               </li>
@@ -38,13 +38,13 @@ export function SubmissionVersionView({ submission, version }: { submission: Sub
       )}
       {version.files.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-ink-muted">첨부 파일</p>
+          <p className="text-xs font-medium text-ink-muted">첨부 파일</p>
           <ul className="mt-1 space-y-1 text-sm">
             {version.files.map((file) => (
               <li key={file.id}>
                 <a
                   href={`/api/submissions/${submission.id}/files/${file.id}`}
-                  className="font-medium text-[var(--series-blue)] hover:underline"
+                  className="font-medium text-[var(--accent)] hover:underline"
                 >
                   {file.name}
                 </a>
@@ -61,36 +61,33 @@ export function SubmissionVersionView({ submission, version }: { submission: Sub
 export function GradeView({ grade, rubric }: { grade: SubmissionGrade; rubric?: RubricCriterion[] }) {
   const revision = grade.decision === "revision";
   return (
-    <div
-      className="rounded-lg border-l-4 px-4 py-3"
-      style={{
-        borderColor: revision ? "var(--status-serious)" : "var(--status-good)",
-        background: `color-mix(in srgb, ${revision ? "var(--status-serious)" : "var(--status-good)"} 10%, transparent)`,
-      }}
-    >
+    <div className="rounded-2xl border border-[var(--border-hairline)] p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-black text-ink">
-          {revision ? "재제출 요청" : `${grade.score ?? "-"} / ${grade.maxScore}점`}
-        </p>
+        {revision ? (
+          <p className="text-lg font-semibold tracking-[-0.02em] text-[var(--status-serious)]">재제출 요청</p>
+        ) : (
+          <p className="text-[2rem] font-bold leading-none tracking-[-0.04em] tabular-nums text-ink">
+            {grade.score ?? "-"}
+            <span className="ml-1 text-base font-medium tracking-normal text-ink-muted">/ {grade.maxScore}점</span>
+          </p>
+        )}
         <p className="text-xs text-ink-muted">
-          제출본 v{grade.version} · {formatDateTime(grade.gradedAt)} 채점
+          v{grade.version} · {formatDateTime(grade.gradedAt)} 채점
         </p>
       </div>
       {!revision && rubric && grade.criteria && (
-        <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+        <dl className="rows mt-5 border-t border-[var(--border-hairline)] text-sm">
           {rubric.map((c) => (
-            <li key={c.id} className="flex justify-between gap-3 rounded-md bg-[color-mix(in_srgb,var(--surface-card)_70%,transparent)] px-2.5 py-1">
-              <span className="text-ink-secondary">{c.label}</span>
-              <span className="shrink-0 font-bold text-ink">
-                {grade.criteria?.[c.id] ?? "-"} / {c.points}
-              </span>
-            </li>
+            <div key={c.id} className="flex justify-between gap-3 py-2.5">
+              <dt className="text-ink-secondary">{c.label}</dt>
+              <dd className="shrink-0 tabular-nums text-ink">
+                {grade.criteria?.[c.id] ?? "-"} <span className="text-ink-muted">/ {c.points}</span>
+              </dd>
+            </div>
           ))}
-        </ul>
+        </dl>
       )}
-      {grade.feedback && (
-        <p className="mt-2 whitespace-pre-wrap text-sm text-ink-secondary">{grade.feedback}</p>
-      )}
+      {grade.feedback && <p className="mt-5 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-body">{grade.feedback}</p>}
     </div>
   );
 }

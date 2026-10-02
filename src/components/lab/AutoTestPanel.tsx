@@ -3,6 +3,7 @@
 import { useId, useState, type ReactNode } from "react";
 import { runPython, type RunStatus } from "@/lib/pyRunner";
 import { buildAutoTestProgram, parseAutoTestResults, type AutoTestResult } from "@/lib/labHarness";
+import Icon from "@/components/Icon";
 
 export interface AutoTestView {
   id: string;
@@ -27,7 +28,7 @@ export default function AutoTestPanel({
   ns,
   tests,
   beforeRun,
-  beforeRunLabel = "▶ 전체 실행 후 테스트",
+  beforeRunLabel = "전체 실행 후 테스트",
   disabled,
   note,
 }: {
@@ -74,9 +75,9 @@ export default function AutoTestPanel({
   const passed = results ? tests.filter((t) => results[t.id]?.ok).length : 0;
 
   return (
-    <section aria-labelledby={headingId} className="rounded-xl border border-[var(--series-aqua)]/50 bg-card p-4 sm:p-5">
+    <section aria-labelledby={headingId} className="rounded-2xl border border-[var(--border-hairline)] p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 id={headingId} className="text-base font-black text-ink">
+        <h3 id={headingId} className="text-base font-bold tracking-[-0.02em] text-ink">
           자동 테스트
           {results && (
             <span className={`ml-2 text-sm ${passed === tests.length ? "text-[var(--status-good)]" : "text-ink-muted"}`}>
@@ -90,7 +91,7 @@ export default function AutoTestPanel({
               type="button"
               onClick={() => void run(true)}
               disabled={running || disabled}
-              className="rounded-md bg-[var(--series-aqua)] px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50"
+              className="btn btn-primary btn-sm"
             >
               {beforeRunLabel}
             </button>
@@ -107,7 +108,7 @@ export default function AutoTestPanel({
       </div>
       <p className="mt-1 text-sm text-ink-muted">
         {note ??
-          "실행한 코드 셀의 변수와 함수를 검사합니다. 브라우저에서만 실행되며 결과는 저장되지 않습니다. 통과는 최소 조건일 뿐이고, 점수는 채점 기준에 따라 운영자가 매깁니다."}
+          "실행한 코드의 변수와 함수를 검사합니다. 통과는 최소 조건이며, 점수는 운영자가 채점 기준에 따라 매깁니다."}
       </p>
       {status && <p className="mt-2 text-xs text-ink-muted">{status}</p>}
       {error && <p className="mt-2 text-sm text-[var(--status-critical)]">{error}</p>}
@@ -115,13 +116,15 @@ export default function AutoTestPanel({
         {tests.map((t) => {
           const r = results?.[t.id];
           return (
-            <li key={t.id} className="rounded-lg border border-[var(--border-hairline)] px-3 py-2">
-              <p className={r ? (r.ok ? "font-bold text-[var(--status-good)]" : "font-bold text-[var(--status-critical)]") : "font-bold text-ink-secondary"}>
-                <span aria-hidden="true" className="mr-1.5">
-                  {r ? (r.ok ? "✓" : "✗") : "○"}
-                </span>
+            <li key={t.id} className="rounded-xl border border-[var(--border-hairline)] px-4 py-3">
+              <p className={`flex flex-wrap items-center gap-x-2 font-medium ${r ? (r.ok ? "text-[var(--status-good)]" : "text-[var(--status-critical)]") : "text-ink-secondary"}`}>
+                {r ? (
+                  <Icon name={r.ok ? "check" : "close"} size={15} strokeWidth={2} />
+                ) : (
+                  <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full border border-[var(--border-strong)]" />
+                )}
                 {t.title}
-                <span className="ml-2 text-xs font-medium text-ink-muted">{t.taskTitle}</span>
+                <span className="text-xs font-normal text-ink-muted">{t.taskTitle}</span>
                 <span className="sr-only">{r ? (r.ok ? " (통과)" : " (미통과)") : " (실행 전)"}</span>
               </p>
               {r && !r.ok && (

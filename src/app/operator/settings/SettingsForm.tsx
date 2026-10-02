@@ -28,24 +28,24 @@ export default function SettingsForm({
   };
 
   return (
-    <form action={submit} className="space-y-8">
-      <fieldset className="min-w-0 surface p-5">
-        <legend className="px-1 text-lg font-black text-ink">단계 진행 방식</legend>
-        <div className="mt-2 space-y-3">
-          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--border-hairline)] p-3 has-[:checked]:border-[var(--series-blue)]">
-            <input type="radio" name="progressionMode" value="warn" defaultChecked={mode === "warn"} className="mt-1" />
+    <form action={submit} className="space-y-14">
+      <fieldset className="min-w-0">
+        <legend className="section-title mb-4">단계 진행 방식</legend>
+        <div className="space-y-3">
+          <label className="flex cursor-pointer gap-3 rounded-2xl border border-[var(--border-hairline)] p-4 transition has-[:checked]:border-[var(--text-primary)] has-[:checked]:bg-[var(--surface-card-2)]">
+            <input type="radio" name="progressionMode" value="warn" defaultChecked={mode === "warn"} className="mt-1 accent-[var(--text-primary)]" />
             <span>
-              <span className="font-bold text-ink">미완료 경고 (기본)</span>
-              <span className="block text-sm text-ink-secondary">
+              <span className="font-medium text-ink">미완료 경고 (기본)</span>
+              <span className="mt-1 block text-sm leading-relaxed text-ink-secondary">
                 순서는 안내만 합니다. 앞 단계를 끝내지 않아도 다음 단계·백지공부·과제로 넘어갈 수 있고, 끝내지 않은 핵심 단계가 있다는 경고를 보여 줍니다. 보충·심화 단계는 언제든 열 수 있습니다.
               </span>
             </span>
           </label>
-          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--border-hairline)] p-3 has-[:checked]:border-[var(--series-blue)]">
-            <input type="radio" name="progressionMode" value="lock" defaultChecked={mode === "lock"} className="mt-1" />
+          <label className="flex cursor-pointer gap-3 rounded-2xl border border-[var(--border-hairline)] p-4 transition has-[:checked]:border-[var(--text-primary)] has-[:checked]:bg-[var(--surface-card-2)]">
+            <input type="radio" name="progressionMode" value="lock" defaultChecked={mode === "lock"} className="mt-1 accent-[var(--text-primary)]" />
             <span>
-              <span className="font-bold text-ink">잠금</span>
-              <span className="block text-sm text-ink-secondary">
+              <span className="font-medium text-ink">잠금</span>
+              <span className="mt-1 block text-sm leading-relaxed text-ink-secondary">
                 앞 핵심 단계의 확인 문제를 모두 맞혀야 다음 핵심 단계가 열리고, 핵심 단계를 모두 마치면 백지공부·과제와 보충·심화 단계가 열립니다.
               </span>
             </span>
@@ -53,22 +53,21 @@ export default function SettingsForm({
         </div>
       </fieldset>
 
-      <fieldset className="min-w-0 surface p-5">
-        <legend className="px-1 text-lg font-black text-ink">주차별 과제 마감일</legend>
-        <p className="mb-4 text-sm text-ink-secondary">
-          정해 두면 스터디원의 진도 대시보드에 &lsquo;가장 가까운 마감&rsquo;과 남은 일수가 표시됩니다(한국 시간 그날 23:59까지). 비워 두면 표시하지 않습니다.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
+      <fieldset className="min-w-0">
+        <legend className="section-title">주차별 과제 마감일</legend>
+        <p className="mb-4 mt-1 text-sm text-ink-muted">한국 시간 그날 23:59까지 · 비워 두면 표시하지 않습니다</p>
+        <div className="rows border-y border-[var(--border-hairline)]">
           {weeks.map((w) => (
-            <label key={w.slug} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <label key={w.slug} className="flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <span className="min-w-0 truncate text-ink-secondary">
-                <strong className="text-ink">{w.number}주차</strong> {w.title}
+                <span className="mr-2 font-medium text-ink">{w.number}주차</span>
+                {w.title}
               </span>
               <input
                 type="date"
                 name={`due:${w.slug}`}
                 defaultValue={dueDates[w.slug] ?? ""}
-                className="shrink-0 rounded-md border border-[var(--border-hairline)] bg-page px-2 py-1 text-ink"
+                className="shrink-0 rounded-lg border border-[var(--border-strong)] bg-card px-3 py-1.5 tabular-nums text-ink"
               />
             </label>
           ))}
@@ -79,12 +78,12 @@ export default function SettingsForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-[var(--series-orange)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
+          className="btn btn-primary"
         >
           {pending ? "저장 중…" : "설정 저장"}
         </button>
         {message && (
-          <p className={`text-sm font-bold ${message.tone === "ok" ? "text-[var(--status-good)]" : "text-[var(--status-critical)]"}`}>
+          <p className={`text-sm ${message.tone === "ok" ? "text-[var(--status-good)]" : "text-[var(--status-critical)]"}`}>
             {message.text}
           </p>
         )}

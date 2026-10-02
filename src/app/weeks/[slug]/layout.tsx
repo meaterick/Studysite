@@ -32,33 +32,19 @@ export default async function WeekLayout({
   if (!week) notFound();
   const { prev, next } = getAdjacentWeeks(week.number);
 
+  const navItem = (label: string, href: string, title: string, align: "left" | "right") => (
+    <Link href={href} className={`group min-w-0 ${align === "right" ? "text-right" : ""}`}>
+      <span className="kicker block">{label}</span>
+      <span className="mt-2 block truncate text-[15px] font-semibold tracking-[-0.02em] text-ink-secondary transition group-hover:text-ink">{title}</span>
+    </Link>
+  );
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
       {children}
-      <nav aria-label="다른 주차" className="mt-14 grid gap-3 border-t border-[var(--border-hairline)] pt-8 sm:grid-cols-2 print:hidden">
-        {prev ? (
-          <Link href={`/weeks/${prev.slug}`} className="surface surface-link group block min-w-0 p-4">
-            <span className="block text-xs font-bold text-ink-muted">← 이전 주차</span>
-            <span className="mt-1 block truncate font-black text-ink group-hover:text-[var(--series-blue)]">
-              {prev.number}주차 · {prev.title}
-            </span>
-          </Link>
-        ) : (
-          <span className="hidden sm:block" />
-        )}
-        {next ? (
-          <Link href={`/weeks/${next.slug}`} className="surface surface-link group block min-w-0 p-4 text-right">
-            <span className="block text-xs font-bold text-ink-muted">다음 주차 →</span>
-            <span className="mt-1 block truncate font-black text-ink group-hover:text-[var(--series-blue)]">
-              {next.number}주차 · {next.title}
-            </span>
-          </Link>
-        ) : (
-          <Link href="/curriculum" className="surface surface-link group block min-w-0 p-4 text-right">
-            <span className="block text-xs font-bold text-ink-muted">과정 마무리</span>
-            <span className="mt-1 block font-black text-ink group-hover:text-[var(--series-blue)]">커리큘럼 보기 →</span>
-          </Link>
-        )}
+      <nav aria-label="다른 주차" className="mt-24 grid grid-cols-2 gap-8 border-t border-[var(--border-hairline)] pt-8 print:hidden">
+        {prev ? navItem("Previous week", `/weeks/${prev.slug}`, `${prev.number}주차 · ${prev.title}`, "left") : <span />}
+        {next ? navItem("Next week", `/weeks/${next.slug}`, `${next.number}주차 · ${next.title}`, "right") : navItem("Overview", "/curriculum", "커리큘럼", "right")}
       </nav>
     </div>
   );

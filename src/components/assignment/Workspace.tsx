@@ -16,6 +16,8 @@ import { forceStop, onRuntimeReset, preloadPyodide, resetNamespace, runPython, w
 import AnswerCell from "./AnswerCell";
 import AutoTestPanel, { type AutoTestView } from "@/components/lab/AutoTestPanel";
 import TierBadge from "@/components/TierBadge";
+import StepMarker from "@/components/StepMarker";
+import Icon from "@/components/Icon";
 import { TIER_INFO, type Tier } from "@/content/tiers";
 import { formatTime } from "@/lib/datetime";
 
@@ -23,7 +25,7 @@ import { formatTime } from "@/lib/datetime";
 const NotebookCodeCell = dynamic(() => import("./NotebookCodeCell"), {
   ssr: false,
   loading: () => (
-    <div className="rounded-lg border border-[var(--border-hairline)] bg-card py-8 text-center text-xs text-ink-muted">
+    <div className="rounded-xl border border-[var(--border-hairline)] bg-[var(--code-bg)] py-8 text-center text-xs text-ink-muted">
       코드 편집기를 불러오고 있습니다…
     </div>
   ),
@@ -389,40 +391,37 @@ export default function Workspace({
     <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside className="print:hidden" aria-label="과제 목록">
         <div className="lg:sticky lg:top-20">
-          <nav className="surface p-3">
-            <p className="px-1 text-xs font-bold text-ink-muted">과제 목록</p>
-            <ol className="mt-2 space-y-1">
+          <nav className="lg:border-l lg:border-[var(--border-hairline)] lg:pl-4">
+            <p className="px-2 text-[13px] font-medium text-ink">과제 목록</p>
+            <ol className="mt-3 space-y-0.5">
               {tasks.map((t, i) => {
                 const c = checks.find((x) => x.taskId === t.id);
                 return (
                   <li key={t.id}>
                     <a
                       href={`#task-${t.id}`}
-                      className="flex gap-2 rounded-md px-2 py-1.5 text-sm text-ink-secondary hover:bg-[var(--surface-card-2)]"
+                      className="flex items-start gap-2.5 rounded-lg px-2 py-1.5 text-[13px] text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
                     >
-                      <span aria-hidden="true" className={`w-4 shrink-0 ${c?.complete ? "text-[var(--status-good)]" : "text-ink-muted"}`}>
-                        {c?.complete ? "✓" : `${i + 1}`}
-                      </span>
-                      <span className="min-w-0">
+                      <StepMarker size={20} state={c?.complete ? "done" : "todo"} label={i + 1} />
+                      <span className="min-w-0 leading-snug">
                         {t.title}
-                        {t.optional && <span className="ml-1 text-xs text-ink-muted">({TIER_INFO[t.tier].label} · 선택)</span>}
+                        {t.optional && <span className="ml-1 text-xs text-ink-muted">· {TIER_INFO[t.tier].label} 선택</span>}
                       </span>
                     </a>
                   </li>
                 );
               })}
               {autoTests && autoTests.length > 0 && (
-                <li className="border-t border-[var(--border-hairline)] pt-1">
-                  <a href="#autotests" className="flex gap-2 rounded-md px-2 py-1.5 text-sm text-ink-secondary hover:bg-[var(--surface-card-2)]">
-                    <span aria-hidden="true" className="w-4">✓</span>
+                <li className="mt-2 border-t border-[var(--border-hairline)] pt-2">
+                  <a href="#autotests" className="flex items-center rounded-lg px-2 py-1.5 text-[13px] text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink">
                     자동 테스트
                   </a>
                 </li>
               )}
-              <li className="border-t border-[var(--border-hairline)] pt-1">
-                <a href="#submit" className="flex gap-2 rounded-md px-2 py-1.5 text-sm font-bold text-[var(--series-blue)] hover:bg-[var(--surface-card-2)]">
-                  <span aria-hidden="true" className="w-4">→</span>
+              <li className={autoTests && autoTests.length > 0 ? "" : "mt-2 border-t border-[var(--border-hairline)] pt-2"}>
+                <a href="#submit" className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-[13px] font-medium text-ink transition hover:bg-[var(--surface-card-2)]">
                   제출하기
+                  <Icon name="arrowRight" size={14} className="text-ink-muted transition group-hover:translate-x-0.5" />
                 </a>
               </li>
             </ol>
@@ -430,10 +429,10 @@ export default function Workspace({
         </div>
       </aside>
 
-      <div className="min-w-0 space-y-8">
-        <div className="sticky top-16 z-20 -mx-4 flex flex-wrap items-center justify-between gap-2 border-y border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_97%,transparent)] px-4 py-2 shadow-sm backdrop-blur sm:mx-0 sm:rounded-xl sm:border">
+      <div className="min-w-0 space-y-12">
+        <div className="sticky top-[4.75rem] z-20 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-card)_94%,transparent)] py-2 pl-4 pr-2 shadow-[var(--shadow-raised)] backdrop-blur-xl">
           <p
-            className={`text-xs font-bold ${saveState === "error" ? "text-[var(--status-critical)]" : saveState === "saved" && lastSaved ? "text-[var(--status-good)]" : "text-ink-muted"}`}
+            className={`text-xs ${saveState === "error" ? "text-[var(--status-critical)]" : "text-ink-muted"}`}
             aria-live="polite"
           >
             {saveLabel}
@@ -443,7 +442,7 @@ export default function Workspace({
               type="button"
               onClick={() => void saveNow()}
               disabled={saveState === "saving"}
-              className="btn btn-secondary btn-sm"
+              className="btn btn-ghost btn-sm"
             >
               지금 저장
             </button>
@@ -451,7 +450,7 @@ export default function Workspace({
               type="button"
               onClick={() => void restartRuntime()}
               disabled={busy}
-              className="btn btn-secondary btn-sm"
+              className="btn btn-ghost btn-sm"
             >
               실행 환경 초기화
             </button>
@@ -459,7 +458,7 @@ export default function Workspace({
               <button
                 type="button"
                 onClick={() => forceStop()}
-                className="rounded-md bg-[var(--status-critical)] px-2.5 py-1 text-xs font-bold text-white hover:opacity-90"
+                className="btn btn-danger btn-sm"
               >
                 실행 중단
               </button>
@@ -469,19 +468,20 @@ export default function Workspace({
                 onClick={() => void runAll()}
                 className="btn btn-primary btn-sm"
               >
-                ▶ 전체 실행
+                <Icon name="play" size={12} />
+                전체 실행
               </button>
             )}
           </div>
         </div>
 
         {saveError && (
-          <p className="rounded-lg border-l-4 border-[var(--status-critical)] bg-[color-mix(in_srgb,var(--status-critical)_8%,transparent)] px-4 py-2 text-sm text-[var(--status-critical)]">
+          <p className="callout callout-danger text-[var(--status-critical)]">
             {saveError}
           </p>
         )}
         {notice && (
-          <p className="rounded-lg border-l-4 border-[var(--series-blue)] bg-[color-mix(in_srgb,var(--series-blue)_8%,transparent)] px-4 py-2 text-sm text-ink-secondary" role="status">
+          <p className="callout" role="status">
             {notice}
           </p>
         )}
@@ -491,18 +491,22 @@ export default function Workspace({
           const c = checks.find((x) => x.taskId === task.id);
           return (
             <section key={task.id} id={`task-${task.id}`} aria-labelledby={`task-title-${task.id}`} className="scroll-mt-32">
-              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-2">
-                <h3 id={`task-title-${task.id}`} className="text-lg font-black text-ink">
-                  과제 {i + 1}. {task.title}
-                  <span className="ml-2 align-middle">
-                    <TierBadge tier={task.tier} />
+              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-3">
+                <h3 id={`task-title-${task.id}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-bold tracking-[-0.03em] text-ink">
+                  <span className="font-mono text-xs font-normal text-ink-muted">{String(i + 1).padStart(2, "0")}</span>
+                  {task.title}
+                  <span className="text-sm font-normal tracking-normal">
+                    <TierBadge tier={task.tier} compact />
                   </span>
-                  {task.optional && <span className="ml-1.5 align-middle text-xs font-bold text-ink-muted">선택</span>}
+                  {task.optional && <span className="pill">선택</span>}
                 </h3>
                 {c && (
-                  <p className="text-xs font-bold">
+                  <p className="text-xs">
                     {c.complete ? (
-                      <span className="text-[var(--status-good)]">✓ 작성 완료</span>
+                      <span className="flex items-center gap-1 font-medium text-[var(--status-good)]">
+                        <Icon name="check" size={14} />
+                        작성 완료
+                      </span>
                     ) : (
                       <span className="text-ink-muted">
                         {[
@@ -560,20 +564,12 @@ export default function Workspace({
                   );
                 })}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => addCell(task.id, "code")}
-                  className="rounded-md border border-dashed border-[var(--border-strong)] px-3 py-1.5 text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
-                >
-                  + 코드 셀 추가
+              <div className="mt-3 flex flex-wrap gap-1">
+                <button type="button" onClick={() => addCell(task.id, "code")} className="btn btn-ghost btn-sm -ml-3 text-xs">
+                  + 코드 셀
                 </button>
-                <button
-                  type="button"
-                  onClick={() => addCell(task.id, "text")}
-                  className="rounded-md border border-dashed border-[var(--border-strong)] px-3 py-1.5 text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
-                >
-                  + 메모 추가
+                <button type="button" onClick={() => addCell(task.id, "text")} className="btn btn-ghost btn-sm text-xs">
+                  + 메모
                 </button>
               </div>
             </section>
@@ -586,20 +582,19 @@ export default function Workspace({
           </div>
         )}
 
-        <section id="submit" aria-labelledby="submit-heading" className="scroll-mt-32 surface p-5">
-          <h3 id="submit-heading" className="text-lg font-black text-ink">
+        <section id="submit" aria-labelledby="submit-heading" className="scroll-mt-32 rounded-2xl border border-[var(--border-hairline)] p-6 sm:p-8">
+          <h3 id="submit-heading" className="text-xl font-bold tracking-[-0.03em] text-ink">
             {resubmit ? "다시 제출하기" : "제출하기"}
           </h3>
-          <p className="mt-1 text-sm text-ink-muted">
-            제출하면 지금 작업 공간의 코드, 실행 결과, 답안이 그대로 제출본으로 저장됩니다. 제출한 뒤에도 계속 수정해 다시 제출할 수 있으며, 이전 제출본은 기록으로 남습니다.
-          </p>
-          <ul className="mt-4 space-y-1.5 text-sm">
+          <p className="mt-1 text-sm text-ink-muted">지금의 코드·실행 결과·답안이 제출본으로 저장됩니다. 제출 후에도 고쳐서 다시 낼 수 있습니다.</p>
+          <ul className="mt-5 space-y-2 text-sm">
             {checks.map((c) => (
-              <li key={c.taskId} className={c.complete ? "text-[var(--status-good)]" : c.optional ? "text-ink-muted" : "text-ink-secondary"}>
-                <span aria-hidden="true">{c.complete ? "✓" : c.optional ? "–" : "○"}</span> {c.title}
-                {c.optional && " (선택)"}
+              <li key={c.taskId} className={`flex flex-wrap items-center gap-x-2 ${c.complete ? "text-ink" : c.optional ? "text-ink-muted" : "text-ink-secondary"}`}>
+                <StepMarker size={18} state={c.complete ? "done" : "todo"} label="" />
+                {c.title}
+                {c.optional && <span className="text-xs text-ink-muted">선택</span>}
                 {!c.complete && (
-                  <span className="text-xs">
+                  <span className="text-xs text-ink-muted">
                     {" "}
                     {[
                       c.missingAnswers.length > 0 && `답안 ${c.missingAnswers.length}개 미작성`,
@@ -616,7 +611,7 @@ export default function Workspace({
 
           <form ref={formRef} onSubmit={onSubmit} className="mt-5 space-y-4">
             <div>
-              <label htmlFor="submit-text" className="text-sm font-bold text-ink">
+              <label htmlFor="submit-text" className="text-sm font-medium text-ink">
                 운영자에게 남길 메모 <span className="font-normal text-ink-muted">(선택)</span>
               </label>
               <textarea
@@ -625,28 +620,37 @@ export default function Workspace({
                 rows={3}
                 maxLength={20000}
                 placeholder="특히 봐 주었으면 하는 부분이나 막혔던 점을 적어 주십시오."
-                className="mt-1 w-full rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-2 text-sm text-ink outline-none focus:border-[var(--series-blue)]"
+                className="mt-2 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-ink-muted"
               />
             </div>
-            <details className="rounded-lg border border-[var(--border-hairline)] px-3 py-2">
-              <summary className="cursor-pointer text-sm font-bold text-ink-secondary">참고 링크·첨부 파일 (선택)</summary>
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink [&::-webkit-details-marker]:hidden">
+                참고 링크·첨부 파일 (선택)
+                <Icon name="chevronDown" size={14} className="transition group-open:rotate-180" />
+              </summary>
               <div className="mt-3 space-y-3">
                 <div>
-                  <label htmlFor="submit-links" className="text-xs font-bold text-ink-secondary">
+                  <label htmlFor="submit-links" className="text-xs font-medium text-ink-secondary">
                     참고 링크 (한 줄에 하나, 최대 5개)
                   </label>
                   <textarea
                     id="submit-links"
                     name="links"
                     rows={2}
-                    className="mt-1 w-full rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-2 text-sm text-ink outline-none focus:border-[var(--series-blue)]"
+                    className="mt-2 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-sm text-ink"
                   />
                 </div>
                 <div>
-                  <label htmlFor="submit-files" className="text-xs font-bold text-ink-secondary">
+                  <label htmlFor="submit-files" className="text-xs font-medium text-ink-secondary">
                     첨부 파일 (pdf, png, jpg, csv, json, txt, md, py, ipynb, zip · 최대 3개, 각 5MB)
                   </label>
-                  <input id="submit-files" name="files" type="file" multiple className="mt-1 block text-sm text-ink-secondary" />
+                  <input
+                    id="submit-files"
+                    name="files"
+                    type="file"
+                    multiple
+                    className="mt-2 block text-sm text-ink-secondary file:mr-3 file:rounded-full file:border file:border-[var(--border-strong)] file:bg-transparent file:px-4 file:py-1.5 file:text-[13px] file:font-medium file:text-ink"
+                  />
                 </div>
               </div>
             </details>

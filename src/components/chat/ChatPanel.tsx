@@ -170,14 +170,14 @@ export default function ChatPanel({
 
   return (
     <div className={`relative flex flex-col overflow-hidden surface ${className}`}>
-      <div className="flex items-center justify-end gap-1.5 border-b border-[var(--border-hairline)] px-4 py-1.5 text-[11px] text-ink-muted">
+      <div className="absolute right-4 top-3 z-10 flex items-center gap-1.5 text-[11px] text-ink-muted" title={connection === "live" ? "실시간 연결됨" : undefined}>
         <span
           aria-hidden
           className={`inline-block h-1.5 w-1.5 rounded-full ${
             connection === "live" ? "bg-[var(--status-good)]" : connection === "connecting" ? "bg-[var(--status-warning)]" : "bg-[var(--status-critical)]"
           }`}
         />
-        {connection === "live" ? "실시간 연결됨" : connection === "connecting" ? "연결 중…" : "연결이 끊겼습니다. 새로고침해 주십시오."}
+        {connection === "live" ? <span className="sr-only">실시간 연결됨</span> : connection === "connecting" ? "연결 중…" : "연결이 끊겼습니다. 새로고침해 주십시오."}
       </div>
 
       <div
@@ -186,10 +186,10 @@ export default function ChatPanel({
         role="log"
         aria-live="polite"
         aria-label="채팅 메시지"
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6"
       >
         {conv.messages.length === 0 ? (
-          <p className="mt-6 text-center text-sm text-ink-muted">{emptyText ?? "아직 주고받은 메시지가 없습니다."}</p>
+          <p className="mt-10 text-center text-sm text-ink-muted">{emptyText ?? "아직 주고받은 메시지가 없습니다."}</p>
         ) : (
           <ol className="space-y-2">
             {conv.messages.map((m, i) => {
@@ -200,34 +200,34 @@ export default function ChatPanel({
               return (
                 <li key={m.id}>
                   {newDay && (
-                    <p className="my-3 text-center text-[11px] font-bold text-ink-muted">{formatDate(m.createdAt)}</p>
+                    <p className="my-4 text-center text-[11px] tabular-nums text-ink-muted">{formatDate(m.createdAt)}</p>
                   )}
                   <div className={`flex ${mine ? "justify-end" : "justify-start"} ${grouped ? "" : "mt-3"}`}>
                     <div className={`flex max-w-[85%] flex-col ${mine ? "items-end" : "items-start"}`}>
                       {!grouped && !mine && (
-                        <p className="mb-0.5 px-1 text-[11px] font-bold text-ink-muted">
+                        <p className="mb-1 px-1 text-[11px] text-ink-muted">
                           {m.role === "admin" ? `운영자 ${m.authorName}` : m.authorName}
                         </p>
                       )}
                       <div className={`flex min-w-0 max-w-full items-end gap-1.5 ${mine ? "flex-row-reverse" : ""}`}>
                         <div
-                          className={`min-w-0 rounded-2xl px-3 py-2 text-sm ${
+                          className={`min-w-0 rounded-[1.125rem] px-3.5 py-2.5 text-[14.5px] leading-relaxed ${
                             mine
-                              ? "bg-[var(--series-blue)] text-white"
+                              ? "bg-[var(--inverse-bg)] text-[var(--inverse-fg)]"
                               : m.role === "admin"
-                                ? "bg-[color-mix(in_srgb,var(--series-orange)_12%,transparent)] text-ink"
+                                ? "bg-[color-mix(in_srgb,var(--accent)_10%,var(--surface-card))] text-ink"
                                 : "bg-[var(--surface-card-2)] text-ink"
                           }`}
                         >
                           {m.topic && (
-                            <span className={`mb-0.5 block text-[10px] font-bold ${mine ? "text-white/80" : "text-ink-muted"}`}>
+                            <span className={`mb-0.5 block text-[10px] font-medium ${mine ? "opacity-70" : "text-ink-muted"}`}>
                               {m.topic}
                             </span>
                           )}
                           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.text}</p>
                         </div>
                         <span className="shrink-0 pb-0.5 text-[10px] text-ink-muted">
-                          {m.id === lastReadMineId && <span className="mr-1 font-bold text-[var(--series-blue)]">읽음</span>}
+                          {m.id === lastReadMineId && <span className="mr-1 text-ink-secondary">읽음</span>}
                           {formatTime(m.createdAt)}
                         </span>
                       </div>
@@ -244,13 +244,13 @@ export default function ChatPanel({
         <button
           type="button"
           onClick={() => scrollToBottom(true)}
-          className="absolute bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white shadow-lg hover:opacity-90"
+          className="btn btn-primary btn-sm absolute bottom-24 left-1/2 -translate-x-1/2 shadow-[var(--shadow-raised)]"
         >
-          새 메시지 ↓
+          새 메시지
         </button>
       )}
 
-      <div className="border-t border-[var(--border-hairline)] p-3">
+      <div className="border-t border-[var(--border-hairline)] p-3 sm:p-4">
         <label htmlFor={inputId} className="sr-only">
           메시지
         </label>
@@ -263,21 +263,23 @@ export default function ChatPanel({
             onKeyDown={onKeyDown}
             rows={1}
             maxLength={MAX_LENGTH}
-            placeholder={placeholder ?? "메시지를 입력하십시오."}
-            className="max-h-40 min-h-[40px] flex-1 resize-none rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-2 text-sm text-ink outline-none focus:border-[var(--series-blue)]"
+            placeholder={placeholder ?? "메시지"}
+            className="max-h-40 min-h-[42px] flex-1 resize-none rounded-[1.25rem] border border-[var(--border-strong)] bg-card px-4 py-2.5 text-sm leading-relaxed text-ink placeholder:text-ink-muted"
           />
           <button
             type="button"
             onClick={() => void send()}
             disabled={sending || !text.trim()}
-            className="btn btn-primary h-10 shrink-0"
+            className="btn btn-primary h-[42px] shrink-0"
           >
             보내기
           </button>
         </div>
-        <p className="mt-1.5 text-[11px] text-ink-muted">
-          {error ? <span className="font-bold text-[var(--status-critical)]">{error}</span> : "Enter로 보내기 · Shift+Enter로 줄바꿈"}
-        </p>
+        {error ? (
+          <p className="mt-2 px-1 text-[11px] text-[var(--status-critical)]">{error}</p>
+        ) : (
+          <p className="mt-2 hidden px-1 text-[11px] text-ink-muted sm:block">Enter 보내기 · Shift+Enter 줄바꿈</p>
+        )}
       </div>
     </div>
   );

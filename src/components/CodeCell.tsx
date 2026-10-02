@@ -6,34 +6,14 @@ import Editor, { type OnMount } from "@monaco-editor/react";
 import { loadCellCode, resetCellCode, saveCellCode } from "@/lib/codeStore";
 import { forceStop, preloadPyodide, runPython, type RunStatus } from "@/lib/pyRunner";
 import { useUserScope } from "./UserScope";
+import { defineEditorThemes, useEditorTheme } from "./assignment/useEditorTheme";
+import Icon from "./Icon";
 
 const STATUS_LABEL: Record<RunStatus, string> = {
   "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 처음 한 번은 몇 초 정도 걸립니다.",
   "loading-packages": "필요한 패키지를 불러오고 있습니다…",
   running: "실행 중…",
 };
-
-function useEditorTheme() {
-  const [theme, setTheme] = useState<"vs" | "vs-dark">("vs");
-  useEffect(() => {
-    const root = document.documentElement;
-    const resolve = () => {
-      const attr = root.getAttribute("data-theme");
-      const dark = attr === "dark" || (attr !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      setTheme(dark ? "vs-dark" : "vs");
-    };
-    resolve();
-    const observer = new MutationObserver(resolve);
-    observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    media.addEventListener("change", resolve);
-    return () => {
-      observer.disconnect();
-      media.removeEventListener("change", resolve);
-    };
-  }, []);
-  return theme;
-}
 
 export default function CodeCell({
   cellId: rawCellId,
@@ -160,37 +140,28 @@ export default function CodeCell({
     <pre
       aria-busy="true"
       style={{ height: editorHeight }}
-      className="m-0 w-full overflow-hidden bg-[var(--surface-card)] px-4 py-2.5 font-mono text-[12.5px] leading-[19px] text-ink"
+      className="m-0 w-full overflow-hidden bg-[var(--code-bg)] px-4 py-2.5 font-mono text-[12.5px] leading-[19px] text-ink"
     >
       {code}
     </pre>
   );
 
   return (
-    <div ref={containerRef} className="not-prose overflow-hidden rounded-lg border border-[var(--border-hairline)]">
-      <div className="flex items-center justify-between border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1.5">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">Python · 완성 예제 · 편집·실행 가능</span>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={handleReset}
-            className="rounded px-2 py-1 text-xs font-medium text-ink-muted hover:bg-[var(--surface-card)] hover:text-ink-secondary"
-          >
+    <div ref={containerRef} className="not-prose overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-[var(--code-bg)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-hairline)] py-1.5 pl-4 pr-2">
+        <span className="font-mono text-[11px] text-ink-muted">Python · 편집·실행 가능</span>
+        <div className="flex items-center gap-1">
+          <button onClick={handleReset} className="btn btn-ghost btn-sm min-h-7 px-3 text-xs">
             초기화
           </button>
           {running ? (
-            <button
-              onClick={handleStop}
-              className="rounded-md bg-[var(--status-bad)] px-3 py-1 text-xs font-bold text-white hover:opacity-90"
-            >
+            <button onClick={handleStop} className="btn btn-danger btn-sm min-h-7 px-3 text-xs">
               중단
             </button>
           ) : (
-            <button
-              onClick={handleRun}
-              disabled={!loaded}
-              className="btn btn-primary btn-sm"
-            >
-              ▶ 실행
+            <button onClick={handleRun} disabled={!loaded} className="btn btn-primary btn-sm min-h-7 px-3 text-xs">
+              <Icon name="play" size={12} />
+              실행
             </button>
           )}
         </div>
@@ -202,6 +173,7 @@ export default function CodeCell({
           value={code}
           onChange={onChange}
           theme={theme}
+          beforeMount={defineEditorThemes}
           onMount={handleMount}
           options={{
             fontSize: 12.5,
@@ -218,17 +190,14 @@ export default function CodeCell({
         placeholder
       )}
       {(status || output.length > 0) && (
-        <div className="border-t border-[var(--border-hairline)] bg-[#0d1117] px-4 py-2.5 font-mono text-[12.5px] leading-relaxed">
-          {status && <p className="text-ink-muted/70">{STATUS_LABEL[status]}</p>}
+        <div className="border-t border-[var(--border-hairline)] bg-[var(--surface-card)] px-4 py-3 font-mono text-[12.5px] leading-relaxed">
+          {status && <p className="text-ink-muted">{STATUS_LABEL[status]}</p>}
           {output.map((line, i) => (
-            <pre
-              key={i}
-              className={`whitespace-pre-wrap break-words ${line.stream === "stderr" ? "text-[var(--status-bad)]" : "text-[#c9d1d9]"}`}
-            >
+            <pre key={i} className={`whitespace-pre-wrap break-words ${line.stream === "stderr" ? "text-[var(--status-critical)]" : "text-ink-body"}`}>
               {line.text}
             </pre>
           ))}
-          {errored && output.length === 0 && <p className="text-[var(--status-bad)]">실행 중에 오류가 발생했습니다.</p>}
+          {errored && output.length === 0 && <p className="text-[var(--status-critical)]">실행 중에 오류가 발생했습니다.</p>}
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { STAGE_LIST_COOKIE } from "@/lib/stageListCookie";
+import Icon from "@/components/Icon";
 
 // 접힘 상태는 쿠키에 둔다. 서버가 첫 화면부터 같은 모양으로 그려야 펼쳤다 접히는 깜빡임이 없다.
 
@@ -35,28 +36,31 @@ export default function StageLayout({
     setCollapsed(!collapsed);
   };
 
-  const summary = `이번 주 단계 · ${done}/${total} 완료`;
-
   return (
     <div
-      className={`grid gap-8 transition-[grid-template-columns] duration-300 ${
-        collapsed ? "lg:grid-cols-[minmax(0,1fr)_44px]" : "lg:grid-cols-[minmax(0,1fr)_260px]"
+      className={`grid gap-10 transition-[grid-template-columns] duration-300 xl:gap-16 ${
+        collapsed ? "lg:grid-cols-[minmax(0,1fr)_40px]" : "lg:grid-cols-[minmax(0,1fr)_248px]"
       }`}
     >
       <div className="min-w-0">{children}</div>
 
       <aside className="order-first lg:order-none print:hidden" aria-label="이번 주 단계 목록">
         {/* 좁은 화면: 본문 위의 접이식 목록 */}
-        <details className="surface p-4 lg:hidden">
-          <summary className="cursor-pointer text-sm font-bold text-ink-secondary">
-            {summary}
-            <span className="ml-2 font-normal text-ink-muted">(목록 펼치기)</span>
+        <details className="group border-y border-[var(--border-hairline)] lg:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3.5 text-sm [&::-webkit-details-marker]:hidden">
+            <span className="font-medium text-ink">이번 주 단계</span>
+            <span className="flex items-center gap-2 text-ink-muted">
+              <span className="tabular-nums">
+                핵심 {done}/{total}
+              </span>
+              <Icon name="chevronDown" size={16} className="transition group-open:rotate-180" />
+            </span>
           </summary>
-          {list}
+          <div className="pb-4">{list}</div>
         </details>
 
-        {/* 넓은 화면: 오른쪽 고정 목록, 접으면 세로 막대만 남는다 */}
-        <div className="hidden lg:sticky lg:top-20 lg:block">
+        {/* 넓은 화면: 오른쪽 고정 목록, 접으면 얇은 막대만 남는다 */}
+        <div className="hidden lg:sticky lg:top-24 lg:block">
           {collapsed ? (
             <button
               type="button"
@@ -64,22 +68,23 @@ export default function StageLayout({
               aria-expanded={false}
               aria-controls="stage-list-panel"
               title="이번 주 단계 목록 펼치기"
-              className="flex w-11 flex-col items-center gap-3 surface py-3 text-ink-secondary transition hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
+              className="flex w-10 flex-col items-center gap-3 rounded-full border border-[var(--border-hairline)] py-4 text-ink-muted transition hover:border-[var(--border-strong)] hover:text-ink"
             >
-              <span aria-hidden="true" className="text-base leading-none">
-                «
-              </span>
-              <span className="text-xs font-bold [writing-mode:vertical-rl]">이번 주 단계</span>
-              <span className="text-[11px] font-bold text-[var(--series-blue)] [writing-mode:vertical-rl]">
+              <Icon name="arrowLeft" size={14} />
+              <span className="text-xs [writing-mode:vertical-rl]">이번 주 단계</span>
+              <span className="text-[11px] tabular-nums [writing-mode:vertical-rl]">
                 {done}/{total}
               </span>
               <span className="sr-only">목록 펼치기</span>
             </button>
           ) : (
-            <div id="stage-list-panel" className="surface p-4">
+            <div id="stage-list-panel" className="border-l border-[var(--border-hairline)] pl-5">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-bold text-ink-muted">
-                  이번 주 단계 ({done}/{total})
+                <p className="text-[13px] font-medium text-ink">
+                  이번 주 단계
+                  <span className="ml-2 font-normal tabular-nums text-ink-muted">
+                    {done}/{total}
+                  </span>
                 </p>
                 <button
                   type="button"
@@ -87,9 +92,10 @@ export default function StageLayout({
                   aria-expanded={true}
                   aria-controls="stage-list-panel"
                   title="이번 주 단계 목록 접기"
-                  className="rounded-md px-1.5 py-0.5 text-xs font-bold text-ink-muted transition hover:bg-[var(--surface-card-2)] hover:text-ink"
+                  className="icon-btn h-7 w-7"
                 >
-                  접기 »
+                  <Icon name="arrowRight" size={14} />
+                  <span className="sr-only">목록 접기</span>
                 </button>
               </div>
               {list}

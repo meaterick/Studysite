@@ -40,9 +40,9 @@ export default function AnswerCell({
   }, [cell.source, mode]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--border-hairline)] bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1.5">
-        <div className="flex items-center gap-1 text-xs font-bold" role="tablist" aria-label="답안 보기 방식">
+    <div className="overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-hairline)] py-1.5 pl-2 pr-3">
+        <div className="flex items-center gap-1 text-xs font-medium" role="tablist" aria-label="답안 보기 방식">
           {(["write", "preview"] as const).map((m) => (
             <button
               key={m}
@@ -50,26 +50,26 @@ export default function AnswerCell({
               role="tab"
               aria-selected={mode === m}
               onClick={() => setMode(m)}
-              className={`rounded px-2.5 py-1 ${mode === m ? "bg-card text-ink shadow-sm" : "text-ink-muted hover:text-ink-secondary"}`}
+              className={`rounded-full px-3 py-1 transition ${mode === m ? "bg-[var(--surface-card-2)] text-ink" : "text-ink-muted hover:text-ink"}`}
             >
               {m === "write" ? "작성" : "미리보기"}
             </button>
           ))}
-          <span className="ml-2 font-medium text-ink-muted">{cell.custom ? "추가한 메모" : "답안"} · 마크다운·수식($...$) 지원</span>
+          <span className="ml-2 font-normal text-ink-muted">{cell.custom ? "추가한 메모" : "답안"} · 마크다운</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className={enough ? "font-bold text-[var(--status-good)]" : optional ? "text-ink-muted" : "font-bold text-[var(--status-serious)]"}>
+          <span className={enough ? "text-[var(--status-good)]" : optional ? "text-ink-muted" : "text-[var(--status-serious)]"}>
             {length.toLocaleString()}자{minChars ? ` / 최소 ${minChars.toLocaleString()}자` : ""}
             {enough ? " ✓" : ""}
           </span>
           {onDelete && (
-            <button type="button" onClick={onDelete} className="rounded px-2 py-1 font-medium text-ink-muted hover:text-[var(--status-critical)]">
+            <button type="button" onClick={onDelete} className="rounded-full px-2 py-1 font-medium text-ink-muted transition hover:text-[var(--status-critical)]">
               삭제
             </button>
           )}
         </div>
       </div>
-      {prompt && <div className="border-b border-[var(--border-hairline)] px-3 py-2 text-sm font-medium text-ink">{prompt}</div>}
+      {prompt && <div className="border-b border-[var(--border-hairline)] px-4 py-3 text-sm font-medium leading-relaxed text-ink">{prompt}</div>}
       {mode === "write" ? (
         <textarea
           ref={ref}
@@ -78,10 +78,10 @@ export default function AnswerCell({
           placeholder={placeholder ?? "여기에 답안을 작성합니다."}
           aria-label="답안"
           spellCheck={false}
-          className="block w-full resize-none bg-card px-3 py-2.5 font-[inherit] text-sm leading-relaxed text-ink outline-none"
+          className="block w-full resize-none bg-card px-4 py-3 font-[inherit] text-[15px] leading-relaxed text-ink outline-none placeholder:text-ink-muted"
         />
       ) : (
-        <div className="px-3 py-3">
+        <div className="px-4 py-3">
           <UserMarkdown source={cell.source} />
         </div>
       )}

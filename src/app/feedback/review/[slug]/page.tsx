@@ -6,7 +6,8 @@ import { getWeekLab } from "@/content/labs";
 import { quizAnswers } from "@/content/quizAnswers";
 import { parseMarkdown } from "@/content/markdown";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
-import TierBadge from "@/components/TierBadge";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readLabState, readSectionState, readWorksheetState } from "@/lib/learningStore";
 import { quizItemWeak } from "@/lib/labView";
@@ -75,7 +76,7 @@ export default async function WeekReviewPage({
         body: s?.correct ? (
           <>
             <p>
-              <span className="font-bold text-[var(--status-good)]">정답</span> <Inline text={check.choices[check.answer]} />
+              <span className="font-semibold text-[var(--status-good)]">정답</span> <Inline text={check.choices[check.answer]} />
               {s.wrong.length > 0 && <span className="ml-2 text-xs text-[var(--status-critical)]">({s.attempts}번째 시도에서 정답)</span>}
             </p>
             <p className="text-ink-muted">
@@ -83,7 +84,7 @@ export default async function WeekReviewPage({
             </p>
           </>
         ) : s ? (
-          <p className="text-xs text-ink-muted">아직 정답을 맞히지 못했습니다. 단계로 돌아가 다시 풀어 보십시오.</p>
+          <p className="text-xs text-ink-muted">아직 정답을 맞히지 못했습니다.</p>
         ) : undefined,
       });
     });
@@ -99,10 +100,10 @@ export default async function WeekReviewPage({
         body: a ? (
           <>
             <p className="whitespace-pre-wrap">
-              <span className="font-bold">내 답안</span> {a.text}
+              <span className="font-semibold">내 답안</span> {a.text}
             </p>
             <p>
-              <span className="font-bold text-[var(--status-good)]">모범답안</span> <Inline text={answers[id] ?? ""} />
+              <span className="font-semibold text-[var(--status-good)]">모범답안</span> <Inline text={answers[id] ?? ""} />
             </p>
           </>
         ) : undefined,
@@ -122,10 +123,10 @@ export default async function WeekReviewPage({
           body: s?.text ? (
             <>
               <p className="whitespace-pre-wrap">
-                <span className="font-bold">내 답안</span> {s.text}
+                <span className="font-semibold">내 답안</span> {s.text}
               </p>
               <div>
-                <p className="font-bold text-[var(--status-good)]">모범답안</p>
+                <p className="font-semibold text-[var(--status-good)]">모범답안</p>
                 <BlocksRenderer blocks={parseMarkdown(item.modelAnswer)} />
               </div>
             </>
@@ -144,7 +145,7 @@ export default async function WeekReviewPage({
             <>
               {s.correct ? (
                 <p>
-                  <span className="font-bold text-[var(--status-good)]">정답</span> <Inline text={item.choices[item.answer]} />
+                  <span className="font-semibold text-[var(--status-good)]">정답</span> <Inline text={item.choices[item.answer]} />
                 </p>
               ) : (
                 <p className="text-xs text-ink-muted">아직 정답을 맞히지 못했습니다.</p>
@@ -165,7 +166,7 @@ export default async function WeekReviewPage({
           question: (
             <>
               <Inline text={item.question ?? "다음 코드의 출력을 예측하십시오."} />
-              <pre className="mt-2 overflow-x-auto rounded-md bg-[var(--surface-card-2)] px-3 py-2 font-mono text-xs text-ink-secondary">{item.code}</pre>
+              <pre className="mt-2 overflow-x-auto rounded-xl bg-[var(--code-bg)] px-4 py-3 font-mono text-xs text-ink-secondary">{item.code}</pre>
             </>
           ),
           attempted: !!s && s.attempts > 0,
@@ -175,13 +176,13 @@ export default async function WeekReviewPage({
             <>
               {s.lastAnswer && !s.correct && (
                 <p className="whitespace-pre-wrap">
-                  <span className="font-bold">내 답</span> {s.lastAnswer}
+                  <span className="font-semibold">내 답</span> {s.lastAnswer}
                 </p>
               )}
               {revealed ? (
                 <>
                   <p className="whitespace-pre-wrap">
-                    <span className="font-bold text-[var(--status-good)]">출력</span> <code className="font-mono">{item.expected}</code>
+                    <span className="font-semibold text-[var(--status-good)]">출력</span> <code className="font-mono">{item.expected}</code>
                   </p>
                   <p className="text-ink-muted">
                     <Inline text={item.explanation} />
@@ -205,42 +206,24 @@ export default async function WeekReviewPage({
   const mode: "weak" | "all" = view === "all" || (view !== "weak" && totalWeak === 0) ? "all" : "weak";
   const visible = (n: Note) => (mode === "weak" ? n.weak : true);
 
+  const counts = [
+    { label: "확인 문제", n: weakBySource("check") },
+    { label: "서술형", n: weakBySource("descriptive") },
+    { label: "추가 퀴즈", n: weakBySource("drill") },
+    { label: "백지공부", n: sheetWeak.length },
+  ];
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <div className="space-y-8">
-        <section aria-labelledby="notes-intro">
-          <Link href="/feedback#review" className="group mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-ink-muted transition hover:text-ink">
-            <span aria-hidden="true" className="transition group-hover:-translate-x-0.5">
-              ←
-            </span>
-            피드백함
-          </Link>
-          <p className="eyebrow mb-2">
-            {week.number}주차 · {week.title}
-          </p>
-          <h1 id="notes-intro" className="page-title">
-            복습 노트
-          </h1>
-          <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {[
-              { label: "확인 문제", n: weakBySource("check") },
-              { label: "서술형", n: weakBySource("descriptive") },
-              { label: "추가 퀴즈", n: weakBySource("drill") },
-              { label: "백지공부", n: sheetWeak.length },
-            ].map((c) => (
-              <div key={c.label} className="surface px-3 py-2.5">
-                <dt className="text-xs font-bold text-ink-muted">{c.label}</dt>
-                <dd className={`text-xl font-black ${c.n > 0 ? "text-[var(--status-critical)]" : "text-ink-muted"}`}>
-                  {c.n}
-                  <span className="ml-1 text-xs font-bold text-ink-muted">개</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
-          <div role="group" aria-label="보기 방식" className="mt-4 inline-flex rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-card-2)] p-1 text-sm font-bold">
+    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+      <PageHeader
+        back={{ href: "/feedback#review", label: "피드백함" }}
+        eyebrow={`${week.number}주차 · ${week.title}`}
+        title="복습 노트"
+        actions={
+          <div role="group" aria-label="보기 방식" className="inline-flex rounded-full border border-[var(--border-hairline)] p-1 text-[13px] font-medium">
             {(
               [
-                { key: "weak", label: `다시 볼 문항만 (${totalWeak})`, href: `/feedback/review/${slug}?view=weak` },
+                { key: "weak", label: `다시 볼 문항 ${totalWeak}`, href: `/feedback/review/${slug}?view=weak` },
                 { key: "all", label: "전체 기록", href: `/feedback/review/${slug}?view=all` },
               ] as const
             ).map((t) => (
@@ -248,89 +231,87 @@ export default async function WeekReviewPage({
                 key={t.key}
                 href={t.href}
                 aria-current={mode === t.key ? "page" : undefined}
-                className={`rounded-md px-3 py-1 transition ${mode === t.key ? "bg-card text-ink shadow-sm" : "text-ink-muted hover:text-ink"}`}
+                className={`rounded-full px-3.5 py-1.5 transition ${mode === t.key ? "bg-[var(--inverse-bg)] text-[var(--inverse-fg)]" : "text-ink-muted hover:text-ink"}`}
               >
                 {t.label}
               </Link>
             ))}
           </div>
-        </section>
+        }
+      />
 
-        {mode === "weak" && totalWeak === 0 && (
-          <p className="rounded-xl border border-dashed border-[var(--border-hairline)] p-6 text-center text-sm text-ink-muted">
-            다시 볼 문항이 없습니다.
-          </p>
-        )}
+      <dl className="mb-14 grid grid-cols-4 divide-x divide-[var(--border-hairline)] border-y border-[var(--border-hairline)]">
+        {counts.map((c) => (
+          <div key={c.label} className="py-4 pl-4 first:pl-0">
+            <dt className="text-xs text-ink-muted">{c.label}</dt>
+            <dd className={`mt-1.5 text-xl font-semibold tabular-nums tracking-[-0.03em] ${c.n > 0 ? "text-[var(--status-critical)]" : "text-ink-muted"}`}>{c.n}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="space-y-14">
+        {mode === "weak" && totalWeak === 0 && <p className="border-y border-[var(--border-hairline)] py-10 text-center text-sm text-ink-muted">다시 볼 문항이 없습니다.</p>}
 
         {sheetWeak.length > 0 && (
-          <section aria-labelledby="sheet-weak" className="rounded-xl border border-[var(--status-critical)]/40 bg-card p-4 sm:p-5">
-            <h3 id="sheet-weak" className="font-black text-ink">
-              백지공부에서 보완이 필요하다고 표시한 칸 <span className="text-sm text-[var(--status-critical)]">{sheetWeak.length}</span>
-            </h3>
-            <ul className="mt-3 space-y-3 text-sm">
+          <section aria-labelledby="sheet-weak">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 id="sheet-weak" className="section-title">
+                백지공부 · 보완 필요
+              </h2>
+              <Link href={`${base}/worksheet`} className="text-[13px] font-medium text-ink-muted transition hover:text-ink">
+                비교 자료 다시 보기
+              </Link>
+            </div>
+            <ul className="rows border-y border-[var(--border-hairline)]">
               {sheetWeak.map(({ field, i, answer }) => (
-                <li key={i} className="rounded-lg border border-[var(--border-hairline)] px-3 py-2.5">
+                <li key={i} className="py-4 text-sm">
                   <p className="font-medium text-ink">{field.label}</p>
-                  {answer && <p className="mt-1 whitespace-pre-wrap text-ink-secondary">{answer}</p>}
+                  {answer && <p className="mt-1.5 whitespace-pre-wrap leading-relaxed text-ink-secondary">{answer}</p>}
                 </li>
               ))}
             </ul>
-            <Link href={`${base}/worksheet`} className="mt-3 inline-block text-sm font-bold text-[var(--series-blue)] hover:underline">
-              백지공부에서 비교 자료 다시 보기 →
-            </Link>
           </section>
         )}
 
-        <div className="space-y-4">
-          {groups.map(({ section, access, notes }) => {
-            const shown = notes.filter(visible);
-            if (shown.length === 0) return null;
-            const weak = notes.filter((n) => n.weak).length;
-            return (
-              <details key={section.id} open={mode === "weak" || weak > 0} className="group surface">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 sm:px-5 [&::-webkit-details-marker]:hidden">
-                  <span className="min-w-0">
-                    <span className="flex flex-wrap items-center gap-2 font-black text-ink">
-                      {sectionLabel(section)}. {section.title}
-                      {section.tier !== "core" && <TierBadge tier={section.tier} compact />}
-                    </span>
-                    <span className="mt-0.5 block text-xs font-bold text-ink-muted">
-                      {access === "locked" ? "잠김" : access === "completed" ? "단계 완료" : "단계 미완료"}
-                      {weak > 0 && <span className="text-[var(--status-critical)]"> · 다시 볼 문항 {weak}</span>}
-                    </span>
+        {groups.map(({ section, access, notes }) => {
+          const shown = notes.filter(visible);
+          if (shown.length === 0) return null;
+          const weak = notes.filter((n) => n.weak).length;
+          return (
+            <details key={section.id} open={mode === "weak" || weak > 0} className="group">
+              <summary className="flex cursor-pointer list-none items-baseline justify-between gap-3 border-b border-[var(--border-hairline)] pb-3 [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-center gap-2 text-base font-semibold tracking-[-0.02em] text-ink">
+                    {sectionLabel(section)}. {section.title}
                   </span>
-                  <span aria-hidden="true" className="shrink-0 text-ink-muted transition group-open:rotate-180">
-                    ▾
+                  <span className="mt-1 block text-xs text-ink-muted">
+                    {access === "locked" ? "잠김" : access === "completed" ? "단계 완료" : "단계 미완료"}
+                    {weak > 0 && <span className="text-[var(--status-critical)]"> · 다시 볼 문항 {weak}</span>}
                   </span>
-                </summary>
-                <ul className="space-y-3 border-t border-[var(--border-hairline)] p-4 sm:p-5">
-                  {shown.map((n) => (
-                    <li
-                      key={n.id}
-                      className={`rounded-lg border px-3 py-3 text-sm ${n.weak ? "border-[var(--status-critical)]/40" : "border-[var(--border-hairline)]"}`}
-                    >
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                        <span className="rounded bg-[var(--surface-card-2)] px-1.5 py-0.5 text-ink-secondary">{SOURCE_LABEL[n.source]}</span>
-                        {n.weak && <span className="text-[var(--status-critical)]">다시 볼 문항</span>}
-                      </div>
-                      <div className="mt-1.5 font-medium text-ink">{n.question}</div>
-                      {n.body ? (
-                        <div className="mt-2 space-y-1.5 text-ink-secondary">{n.body}</div>
-                      ) : (
-                        <p className="mt-1 text-xs text-ink-muted">아직 풀지 않았습니다.</p>
-                      )}
-                      {access !== "locked" && (
-                        <Link href={n.href} className="mt-2 inline-block text-xs font-bold text-[var(--series-blue)] hover:underline">
-                          {n.attempted ? "다시 풀기" : "풀러 가기"} →
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            );
-          })}
-        </div>
+                </span>
+                <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
+              </summary>
+              <ul className="rows">
+                {shown.map((n) => (
+                  <li key={n.id} className="py-5 text-sm">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <span className="text-ink-muted">{SOURCE_LABEL[n.source]}</span>
+                      {n.weak && <span className="pill [--pill:var(--status-critical)]">다시 볼 문항</span>}
+                    </div>
+                    <div className="mt-2 text-[15px] font-medium leading-relaxed text-ink">{n.question}</div>
+                    {n.body ? <div className="mt-3 space-y-2 leading-relaxed text-ink-secondary">{n.body}</div> : <p className="mt-1.5 text-xs text-ink-muted">아직 풀지 않았습니다.</p>}
+                    {access !== "locked" && (
+                      <Link href={n.href} className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink">
+                        {n.attempted ? "다시 풀기" : "풀러 가기"}
+                        <Icon name="arrowRight" size={13} />
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          );
+        })}
       </div>
     </div>
   );

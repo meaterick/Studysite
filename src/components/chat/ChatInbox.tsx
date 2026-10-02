@@ -45,7 +45,7 @@ export default function ChatInbox({ initial }: { initial: InboxItemView[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="이름·이메일 검색"
-          className="w-full rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-1.5 text-sm text-ink outline-none focus:border-[var(--series-orange)]"
+          className="w-full rounded-full border border-[var(--border-strong)] bg-card px-4 py-2 text-sm text-ink placeholder:text-ink-muted"
         />
       </div>
       <ul className="min-h-0 flex-1 overflow-y-auto">
@@ -57,12 +57,12 @@ export default function ChatInbox({ initial }: { initial: InboxItemView[] }) {
               <Link
                 href={`/operator/chat/${encodeURIComponent(item.userId)}`}
                 aria-current={active ? "page" : undefined}
-                className={`block border-b border-[var(--border-hairline)] px-3 py-2.5 transition ${
-                  active ? "bg-[color-mix(in_srgb,var(--series-orange)_12%,transparent)]" : "hover:bg-[var(--surface-card-2)]"
+                className={`block border-b border-[var(--border-hairline)] px-4 py-3 transition ${
+                  active ? "bg-[var(--surface-card-2)]" : "hover:bg-[color-mix(in_srgb,var(--surface-card-2)_55%,transparent)]"
                 }`}
               >
                 <span className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-sm font-bold text-ink">{item.name}</span>
+                  <span className="truncate text-sm font-medium text-ink">{item.name}</span>
                   {item.updatedAt && (
                     <span className="shrink-0 text-[10px] text-ink-muted">
                       {formatDate(item.updatedAt) === today ? formatTime(item.updatedAt) : formatDate(item.updatedAt)}
@@ -74,7 +74,7 @@ export default function ChatInbox({ initial }: { initial: InboxItemView[] }) {
                     {item.lastText ? `${item.lastRole === "admin" ? "운영자: " : ""}${item.lastText}` : item.email}
                   </span>
                   {item.unread > 0 && (
-                    <span className="shrink-0 rounded-full bg-[var(--series-orange)] px-1.5 text-[10px] font-bold text-white">
+                    <span className="grid h-[18px] min-w-[18px] shrink-0 place-items-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-semibold text-[var(--on-accent)]">
                       {item.unread}
                     </span>
                   )}

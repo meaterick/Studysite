@@ -20,30 +20,23 @@ export default async function LoginPage({
   const googleHref = `/api/auth/google${returnPath !== "/account" ? `?from=${encodeURIComponent(returnPath)}` : ""}`;
 
   return (
-    <div className="mx-auto flex max-w-md flex-col px-4 py-12 sm:px-6 sm:py-20">
-      <div className="surface p-6 sm:p-8">
-        <Image src="/images/aegis-mark.svg" alt="" width={44} height={44} className="mb-5 h-11 w-11" />
-        <p className="eyebrow mb-2">Aegis AI 스터디</p>
-        <h1 className="page-title">로그인</h1>
-        <p className="mt-2 text-sm leading-relaxed text-ink-secondary">
-          Google 계정으로 로그인하면 처음 방문할 때 스터디원 계정이 자동으로 생성됩니다.
+    <div className="mx-auto flex max-w-sm flex-col items-center px-4 py-20 text-center sm:py-28">
+      <Image src="/images/aegis-mark.svg" alt="" width={40} height={40} className="mb-8 h-10 w-10" />
+      <h1 className="page-title">로그인</h1>
+      <p className="mt-3 text-[15px] text-ink-secondary">처음 로그인하면 스터디원 계정이 만들어집니다.</p>
+      {from && returnPath !== "/account" && <p className="callout mt-8 w-full text-left">로그인하면 보려던 페이지로 이동합니다.</p>}
+      {error && (
+        <p role="alert" className="callout callout-danger mt-8 w-full text-left text-[var(--status-critical)]">
+          {OAUTH_ERRORS[error] ?? OAUTH_ERRORS.oauth_failed}
         </p>
-        {from && returnPath !== "/account" && (
-          <p className="callout mt-5">로그인한 스터디원만 볼 수 있는 페이지입니다. 로그인하면 보려던 페이지로 바로 이동합니다.</p>
-        )}
-        {error && (
-          <p role="alert" className="callout callout-danger mt-5 font-medium text-[var(--status-critical)]">
-            {OAUTH_ERRORS[error] ?? OAUTH_ERRORS.oauth_failed}
-          </p>
-        )}
-        <Link href={googleHref} prefetch={false} className="btn btn-secondary btn-lg mt-6 w-full text-ink">
-          <GoogleMark />
-          Google로 계속하기
-        </Link>
-      </div>
-      <p className="mt-6 text-center text-xs leading-relaxed text-ink-muted">
+      )}
+      <Link href={googleHref} prefetch={false} className="btn btn-secondary btn-lg mt-10 w-full">
+        <GoogleMark />
+        Google로 계속하기
+      </Link>
+      <p className="mt-8 text-xs leading-relaxed text-ink-muted">
         로그인하면{" "}
-        <Link href="/privacy" className="font-bold text-ink-secondary underline-offset-2 hover:underline">
+        <Link href="/privacy" className="text-ink-secondary underline underline-offset-4 hover:text-ink">
           개인정보처리방침
         </Link>
         에 따라 이름과 이메일이 처리됩니다.

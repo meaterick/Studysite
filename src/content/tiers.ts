@@ -29,7 +29,7 @@ export const TIER_INFO: Record<Tier, TierInfo> = {
     audience: "초심자",
     course: "핵심 과정",
     summary: "이번 주를 끝내는 데 꼭 필요한 개념입니다. 핵심 단계만 마치면 주차가 완료되고 백지공부·과제가 열립니다.",
-    color: "var(--status-good)",
+    color: "var(--tier-core)",
     required: true,
   },
   supplement: {
@@ -37,7 +37,7 @@ export const TIER_INFO: Record<Tier, TierInfo> = {
     audience: "중급자",
     course: "보충 과정",
     summary: "핵심 개념을 실무 도구와 다른 방법으로 넓힙니다. 선택이며, 핵심 과정을 마친 뒤 보는 것을 권장합니다.",
-    color: "var(--series-blue)",
+    color: "var(--tier-supplement)",
     required: false,
   },
   advanced: {
@@ -45,7 +45,7 @@ export const TIER_INFO: Record<Tier, TierInfo> = {
     audience: "전문가",
     course: "심화 과정",
     summary: "수식 유도, 최신 기법, 연구 수준의 내용을 다룹니다. 선택이며, 마친 내용은 심화 달성 기록으로 따로 남습니다.",
-    color: "var(--series-orange)",
+    color: "var(--tier-advanced)",
     required: false,
   },
 };

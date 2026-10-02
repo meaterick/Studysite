@@ -17,6 +17,8 @@ import ChatPanel from "@/components/chat/ChatPanel";
 import { conversationView } from "@/lib/chatView";
 import { formatDateTime } from "@/lib/datetime";
 import { autoTestViews } from "@/lib/labView";
+import PageHeader from "@/components/PageHeader";
+import Icon from "@/components/Icon";
 
 export const metadata = { title: "과제 채점" };
 
@@ -43,38 +45,36 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
   const currentGrade = grade && grade.version === latest.version ? grade : undefined;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <Link href="/operator/submissions" className="group mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-ink-muted transition hover:text-ink">
-        <span aria-hidden="true" className="transition group-hover:-translate-x-0.5">←</span>
-        과제 채점 목록
-      </Link>
-      <p className="eyebrow mb-2 text-[var(--series-orange)]">
-        {week.number}주차 {spec.title}
-      </p>
-      <h1 className="page-title">{student?.name ?? "(탈퇴한 사용자)"}님의 과제</h1>
-      <p className="mt-2 text-sm text-ink-secondary">
-        {student?.email} · 핵심 단계 {status.tiers.core.done}/{status.tiers.core.total} · 백지공부 {worksheet.submittedAt ? "제출" : "미제출"} · 제출{" "}
-        {submission.versions.length}회
-        {student && (
-          <>
-            {" · "}
-            <Link href={`/operator/members/${student.id}`} className="font-bold text-[var(--series-orange)] hover:underline">
-              학습 현황 보기
-            </Link>
-            {" · "}
-            <a href="#chat-heading" className="font-bold text-[var(--series-orange)] hover:underline">
-              채팅{unread > 0 ? ` (새 메시지 ${unread})` : ""}
-            </a>
-          </>
-        )}
-      </p>
+    <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+      <PageHeader
+        back={{ href: "/operator/submissions", label: "과제 채점" }}
+        eyebrow={`${week.number}주차 · ${spec.title}`}
+        title={`${student?.name ?? "(탈퇴한 사용자)"}님의 과제`}
+        description={
+          <span className="tabular-nums">
+            {student?.email} · 핵심 {status.tiers.core.done}/{status.tiers.core.total} · 백지공부 {worksheet.submittedAt ? "제출" : "미제출"} · 제출 {submission.versions.length}회
+          </span>
+        }
+        actions={
+          student && (
+            <>
+              <Link href={`/operator/members/${student.id}`} className="btn btn-ghost btn-sm">
+                학습 현황
+              </Link>
+              <a href="#chat-heading" className="btn btn-secondary btn-sm">
+                채팅{unread > 0 ? ` · 새 메시지 ${unread}` : ""}
+              </a>
+            </>
+          )
+        }
+      />
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0 space-y-8">
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-14">
           <section aria-labelledby="latest-heading">
-            <h2 id="latest-heading" className="mb-3 text-lg font-black text-ink">
-              최신 제출본 v{latest.version}{" "}
-              <span className="text-sm font-medium text-ink-muted">· {formatDateTime(latest.submittedAt)}</span>
+            <h2 id="latest-heading" className="mb-4 text-xl font-bold tracking-[-0.03em] text-ink">
+              최신 제출본 v{latest.version}
+              <span className="ml-2 text-sm font-normal tracking-normal text-ink-muted">{formatDateTime(latest.submittedAt)}</span>
             </h2>
             <div className="space-y-4">
               <SubmissionVersionView submission={submission} version={latest} />
@@ -95,10 +95,10 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
 
           {submission.versions.length > 1 && (
             <section aria-labelledby="prev-heading">
-              <h2 id="prev-heading" className="mb-3 text-lg font-black text-ink">
+              <h2 id="prev-heading" className="mb-3 text-xl font-bold tracking-[-0.03em] text-ink">
                 이전 제출본
               </h2>
-              <div className="space-y-3">
+              <div className="rows border-y border-[var(--border-hairline)]">
                 {submission.versions
                   .slice(0, -1)
                   .reverse()
@@ -106,11 +106,14 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
                     const nb = readNotebook(submission, v);
                     const gs = submission.grades.filter((g) => g.version === v.version);
                     return (
-                      <details key={v.version} className="surface p-4">
-                        <summary className="cursor-pointer text-sm font-bold text-ink">
-                          v{v.version} · {formatDateTime(v.submittedAt)}
+                      <details key={v.version} className="group">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3.5 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+                          <span className="tabular-nums">
+                            v{v.version} · {formatDateTime(v.submittedAt)}
+                          </span>
+                          <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
                         </summary>
-                        <div className="mt-3 space-y-3">
+                        <div className="space-y-3 pb-5">
                           {gs.map((g) => (
                             <GradeView key={g.gradedAt} grade={g} rubric={spec.rubric} />
                           ))}
@@ -132,8 +135,8 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
           )}
 
           {sampleDirection && (
-            <section className="rounded-xl border border-dashed border-[var(--series-orange)] p-4 text-sm text-ink-secondary">
-              <p className="mb-1 text-xs font-bold text-[var(--series-orange)]">채점 참고: 모범 답안 방향</p>
+            <section className="rounded-2xl bg-[var(--surface-card-2)] p-5 text-sm leading-relaxed text-ink-secondary sm:p-6">
+              <p className="mb-2 text-xs font-medium text-ink-muted">채점 참고 · 모범 답안 방향</p>
               <Inline text={sampleDirection} />
             </section>
           )}
@@ -141,11 +144,11 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
           {student && (
             <section aria-labelledby="chat-heading">
               <div className="mb-3 flex items-baseline justify-between gap-2">
-                <h2 id="chat-heading" className="text-lg font-black text-ink">
+                <h2 id="chat-heading" className="text-xl font-bold tracking-[-0.03em] text-ink">
                   {student.name}님과의 채팅
                 </h2>
-                <Link href={`/operator/chat/${student.id}`} className="text-xs font-bold text-[var(--series-orange)] hover:underline">
-                  채팅 화면에서 크게 보기 →
+                <Link href={`/operator/chat/${student.id}`} className="text-[13px] font-medium text-ink-muted transition hover:text-ink">
+                  크게 보기
                 </Link>
               </div>
               <ChatPanel
@@ -160,7 +163,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
 
         </div>
 
-        <aside className="lg:sticky lg:top-20 lg:self-start">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
           <GradeForm
             submissionId={submission.id}
             version={latest.version}
@@ -171,8 +174,8 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
           />
           {submission.grades.length > 0 && (
             <div className="mt-6">
-              <h2 className="mb-2 text-sm font-black text-ink">채점 기록</h2>
-              <div className="space-y-2">
+              <h2 className="mb-3 text-[13px] font-medium text-ink-muted">채점 기록</h2>
+              <div className="space-y-3">
                 {[...submission.grades].reverse().map((g) => (
                   <div key={g.gradedAt}>
                     <GradeView grade={g} rubric={spec.rubric} />

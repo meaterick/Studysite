@@ -6,7 +6,7 @@ import Editor, { type OnMount } from "@monaco-editor/react";
 import CodeBlock from "@/components/CodeBlock";
 import type { NotebookCell } from "@/lib/notebook";
 import CellOutputs from "./CellOutputs";
-import { useEditorTheme } from "./useEditorTheme";
+import { defineEditorThemes, useEditorTheme } from "./useEditorTheme";
 
 /**
  * 과제 노트북의 코드 셀. 화면 근처에 오기 전까지는 가벼운 정적 코드 블록으로 보여 주고,
@@ -80,12 +80,12 @@ export default function NotebookCodeCell({
         : { text: "오류", cls: "text-[var(--status-critical)]" };
 
   return (
-    <div ref={ref} className="not-prose overflow-hidden rounded-lg border border-[var(--border-hairline)] bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1.5">
+    <div ref={ref} className="not-prose overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-[var(--code-bg)]">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-hairline)] py-1.5 pl-4 pr-2">
         <div className="flex min-w-0 items-center gap-2 text-xs">
-          <span className="font-mono font-bold text-ink-muted">[{execCount ?? " "}]</span>
-          <span className="truncate font-bold text-ink-secondary">{label ?? (cell.custom ? "추가한 코드 셀" : "코드")}</span>
-          <span className={`font-bold ${state.cls}`}>· {state.text}</span>
+          <span className="font-mono text-ink-muted">[{execCount ?? " "}]</span>
+          <span className="truncate font-medium text-ink-secondary">{label ?? (cell.custom ? "추가한 코드 셀" : "코드")}</span>
+          <span className={state.cls}>· {state.text}</span>
         </div>
         <div className="flex items-center gap-1.5">
           {onReset && (
@@ -93,7 +93,7 @@ export default function NotebookCodeCell({
               type="button"
               onClick={onReset}
               disabled={running}
-              className="rounded px-2 py-1 text-xs font-medium text-ink-muted hover:bg-card hover:text-ink-secondary disabled:opacity-40"
+              className="btn btn-ghost btn-sm min-h-7 px-3 text-xs"
             >
               시작 코드로
             </button>
@@ -103,7 +103,7 @@ export default function NotebookCodeCell({
               type="button"
               onClick={onDelete}
               disabled={running}
-              className="rounded px-2 py-1 text-xs font-medium text-ink-muted hover:bg-card hover:text-[var(--status-critical)] disabled:opacity-40"
+              className="btn btn-ghost btn-sm min-h-7 px-3 text-xs hover:text-[var(--status-critical)]"
             >
               삭제
             </button>
@@ -113,9 +113,9 @@ export default function NotebookCodeCell({
             onClick={onRun}
             disabled={running || disabled}
             title="Shift+Enter"
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm min-h-7 px-3 text-xs"
           >
-            {running ? "실행 중…" : "▶ 실행"}
+            {running ? "실행 중…" : "실행"}
           </button>
         </div>
       </div>
@@ -126,6 +126,7 @@ export default function NotebookCodeCell({
           value={cell.source}
           onChange={(v) => onChange(v ?? "")}
           theme={theme}
+          beforeMount={defineEditorThemes}
           onMount={handleMount}
           loading={<div className="py-6 text-center text-xs text-ink-muted">편집기를 불러오고 있습니다…</div>}
           options={{

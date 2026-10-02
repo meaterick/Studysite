@@ -11,32 +11,32 @@ const UPDATED_AT = "2026년 9월 27일";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-[var(--border-hairline)] py-7 first:border-t-0 first:pt-0">
-      <h2 className="mb-3 text-lg font-black text-ink">{title}</h2>
-      <div className="space-y-3 text-sm leading-7 text-ink-secondary">{children}</div>
+    <section className="border-t border-[var(--border-hairline)] py-9 first:border-t-0 first:pt-0">
+      <h2 className="mb-4 text-base font-semibold tracking-[-0.02em] text-ink">{title}</h2>
+      <div className="space-y-3 text-[15px] leading-8 text-ink-body">{children}</div>
     </section>
   );
 }
 
 export default function PrivacyPage() {
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
-      <PageHeader eyebrow="Aegis AI 스터디" title="개인정보처리방침" description={`시행일: ${UPDATED_AT}`} className="mb-6" />
-      <p className="surface p-5 text-sm leading-7 text-ink-secondary">
+    <article className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+      <PageHeader title="개인정보처리방침" description={`시행일 ${UPDATED_AT}`} />
+      <p className="text-[15px] leading-8 text-ink-body">
         Aegis AI 스터디(이하 “서비스”)는 학습 서비스 제공에 필요한 최소한의 개인정보만 처리합니다. 이 방침은
         서비스에서 어떤 정보를 왜 처리하는지와 이용자가 행사할 수 있는 권리를 설명합니다.
       </p>
 
-      <div className="mt-10">
+      <div className="mt-14">
         <Section title="1. 처리하는 개인정보와 목적">
-          <div className="surface overflow-x-auto rounded-xl">
+          <div className="overflow-x-auto rounded-xl border border-[var(--border-hairline)]">
             <table className="w-full min-w-[620px] text-left text-xs leading-6 sm:text-sm">
               <thead className="bg-[var(--surface-card-2)] text-ink">
                 <tr>
-                  <th className="px-4 py-3 font-bold">구분</th>
-                  <th className="px-4 py-3 font-bold">처리 항목</th>
-                  <th className="px-4 py-3 font-bold">처리 목적</th>
-                  <th className="px-4 py-3 font-bold">보유 기간</th>
+                  <th className="px-4 py-3 font-semibold">구분</th>
+                  <th className="px-4 py-3 font-semibold">처리 항목</th>
+                  <th className="px-4 py-3 font-semibold">처리 목적</th>
+                  <th className="px-4 py-3 font-semibold">보유 기간</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,7 +103,7 @@ export default function PrivacyPage() {
 
         <Section title="5. 정보주체의 권리와 행사 방법">
           <p>
-            이용자는 로그인 후 <Link className="font-bold text-[var(--series-blue)] hover:underline" href="/account">내 계정</Link>에서
+            이용자는 로그인 후 <Link className="font-semibold text-[var(--accent)] hover:underline" href="/account">내 계정</Link>에서
             자신의 계정 정보를 확인하고 회원 탈퇴를 요청할 수 있습니다. 탈퇴 시 서버에 보관된 계정 정보, 학습 기록,
             과제(제출물·첨부 파일 포함)는 즉시 삭제됩니다. 브라우저에 남은 정보는 각 브라우저의 사이트 데이터 삭제
             기능으로 직접 지울 수 있습니다.

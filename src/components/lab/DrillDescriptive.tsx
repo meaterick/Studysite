@@ -104,10 +104,10 @@ export default function DrillDescriptive({
   };
 
   return (
-    <div id={`drill-${itemId}`} className={`scroll-mt-24 rounded-xl border bg-card p-4 sm:p-5 ${review ? "border-[var(--status-good)]/60" : "border-[var(--border-hairline)]"}`}>
-      <div className="mb-3 flex items-start gap-2">
-        <span className="mt-0.5 shrink-0 rounded-md bg-[color-mix(in_srgb,var(--series-violet)_14%,transparent)] px-2 py-0.5 text-xs font-black text-[var(--series-violet)]">{label}</span>
-        <div className="text-[15px] font-medium text-ink">{question}</div>
+    <div id={`drill-${itemId}`} className={`scroll-mt-24 rounded-2xl border p-5 sm:p-7 ${review ? "border-[color-mix(in_srgb,var(--status-good)_40%,transparent)]" : "border-[var(--border-hairline)]"}`}>
+      <div className="mb-5 flex flex-col gap-2">
+        <span className="text-xs font-medium text-ink-muted">{label}</span>
+        <div className="text-base font-medium leading-relaxed text-ink">{question}</div>
       </div>
       <label className="sr-only" htmlFor={`drill-answer-${itemId}`}>
         내 답
@@ -119,9 +119,9 @@ export default function DrillDescriptive({
         rows={5}
         maxLength={4000}
         placeholder="자료를 다시 보지 말고 자신의 말로 먼저 적어 보십시오. 코드의 어느 줄이 근거인지도 함께 적으면 좋습니다."
-        className="w-full rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-2 text-sm text-ink outline-none focus:border-[var(--series-blue)]"
+        className="w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-[15px] leading-relaxed text-ink placeholder:text-ink-muted"
       />
-      <div className="mt-2 flex flex-wrap items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
         {(!answered || dirty) && (
           <button
             type="button"
@@ -136,14 +136,14 @@ export default function DrillDescriptive({
       </div>
 
       {answered && modelAnswer && (
-        <div className="mt-3 space-y-3">
-          <div className="rounded-lg border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-3 py-2.5 text-sm">
-            <p className="mb-1 text-xs font-bold text-[var(--status-good)]">모범답안</p>
-            <div className="text-ink-secondary">{modelAnswer}</div>
+        <div className="mt-5 space-y-4">
+          <div className="callout callout-good">
+            <p className="mb-1 text-xs font-medium text-[var(--status-good)]">모범답안</p>
+            <div className="text-ink-body">{modelAnswer}</div>
           </div>
           {keyPoints && keyPoints.length > 0 && (
             <div className="rounded-lg border border-[var(--border-hairline)] px-3 py-2.5 text-sm">
-              <p className="mb-1.5 text-xs font-bold text-ink-muted">내 답에 들어 있는 핵심 요소를 체크해 보십시오</p>
+              <p className="mb-1.5 text-xs font-semibold text-ink-muted">내 답에 들어 있는 핵심 요소를 체크해 보십시오</p>
               <ul className="space-y-1">
                 {keyPoints.map((point, i) => (
                   <li key={i}>
@@ -160,13 +160,13 @@ export default function DrillDescriptive({
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-ink-secondary">자기평가:</span>
+            <span className="text-xs text-ink-muted">자기평가</span>
             <button
               type="button"
               onClick={() => mark("correct")}
               disabled={pending}
               aria-pressed={review === "correct"}
-              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                 review === "correct" ? "bg-[var(--status-good)] text-white" : "border border-[var(--border-hairline)] text-ink-secondary hover:bg-[var(--surface-card-2)]"
               }`}
             >
@@ -177,7 +177,7 @@ export default function DrillDescriptive({
               onClick={() => mark("incorrect")}
               disabled={pending}
               aria-pressed={review === "incorrect"}
-              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                 review === "incorrect" ? "bg-[var(--status-critical)] text-white" : "border border-[var(--border-hairline)] text-ink-secondary hover:bg-[var(--surface-card-2)]"
               }`}
             >

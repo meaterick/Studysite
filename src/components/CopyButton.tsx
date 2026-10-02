@@ -20,7 +20,7 @@ export default function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="rounded-md px-2 py-1 text-[11px] font-bold text-ink-muted transition hover:bg-[var(--surface-card)] hover:text-ink"
+      className="rounded-full px-2.5 py-1 text-[11px] font-medium text-ink-muted transition hover:bg-[var(--surface-card-2)] hover:text-ink"
       aria-label="코드 복사"
     >
       {copied ? "복사됨 ✓" : "복사"}

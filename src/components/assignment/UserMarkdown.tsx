@@ -23,17 +23,17 @@ function UserInline({ text }: { text: string }) {
     <>
       {renderInline(text).map((p, i) => {
         if (typeof p === "string") return <span key={i}>{p}</span>;
-        if ("bold" in p) return <strong key={i} className="font-bold text-ink"><UserInline text={p.bold} /></strong>;
+        if ("bold" in p) return <strong key={i} className="font-semibold text-ink"><UserInline text={p.bold} /></strong>;
         if ("italic" in p) return <em key={i}>{p.italic}</em>;
         if ("link" in p)
           return (
-            <a key={i} href={p.href} target="_blank" rel="noopener noreferrer nofollow" className="text-[var(--series-blue)] underline">
+            <a key={i} href={p.href} target="_blank" rel="noopener noreferrer nofollow" className="text-[var(--accent)] underline">
               {p.link}
             </a>
           );
         if ("math" in p) return <span key={i} dangerouslySetInnerHTML={{ __html: mathHtml(p.math, false) }} />;
         return (
-          <code key={i} className="rounded border border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-1 font-mono text-[0.88em]">
+          <code key={i} className="rounded-md bg-[var(--surface-card-2)] px-1.5 py-0.5 font-mono text-[0.86em] text-ink">
             {p.code}
           </code>
         );
@@ -46,11 +46,11 @@ function renderBlock(b: Block, i: number) {
   switch (b.type) {
     case "heading":
       return b.level === 2 ? (
-        <h4 key={i} className="pt-2 text-base font-black text-ink">
+        <h4 key={i} className="pt-2 text-base font-semibold text-ink">
           <UserInline text={b.text} />
         </h4>
       ) : (
-        <h5 key={i} className="pt-1 text-sm font-bold text-ink">
+        <h5 key={i} className="pt-1 text-sm font-semibold text-ink">
           <UserInline text={b.text} />
         </h5>
       );
@@ -74,12 +74,12 @@ function renderBlock(b: Block, i: number) {
     }
     case "table":
       return (
-        <div key={i} className="overflow-x-auto rounded-md border border-[var(--border-hairline)]">
+        <div key={i} className="overflow-x-auto rounded-xl border border-[var(--border-hairline)]">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-[var(--surface-card-2)]">
                 {b.headers.map((h, j) => (
-                  <th key={j} className="border-b border-[var(--border-hairline)] px-2 py-1.5 text-left font-bold text-ink">
+                  <th key={j} className="border-b border-[var(--border-hairline)] px-2 py-1.5 text-left font-semibold text-ink">
                     <UserInline text={h} />
                   </th>
                 ))}
@@ -103,7 +103,7 @@ function renderBlock(b: Block, i: number) {
       return <CodeBlock key={i} lang={b.lang} code={b.code} />;
     case "formula":
       return (
-        <pre key={i} className="overflow-x-auto rounded-md bg-[var(--surface-card-2)] px-3 py-2 font-mono text-[13px]">
+        <pre key={i} className="overflow-x-auto rounded-xl bg-[var(--code-bg)] px-4 py-3 font-mono text-[13px]">
           {b.code}
         </pre>
       );
@@ -111,7 +111,7 @@ function renderBlock(b: Block, i: number) {
       return <div key={i} className="overflow-x-auto py-2 text-center" dangerouslySetInnerHTML={{ __html: mathHtml(b.tex, true) }} />;
     case "callout":
       return (
-        <div key={i} className="rounded-md border-l-4 border-[var(--border-strong)] bg-[var(--surface-card-2)] px-3 py-2">
+        <div key={i} className="border-l-2 border-[var(--border-strong)] py-1 pl-4">
           <UserInline text={b.text} />
         </div>
       );

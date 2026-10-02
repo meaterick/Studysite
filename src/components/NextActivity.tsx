@@ -1,20 +1,18 @@
 import Link from "next/link";
+import Icon from "./Icon";
 
-/** 적용과 복습 활동 끝의 "다음 활동" 안내 */
-export default function NextActivity({ slug, href, label, desc }: { slug: string; href: string; label: string; desc: string }) {
+/** 적용과 복습 활동 끝의 "다음 활동" 링크 */
+export default function NextActivity({ slug, href, label }: { slug: string; href: string; label: string }) {
   return (
     <Link
       href={href.startsWith("/") ? href : `/weeks/${slug}/${href}`}
-      className="flex items-center justify-between gap-4 surface p-4 transition hover:border-[var(--series-blue)]"
+      className="group flex items-center justify-between gap-4 border-t border-[var(--border-hairline)] pt-6"
     >
       <span>
-        <span className="block text-xs font-bold text-ink-muted">다음 활동</span>
-        <span className="block font-black text-ink">{label}</span>
-        <span className="block text-sm text-ink-muted">{desc}</span>
+        <span className="kicker block">Next</span>
+        <span className="mt-1 block text-lg font-semibold tracking-[-0.02em] text-ink">{label}</span>
       </span>
-      <span aria-hidden="true" className="text-lg font-black text-[var(--series-blue)]">
-        →
-      </span>
+      <Icon name="arrowRight" size={20} className="text-ink-muted transition group-hover:translate-x-1 group-hover:text-ink" />
     </Link>
   );
 }

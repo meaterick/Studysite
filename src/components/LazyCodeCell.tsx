@@ -2,6 +2,7 @@
 
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import CodeBlock from "@/components/CodeBlock";
+import Icon from "./Icon";
 import { loadCellCode } from "@/lib/codeStore";
 import { useUserScope } from "./UserScope";
 
@@ -69,25 +70,16 @@ export default function LazyCodeCell({
   const staticBlock = (
     <CodeBlock
       lang="python"
-      label={saved ? "Python · 내가 수정한 코드" : "Python · 완성 예제"}
+      label={saved ? "Python · 내가 수정한 코드" : "Python · 편집·실행 가능"}
       code={saved ?? starterCode}
       action={
         <>
-          <button
-            type="button"
-            onClick={() => open(false)}
-            disabled={active}
-            className="rounded-md px-2 py-1 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card)] hover:text-ink disabled:opacity-50"
-          >
-            ✎ 편집
+          <button type="button" onClick={() => open(false)} disabled={active} className="btn btn-ghost btn-sm min-h-7 px-3 text-xs">
+            편집
           </button>
-          <button
-            type="button"
-            onClick={() => open(true)}
-            disabled={active}
-            className="btn btn-primary btn-sm"
-          >
-            ▶ 실행
+          <button type="button" onClick={() => open(true)} disabled={active} className="btn btn-primary btn-sm min-h-7 px-3 text-xs">
+            <Icon name="play" size={12} />
+            실행
           </button>
         </>
       }

@@ -95,13 +95,13 @@ export default function DrillPredict({
   };
 
   return (
-    <div id={`drill-${itemId}`} className={`scroll-mt-24 rounded-xl border bg-card p-4 sm:p-5 ${solved ? "border-[var(--status-good)]/60" : "border-[var(--border-hairline)]"}`}>
-      <div className="mb-3 flex items-start gap-2">
-        <span className="mt-0.5 shrink-0 rounded-md bg-[color-mix(in_srgb,var(--series-aqua)_14%,transparent)] px-2 py-0.5 text-xs font-black text-[var(--series-aqua)]">{label}</span>
-        <div className="text-[15px] font-medium text-ink">{question}</div>
+    <div id={`drill-${itemId}`} className={`scroll-mt-24 rounded-2xl border p-5 sm:p-7 ${solved ? "border-[color-mix(in_srgb,var(--status-good)_40%,transparent)]" : "border-[var(--border-hairline)]"}`}>
+      <div className="mb-5 flex flex-col gap-2">
+        <span className="text-xs font-medium text-ink-muted">{label}</span>
+        <div className="text-base font-medium leading-relaxed text-ink">{question}</div>
       </div>
       <CodeBlock lang="python" code={code} />
-      <label htmlFor={`predict-${itemId}`} className="mt-3 block text-xs font-bold text-ink-secondary">
+      <label htmlFor={`predict-${itemId}`} className="mt-4 block text-xs font-medium text-ink-muted">
         예상 출력 (화면에 찍힐 그대로, 줄바꿈 포함)
       </label>
       <textarea
@@ -113,10 +113,10 @@ export default function DrillPredict({
         maxLength={4000}
         spellCheck={false}
         placeholder="코드를 실행하지 말고 머릿속으로 따라가 출력을 적어 보십시오."
-        className="mt-1 w-full rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-2 font-mono text-sm text-ink outline-none focus:border-[var(--series-blue)]"
+        className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 font-mono text-[15px] leading-relaxed text-ink placeholder:text-ink-muted"
       />
       {!solved && !revealed && (
-        <div className="mt-2 flex flex-wrap items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             type="button"
             onClick={submit}
@@ -125,7 +125,7 @@ export default function DrillPredict({
           >
             {pending ? "채점 중…" : "정답 확인"}
           </button>
-          <button type="button" onClick={giveUp} disabled={pending} className="text-xs font-bold text-ink-muted underline-offset-2 hover:underline">
+          <button type="button" onClick={giveUp} disabled={pending} className="text-xs font-medium text-ink-muted underline-offset-4 transition hover:text-ink hover:underline">
             정답 보기
           </button>
           {state && state.attempts > 0 && !state.correct && (
@@ -137,33 +137,33 @@ export default function DrillPredict({
         </div>
       )}
       {solved && (
-        <p className="mt-2 text-sm font-bold text-[var(--status-good)]" aria-live="polite">
+        <p className="mt-4 text-sm font-medium text-[var(--status-good)]" aria-live="polite">
           정답입니다{state && state.attempts > 1 ? ` (${state.attempts}번째 시도)` : ""}.
         </p>
       )}
       {revealed && (
-        <div className="mt-3 space-y-3">
-          {!solved && <p className="text-sm font-bold text-[var(--status-critical)]">이번에는 맞히지 못했습니다. 정답과 해설을 확인해 보십시오.</p>}
+        <div className="mt-5 space-y-4">
+          {!solved && <p className="text-sm text-[var(--status-critical)]">이번에는 맞히지 못했습니다.</p>}
           <div>
-            <p className="mb-1 text-xs font-bold text-ink-muted">실제 출력</p>
-            <pre className="overflow-x-auto rounded-lg bg-[#0d1117] px-4 py-2.5 font-mono text-[12.5px] text-[#c9d1d9]">{expected}</pre>
+            <p className="mb-1 text-xs font-medium text-ink-muted">실제 출력</p>
+            <pre className="overflow-x-auto rounded-xl bg-[var(--code-bg)] px-4 py-3 font-mono text-[13px] text-ink">{expected}</pre>
           </div>
           {explanation && (
-            <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-2.5 text-sm text-ink-secondary">
-              <p className="mb-1 text-xs font-bold text-ink-muted">해설</p>
+            <div className="rounded-xl bg-[var(--surface-card-2)] px-4 py-3.5 text-sm leading-relaxed text-ink-secondary">
+              <p className="mb-1 text-xs font-medium text-ink-muted">해설</p>
               {explanation}
             </div>
           )}
-          <div className="overflow-hidden rounded-lg border border-[var(--border-hairline)]">
-            <div className="flex items-center justify-between bg-[var(--surface-card-2)] px-3 py-1.5">
-              <span className="text-xs font-bold text-ink-muted">브라우저에서 직접 실행해 확인하기</span>
+          <div className="overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-[var(--code-bg)]">
+            <div className="flex items-center justify-between border-b border-[var(--border-hairline)] py-1.5 pl-4 pr-2">
+              <span className="font-mono text-[11px] text-ink-muted">직접 실행해 확인하기</span>
               <button
                 type="button"
                 onClick={() => void runCode()}
                 disabled={running}
                 className="btn btn-primary btn-sm"
               >
-                {running ? "실행 중…" : "▶ 실행"}
+                {running ? "실행 중…" : "실행"}
               </button>
             </div>
             <CellOutputs outputs={outputs} status={running && outputs.length === 0 ? "실행 중… (처음에는 실행 환경을 준비하느라 몇 초 걸립니다)" : null} />

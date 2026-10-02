@@ -12,6 +12,7 @@ import { forceStop, preloadPyodide, resetNamespace, runPython, type RunHandlers,
 import { buildGradeProgram, countTodos, parseGradeReport, type LabGradeReport } from "@/lib/labHarness";
 import type { NotebookOutput } from "@/lib/notebook";
 import { getExerciseSolution, recordExerciseGrade, recordExerciseHint } from "@/lib/labActions";
+import Icon from "@/components/Icon";
 
 const LabEditor = dynamic(() => import("./LabEditor"), {
   ssr: false,
@@ -240,74 +241,66 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     <article
       ref={ref}
       id={`exercise-${view.id}`}
-      className={`scroll-mt-24 rounded-xl border bg-card p-4 sm:p-5 ${passed ? "border-[var(--status-good)]/60" : "border-[var(--series-orange)]/40"}`}
+      className={`scroll-mt-24 rounded-2xl border p-5 sm:p-7 ${passed ? "border-[color-mix(in_srgb,var(--status-good)_40%,transparent)]" : "border-[var(--border-hairline)]"}`}
     >
-      <header className="flex flex-wrap items-start justify-between gap-2">
+      <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-            <span className="rounded-md bg-[color-mix(in_srgb,var(--series-orange)_15%,transparent)] px-2 py-0.5 text-[var(--series-orange)]">
-              TODO 실습
-            </span>
-            <TierBadge tier={view.tier} />
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+            <TierBadge tier={view.tier} compact />
             {view.section && (
-              <a href={view.section.href} className="font-medium text-ink-muted hover:text-[var(--series-blue)] hover:underline">
+              <a href={view.section.href} className="transition hover:text-ink">
                 {view.section.label} · {view.section.title}
               </a>
             )}
-          </div>
-          <h3 className="mt-1.5 text-lg font-black text-ink">{view.title}</h3>
+          </p>
+          <h3 className="mt-2 text-lg font-bold tracking-[-0.03em] text-ink">{view.title}</h3>
         </div>
-        <p className={`shrink-0 text-xs font-bold ${passed ? "text-[var(--status-good)]" : "text-ink-muted"}`} aria-live="polite">
-          {passed ? "✓ 통과" : attempts > 0 ? `채점 ${attempts}회 · 최고 ${best}/${total}` : "아직 채점하지 않음"}
+        <p className={`flex shrink-0 items-center gap-1 text-xs ${passed ? "font-medium text-[var(--status-good)]" : "text-ink-muted"}`} aria-live="polite">
+          {passed ? (
+            <>
+              <Icon name="check" size={14} />
+              통과
+            </>
+          ) : attempts > 0 ? (
+            `채점 ${attempts}회 · 최고 ${best}/${total}`
+          ) : (
+            "채점 전"
+          )}
         </p>
       </header>
 
-      <div className="mt-3 text-sm">{view.prompt}</div>
+      <div className="mt-4 text-[15px] leading-relaxed text-ink-body">{view.prompt}</div>
 
       {view.locked ? (
-        <p className="mt-4 rounded-lg bg-[var(--surface-card-2)] px-3 py-2 text-sm text-ink-muted">🔒 {view.locked}</p>
+        <p className="mt-5 flex items-center gap-2 rounded-xl bg-[var(--surface-card-2)] px-4 py-3 text-sm text-ink-muted">
+          <Icon name="lock" size={14} />
+          {view.locked}
+        </p>
       ) : (
         <>
-          <div className="mt-4 overflow-hidden rounded-lg border border-[var(--border-hairline)]">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-ink-muted">
-                Python · 내가 채우는 코드
-                <span className={`ml-2 normal-case ${todos > 0 ? "text-[var(--series-orange)]" : "text-[var(--status-good)]"}`}>
-                  {todos > 0 ? `TODO ${todos}곳 남음` : "TODO 표시 없음"}
-                </span>
+          <div className="mt-5 overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-[var(--code-bg)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-hairline)] py-1.5 pl-4 pr-2">
+              <span className="font-mono text-[11px] text-ink-muted">
+                Python
+                <span className={`ml-2 ${todos > 0 ? "text-[var(--tier-advanced)]" : "text-[var(--status-good)]"}`}>· {todos > 0 ? `TODO ${todos}` : "TODO 없음"}</span>
               </span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => void handleReset()}
-                  disabled={!!busy}
-                  className="rounded px-2 py-1 text-xs font-medium text-ink-muted hover:bg-card hover:text-ink-secondary disabled:opacity-40"
-                >
+              <div className="flex flex-wrap items-center gap-1">
+                <button type="button" onClick={() => void handleReset()} disabled={!!busy} className="btn btn-ghost btn-sm min-h-7 px-3 text-xs">
                   초기화
                 </button>
                 {busy ? (
-                  <button type="button" onClick={handleStop} className="rounded-md bg-[var(--status-bad)] px-3 py-1 text-xs font-bold text-white hover:opacity-90">
+                  <button type="button" onClick={handleStop} className="btn btn-danger btn-sm min-h-7 px-3 text-xs">
                     중단
                   </button>
                 ) : (
                   <>
-                    <button
-                      type="button"
-                      onClick={() => void handleRun()}
-                      disabled={!loaded}
-                      title="Shift+Enter"
-                      className="rounded-md border border-[var(--border-strong)] px-3 py-1 text-xs font-bold text-ink-secondary hover:bg-card disabled:opacity-50"
-                    >
-                      ▶ 실행
+                    <button type="button" onClick={() => void handleRun()} disabled={!loaded} title="Shift+Enter" className="btn btn-secondary btn-sm min-h-7 px-3 text-xs">
+                      <Icon name="play" size={11} />
+                      실행
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleGrade()}
-                      disabled={!loaded}
-                      title="Ctrl+Enter"
-                      className="rounded-md bg-[var(--series-orange)] px-3 py-1 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50"
-                    >
-                      ✓ 채점
+                    <button type="button" onClick={() => void handleGrade()} disabled={!loaded} title="Ctrl+Enter" className="btn btn-primary btn-sm min-h-7 px-3 text-xs">
+                      <Icon name="check" size={13} strokeWidth={2} />
+                      채점
                     </button>
                   </>
                 )}
@@ -317,40 +310,39 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
               <LabEditor value={code} onChange={onChange} onRun={() => void handleRun()} onGrade={() => void handleGrade()} readOnly={!!busy} />
             ) : (
               <div onClick={() => setActive(true)} className="cursor-text">
-                <CodeBlock lang="python" code={code} />
+                <CodeBlock lang="python" code={code} bare />
               </div>
             )}
             <CellOutputs outputs={outputs} status={status ? STATUS_TEXT[status] : null} />
           </div>
 
           {notice && (
-            <p className="mt-3 rounded-lg border-l-4 border-[var(--status-serious)] bg-[color-mix(in_srgb,var(--status-serious)_10%,transparent)] px-3 py-2 text-sm text-ink-secondary" role="status">
+            <p className="callout callout-warn mt-4" role="status">
               {notice}
             </p>
           )}
 
           {report && (
-            <div className="mt-3 rounded-lg border border-[var(--border-hairline)] px-3 py-3 text-sm" aria-live="polite">
+            <div className="mt-4 rounded-xl border border-[var(--border-hairline)] px-4 py-3.5 text-sm" aria-live="polite">
               {report.error ? (
                 <>
-                  <p className="font-bold text-[var(--status-critical)]">코드를 실행하다 오류가 났습니다. 채점 항목은 실행하지 않았습니다.</p>
+                  <p className="font-medium text-[var(--status-critical)]">실행 중 오류가 나서 채점 항목을 검사하지 못했습니다.</p>
                   <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-xs text-[var(--status-critical)]">{report.error}</pre>
                 </>
               ) : (
                 <>
-                  <p className={`font-bold ${passedNow === report.tests.length ? "text-[var(--status-good)]" : "text-ink"}`}>
+                  <p className={`font-medium tabular-nums ${passedNow === report.tests.length ? "text-[var(--status-good)]" : "text-ink"}`}>
                     채점 결과 {passedNow}/{report.tests.length} 통과
-                    {passedNow === report.tests.length && " · 모든 항목을 통과했습니다."}
                   </p>
-                  <ul className="mt-2 space-y-1">
+                  <ul className="mt-2 space-y-1.5">
                     {report.tests.map((t, i) => (
-                      <li key={i} className={t.ok ? "text-[var(--status-good)]" : "text-ink-secondary"}>
-                        <span aria-hidden="true" className="mr-1.5 font-bold">
-                          {t.ok ? "✓" : "✗"}
+                      <li key={i} className={`flex items-start gap-2 ${t.ok ? "text-[var(--status-good)]" : "text-ink-secondary"}`}>
+                        <Icon name={t.ok ? "check" : "close"} size={14} strokeWidth={2} className={`mt-[3px] shrink-0 ${t.ok ? "" : "text-[var(--status-critical)]"}`} />
+                        <span className="min-w-0">
+                          {t.name}
+                          <span className="sr-only">{t.ok ? " (통과)" : " (미통과)"}</span>
+                          {!t.ok && t.message && <span className="ml-1 font-mono text-xs text-[var(--status-critical)]"> — {t.message}</span>}
                         </span>
-                        {t.name}
-                        <span className="sr-only">{t.ok ? " (통과)" : " (미통과)"}</span>
-                        {!t.ok && t.message && <span className="ml-1 font-mono text-xs text-[var(--status-critical)]"> — {t.message}</span>}
                       </li>
                     ))}
                   </ul>
@@ -359,40 +351,35 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
             </div>
           )}
 
-          <div className="mt-3 space-y-2">
+          <div className="mt-4 space-y-3">
             {view.hints.slice(0, hintsShown).map((hint, i) => (
-              <div key={i} className="rounded-lg border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_8%,transparent)] px-3 py-2 text-sm">
-                <p className="text-xs font-bold text-[var(--status-good)]">힌트 {i + 1}</p>
-                <div className="text-ink-secondary">{hint}</div>
+              <div key={i} className="callout callout-good">
+                <p className="mb-1 text-xs font-medium text-[var(--status-good)]">힌트 {i + 1}</p>
+                <div className="text-ink-body">{hint}</div>
               </div>
             ))}
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
               {hintsShown < view.hints.length && (
-                <button
-                  type="button"
-                  onClick={showHint}
-                  className="rounded-md border border-[var(--border-hairline)] px-3 py-1.5 text-ink-secondary hover:border-[var(--status-good)] hover:text-[var(--status-good)]"
-                >
-                  {hintsShown === 0 ? "힌트 보기" : "다음 힌트"} ({hintsShown + 1}/{view.hints.length})
+                <button type="button" onClick={showHint} className="btn btn-secondary btn-sm">
+                  {hintsShown === 0 ? "힌트 보기" : "다음 힌트"}
+                  <span className="tabular-nums text-ink-muted">
+                    {hintsShown + 1}/{view.hints.length}
+                  </span>
                 </button>
               )}
               {solution === null &&
                 (canSeeSolution ? (
-                  <button
-                    type="button"
-                    onClick={() => void loadSolution()}
-                    className="rounded-md border border-[var(--border-hairline)] px-3 py-1.5 text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
-                  >
-                    {passed ? "모범 답안과 비교하기" : "모범 답안 보기"}
+                  <button type="button" onClick={() => void loadSolution()} className="btn btn-secondary btn-sm">
+                    {passed ? "모범 답안과 비교" : "모범 답안 보기"}
                   </button>
                 ) : (
-                  <span className="font-medium text-ink-muted">모범 답안은 통과하거나, 채점해 본 뒤 힌트를 모두 보면 열립니다.</span>
+                  <span className="text-ink-muted">모범 답안은 통과하거나 힌트를 모두 본 뒤 열립니다.</span>
                 ))}
-              {solutionError && <span className="font-medium text-[var(--status-critical)]">{solutionError}</span>}
+              {solutionError && <span className="text-[var(--status-critical)]">{solutionError}</span>}
             </div>
             {solution !== null && (
               <div>
-                <p className="mb-1 text-xs font-bold text-[var(--series-blue)]">모범 답안 (내 코드와 비교해 보십시오. 풀이는 하나가 아닙니다.)</p>
+                <p className="mb-2 text-xs font-medium text-ink-muted">모범 답안 · 풀이는 하나가 아닙니다</p>
                 <CodeBlock lang="python" code={solution} />
               </div>
             )}

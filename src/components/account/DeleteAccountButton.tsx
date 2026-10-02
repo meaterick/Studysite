@@ -22,7 +22,7 @@ export default function DeleteAccountButton() {
         type="button"
         onClick={() => dialogRef.current?.showModal()}
         // 되돌릴 수 없는 동작의 시작 버튼은 눈에 덜 띄는 외곽선 모양으로 두고, 확인 창에서만 빨간 버튼을 쓴다.
-        className="btn border-[color-mix(in_srgb,var(--status-critical)_45%,transparent)] bg-card text-[var(--status-critical)] hover:bg-[color-mix(in_srgb,var(--status-critical)_8%,var(--surface-card))]"
+        className="btn border-[color-mix(in_srgb,var(--status-critical)_40%,transparent)] text-[var(--status-critical)] hover:bg-[color-mix(in_srgb,var(--status-critical)_7%,transparent)]"
       >
         회원 탈퇴
       </button>
@@ -41,7 +41,7 @@ export default function DeleteAccountButton() {
       >
         <form action={formAction}>
           <div className="p-5">
-            <h2 id={titleId} className="text-lg font-black text-ink">
+            <h2 id={titleId} className="text-lg font-semibold text-ink">
               정말 탈퇴하시겠습니까?
             </h2>
             <p className="mt-2 text-sm text-ink-secondary">탈퇴하면 아래 내용이 즉시 삭제되며 되돌릴 수 없습니다.</p>
@@ -51,7 +51,7 @@ export default function DeleteAccountButton() {
               <li>과제 작업 공간, 제출한 과제와 첨부 파일, 채점 결과</li>
               <li>운영자와 주고받은 채팅</li>
             </ul>
-            {state?.error && <p className="mt-3 text-sm font-bold text-[var(--status-critical)]">{state.error}</p>}
+            {state?.error && <p className="mt-3 text-sm font-semibold text-[var(--status-critical)]">{state.error}</p>}
           </div>
           <div className="flex gap-2 border-t border-[var(--border-hairline)] p-4">
             <button
