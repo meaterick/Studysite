@@ -10,6 +10,7 @@ const OPERATOR_NAV = [
   { href: "/operator/chat", label: "채팅" },
   { href: "/operator/members", label: "스터디원" },
   { href: "/operator/settings", label: "운영 설정" },
+  { href: "/operator/system", label: "시스템" },
   { href: "/operator/quiz-answers", label: "모범 방향" },
   { href: "/operator/guide", label: "운영 가이드" },
   { href: "/operator/quality-log", label: "품질 로그" },

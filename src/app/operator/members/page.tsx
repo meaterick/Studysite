@@ -3,10 +3,10 @@ import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { deleteUser, listUsers } from "@/lib/userStore";
-import { listLearningRecords } from "@/lib/learningStore";
-import { listSubmissions, type Submission } from "@/lib/submissionStore";
-import { weekStatus } from "@/lib/study";
+import { countCompletedSections, lastLearningActivity } from "@/lib/learningStore";
+import { submissionCountsByUser, type SubmissionStatus } from "@/lib/submissionStore";
 import { WEEKS } from "@/content/weeks";
+import { getWeekOutline } from "@/content/sections";
 import { formatDateTime, formatDate } from "@/lib/datetime";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
@@ -23,8 +23,11 @@ export default async function MembersPage({
   const { error } = await searchParams;
   const members = listUsers();
   const adminCount = members.filter((m) => m.role === "admin").length;
-  const learning = listLearningRecords();
-  const submissions = listSubmissions();
+  // 모든 학습 기록을 읽지 않고 DB에서 사용자별 숫자만 모아 온다.
+  const coreKeys = WEEKS.flatMap((w) => getWeekOutline(w).sections.filter((s) => s.tier === "core").map((s) => `${w.slug}/${s.id}`));
+  const coreDone = countCompletedSections(coreKeys);
+  const lastActivity = lastLearningActivity();
+  const submissionCounts = submissionCountsByUser();
 
   async function removeMember(formData: FormData) {
     "use server";
@@ -71,8 +74,10 @@ export default async function MembersPage({
                 key={m.id}
                 member={m}
                 adminId={admin.id}
-                learning={learning[m.id]}
-                submissions={submissions.filter((s) => s.userId === m.id)}
+                completed={coreDone.get(m.id) ?? 0}
+                totalItems={coreKeys.length}
+                lastActivity={lastActivity.get(m.id)}
+                submissions={submissionCounts.get(m.id) ?? { submitted: 0, graded: 0, revision: 0 }}
                 removeMember={removeMember}
               />
             ))}
@@ -86,22 +91,23 @@ export default async function MembersPage({
 function MemberRow({
   member,
   adminId,
-  learning,
+  completed,
+  totalItems,
+  lastActivity,
   submissions,
   removeMember,
 }: {
   member: ReturnType<typeof listUsers>[number];
   adminId: string;
-  learning: ReturnType<typeof listLearningRecords>[string] | undefined;
-  submissions: Submission[];
+  completed: number;
+  totalItems: number;
+  lastActivity: string | undefined;
+  submissions: Record<SubmissionStatus, number>;
   removeMember: (formData: FormData) => Promise<void>;
 }) {
-  const record = learning ?? { sections: {}, worksheets: {} };
-  const statuses = WEEKS.map((w) => weekStatus(w, record, submissions.find((s) => s.weekSlug === w.slug)));
-  const completed = statuses.reduce((sum, st) => sum + st.tiers.core.done, 0);
-  const totalItems = statuses.reduce((sum, st) => sum + st.tiers.core.total, 0);
-  const pending = submissions.filter((s) => s.status === "submitted").length;
-  const graded = submissions.filter((s) => s.status === "graded").length;
+  const pending = submissions.submitted;
+  const graded = submissions.graded;
+  const total = submissions.submitted + submissions.graded + submissions.revision;
 
   return (
     <tr>
@@ -117,10 +123,10 @@ function MemberRow({
         {completed} / {totalItems}
       </td>
       <td className="whitespace-nowrap text-ink-secondary">
-        제출 {submissions.length} · 채점 {graded}
+        제출 {total} · 채점 {graded}
         {pending > 0 && <span className="ml-1 text-[var(--accent)]">· 대기 {pending}</span>}
       </td>
-      <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">{learning?.updatedAt ? formatDateTime(learning.updatedAt) : "기록 없음"}</td>
+      <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">{lastActivity ? formatDateTime(lastActivity) : "기록 없음"}</td>
       <td>
         <div className="flex items-center justify-end gap-1">
           <Link href={`/operator/members/${member.id}`} className="btn btn-secondary btn-sm">

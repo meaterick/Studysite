@@ -1,12 +1,12 @@
 import "server-only";
 import fs from "fs";
 import path from "path";
+import { DATA_DIR } from "./dataDir";
 import type { AssignmentDraft } from "./notebook";
 
 // 과제 작업 공간의 자동 저장 초안. 코드 실행 결과(그림 포함)가 들어 있어 크기가 커질 수 있으므로
 // 하나의 JSON에 모으지 않고 DATA_DIR/drafts/<사용자 id>/<주차 slug>.json 파일로 나눠 저장한다.
 
-const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(process.cwd(), "data");
 const DRAFT_DIR = path.join(DATA_DIR, "drafts");
 const SAFE = /^[A-Za-z0-9_-]{1,80}$/;
 
