@@ -154,7 +154,7 @@ export default async function WeekOverviewPage({
             </p>
           </div>
           <p className="mb-5 text-sm text-ink-muted">
-            <strong className="text-ink-secondary">핵심 단계 학습 → 짧은 실습·확인 문제 → 백지공부 → 과제</strong> · 보충·심화는 선택
+            <strong className="text-ink-secondary">핵심 단계 학습 → 확인 문제 → 백지공부 → 과제</strong> · 보충·심화는 선택
             {status.mode === "lock" && " · 앞 단계를 마치면 다음 단계가 열립니다"}
           </p>
           <div className="space-y-8">
@@ -336,7 +336,7 @@ function SectionRow({
         </p>
         <p className="mt-1 text-xs text-ink-muted">
           <span className="sr-only">{style.label} · </span>약 {section.minutes}분
-          {progress.practiceTotal > 0 && ` · 실습 ${progress.practiceDone}/${progress.practiceTotal}`} · 확인 문제 {progress.checksDone}/{progress.checksTotal}
+          · 확인 문제 {progress.checksDone}/{progress.checksTotal}
         </p>
       </div>
       <span className="shrink-0 text-xs font-bold" style={{ color: access === "locked" ? "var(--text-muted)" : style.ring }}>

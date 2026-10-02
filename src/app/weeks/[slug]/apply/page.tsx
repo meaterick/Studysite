@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 /**
- * 적용과 복습 · 한눈에 보기: 한 주의 흐름(핵심 단계 학습 → 짧은 실습·확인 문제 → 백지공부 → 과제)과 선택 과정의 진행 상태를 보여 주고,
+ * 적용과 복습 · 한눈에 보기: 한 주의 흐름(핵심 단계 학습 → 확인 문제 → 백지공부 → 과제)과 선택 과정의 진행 상태를 보여 주고,
  * 지금 할 일을 하나로 정해 준다.
  */
 export default async function ApplyHubPage({
@@ -57,9 +57,8 @@ export default async function ApplyHubPage({
   const optional = summary.items.filter((i) => !i.onPath);
   const coreRows = status.sections.filter((r) => r.section.tier === "core");
   const sum = (f: (r: (typeof coreRows)[number]) => number) => coreRows.reduce((acc, r) => acc + f(r), 0);
-  const practice = { done: sum((r) => r.progress.practiceDone), total: sum((r) => r.progress.practiceTotal) };
   const checks = { done: sum((r) => r.progress.checksDone), total: sum((r) => r.progress.checksTotal) };
-  const practiceAndChecksDone = practice.done >= practice.total && checks.done >= checks.total;
+  const checksDone = checks.done >= checks.total;
 
   return (
     <WeekFrame week={week} status={status} record={record} apply="hub">
@@ -106,10 +105,10 @@ export default async function ApplyHubPage({
               />
               <PathNode
                 step={2}
-                title="짧은 실습 · 확인 문제"
+                title="확인 문제"
                 place="학습 자료"
-                state={`실습 ${practice.done}/${practice.total} · 문제 ${checks.done}/${checks.total}`}
-                done={practiceAndChecksDone}
+                state={`${checks.done}/${checks.total}문항`}
+                done={checksDone}
                 current={false}
                 href={continueHref(slug, status)}
               />

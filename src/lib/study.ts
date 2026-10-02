@@ -2,17 +2,16 @@ import "server-only";
 import type { WeekMeta, WeekSection } from "@/content/types";
 import { TIER_ORDER, type Tier } from "@/content/tiers";
 import { getWeekOutline } from "@/content/sections";
-import { getWeekLab } from "@/content/labs";
-import { readLabState, readSectionState, readWorksheetState, type LearningRecord, type SectionState } from "./learningStore";
+import { readSectionState, readWorksheetState, type LearningRecord, type SectionState } from "./learningStore";
 import { latestGrade, type Submission } from "./submissionStore";
 import { getProgressionMode, type ProgressionMode } from "./settingsStore";
 
 // 단계 진행 규칙을 한곳에 모아둔다 — 페이지(표시), 서버 액션(검증), 운영자 화면(요약)이
 // 모두 같은 함수를 쓰므로 "화면에서는 완료인데 서버는 미완료" 같은 불일치가 생기지 않는다.
 //
-// 한 단계는 학습 → 짧은 실습 → 확인 문제 순서다. 짧은 실습(그 단계와 같은 구분의 코딩 실습)을 통과하고
-// 객관식 확인 문제를 전부 맞히면 단계를 완료할 수 있다. 주차 학습 완료는 핵심 단계만으로 판단하고,
-// 보충 단계는 선택 기록, 심화 단계는 별도의 심화 달성 기록(src/lib/achievement.ts)으로 보여 준다. 서술형 문항은 선택 활동이다.
+// 한 단계를 끝내려면 객관식 확인 문제를 전부 맞히면 된다. 주차 학습 완료는 핵심 단계만으로 판단하고,
+// 보충 단계는 선택 기록, 심화 단계는 별도의 심화 달성 기록(src/lib/achievement.ts)으로 보여 준다. 서술형 문항(작성 → 모범답안과 비교 →
+// 자기평가)과 실습은 권장 활동이며 완료 조건에는 넣지 않는다.
 //
 // 진행 방식(운영 설정, settingsStore)
 // - warn(기본): 순서는 안내만 한다. 끝내지 않은 앞 단계가 있어도 다음 단계·백지공부·과제로 갈 수 있고,
@@ -22,38 +21,22 @@ import { getProgressionMode, type ProgressionMode } from "./settingsStore";
 export interface SectionProgress {
   checksDone: number;
   checksTotal: number;
-  /** 짧은 실습(이 단계와 같은 구분의 코딩 실습) 통과 수 */
-  practiceDone: number;
-  practiceTotal: number;
   quizDone: number;
   quizTotal: number;
   ready: boolean;
   completed: boolean;
 }
 
-/** 단계의 짧은 실습: 그 단계에 연결된 같은 구분(핵심·보충·심화)의 코딩 실습 */
-export function sectionPractice(slug: string, section: WeekSection, record: LearningRecord): { done: number; total: number } {
-  const exercises = (getWeekLab(slug)?.exercises ?? []).filter((e) => e.sectionId === section.id && e.tier === section.tier);
-  const lab = readLabState(record, slug);
-  return { done: exercises.filter((e) => lab.exercises[e.id]?.passedAt).length, total: exercises.length };
-}
-
-export function sectionProgress(
-  section: WeekSection,
-  state: SectionState,
-  practice: { done: number; total: number } = { done: 0, total: 0 }
-): SectionProgress {
+export function sectionProgress(section: WeekSection, state: SectionState): SectionProgress {
   const checksTotal = section.meta.checks.length;
   const checksDone = section.meta.checks.filter((c) => state.checks[c.id]?.correct).length;
   const quizTotal = section.meta.quizIds.length;
   const quizDone = section.meta.quizIds.filter((id) => !!state.answers[id]?.review).length;
   // 서술형은 선택 사항이라 완료 조건에 넣지 않는다(진행 표시에는 quizDone/quizTotal로 보여 준다).
-  const ready = checksDone === checksTotal && practice.done >= practice.total;
+  const ready = checksDone === checksTotal;
   return {
     checksDone,
     checksTotal,
-    practiceDone: practice.done,
-    practiceTotal: practice.total,
     quizDone,
     quizTotal,
     ready,
@@ -105,8 +88,7 @@ export function weekStatus(
   mode: ProgressionMode = getProgressionMode()
 ): WeekStatus {
   const { sections } = getWeekOutline(week);
-  const progressOf = (section: WeekSection) =>
-    sectionProgress(section, readSectionState(record, week.slug, section.id), sectionPractice(week.slug, section, record));
+  const progressOf = (section: WeekSection) => sectionProgress(section, readSectionState(record, week.slug, section.id));
   const core = sections.filter((s) => s.tier === "core");
   const coreDone = core.every((s) => progressOf(s).completed);
   let blocked = false;

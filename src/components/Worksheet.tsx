@@ -102,7 +102,7 @@ export default function Worksheet({
           <div>
             <h3 className="text-base font-bold text-ink">백지공부 시트</h3>
             <p className="text-xs text-ink-muted">
-              학습 자료를 닫고 기억나는 내용만 적어 보십시오. 막힌 부분을 솔직하게 기록하는 것이 핵심입니다. ({fields.length}칸 중 {filled}칸 작성)
+              학습 자료를 닫고 답하십시오. ({fields.length}문항 중 {filled}문항 작성)
             </p>
           </div>
           <button
