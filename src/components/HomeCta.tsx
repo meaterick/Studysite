@@ -1,5 +1,20 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/dal";
+import { WEEKS } from "@/content/weeks";
+import { getLearningRecord } from "@/lib/learningStore";
+import { findUserSubmission } from "@/lib/submissionStore";
+import { continueHref, weekStatus } from "@/lib/study";
+
+/** 지난 학습을 이어 갈 곳: 핵심 단계·백지공부·과제 중 남은 것이 있는 첫 주차. 핵심이 남았으면 그 단계로, 아니면 주차 개요로 */
+function resumeHref(userId: string): string {
+  const record = getLearningRecord(userId);
+  for (const week of WEEKS) {
+    const status = weekStatus(week, record, findUserSubmission(userId, week.slug));
+    if (!status.coreDone) return continueHref(week.slug, status);
+    if (!status.worksheetSubmitted || status.assignment.status === "none") return `/weeks/${week.slug}`;
+  }
+  return "/progress";
+}
 
 // 학습자료는 로그인해야 볼 수 있으므로, 로그인 여부에 따라 "지금 할 수 있는 일"
 // 하나를 가장 크게 보여준다. 로그인 전에는 커리큘럼/Week 1 버튼을 눌러도 결국
@@ -22,8 +37,8 @@ export default async function HomeCta({ tone = "default" }: { tone?: "default" |
     }
     return (
       <div className="flex flex-col gap-2.5">
-        <Link href="/weeks/week-1" className={primary}>
-          {user.name}님, 1주차부터 시작하기
+        <Link href={resumeHref(user.id)} className={primary}>
+          {user.name}님, 지난 학습 이어하기
         </Link>
         <Link href="/curriculum" className={secondary}>
           커리큘럼 보기
@@ -53,11 +68,11 @@ export default async function HomeCta({ tone = "default" }: { tone?: "default" |
     <div className="flex flex-col gap-2 sm:max-w-md">
       <p className="text-sm font-medium text-ink-secondary">{user.name}님, 환영합니다.</p>
       <Link
-        href="/weeks/week-1"
+        href={resumeHref(user.id)}
         className="flex w-full items-center justify-center rounded-xl px-5 py-4 text-base font-bold text-white shadow-sm transition hover:opacity-90"
         style={{ background: "var(--series-blue)" }}
       >
-        1주차부터 시작하기
+        지난 학습 이어하기
       </Link>
       <Link
         href="/curriculum"

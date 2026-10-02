@@ -209,9 +209,9 @@ export default function ChatPanel({
                           {m.role === "admin" ? `운영자 ${m.authorName}` : m.authorName}
                         </p>
                       )}
-                      <div className={`flex items-end gap-1.5 ${mine ? "flex-row-reverse" : ""}`}>
+                      <div className={`flex min-w-0 max-w-full items-end gap-1.5 ${mine ? "flex-row-reverse" : ""}`}>
                         <div
-                          className={`rounded-2xl px-3 py-2 text-sm ${
+                          className={`min-w-0 rounded-2xl px-3 py-2 text-sm ${
                             mine
                               ? "bg-[var(--series-blue)] text-white"
                               : m.role === "admin"
@@ -224,7 +224,7 @@ export default function ChatPanel({
                               {m.topic}
                             </span>
                           )}
-                          <p className="whitespace-pre-wrap break-words">{m.text}</p>
+                          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.text}</p>
                         </div>
                         <span className="shrink-0 pb-0.5 text-[10px] text-ink-muted">
                           {m.id === lastReadMineId && <span className="mr-1 font-bold text-[var(--series-blue)]">읽음</span>}
