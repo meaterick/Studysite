@@ -10,7 +10,7 @@ import { ASSIGNMENT_STATUS_LABEL, type TierCount, type WeekStatus } from "./stud
 //
 // 주차 학습 흐름은 세 페이지로 나뉜다.
 //   개요 → 학습 자료(단계별 설명 + 단계마다 빠르게 푸는 객관식 확인 문제) → 적용과 복습
-// 적용과 복습에는 아래 여섯 활동을 권장 순서대로 둔다. 필수는 백지공부·과제 두 가지뿐이고(진행률에 들어간다),
+// 적용과 복습에는 아래 여섯 활동을 권장 순서대로 둔다. 필수는 백지공부·과제 두 가지뿐이고(진행률에는 넣지 않고 따로 표시한다),
 // 나머지는 실력을 다지는 추가 활동이다.
 
 export type ApplyKey = "descriptive" | "lab" | "drill" | "worksheet" | "assignment" | "notes";
