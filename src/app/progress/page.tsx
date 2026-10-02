@@ -265,7 +265,7 @@ export default async function ProgressPage() {
         <ProgressRing ratio={overall} size={52} />
         <div>
           <p className="text-lg font-black text-ink">전체 {Math.round(overall * 100)}%</p>
-          <p className="text-xs text-ink-muted">핵심 학습 자료·백지공부·과제 제출을 반영한 진행률(보충·심화는 아래에 따로 기록)</p>
+          <p className="text-xs text-ink-muted">학습 자료의 핵심 단계 완료 비율(백지공부·과제와 보충·심화는 따로 기록)</p>
         </div>
         <p className="ml-auto text-sm text-ink-secondary">
           채점된 과제 합계 <strong className="text-ink">{graded.length ? `${scoreSum}/${scoreMax}점` : "아직 없음"}</strong>

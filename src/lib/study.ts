@@ -73,7 +73,7 @@ export interface WeekStatus {
     score: number | null;
     maxScore: number;
   };
-  /** 핵심 단계 N개 + 백지공부 + 과제 제출 기준 진행률 */
+  /** 학습 자료의 핵심 단계 완료 비율(백지공부·과제 등 적용과 복습 활동은 넣지 않는다) */
   ratio: number;
 }
 
@@ -121,7 +121,6 @@ export function weekStatus(
   const worksheetSubmitted = !!readWorksheetState(record, week.slug).submittedAt;
   const grade = submission ? latestGrade(submission) : undefined;
   const assignmentStatus = submission ? submission.status : "none";
-  const done = tiers.core.done + (worksheetSubmitted ? 1 : 0) + (submission ? 1 : 0);
   return {
     sections: rows,
     tiers,
@@ -135,7 +134,7 @@ export function weekStatus(
       score: grade?.decision === "graded" ? grade.score : null,
       maxScore: week.assignmentMaxScore,
     },
-    ratio: tiers.core.total === 0 ? 0 : done / (tiers.core.total + 2),
+    ratio: tiers.core.total === 0 ? 0 : tiers.core.done / tiers.core.total,
   };
 }
 
