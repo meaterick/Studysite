@@ -11,6 +11,7 @@ import NextActivity from "@/components/NextActivity";
 import WeekFrame from "@/components/WeekFrame";
 import DrillChoice from "@/components/lab/DrillChoice";
 import DrillPredict from "@/components/lab/DrillPredict";
+import DrillSequence, { type DrillSequenceItem } from "@/components/lab/DrillSequence";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readLabState, type LabQuizState } from "@/lib/learningStore";
 import { QUIZ_KIND_LABEL, quizItemDone, quizItemWeak } from "@/lib/labView";
@@ -57,18 +58,25 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
     );
   };
 
+  const isLocked = (item: LabQuizItem) => {
+    if (isAdmin) return false;
+    const row = status.sections.find((r) => r.section.id === item.sectionId);
+    return row?.access === "locked";
+  };
+
+  const lockedRow = (item: LabQuizItem, label: string) => {
+    const row = status.sections.find((r) => r.section.id === item.sectionId)!;
+    return (
+      <div key={item.id} id={`drill-${item.id}`} className="scroll-mt-24 flex items-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] px-5 py-4 text-sm text-ink-muted">
+        <Icon name="lock" size={14} />
+        {label} · {row.section.tier === "core" ? `${sectionLabel(row.section)}단계를 열면` : "핵심 단계를 모두 마치면"} 풀 수 있습니다
+      </div>
+    );
+  };
+
   const render = (item: LabQuizItem, index: number) => {
     const s: LabQuizState | undefined = state.quiz[item.id];
     const label = `${QUIZ_KIND_LABEL[item.kind]} ${index + 1}`;
-    const row = status.sections.find((r) => r.section.id === item.sectionId);
-    if (!isAdmin && row?.access === "locked") {
-      return (
-        <div key={item.id} className="flex items-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] px-5 py-4 text-sm text-ink-muted">
-          <Icon name="lock" size={14} />
-          {label} · {row.section.tier === "core" ? `${sectionLabel(row.section)}단계를 열면` : "핵심 단계를 모두 마치면"} 풀 수 있습니다
-        </div>
-      );
-    }
     const weak = quizItemWeak(item, s);
     if (item.kind === "choice") {
       const reveal = !!s && (!!s.correct || (s.wrong?.length ?? 0) >= 2);
@@ -147,6 +155,17 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           const tierItems = KIND_ORDER.flatMap((kind) => items.filter((q) => q.tier === tier && q.kind === kind));
           if (tierItems.length === 0) return null;
           const counters: Partial<Record<LabQuizItem["kind"], number>> = {};
+          const openItems: DrillSequenceItem[] = [];
+          const lockedRows: ReactNode[] = [];
+          for (const item of tierItems) {
+            counters[item.kind] = (counters[item.kind] ?? 0) + 1;
+            const index = counters[item.kind]! - 1;
+            if (isLocked(item)) {
+              lockedRows.push(lockedRow(item, `${QUIZ_KIND_LABEL[item.kind]} ${index + 1}`));
+              continue;
+            }
+            openItems.push({ id: item.id, done: quizItemDone(item, state.quiz[item.id]), node: render(item, index) });
+          }
           return (
             <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-heading`} className="scroll-mt-24">
               <div className="mb-5 flex items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-3">
@@ -157,16 +176,8 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
                 </h2>
                 <span className="text-[13px] tabular-nums text-ink-muted">{tierItems.length}문항</span>
               </div>
-              <div className="space-y-5">
-                {tierItems.map((item) => {
-                  counters[item.kind] = (counters[item.kind] ?? 0) + 1;
-                  return (
-                    <div key={item.id} id={`q-${item.id}`} className="scroll-mt-24">
-                      {render(item, counters[item.kind]! - 1)}
-                    </div>
-                  );
-                })}
-              </div>
+              {openItems.length > 0 && <DrillSequence items={openItems} />}
+              {lockedRows.length > 0 && <div className={`space-y-3 ${openItems.length > 0 ? "mt-5" : ""}`}>{lockedRows}</div>}
             </section>
           );
         })}
