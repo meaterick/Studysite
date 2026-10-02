@@ -14,7 +14,7 @@ export function Inline({ text }: { text: string }) {
     <>
       {parts.map((p, i) => {
         if (typeof p === "string") return <span key={i}>{p}</span>;
-        if ("bold" in p) return <strong key={i} className="font-bold text-ink"><Inline text={p.bold} /></strong>;
+        if ("bold" in p) return <strong key={i} className="font-semibold text-ink"><Inline text={p.bold} /></strong>;
         if ("italic" in p) return <em key={i}>{p.italic}</em>;
         if ("link" in p)
           return (
@@ -23,7 +23,7 @@ export function Inline({ text }: { text: string }) {
               href={p.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[var(--series-blue)] underline decoration-[var(--series-blue)]/40 underline-offset-2 hover:decoration-[var(--series-blue)]"
+              className="font-medium text-[var(--accent)] underline decoration-[color-mix(in_srgb,var(--accent)_35%,transparent)] underline-offset-4 transition hover:decoration-[var(--accent)]"
             >
               {p.link}
             </a>
@@ -32,7 +32,7 @@ export function Inline({ text }: { text: string }) {
         return (
           <code
             key={i}
-            className="rounded border border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-1.5 py-0.5 font-mono text-[0.88em]"
+            className="rounded-md bg-[var(--surface-card-2)] px-1.5 py-0.5 font-mono text-[0.86em] text-ink"
           >
             {p.code}
           </code>
@@ -50,13 +50,14 @@ export function slugify(text: string) {
     .replace(/\s+/g, "-");
 }
 
-const CALLOUT_STYLE: Record<string, { border: string; bg: string; icon: string }> = {
-  info: { border: "var(--series-blue)", bg: "color-mix(in srgb, var(--series-blue) 10%, transparent)", icon: "정보" },
-  warn: { border: "var(--status-serious)", bg: "color-mix(in srgb, var(--status-serious) 12%, transparent)", icon: "주의" },
-  example: { border: "var(--series-aqua)", bg: "color-mix(in srgb, var(--series-aqua) 10%, transparent)", icon: "예제" },
-  quote: { border: "var(--border-strong)", bg: "var(--surface-card-2)", icon: "" },
-  tip: { border: "var(--status-good)", bg: "color-mix(in srgb, var(--status-good) 10%, transparent)", icon: "팁" },
-  task: { border: "var(--series-orange)", bg: "color-mix(in srgb, var(--series-orange) 10%, transparent)", icon: "직접 해보기" },
+// 본문 상자: 색은 제목 글자와 아주 옅은 바탕에만 쓴다. 인용(quote)은 왼쪽 가는 선만 둔다.
+const CALLOUT_STYLE: Record<string, { tone: string; icon: string }> = {
+  info: { tone: "var(--accent)", icon: "정보" },
+  warn: { tone: "var(--status-serious)", icon: "주의" },
+  example: { tone: "var(--tier-supplement)", icon: "예제" },
+  quote: { tone: "var(--border-strong)", icon: "" },
+  tip: { tone: "var(--status-good)", icon: "팁" },
+  task: { tone: "var(--tier-advanced)", icon: "직접 해보기" },
 };
 
 export function BlocksRenderer({
@@ -72,7 +73,7 @@ export function BlocksRenderer({
 }) {
   let codeOrdinal = -1;
   return (
-    <div className="prose-week max-w-none space-y-4 leading-relaxed text-ink-secondary">
+    <div className="prose-week max-w-none space-y-5 text-ink-body">
       {blocks.map((b, i) => {
         switch (b.type) {
           case "heading": {
@@ -84,8 +85,8 @@ export function BlocksRenderer({
                 id={id}
                 className={
                   b.level === 2
-                    ? "scroll-mt-24 pt-4 text-xl font-black text-ink"
-                    : "scroll-mt-24 pt-2 text-base font-bold text-ink"
+                    ? "scroll-mt-24 pt-8 text-[1.375rem] font-bold leading-snug tracking-[-0.03em] text-ink first:pt-0"
+                    : "scroll-mt-24 pt-3 text-[1.0625rem] font-semibold leading-snug tracking-[-0.02em] text-ink"
                 }
               >
                 <Inline text={b.text} />
@@ -94,13 +95,13 @@ export function BlocksRenderer({
           }
           case "paragraph":
             return (
-              <p key={i} className="text-[15px]">
+              <p key={i} className="text-base leading-[1.85]">
                 <Inline text={b.text} />
               </p>
             );
           case "list":
             return b.ordered ? (
-              <ol key={i} className="list-decimal space-y-1.5 pl-5 text-[15px]">
+              <ol key={i} className="list-decimal space-y-2 pl-5 text-base leading-[1.8] marker:text-ink-muted">
                 {b.items.map((it, j) => (
                   <li key={j}>
                     <Inline text={it} />
@@ -108,7 +109,7 @@ export function BlocksRenderer({
                 ))}
               </ol>
             ) : (
-              <ul key={i} className="list-disc space-y-1.5 pl-5 text-[15px]">
+              <ul key={i} className="list-disc space-y-2 pl-5 text-base leading-[1.8] marker:text-ink-muted">
                 {b.items.map((it, j) => (
                   <li key={j}>
                     <Inline text={it} />
@@ -118,12 +119,12 @@ export function BlocksRenderer({
             );
           case "table":
             return (
-              <div key={i} className="not-prose overflow-x-auto rounded-lg border border-[var(--border-hairline)]">
-                <table className="w-full border-collapse text-sm">
+              <div key={i} className="not-prose overflow-x-auto rounded-xl border border-[var(--border-hairline)]">
+                <table className="w-full border-collapse text-sm leading-relaxed">
                   <thead>
                     <tr className="bg-[var(--surface-card-2)]">
                       {b.headers.map((h, j) => (
-                        <th key={j} className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">
+                        <th key={j} className="px-4 py-2.5 text-left text-[13px] font-semibold text-ink">
                           <Inline text={h} />
                         </th>
                       ))}
@@ -131,9 +132,9 @@ export function BlocksRenderer({
                   </thead>
                   <tbody>
                     {b.rows.map((row, r) => (
-                      <tr key={r} className="odd:bg-transparent even:bg-[var(--surface-card-2)]/40">
+                      <tr key={r}>
                         {row.map((cell, c) => (
-                          <td key={c} className="border-b border-[var(--border-hairline)] px-3 py-2 align-top">
+                          <td key={c} className="border-t border-[var(--border-hairline)] px-4 py-3 align-top">
                             <Inline text={cell} />
                           </td>
                         ))}
@@ -155,7 +156,7 @@ export function BlocksRenderer({
             return (
               <div
                 key={i}
-                className="not-prose overflow-x-auto rounded-lg border border-dashed border-[var(--border-strong)] bg-[var(--surface-card-2)] px-4 py-3 text-center"
+                className="not-prose overflow-x-auto rounded-xl bg-[var(--surface-card-2)] px-5 py-4 text-center"
               >
                 <pre className="inline-block whitespace-pre text-left font-mono text-[13px] leading-relaxed text-ink">
                   {b.code}
@@ -166,13 +167,13 @@ export function BlocksRenderer({
             return (
               <div
                 key={i}
-                className="not-prose overflow-x-auto rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-5 text-center"
+                className="not-prose overflow-x-auto rounded-xl border border-[var(--border-hairline)] px-4 py-6 text-center"
                 dangerouslySetInnerHTML={{ __html: renderMath(b.tex, true) }}
               />
             );
           case "image":
             return (
-              <figure key={i} className="not-prose my-6 overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card">
+              <figure key={i} className="not-prose my-8 overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-card">
                 <Image
                   src={b.src}
                   alt={b.alt}
@@ -182,7 +183,7 @@ export function BlocksRenderer({
                   sizes="(max-width: 768px) 100vw, 768px"
                 />
                 {(b.caption || b.credit) && (
-                  <figcaption className="border-t border-[var(--border-hairline)] px-4 py-2.5 text-xs text-ink-secondary">
+                  <figcaption className="border-t border-[var(--border-hairline)] px-4 py-3 text-[13px] text-ink-secondary">
                     {b.caption}
                     {b.credit && <span className="ml-2 text-ink-muted">— {b.credit}</span>}
                   </figcaption>
@@ -191,19 +192,27 @@ export function BlocksRenderer({
             );
           case "callout": {
             const style = CALLOUT_STYLE[b.tone];
+            const quote = b.tone === "quote";
             return (
               <div
                 key={i}
-                className="not-prose rounded-lg border-l-4 px-4 py-3 text-[14px]"
-                style={{ borderColor: style.border, background: style.bg }}
+                className={quote ? "not-prose border-l-2 border-[var(--border-strong)] py-1 pl-5 text-[15px]" : "not-prose rounded-xl px-5 py-4 text-[15px]"}
+                style={
+                  quote
+                    ? undefined
+                    : {
+                        background: `color-mix(in srgb, ${style.tone} 6%, var(--surface-card))`,
+                        border: `1px solid color-mix(in srgb, ${style.tone} 18%, transparent)`,
+                      }
+                }
               >
                 {(b.title || style.icon) && (
-                  <p className="mb-1 text-xs font-bold uppercase tracking-wide" style={{ color: style.border }}>
+                  <p className="mb-1.5 text-xs font-semibold" style={{ color: quote ? "var(--text-muted)" : style.tone }}>
                     {b.title || style.icon}
                   </p>
                 )}
                 {b.blocks.length === 1 && b.blocks[0].type === "paragraph" ? (
-                  <p className="text-ink-secondary">
+                  <p className="leading-[1.8] text-ink-body">
                     <Inline text={b.text} />
                   </p>
                 ) : (

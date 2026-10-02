@@ -1,38 +1,24 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { syllabus } from "@/content/syllabus";
 import { WEEKS } from "@/content/weeks";
-import { TIER_INFO, type Tier } from "@/content/tiers";
-import Markdown from "@/components/MarkdownBlocks";
-import Link from "next/link";
+import { TIER_INFO, TIER_ORDER, type Tier } from "@/content/tiers";
 import { getCurrentUser } from "@/lib/dal";
+import { loginHref } from "@/lib/returnPath";
+import { phaseInfo } from "@/lib/phases";
+import { Inline } from "@/components/MarkdownBlocks";
 import PageHeader from "@/components/PageHeader";
 
 export const metadata: Metadata = { title: "커리큘럼" };
 
-// 커리큘럼은 처음 온 사람이 과정 전체의 구조(목표·4부 구성·주차 페이지·한 주 순서·단계 구분)를 파악하는 곳이다.
-// 주차별 세부 내용은 주차별 자료에서 본다.
-
-const PHASE_INFO: Record<string, { color: string; focus: string }> = {
-  "1부 · 기초": { color: "var(--series-blue)", focus: "벡터·확률·미분과 Python에서 출발해 고전 머신러닝까지" },
-  "2부 · 딥러닝": { color: "var(--series-aqua)", focus: "신경망을 직접 만들고 역전파로 학습시킨 뒤 CNN으로 실전 학습" },
-  "3부 · 현대 AI": { color: "var(--series-violet)", focus: "Attention과 Transformer, LLM이 만들어지는 과정" },
-  "4부 · 활용·책임": { color: "var(--series-orange)", focus: "프롬프트·RAG·에이전트 활용, 책임 있는 AI와 캡스톤" },
-};
-
-const TABS = [
-  { title: "개요", desc: "이번 주 목표, 단계 목록, 지금 할 일" },
-  { title: "학습 자료", desc: "단계별 설명 글과 확인 문제" },
-  { title: "적용과 복습", desc: "백지공부, 과제, 선택 활동" },
-];
+// 커리큘럼은 처음 온 사람이 과정 전체의 구조(목표·4부 구성·한 주 흐름·단계 구분)를 한눈에 보는 곳이다.
 
 const FLOW = [
-  { title: "핵심 단계 학습", place: "학습 자료", desc: "단계별 글을 순서대로 읽습니다." },
-  { title: "확인 문제", place: "학습 자료", desc: "단계 끝의 문제로 이해를 확인합니다." },
-  { title: "백지공부", place: "적용과 복습", desc: "자료를 덮고 핵심 개념을 설명합니다." },
-  { title: "과제", place: "적용과 복습", desc: "배운 내용을 코드와 답안으로 풀어 제출합니다." },
+  { title: "핵심 단계 학습", place: "학습 자료" },
+  { title: "확인 문제", place: "학습 자료" },
+  { title: "백지공부", place: "적용과 복습" },
+  { title: "과제", place: "적용과 복습" },
 ];
-
-const OPTIONAL = ["보충·심화 단계", "서술형", "코딩 실습", "추가 퀴즈"];
 
 const TIER_DESC: Record<Tier, string> = {
   core: "그 주의 기본 개념",
@@ -40,205 +26,141 @@ const TIER_DESC: Record<Tier, string> = {
   advanced: "수식 유도, 최신 기법, 연구 수준의 내용",
 };
 
-const START = [
-  { title: "로그인", desc: "스터디원 계정으로 로그인" },
-  { title: "1주차 열기", desc: "주차별 자료에서 1주차 선택" },
-  { title: "지금 할 일", desc: "개요의 「시작하기」부터 진행" },
-  { title: "내 진도 · 피드백함", desc: "주차별 상태 확인, 복습 노트" },
-];
+/** 목표 마크다운에서 번호 목록만 뽑는다. */
+function goalItems(md: string): string[] {
+  return md
+    .split("\n")
+    .map((line) => line.match(/^\d+\.\s+(.*)$/)?.[1])
+    .filter((x): x is string => !!x);
+}
 
-function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
+function Section({ id, title, children, ruled = true }: { id: string; title: string; children: React.ReactNode; ruled?: boolean }) {
   return (
-    <h2 id={id} className="section-title mb-4 scroll-mt-24">
+    <section aria-labelledby={id} className={ruled ? "border-t border-[var(--border-hairline)] pt-10" : ""}>
+      <h2 id={id} className="section-title mb-8 scroll-mt-24">
+        {title}
+      </h2>
       {children}
-    </h2>
+    </section>
   );
 }
 
 export default async function CurriculumPage() {
   const user = await getCurrentUser();
   const phases = [...new Set(WEEKS.map((w) => w.phase))];
+  const goals = goalItems(syllabus.goalsMd);
+  const weekHref = (slug: string) => (user ? `/weeks/${slug}` : loginHref(`/weeks/${slug}`));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-      {/* ── 머리말 ─────────────────────────────────────────── */}
+    <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
       <PageHeader
-        eyebrow="8주 커리큘럼"
-        title={syllabus.title}
-        className="mb-6"
+        eyebrow="Aegis AI 스터디 · 8주 커리큘럼"
+        title="AI 기초부터 활용까지"
         actions={
-          <Link href="/weeks" className="btn btn-primary">
-            주차별 자료 보기 →
-          </Link>
+          user ? (
+            <Link href="/weeks" className="btn btn-primary">
+              주차별 자료
+            </Link>
+          ) : (
+            <Link href={loginHref("/weeks")} className="btn btn-primary">
+              로그인하고 시작하기
+            </Link>
+          )
         }
       />
-      <nav aria-label="이 페이지의 구성" className="mb-6 flex flex-wrap gap-1.5 text-xs font-bold">
-        {[
-          { id: "phases", label: "4부 구성" },
-          { id: "week-page", label: "주차 페이지" },
-          { id: "flow", label: "한 주 학습 순서" },
-          { id: "tiers", label: "단계 구분" },
-        ].map((l) => (
-          <a
-            key={l.id}
-            href={`#${l.id}`}
-            className="rounded-full border border-[var(--border-hairline)] bg-card px-3 py-1.5 text-ink-secondary transition hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
-          >
-            {l.label}
-          </a>
-        ))}
-      </nav>
-      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+
+      <dl className="mb-16 grid grid-cols-3 divide-x divide-[var(--border-hairline)] border-y border-[var(--border-hairline)]">
         {[
           { k: "기간", v: "8주" },
           { k: "구성", v: `${phases.length}부 · ${WEEKS.length}주차` },
-          { k: "주차 페이지", v: "개요 · 학습 자료 · 적용과 복습" },
           { k: "단계", v: "핵심 · 보충 · 심화" },
         ].map((f) => (
-          <div key={f.k} className="surface px-4 py-3.5">
-            <dt className="text-xs font-bold text-ink-muted">{f.k}</dt>
-            <dd className="mt-1 text-[15px] font-black text-ink">{f.v}</dd>
+          <div key={f.k} className="px-4 py-5 first:pl-0 sm:px-6">
+            <dt className="text-xs text-ink-muted">{f.k}</dt>
+            <dd className="mt-1.5 text-[15px] font-semibold tracking-[-0.02em] text-ink sm:text-lg">{f.v}</dd>
           </div>
         ))}
       </dl>
 
-      {/* ── 스터디 목표 ────────────────────────────────────── */}
-      <div className="mt-10">
-        <Markdown source={syllabus.goalsMd} />
-      </div>
-
-      {/* ── 4부 구성 ──────────────────────────────────────── */}
-      <section className="mt-12">
-        <SectionHeading id="phases">8주 · 4부 구성</SectionHeading>
-        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {phases.map((phase) => {
-            const info = PHASE_INFO[phase] ?? { color: "var(--series-blue)", focus: "" };
-            const weeks = WEEKS.filter((w) => w.phase === phase);
-            return (
-              <li key={phase} className="surface flex flex-col overflow-hidden">
-                <div className="px-4 py-3.5 text-white" style={{ background: `linear-gradient(135deg, ${info.color}, color-mix(in srgb, ${info.color} 75%, #000))` }}>
-                  <p className="text-xs font-bold opacity-90">
-                    W{weeks[0].number}–W{weeks[weeks.length - 1].number}
-                  </p>
-                  <p className="font-black">{phase}</p>
-                </div>
-                <div className="flex flex-1 flex-col gap-3 p-4">
-                  <p className="text-sm text-ink-secondary">{info.focus}</p>
-                  <ul className="mt-auto space-y-1.5 border-t border-[var(--border-hairline)] pt-3">
-                    {weeks.map((w) => (
-                      <li key={w.slug} className="text-xs text-ink">
-                        <span className="font-black" style={{ color: info.color }}>
-                          {w.number}주차
-                        </span>{" "}
-                        {w.title}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      {/* ── 주차 페이지 구성 ───────────────────────────────── */}
-      <section className="mt-12">
-        <SectionHeading id="week-page">주차 페이지 구성</SectionHeading>
-        <ol className="grid gap-3 sm:grid-cols-3">
-          {TABS.map((t, i) => (
-            <li key={t.title} className="flex items-start gap-3 surface p-4">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-[var(--series-blue)] text-xs font-black text-[var(--series-blue)]">
-                {i + 1}
-              </span>
-              <div>
-                <p className="font-black text-ink">{t.title}</p>
-                <p className="mt-0.5 text-sm text-ink-secondary">{t.desc}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* ── 한 주 학습 순서 ────────────────────────────────── */}
-      <section className="mt-12">
-        <SectionHeading id="flow">한 주 학습 순서</SectionHeading>
-        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {FLOW.map((f, i) => (
-            <li key={f.title} className="relative surface p-4">
-              <div className="flex items-center gap-2">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--series-blue)] text-xs font-black text-white">
-                  {i + 1}
+      <div className="space-y-16">
+        <Section id="goals" title="수료하면 할 수 있는 것" ruled={false}>
+          <ol className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
+            {goals.map((g, i) => (
+              <li key={i} className="flex gap-4">
+                <span aria-hidden="true" className="w-6 shrink-0 pt-0.5 font-mono text-xs text-ink-muted">
+                  {String(i + 1).padStart(2, "0")}
                 </span>
-                <p className="font-black text-ink">{f.title}</p>
-              </div>
-              <p className="mt-2 text-sm text-ink-secondary">{f.desc}</p>
-              <p className="mt-2 inline-block rounded-md bg-[var(--surface-card-2)] px-2 py-0.5 text-xs font-bold text-ink-muted">{f.place}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-[var(--border-strong)] px-4 py-3">
-          <span className="text-sm font-black text-ink">선택 과정</span>
-          {OPTIONAL.map((o) => (
-            <span key={o} className="rounded-full bg-[var(--surface-card-2)] px-2.5 py-0.5 text-xs font-bold text-ink-secondary">
-              {o}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 단계 구분 ──────────────────────────────────────── */}
-      <section className="mt-12">
-        <SectionHeading id="tiers">단계 구분</SectionHeading>
-        <ul className="grid gap-3 sm:grid-cols-3">
-          {(Object.keys(TIER_INFO) as Tier[]).map((tier) => {
-            const info = TIER_INFO[tier];
-            return (
-              <li key={tier} className="surface p-4" style={{ borderTop: `4px solid ${info.color}` }}>
-                <p className="flex items-baseline gap-2">
-                  <span className="text-lg font-black" style={{ color: info.color }}>
-                    {info.label}
-                  </span>
-                  <span className="text-xs font-bold text-ink-muted">{info.audience}</span>
-                  {!info.required && (
-                    <span className="ml-auto rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
-                  )}
-                </p>
-                <p className="mt-1 text-sm text-ink-secondary">{TIER_DESC[tier]}</p>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      {/* ── 처음이라면(로그인 전에만) ───────────────────────────────── */}
-      {!user && (
-        <section className="mt-12 rounded-2xl border border-[color-mix(in_srgb,var(--series-blue)_40%,transparent)] bg-card p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="start" className="text-xl font-black text-ink">
-              처음이라면
-            </h2>
-            <Link href="/login" className="btn btn-primary w-full sm:w-auto">
-              로그인하고 시작하기 →
-            </Link>
-          </div>
-          <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {START.map((s, i) => (
-              <li key={s.title} className="flex items-start gap-3">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--series-blue)_12%,transparent)] text-xs font-black text-[var(--series-blue)]">
-                  {i + 1}
+                <span className="text-[15px] leading-relaxed text-ink-body">
+                  <Inline text={g} />
                 </span>
-                <div>
-                  <p className="text-sm font-black text-ink">{s.title}</p>
-                  <p className="text-xs text-ink-muted">{s.desc}</p>
-                </div>
               </li>
             ))}
           </ol>
-        </section>
-      )}
+        </Section>
 
-      {/* ── 설계 원칙 ──────────────────────────────────────── */}
-      <p className="mt-10 border-t border-[var(--border-hairline)] pt-6 text-sm text-ink-muted">{syllabus.designNote}</p>
+        <Section id="phases" title="로드맵">
+          <ol className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+            {phases.map((phase) => {
+              const info = phaseInfo(phase);
+              const weeks = WEEKS.filter((w) => w.phase === phase);
+              return (
+                <li key={phase} className="flex flex-col">
+                  <span aria-hidden="true" className="mb-5 h-[2px] w-full rounded-full" style={{ background: info.color }} />
+                  <p className="kicker">Part {String(info.index).padStart(2, "0")}</p>
+                  <p className="mt-1.5 text-lg font-semibold tracking-[-0.02em] text-ink">{info.name}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-muted">{info.focus}</p>
+                  <ul className="mt-5 space-y-3">
+                    {weeks.map((w) => (
+                      <li key={w.slug}>
+                        <Link href={weekHref(w.slug)} prefetch={user ? undefined : false} className="group flex gap-3 text-sm">
+                          <span className="w-5 shrink-0 font-mono text-xs leading-5 text-ink-muted">{String(w.number).padStart(2, "0")}</span>
+                          <span className="text-ink-secondary transition group-hover:text-ink">{w.title}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
+          </ol>
+        </Section>
+
+        <Section id="flow" title="한 주의 흐름">
+          <ol className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4">
+            {FLOW.map((f, i) => (
+              <li key={f.title} className="relative">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[var(--border-strong)] text-xs font-semibold text-ink">{i + 1}</span>
+                  {i < FLOW.length - 1 && <span aria-hidden="true" className="hidden h-px flex-1 bg-[var(--border-hairline)] sm:block" />}
+                </div>
+                <p className="text-[15px] font-semibold tracking-[-0.02em] text-ink">{f.title}</p>
+                <p className="mt-1 text-xs text-ink-muted">{f.place}</p>
+              </li>
+            ))}
+          </ol>
+        </Section>
+
+        <Section id="tiers" title="단계 구분">
+          <ul className="grid gap-x-10 gap-y-6 sm:grid-cols-3">
+            {TIER_ORDER.map((tier) => {
+              const info = TIER_INFO[tier];
+              return (
+                <li key={tier}>
+                  <p className="flex items-center gap-2">
+                    <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: info.color }} />
+                    <span className="text-[15px] font-semibold text-ink">{info.label}</span>
+                    <span className="text-xs text-ink-muted">{info.audience}</span>
+                    {!info.required && <span className="ml-auto text-xs text-ink-muted">선택</span>}
+                  </p>
+                  <p className="mt-2 text-sm text-ink-muted">{TIER_DESC[tier]}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
+      </div>
+
+      <p className="mt-20 max-w-3xl text-xs leading-relaxed text-ink-muted">{syllabus.designNote}</p>
     </div>
   );
 }

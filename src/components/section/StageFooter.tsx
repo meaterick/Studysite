@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { completeSection } from "@/lib/studyActions";
+import Icon from "@/components/Icon";
 
 export interface StageRequirement {
   label: string;
@@ -54,22 +55,22 @@ export default function StageFooter({
   };
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-10 border-t border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_97%,transparent)] px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur sm:mx-0 sm:rounded-t-xl sm:border-x print:hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm" aria-label="단계 완료 조건">
+    <div className="sticky bottom-4 z-20 mt-14 print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-card)_95%,transparent)] px-4 py-3 shadow-[var(--shadow-raised)] backdrop-blur-xl backdrop-saturate-150 sm:px-5">
+        <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]" aria-label="단계 완료 조건">
           {completed ? (
-            <li className="font-bold text-[var(--status-good)]">✓ 완료한 단계입니다</li>
+            <li className="flex items-center gap-1.5 font-medium text-[var(--status-good)]">
+              <Icon name="check" size={15} />
+              완료한 단계입니다
+            </li>
           ) : (
             requirements.map((r) => {
               const done = r.done >= r.total;
               return (
-                <li
-                  key={r.label}
-                  className={done ? "font-bold text-[var(--status-good)]" : r.optional ? "text-ink-muted" : "text-ink-secondary"}
-                >
-                  <span aria-hidden="true">{done ? "✓ " : ""}</span>
+                <li key={r.label} className={`flex items-center gap-1.5 tabular-nums ${done ? "font-medium text-[var(--status-good)]" : "text-ink-secondary"}`}>
+                  {done && <Icon name="check" size={15} />}
                   {r.label} {r.done}/{r.total}
-                  {r.optional && <span className="ml-0.5 text-xs font-medium">(선택)</span>}
+                  {r.optional && <span className="text-xs text-ink-muted">(선택)</span>}
                   <span className="sr-only">{done ? " (완료)" : r.optional ? " (선택 사항)" : " (미완료)"}</span>
                 </li>
               );
@@ -84,7 +85,8 @@ export default function StageFooter({
                 href={nextHref}
                 className="btn btn-primary"
               >
-                {nextLabel ?? (isLast ? "적용과 복습으로" : "다음 단계로")} →
+                {nextLabel ?? (isLast ? "적용과 복습으로" : "다음 단계로")}
+                <Icon name="arrowRight" size={15} />
               </Link>
             )
           ) : ready ? (
@@ -101,9 +103,9 @@ export default function StageFooter({
             <Link
               href={skipHref}
               title="이 단계는 미완료로 남고, 나중에 돌아와 마칠 수 있습니다."
-              className="text-xs font-bold text-ink-muted underline-offset-2 hover:text-ink-secondary hover:underline"
+              className="text-xs font-medium text-ink-muted underline-offset-4 hover:text-ink hover:underline"
             >
-              {isLast ? "미완료로 두고 적용과 복습으로 →" : "미완료로 두고 다음 단계로 →"}
+              {isLast ? "미완료로 두고 적용과 복습으로" : "미완료로 두고 다음 단계로"}
             </Link>
           )}
         </div>

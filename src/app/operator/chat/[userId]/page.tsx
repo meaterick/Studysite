@@ -7,6 +7,7 @@ import { conversationView } from "@/lib/chatView";
 import { getWeek } from "@/content/weeks";
 import ChatPanel from "@/components/chat/ChatPanel";
 import ClearChatButton from "@/components/chat/ClearChatButton";
+import Icon from "@/components/Icon";
 
 export const metadata = { title: "채팅" };
 
@@ -21,20 +22,20 @@ export default async function OperatorChatPage({ params }: { params: Promise<{ u
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-base font-black text-ink">
-          <Link href="/operator/chat" className="mr-2 text-[var(--series-orange)] lg:hidden">
-            ←
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="flex min-w-0 items-center gap-2 text-[15px] font-medium text-ink">
+          <Link href="/operator/chat" aria-label="대화 목록" className="icon-btn h-8 w-8 lg:hidden">
+            <Icon name="arrowLeft" size={15} />
           </Link>
-          {student.name}
-          <span className="ml-2 text-xs font-medium text-ink-muted">{student.email}</span>
+          <span className="truncate">{student.name}</span>
+          <span className="truncate text-xs font-normal text-ink-muted">{student.email}</span>
         </p>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <Link href={`/operator/members/${student.id}`} className="font-bold text-[var(--series-orange)] hover:underline">
+        <div className="flex flex-wrap items-center gap-1">
+          <Link href={`/operator/members/${student.id}`} className="btn btn-ghost btn-sm">
             학습 현황
           </Link>
           {submissions.map((s) => (
-            <Link key={s.id} href={`/operator/submissions/${s.id}`} className="font-bold text-[var(--series-orange)] hover:underline">
+            <Link key={s.id} href={`/operator/submissions/${s.id}`} className="btn btn-ghost btn-sm">
               {s.week}주차 과제
             </Link>
           ))}

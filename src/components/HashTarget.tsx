@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const HIGHLIGHT = ["ring-2", "ring-[var(--series-blue)]", "ring-offset-2", "ring-offset-[var(--surface-page)]", "rounded-xl"];
+const HIGHLIGHT = ["ring-2", "ring-[var(--accent)]", "ring-offset-2", "ring-offset-[var(--surface-page)]", "rounded-xl"];
 
 /** 주소의 #id 위치로 이동한다. 대상이 접힌 <details> 안에 있으면 펼친 뒤 스크롤하고 잠깐 강조한다. */
 export default function HashTarget() {

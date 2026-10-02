@@ -68,7 +68,7 @@ export default function Worksheet({
         try {
           localStorage.removeItem(draftKey);
         } catch {}
-        setMessage({ tone: "ok", text: submit ? "제출했습니다. 아래 비교 자료로 스스로 점검해 보십시오." : "임시 저장했습니다." });
+        setMessage({ tone: "ok", text: submit ? "제출했습니다." : "임시 저장했습니다." });
       } catch {
         setMessage({ tone: "error", text: "저장에 실패했습니다. 잠시 후 다시 시도해 주십시오." });
       }
@@ -84,107 +84,84 @@ export default function Worksheet({
   const filled = fields.filter((_, i) => (values[String(i)] ?? "").trim()).length;
 
   return (
-    <div className="space-y-6">
-      <div className="surface p-5">
-        {draftIsNewer && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--surface-card-2)] px-3 py-2 text-sm print:hidden">
-            <span className="text-ink-secondary">저장하지 않은 작성 내용이 이 브라우저에 남아 있습니다.</span>
-            <button
-              type="button"
-              onClick={() => setValues(draft!.values)}
-              className="rounded-md border border-[var(--border-hairline)] px-3 py-1 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card)]"
-            >
-              불러오기
-            </button>
-          </div>
-        )}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-base font-bold text-ink">백지공부 시트</h3>
-            <p className="text-xs text-ink-muted">
-              학습 자료를 닫고 답하십시오. ({fields.length}문항 중 {filled}문항 작성)
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="btn btn-secondary btn-sm print:hidden font-medium"
-          >
-            인쇄·PDF 저장
+    <div className="space-y-10">
+      {draftIsNewer && (
+        <div className="callout flex flex-wrap items-center justify-between gap-3 print:hidden">
+          <span>저장하지 않은 작성 내용이 이 브라우저에 남아 있습니다.</span>
+          <button type="button" onClick={() => setValues(draft!.values)} className="btn btn-secondary btn-sm">
+            불러오기
           </button>
         </div>
-        <div className="space-y-4">
-          {fields.map((f, i) => {
-            const key = String(i);
-            return (
-              <div key={f.label} className="rounded-lg border border-[var(--border-hairline)] bg-page px-3 py-3">
-                <label htmlFor={`ws-${key}`} className="mb-1 block text-sm font-bold text-ink">
+      )}
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-hairline)] pb-3">
+        <p className="text-[13px] tabular-nums text-ink-muted">
+          {filled}/{fields.length} 작성
+        </p>
+        <button type="button" onClick={() => window.print()} className="btn btn-ghost btn-sm -mr-3 print:hidden">
+          인쇄 · PDF
+        </button>
+      </div>
+      <ol className="space-y-10">
+        {fields.map((f, i) => {
+          const key = String(i);
+          return (
+            <li key={f.label}>
+              <div className="min-w-0">
+                <label htmlFor={`ws-${key}`} className="block text-base font-semibold tracking-[-0.02em] text-ink">
                   {f.label}
                 </label>
-                {f.hint && <p className="mb-2 text-xs text-ink-muted">{f.hint}</p>}
+                {f.hint && <p className="mt-1 text-sm text-ink-muted">{f.hint}</p>}
                 <textarea
                   id={`ws-${key}`}
                   value={values[key] ?? ""}
                   onChange={(e) => update(key, e.target.value)}
                   rows={4}
                   maxLength={4000}
-                  className="w-full rounded-md border border-[var(--border-hairline)] bg-card px-3 py-2 text-sm text-ink outline-none focus:border-[var(--series-blue)] print:border-dashed"
+                  className="mt-3 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-[15px] leading-relaxed text-ink transition placeholder:text-ink-muted print:border-dashed"
                 />
                 {submittedAt && (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 print:hidden">
-                    <span className="text-xs text-ink-muted">비교 결과:</span>
-                    {(["ok", "weak"] as const).map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        disabled={pending}
-                        aria-pressed={marks[key] === m}
-                        onClick={() => mark(key, m)}
-                        className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${
-                          marks[key] === m
-                            ? m === "ok"
-                              ? "bg-[var(--status-good)] text-white"
-                              : "bg-[var(--status-critical)] text-white"
-                            : "border border-[var(--border-hairline)] text-ink-secondary hover:bg-[var(--surface-card-2)]"
-                        }`}
-                      >
-                        {m === "ok" ? "충분히 떠올림" : "보완 필요"}
-                      </button>
-                    ))}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 print:hidden" role="group" aria-label="비교 결과">
+                    {(["ok", "weak"] as const).map((m) => {
+                      const on = marks[key] === m;
+                      const tone = m === "ok" ? "var(--status-good)" : "var(--status-critical)";
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          disabled={pending}
+                          aria-pressed={on}
+                          onClick={() => mark(key, m)}
+                          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                            on ? "" : "border-[var(--border-hairline)] text-ink-secondary hover:border-[var(--border-strong)] hover:text-ink"
+                          }`}
+                          style={on ? { color: tone, borderColor: `color-mix(in srgb, ${tone} 45%, transparent)`, background: `color-mix(in srgb, ${tone} 8%, transparent)` } : undefined}
+                        >
+                          {m === "ok" ? "충분히 떠올림" : "보완 필요"}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            );
-          })}
-        </div>
-        <div className="mt-4 flex flex-wrap items-center gap-3 print:hidden">
-          <button
-            type="button"
-            onClick={() => persist(true)}
-            disabled={pending}
-            className="btn btn-primary"
-          >
-            {pending ? "저장 중…" : submittedAt ? "수정 내용 저장" : "제출 후 비교 자료 보기"}
+            </li>
+          );
+        })}
+      </ol>
+      <div className="flex flex-wrap items-center gap-3 border-t border-[var(--border-hairline)] pt-6 print:hidden">
+        <button type="button" onClick={() => persist(true)} disabled={pending} className="btn btn-primary">
+          {pending ? "저장 중…" : submittedAt ? "수정 내용 저장" : "제출하고 비교 자료 보기"}
+        </button>
+        {!submittedAt && (
+          <button type="button" onClick={() => persist(false)} disabled={pending} className="btn btn-secondary">
+            임시 저장
           </button>
-          {!submittedAt && (
-            <button
-              type="button"
-              onClick={() => persist(false)}
-              disabled={pending}
-              className="btn btn-secondary"
-            >
-              임시 저장
-            </button>
-          )}
-          {submittedAt && (
-            <span className="text-xs text-[var(--status-good)]">제출 완료 · {formatDateTime(submittedAt)}</span>
-          )}
-          {message && (
-            <p className={`text-sm ${message.tone === "ok" ? "text-[var(--status-good)]" : "text-[var(--status-critical)]"}`} aria-live="polite">
-              {message.text}
-            </p>
-          )}
-        </div>
+        )}
+        {submittedAt && <span className="text-[13px] text-ink-muted">제출 · {formatDateTime(submittedAt)}</span>}
+        {message && (
+          <p className={`text-sm ${message.tone === "ok" ? "text-[var(--status-good)]" : "text-[var(--status-critical)]"}`} aria-live="polite">
+            {message.text}
+          </p>
+        )}
       </div>
       {review}
     </div>

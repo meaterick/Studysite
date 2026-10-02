@@ -15,7 +15,7 @@ import { loadWeekPage } from "@/lib/weekPage";
 import { readLabState, type LabQuizState } from "@/lib/learningStore";
 import { QUIZ_KIND_LABEL, quizItemDone, quizItemWeak } from "@/lib/labView";
 import { sectionLabel, TIER_INFO, TIER_ORDER } from "@/content/tiers";
-import TierBadge from "@/components/TierBadge";
+import Icon from "@/components/Icon";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -30,10 +30,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 // 서술형 문항은 "서술형" 페이지에서 단계별 서술형과 함께 모아 보여 준다.
 type DrillKind = Exclude<LabQuizItem["kind"], "descriptive">;
 const KIND_ORDER: DrillKind[] = ["choice", "predict"];
-const KIND_DESC: Record<DrillKind, string> = {
-  choice: "보기 중 하나를 고릅니다. 두 번 틀리면 해설이 공개됩니다.",
-  predict: "코드를 실행하지 말고 출력을 예측해 적습니다. 공백 차이는 무시하고 비교하며, 정답이 공개되면 직접 실행해 확인할 수 있습니다.",
-};
 
 /** 추가 퀴즈: 객관식·코드 출력 예측. 정답 비교는 서버가 하고, 정답·해설은 공개 조건을 만족한 뒤에만 내려보낸다. */
 export default async function WeekDrillPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -50,11 +46,11 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
   const footer = (item: LabQuizItem, weak: boolean): ReactNode => {
     const s = sections.get(item.sectionId);
     return (
-      <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
-        {weak && <span className="rounded bg-[color-mix(in_srgb,var(--status-critical)_12%,transparent)] px-1.5 py-0.5 font-bold text-[var(--status-critical)]">다시 볼 문항</span>}
+      <p className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-muted">
+        {weak && <span className="pill [--pill:var(--status-critical)]">다시 볼 문항</span>}
         {s && (
-          <Link href={`/weeks/${slug}/sections/${s.id}`} className="hover:text-[var(--series-blue)] hover:underline">
-            관련 단계: {sectionLabel(s)}. {s.title} →
+          <Link href={`/weeks/${slug}/sections/${s.id}`} className="transition hover:text-ink">
+            관련 단계 · {sectionLabel(s)}. {s.title}
           </Link>
         )}
       </p>
@@ -67,8 +63,9 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
     const row = status.sections.find((r) => r.section.id === item.sectionId);
     if (!isAdmin && row?.access === "locked") {
       return (
-        <div key={item.id} className="rounded-xl border border-dashed border-[var(--border-hairline)] p-4 text-sm text-ink-muted">
-          🔒 {label}: {row.section.tier === "core" ? `${sectionLabel(row.section)}단계를 열면` : "핵심 단계를 모두 마치면"} 풀 수 있습니다.
+        <div key={item.id} className="flex items-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] px-5 py-4 text-sm text-ink-muted">
+          <Icon name="lock" size={14} />
+          {label} · {row.section.tier === "core" ? `${sectionLabel(row.section)}단계를 열면` : "핵심 단계를 모두 마치면"} 풀 수 있습니다
         </div>
       );
     }
@@ -113,42 +110,33 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
   };
 
   return (
-    <WeekFrame week={week} status={status} record={record} apply="drill">
-      <div className="space-y-10">
+    <WeekFrame week={week} status={status} record={record} apply="drill" compact>
+      <div className="space-y-16">
         <section aria-labelledby="drill-intro">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="drill-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
-                추가 퀴즈 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
+              <h2 id="drill-intro" className="flex flex-wrap items-center gap-3 text-[1.75rem] font-bold tracking-[-0.035em] text-ink">
+                추가 퀴즈 <span className="pill align-middle text-xs">선택</span>
               </h2>
-              <p className="mt-1 text-sm text-ink-muted">
-                단계 끝의 확인 문제보다 한 걸음 더 나아간 문제입니다. 개념을 다른 상황에 적용하고, 코드를 읽고 결과를 예측해 봅니다. 주차 완료 조건과는 무관합니다.
-              </p>
+              <p className="mt-2 text-[15px] text-ink-secondary">객관식과 코드 출력 예측으로 이해를 한 번 더 점검합니다.</p>
             </div>
-            <p className="rounded-full bg-[var(--surface-card-2)] px-3 py-1 text-sm font-bold text-ink-secondary">
+            <p className="text-[13px] tabular-nums text-ink-muted">
               완료 {doneCount}/{items.length}
               {weakCount > 0 && <span className="ml-2 text-[var(--status-critical)]">다시 볼 문항 {weakCount}</span>}
             </p>
           </div>
-          <ul className="mt-4 space-y-1 text-sm text-ink-muted">
-            {KIND_ORDER.map((kind) => (
-              <li key={kind}>
-                <strong className="text-ink-secondary">{QUIZ_KIND_LABEL[kind]}</strong>: {KIND_DESC[kind]}
-              </li>
-            ))}
-          </ul>
-          <nav aria-label="단계 구분" className="mt-4 flex flex-wrap gap-2 text-xs font-bold">
+          <nav aria-label="단계 구분" className="mt-5 flex flex-wrap gap-1">
             {TIER_ORDER.map((tier) => {
               const inTier = items.filter((q) => q.tier === tier);
               if (inTier.length === 0) return null;
               const done = inTier.filter((q) => quizItemDone(q, state.quiz[q.id])).length;
               return (
-                <a
-                  key={tier}
-                  href={`#tier-${tier}`}
-                  className="rounded-full border border-[var(--border-hairline)] px-3 py-1 text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
-                >
-                  {TIER_INFO[tier].label} {done}/{inTier.length}
+                <a key={tier} href={`#tier-${tier}`} className="chip border border-[var(--border-hairline)]">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ background: TIER_INFO[tier].color }} />
+                  {TIER_INFO[tier].label}
+                  <span className="tabular-nums text-ink-muted">
+                    {done}/{inTier.length}
+                  </span>
                 </a>
               );
             })}
@@ -161,19 +149,15 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           const counters: Partial<Record<LabQuizItem["kind"], number>> = {};
           return (
             <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-heading`} className="scroll-mt-24">
-              <div className="mb-4 border-b border-[var(--border-hairline)] pb-2">
-                <h2 id={`tier-${tier}-heading`} className="flex flex-wrap items-center gap-2 text-lg font-black text-ink">
-                  {TIER_INFO[tier].label} 문항 ({tierItems.length}) <TierBadge tier={tier} />
+              <div className="mb-5 flex items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-3">
+                <h2 id={`tier-${tier}-heading`} className="flex items-center gap-2 text-lg font-bold tracking-[-0.03em] text-ink">
+                  <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: TIER_INFO[tier].color }} />
+                  {TIER_INFO[tier].label} 문항
+                  <span className="text-xs font-normal text-ink-muted">{TIER_INFO[tier].audience}</span>
                 </h2>
-                <p className="mt-0.5 text-sm text-ink-muted">
-                  {tier === "core"
-                    ? "이번 주 핵심 개념을 확인하는 문항입니다. 먼저 풀어 보십시오."
-                    : tier === "supplement"
-                      ? "보충 단계의 내용과 핵심 개념의 응용을 다루는 문항입니다."
-                      : "유도·분석·설계 판단을 요구하는 전문가 수준 문항입니다. 심화 달성 기록에 반영됩니다."}
-                </p>
+                <span className="text-[13px] tabular-nums text-ink-muted">{tierItems.length}문항</span>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {tierItems.map((item) => {
                   counters[item.kind] = (counters[item.kind] ?? 0) + 1;
                   return (
@@ -187,7 +171,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           );
         })}
 
-        <NextActivity slug={slug} href={`/feedback/review/${slug}`} label="복습 노트" desc="틀렸던 문제 다시 보기" />
+        <NextActivity slug={slug} href={`/feedback/review/${slug}`} label="복습 노트" />
       </div>
     </WeekFrame>
   );

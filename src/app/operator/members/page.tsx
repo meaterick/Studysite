@@ -8,6 +8,7 @@ import { listSubmissions, type Submission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
 import { WEEKS } from "@/content/weeks";
 import { formatDateTime, formatDate } from "@/lib/datetime";
+import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
 export const metadata = { title: "스터디원 관리" };
 
@@ -41,37 +42,27 @@ export default async function MembersPage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <PageHeader
-        tone="operator"
-        eyebrow="운영자"
-        title="스터디원 관리"
-        description={`총 ${members.length}명 가입 · 관리자 ${adminCount}명. 단계 진도·과제 현황을 확인하고 계정 삭제만 할 수 있습니다.`}
-      />
+    <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
+      <PageHeader title="스터디원 관리" description={`가입 ${members.length}명 · 관리자 ${adminCount}명`} />
 
       {error === "lastadmin" && (
-        <p role="alert" className="callout callout-danger mb-4 font-medium text-[var(--status-critical)]">
+        <p role="alert" className="callout callout-danger mb-6 text-[var(--status-critical)]">
           마지막 관리자 계정은 강등하거나 삭제할 수 없습니다.
         </p>
       )}
       {error === "self" && (
-        <p role="alert" className="callout callout-danger mb-4 font-medium text-[var(--status-critical)]">
-          본인 계정은 이 화면에서 삭제할 수 없습니다. 탈퇴는 &lsquo;내 계정&rsquo; 페이지를 이용해 주십시오.
+        <p role="alert" className="callout callout-danger mb-6 text-[var(--status-critical)]">
+          본인 계정은 이 화면에서 삭제할 수 없습니다. 탈퇴는 내 계정 페이지를 이용해 주십시오.
         </p>
       )}
 
-      <div className="surface overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--border-hairline)]">
+        <table className="data-table">
           <thead>
-            <tr className="bg-[var(--surface-card-2)]">
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">이름</th>
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">이메일</th>
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">역할</th>
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">가입일</th>
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">핵심 단계 진도</th>
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">과제</th>
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">마지막 기록</th>
-              <th className="border-b border-[var(--border-hairline)] px-3 py-2 text-left font-bold text-ink">관리</th>
+            <tr>
+              {["이름", "역할", "가입일", "핵심 단계", "과제", "마지막 기록", ""].map((h) => (
+                <th key={h}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -113,25 +104,36 @@ function MemberRow({
   const graded = submissions.filter((s) => s.status === "graded").length;
 
   return (
-    <tr className="odd:bg-transparent even:bg-[var(--surface-card-2)]/40">
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top font-medium text-ink">
-        {member.name} {member.id === adminId && <span className="text-xs text-ink-muted">(나)</span>}
+    <tr>
+      <td>
+        <span className="font-medium text-ink">
+          {member.name} {member.id === adminId && <span className="text-xs font-normal text-ink-muted">(나)</span>}
+        </span>
+        <span className="block text-xs text-ink-muted">{member.email}</span>
       </td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{member.email}</td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{ROLE_LABEL[member.role]}</td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{formatDate(member.createdAt)}</td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">{completed} / {totalItems}</td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-ink-secondary">
+      <td className="whitespace-nowrap text-ink-secondary">{ROLE_LABEL[member.role]}</td>
+      <td className="whitespace-nowrap tabular-nums text-ink-secondary">{formatDate(member.createdAt)}</td>
+      <td className="whitespace-nowrap tabular-nums text-ink-secondary">
+        {completed} / {totalItems}
+      </td>
+      <td className="whitespace-nowrap text-ink-secondary">
         제출 {submissions.length} · 채점 {graded}
-        {pending > 0 && <span className="ml-1 font-bold text-[var(--series-orange)]">· 대기 {pending}</span>}
+        {pending > 0 && <span className="ml-1 text-[var(--accent)]">· 대기 {pending}</span>}
       </td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-xs text-ink-muted">{learning?.updatedAt ? formatDateTime(learning.updatedAt) : "기록 없음"}</td>
-      <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top">
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/operator/members/${member.id}`} className="btn btn-secondary btn-sm">상세 보기</Link>
+      <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">{learning?.updatedAt ? formatDateTime(learning.updatedAt) : "기록 없음"}</td>
+      <td>
+        <div className="flex items-center justify-end gap-1">
+          <Link href={`/operator/members/${member.id}`} className="btn btn-secondary btn-sm">
+            상세
+          </Link>
           <form action={removeMember}>
             <input type="hidden" name="id" value={member.id} />
-            <button className="rounded-md border px-2 py-1 text-xs font-bold text-white" style={{ background: "var(--status-critical)", borderColor: "var(--status-critical)" }}>삭제</button>
+            <ConfirmSubmitButton
+              message={`${member.name}님의 계정과 학습 기록·과제를 모두 삭제합니다. 되돌릴 수 없습니다. 계속하시겠습니까?`}
+              className="btn btn-ghost btn-sm text-[var(--status-critical)] hover:text-[var(--status-critical)]"
+            >
+              삭제
+            </ConfirmSubmitButton>
           </form>
         </div>
       </td>

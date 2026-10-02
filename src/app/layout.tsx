@@ -7,6 +7,8 @@ import "@fontsource/noto-sans-kr/500.css";
 import "@fontsource/noto-sans-kr/700.css";
 import "@fontsource/noto-sans-kr/800.css";
 import "@fontsource/noto-sans-kr/900.css";
+// 화면 글꼴: Pretendard(가변 글꼴, 유니코드 구간별로 나뉘어 필요한 글자 파일만 내려받는다). 메인 화면은 위의 Noto Sans KR을 쓴다.
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "@fontsource/jetbrains-mono/700.css";

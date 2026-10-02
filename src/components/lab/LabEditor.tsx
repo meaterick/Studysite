@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import "@/lib/monacoSetup";
 import Editor, { type OnMount } from "@monaco-editor/react";
-import { useEditorTheme } from "@/components/assignment/useEditorTheme";
+import { defineEditorThemes, useEditorTheme } from "@/components/assignment/useEditorTheme";
 
 /** TODO 실습용 Monaco 편집기. Shift+Enter로 실행, Ctrl(⌘)+Enter로 채점한다. */
 export default function LabEditor({
@@ -43,6 +43,7 @@ export default function LabEditor({
       value={value}
       onChange={(v) => onChange(v ?? "")}
       theme={theme}
+      beforeMount={defineEditorThemes}
       onMount={handleMount}
       loading={<div className="py-6 text-center text-xs text-ink-muted">편집기를 불러오고 있습니다…</div>}
       options={{

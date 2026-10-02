@@ -4,8 +4,8 @@ import type { NotebookOutput } from "@/lib/notebook";
 export default function CellOutputs({ outputs, status }: { outputs?: NotebookOutput[]; status?: string | null }) {
   if (!status && (!outputs || outputs.length === 0)) return null;
   return (
-    <div className="border-t border-[var(--border-hairline)] bg-[#0d1117] px-4 py-2.5 font-mono text-[12.5px] leading-relaxed">
-      {status && <p className="text-[#8b949e]">{status}</p>}
+    <div className="border-t border-[var(--border-hairline)] bg-[var(--surface-card)] px-4 py-3 font-mono text-[12.5px] leading-relaxed">
+      {status && <p className="text-ink-muted">{status}</p>}
       {outputs?.map((o, i) => {
         if (o.type === "image")
           return (
@@ -14,11 +14,11 @@ export default function CellOutputs({ outputs, status }: { outputs?: NotebookOut
               key={i}
               src={`data:image/png;base64,${o.data}`}
               alt={`실행 결과 그림 ${i + 1}`}
-              className="my-2 max-w-full rounded bg-white"
+              className="my-2 max-w-full rounded-lg bg-white"
             />
           );
         const color =
-          o.type === "error" || (o.type === "stream" && o.name === "stderr") ? "text-[#ff7b72]" : "text-[#c9d1d9]";
+          o.type === "error" || (o.type === "stream" && o.name === "stderr") ? "text-[var(--status-critical)]" : "text-ink-body";
         return (
           <pre key={i} className={`whitespace-pre-wrap break-words ${color}`}>
             {o.text}

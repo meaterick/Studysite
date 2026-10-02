@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import Icon from "./Icon";
 
 type Theme = "light" | "dark" | null;
 
@@ -42,21 +43,12 @@ export default function ThemeToggle() {
     setTheme(current === "dark" ? "light" : "dark");
   };
 
+  // 지금 화면 모드의 반대쪽 아이콘을 보여 준다(화이트 모드 → 달, 블랙 모드 → 해).
+  // 시스템 설정을 따르는 경우 서버는 어느 쪽인지 모르므로 두 아이콘을 모두 그리고 CSS로 하나만 보인다.
   return (
-    <button
-      onClick={toggle}
-      aria-label="테마 전환"
-      className="rounded-full border border-[var(--border-hairline)] p-2 text-ink-secondary transition hover:border-[var(--border-strong)] hover:text-ink"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10l1.4 1.4M5.6 18.4l1.4-1.4m10-10l1.4-1.4"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.6" />
-      </svg>
+    <button onClick={toggle} aria-label="화면 모드 전환" title="화면 모드 전환" className="icon-btn">
+      <Icon name="moon" size={17} className="theme-moon" />
+      <Icon name="sun" size={18} className="theme-sun" />
     </button>
   );
 }

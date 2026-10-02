@@ -1,5 +1,6 @@
 "use client";
 
+import Icon from "@/components/Icon";
 import { useState, useTransition } from "react";
 import type { RubricCriterion } from "@/content/types";
 import { gradeAssignment } from "@/lib/assignmentActions";
@@ -51,18 +52,19 @@ export default function GradeForm({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-[var(--series-orange)] bg-card p-5">
+    <div className="space-y-6 rounded-2xl border border-[var(--border-hairline)] bg-card p-5 shadow-[var(--shadow-card)] sm:p-6">
       <div>
-        <h2 className="text-base font-black text-ink">제출본 v{version} 채점</h2>
-        {alreadyGraded && <p className="mt-1 text-xs text-ink-muted">이미 채점한 제출본입니다. 다시 저장하면 새 채점 기록이 추가됩니다.</p>}
+        <h2 className="text-lg font-bold tracking-[-0.03em] text-ink">제출본 v{version} 채점</h2>
+        {alreadyGraded && <p className="mt-1 text-xs text-ink-muted">다시 저장하면 새 채점 기록이 추가됩니다.</p>}
       </div>
 
-      <fieldset className="min-w-0 space-y-2">
-        <legend className="text-sm font-bold text-ink">채점 기준별 점수 (0.5점 단위)</legend>
+      <fieldset className="min-w-0">
+        <legend className="mb-2 text-xs font-medium text-ink-muted">채점 기준 · 0.5점 단위</legend>
+        <div className="rows border-y border-[var(--border-hairline)]">
         {rubric.map((c) => (
-          <div key={c.id} className="rounded-md border border-[var(--border-hairline)] px-3 py-2">
+          <div key={c.id} className="py-3">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor={`score-${c.id}`} className="text-sm font-bold text-ink-secondary">
+              <label htmlFor={`score-${c.id}`} className="text-sm font-medium text-ink">
                 {c.label}
               </label>
               <span className="flex items-center gap-1 text-sm">
@@ -74,25 +76,29 @@ export default function GradeForm({
                   step={0.5}
                   value={scores[c.id]}
                   onChange={(e) => setScores((prev) => ({ ...prev, [c.id]: e.target.value }))}
-                  className="w-16 rounded-md border border-[var(--border-hairline)] bg-page px-2 py-1 text-right text-sm text-ink"
+                  className="w-16 rounded-lg border border-[var(--border-strong)] bg-card px-2 py-1 text-right text-sm tabular-nums text-ink"
                 />
                 <span className="text-ink-muted">/ {c.points}</span>
               </span>
             </div>
-            <p className="mt-1 text-xs text-ink-muted">{c.guide}</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-muted">{c.guide}</p>
           </div>
         ))}
-        <p className="text-right text-sm font-black text-ink">
-          합계 {total} / {max}점
+        </div>
+        <p className="mt-3 text-right text-sm tabular-nums text-ink">
+          합계 <span className="text-lg font-semibold">{total}</span> / {max}점
         </p>
       </fieldset>
 
-      <details className="rounded-md border border-[var(--border-hairline)] px-3 py-2">
-        <summary className="cursor-pointer text-sm font-bold text-ink-secondary">과제별 코멘트 (선택)</summary>
-        <div className="mt-2 space-y-2">
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink [&::-webkit-details-marker]:hidden">
+          과제별 코멘트 (선택)
+          <Icon name="chevronDown" size={14} className="transition group-open:rotate-180" />
+        </summary>
+        <div className="mt-3 space-y-3">
           {tasks.map((t, i) => (
             <div key={t.id}>
-              <label htmlFor={`comment-${t.id}`} className="text-xs font-bold text-ink-muted">
+              <label htmlFor={`comment-${t.id}`} className="text-xs text-ink-muted">
                 과제 {i + 1}. {t.title}
               </label>
               <textarea
@@ -101,7 +107,7 @@ export default function GradeForm({
                 maxLength={2000}
                 value={comments[t.id] ?? ""}
                 onChange={(e) => setComments((prev) => ({ ...prev, [t.id]: e.target.value }))}
-                className="mt-0.5 w-full rounded-md border border-[var(--border-hairline)] bg-page px-2 py-1.5 text-sm text-ink"
+                className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-card px-3 py-2 text-sm text-ink"
               />
             </div>
           ))}
@@ -109,17 +115,17 @@ export default function GradeForm({
       </details>
 
       <div>
-        <label htmlFor="feedback" className="block text-sm font-bold text-ink">
+        <label htmlFor="feedback" className="block text-sm font-medium text-ink">
           전체 피드백
         </label>
-        <p className="text-xs text-ink-muted">잘한 점 1개와 개선할 점 1~2개를 채점 기준에 맞춰 구체적으로 적습니다.</p>
+        <p className="mt-0.5 text-xs text-ink-muted">잘한 점 1개, 개선할 점 1~2개</p>
         <textarea
           id="feedback"
           rows={7}
           maxLength={5000}
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
-          className="mt-1 w-full rounded-md border border-[var(--border-hairline)] bg-page px-3 py-2 text-sm text-ink"
+          className="mt-2 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-sm leading-relaxed text-ink"
         />
       </div>
 
@@ -128,7 +134,7 @@ export default function GradeForm({
           type="button"
           onClick={() => submit("graded")}
           disabled={pending || !allScored}
-          className="rounded-md bg-[var(--status-good)] px-4 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+          className="btn btn-primary"
         >
           채점 완료
         </button>
@@ -136,12 +142,12 @@ export default function GradeForm({
           type="button"
           onClick={() => submit("revision")}
           disabled={pending}
-          className="rounded-md border border-[var(--status-serious)] px-4 py-2 text-sm font-bold text-[var(--status-serious)] hover:bg-[color-mix(in_srgb,var(--status-serious)_10%,transparent)] disabled:opacity-40"
+          className="btn btn-secondary text-[var(--status-serious)]"
         >
           재제출 요청
         </button>
       </div>
-      {!allScored && <p className="text-xs text-ink-muted">모든 채점 기준에 점수를 입력하면 채점을 완료할 수 있습니다.</p>}
+      {!allScored && <p className="text-xs text-ink-muted">모든 기준에 점수를 넣으면 채점을 완료할 수 있습니다.</p>}
       {message && (
         <p className={`text-sm font-medium ${message.tone === "ok" ? "text-[var(--status-good)]" : "text-[var(--status-critical)]"}`} role="status">
           {message.text}

@@ -21,7 +21,7 @@ export function Slider({
 }) {
   return (
     <label className="flex flex-1 min-w-[220px] flex-col gap-1.5 text-xs">
-      <span className="flex items-center justify-between font-bold text-ink">
+      <span className="flex items-center justify-between font-semibold text-ink">
         <span>{label}</span>
         <span className="font-mono" style={{ color }}>
           {format ? format(value) : value}
@@ -56,7 +56,7 @@ export function PresetButtons<T extends string | number>({
 }) {
   return (
     <div className="flex flex-1 min-w-[220px] flex-col gap-1.5 text-xs">
-      <span className="font-bold text-ink">{label}</span>
+      <span className="font-semibold text-ink">{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => {
           const active = opt === value;
@@ -65,7 +65,7 @@ export function PresetButtons<T extends string | number>({
               key={String(opt)}
               type="button"
               onClick={() => onChange(opt)}
-              className="rounded-md border px-2.5 py-1 font-mono text-[11.5px] font-bold transition"
+              className="rounded-md border px-2.5 py-1 font-mono text-[11.5px] font-semibold transition"
               style={
                 active
                   ? { background: "var(--series-blue)", borderColor: "var(--series-blue)", color: "#fff" }

@@ -38,7 +38,7 @@ export default function ClearChatButton({ targetUserId, targetName }: { targetUs
       <button
         type="button"
         onClick={open}
-        className="rounded-lg border border-[color-mix(in_srgb,var(--status-critical)_45%,transparent)] px-2.5 py-1 text-xs font-bold text-[var(--status-critical)] transition hover:bg-[color-mix(in_srgb,var(--status-critical)_10%,transparent)]"
+        className="btn btn-ghost btn-sm text-[var(--status-critical)] hover:text-[var(--status-critical)]"
       >
         {all ? "모든 채팅 삭제" : "대화 전체 삭제"}
       </button>
@@ -53,10 +53,10 @@ export default function ClearChatButton({ targetUserId, targetName }: { targetUs
         onCancel={(e) => {
           if (pending) e.preventDefault();
         }}
-        className="m-auto w-[calc(100%-2rem)] max-w-sm surface p-0 text-ink shadow-xl backdrop:bg-black/50"
+        className="surface m-auto w-[calc(100%-2rem)] max-w-sm p-0 text-ink shadow-[var(--shadow-raised)] backdrop:bg-black/50 backdrop:backdrop-blur-sm"
       >
         <div className="p-5">
-          <h2 id={titleId} className="text-lg font-black text-ink">
+          <h2 id={titleId} className="text-lg font-semibold text-ink">
             {all ? "모든 채팅을 삭제하시겠습니까?" : `${targetName ?? "이 스터디원"}님과의 대화를 삭제하시겠습니까?`}
           </h2>
           <p className="mt-2 text-sm text-ink-secondary">
@@ -65,7 +65,7 @@ export default function ClearChatButton({ targetUserId, targetName }: { targetUs
               : "지금까지 주고받은 메시지가 모두 즉시 삭제되며 되돌릴 수 없습니다."}{" "}
             스터디원의 채팅 화면과 피드백함에서도 사라집니다.
           </p>
-          {error && <p className="mt-3 text-sm font-bold text-[var(--status-critical)]">{error}</p>}
+          {error && <p className="mt-3 text-sm font-semibold text-[var(--status-critical)]">{error}</p>}
         </div>
         <div className="flex gap-2 border-t border-[var(--border-hairline)] p-4">
           <button
@@ -73,7 +73,7 @@ export default function ClearChatButton({ targetUserId, targetName }: { targetUs
             onClick={close}
             disabled={pending}
             autoFocus
-            className="flex-1 rounded-lg border border-[var(--border-hairline)] px-4 py-2.5 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)] disabled:opacity-40"
+            className="btn btn-secondary flex-1"
           >
             취소
           </button>
@@ -81,8 +81,7 @@ export default function ClearChatButton({ targetUserId, targetName }: { targetUs
             type="button"
             onClick={confirm}
             disabled={pending}
-            className="flex-1 rounded-lg px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
-            style={{ background: "var(--status-critical)" }}
+            className="btn btn-danger flex-1"
           >
             {pending ? "삭제하는 중…" : "삭제하기"}
           </button>

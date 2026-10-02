@@ -9,7 +9,7 @@ import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import DescriptiveQuestion from "@/components/section/DescriptiveQuestion";
 import DrillDescriptive from "@/components/lab/DrillDescriptive";
-import TierBadge from "@/components/TierBadge";
+import Icon from "@/components/Icon";
 import NextActivity from "@/components/NextActivity";
 import { loadWeekPage } from "@/lib/weekPage";
 import { readLabState, readSectionState } from "@/lib/learningStore";
@@ -25,12 +25,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const week = getWeek(slug);
   return week ? { title: `${week.number}주차 서술형` } : {};
 }
-
-const TIER_DESC = {
-  core: "핵심 단계의 개념을 자신의 말로 설명해 보는 문항입니다. 여기서부터 시작하십시오.",
-  supplement: "보충 단계의 내용과 핵심 개념의 응용을 설명하는 문항입니다.",
-  advanced: "유도·분석·설계 판단을 요구하는 전문가 수준 문항입니다.",
-} as const;
 
 /**
  * 서술형: 단계별 서술형 문항과 퀴즈의 서술형 문항을 단계 순서대로 모아, 직접 쓰고 → 모범답안과 비교 → 자기평가한다.
@@ -68,32 +62,24 @@ export default async function WeekDescriptivePage({ params }: { params: Promise<
   const firstOpen = groups.find((g) => g.section.tier === "core" && !g.locked && g.done < g.total)?.section.id;
 
   return (
-    <WeekFrame week={week} status={status} record={record} apply="descriptive">
-      <div className="space-y-10">
+    <WeekFrame week={week} status={status} record={record} apply="descriptive" compact>
+      <div className="space-y-16">
         <section aria-labelledby="desc-intro">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div className="max-w-3xl">
-              <h2 id="desc-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
-                서술형 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
-              </h2>
-              <p className="mt-1 text-sm text-ink-muted">
-                설명할 수 있어야 진짜로 이해한 것입니다. 자료를 다시 보지 말고 <strong className="text-ink-secondary">자신의 말로 먼저 쓰고</strong>, 저장하면 공개되는 모범답안과 비교해
-                스스로 평가하십시오. &lsquo;보완이 필요합니다&rsquo;로 표시한 문항은 복습 노트에 모입니다.
-              </p>
-            </div>
-          </div>
-          <nav aria-label="구분별 바로 가기" className="mt-4 flex flex-wrap gap-2 text-xs font-bold">
+          <h2 id="desc-intro" className="flex flex-wrap items-center gap-3 text-[1.75rem] font-bold tracking-[-0.035em] text-ink">
+            서술형 <span className="pill align-middle text-xs">선택</span>
+          </h2>
+          <p className="mt-2 max-w-2xl text-[15px] text-ink-secondary">자신의 말로 먼저 쓰고, 저장하면 열리는 모범답안과 비교해 스스로 평가합니다.</p>
+          <nav aria-label="구분별 바로 가기" className="mt-5 flex flex-wrap gap-1">
             {TIER_ORDER.map((tier) => {
               const c = tierCount(tier);
               if (c.total === 0) return null;
               return (
-                <a
-                  key={tier}
-                  href={`#tier-${tier}`}
-                  className="flex items-center gap-1.5 rounded-full border border-[var(--border-hairline)] px-3 py-1 text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
-                >
-                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: TIER_INFO[tier].color }} aria-hidden="true" />
-                  {TIER_INFO[tier].label} {c.done}/{c.total}
+                <a key={tier} href={`#tier-${tier}`} className="chip border border-[var(--border-hairline)]">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: TIER_INFO[tier].color }} aria-hidden="true" />
+                  {TIER_INFO[tier].label}
+                  <span className="tabular-nums text-ink-muted">
+                    {c.done}/{c.total}
+                  </span>
                 </a>
               );
             })}
@@ -106,18 +92,17 @@ export default async function WeekDescriptivePage({ params }: { params: Promise<
           const c = tierCount(tier);
           return (
             <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-heading`} className="scroll-mt-24">
-              <div className="mb-4 border-b border-[var(--border-hairline)] pb-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 id={`tier-${tier}-heading`} className="flex flex-wrap items-center gap-2 text-lg font-black text-ink">
-                    {TIER_INFO[tier].label} 문항 <TierBadge tier={tier} />
-                  </h2>
-                  <span className="text-xs font-bold text-ink-muted">
-                    자기평가 {c.done}/{c.total}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-sm text-ink-muted">{TIER_DESC[tier]}</p>
+              <div className="flex items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-3">
+                <h2 id={`tier-${tier}-heading`} className="flex items-center gap-2 text-lg font-bold tracking-[-0.03em] text-ink">
+                  <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: TIER_INFO[tier].color }} />
+                  {TIER_INFO[tier].label} 문항
+                  <span className="text-xs font-normal text-ink-muted">{TIER_INFO[tier].audience}</span>
+                </h2>
+                <span className="text-[13px] tabular-nums text-ink-muted">
+                  {c.done}/{c.total}
+                </span>
               </div>
-              <div className="space-y-3">
+              <div className="rows">
                 {gs.map((g) => {
                   const { section } = g;
                   let n = 0;
@@ -126,25 +111,28 @@ export default async function WeekDescriptivePage({ params }: { params: Promise<
                       key={section.id}
                       id={`sec-${section.id}`}
                       open={section.id === firstOpen || (g.weak > 0 && !g.locked)}
-                      className="group scroll-mt-24 surface"
+                      className="group scroll-mt-24"
                     >
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 sm:px-5 [&::-webkit-details-marker]:hidden">
-                        <span className="min-w-0">
-                          <span className="block font-black text-ink">
-                            {g.locked && <span aria-hidden="true">🔒 </span>}
+                      <summary className="row-hover -mx-3 flex cursor-pointer list-none items-center gap-4 rounded-xl px-3 py-4 [&::-webkit-details-marker]:hidden">
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2 text-[15px] font-medium text-ink">
+                            {g.locked && <Icon name="lock" size={14} className="shrink-0 text-ink-muted" />}
                             {sectionLabel(section)}. {section.title}
                           </span>
-                          <span className="mt-0.5 block text-xs font-bold text-ink-muted">
+                          <span className="mt-1 block text-xs tabular-nums text-ink-muted">
                             {g.total}문항 · 자기평가 {g.done}/{g.total}
                             {g.weak > 0 && <span className="text-[var(--status-critical)]"> · 다시 볼 문항 {g.weak}</span>}
-                            {g.done === g.total && <span className="text-[var(--status-good)]"> · ✓ 완료</span>}
                           </span>
                         </span>
-                        <span aria-hidden="true" className="shrink-0 text-ink-muted transition group-open:rotate-180">
-                          ▾
-                        </span>
+                        {g.done === g.total && (
+                          <span className="text-[var(--status-good)]">
+                            <Icon name="check" size={16} />
+                            <span className="sr-only">완료</span>
+                          </span>
+                        )}
+                        <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
                       </summary>
-                      <div className="space-y-4 border-t border-[var(--border-hairline)] p-4 sm:p-5">
+                      <div className="space-y-5 pb-8 pt-2">
                         {g.locked ? (
                           <p className="text-sm text-ink-muted">
                             {section.tier === "core" ? `${sectionLabel(section)}단계가 열리면` : "핵심 단계를 모두 마치면"} 풀 수 있습니다.
@@ -184,8 +172,9 @@ export default async function WeekDescriptivePage({ params }: { params: Promise<
                                 />
                               );
                             })}
-                            <Link href={`/weeks/${slug}/sections/${section.id}`} className="inline-block text-sm font-bold text-[var(--series-blue)] hover:underline">
-                              막히면 이 단계 다시 읽기 →
+                            <Link href={`/weeks/${slug}/sections/${section.id}`} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink">
+                              이 단계 다시 읽기
+                              <Icon name="arrowRight" size={13} />
                             </Link>
                           </>
                         )}
@@ -198,7 +187,7 @@ export default async function WeekDescriptivePage({ params }: { params: Promise<
           );
         })}
 
-        <NextActivity slug={slug} href="lab" label="코딩 실습" desc="이번에는 개념을 코드로 옮겨 봅니다." />
+        <NextActivity slug={slug} href="lab" label="코딩 실습" />
       </div>
     </WeekFrame>
   );

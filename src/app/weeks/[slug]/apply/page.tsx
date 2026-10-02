@@ -7,6 +7,7 @@ import { loadWeekPage } from "@/lib/weekPage";
 import { applySummary, type ApplyItem } from "@/lib/applyView";
 import { weekFlow } from "@/lib/weekFlow";
 import WeekFlowCard from "@/components/WeekFlowCard";
+import Icon from "@/components/Icon";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -38,41 +39,33 @@ export default async function ApplyHubPage({
 
   return (
     <WeekFrame week={week} status={status} record={record} apply="hub">
-      <div className="space-y-10">
+      <div className="space-y-16">
         {finished && status.coreDone && (
-          <div role="status" className="callout callout-good px-5 py-4">
-            <p className="font-black text-ink">핵심 단계를 모두 마쳤습니다. 이번 주 학습 완료입니다!</p>
-            <p className="mt-1 text-sm text-ink-secondary">
-              이제 배운 내용을 직접 꺼내 쓰고 적용해 볼 차례입니다. 다음은 <strong>백지공부</strong>와 <strong>과제</strong>입니다.
-            </p>
-          </div>
+          <p role="status" className="callout callout-good flex items-center gap-2.5 font-medium text-ink">
+            <Icon name="check" size={16} className="text-[var(--status-good)]" />
+            핵심 단계를 모두 마쳤습니다. 이제 백지공부와 과제입니다.
+          </p>
         )}
 
         <WeekFlowCard flow={flow} />
 
         {/* ── 선택 과정 ─────────────────────────────────────── */}
         <section aria-labelledby="optional-heading">
-          <h2 id="optional-heading" className="mb-4 text-xl font-black text-ink">
+          <h2 id="optional-heading" className="section-title mb-3">
             선택 과정
           </h2>
-          <ol className="space-y-3">
+          <ol className="rows border-y border-[var(--border-hairline)]">
             {optional.map((item) => (
               <ActivityRow key={item.key} item={item} />
             ))}
             {(status.tiers.supplement.total > 0 || status.tiers.advanced.total > 0) && (
               <li>
-                <Link
-                  href={`/weeks/${slug}#record-heading`}
-                  className="flex items-center justify-between gap-4 surface p-4 transition hover:border-[var(--series-blue)] hover:shadow-sm"
-                >
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-black text-ink">보충 · 심화 단계</span>
-                    <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
-                  </span>
-                  <span className="text-xs font-bold text-ink-muted">
+                <Link href={`/weeks/${slug}#record-heading`} className="group row-hover -mx-3 flex items-center gap-4 rounded-xl px-3 py-4">
+                  <span className="min-w-0 flex-1 text-[15px] font-medium text-ink">보충 · 심화 단계</span>
+                  <span className="text-[13px] tabular-nums text-ink-muted">
                     보충 {status.tiers.supplement.done}/{status.tiers.supplement.total} · 심화 {status.tiers.advanced.done}/{status.tiers.advanced.total}
-                    <span className="ml-2 text-sm text-[var(--series-blue)]">열기 →</span>
                   </span>
+                  <Icon name="chevronRight" size={16} className="text-ink-muted transition group-hover:translate-x-0.5 group-hover:text-ink" />
                 </Link>
               </li>
             )}
@@ -86,65 +79,39 @@ export default async function ApplyHubPage({
 function ActivityRow({ item }: { item: ApplyItem }) {
   const tiers = item.tiers ? TIER_ORDER.filter((t) => item.tiers![t].total > 0) : [];
   const body = (
-    <div className="flex items-start gap-4">
-      <div className="min-w-0 flex-1 pb-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-black text-ink">
-            {item.locked && <span aria-hidden="true">🔒 </span>}
-            {item.label}
-          </h3>
-          <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
-          {item.weak > 0 && (
-            <span className="rounded-md bg-[color-mix(in_srgb,var(--status-critical)_12%,transparent)] px-1.5 py-0.5 text-[11px] font-bold text-[var(--status-critical)]">
-              다시 볼 문항 {item.weak}
-            </span>
-          )}
-        </div>
-        <p className="mt-1 text-sm text-ink-secondary">{item.desc}</p>
+    <>
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2">
+          {item.locked && <Icon name="lock" size={14} className="text-ink-muted" />}
+          <span className="text-[15px] font-medium text-ink">{item.label}</span>
+          {item.weak > 0 && <span className="pill [--pill:var(--status-critical)]">다시 볼 문항 {item.weak}</span>}
+        </span>
         {tiers.length > 0 && (
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold" aria-label="구분별 진행">
+          <span className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted" aria-label="구분별 진행">
             {tiers.map((t) => {
               const c = item.tiers![t];
-              const full = c.done === c.total;
               return (
-                <li key={t} className="flex items-center gap-1.5">
-                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: TIER_INFO[t].color }} aria-hidden="true" />
-                  <span style={{ color: TIER_INFO[t].color }}>{TIER_INFO[t].label}</span>
-                  <span className={full ? "text-[var(--status-good)]" : "text-ink-muted"}>
-                    {c.done}/{c.total}
-                  </span>
-                </li>
+                <span key={t} className="flex items-center gap-1.5 tabular-nums">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: TIER_INFO[t].color }} aria-hidden="true" />
+                  {TIER_INFO[t].label} {c.done}/{c.total}
+                </span>
               );
             })}
-          </ul>
+          </span>
         )}
-        {item.locked && <p className="mt-2 text-xs font-bold text-ink-muted">핵심 단계를 모두 마치면 열립니다.</p>}
-      </div>
-      <div className="hidden shrink-0 flex-col items-end gap-1 text-right sm:flex">
-        <span
-          className={`text-xs font-bold ${
-            item.complete ? "text-[var(--status-good)]" : "text-ink-muted"
-          }`}
-        >
-          {item.total <= 1 ? item.state : `완료 ${item.state}`}
-        </span>
-        {!item.locked && <span className="text-sm font-bold text-[var(--series-blue)]">열기 →</span>}
-      </div>
-    </div>
+        {item.locked && <span className="mt-1 block text-xs text-ink-muted">핵심 단계를 모두 마치면 열립니다</span>}
+      </span>
+      <span className={`shrink-0 text-[13px] tabular-nums ${item.complete ? "text-[var(--status-good)]" : "text-ink-muted"}`}>{item.state}</span>
+    </>
   );
-  const cls = `block rounded-xl border p-4 transition ${
-    "border-[var(--border-hairline)] bg-card"
-  }`;
   return (
     <li>
       {item.locked ? (
-        <div className={`${cls} opacity-75`}>{body}</div>
+        <div className="flex items-center gap-4 py-4 opacity-70">{body}</div>
       ) : (
-        <Link href={item.href} className={`${cls} hover:border-[var(--series-blue)] hover:shadow-sm`}>
+        <Link href={item.href} className="group row-hover -mx-3 flex items-center gap-4 rounded-xl px-3 py-4">
           {body}
-          <p className="mt-2 text-xs font-bold text-ink-muted sm:hidden">
-            {item.total <= 1 ? item.state : `완료 ${item.state}`} · <span className="text-[var(--series-blue)]">열기 →</span>
-          </p>
+          <Icon name="chevronRight" size={16} className="shrink-0 text-ink-muted transition group-hover:translate-x-0.5 group-hover:text-ink" />
         </Link>
       )}
     </li>

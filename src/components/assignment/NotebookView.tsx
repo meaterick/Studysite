@@ -103,7 +103,7 @@ export default function NotebookView({
           ns={`review:${runKey}`}
           tests={autoTests}
           beforeRun={rerun}
-          beforeRunLabel="▶ 처음부터 다시 실행 후 테스트"
+          beforeRunLabel="처음부터 다시 실행 후 테스트"
           disabled={running}
           note="제출된 코드를 빈 실행 환경에서 다시 실행한 뒤 같은 자동 테스트를 돌려, 학습자 화면의 결과가 재현되는지 확인합니다. 자동 테스트는 채점 기준의 일부만 확인합니다."
         />
@@ -112,17 +112,17 @@ export default function NotebookView({
         const cells = notebook.tasks[task.id]?.cells ?? [];
         const comment = taskComments?.[task.id];
         return (
-          <section key={task.id} className="surface p-4">
-            <h4 className="font-black text-ink">
+          <section key={task.id} className="rounded-2xl border border-[var(--border-hairline)] p-5">
+            <h4 className="font-semibold tracking-[-0.02em] text-ink">
               과제 {i + 1}. {task.title}
               <span className="ml-2 align-middle">
                 <TierBadge tier={task.tier} compact />
               </span>
-              {task.optional && <span className="ml-1 text-xs font-bold text-ink-muted">(선택)</span>}
+              {task.optional && <span className="ml-1 text-xs font-semibold text-ink-muted">(선택)</span>}
             </h4>
             {task.intro && (
               <details className="mt-2">
-                <summary className="cursor-pointer text-xs font-bold text-ink-muted">과제 설명 보기</summary>
+                <summary className="cursor-pointer text-xs font-medium text-ink-muted transition hover:text-ink">과제 설명 보기</summary>
                 <div className="mt-2 text-sm">{task.intro}</div>
               </details>
             )}
@@ -130,8 +130,8 @@ export default function NotebookView({
               {cells.length === 0 && <p className="text-sm text-ink-muted">작성한 내용이 없습니다.</p>}
               {cells.map((cell) =>
                 cell.kind === "code" ? (
-                  <div key={cell.id} className="overflow-hidden rounded-lg border border-[var(--border-hairline)]">
-                    <p className="border-b border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-3 py-1 text-xs font-bold text-ink-muted">
+                  <div key={cell.id} className="overflow-hidden rounded-xl border border-[var(--border-hairline)]">
+                    <p className="border-b border-[var(--border-hairline)] px-4 py-1.5 text-xs text-ink-muted">
                       {task.labels[cell.id] ?? (cell.custom ? "추가한 코드 셀" : "코드")}
                       {cell.executedAt
                         ? ` · ${formatDateTime(cell.executedAt)} 실행${cell.stale ? " (이후 수정됨)" : ""}${cell.runOk === false ? " · 오류" : ""}`
@@ -141,22 +141,22 @@ export default function NotebookView({
                     <CellOutputs outputs={cell.outputs} />
                     {fresh[cell.id] && (
                       <div>
-                        <p className="bg-[#161b22] px-4 pt-2 text-[11px] font-bold text-[#8b949e]">다시 실행한 결과</p>
+                        <p className="border-t border-[var(--border-hairline)] bg-[var(--surface-card)] px-4 pt-2 text-[11px] font-medium text-ink-muted">다시 실행한 결과</p>
                         <CellOutputs outputs={fresh[cell.id]} />
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div key={cell.id} className="rounded-lg border border-[var(--border-hairline)] px-3 py-2">
-                    {task.prompts[cell.id] && <div className="mb-2 text-xs font-bold text-ink-muted">{task.prompts[cell.id]}</div>}
+                  <div key={cell.id} className="rounded-xl border border-[var(--border-hairline)] px-4 py-3">
+                    {task.prompts[cell.id] && <div className="mb-2 text-xs font-medium text-ink-muted">{task.prompts[cell.id]}</div>}
                     <UserMarkdown source={cell.source} />
                   </div>
                 )
               )}
             </div>
             {comment && (
-              <div className="mt-3 rounded-lg border-l-4 border-[var(--series-orange)] bg-[color-mix(in_srgb,var(--series-orange)_8%,transparent)] px-3 py-2 text-sm">
-                <p className="mb-1 text-xs font-bold text-[var(--series-orange)]">운영자 코멘트</p>
+              <div className="callout mt-4">
+                <p className="mb-1 text-xs font-medium text-[var(--accent)]">운영자 코멘트</p>
                 <p className="whitespace-pre-wrap text-ink-secondary">{comment}</p>
               </div>
             )}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Icon from "./Icon";
 
 /**
  * warn 모드의 미완료 경고. 앞 단계를 끝내지 않고 넘어왔을 때 보여 주되, 막지는 않는다.
@@ -15,25 +16,21 @@ export default function UnfinishedWarning({
   if (items.length === 0) return null;
   const shown = items.slice(0, 3);
   return (
-    <div
-      role="note"
-      className="callout mb-6 [--callout:var(--status-warning)]"
-    >
-      <p className="font-bold text-ink">
-        ⚠ {context} 아직 끝내지 않은 핵심 단계가 {items.length}개 있습니다.
-      </p>
-      <p className="mt-1">
-        순서대로 학습하면 훨씬 수월합니다. 그대로 진행해도 되지만, 먼저 확인해 보십시오:{" "}
-        {shown.map((it, i) => (
-          <span key={it.href}>
-            {i > 0 && ", "}
-            <Link href={it.href} className="font-bold text-[var(--series-blue)] hover:underline">
-              {it.label}단계 {it.title}
+    <div role="note" className="callout mb-8 flex gap-3 [--callout:var(--status-warning)]">
+      <Icon name="alert" size={18} className="mt-0.5 shrink-0 text-[var(--status-warning)]" />
+      <div className="min-w-0">
+        <p className="font-semibold text-ink">
+          {context} 끝내지 않은 핵심 단계가 {items.length}개 있습니다.
+        </p>
+        <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+          {shown.map((it) => (
+            <Link key={it.href} href={it.href} className="font-medium text-ink underline decoration-[var(--border-strong)] underline-offset-4 hover:decoration-current">
+              {it.label}. {it.title}
             </Link>
-          </span>
-        ))}
-        {items.length > shown.length && ` 외 ${items.length - shown.length}개`}
-      </p>
+          ))}
+          {items.length > shown.length && <span>외 {items.length - shown.length}개</span>}
+        </p>
+      </div>
     </div>
   );
 }

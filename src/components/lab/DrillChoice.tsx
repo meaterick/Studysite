@@ -1,5 +1,6 @@
 "use client";
 
+import Icon from "@/components/Icon";
 import { useState, useTransition, type ReactNode } from "react";
 import { answerDrillChoice } from "@/lib/labActions";
 
@@ -50,11 +51,11 @@ export default function DrillChoice({
   };
 
   return (
-    <fieldset id={`drill-${itemId}`} className={`min-w-0 scroll-mt-24 rounded-xl border bg-card p-4 sm:p-5 ${solved ? "border-[var(--status-good)]/60" : "border-[var(--border-hairline)]"}`}>
+    <fieldset id={`drill-${itemId}`} className={`min-w-0 scroll-mt-24 rounded-2xl border p-5 sm:p-7 ${solved ? "border-[color-mix(in_srgb,var(--status-good)_40%,transparent)]" : "border-[var(--border-hairline)]"}`}>
       <legend className="sr-only">{label}</legend>
-      <div className="mb-3 flex items-start gap-2">
-        <span className="mt-0.5 shrink-0 rounded-md bg-[color-mix(in_srgb,var(--series-blue)_12%,transparent)] px-2 py-0.5 text-xs font-black text-[var(--series-blue)]">{label}</span>
-        <div className="text-[15px] font-medium text-ink">{question}</div>
+      <div className="mb-5 flex flex-col gap-2">
+        <span className="text-xs font-medium text-ink-muted">{label}</span>
+        <div className="text-base font-medium leading-relaxed text-ink">{question}</div>
       </div>
       <div className="space-y-2" role="radiogroup">
         {choices.map((choice, i) => {
@@ -69,18 +70,29 @@ export default function DrillChoice({
               aria-checked={isSelected || isCorrect}
               disabled={solved || isWrong || pending}
               onClick={() => setSelected(i)}
-              className={`flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition disabled:cursor-default ${
+              className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left text-[15px] leading-relaxed transition disabled:cursor-default ${
                 isCorrect
-                  ? "border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_12%,transparent)] text-ink"
+                  ? "border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_8%,transparent)] text-ink"
                   : isWrong
-                    ? "border-[var(--status-critical)]/50 bg-[color-mix(in_srgb,var(--status-critical)_7%,transparent)] text-ink-muted line-through decoration-[var(--status-critical)]/60"
+                    ? "border-[color-mix(in_srgb,var(--status-critical)_35%,transparent)] text-ink-muted line-through decoration-[color-mix(in_srgb,var(--status-critical)_60%,transparent)]"
                     : isSelected
-                      ? "border-[var(--series-blue)] bg-[color-mix(in_srgb,var(--series-blue)_8%,transparent)] text-ink"
-                      : "border-[var(--border-hairline)] text-ink-secondary hover:border-[var(--series-blue)]/60"
+                      ? "border-[var(--text-primary)] bg-[var(--surface-card-2)] text-ink"
+                      : "border-[var(--border-hairline)] text-ink-body hover:border-[var(--border-strong)] hover:bg-[color-mix(in_srgb,var(--surface-card-2)_50%,transparent)]"
               }`}
             >
-              <span aria-hidden="true" className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[11px] font-bold" style={{ borderColor: "currentColor" }}>
-                {isCorrect ? "✓" : isWrong ? "✕" : String.fromCharCode(65 + i)}
+              <span
+                aria-hidden="true"
+                className={`mt-0.5 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-[11px] font-semibold ${
+                  isCorrect
+                    ? "bg-[var(--status-good)] text-white"
+                    : isWrong
+                      ? "text-[var(--status-critical)]"
+                      : isSelected
+                        ? "bg-[var(--inverse-bg)] text-[var(--inverse-fg)]"
+                        : "border border-[var(--border-strong)] text-ink-muted"
+                }`}
+              >
+                {isCorrect ? <Icon name="check" size={12} strokeWidth={2.2} /> : isWrong ? <Icon name="close" size={12} strokeWidth={2} /> : String.fromCharCode(65 + i)}
               </span>
               <span className="min-w-0">{choice}</span>
             </button>
@@ -88,7 +100,7 @@ export default function DrillChoice({
         })}
       </div>
       {!solved && (
-        <div className="mt-3 flex flex-wrap items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             type="button"
             onClick={submit}
@@ -98,21 +110,22 @@ export default function DrillChoice({
             {pending ? "채점 중…" : "정답 확인"}
           </button>
           {wrong.size > 0 && (
-            <p className="text-sm font-medium text-[var(--status-critical)]" aria-live="polite">
-              오답입니다. 다른 보기를 골라 보십시오.{wrong.size < 2 && " 한 번 더 틀리면 해설이 공개됩니다."}
+            <p className="text-sm text-[var(--status-critical)]" aria-live="polite">
+              오답입니다.{wrong.size < 2 && " 한 번 더 틀리면 해설이 공개됩니다."}
             </p>
           )}
           {error && <p className="text-sm text-[var(--status-critical)]">{error}</p>}
         </div>
       )}
       {solved && (
-        <p className="mt-3 text-sm font-bold text-[var(--status-good)]" aria-live="polite">
-          정답입니다{state && state.attempts > 1 ? ` (${state.attempts}번째 시도)` : ""}.
+        <p className="mt-5 flex items-center gap-1.5 text-sm font-medium text-[var(--status-good)]" aria-live="polite">
+          <Icon name="check" size={15} />
+          정답입니다{state && state.attempts > 1 ? ` · ${state.attempts}번째 시도` : ""}
         </p>
       )}
       {explanation && (
-        <div className="mt-3 rounded-lg bg-[var(--surface-card-2)] px-3 py-2.5 text-sm text-ink-secondary">
-          <p className="mb-1 text-xs font-bold text-ink-muted">{solved ? "해설" : "힌트 · 해설"}</p>
+        <div className="mt-3 rounded-xl bg-[var(--surface-card-2)] px-4 py-3.5 text-sm leading-relaxed text-ink-secondary">
+          <p className="mb-1 text-xs font-medium text-ink-muted">{solved ? "해설" : "힌트 · 해설"}</p>
           {explanation}
         </div>
       )}

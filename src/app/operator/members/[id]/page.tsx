@@ -11,6 +11,7 @@ import { sectionLabel, type Tier } from "@/content/tiers";
 import { tierRecord } from "@/lib/achievement";
 import { Inline } from "@/components/MarkdownBlocks";
 import ProgressRing from "@/components/ProgressRing";
+import Icon from "@/components/Icon";
 import { formatDateTime, formatDate } from "@/lib/datetime";
 
 export const metadata = { title: "스터디원 학습 현황" };
@@ -30,17 +31,14 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
   const advancedWeeks = rows.filter((r) => tierRecord(r.week, learning, r.status, "advanced").complete).length;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6 sm:py-20">
       <PageHeader
-        tone="operator"
         back={{ href: "/operator/members", label: "스터디원 관리" }}
-        eyebrow="스터디원 학습 현황"
         title={`${member.name}님의 학습 현황`}
         description={`${member.email} · 가입일 ${formatDate(member.createdAt)}`}
-        className="mb-0"
       />
 
-      <div className="my-8 grid gap-3 sm:grid-cols-2">
+      <div className="mb-14 grid grid-cols-1 border-y border-[var(--border-hairline)] sm:grid-cols-2">
         <Stat label="핵심 단계(주차 완료 기준)" value={`${sum("core", "done")} / ${sum("core", "total")}`} />
         <Stat
           label="보충 · 심화 단계"
@@ -50,17 +48,19 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
         <Stat label="마지막 학습 기록" value={learning.updatedAt ? formatDateTime(learning.updatedAt) : "아직 없음"} />
       </div>
 
-      <div className="space-y-3">
+      <div className="rows border-y border-[var(--border-hairline)]">
         {rows.map(({ week, submission, status }) => {
           const worksheet = readWorksheetState(learning, week.slug);
           const weakMarks = week.worksheet.filter((_, i) => worksheet.marks[String(i)] === "weak");
           return (
-            <details key={week.slug} className="surface p-4 sm:p-5">
-              <summary className="flex cursor-pointer items-start gap-4">
-                <ProgressRing ratio={status.ratio} size={44} />
+            <details key={week.slug} className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-4 py-4 [&::-webkit-details-marker]:hidden">
+                <ProgressRing ratio={status.ratio} size={40} />
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-black text-ink">{week.number}주차 · {week.title}</h2>
-                  <p className="mt-1 text-xs text-ink-secondary">
+                  <h2 className="text-[15px] font-medium text-ink">
+                    {week.number}주차 · {week.title}
+                  </h2>
+                  <p className="mt-1 text-xs tabular-nums text-ink-muted">
                     핵심 {status.tiers.core.done}/{status.tiers.core.total} · 보충 {status.tiers.supplement.done}/{status.tiers.supplement.total} · 심화{" "}
                     {status.tiers.advanced.done}/{status.tiers.advanced.total} · 백지공부 {status.worksheetSubmitted ? "제출" : "미제출"} · 과제{" "}
                     {ASSIGNMENT_STATUS_LABEL[status.assignment.status]}
@@ -68,20 +68,21 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
                   </p>
                 </div>
                 {submission && (
-                  <Link href={`/operator/submissions/${submission.id}`} className="shrink-0 text-xs font-bold text-[var(--series-orange)] hover:underline">
-                    과제 보기 →
+                  <Link href={`/operator/submissions/${submission.id}`} className="btn btn-secondary btn-sm shrink-0">
+                    과제 보기
                   </Link>
                 )}
+                <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
               </summary>
 
-              <div className="mt-4 space-y-4 text-sm">
-                <table className="w-full border-collapse text-xs">
+              <div className="space-y-5 pb-6 text-sm">
+                <table className="data-table text-xs">
                   <thead>
-                    <tr className="text-left text-ink-muted">
-                      <th className="py-1 pr-2">단계</th>
-                      <th className="py-1 pr-2">상태</th>
-                      <th className="py-1 pr-2">객관식 (오답 시도)</th>
-                      <th className="py-1">서술형 자기평가</th>
+                    <tr>
+                      <th>단계</th>
+                      <th>상태</th>
+                      <th>객관식 (오답 시도)</th>
+                      <th>서술형 자기평가</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -90,14 +91,16 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
                       const wrongTries = Object.values(state.checks).reduce((sum, c) => sum + c.wrong.length, 0);
                       const weak = section.meta.quizIds.filter((q) => state.answers[q]?.review === "incorrect").length;
                       return (
-                        <tr key={section.id} className="border-t border-[var(--border-hairline)] text-ink-secondary">
-                          <td className="py-1.5 pr-2">{sectionLabel(section)}. {section.title}</td>
-                          <td className="py-1.5 pr-2">{access === "completed" ? "✓ 완료" : access === "current" ? "진행 중" : "—"}</td>
-                          <td className="py-1.5 pr-2">
+                        <tr key={section.id} className="text-ink-secondary">
+                          <td>
+                            {sectionLabel(section)}. {section.title}
+                          </td>
+                          <td className={access === "completed" ? "text-[var(--status-good)]" : ""}>{access === "completed" ? "완료" : access === "current" ? "진행 중" : "—"}</td>
+                          <td className="tabular-nums">
                             {progress.checksDone}/{progress.checksTotal}
                             {wrongTries > 0 && <span className="text-[var(--status-critical)]"> ({wrongTries})</span>}
                           </td>
-                          <td className="py-1.5">
+                          <td className="tabular-nums">
                             {progress.quizDone}/{progress.quizTotal}
                             {weak > 0 && <span className="text-[var(--status-critical)]"> · 보완 필요 {weak}</span>}
                           </td>
@@ -108,12 +111,12 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
                 </table>
 
                 {worksheet.submittedAt && (
-                  <div className="rounded-lg bg-[var(--surface-card-2)] px-3 py-3">
-                    <p className="text-xs font-bold text-ink-muted">백지공부 ({formatDateTime(worksheet.submittedAt)})</p>
+                  <div className="rounded-xl bg-[var(--surface-card-2)] px-4 py-4">
+                    <p className="text-xs text-ink-muted">백지공부 · {formatDateTime(worksheet.submittedAt)}</p>
                     <dl className="mt-2 space-y-2">
                       {week.worksheet.map((field, i) => (
                         <div key={field.label}>
-                          <dt className="text-xs font-bold text-ink">
+                          <dt className="text-xs font-medium text-ink">
                             {field.label}
                             {worksheet.marks[String(i)] === "weak" && <span className="ml-1 text-[var(--status-critical)]">(보완 필요)</span>}
                           </dt>
@@ -131,7 +134,7 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
                   section.meta.quizIds.some((q) => readSectionState(learning, week.slug, section.id).answers[q]?.review === "incorrect")
                 ) && (
                   <div>
-                    <p className="text-xs font-bold text-[var(--status-critical)]">보완이 필요하다고 표시한 서술형 문항</p>
+                    <p className="text-xs font-medium text-[var(--status-critical)]">보완 필요로 표시한 서술형 문항</p>
                     <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-ink-secondary">
                       {status.sections.flatMap(({ section }) => {
                         const state = readSectionState(learning, week.slug, section.id);
@@ -157,5 +160,10 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-  return <div className="surface p-4"><p className="text-xs font-bold text-ink-muted">{label}</p><p className="mt-1 text-sm font-black text-ink">{value}</p></div>;
+  return (
+    <div className="border-[var(--border-hairline)] py-4 pr-4 sm:even:border-l sm:even:pl-5 [&:nth-child(n+2)]:border-t sm:[&:nth-child(2)]:border-t-0">
+      <p className="text-xs text-ink-muted">{label}</p>
+      <p className="mt-1.5 text-[15px] font-medium tabular-nums text-ink">{value}</p>
+    </div>
+  );
 }

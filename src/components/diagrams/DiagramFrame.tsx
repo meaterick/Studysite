@@ -24,12 +24,12 @@ export default function DiagramFrame({
       <div className="border-b border-[var(--border-hairline)] px-4 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">그림 · Diagram</p>
-            <h4 className="text-sm font-bold text-ink">{title}</h4>
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">그림 · Diagram</p>
+            <h4 className="text-sm font-semibold text-ink">{title}</h4>
           </div>
           {interactive && (
             <span
-              className="shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-bold text-white"
+              className="shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-semibold text-white"
               style={{ background: "var(--series-blue)" }}
             >
               직접 조작해 보십시오 ↓

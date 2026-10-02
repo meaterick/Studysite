@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import CheckQuestion, { type CheckStateView } from "./CheckQuestion";
+import Icon from "@/components/Icon";
 
 export interface CheckItem {
   checkId: string;
@@ -66,12 +67,12 @@ export default function CheckSequence({
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <p ref={headingRef} tabIndex={-1} className="text-sm font-bold text-ink-secondary outline-none" aria-live="polite">
-          {index < items.length ? `문제 ${index + 1} / ${items.length}` : "확인 문제 결과"}
-          <span className="ml-2 font-medium text-ink-muted">· 맞힌 문제 {solvedCount}개</span>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p ref={headingRef} tabIndex={-1} className="text-sm font-medium tabular-nums text-ink outline-none" aria-live="polite">
+          {index < items.length ? `문제 ${index + 1} / ${items.length}` : "결과"}
+          <span className="ml-2 font-normal text-ink-muted">맞힌 문제 {solvedCount}</span>
         </p>
-        <ol className="flex flex-wrap items-center gap-1.5" aria-label="확인 문제 목록">
+        <ol className="flex flex-wrap items-center gap-1" aria-label="확인 문제 목록">
           {items.map((it, i) => {
             const solved = !!it.state?.correct;
             const active = i === index;
@@ -84,17 +85,17 @@ export default function CheckSequence({
                   disabled={!open}
                   aria-current={active ? "step" : undefined}
                   aria-label={`문제 ${i + 1}${solved ? " (맞힘)" : open ? "" : " (앞 문제를 풀면 열립니다)"}`}
-                  className={`grid h-7 w-7 place-items-center rounded-full border text-xs font-black transition ${
+                  className={`grid h-7 w-7 place-items-center rounded-full text-xs tabular-nums transition ${
                     active
-                      ? "border-[var(--series-blue)] bg-[var(--series-blue)] text-white"
+                      ? "bg-[var(--inverse-bg)] font-semibold text-[var(--inverse-fg)]"
                       : solved
-                        ? "border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_14%,transparent)] text-[var(--status-good)] hover:opacity-80"
+                        ? "bg-[color-mix(in_srgb,var(--status-good)_14%,transparent)] text-[var(--status-good)] hover:opacity-80"
                         : open
-                          ? "border-[var(--border-strong)] text-ink-secondary hover:border-[var(--series-blue)]"
-                          : "border-[var(--border-hairline)] text-ink-muted/60"
+                          ? "border border-[var(--border-strong)] text-ink-secondary hover:border-[var(--text-primary)]"
+                          : "border border-[var(--border-hairline)] text-ink-muted opacity-60"
                   } disabled:cursor-not-allowed`}
                 >
-                  {solved && !active ? "✓" : i + 1}
+                  {solved && !active ? <Icon name="check" size={13} strokeWidth={2} /> : i + 1}
                 </button>
               </li>
             );
@@ -116,14 +117,11 @@ export default function CheckSequence({
             explanation={current.explanation}
             correctIndex={current.correctIndex}
           />
-          <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-4 flex items-center justify-between gap-3">
             {index > 0 ? (
-              <button
-                type="button"
-                onClick={() => go(index - 1)}
-                className="text-sm font-bold text-ink-muted hover:text-ink"
-              >
-                ← 이전 문제
+              <button type="button" onClick={() => go(index - 1)} className="btn btn-ghost btn-sm -ml-3">
+                <Icon name="arrowLeft" size={14} />
+                이전 문제
               </button>
             ) : (
               <span />
@@ -135,31 +133,32 @@ export default function CheckSequence({
                 onClick={() => go(nextTarget())}
                 className="btn btn-primary"
               >
-                {items.some((it, i) => i !== index && !it.state?.correct) ? "다음 문제 →" : "결과 보기 →"}
+                {items.some((it, i) => i !== index && !it.state?.correct) ? "다음 문제" : "결과 보기"}
+                <Icon name="arrowRight" size={15} />
               </button>
             )}
           </div>
         </>
       ) : (
-        <div className="rounded-xl border border-[var(--status-good)]/60 bg-card p-4 sm:p-5" aria-live="polite">
+        <div className="surface p-6" aria-live="polite">
           {allSolved ? (
             <>
-              <p className="font-black text-[var(--status-good)]">✓ 확인 문제 {items.length}개를 모두 맞혔습니다.</p>
-              <p className="mt-1 text-sm text-ink-secondary">
-                {completed ? "완료한 단계입니다." : "아래 막대의 「단계 완료」를 누르면 이 단계가 끝납니다."} 위 번호를 눌러 문제와 해설을 다시 볼 수 있습니다.
+              <p className="flex items-center gap-2 font-semibold text-ink">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-[color-mix(in_srgb,var(--status-good)_14%,transparent)] text-[var(--status-good)]">
+                  <Icon name="check" size={13} strokeWidth={2} />
+                </span>
+                {items.length}문제를 모두 맞혔습니다
               </p>
+              <p className="mt-2 text-sm text-ink-muted">{completed ? "완료한 단계입니다." : "아래의 단계 완료를 눌러 마무리하십시오."}</p>
             </>
           ) : (
             <>
-              <p className="font-black text-ink">
-                {items.length}문제 중 {solvedCount}문제를 맞혔습니다.
+              <p className="font-semibold text-ink">
+                {items.length}문제 중 {solvedCount}문제를 맞혔습니다
               </p>
-              <button
-                type="button"
-                onClick={() => go(firstUnsolved)}
-                className="btn btn-primary mt-2"
-              >
-                남은 문제 풀기 →
+              <button type="button" onClick={() => go(firstUnsolved)} className="btn btn-primary mt-4">
+                남은 문제 풀기
+                <Icon name="arrowRight" size={15} />
               </button>
             </>
           )}
