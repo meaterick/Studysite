@@ -23,11 +23,33 @@ const PHASES = [
   { key: "Part 4", name: "활용", weeks: [7, 8] },
 ];
 
-const STEPS = [
-  { name: "학습 자료", desc: "핵심·보충·심화 단계의 글과 그림으로 원리를 이해합니다." },
-  { name: "확인 문제", desc: "단계마다 바로 문제를 풀어 이해를 점검합니다." },
-  { name: "백지공부", desc: "배운 내용을 자신의 말로 백지에 설명하며 복습합니다." },
-  { name: "과제", desc: "실제 문제에 적용하고, 운영자의 채점과 피드백을 받습니다." },
+// 위쪽 네 단계가 필수 흐름이고, 각 영역에서 고를 수 있는 선택 과정을 그 아래에 붙인다.
+const FLOW = [
+  {
+    area: "학습 자료",
+    when: "핵심 단계부터",
+    steps: [
+      { name: "개념 학습", desc: "글과 그림, 직접 실행하는 코드로 원리를 익힙니다." },
+      { name: "확인 문제", desc: "단계마다 문제를 풀며 이해했는지 짚어 봅니다." },
+    ],
+    extras: [
+      { name: "보충", desc: "실무 도구와 다른 방법으로 폭을 넓힙니다." },
+      { name: "심화", desc: "수식 유도와 최신 기법까지 다룹니다." },
+    ],
+  },
+  {
+    area: "적용과 복습",
+    when: "핵심 단계를 마친 뒤",
+    steps: [
+      { name: "백지공부", desc: "자료를 덮고 떠올려 적으며 스스로 점검합니다." },
+      { name: "과제", desc: "실제 문제에 적용하고 운영자의 채점을 받습니다." },
+    ],
+    extras: [
+      { name: "서술형", desc: "자신의 말로 설명하고 스스로 평가합니다." },
+      { name: "추가 퀴즈", desc: "객관식과 코드 출력 예측 문제를 풉니다." },
+      { name: "코딩 실습", desc: "빈칸 코드를 채우면 바로 채점됩니다." },
+    ],
+  },
 ];
 
 const OUTCOMES = [
@@ -41,15 +63,20 @@ const OUTCOMES = [
 const ASSIGNMENT_HOURS = { min: 2, max: 3 };
 const WORKSHEET_HOURS = 0.5;
 
+// 그 주의 과제로 완성하는 결과물
 const BUILDS = [
-  "직접 만든 자동미분 엔진으로 학습시킨 MLP",
-  "Self-Attention부터 쌓아 올린 나만의 미니 GPT 블록",
-  "학습 자료에서 근거를 찾아 답하는 RAG 방식 QA 봇과 그 평가 리포트",
-  "주제를 골라 끝까지 완성하는 캡스톤 프로젝트",
+  { week: 3, name: "자동미분 엔진을 만들어 학습시킨 MLP" },
+  { week: 5, name: "Self-Attention부터 쌓아 올린 미니 GPT 블록" },
+  { week: 7, name: "근거를 찾아 답하는 RAG QA 봇과 평가 리포트" },
+  { week: 8, name: "주제를 골라 끝까지 완성하는 캡스톤 프로젝트" },
 ];
 
 function Label({ children }: { children: ReactNode }) {
   return <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[var(--j-3)]">{children}</p>;
+}
+
+function Em({ children }: { children: ReactNode }) {
+  return <strong className="font-semibold text-white">{children}</strong>;
 }
 
 export default async function Home() {
@@ -137,24 +164,47 @@ export default async function Home() {
             {[
               {
                 q: "누구를 위한 과정인가요?",
-                a: "AI를 '쓰는 것'을 넘어 원리부터 이해하고 활용하고 싶은 대학생·개발자·AI를 처음 공부하는 사람들을 위한 과정입니다.",
+                a: (
+                  <>
+                    AI를 ‘쓰는 것’을 넘어 <Em>원리부터 이해하고 활용하고 싶은 분</Em>을 위한 과정입니다. 대학생과 개발자는 물론, AI를 처음
+                    공부하는 분도 따라올 수 있습니다.
+                  </>
+                ),
               },
               {
                 q: "무엇을 알고 시작해야 하나요?",
-                a: "Python 기초 문법(변수·함수·리스트·반복문)과 고등학교 수준의 수학이면 충분합니다. 수학이 막막해도 1주차에서 벡터·확률·미분부터 차근히 다시 다룹니다.",
+                a: (
+                  <>
+                    <Em>Python 기초 문법</Em>(변수·함수·리스트·반복문)과 <Em>고등학교 수준의 수학</Em>이면 충분합니다. 필요한 수학은 1주차에서
+                    벡터·확률·미분부터 다시 정리합니다.
+                  </>
+                ),
               },
               {
                 q: "일주일에 얼마나 걸리나요?",
-                a: `주 ${weeklyMin}~${weeklyMax}시간: 핵심 학습 자료 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). (보충·심화 단계는 포함되지 않았습니다.)`,
+                a: (
+                  <>
+                    핵심 학습 자료 {studyMin}~{studyMax}시간, 백지공부 30분, 과제 {ASSIGNMENT_HOURS.min}~{ASSIGNMENT_HOURS.max}시간을 더해{" "}
+                    <Em>
+                      주 {weeklyMin}~{weeklyMax}시간
+                    </Em>{" "}
+                    정도 걸립니다. (보충·심화 단계는 포함되지 않았습니다.)
+                  </>
+                ),
               },
               {
                 q: "비용이 드나요? 누가 이용할 수 있나요?",
-                a: "무료이며 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 실행되어 설치할 것이 없습니다.",
+                a: (
+                  <>
+                    <Em>무료</Em>이며, 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 바로 실행되므로 따로 설치할 것이
+                    없습니다.
+                  </>
+                ),
               },
             ].map((item) => (
-              <div key={item.q} className="border-b border-[var(--j-line)] py-3 sm:py-4 sm:pr-8">
+              <div key={item.q} className="border-b border-[var(--j-line)] py-3.5 sm:py-5 sm:pr-10">
                 <dt className="text-base font-semibold text-white sm:text-lg">{item.q}</dt>
-                <dd className="mt-1.5 text-sm leading-relaxed text-[var(--j-2)] sm:text-[15px]">{item.a}</dd>
+                <dd className="mt-1.5 text-sm leading-relaxed text-pretty text-[var(--j-2)] sm:text-[15px]">{item.a}</dd>
               </div>
             ))}
           </dl>
@@ -174,30 +224,54 @@ export default async function Home() {
             <br />
             <span className="j-gradient">진행됩니다.</span>
           </h2>
-          <ol className="mt-8 grid grid-cols-2 border-t border-[var(--j-line)] sm:mt-12 lg:grid-cols-4">
-            {STEPS.map((step, i) => (
-              <li key={step.name} className="border-b border-[var(--j-line)] py-4 pr-4 sm:py-5 sm:pr-6 lg:border-b-0 lg:border-r lg:py-6 lg:pl-6 lg:first:pl-0 lg:last:border-r-0">
-                <p className="font-mono text-xs text-[var(--journey-accent)]">0{i + 1}</p>
-                <p className="mt-2 text-lg font-semibold text-white sm:mt-3 sm:text-xl">{step.name}</p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--j-2)] sm:mt-2 sm:text-sm">{step.desc}</p>
-              </li>
-            ))}
-          </ol>
-          <p className="mt-6 text-sm text-[var(--j-2)]">핵심 단계만 마치면 이 네 단계로 한 주를 마무리할 수 있습니다.</p>
-          <dl className="mt-6 grid gap-x-10 gap-y-5 border-t border-[var(--j-line)] pt-6 sm:grid-cols-2">
-            <div>
-              <dt className="text-sm font-semibold text-white">+ 보충 · 심화</dt>
-              <dd className="mt-1.5 text-[13px] leading-relaxed text-[var(--j-2)] sm:text-sm">
-                학습 자료 안에서 폭(보충)과 깊이(심화)를 더하는 선택 단계입니다.
-              </dd>
-            </div>
-            <div>
-              <dt className="text-sm font-semibold text-white">+ 서술형 · 추가 퀴즈 · 코딩 실습</dt>
-              <dd className="mt-1.5 text-[13px] leading-relaxed text-[var(--j-2)] sm:text-sm">
-                적용과 복습에서 선택해서 한 번 더 다지는 과정입니다.
-              </dd>
-            </div>
-          </dl>
+          <div className="mt-7 grid gap-y-6 sm:mt-11 sm:gap-y-8 lg:grid-cols-2">
+            {FLOW.map((part, p) => {
+              const first = FLOW.slice(0, p).reduce((sum, f) => sum + f.steps.length, 0) + 1;
+              return (
+                <section key={part.area} aria-label={part.area} className="flex flex-col">
+                  <p className={`flex items-center gap-2.5 text-[13px] ${p === 0 ? "lg:pr-6" : ""}`}>
+                    <span className="font-semibold text-white">{part.area}</span>
+                    <span className="text-[var(--j-3)]">{part.when}</span>
+                    <span aria-hidden="true" className="h-px flex-1 bg-[var(--j-line)]" />
+                  </p>
+                  <ol start={first} className="mt-3 grid grid-cols-2 sm:mt-4">
+                    {part.steps.map((step, s) => {
+                      const lastInArea = s === part.steps.length - 1;
+                      const lastOverall = lastInArea && p === FLOW.length - 1;
+                      return (
+                        <li key={step.name}>
+                          <div aria-hidden="true" className="flex items-center">
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[color-mix(in_srgb,var(--journey-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--journey-accent)_10%,transparent)] font-mono text-[11px] text-[var(--journey-accent)]">
+                              {String(first + s).padStart(2, "0")}
+                            </span>
+                            {/* 영역의 마지막 단계에서 나가는 선은 두 영역이 나란히 놓이는 넓은 화면에서만 다음 영역으로 이어진다. */}
+                            {!lastOverall && <span className={`h-px flex-1 bg-[var(--j-line-strong)] ${lastInArea ? "hidden lg:block" : ""}`} />}
+                          </div>
+                          <div className="pr-4 sm:pr-6">
+                            <p className="mt-3 text-base font-semibold text-white sm:text-lg">{step.name}</p>
+                            <p className="mt-1 text-[13px] leading-relaxed text-[var(--j-2)] sm:text-sm">{step.desc}</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  <div
+                    className={`mt-4 flex-1 rounded-2xl border border-dashed border-[var(--j-line-strong)] bg-white/[0.02] px-4 py-3 sm:mt-5 sm:px-5 sm:py-3.5 ${p === 0 ? "lg:mr-6" : ""}`}
+                  >
+                    <p className="text-[11px] font-medium tracking-[0.06em] text-[var(--j-3)]">선택 과정</p>
+                    <dl className="mt-1.5 space-y-1 text-[13px] leading-relaxed sm:mt-2 sm:text-sm">
+                      {part.extras.map((x) => (
+                        <div key={x.name} className="flex gap-2.5 sm:gap-3">
+                          <dt className="w-16 shrink-0 font-semibold text-white sm:w-[4.25rem]">{x.name}</dt>
+                          <dd className="text-[var(--j-2)]">{x.desc}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                </section>
+              );
+            })}
+          </div>
         </div>
       ),
     },
@@ -274,26 +348,31 @@ export default async function Home() {
             <br />
             <span className="j-gradient">할 수 있게 되는 것.</span>
           </h2>
-          <ol className="mt-10 grid border-t border-[var(--j-line)] sm:grid-cols-2">
+          <ol className="mt-7 grid border-t border-[var(--j-line)] sm:mt-9 sm:grid-cols-2">
             {OUTCOMES.map((g, i) => (
-              <li key={i} className="flex gap-4 border-b border-[var(--j-line)] py-4 sm:pr-8">
+              <li key={i} className="flex gap-4 border-b border-[var(--j-line)] py-3 sm:pr-8">
                 <span className="w-6 shrink-0 pt-0.5 font-mono text-xs text-[var(--journey-accent)]">0{i + 1}</span>
                 <p className="text-sm leading-relaxed text-[var(--j-2)] sm:text-[15px]">{g}</p>
               </li>
             ))}
           </ol>
-          <div className="mt-10">
-            <p className="text-base font-semibold text-white sm:text-lg">직접 만드는 것</p>
-            <ul className="mt-3 grid gap-x-8 gap-y-1.5 text-sm text-[var(--j-2)] sm:grid-cols-2 sm:text-[15px]">
+          <div className="mt-6 sm:mt-8">
+            <p className="text-[13px] font-semibold text-white sm:text-sm">과제로 직접 만드는 것</p>
+            <ul className="mt-2.5 grid gap-y-1.5 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-2 lg:grid-cols-4 lg:gap-3">
               {BUILDS.map((b) => (
-                <li key={b} className="flex gap-2">
-                  <span aria-hidden="true" className="text-[var(--journey-accent)]">→</span>
-                  {b}
+                <li
+                  key={b.week}
+                  className="flex items-baseline gap-3 lg:block lg:rounded-xl lg:border lg:border-[var(--j-line)] lg:bg-white/[0.03] lg:px-4 lg:py-3"
+                >
+                  <span className="w-[3.75rem] shrink-0 font-mono text-[10.5px] tracking-[0.18em] text-[var(--journey-accent)] lg:block lg:w-auto">
+                    WEEK {String(b.week).padStart(2, "0")}
+                  </span>
+                  <span className="text-[13px] leading-snug text-[var(--j-1)] sm:text-sm lg:mt-1.5 lg:block">{b.name}</span>
                 </li>
               ))}
             </ul>
           </div>
-          <div className="mt-10 grid items-center gap-6 sm:grid-cols-[minmax(0,22rem)_1fr]">
+          <div className="mt-7 grid items-center gap-4 sm:mt-8 sm:grid-cols-[minmax(0,22rem)_1fr] sm:gap-6">
             <Suspense fallback={<div className="h-14 w-full rounded-full bg-white/5" />}>
               <HomeCta tone="minimal" />
             </Suspense>
