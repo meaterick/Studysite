@@ -20,14 +20,14 @@ const PHASES = [
   { key: "Part 1", name: "기초", weeks: [1, 2] },
   { key: "Part 2", name: "딥러닝", weeks: [3, 4] },
   { key: "Part 3", name: "현대 AI", weeks: [5, 6] },
-  { key: "Part 4", name: "활용과 책임", weeks: [7, 8] },
+  { key: "Part 4", name: "활용", weeks: [7, 8] },
 ];
 
 const STEPS = [
-  { name: "이해", desc: "개념 설명과 그림으로 원리를 이해합니다.", where: "학습 자료" },
-  { name: "구현", desc: "핵심을 라이브러리 없이 직접 구현하고 브라우저에서 실행합니다.", where: "단계 실습" },
-  { name: "설명", desc: "확인 문제와 백지공부로 자신의 말로 설명할 수 있는지 점검합니다.", where: "확인 문제 · 백지공부" },
-  { name: "활용", desc: "과제에서 실제 문제에 적용하고, 운영자의 채점과 피드백을 받습니다.", where: "과제 · 채점" },
+  { name: "학습 자료", desc: "핵심·보충·심화 단계의 글과 그림으로 원리를 이해합니다." },
+  { name: "확인 문제", desc: "단계마다 바로 문제를 풀어 이해를 점검합니다." },
+  { name: "백지공부", desc: "배운 내용을 자신의 말로 백지에 설명하며 복습합니다." },
+  { name: "과제", desc: "실제 문제에 적용하고, 운영자의 채점과 피드백을 받습니다." },
 ];
 
 const OUTCOMES = [
@@ -88,7 +88,7 @@ export default async function Home() {
             {[
               "무료 · 누구나 이용 가능",
               `주 ${weeklyMin}~${weeklyMax}시간`,
-              "Python 기초 + 고등학교 수학",
+              "Python 기초 + 벡터·확률·미분",
               "설치 없이 브라우저에서 실습",
             ].map((t) => (
               <li key={t} className="rounded-full border border-[var(--j-line)] bg-white/5 px-3 py-1">
@@ -137,19 +137,19 @@ export default async function Home() {
             {[
               {
                 q: "누구를 위한 과정인가요?",
-                a: "AI를 '쓰는 것'을 넘어 원리부터 이해하고 싶은 대학생·입문 개발자. AI를 처음 공부하거나, 라이브러리만 써 봐서 속이 궁금한 사람에게 맞춥니다.",
+                a: "AI를 '쓰는 것'을 넘어 원리부터 이해하고 활용하고 싶은 대학생·개발자·AI를 처음 공부하는 사람들을 위한 과정입니다.",
               },
               {
                 q: "무엇을 알고 시작해야 하나요?",
-                a: "Python 기초 문법(변수·함수·리스트·반복문)과 고등학교 수준의 미분·확률. 부족한 수학은 1주차에서 벡터·확률·미분부터 다시 다룹니다.",
+                a: "Python 기초 문법(변수·함수·리스트·반복문)과 고등학교 수준의 수학이면 충분합니다. 수학이 막막해도 1주차에서 벡터·확률·미분부터 차근히 다시 다룹니다.",
               },
               {
                 q: "일주일에 얼마나 걸리나요?",
-                a: `주 ${weeklyMin}~${weeklyMax}시간: 핵심 학습 자료 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). 보충·심화 단계는 선택이라 이 시간에 넣지 않았습니다.`,
+                a: `주 ${weeklyMin}~${weeklyMax}시간: 핵심 학습 자료 ${studyMin}~${studyMax}시간 + 백지공부 30분 + 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간(예상). (보충·심화 단계는 포함되지 않았습니다.)`,
               },
               {
                 q: "비용이 드나요? 누가 이용할 수 있나요?",
-                a: "무료이며 동아리원이 아니어도 누구나 Google 계정으로 가입해 이용할 수 있습니다. 코드는 브라우저에서 실행되어 설치할 것이 없습니다.",
+                a: "무료이며 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 실행되어 설치할 것이 없습니다.",
               },
             ].map((item) => (
               <div key={item.q} className="border-b border-[var(--j-line)] py-3 sm:py-4 sm:pr-8">
@@ -158,17 +158,6 @@ export default async function Home() {
               </div>
             ))}
           </dl>
-          <div className="mt-6">
-            <p className="text-base font-semibold text-white sm:text-lg">수료하면 무엇을 만들 수 있나요?</p>
-            <ul className="mt-2 grid gap-x-8 gap-y-1.5 text-sm text-[var(--j-2)] sm:grid-cols-2 sm:text-[15px]">
-              {BUILDS.map((b) => (
-                <li key={b} className="flex gap-2">
-                  <span aria-hidden="true" className="text-[var(--journey-accent)]">→</span>
-                  {b}
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
       ),
     },
@@ -183,7 +172,7 @@ export default async function Home() {
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             한 주는 네 단계로
             <br />
-            <span className="j-gradient">순환합니다.</span>
+            <span className="j-gradient">진행됩니다.</span>
           </h2>
           <ol className="mt-8 grid grid-cols-2 border-t border-[var(--j-line)] sm:mt-12 lg:grid-cols-4">
             {STEPS.map((step, i) => (
@@ -191,13 +180,24 @@ export default async function Home() {
                 <p className="font-mono text-xs text-[var(--journey-accent)]">0{i + 1}</p>
                 <p className="mt-2 text-lg font-semibold text-white sm:mt-3 sm:text-xl">{step.name}</p>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--j-2)] sm:mt-2 sm:text-sm">{step.desc}</p>
-                <p className="mt-3 hidden text-[11px] tracking-wider text-[var(--j-3)] sm:mt-4 sm:block">{step.where}</p>
               </li>
             ))}
           </ol>
-          <p className="mt-6 text-sm text-[var(--j-3)]">
-            단계마다 학습 → 실습 → 확인 문제 순서로 진행합니다. 단계는 핵심(초심자)·보충(중급자)·심화(전문가)로 나뉘고, 핵심 단계만 마치면 백지공부와 과제로 한 주를 마무리할 수 있습니다. 보충은 폭을, 심화는 깊이를 더하는 선택 과정입니다.
-          </p>
+          <p className="mt-6 text-sm text-[var(--j-2)]">핵심 단계만 마치면 이 네 단계로 한 주를 마무리할 수 있습니다.</p>
+          <dl className="mt-6 grid gap-x-10 gap-y-5 border-t border-[var(--j-line)] pt-6 sm:grid-cols-2">
+            <div>
+              <dt className="text-sm font-semibold text-white">+ 보충 · 심화</dt>
+              <dd className="mt-1.5 text-[13px] leading-relaxed text-[var(--j-2)] sm:text-sm">
+                학습 자료 안에서 폭(보충)과 깊이(심화)를 더하는 선택 단계입니다.
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-semibold text-white">+ 서술형 · 추가 퀴즈 · 코딩 실습</dt>
+              <dd className="mt-1.5 text-[13px] leading-relaxed text-[var(--j-2)] sm:text-sm">
+                적용과 복습에서 선택해서 한 번 더 다지는 과정입니다.
+              </dd>
+            </div>
+          </dl>
         </div>
       ),
     },
@@ -258,7 +258,6 @@ export default async function Home() {
               </section>
             ))}
           </div>
-          <p className="mt-5 text-sm text-[var(--j-3)]">뒤로 갈수록 난도가 높아지고, 스스로 해결해야 하는 부분이 늘어납니다.</p>
         </div>
       ),
     },
@@ -283,6 +282,17 @@ export default async function Home() {
               </li>
             ))}
           </ol>
+          <div className="mt-10">
+            <p className="text-base font-semibold text-white sm:text-lg">직접 만드는 것</p>
+            <ul className="mt-3 grid gap-x-8 gap-y-1.5 text-sm text-[var(--j-2)] sm:grid-cols-2 sm:text-[15px]">
+              {BUILDS.map((b) => (
+                <li key={b} className="flex gap-2">
+                  <span aria-hidden="true" className="text-[var(--journey-accent)]">→</span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
           <div className="mt-10 grid items-center gap-6 sm:grid-cols-[minmax(0,22rem)_1fr]">
             <Suspense fallback={<div className="h-14 w-full rounded-full bg-white/5" />}>
               <HomeCta tone="minimal" />
