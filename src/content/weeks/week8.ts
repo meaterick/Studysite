@@ -6,7 +6,7 @@ const week8: WeekMeta = {
   slug: "week-8",
   number: 8,
   phase: "4부 · 활용·책임",
-  title: "책임 있는 AI와 캡스톤 프로젝트",
+  title: "AI와 캡스톤 프로젝트",
   subtitle: "편향·공정성, 프라이버시, 안전, 프롬프트 인젝션, 저작권, 규제, 모델카드",
   difficulty: 4,
   keywords: ["편향·공정성", "프라이버시", "안전", "모델카드", "캡스톤", "MLOps", "LLMOps", "모델 서빙", "연구방법론", "논문 재현"],
