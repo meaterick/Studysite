@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/dal";
 import { listSubmissions } from "@/lib/submissionStore";
 import { adminUnreadTotal } from "@/lib/chatView";
 import PageHeader from "@/components/PageHeader";
+import NextStep from "@/components/NextStep";
 
 export const metadata = { title: "운영자 대시보드" };
 
@@ -36,6 +37,21 @@ export default async function OperatorHome() {
           </form>
         }
       />
+      {(pending > 0 || questions > 0) && (
+        <div className="mb-4">
+          {pending > 0 ? (
+            <NextStep
+              eyebrow="지금 할 일"
+              title={`채점을 기다리는 과제 ${pending}건`}
+              detail={questions > 0 ? `답변을 기다리는 채팅도 ${questions}건 있습니다.` : "오래 기다린 제출물부터 채점합니다."}
+              href="/operator/submissions?status=submitted"
+              cta="채점하기"
+            />
+          ) : (
+            <NextStep eyebrow="지금 할 일" title={`답변을 기다리는 채팅 ${questions}건`} href="/operator/chat" cta="답변하기" />
+          )}
+        </div>
+      )}
       <div className="mb-6 grid grid-cols-2 gap-3">
         {stats.map((st) => (
           <Link key={st.label} href={st.href} className="surface surface-link p-4 sm:p-5">

@@ -7,7 +7,8 @@ import { getCurrentUser } from "@/lib/dal";
 import { loginHref } from "@/lib/returnPath";
 import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission } from "@/lib/submissionStore";
-import { weekStatus } from "@/lib/study";
+import { continueHref, weekStatus } from "@/lib/study";
+import NextStep from "@/components/NextStep";
 import PageHeader from "@/components/PageHeader";
 
 // 부(phase)마다 커리큘럼과 같은 색을 써서 두 화면이 한 체계로 읽히게 한다.
@@ -28,6 +29,14 @@ export default async function WeeksIndexPage() {
     WEEKS.map((w) => [w.slug, weekStatus(w, record, user ? findUserSubmission(user.id, w.slug) : undefined)])
   );
   const phases = Array.from(new Set(WEEKS.map((w) => w.phase)));
+  // 지금 학습할 주차: 핵심 단계·백지공부·과제 중 하나라도 남은 첫 주차(내 진도와 같은 기준)
+  const focus = user
+    ? WEEKS.find((w) => {
+        const st = statuses.get(w.slug)!;
+        return !st.coreDone || !st.worksheetSubmitted || st.assignment.status === "none";
+      })
+    : undefined;
+  const focusStatus = focus ? statuses.get(focus.slug)! : undefined;
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <PageHeader
@@ -48,6 +57,22 @@ export default async function WeeksIndexPage() {
           </Link>
         </div>
       )}
+      {focus && focusStatus && (
+        <div className="mb-12">
+          <NextStep
+            eyebrow={focusStatus.tiers.core.done === 0 ? "이번에 시작할 주차" : "이어서 학습"}
+            title={`${focus.number}주차 · ${focus.title}`}
+            detail={
+              focusStatus.currentSection
+                ? `다음 단계: ${focusStatus.currentSection.title}`
+                : "핵심 단계를 마쳤습니다. 백지공부와 과제로 마무리하십시오."
+            }
+            href={continueHref(focus.slug, focusStatus)}
+            cta={focusStatus.tiers.core.done === 0 ? "시작하기" : "이어서 학습"}
+            meta={`핵심 ${focusStatus.tiers.core.done}/${focusStatus.tiers.core.total}단계 완료`}
+          />
+        </div>
+      )}
       {phases.map((phase, pi) => (
         <section key={phase} aria-labelledby={`phase-${pi}`} className="mb-12">
           <div className="mb-4 flex items-center gap-3">
@@ -62,7 +87,7 @@ export default async function WeeksIndexPage() {
             </span>
             <span aria-hidden="true" className="h-px flex-1 bg-[var(--border-hairline)]" />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {WEEKS.filter((w) => w.phase === phase).map((w) => (
               <WeekCard
                 key={w.slug}
@@ -72,6 +97,7 @@ export default async function WeeksIndexPage() {
                 coreTotal={statuses.get(w.slug)!.tiers.core.total}
                 minutes={getWeekOutline(w).sections.reduce((sum, x) => sum + x.minutes, 0)}
                 locked={!user}
+                current={w.slug === focus?.slug}
               />
             ))}
           </div>
