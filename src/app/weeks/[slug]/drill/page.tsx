@@ -176,7 +176,11 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
               <div className="space-y-4">
                 {tierItems.map((item) => {
                   counters[item.kind] = (counters[item.kind] ?? 0) + 1;
-                  return render(item, counters[item.kind]! - 1);
+                  return (
+                    <div key={item.id} id={`q-${item.id}`} className="scroll-mt-24">
+                      {render(item, counters[item.kind]! - 1)}
+                    </div>
+                  );
                 })}
               </div>
             </section>

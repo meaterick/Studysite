@@ -7,6 +7,7 @@ import WeekTabs from "./WeekTabs";
 import ApplyNav from "./ApplyNav";
 import ProgressRing from "./ProgressRing";
 import DifficultyBadge from "./DifficultyBadge";
+import HashTarget from "./HashTarget";
 
 /**
  * 주차 머리글 + 학습 흐름 탭(개요 · 학습 자료 · 적용과 복습). 진행 상태가 페이지마다 최신이어야 해서
@@ -68,6 +69,7 @@ export default function WeekFrame({
       />
       {apply && <ApplyNav slug={week.slug} summary={summary} active={apply} />}
       {children}
+      <HashTarget />
     </>
   );
 }

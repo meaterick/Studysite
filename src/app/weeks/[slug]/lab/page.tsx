@@ -101,7 +101,9 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
               </div>
               <div className="space-y-5">
                 {exercises.map((ex) => (
-                  <CodingExercise key={ex.id} view={exerciseView(week, ex, state, status, isAdmin)} />
+                  <div key={ex.id} id={`ex-${ex.id}`} className="scroll-mt-24">
+                    <CodingExercise view={exerciseView(week, ex, state, status, isAdmin)} />
+                  </div>
                 ))}
               </div>
             </section>

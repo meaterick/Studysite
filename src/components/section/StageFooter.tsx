@@ -53,8 +53,6 @@ export default function StageFooter({
     });
   };
 
-  const remaining = requirements.filter((r) => !r.optional && r.done < r.total);
-
   return (
     <div className="sticky bottom-0 z-20 -mx-4 mt-10 border-t border-[var(--border-hairline)] bg-[color-mix(in_srgb,var(--surface-page)_97%,transparent)] px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] backdrop-blur sm:mx-0 sm:rounded-t-xl sm:border-x print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -98,15 +96,7 @@ export default function StageFooter({
             >
               {pending ? "저장 중…" : isLast ? "단계 완료 · 적용과 복습으로" : "단계 완료 · 다음 단계로"}
             </button>
-          ) : (
-            <a
-              href="#check"
-              className="rounded-lg border border-[var(--border-hairline)] px-4 py-2 text-sm font-bold text-ink-secondary hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
-              title={remaining.map((r) => `${r.label} ${r.total - r.done}개 남음`).join(", ")}
-            >
-              확인 문제 풀기 ↓
-            </a>
-          )}
+          ) : null}
           {!completed && skipHref && (
             <Link
               href={skipHref}

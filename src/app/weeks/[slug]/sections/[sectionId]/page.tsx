@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { WEEKS, getWeek } from "@/content/weeks";
 import { getSection, getWeekOutline, nextSectionAfter } from "@/content/sections";
-import { TIER_INFO, TIER_ORDER, sectionLabel } from "@/content/tiers";
+import { TIER_INFO, TIER_ORDER, sectionLabel, type Tier } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
@@ -55,10 +55,16 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
   const continueTo = nextSectionAfter(week, section);
   // 서술형·코딩 실습·추가 퀴즈는 "적용과 복습"에서 한다. 단계 화면에는 이어지는 활동의 개수와 링크만 둔다.
   const lab = getWeekLab(slug);
+  // 링크는 그 단계의 첫 문항 위치로 바로 이동한다(목록과 같은 순서: 핵심 → 보충 → 심화).
+  const byTier = <T extends { tier: Tier }>(items: T[]) => TIER_ORDER.flatMap((t) => items.filter((i) => i.tier === t));
+  const labHere = byTier(lab?.exercises.filter((e) => e.sectionId === sectionId) ?? []);
+  const drillHere = byTier(lab?.quiz.filter((q) => q.sectionId === sectionId && q.kind !== "descriptive") ?? []);
   const related = {
     descriptive: section.meta.quizIds.length + (lab?.quiz.filter((q) => q.sectionId === sectionId && q.kind === "descriptive").length ?? 0),
-    lab: lab?.exercises.filter((e) => e.sectionId === sectionId).length ?? 0,
-    drill: lab?.quiz.filter((q) => q.sectionId === sectionId && q.kind !== "descriptive").length ?? 0,
+    lab: labHere.length,
+    drill: drillHere.length,
+    labAnchor: labHere[0] ? `#ex-${labHere[0].id}` : "",
+    drillAnchor: drillHere[0] ? `#q-${drillHere[0].id}` : "",
   };
 
   const requirements = [{ label: "확인 문제", done: progress.checksDone, total: progress.checksTotal }];
@@ -325,12 +331,12 @@ function RelatedActivities({
 }: {
   slug: string;
   sectionId: string;
-  related: { descriptive: number; lab: number; drill: number };
+  related: { descriptive: number; lab: number; drill: number; labAnchor: string; drillAnchor: string };
 }) {
   const links = [
     { n: related.descriptive, label: "서술형", unit: "문항", href: `/weeks/${slug}/descriptive#sec-${sectionId}` },
-    { n: related.lab, label: "코딩 실습", unit: "개", href: `/weeks/${slug}/lab` },
-    { n: related.drill, label: "추가 퀴즈", unit: "문항", href: `/weeks/${slug}/drill` },
+    { n: related.lab, label: "코딩 실습", unit: "개", href: `/weeks/${slug}/lab${related.labAnchor}` },
+    { n: related.drill, label: "추가 퀴즈", unit: "문항", href: `/weeks/${slug}/drill${related.drillAnchor}` },
   ].filter((l) => l.n > 0);
   return (
     <aside aria-labelledby="related-heading" className="mt-10 rounded-xl border border-dashed border-[var(--border-strong)] p-4 sm:p-5">
