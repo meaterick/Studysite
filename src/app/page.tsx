@@ -45,7 +45,7 @@ const FLOW = [
       { name: "과제", desc: "실제 문제에 적용하고 운영자의 채점을 받습니다." },
     ],
     extras: [
-      { name: "서술형", desc: "자신의 말로 설명하고 스스로 평가합니다." },
+      { name: "서술형", desc: "직접 설명해 보고 스스로 평가합니다." },
       { name: "추가 퀴즈", desc: "객관식과 코드 출력 예측 문제를 풉니다." },
       { name: "코딩 실습", desc: "빈칸 코드를 채우면 바로 채점됩니다." },
     ],
@@ -63,20 +63,8 @@ const OUTCOMES = [
 const ASSIGNMENT_HOURS = { min: 2, max: 3 };
 const WORKSHEET_HOURS = 0.5;
 
-// 그 주의 과제로 완성하는 결과물
-const BUILDS = [
-  { week: 3, name: "자동미분 엔진을 만들어 학습시킨 MLP" },
-  { week: 5, name: "Self-Attention부터 쌓아 올린 미니 GPT 블록" },
-  { week: 7, name: "근거를 찾아 답하는 RAG QA 봇과 평가 리포트" },
-  { week: 8, name: "주제를 골라 끝까지 완성하는 캡스톤 프로젝트" },
-];
-
 function Label({ children }: { children: ReactNode }) {
   return <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[var(--j-3)]">{children}</p>;
-}
-
-function Em({ children }: { children: ReactNode }) {
-  return <strong className="font-semibold text-white">{children}</strong>;
 }
 
 export default async function Home() {
@@ -160,49 +148,26 @@ export default async function Home() {
             <br />
             <span className="j-gradient">확인할 것.</span>
           </h2>
-          <dl className="mt-8 grid border-t border-[var(--j-line)] sm:mt-10 sm:grid-cols-2">
+          <dl className="mt-6 grid border-t border-[var(--j-line)] sm:mt-10 sm:grid-cols-2">
             {[
               {
                 q: "누구를 위한 과정인가요?",
-                a: (
-                  <>
-                    AI를 ‘쓰는 것’을 넘어 <Em>원리부터 이해하고 활용하고 싶은 분</Em>을 위한 과정입니다. 대학생과 개발자는 물론, AI를 처음
-                    공부하는 분도 따라올 수 있습니다.
-                  </>
-                ),
+                a: "AI를 ‘쓰는 것’을 넘어 원리부터 이해하고 활용하고 싶은 분을 위한 과정입니다. 대학생과 개발자는 물론, AI를 처음 공부하는 분도 따라올 수 있습니다.",
               },
               {
                 q: "무엇을 알고 시작해야 하나요?",
-                a: (
-                  <>
-                    <Em>Python 기초 문법</Em>(변수·함수·리스트·반복문)과 <Em>고등학교 수준의 수학</Em>이면 충분합니다. 필요한 수학은 1주차에서
-                    벡터·확률·미분부터 다시 정리합니다.
-                  </>
-                ),
+                a: "Python 기초 문법(변수·함수·리스트·반복문)과 고등학교 수준의 수학이면 충분합니다. 필요한 수학은 1주차에서 벡터·확률·미분부터 다시 정리합니다.",
               },
               {
                 q: "일주일에 얼마나 걸리나요?",
-                a: (
-                  <>
-                    핵심 학습 자료 {studyMin}~{studyMax}시간, 백지공부 30분, 과제 {ASSIGNMENT_HOURS.min}~{ASSIGNMENT_HOURS.max}시간을 더해{" "}
-                    <Em>
-                      주 {weeklyMin}~{weeklyMax}시간
-                    </Em>{" "}
-                    정도 걸립니다. (보충·심화 단계는 포함되지 않았습니다.)
-                  </>
-                ),
+                a: `핵심 학습 자료 ${studyMin}~${studyMax}시간, 백지공부 30분, 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간을 더해 주 ${weeklyMin}~${weeklyMax}시간 정도 걸립니다. (보충·심화 단계는 포함되지 않았습니다.)`,
               },
               {
                 q: "비용이 드나요? 누가 이용할 수 있나요?",
-                a: (
-                  <>
-                    <Em>무료</Em>이며, 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 바로 실행되므로 따로 설치할 것이
-                    없습니다.
-                  </>
-                ),
+                a: "무료이며, 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 바로 실행되므로 따로 설치할 것이 없습니다.",
               },
             ].map((item) => (
-              <div key={item.q} className="border-b border-[var(--j-line)] py-3.5 sm:py-5 sm:pr-10">
+              <div key={item.q} className="border-b border-[var(--j-line)] py-3 sm:py-5 sm:pr-10">
                 <dt className="text-base font-semibold text-white sm:text-lg">{item.q}</dt>
                 <dd className="mt-1.5 text-sm leading-relaxed text-pretty text-[var(--j-2)] sm:text-[15px]">{item.a}</dd>
               </div>
@@ -224,31 +189,30 @@ export default async function Home() {
             <br />
             <span className="j-gradient">진행됩니다.</span>
           </h2>
-          <div className="mt-7 grid gap-y-6 sm:mt-11 sm:gap-y-8 lg:grid-cols-2">
+          <div className="mt-6 grid gap-y-5 sm:mt-11 sm:gap-y-8 lg:grid-cols-2">
             {FLOW.map((part, p) => {
               const first = FLOW.slice(0, p).reduce((sum, f) => sum + f.steps.length, 0) + 1;
               return (
                 <section key={part.area} aria-label={part.area} className="flex flex-col">
-                  <p className={`flex items-center gap-2.5 text-[13px] ${p === 0 ? "lg:pr-6" : ""}`}>
+                  <p className="flex items-baseline gap-2.5 text-[13px]">
                     <span className="font-semibold text-white">{part.area}</span>
                     <span className="text-[var(--j-3)]">{part.when}</span>
-                    <span aria-hidden="true" className="h-px flex-1 bg-[var(--j-line)]" />
                   </p>
-                  <ol start={first} className="mt-3 grid grid-cols-2 sm:mt-4">
+                  <ol start={first} className="mt-2.5 grid grid-cols-2 sm:mt-4">
                     {part.steps.map((step, s) => {
                       const lastInArea = s === part.steps.length - 1;
                       const lastOverall = lastInArea && p === FLOW.length - 1;
                       return (
                         <li key={step.name}>
                           <div aria-hidden="true" className="flex items-center">
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[color-mix(in_srgb,var(--journey-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--journey-accent)_10%,transparent)] font-mono text-[11px] text-[var(--journey-accent)]">
+                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border sm:h-7 sm:w-7 border-[color-mix(in_srgb,var(--journey-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--journey-accent)_10%,transparent)] font-mono text-[11px] text-[var(--journey-accent)]">
                               {String(first + s).padStart(2, "0")}
                             </span>
                             {/* 영역의 마지막 단계에서 나가는 선은 두 영역이 나란히 놓이는 넓은 화면에서만 다음 영역으로 이어진다. */}
                             {!lastOverall && <span className={`h-px flex-1 bg-[var(--j-line-strong)] ${lastInArea ? "hidden lg:block" : ""}`} />}
                           </div>
                           <div className="pr-4 sm:pr-6">
-                            <p className="mt-3 text-base font-semibold text-white sm:text-lg">{step.name}</p>
+                            <p className="mt-2 text-base font-semibold text-white sm:mt-3 sm:text-lg">{step.name}</p>
                             <p className="mt-1 text-[13px] leading-relaxed text-[var(--j-2)] sm:text-sm">{step.desc}</p>
                           </div>
                         </li>
@@ -256,13 +220,13 @@ export default async function Home() {
                     })}
                   </ol>
                   <div
-                    className={`mt-4 flex-1 rounded-2xl border border-dashed border-[var(--j-line-strong)] bg-white/[0.02] px-4 py-3 sm:mt-5 sm:px-5 sm:py-3.5 ${p === 0 ? "lg:mr-6" : ""}`}
+                    className={`mt-3 flex-1 rounded-2xl border border-dashed border-[var(--j-line-strong)] bg-white/[0.02] px-3.5 py-2.5 sm:mt-5 sm:px-5 sm:py-3.5 ${p === 0 ? "lg:mr-6" : ""}`}
                   >
                     <p className="text-[11px] font-medium tracking-[0.06em] text-[var(--j-3)]">선택 과정</p>
                     <dl className="mt-1.5 space-y-1 text-[13px] leading-relaxed sm:mt-2 sm:text-sm">
                       {part.extras.map((x) => (
-                        <div key={x.name} className="flex gap-2.5 sm:gap-3">
-                          <dt className="w-16 shrink-0 font-semibold text-white sm:w-[4.25rem]">{x.name}</dt>
+                        <div key={x.name} className="flex gap-2 sm:gap-3">
+                          <dt className="w-14 shrink-0 font-semibold text-white sm:w-[4.25rem]">{x.name}</dt>
                           <dd className="text-[var(--j-2)]">{x.desc}</dd>
                         </div>
                       ))}
@@ -291,9 +255,9 @@ export default async function Home() {
               전체 커리큘럼 보기 →
             </Link>
           </div>
-          <div className="mt-10 grid grid-cols-1 gap-x-10 border-t border-[var(--j-line)] md:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-x-10 border-t border-[var(--j-line)] sm:mt-10 md:grid-cols-2">
             {PHASES.map((phase) => (
-              <section key={phase.key} aria-label={`${phase.key} ${phase.name}`} className="border-b border-[var(--j-line)] py-4">
+              <section key={phase.key} aria-label={`${phase.key} ${phase.name}`} className="border-b border-[var(--j-line)] py-3 sm:py-4">
                 <p className="mb-1 flex items-baseline gap-3 text-[11px] uppercase tracking-[0.2em] text-[var(--j-3)]">
                   <span className="font-mono">{phase.key}</span>
                   <span className="normal-case tracking-normal">{phase.name}</span>
@@ -305,23 +269,25 @@ export default async function Home() {
                     const pct = Math.round(st.ratio * 100);
                     return (
                       <li key={w.slug}>
-                        <Link href={gatedHref(!!user, `/weeks/${w.slug}`)} prefetch={user ? undefined : false} className="journey-week group flex items-center gap-4 py-2.5">
-                          <span className="w-7 shrink-0 font-mono text-xs text-[var(--j-3)] group-hover:text-[var(--journey-accent)]">
+                        <Link href={gatedHref(!!user, `/weeks/${w.slug}`)} prefetch={user ? undefined : false} className="journey-week group flex items-center gap-3 py-2 sm:gap-4 sm:py-2.5">
+                          <span className="w-6 shrink-0 font-mono text-xs text-[var(--j-3)] group-hover:text-[var(--journey-accent)] sm:w-7">
                             {String(n).padStart(2, "0")}
                           </span>
+                          {/* 좁은 화면에서는 오른쪽 표시를 빼고 제목을 잘라내지 않고 줄바꿈한다(진행률은 제목 아래 선으로 보인다). */}
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[15px] font-medium text-[var(--j-1)] transition group-hover:text-white sm:text-base">
-                              {w.title}
+                            <span className="block text-[15px] font-medium leading-snug text-[var(--j-1)] transition group-hover:text-white sm:truncate sm:text-base">
+                              {/* 줄바꿈된 줄이 가운뎃점으로 시작하지 않도록 점 앞 공백을 붙는 공백으로 바꾼다. */}
+                              {w.title.replaceAll(" · ", " · ")}
                             </span>
                             <span className="mt-1 block h-px w-full bg-[var(--j-line)]">
                               <span className="block h-px bg-[var(--journey-accent)] transition-all" style={{ width: `${pct}%` }} />
                             </span>
                           </span>
                           {/* 로그인한 사용자는 진행률, 방문자는 난이도를 보여 준다(방문자에게 "—"는 의미가 없다). */}
-                          <span className="w-16 shrink-0 text-right text-xs tabular-nums text-[var(--j-3)]">
+                          <span className="hidden w-16 shrink-0 text-right text-xs tabular-nums text-[var(--j-3)] sm:block">
                             {user ? (pct > 0 ? `${pct}%` : "—") : difficultyInfo(w.difficulty).label}
                           </span>
-                          <span aria-hidden="true" className="text-[var(--j-4)] transition group-hover:translate-x-0.5 group-hover:text-white">
+                          <span aria-hidden="true" className="hidden text-[var(--j-4)] transition group-hover:translate-x-0.5 group-hover:text-white sm:inline">
                             →
                           </span>
                         </Link>
@@ -356,23 +322,7 @@ export default async function Home() {
               </li>
             ))}
           </ol>
-          <div className="mt-6 sm:mt-8">
-            <p className="text-[13px] font-semibold text-white sm:text-sm">과제로 직접 만드는 것</p>
-            <ul className="mt-2.5 grid gap-y-1.5 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-2 lg:grid-cols-4 lg:gap-3">
-              {BUILDS.map((b) => (
-                <li
-                  key={b.week}
-                  className="flex items-baseline gap-3 lg:block lg:rounded-xl lg:border lg:border-[var(--j-line)] lg:bg-white/[0.03] lg:px-4 lg:py-3"
-                >
-                  <span className="w-[3.75rem] shrink-0 font-mono text-[10.5px] tracking-[0.18em] text-[var(--journey-accent)] lg:block lg:w-auto">
-                    WEEK {String(b.week).padStart(2, "0")}
-                  </span>
-                  <span className="text-[13px] leading-snug text-[var(--j-1)] sm:text-sm lg:mt-1.5 lg:block">{b.name}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="mt-7 grid items-center gap-4 sm:mt-8 sm:grid-cols-[minmax(0,22rem)_1fr] sm:gap-6">
+          <div className="mt-8 grid items-center gap-4 sm:mt-10 sm:grid-cols-[minmax(0,22rem)_1fr] sm:gap-6">
             <Suspense fallback={<div className="h-14 w-full rounded-full bg-white/5" />}>
               <HomeCta tone="minimal" />
             </Suspense>

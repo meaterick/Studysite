@@ -727,6 +727,12 @@ html[data-motion="full"] .journey-scene {
   will-change: transform, opacity;
   backface-visibility: hidden;
 }
+/* 좁은 화면에는 오른쪽 아래 SCROLL 표시가 없고 진행 번호만 한 줄 있으므로 아래 여백을 줄여 장면을 덜 축소한다. */
+@media (max-width: 767px) {
+  html[data-motion="full"] .journey-scene {
+    padding-bottom: 3.25rem;
+  }
+}
 html[data-motion="full"] .journey-scene__inner {
   width: 100%;
   transform: scale(var(--fit, 1));
