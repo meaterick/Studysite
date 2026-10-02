@@ -5,7 +5,7 @@ export const PHASES = [
   { name: "1부 · 기초", weeks: ["W1", "W2"], color: colors.blue },
   { name: "2부 · 딥러닝", weeks: ["W3", "W4"], color: colors.aqua },
   { name: "3부 · 현대 AI", weeks: ["W5", "W6"], color: colors.violet },
-  { name: "4부 · 활용·책임", weeks: ["W7", "W8"], color: colors.orange },
+  { name: "4부 · 활용", weeks: ["W7", "W8"], color: colors.orange },
 ];
 
 export function PhaseRoadmap() {
