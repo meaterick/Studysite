@@ -63,8 +63,8 @@ export default function WeekFrame({
         stageHref={continueHref(week.slug, status)}
         stageSub={`핵심 ${status.tiers.core.done}/${status.tiers.core.total} 완료`}
         stageDone={status.coreDone}
-        applySub={`제출 ${summary.gradedDone}/${summary.gradedTotal}`}
-        applyDone={summary.gradedDone === summary.gradedTotal}
+        applySub={`제출 ${summary.pathDone}/${summary.pathTotal}`}
+        applyDone={summary.pathDone === summary.pathTotal}
       />
       {apply && <ApplyNav slug={week.slug} summary={summary} active={apply} />}
       {children}

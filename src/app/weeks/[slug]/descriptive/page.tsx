@@ -74,7 +74,7 @@ export default async function WeekDescriptivePage({ params }: { params: Promise<
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="max-w-3xl">
               <h2 id="desc-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
-                서술형 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가 활동</span>
+                서술형 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
               </h2>
               <p className="mt-1 text-sm text-ink-muted">
                 설명할 수 있어야 진짜로 이해한 것입니다. 자료를 다시 보지 말고 <strong className="text-ink-secondary">자신의 말로 먼저 쓰고</strong>, 저장하면 공개되는 모범답안과 비교해

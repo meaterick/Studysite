@@ -89,7 +89,7 @@ export default async function WeekOverviewPage({
             <div className="mt-2 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm text-ink-secondary">
-                  다음: 백지공부 · 과제
+                  다음: 백지공부 → 과제
                 </p>
                 <Link href={`/weeks/${slug}/apply`} className="shrink-0 rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
                   적용과 복습으로 →
@@ -154,12 +154,8 @@ export default async function WeekOverviewPage({
             </p>
           </div>
           <p className="mb-5 text-sm text-ink-muted">
-            단계는 <strong>핵심(초심자)</strong>, <strong>보충(중급자)</strong>, <strong>심화(전문가)</strong>로 나뉩니다. <strong>핵심 단계만 마치면 이번 주가 완료</strong>되고,
-            보충은 선택, 심화는 별도의 달성 기록으로 남습니다. 각 단계는 학습 → 객관식 확인 문제 순서로 짧게 진행하며, 확인 문제를 모두 맞히면 단계가 완료됩니다. 서술형·코딩 실습 같은 적용 활동은 <strong>적용과 복습</strong>에 모여 있습니다.
-            {status.mode === "warn"
-              ? " 핵심 단계를 순서대로 학습하는 것을 권장하지만, 필요하면 건너뛰고 먼저 볼 수도 있습니다."
-              : " 앞의 핵심 단계를 마쳐야 다음 핵심 단계가 열리고, 보충·심화 단계는 핵심 단계를 모두 마치면 열립니다."}
-            {isAdmin && status.mode === "lock" && " 운영자는 잠금과 관계없이 모든 단계를 열람할 수 있습니다."}
+            <strong className="text-ink-secondary">핵심 단계 학습 → 짧은 실습·확인 문제 → 백지공부 → 과제</strong> · 보충·심화는 선택
+            {status.mode === "lock" && " · 앞 단계를 마치면 다음 단계가 열립니다"}
           </p>
           <div className="space-y-8">
             {TIER_ORDER.map((tier) => {
@@ -211,13 +207,11 @@ export default async function WeekOverviewPage({
           </div>
           <p className="mb-4 text-sm text-ink-muted">
             {status.coreDone
-              ? "핵심 단계를 모두 마쳤습니다. 백지공부로 떠올려 본 뒤 과제를 진행하십시오."
-              : status.mode === "lock"
-                ? "백지공부와 과제는 이번 주의 핵심 단계를 모두 마치면 열립니다. 추가 활동은 언제든 할 수 있습니다."
-                : `백지공부와 과제는 핵심 단계를 모두 마친 뒤에 하는 것을 권장합니다. 아직 끝내지 않은 핵심 단계가 ${status.tiers.core.total - status.tiers.core.done}개 있습니다.`}
+              ? "다음: 백지공부 → 과제"
+              : `핵심 단계 ${status.tiers.core.total - status.tiers.core.done}개 남음`}
           </p>
           <h3 className="mb-2 flex items-center gap-2 text-sm font-black text-ink">
-            <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">평가</span> 백지공부 · 과제
+            백지공부 → 과제
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <FinaleCard
@@ -244,7 +238,7 @@ export default async function WeekOverviewPage({
           {lab && (lab.exercisesTotal > 0 || lab.quizTotal > 0) && (
             <>
               <h3 className="mb-2 mt-5 flex items-center gap-2 text-sm font-black text-ink">
-                <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가</span> 실력을 다지는 활동
+                <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span> 선택 과정
               </h3>
               <div className="grid gap-3 sm:grid-cols-2">
                 <FinaleCard
@@ -341,8 +335,8 @@ function SectionRow({
           <Inline text={section.meta.goal} />
         </p>
         <p className="mt-1 text-xs text-ink-muted">
-          <span className="sr-only">{style.label} · </span>약 {section.minutes}분 · 확인 문제 {progress.checksTotal}개
-          {access === "current" && progress.checksDone > 0 && ` · 확인 문제 ${progress.checksDone}/${progress.checksTotal}`}
+          <span className="sr-only">{style.label} · </span>약 {section.minutes}분
+          {progress.practiceTotal > 0 && ` · 실습 ${progress.practiceDone}/${progress.practiceTotal}`} · 확인 문제 {progress.checksDone}/{progress.checksTotal}
         </p>
       </div>
       <span className="shrink-0 text-xs font-bold" style={{ color: access === "locked" ? "var(--text-muted)" : style.ring }}>

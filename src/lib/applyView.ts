@@ -10,8 +10,8 @@ import { ASSIGNMENT_STATUS_LABEL, type TierCount, type WeekStatus } from "./stud
 //
 // 주차 학습 흐름은 세 페이지로 나뉜다.
 //   개요 → 학습 자료(단계별 설명 + 단계마다 빠르게 푸는 객관식 확인 문제) → 적용과 복습
-// 적용과 복습에는 아래 여섯 활동을 권장 순서대로 둔다. 백지공부·과제는 제출해 스터디 평가에 반영되는 평가 활동이고,
-// 나머지는 실력을 다지는 추가 활동이다. 주차 진행률은 학습 자료의 핵심 단계로만 계산하므로 여기 활동은 진행률에 들어가지 않는다.
+// 한 주의 흐름: 핵심 단계 학습 → 짧은 실습·확인 문제(학습 자료) → 백지공부 → 과제(적용과 복습).
+// 적용과 복습에는 백지공부·과제를 먼저 두고, 서술형·코딩 실습·추가 퀴즈·복습 노트는 선택 과정으로 둔다.
 
 export type ApplyKey = "descriptive" | "lab" | "drill" | "worksheet" | "assignment" | "notes";
 
@@ -21,8 +21,8 @@ export interface ApplyItem {
   /** 한 줄 설명(한눈에 보기 화면) */
   desc: string;
   href: string;
-  /** 제출해 스터디 평가에 반영되는 활동인가(백지공부·과제). 진행률과는 무관하다. */
-  graded: boolean;
+  /** 한 주의 기본 흐름에 들어가는 활동인가(백지공부·과제). 나머지는 선택 과정 */
+  onPath: boolean;
   done: number;
   total: number;
   /** 핵심·보충·심화별 진행(해당하는 활동만) */
@@ -38,10 +38,10 @@ export interface ApplyItem {
 
 export interface ApplySummary {
   items: ApplyItem[];
-  gradedDone: number;
-  gradedTotal: number;
-  /** 다음에 할 평가 활동(모두 제출했으면 undefined) */
-  nextGraded?: ApplyItem;
+  pathDone: number;
+  pathTotal: number;
+  /** 다음에 할 기본 흐름 활동(모두 제출했으면 undefined) */
+  nextPath?: ApplyItem;
 }
 
 const emptyTiers = (): Record<Tier, TierCount> =>
@@ -100,50 +100,11 @@ export function applySummary(week: WeekMeta, record: LearningRecord, status: Wee
 
   const items: ApplyItem[] = [
     {
-      key: "descriptive",
-      label: "서술형",
-      desc: "배운 개념을 자신의 말로 설명해 보고, 모범답안과 비교해 스스로 평가합니다.",
-      href: `${base}/descriptive`,
-      graded: false,
-      ...desc,
-      tiers: descTiers,
-      state: `${desc.done}/${desc.total}`,
-      complete: desc.total > 0 && desc.done === desc.total,
-      locked: false,
-      weak: descWeak,
-    },
-    {
-      key: "lab",
-      label: "코딩 실습",
-      desc: "TODO가 비어 있는 코드를 직접 채우고 브라우저에서 바로 자동 채점을 받습니다.",
-      href: `${base}/lab`,
-      graded: false,
-      ...labs,
-      tiers: labTiers,
-      state: `${labs.done}/${labs.total}`,
-      complete: labs.total > 0 && labs.done === labs.total,
-      locked: false,
-      weak: 0,
-    },
-    {
-      key: "drill",
-      label: "추가 퀴즈",
-      desc: "단계 확인 문제보다 한 걸음 더 나아간 객관식·코드 출력 예측 문제를 풉니다.",
-      href: `${base}/drill`,
-      graded: false,
-      ...quiz,
-      tiers: quizTiers,
-      state: `${quiz.done}/${quiz.total}`,
-      complete: quiz.total > 0 && quiz.done === quiz.total,
-      locked: false,
-      weak: quizWeak,
-    },
-    {
       key: "worksheet",
       label: "백지공부",
       desc: "자료를 덮고 이번 주 내용을 떠올려 적은 뒤, 제출하고 학습 자료와 비교합니다.",
       href: `${base}/worksheet`,
-      graded: true,
+      onPath: true,
       done: sheet.submittedAt ? 1 : 0,
       total: 1,
       state: sheet.submittedAt ? "제출 완료" : sheet.savedAt ? "작성 중" : "미작성",
@@ -156,7 +117,7 @@ export function applySummary(week: WeekMeta, record: LearningRecord, status: Wee
       label: "과제",
       desc: `코드 실행부터 보고서 작성, 제출까지 이 사이트에서 진행합니다. ${week.dueNote}.`,
       href: `${base}/assignment`,
-      graded: true,
+      onPath: true,
       done: assignmentDone ? 1 : 0,
       total: 1,
       state:
@@ -168,11 +129,50 @@ export function applySummary(week: WeekMeta, record: LearningRecord, status: Wee
       weak: 0,
     },
     {
+      key: "descriptive",
+      label: "서술형",
+      desc: "배운 개념을 자신의 말로 설명해 보고, 모범답안과 비교해 스스로 평가합니다.",
+      href: `${base}/descriptive`,
+      onPath: false,
+      ...desc,
+      tiers: descTiers,
+      state: `${desc.done}/${desc.total}`,
+      complete: desc.total > 0 && desc.done === desc.total,
+      locked: false,
+      weak: descWeak,
+    },
+    {
+      key: "lab",
+      label: "코딩 실습",
+      desc: "TODO가 비어 있는 코드를 직접 채우고 브라우저에서 바로 자동 채점을 받습니다.",
+      href: `${base}/lab`,
+      onPath: false,
+      ...labs,
+      tiers: labTiers,
+      state: `${labs.done}/${labs.total}`,
+      complete: labs.total > 0 && labs.done === labs.total,
+      locked: false,
+      weak: 0,
+    },
+    {
+      key: "drill",
+      label: "추가 퀴즈",
+      desc: "단계 확인 문제보다 한 걸음 더 나아간 객관식·코드 출력 예측 문제를 풉니다.",
+      href: `${base}/drill`,
+      onPath: false,
+      ...quiz,
+      tiers: quizTiers,
+      state: `${quiz.done}/${quiz.total}`,
+      complete: quiz.total > 0 && quiz.done === quiz.total,
+      locked: false,
+      weak: quizWeak,
+    },
+    {
       key: "notes",
       label: "복습 노트",
       desc: "틀렸던 문제와 '보완 필요'로 표시한 답을 한곳에 모아 다시 봅니다.",
       href: `${base}/quiz`,
-      graded: false,
+      onPath: false,
       done: 0,
       total: 0,
       state: notesWeak > 0 ? `다시 볼 문항 ${notesWeak}` : "다시 볼 문항 없음",
@@ -181,11 +181,11 @@ export function applySummary(week: WeekMeta, record: LearningRecord, status: Wee
       weak: notesWeak,
     },
   ];
-  const graded = items.filter((i) => i.graded);
+  const path = items.filter((i) => i.onPath);
   return {
     items,
-    gradedDone: graded.filter((i) => i.complete).length,
-    gradedTotal: graded.length,
-    nextGraded: graded.find((i) => !i.complete),
+    pathDone: path.filter((i) => i.complete).length,
+    pathTotal: path.length,
+    nextPath: path.find((i) => !i.complete),
   };
 }

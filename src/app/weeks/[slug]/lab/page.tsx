@@ -47,7 +47,7 @@ export default async function WeekLabPage({ params }: { params: Promise<{ slug: 
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="lab-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
-                코딩 실습 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가 활동</span>
+                코딩 실습 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
               </h2>
               <p className="mt-1 text-sm text-ink-muted">
                 단계에서 배운 내용을 직접 코드로 옮겨 봅니다. 문제를 읽고 <strong className="text-[var(--series-orange)]">TODO</strong>를 채운 뒤 채점하면, 채점 코드가 결과를 항목별로 검사합니다.
