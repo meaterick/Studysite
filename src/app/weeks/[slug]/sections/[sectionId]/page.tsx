@@ -61,7 +61,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
     lab: labHere.length,
     drill: drillHere.length,
     labAnchor: labHere[0] ? `#ex-${labHere[0].id}` : "",
-    drillAnchor: drillHere[0] ? `#q-${drillHere[0].id}` : "",
+    drillAnchor: drillHere[0] ? `#drill-${drillHere[0].id}` : "",
   };
 
   const requirements = [{ label: "확인 문제", done: progress.checksDone, total: progress.checksTotal }];
