@@ -183,7 +183,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           );
         })}
 
-        <NextActivity slug={slug} href="quiz" label="복습 노트" desc="틀렸던 문제를 다시 봅니다." />
+        <NextActivity slug={slug} href={`/feedback/review/${slug}`} label="복습 노트" desc="틀렸던 문제 다시 보기" />
       </div>
     </WeekFrame>
   );

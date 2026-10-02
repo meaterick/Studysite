@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 // 적용과 복습 묶음에 속하는 하위 경로(한눈에 보기 + 여섯 활동)
-const APPLY_PATHS = ["/apply", "/descriptive", "/lab", "/drill", "/worksheet", "/assignment", "/quiz"];
+const APPLY_PATHS = ["/apply", "/descriptive", "/lab", "/drill", "/worksheet", "/assignment"];
 
 type Tab = { href: string; step: number; label: string; sub?: string; done?: boolean; match: (path: string) => boolean };
 

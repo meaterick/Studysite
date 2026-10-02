@@ -32,8 +32,6 @@ export default function ApplyNav({ slug, summary, active }: { slug: string; summ
               <span className="text-[var(--status-good)]" aria-label="완료">
                 ✓
               </span>
-            ) : item.key === "notes" ? (
-              item.weak > 0 && <span className="text-[11px] font-bold text-[var(--status-critical)]">{item.weak}</span>
             ) : (
               item.total > 1 && <span className="text-[11px] font-bold text-ink-muted">{item.state}</span>
             )}

@@ -70,7 +70,7 @@ export function weekFlow(week: WeekMeta, record: LearningRecord, status: WeekSta
     })),
   ];
 
-  const nextExtra = s.items.find((i) => !i.onPath && i.key !== "notes" && i.total > 0 && !i.complete);
+  const nextExtra = s.items.find((i) => !i.onPath && i.total > 0 && !i.complete);
   const next = !status.coreDone
     ? { label: status.tiers.core.done === 0 ? "핵심 1단계부터 시작하기" : "핵심 단계 이어서 학습하기", detail: `핵심 단계 ${coreLeft}개 남음`, href: learnHref }
     : s.nextPath
@@ -81,7 +81,7 @@ export function weekFlow(week: WeekMeta, record: LearningRecord, status: WeekSta
         }
       : nextExtra
         ? { label: `${nextExtra.label} 이어서 하기`, detail: "백지공부·과제 제출 완료", href: nextExtra.href }
-        : { label: "복습 노트 보기", detail: "모든 활동 완료", href: `/weeks/${slug}/quiz` };
+        : { label: "복습 노트 보기", detail: "모든 활동 완료", href: `/feedback/review/${slug}` };
 
   return {
     nodes,
