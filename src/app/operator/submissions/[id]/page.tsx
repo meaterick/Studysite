@@ -44,13 +44,14 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <Link href="/operator/submissions" className="text-sm font-bold text-[var(--series-orange)] hover:underline">
-        ← 과제 채점 목록
+      <Link href="/operator/submissions" className="group mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-ink-muted transition hover:text-ink">
+        <span aria-hidden="true" className="transition group-hover:-translate-x-0.5">←</span>
+        과제 채점 목록
       </Link>
-      <p className="mt-5 text-sm font-bold text-[var(--series-orange)]">
+      <p className="eyebrow mb-2 text-[var(--series-orange)]">
         {week.number}주차 {spec.title}
       </p>
-      <h1 className="mt-1 text-3xl font-black text-ink">{student?.name ?? "(탈퇴한 사용자)"}님의 과제</h1>
+      <h1 className="page-title">{student?.name ?? "(탈퇴한 사용자)"}님의 과제</h1>
       <p className="mt-2 text-sm text-ink-secondary">
         {student?.email} · 핵심 단계 {status.tiers.core.done}/{status.tiers.core.total} · 백지공부 {worksheet.submittedAt ? "제출" : "미제출"} · 제출{" "}
         {submission.versions.length}회
@@ -105,7 +106,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
                     const nb = readNotebook(submission, v);
                     const gs = submission.grades.filter((g) => g.version === v.version);
                     return (
-                      <details key={v.version} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+                      <details key={v.version} className="surface p-4">
                         <summary className="cursor-pointer text-sm font-bold text-ink">
                           v{v.version} · {formatDateTime(v.submittedAt)}
                         </summary>

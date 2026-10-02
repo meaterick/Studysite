@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import ThemeToggle from "./ThemeToggle";
 import HeaderAuthSection from "./HeaderAuthSection";
 import HeaderMobileMenu from "./HeaderMobileMenu";
+import NavLink from "./NavLink";
+import { NAV_ACTIVE, NAV_IDLE, NAV_LINK } from "./navStyles";
 
 const NAV = [
   { href: "/curriculum", label: "커리큘럼" },
@@ -43,13 +45,9 @@ export default function SiteHeader() {
         {/* md 이상: 한 줄 가로 네비게이션. 이 너비부터는 항목이 전부 잘리지 않고 들어간다. */}
         <nav className="hidden min-w-0 flex-1 items-center justify-end gap-1 text-sm md:flex">
           {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
-            >
+            <NavLink key={item.href} href={item.href} className={NAV_LINK} activeClassName={NAV_ACTIVE} inactiveClassName={NAV_IDLE}>
               {item.label}
-            </Link>
+            </NavLink>
           ))}
           <Suspense fallback={<AuthSkeleton />}>
             <HeaderAuthSection />
@@ -63,21 +61,19 @@ export default function SiteHeader() {
         <HeaderMobileMenu>
           <div className="flex flex-col gap-0.5">
             {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
-              >
+              <NavLink key={item.href} href={item.href} className={NAV_LINK} activeClassName={NAV_ACTIVE} inactiveClassName={NAV_IDLE}>
                 {item.label}
-              </Link>
+              </NavLink>
             ))}
-            <div className="my-1 border-t border-[var(--border-hairline)]" />
-            <div className="flex items-center justify-between gap-2 px-1">
-              <div className="flex flex-wrap items-center gap-1">
-                <Suspense fallback={<AuthSkeleton />}>
-                  <HeaderAuthSection />
-                </Suspense>
-              </div>
+            <div className="my-1.5 border-t border-[var(--border-hairline)]" />
+            <div className="flex flex-col gap-0.5">
+              <Suspense fallback={<AuthSkeleton />}>
+                <HeaderAuthSection />
+              </Suspense>
+            </div>
+            <div className="my-1.5 border-t border-[var(--border-hairline)]" />
+            <div className="flex items-center justify-between gap-2 px-3 py-1">
+              <span className="text-xs font-bold text-ink-muted">화면 테마</span>
               <ThemeToggle />
             </div>
           </div>

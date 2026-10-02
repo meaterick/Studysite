@@ -53,7 +53,7 @@ export default function ClearChatButton({ targetUserId, targetName }: { targetUs
         onCancel={(e) => {
           if (pending) e.preventDefault();
         }}
-        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-xl border border-[var(--border-hairline)] bg-card p-0 text-ink shadow-xl backdrop:bg-black/50"
+        className="m-auto w-[calc(100%-2rem)] max-w-sm surface p-0 text-ink shadow-xl backdrop:bg-black/50"
       >
         <div className="p-5">
           <h2 id={titleId} className="text-lg font-black text-ink">

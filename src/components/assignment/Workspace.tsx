@@ -389,7 +389,7 @@ export default function Workspace({
     <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
       <aside className="print:hidden" aria-label="과제 목록">
         <div className="lg:sticky lg:top-20">
-          <nav className="rounded-xl border border-[var(--border-hairline)] bg-card p-3">
+          <nav className="surface p-3">
             <p className="px-1 text-xs font-bold text-ink-muted">과제 목록</p>
             <ol className="mt-2 space-y-1">
               {tasks.map((t, i) => {
@@ -443,7 +443,7 @@ export default function Workspace({
               type="button"
               onClick={() => void saveNow()}
               disabled={saveState === "saving"}
-              className="rounded-md border border-[var(--border-hairline)] px-2.5 py-1 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card-2)] disabled:opacity-50"
+              className="btn btn-secondary btn-sm"
             >
               지금 저장
             </button>
@@ -451,7 +451,7 @@ export default function Workspace({
               type="button"
               onClick={() => void restartRuntime()}
               disabled={busy}
-              className="rounded-md border border-[var(--border-hairline)] px-2.5 py-1 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card-2)] disabled:opacity-50"
+              className="btn btn-secondary btn-sm"
             >
               실행 환경 초기화
             </button>
@@ -467,7 +467,7 @@ export default function Workspace({
               <button
                 type="button"
                 onClick={() => void runAll()}
-                className="rounded-md bg-[var(--series-blue)] px-2.5 py-1 text-xs font-bold text-white hover:opacity-90"
+                className="btn btn-primary btn-sm"
               >
                 ▶ 전체 실행
               </button>
@@ -586,7 +586,7 @@ export default function Workspace({
           </div>
         )}
 
-        <section id="submit" aria-labelledby="submit-heading" className="scroll-mt-32 rounded-xl border border-[var(--border-hairline)] bg-card p-5">
+        <section id="submit" aria-labelledby="submit-heading" className="scroll-mt-32 surface p-5">
           <h3 id="submit-heading" className="text-lg font-black text-ink">
             {resubmit ? "다시 제출하기" : "제출하기"}
           </h3>
@@ -654,7 +654,7 @@ export default function Workspace({
               <button
                 type="submit"
                 disabled={submitting || missingCount > 0 || busy}
-                className="rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="btn btn-primary"
               >
                 {submitting ? "제출 중…" : resubmit ? "새 버전으로 다시 제출" : "과제 제출"}
               </button>

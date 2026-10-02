@@ -40,7 +40,7 @@ export default async function ApplyHubPage({
     <WeekFrame week={week} status={status} record={record} apply="hub">
       <div className="space-y-10">
         {finished && status.coreDone && (
-          <div role="status" className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
+          <div role="status" className="callout callout-good px-5 py-4">
             <p className="font-black text-ink">핵심 단계를 모두 마쳤습니다. 이번 주 학습 완료입니다!</p>
             <p className="mt-1 text-sm text-ink-secondary">
               이제 배운 내용을 직접 꺼내 쓰고 적용해 볼 차례입니다. 다음은 <strong>백지공부</strong>와 <strong>과제</strong>입니다.
@@ -63,7 +63,7 @@ export default async function ApplyHubPage({
               <li>
                 <Link
                   href={`/weeks/${slug}#record-heading`}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)] hover:shadow-sm"
+                  className="flex items-center justify-between gap-4 surface p-4 transition hover:border-[var(--series-blue)] hover:shadow-sm"
                 >
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="text-base font-black text-ink">보충 · 심화 단계</span>

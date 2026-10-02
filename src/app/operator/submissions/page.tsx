@@ -50,9 +50,9 @@ export default async function SubmissionsPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-      <Link href="/operator" className="text-sm font-bold text-[var(--series-orange)] hover:underline">← 운영자 대시보드</Link>
-      <h1 className="mt-5 text-3xl font-black text-ink">과제 채점</h1>
-      <p className="mt-2 text-sm text-ink-secondary">
+      <p className="eyebrow mb-2 text-[var(--series-orange)]">운영자</p>
+      <h1 className="page-title">과제 채점</h1>
+      <p className="page-lead mt-2">
         전체 제출 {all.length}건 · 채점 대기 <strong className="text-ink">{pendingCount}</strong>건 · 답변을 기다리는 질문{" "}
         <strong className="text-ink">{unansweredThreads.length}</strong>건. 채점 대기 중인 제출물이 위에, 오래 기다린 순서로 표시됩니다.
       </p>
@@ -73,7 +73,7 @@ export default async function SubmissionsPage({
                   </span>
                   <Link
                     href={`/operator/chat/${t.userId}`}
-                    className="shrink-0 rounded-md bg-[var(--series-orange)] px-3 py-1 text-xs font-bold text-white hover:opacity-90"
+                    className="btn btn-operator btn-sm shrink-0"
                   >
                     답변하기
                   </Link>

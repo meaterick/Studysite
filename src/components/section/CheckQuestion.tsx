@@ -108,7 +108,7 @@ export default function CheckQuestion({
             type="button"
             onClick={submit}
             disabled={selected === null || pending || lastWrong}
-            className="rounded-md bg-[var(--series-blue)] px-4 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+            className="btn btn-primary"
           >
             {pending ? "채점 중…" : "정답 확인"}
           </button>

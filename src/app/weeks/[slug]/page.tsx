@@ -50,13 +50,13 @@ export default async function WeekOverviewPage({
     <WeekFrame week={week} status={status} record={record}>
       <div className="space-y-10">
         {finished && status.coreDone && (
-          <div role="status" className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
+          <div role="status" className="callout callout-good px-5 py-4">
             <p className="font-black text-ink">이번 주 핵심 단계를 모두 마쳤습니다.</p>
             <p className="mt-1 text-sm text-ink-secondary">다음: 백지공부 → 과제</p>
           </div>
         )}
         {locked && (
-          <div className="rounded-xl border-l-4 border-[var(--status-serious)] bg-[color-mix(in_srgb,var(--status-serious)_12%,transparent)] px-5 py-3 text-sm text-ink-secondary">
+          <div className="callout callout-warn px-5">
             {locked === "finale" ? "백지공부와 과제는 핵심 단계를 모두 마치면 열립니다." : "앞의 핵심 단계를 먼저 마쳐 주십시오."}
           </div>
         )}
@@ -65,10 +65,10 @@ export default async function WeekOverviewPage({
 
         {/* ── 학습 목표 ─────────────────────────────────────── */}
         <section id="goals" aria-labelledby="goals-heading">
-          <h2 id="goals-heading" className="mb-3 text-xl font-black text-ink">학습 목표</h2>
+          <h2 id="goals-heading" className="section-title mb-3">학습 목표</h2>
           <ul className="grid gap-2 sm:grid-cols-2">
             {coreGoals.map((g, i) => (
-              <li key={i} className="flex gap-2.5 rounded-xl border border-[var(--border-hairline)] bg-card p-3 text-[15px] text-ink-secondary">
+              <li key={i} className="flex gap-2.5 surface p-3 text-[15px] text-ink-secondary">
                 <span aria-hidden="true" className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--series-blue)_14%,transparent)] text-[11px] font-black text-[var(--series-blue)]">
                   {i + 1}
                 </span>
@@ -95,7 +95,7 @@ export default async function WeekOverviewPage({
         {/* ── 핵심 단계 ─────────────────────────────────────── */}
         <section aria-labelledby="core-heading">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="core-heading" className="flex items-center gap-2 text-xl font-black text-ink">
+            <h2 id="core-heading" className="section-title flex items-center gap-2">
               핵심 단계 <TierBadge tier="core" />
             </h2>
             <p className="text-sm font-bold text-ink-muted">
@@ -111,7 +111,7 @@ export default async function WeekOverviewPage({
 
         {/* ── 선택 과정 ─────────────────────────────────────── */}
         <section aria-labelledby="optional-heading" id="record-heading" className="scroll-mt-24">
-          <h2 id="optional-heading" className="mb-3 text-xl font-black text-ink">선택 과정</h2>
+          <h2 id="optional-heading" className="section-title mb-3">선택 과정</h2>
           <div className="space-y-3">
             {(["supplement", "advanced"] as const).map((tier) => {
               const rows = status.sections.filter((r) => r.section.tier === tier);
@@ -119,7 +119,7 @@ export default async function WeekOverviewPage({
               const count = status.tiers[tier];
               const rec = records[tier];
               return (
-                <details key={tier} className="group rounded-xl border border-[var(--border-hairline)] bg-card" open={count.done > 0 && count.done < count.total}>
+                <details key={tier} className="group surface" open={count.done > 0 && count.done < count.total}>
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="text-base font-black text-ink">{TIER_INFO[tier].course}</span>
@@ -164,7 +164,7 @@ export default async function WeekOverviewPage({
 
         {/* ── 이번 주 소개 ─────────────────────────────────── */}
         {(intro.length > 0 || week.learningOrder.length > 0) && (
-          <details className="group rounded-xl border border-[var(--border-hairline)] bg-card">
+          <details className="group surface">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
               <span className="text-base font-black text-ink">이번 주 소개 · 함께 보면 좋은 자료</span>
               <span aria-hidden="true" className="text-xs text-ink-muted transition group-open:rotate-180">
@@ -195,7 +195,7 @@ export default async function WeekOverviewPage({
 
 function OptionCard({ href, title, state, done }: { href: string; title: string; state: string; done: boolean }) {
   return (
-    <Link href={href} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-dashed border-[var(--border-strong)] bg-card p-4 transition hover:border-[var(--series-blue)]">
+    <Link href={href} className="surface surface-link flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-dashed border-[var(--border-strong)] p-4">
       <span className="flex items-center gap-2 whitespace-nowrap">
         <span className="font-black text-ink">{title}</span>
         <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
@@ -254,14 +254,14 @@ function SectionRow({
       {openable ? (
         <Link
           href={`/weeks/${slug}/sections/${section.id}`}
-          className={`block rounded-xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
-            access === "current" ? "border-[var(--series-blue)]" : "border-[var(--border-hairline)]"
+          className={`surface surface-link block p-4 ${
+            access === "current" ? "border-[var(--series-blue)] ring-1 ring-[color-mix(in_srgb,var(--series-blue)_35%,transparent)]" : ""
           }`}
         >
           {body}
         </Link>
       ) : (
-        <div className="rounded-xl border border-dashed border-[var(--border-hairline)] p-4 opacity-80">{body}</div>
+        <div className="rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-card-2)] p-4 opacity-75">{body}</div>
       )}
     </li>
   );

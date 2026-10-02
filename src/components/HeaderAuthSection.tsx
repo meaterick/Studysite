@@ -1,4 +1,6 @@
 import Link from "next/link";
+import NavLink from "./NavLink";
+import { NAV_ACTIVE, NAV_IDLE, NAV_LINK } from "./navStyles";
 import { getCurrentUser } from "@/lib/dal";
 import { findConversation, unreadCount } from "@/lib/chatStore";
 import { adminUnreadTotal } from "@/lib/chatView";
@@ -25,26 +27,21 @@ export default async function HeaderAuthSection() {
   return (
     <>
       {user?.role === "admin" && (
-        <Link
+        <NavLink
           href="/operator"
-          className="whitespace-nowrap rounded-md px-3 py-2 font-medium text-[var(--series-orange)] transition hover:bg-[var(--surface-card-2)]"
+          className={`${NAV_LINK} text-[var(--series-orange)] hover:bg-[var(--surface-card-2)]`}
+          activeClassName="bg-[color-mix(in_srgb,var(--series-orange)_12%,transparent)] font-bold"
         >
           운영자
-        </Link>
+        </NavLink>
       )}
       {user && (
-        <Link
-          href="/progress"
-          className="whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
-        >
+        <NavLink href="/progress" className={NAV_LINK} activeClassName={NAV_ACTIVE} inactiveClassName={NAV_IDLE}>
           내 진도
-        </Link>
+        </NavLink>
       )}
       {user && user.role !== "admin" && (
-        <Link
-          href="/feedback"
-          className="relative whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
-        >
+        <NavLink href="/feedback" className={NAV_LINK} activeClassName={NAV_ACTIVE} inactiveClassName={NAV_IDLE}>
           피드백함
           {newGrades > 0 && (
             <span className="ml-1 rounded-full bg-[var(--series-orange)] px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -52,13 +49,10 @@ export default async function HeaderAuthSection() {
               <span className="sr-only">개의 새 피드백</span>
             </span>
           )}
-        </Link>
+        </NavLink>
       )}
       {user && (
-        <Link
-          href={user.role === "admin" ? "/operator/chat" : "/chat"}
-          className="relative whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
-        >
+        <NavLink href={user.role === "admin" ? "/operator/chat" : "/chat"} className={NAV_LINK} activeClassName={NAV_ACTIVE} inactiveClassName={NAV_IDLE}>
           채팅
           {unread > 0 && (
             <span className="ml-1 rounded-full bg-[var(--series-orange)] px-1.5 py-0.5 text-[10px] font-bold text-white">
@@ -66,20 +60,22 @@ export default async function HeaderAuthSection() {
               <span className="sr-only">개의 새 메시지</span>
             </span>
           )}
-        </Link>
+        </NavLink>
       )}
       {user ? (
-        <Link
-          href="/account"
-          className="whitespace-nowrap rounded-md px-3 py-2 font-medium text-ink-secondary transition hover:bg-[var(--surface-card-2)] hover:text-ink"
-        >
+        <NavLink href="/account" className={`${NAV_LINK} inline-flex items-center gap-2`} activeClassName={NAV_ACTIVE} inactiveClassName={NAV_IDLE}>
+          <span
+            aria-hidden="true"
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--series-blue)_16%,transparent)] text-[11px] font-black text-[var(--series-blue)]"
+          >
+            {user.name.slice(0, 1)}
+          </span>
           {user.name}님
-        </Link>
+        </NavLink>
       ) : (
         <Link
           href="/login"
-          className="whitespace-nowrap rounded-md px-3 py-2 font-bold text-white transition hover:opacity-90"
-          style={{ background: "var(--series-blue)" }}
+          className="btn btn-primary btn-sm min-h-9 px-4 md:ml-1"
         >
           로그인
         </Link>

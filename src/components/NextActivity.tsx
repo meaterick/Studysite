@@ -5,7 +5,7 @@ export default function NextActivity({ slug, href, label, desc }: { slug: string
   return (
     <Link
       href={href.startsWith("/") ? href : `/weeks/${slug}/${href}`}
-      className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]"
+      className="flex items-center justify-between gap-4 surface p-4 transition hover:border-[var(--series-blue)]"
     >
       <span>
         <span className="block text-xs font-bold text-ink-muted">다음 활동</span>

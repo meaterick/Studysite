@@ -99,7 +99,7 @@ export default function AutoTestPanel({
             type="button"
             onClick={() => void run(false)}
             disabled={running || disabled}
-            className="rounded-md border border-[var(--border-hairline)] px-3 py-1.5 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card-2)] disabled:opacity-50"
+            className="btn btn-secondary btn-sm"
           >
             테스트만 실행
           </button>

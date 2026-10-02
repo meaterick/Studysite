@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { deleteUser, listUsers } from "@/lib/userStore";
@@ -41,23 +42,25 @@ export default async function MembersPage({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <h1 className="mb-2 text-3xl font-black text-ink">스터디원 관리</h1>
-      <p className="mb-8 text-sm text-ink-secondary">
-        총 {members.length}명 가입 · 관리자 {adminCount}명. 단계 진도·과제 현황을 확인하고 계정 삭제만 할 수 있습니다.
-      </p>
+      <PageHeader
+        tone="operator"
+        eyebrow="운영자"
+        title="스터디원 관리"
+        description={`총 ${members.length}명 가입 · 관리자 ${adminCount}명. 단계 진도·과제 현황을 확인하고 계정 삭제만 할 수 있습니다.`}
+      />
 
       {error === "lastadmin" && (
-        <p className="mb-4 rounded-lg border-l-4 px-4 py-2 text-sm font-medium text-[var(--status-critical)]" style={{ borderColor: "var(--status-critical)", background: "color-mix(in srgb, var(--status-critical) 8%, transparent)" }}>
+        <p role="alert" className="callout callout-danger mb-4 font-medium text-[var(--status-critical)]">
           마지막 관리자 계정은 강등하거나 삭제할 수 없습니다.
         </p>
       )}
       {error === "self" && (
-        <p className="mb-4 rounded-lg border-l-4 px-4 py-2 text-sm font-medium text-[var(--status-critical)]" style={{ borderColor: "var(--status-critical)", background: "color-mix(in srgb, var(--status-critical) 8%, transparent)" }}>
+        <p role="alert" className="callout callout-danger mb-4 font-medium text-[var(--status-critical)]">
           본인 계정은 이 화면에서 삭제할 수 없습니다. 탈퇴는 &lsquo;내 계정&rsquo; 페이지를 이용해 주십시오.
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-[var(--border-hairline)]">
+      <div className="surface overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-[var(--surface-card-2)]">
@@ -125,7 +128,7 @@ function MemberRow({
       <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top text-xs text-ink-muted">{learning?.updatedAt ? formatDateTime(learning.updatedAt) : "기록 없음"}</td>
       <td className="border-b border-[var(--border-hairline)] px-3 py-2 align-top">
         <div className="flex flex-wrap gap-2">
-          <Link href={`/operator/members/${member.id}`} className="rounded-md border border-[var(--border-hairline)] px-2 py-1 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]">상세 보기</Link>
+          <Link href={`/operator/members/${member.id}`} className="btn btn-secondary btn-sm">상세 보기</Link>
           <form action={removeMember}>
             <input type="hidden" name="id" value={member.id} />
             <button className="rounded-md border px-2 py-1 text-xs font-bold text-white" style={{ background: "var(--status-critical)", borderColor: "var(--status-critical)" }}>삭제</button>

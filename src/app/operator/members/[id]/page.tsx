@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/dal";
 import { getLearningRecord, readSectionState, readWorksheetState } from "@/lib/learningStore";
@@ -30,9 +31,14 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <Link href="/operator/members" className="text-sm font-bold text-[var(--series-orange)] hover:underline">← 스터디원 관리</Link>
-      <h1 className="mt-5 text-3xl font-black text-ink">{member.name}님의 학습 현황</h1>
-      <p className="mt-2 text-sm text-ink-secondary">{member.email} · 가입일 {formatDate(member.createdAt)}</p>
+      <PageHeader
+        tone="operator"
+        back={{ href: "/operator/members", label: "스터디원 관리" }}
+        eyebrow="스터디원 학습 현황"
+        title={`${member.name}님의 학습 현황`}
+        description={`${member.email} · 가입일 ${formatDate(member.createdAt)}`}
+        className="mb-0"
+      />
 
       <div className="my-8 grid gap-3 sm:grid-cols-2">
         <Stat label="핵심 단계(주차 완료 기준)" value={`${sum("core", "done")} / ${sum("core", "total")}`} />
@@ -49,7 +55,7 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
           const worksheet = readWorksheetState(learning, week.slug);
           const weakMarks = week.worksheet.filter((_, i) => worksheet.marks[String(i)] === "weak");
           return (
-            <details key={week.slug} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
+            <details key={week.slug} className="surface p-4 sm:p-5">
               <summary className="flex cursor-pointer items-start gap-4">
                 <ProgressRing ratio={status.ratio} size={44} />
                 <div className="min-w-0 flex-1">
@@ -151,5 +157,5 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4"><p className="text-xs font-bold text-ink-muted">{label}</p><p className="mt-1 text-sm font-black text-ink">{value}</p></div>;
+  return <div className="surface p-4"><p className="text-xs font-bold text-ink-muted">{label}</p><p className="mt-1 text-sm font-black text-ink">{value}</p></div>;
 }

@@ -17,7 +17,7 @@ export default function UnfinishedWarning({
   return (
     <div
       role="note"
-      className="mb-6 rounded-xl border-l-4 border-[var(--status-warning)] bg-[color-mix(in_srgb,var(--status-warning)_12%,transparent)] px-4 py-3 text-sm text-ink-secondary"
+      className="callout mb-6 [--callout:var(--status-warning)]"
     >
       <p className="font-bold text-ink">
         ⚠ {context} 아직 끝내지 않은 핵심 단계가 {items.length}개 있습니다.

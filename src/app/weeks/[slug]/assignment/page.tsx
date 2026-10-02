@@ -63,7 +63,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
         />
       )}
       <div className="space-y-10">
-        <section aria-labelledby="assignment-status" className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
+        <section aria-labelledby="assignment-status" className="surface p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id="assignment-status" className="text-base font-black text-ink">
               내 과제 상태
@@ -126,7 +126,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
             </div>
           )}
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+            <div className="surface p-4">
               <h3 className="text-sm font-black text-ink">채점 기준 ({week.assignmentMaxScore}점)</h3>
               <ul className="mt-2 space-y-2 text-sm">
                 {spec.rubric.map((c) => (
@@ -142,7 +142,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
                 ))}
               </ul>
             </div>
-            <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 text-sm text-ink-secondary">
+            <div className="surface p-4 text-sm text-ink-secondary">
               <h3 className="text-sm font-black text-ink">작업 방법</h3>
               <ul className="mt-2 list-disc space-y-1.5 pl-5">
                 <li>과제는 모두 이 페이지에서 진행합니다. 코드는 브라우저에서 실행되며, 별도 설치가 필요하지 않습니다.</li>
@@ -211,7 +211,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
                   <details
                     key={version.version}
                     open={version.version === latest?.version}
-                    className="rounded-xl border border-[var(--border-hairline)] bg-card p-4"
+                    className="surface p-4"
                   >
                     <summary className="cursor-pointer text-sm font-bold text-ink">
                       제출본 v{version.version} · {formatDateTime(version.submittedAt)}

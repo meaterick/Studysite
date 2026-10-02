@@ -82,7 +82,7 @@ export default function StageFooter({
             nextHref && (
               <Link
                 href={nextHref}
-                className="rounded-lg bg-[var(--series-blue)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                className="btn btn-primary"
               >
                 {nextLabel ?? (isLast ? "적용과 복습으로" : "다음 단계로")} →
               </Link>
@@ -92,7 +92,7 @@ export default function StageFooter({
               type="button"
               onClick={finish}
               disabled={pending}
-              className="rounded-lg bg-[var(--series-blue)] px-4 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
+              className="btn btn-primary"
             >
               {pending ? "저장 중…" : isLast ? "단계 완료 · 적용과 복습으로" : "단계 완료 · 다음 단계로"}
             </button>

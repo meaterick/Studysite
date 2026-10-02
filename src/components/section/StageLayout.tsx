@@ -47,7 +47,7 @@ export default function StageLayout({
 
       <aside className="order-first lg:order-none print:hidden" aria-label="이번 주 단계 목록">
         {/* 좁은 화면: 본문 위의 접이식 목록 */}
-        <details className="rounded-xl border border-[var(--border-hairline)] bg-card p-4 lg:hidden">
+        <details className="surface p-4 lg:hidden">
           <summary className="cursor-pointer text-sm font-bold text-ink-secondary">
             {summary}
             <span className="ml-2 font-normal text-ink-muted">(목록 펼치기)</span>
@@ -64,7 +64,7 @@ export default function StageLayout({
               aria-expanded={false}
               aria-controls="stage-list-panel"
               title="이번 주 단계 목록 펼치기"
-              className="flex w-11 flex-col items-center gap-3 rounded-xl border border-[var(--border-hairline)] bg-card py-3 text-ink-secondary transition hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
+              className="flex w-11 flex-col items-center gap-3 surface py-3 text-ink-secondary transition hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
             >
               <span aria-hidden="true" className="text-base leading-none">
                 «
@@ -76,7 +76,7 @@ export default function StageLayout({
               <span className="sr-only">목록 펼치기</span>
             </button>
           ) : (
-            <div id="stage-list-panel" className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+            <div id="stage-list-panel" className="surface p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-bold text-ink-muted">
                   이번 주 단계 ({done}/{total})

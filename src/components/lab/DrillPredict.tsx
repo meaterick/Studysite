@@ -121,7 +121,7 @@ export default function DrillPredict({
             type="button"
             onClick={submit}
             disabled={!answer.trim() || pending}
-            className="rounded-md bg-[var(--series-blue)] px-4 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+            className="btn btn-primary"
           >
             {pending ? "채점 중…" : "정답 확인"}
           </button>
@@ -161,7 +161,7 @@ export default function DrillPredict({
                 type="button"
                 onClick={() => void runCode()}
                 disabled={running}
-                className="rounded-md bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50"
+                className="btn btn-primary btn-sm"
               >
                 {running ? "실행 중…" : "▶ 실행"}
               </button>

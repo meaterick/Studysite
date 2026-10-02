@@ -133,7 +133,7 @@ export default function CheckSequence({
                 ref={nextRef}
                 type="button"
                 onClick={() => go(nextTarget())}
-                className="rounded-md bg-[var(--series-blue)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                className="btn btn-primary"
               >
                 {items.some((it, i) => i !== index && !it.state?.correct) ? "다음 문제 →" : "결과 보기 →"}
               </button>
@@ -157,7 +157,7 @@ export default function CheckSequence({
               <button
                 type="button"
                 onClick={() => go(firstUnsolved)}
-                className="mt-2 rounded-md bg-[var(--series-blue)] px-4 py-1.5 text-sm font-bold text-white hover:opacity-90"
+                className="btn btn-primary mt-2"
               >
                 남은 문제 풀기 →
               </button>

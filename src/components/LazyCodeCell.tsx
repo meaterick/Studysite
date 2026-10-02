@@ -85,7 +85,7 @@ export default function LazyCodeCell({
             type="button"
             onClick={() => open(true)}
             disabled={active}
-            className="rounded-md bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50"
+            className="btn btn-primary btn-sm"
           >
             ▶ 실행
           </button>

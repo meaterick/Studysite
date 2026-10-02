@@ -116,9 +116,9 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
               {section.tier === "advanced" ? "마치면 이번 주 심화 달성 기록에 반영됩니다." : "마치면 보충 기록에 반영됩니다."}
             </p>
           )}
-          <h2 className="mt-1 text-2xl font-black leading-snug text-ink">{section.title}</h2>
+          <h2 className="mt-2 text-2xl font-black leading-snug tracking-[-0.01em] text-ink sm:text-[1.75rem]">{section.title}</h2>
           {section.meta.goal && (
-            <p className="mt-3 rounded-lg border-l-4 border-[var(--series-blue)] bg-[color-mix(in_srgb,var(--series-blue)_7%,transparent)] px-4 py-2.5 text-[15px] text-ink-secondary">
+            <p className="callout mt-4 text-[15px]">
               <span className="font-bold text-ink">학습 목표: </span>
               <Inline text={section.meta.goal} />
             </p>
@@ -175,34 +175,44 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
               <h3 id="refs-heading" className="mb-2 text-base font-black text-ink">더 알아보기</h3>
               <ul className="space-y-2 text-sm">
                 {section.meta.references.map((ref) => (
-                  <li key={ref.url} className="rounded-lg border border-[var(--border-hairline)] bg-card px-3 py-2">
-                    <a href={ref.url} target="_blank" rel="noopener noreferrer" className="font-bold text-[var(--series-blue)] hover:underline">
-                      {ref.title} ↗
+                  <li key={ref.url}>
+                    <a href={ref.url} target="_blank" rel="noopener noreferrer" className="surface surface-link group block rounded-xl px-4 py-3">
+                      <span className="font-bold text-[var(--series-blue)] group-hover:underline">
+                        {ref.title} <span aria-hidden="true">↗</span>
+                        <span className="sr-only"> (새 창에서 열림)</span>
+                      </span>
+                      {ref.note && <span className="mt-0.5 block text-ink-muted">{ref.note}</span>}
                     </a>
-                    {ref.note && <p className="mt-0.5 text-ink-muted">{ref.note}</p>}
                   </li>
                 ))}
               </ul>
             </section>
           )}
 
-          <nav aria-label="단계 이동" className="mt-10 flex items-center justify-between gap-4 text-sm font-bold">
+          <nav aria-label="단계 이동" className="mt-10 grid gap-3 text-sm sm:grid-cols-2">
             {prev ? (
-              <Link href={`/weeks/${slug}/sections/${prev.id}`} className="text-ink-secondary hover:text-[var(--series-blue)]">
-                ← {sectionLabel(prev)}단계 · {prev.title}
+              <Link href={`/weeks/${slug}/sections/${prev.id}`} className="surface surface-link group block min-w-0 p-4">
+                <span className="block text-xs font-bold text-ink-muted">← 이전 단계</span>
+                <span className="mt-1 block truncate font-black text-ink group-hover:text-[var(--series-blue)]">
+                  {sectionLabel(prev)}단계 · {prev.title}
+                </span>
               </Link>
             ) : (
-              <Link href={`/weeks/${slug}`} className="text-ink-secondary hover:text-[var(--series-blue)]">
-                ← 주차 개요
+              <Link href={`/weeks/${slug}`} className="surface surface-link group block min-w-0 p-4">
+                <span className="block text-xs font-bold text-ink-muted">← 처음으로</span>
+                <span className="mt-1 block font-black text-ink group-hover:text-[var(--series-blue)]">주차 개요</span>
               </Link>
             )}
             {next && (progress.completed || isAdmin || status.mode === "warn") ? (
-              <Link href={`/weeks/${slug}/sections/${next.id}`} className="text-right text-ink-secondary hover:text-[var(--series-blue)]">
-                {sectionLabel(next)}단계 · {next.title} →
-                {!progress.completed && !isAdmin && <span className="block text-xs font-medium text-ink-muted">이 단계는 미완료로 남습니다</span>}
+              <Link href={`/weeks/${slug}/sections/${next.id}`} className="surface surface-link group block min-w-0 p-4 text-right">
+                <span className="block text-xs font-bold text-ink-muted">다음 단계 →</span>
+                <span className="mt-1 block truncate font-black text-ink group-hover:text-[var(--series-blue)]">
+                  {sectionLabel(next)}단계 · {next.title}
+                </span>
+                {!progress.completed && !isAdmin && <span className="mt-0.5 block text-xs font-medium text-ink-muted">이 단계는 미완료로 남습니다</span>}
               </Link>
             ) : (
-              <span />
+              <span className="hidden sm:block" />
             )}
           </nav>
 
