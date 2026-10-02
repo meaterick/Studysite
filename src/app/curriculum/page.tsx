@@ -20,7 +20,7 @@ const PHASE_INFO: Record<string, { color: string; focus: string }> = {
 const TABS = [
   { title: "개요", desc: "이번 주 목표, 단계 목록, 지금 할 일" },
   { title: "학습 자료", desc: "단계별 설명 글과 확인 문제" },
-  { title: "적용과 복습", desc: "백지공부, 과제, 선택 활동, 복습 노트" },
+  { title: "적용과 복습", desc: "백지공부, 과제, 선택 활동" },
 ];
 
 const FLOW = [
@@ -30,7 +30,7 @@ const FLOW = [
   { title: "과제", place: "적용과 복습", desc: "배운 내용을 코드와 답안으로 풀어 제출합니다." },
 ];
 
-const OPTIONAL = ["보충·심화 단계", "서술형", "코딩 실습", "추가 퀴즈", "복습 노트"];
+const OPTIONAL = ["보충·심화 단계", "서술형", "코딩 실습", "추가 퀴즈"];
 
 const TIER_DESC: Record<Tier, string> = {
   core: "그 주의 기본 개념",
@@ -42,7 +42,7 @@ const START = [
   { title: "로그인", desc: "스터디원 계정으로 로그인" },
   { title: "1주차 열기", desc: "주차별 자료에서 1주차 선택" },
   { title: "지금 할 일", desc: "개요의 「시작하기」부터 진행" },
-  { title: "내 진도", desc: "주차별 상태 확인, 이어서 학습" },
+  { title: "내 진도 · 피드백함", desc: "주차별 상태 확인, 복습 노트" },
 ];
 
 function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {

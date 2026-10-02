@@ -135,7 +135,7 @@ export function memberFeedback(userId: string, record: LearningRecord): MemberFe
           wrongChecks,
           recovered,
           weakAnswers,
-          href: `/weeks/${week.slug}/quiz`,
+          href: `/feedback/review/${week.slug}`,
         });
       }
     }

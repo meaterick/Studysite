@@ -4,7 +4,7 @@ import Link from "next/link";
 export default function NextActivity({ slug, href, label, desc }: { slug: string; href: string; label: string; desc: string }) {
   return (
     <Link
-      href={`/weeks/${slug}/${href}`}
+      href={href.startsWith("/") ? href : `/weeks/${slug}/${href}`}
       className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]"
     >
       <span>

@@ -94,7 +94,7 @@ function ActivityRow({ item }: { item: ApplyItem }) {
             {item.label}
           </h3>
           <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
-          {item.weak > 0 && item.key !== "notes" && (
+          {item.weak > 0 && (
             <span className="rounded-md bg-[color-mix(in_srgb,var(--status-critical)_12%,transparent)] px-1.5 py-0.5 text-[11px] font-bold text-[var(--status-critical)]">
               다시 볼 문항 {item.weak}
             </span>
@@ -123,10 +123,10 @@ function ActivityRow({ item }: { item: ApplyItem }) {
       <div className="hidden shrink-0 flex-col items-end gap-1 text-right sm:flex">
         <span
           className={`text-xs font-bold ${
-            item.complete ? "text-[var(--status-good)]" : item.key === "notes" && item.weak > 0 ? "text-[var(--status-critical)]" : "text-ink-muted"
+            item.complete ? "text-[var(--status-good)]" : "text-ink-muted"
           }`}
         >
-          {item.key === "notes" || item.total <= 1 ? item.state : `완료 ${item.state}`}
+          {item.total <= 1 ? item.state : `완료 ${item.state}`}
         </span>
         {!item.locked && <span className="text-sm font-bold text-[var(--series-blue)]">열기 →</span>}
       </div>
@@ -143,7 +143,7 @@ function ActivityRow({ item }: { item: ApplyItem }) {
         <Link href={item.href} className={`${cls} hover:border-[var(--series-blue)] hover:shadow-sm`}>
           {body}
           <p className="mt-2 text-xs font-bold text-ink-muted sm:hidden">
-            {item.key === "notes" || item.total <= 1 ? item.state : `완료 ${item.state}`} · <span className="text-[var(--series-blue)]">열기 →</span>
+            {item.total <= 1 ? item.state : `완료 ${item.state}`} · <span className="text-[var(--series-blue)]">열기 →</span>
           </p>
         </Link>
       )}

@@ -11,9 +11,9 @@ import { ASSIGNMENT_STATUS_LABEL, type TierCount, type WeekStatus } from "./stud
 // 주차 학습 흐름은 세 페이지로 나뉜다.
 //   개요 → 학습 자료(단계별 설명 + 단계마다 빠르게 푸는 객관식 확인 문제) → 적용과 복습
 // 한 주의 흐름: 핵심 단계 학습 → 확인 문제(학습 자료) → 백지공부 → 과제(적용과 복습).
-// 적용과 복습에는 백지공부·과제를 먼저 두고, 서술형·코딩 실습·추가 퀴즈·복습 노트는 선택 과정으로 둔다.
+// 적용과 복습에는 백지공부·과제를 먼저 두고, 서술형·코딩 실습·추가 퀴즈는 선택 과정으로 둔다. 복습 노트는 피드백함에 있다.
 
-export type ApplyKey = "descriptive" | "lab" | "drill" | "worksheet" | "assignment" | "notes";
+export type ApplyKey = "descriptive" | "lab" | "drill" | "worksheet" | "assignment";
 
 export interface ApplyItem {
   key: ApplyKey;
@@ -32,7 +32,7 @@ export interface ApplyItem {
   complete: boolean;
   /** lock 모드에서 핵심 단계를 마치기 전 */
   locked: boolean;
-  /** 다시 볼 문항 수(퀴즈·서술형·복습 노트) */
+  /** 다시 볼 문항 수(퀴즈·서술형·백지공부) */
   weak: number;
 }
 
@@ -42,6 +42,8 @@ export interface ApplySummary {
   pathTotal: number;
   /** 다음에 할 기본 흐름 활동(모두 제출했으면 undefined) */
   nextPath?: ApplyItem;
+  /** 복습 노트에 모인 다시 볼 문항 수(확인 문제·서술형·추가 퀴즈·백지공부) */
+  reviewWeak: number;
 }
 
 const emptyTiers = (): Record<Tier, TierCount> =>
@@ -95,7 +97,6 @@ export function applySummary(week: WeekMeta, record: LearningRecord, status: Wee
   const quiz = sum(quizTiers);
   const labs = sum(labTiers);
   const sheetWeak = Object.values(sheet.marks ?? {}).filter((m) => m === "weak").length;
-  const notesWeak = checkWeak + descWeak + quizWeak + sheetWeak;
   const assignmentDone = status.assignment.status !== "none";
 
   const items: ApplyItem[] = [
@@ -167,19 +168,6 @@ export function applySummary(week: WeekMeta, record: LearningRecord, status: Wee
       locked: false,
       weak: quizWeak,
     },
-    {
-      key: "notes",
-      label: "복습 노트",
-      desc: "틀렸던 문제와 '보완 필요'로 표시한 답을 한곳에 모아 다시 봅니다.",
-      href: `${base}/quiz`,
-      onPath: false,
-      done: 0,
-      total: 0,
-      state: notesWeak > 0 ? `다시 볼 문항 ${notesWeak}` : "다시 볼 문항 없음",
-      complete: false,
-      locked: false,
-      weak: notesWeak,
-    },
   ];
   const path = items.filter((i) => i.onPath);
   return {
@@ -187,5 +175,6 @@ export function applySummary(week: WeekMeta, record: LearningRecord, status: Wee
     pathDone: path.filter((i) => i.complete).length,
     pathTotal: path.length,
     nextPath: path.find((i) => !i.complete),
+    reviewWeak: checkWeak + descWeak + quizWeak + sheetWeak,
   };
 }
