@@ -168,7 +168,7 @@ export default async function ProgressPage() {
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-hairline)] pt-3">
             <p className="text-xs text-ink-muted">
-              {focus.week.number}주차에 남은 예상 시간 {hoursLabel(weekRemaining)} (핵심 단계·백지공부·과제 포함)
+              {focus.week.number}주차 남은 시간 {hoursLabel(weekRemaining)}
             </p>
             <Link
               href={next ? `/weeks/${focus.week.slug}/sections/${next.id}` : `/weeks/${focus.week.slug}`}
@@ -246,11 +246,7 @@ export default async function ProgressPage() {
       </div>
 
       {/* ── 진행 현황: 학습 진행률(핵심 단계)과 평가 활동(백지공부·과제)을 나눠 보여 준다 ─── */}
-      <h2 className="mt-12 mb-1 text-xl font-black text-ink">진행 현황</h2>
-      <p className="mb-3 text-sm text-ink-muted">
-        <strong className="text-ink-secondary">학습 진행률</strong>은 학습 자료의 핵심 단계 완료만으로 계산합니다. 백지공부와 과제는 진행률과 별개로,
-        제출하면 스터디 평가에 반영되는 <strong className="text-ink-secondary">평가 활동</strong>입니다.
-      </p>
+      <h2 className="mt-12 mb-3 text-xl font-black text-ink">진행 현황</h2>
 
       <section aria-labelledby="learning-heading" className="flex flex-wrap items-center gap-5 rounded-xl border border-[var(--series-blue)] bg-card p-5">
         <ProgressRing ratio={overall} size={64} />
@@ -272,8 +268,7 @@ export default async function ProgressPage() {
       </section>
 
       <h3 className="mt-6 mb-2 flex items-center gap-2 text-sm font-black text-ink">
-        <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">평가</span> 평가 활동
-        <span className="font-bold text-ink-muted">· 진행률에는 들어가지 않습니다</span>
+        백지공부 · 과제
       </h3>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Rate label="백지공부 제출" percent={pct(worksheetsDone, rows.length)} detail={`제출 ${worksheetsDone}/${rows.length}주`} />
@@ -285,7 +280,7 @@ export default async function ProgressPage() {
         <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
           <p className="text-xs font-bold text-ink-muted">채점된 과제 합계</p>
           <p className="mt-1 text-2xl font-black tabular-nums text-ink">{graded.length ? `${scoreSum}/${scoreMax}` : "-"}</p>
-          <p className="mt-1.5 text-xs text-ink-muted">{graded.length ? `${graded.length}개 주차 채점 완료` : "아직 채점된 과제가 없습니다"}</p>
+          <p className="mt-1.5 text-xs text-ink-muted">{graded.length ? `채점 ${graded.length}주` : "채점 없음"}</p>
         </div>
         <Rate
           label="피드백 확인"
@@ -297,7 +292,7 @@ export default async function ProgressPage() {
       {/* ── 보충·심화: 주차 완료와 별개의 선택 기록 ───────────── */}
       <h2 className="mt-10 mb-1 text-xl font-black text-ink">보충 · 심화 기록</h2>
       <p className="mb-3 text-sm text-ink-muted">
-        학습 진행률과 별개로 쌓이는 선택 과정입니다. 한 주의 심화 단계·심화 실습·과제 심화 문제를 모두 마치면 그 주에 <strong>✦ 심화 달성</strong>이 표시됩니다.
+        선택 과정입니다. 한 주의 심화 단계·심화 실습·과제 심화 문제를 모두 마치면 그 주에 <strong>✦ 심화 달성</strong>이 표시됩니다.
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <Rate label="보충 단계" percent={pct(supplementDone, supplementTotal)} detail={`보충 단계 ${supplementDone}/${supplementTotal}`} />
@@ -316,8 +311,7 @@ export default async function ProgressPage() {
         </div>
       </div>
 
-      <h2 className="mt-10 mb-1 text-xl font-black text-ink">주차별 기록</h2>
-      <p className="mb-3 text-sm text-ink-muted">원형 표시는 그 주의 학습 진행률(핵심 단계)입니다. 백지공부·과제는 평가 활동으로 따로 표시합니다.</p>
+      <h2 className="mt-10 mb-3 text-xl font-black text-ink">주차별 기록</h2>
       <div className="space-y-3">
         {rows.map(({ week, status, grade, supplement, advanced }) => (
           <Link
@@ -332,7 +326,7 @@ export default async function ProgressPage() {
               </p>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-muted">
                 <span className={status.coreDone ? "font-bold text-[var(--status-good)]" : "font-bold text-ink-secondary"}>
-                  {status.coreDone ? "✓" : "○"} 학습 {Math.round(status.ratio * 100)}% (핵심 {status.tiers.core.done}/{status.tiers.core.total})
+                  {status.coreDone ? "✓" : "○"} 핵심 {status.tiers.core.done}/{status.tiers.core.total}
                 </span>
                 <span aria-hidden="true" className="text-[var(--border-strong)]">|</span>
                 <span className={status.worksheetSubmitted ? "text-[var(--status-good)]" : ""}>

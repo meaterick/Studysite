@@ -53,9 +53,9 @@ export default function WeekFrame({
             )}
           </div>
         </div>
-        <div className="shrink-0 text-center" title="학습 진행률: 학습 자료의 핵심 단계 완료 비율(백지공부·과제·보충·심화는 포함하지 않음)">
+        <div className="shrink-0 text-center" title={`핵심 ${status.tiers.core.done}/${status.tiers.core.total}단계 완료`}>
           <ProgressRing ratio={status.ratio} size={56} />
-          <p className="mt-1 text-[11px] font-bold text-ink-muted">학습 진행률</p>
+          <p className="mt-1 text-[11px] font-bold text-ink-muted">진행률</p>
         </div>
       </div>
       <WeekTabs

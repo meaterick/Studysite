@@ -50,7 +50,7 @@ export default async function ApplyHubPage({
           href: summary.nextGraded.href,
         }
       : nextExtra
-        ? { label: `${nextExtra.label} 이어서 하기`, detail: "백지공부와 과제를 모두 제출했습니다. 추가 활동으로 실력을 더 다져 보십시오.", href: nextExtra.href }
+        ? { label: `${nextExtra.label} 이어서 하기`, detail: "백지공부·과제 제출 완료", href: nextExtra.href }
         : { label: "복습 노트 보기", detail: "이번 주의 모든 활동을 마쳤습니다. 다시 볼 문항을 정리해 두십시오.", href: `/weeks/${slug}/quiz` };
 
   const graded = summary.items.filter((i) => i.graded);
@@ -62,7 +62,7 @@ export default async function ApplyHubPage({
           <div role="status" className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
             <p className="font-black text-ink">핵심 단계를 모두 마쳤습니다. 이번 주 학습 완료입니다!</p>
             <p className="mt-1 text-sm text-ink-secondary">
-              이제 배운 내용을 직접 꺼내 쓰고 적용해 볼 차례입니다. <strong>백지공부</strong>와 <strong>과제</strong>는 제출하면 스터디 평가에 반영되고, 나머지는 원하는 만큼 골라서 하면 됩니다.
+              이제 배운 내용을 직접 꺼내 쓰고 적용해 볼 차례입니다. 다음은 <strong>백지공부</strong>와 <strong>과제</strong>입니다.
             </p>
           </div>
         )}
@@ -94,17 +94,17 @@ export default async function ApplyHubPage({
           <div className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 id="graded-heading" className="text-sm font-black text-ink">
-                이번 주 흐름 <span className="font-bold text-ink-muted">· 진행률은 핵심 단계로, 평가는 제출한 백지공부·과제로 반영</span>
+                이번 주 흐름
               </h3>
               <span className={`text-xs font-bold ${allGraded && status.coreDone ? "text-[var(--status-good)]" : "text-ink-muted"}`}>
-                {status.coreDone && allGraded ? "✓ 모두 완료" : `학습 진행률 ${Math.round(status.ratio * 100)}% · 제출 ${summary.gradedDone}/${summary.gradedTotal}`}
+                {status.coreDone && allGraded ? "✓ 모두 완료" : `핵심 ${status.tiers.core.done}/${status.tiers.core.total} · 제출 ${summary.gradedDone}/${summary.gradedTotal}`}
               </span>
             </div>
             <ol className="mt-4 grid gap-3 sm:grid-cols-3">
               <PathNode
                 step={1}
                 title="핵심 단계"
-                place="학습 진행률"
+                place="학습 자료"
                 state={status.coreDone ? "완료" : `${status.tiers.core.done}/${status.tiers.core.total}단계`}
                 done={status.coreDone}
                 current={!status.coreDone}
@@ -115,7 +115,7 @@ export default async function ApplyHubPage({
                   key={item.key}
                   step={i + 2}
                   title={item.label}
-                  place="평가 활동"
+                  place="적용과 복습"
                   state={item.locked ? "핵심 단계를 마치면 열림" : item.state}
                   done={item.complete}
                   current={status.coreDone && summary.nextGraded?.key === item.key}
@@ -135,7 +135,7 @@ export default async function ApplyHubPage({
             </h2>
             <p className="flex items-center gap-3 text-xs font-bold text-ink-muted">
               <span className="flex items-center gap-1.5">
-                <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full bg-[var(--series-blue)]" /> 평가(제출)
+                <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full bg-[var(--series-blue)]" /> 평가
               </span>
               <span className="flex items-center gap-1.5">
                 <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full border-2 border-dashed border-[var(--border-strong)]" /> 추가 활동(선택)

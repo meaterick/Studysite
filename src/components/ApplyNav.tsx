@@ -41,10 +41,6 @@ export default function ApplyNav({ slug, summary, active }: { slug: string; summ
           </NavLink>
         ))}
       </nav>
-      <p className="mt-2 px-4 text-xs text-ink-muted sm:px-0">
-        <span className="font-bold text-[var(--series-blue)]">평가</span> 표시는 제출하면 스터디 평가에 반영되는 활동이고, 점선 테두리는{" "}
-        <span className="font-bold text-ink-secondary">추가 활동</span>으로 실력을 다지고 싶을 때 골라서 하면 됩니다. 주차 진행률은 학습 자료의 핵심 단계로만 계산합니다.
-      </p>
     </div>
   );
 }
