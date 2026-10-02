@@ -14,7 +14,7 @@ export function Inline({ text }: { text: string }) {
     <>
       {parts.map((p, i) => {
         if (typeof p === "string") return <span key={i}>{p}</span>;
-        if ("bold" in p) return <strong key={i} className="font-bold text-ink">{p.bold}</strong>;
+        if ("bold" in p) return <strong key={i} className="font-bold text-ink"><Inline text={p.bold} /></strong>;
         if ("italic" in p) return <em key={i}>{p.italic}</em>;
         if ("link" in p)
           return (
