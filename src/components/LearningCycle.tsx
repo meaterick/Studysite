@@ -1,34 +1,12 @@
 import { colors } from "@/components/diagrams/DiagramFrame";
 import TiltCard from "@/components/home/TiltCard";
 
-// 이 스터디의 설계 원칙인 "이해 → 직접 구현 → 설명 → 활용" 순환을 한눈에 보여준다.
-// 단계마다 사이트의 어느 부분(학습 자료/실습/백지공부·퀴즈/과제)에서 그 단계를
-// 하게 되는지도 함께 적어, 커리큘럼이 어떻게 굴러가는지 바로 파악할 수 있게 한다.
+// 한 주의 기본 흐름(핵심 단계 학습 → 확인 문제 → 백지공부 → 과제)과 각 단계를 하는 화면을 보여 준다.
 const STEPS = [
-  {
-    name: "이해",
-    desc: "단계별로 개념 설명과 그림을 보며 원리를 이해합니다.",
-    where: "학습 자료",
-    color: colors.blue,
-  },
-  {
-    name: "직접 구현",
-    desc: "핵심 부분을 라이브러리 없이 직접 구현하고, 브라우저에서 바로 실행합니다.",
-    where: "단계 실습",
-    color: colors.aqua,
-  },
-  {
-    name: "설명",
-    desc: "단계마다 확인 문제를 풀고, 주차를 마칠 때 백지에 다시 정리하며 자신의 말로 설명할 수 있는지 점검합니다.",
-    where: "확인 문제 · 백지공부",
-    color: colors.violet,
-  },
-  {
-    name: "활용",
-    desc: "과제에서 배운 내용을 실제 문제에 적용해 제출하면, 운영자가 채점하고 피드백을 남깁니다.",
-    where: "과제 · 운영자 채점",
-    color: colors.orange,
-  },
+  { name: "핵심 단계 학습", desc: "단계별 설명과 그림, 실행 가능한 예제로 개념을 익힙니다.", where: "학습 자료", color: colors.blue },
+  { name: "확인 문제", desc: "단계마다 객관식 문제를 풀고 해설을 확인합니다.", where: "학습 자료", color: colors.aqua },
+  { name: "백지공부", desc: "자료를 덮고 그 주의 핵심 개념을 설명하는 문제에 답합니다.", where: "적용과 복습", color: colors.violet },
+  { name: "과제", desc: "배운 내용을 실제 문제에 적용해 제출하고 채점과 피드백을 받습니다.", where: "적용과 복습", color: colors.orange },
 ];
 
 export default function LearningCycle() {
@@ -73,14 +51,8 @@ export default function LearningCycle() {
           </li>
         ))}
       </ol>
-      <p className="mt-3 flex items-center gap-2 rounded-lg bg-[var(--surface-card-2)] px-4 py-3 text-sm text-ink-secondary">
-        <span aria-hidden className="text-lg">
-          ↻
-        </span>
-        <span>
-          핵심 단계를 마친 뒤 그 주의 백지공부와 과제로 마무리하며(보충·심화 단계는 선택), 한 주를 마치면
-          다음 주제에서 같은 과정을 반복합니다.
-        </span>
+      <p className="mt-3 rounded-lg bg-[var(--surface-card-2)] px-4 py-3 text-sm text-ink-secondary">
+        <span className="font-bold text-ink">선택 과정</span> · 보충·심화 단계, 서술형, 코딩 실습, 추가 퀴즈, 복습 노트
       </p>
     </div>
   );
