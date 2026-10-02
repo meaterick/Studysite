@@ -14,8 +14,7 @@ import TierBadge from "@/components/TierBadge";
 
 export const metadata: Metadata = { title: "내 학습 진도" };
 
-// 다시 접속한 학습자에게 먼저 필요한 것은 통계보다 "지금 무엇을 할지"다. 그래서 첫 영역에 오늘 할 일·예상 시간·
-// 가까운 마감·새 피드백·복습·이어서 학습을 두고, 진행률(학습·실습·과제·피드백 확인을 따로)과 주차별 기록은 그 아래에 둔다.
+// 첫 화면: 오늘 할 일과 학습 진행률·새 피드백. 그 아래에 주차별 진행(한 주 흐름 4단계)과 백지공부·과제, 보충·심화 기록을 둔다.
 
 const WORKSHEET_MINUTES = 30;
 const ASSIGNMENT_MINUTES = 150;
@@ -60,7 +59,7 @@ export default async function ProgressPage() {
   for (const r of rows.filter((x) => x.status.assignment.status === "revision")) {
     todos.push({
       label: `${r.week.number}주차 과제 다시 제출`,
-      detail: "운영자가 재제출을 요청했습니다. 피드백을 확인하고 보완해 주십시오.",
+      detail: "재제출 요청",
       href: `/weeks/${r.week.slug}/assignment`,
       minutes: 60,
       tone: "var(--status-serious)",
@@ -70,16 +69,16 @@ export default async function ProgressPage() {
   if (next) {
     todos.push({
       label: `${focus.week.number}주차 ${sectionLabel(next)}단계 · ${next.title}`,
-      detail: "이어서 학습할 핵심 단계입니다.",
+      detail: "학습 자료",
       href: `/weeks/${focus.week.slug}/sections/${next.id}`,
       minutes: next.minutes,
     });
   }
   if (focus.status.coreDone && !focus.status.worksheetSubmitted) {
-    todos.push({ label: `${focus.week.number}주차 백지공부`, detail: "자료를 덮고 배운 내용을 떠올려 적어 봅니다.", href: `/weeks/${focus.week.slug}/worksheet`, minutes: WORKSHEET_MINUTES });
+    todos.push({ label: `${focus.week.number}주차 백지공부`, detail: "적용과 복습", href: `/weeks/${focus.week.slug}/worksheet`, minutes: WORKSHEET_MINUTES });
   }
   if (focus.status.assignment.status === "none" && (focus.status.coreDone || todos.length < 2)) {
-    todos.push({ label: `${focus.week.number}주차 과제 · ${focus.week.assignment.title}`, detail: "작업 공간에서 작성하고 제출합니다.", href: `/weeks/${focus.week.slug}/assignment`, minutes: ASSIGNMENT_MINUTES });
+    todos.push({ label: `${focus.week.number}주차 과제 · ${focus.week.assignment.title}`, detail: "적용과 복습", href: `/weeks/${focus.week.slug}/assignment`, minutes: ASSIGNMENT_MINUTES });
   }
   const today = todos.slice(0, 3);
   const todayMinutes = today.reduce((sum, t) => sum + (t.minutes ?? 0), 0);
@@ -108,13 +107,13 @@ export default async function ProgressPage() {
   const pct = (a: number, b: number) => (b === 0 ? 0 : Math.round((a / b) * 100));
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <p className="mb-1 text-sm font-bold text-[var(--series-blue)]">내 학습 진도</p>
       <h1 className="mb-6 text-3xl font-black text-ink">오늘은 이것부터</h1>
 
-      {/* ── 첫 영역: 다음 행동 ───────────────────────────── */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <section aria-labelledby="today-heading" className="rounded-xl border border-[var(--series-blue)] bg-card p-5">
+      {/* ── 첫 영역: 오늘 할 일 + 학습 진행률·피드백 ─────────────── */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <section aria-labelledby="today-heading" className="rounded-2xl border border-[var(--series-blue)] bg-card p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="today-heading" className="text-lg font-black text-ink">
               오늘 할 일
@@ -122,14 +121,14 @@ export default async function ProgressPage() {
             {todayMinutes > 0 && <p className="text-sm font-bold text-ink-secondary">예상 {hoursLabel(todayMinutes)}</p>}
           </div>
           {today.length === 0 ? (
-            <p className="mt-3 text-sm text-ink-secondary">8주 과정을 모두 마쳤습니다. 복습 노트와 피드백함으로 부족한 부분을 채워 보십시오.</p>
+            <p className="mt-3 text-sm text-ink-secondary">8주 과정을 모두 마쳤습니다.</p>
           ) : (
             <ol className="mt-3 space-y-2">
               {today.map((t, i) => (
                 <li key={t.href + i}>
                   <Link
                     href={t.href}
-                    className="flex items-center gap-3 rounded-lg border border-[var(--border-hairline)] px-3 py-2.5 transition hover:border-[var(--series-blue)]"
+                    className="flex items-center gap-3 rounded-xl border border-[var(--border-hairline)] px-3 py-2.5 transition hover:border-[var(--series-blue)]"
                   >
                     <span
                       aria-hidden="true"
@@ -162,74 +161,129 @@ export default async function ProgressPage() {
         </section>
 
         <div className="grid content-start gap-4">
+          <section aria-labelledby="learning-heading" className="flex items-center gap-4 rounded-2xl border border-[var(--border-hairline)] bg-card p-5">
+            <ProgressRing ratio={overall} size={72} />
+            <div className="min-w-0">
+              <h2 id="learning-heading" className="text-sm font-black text-ink-muted">
+                학습 진행률
+              </h2>
+              <p className="text-3xl font-black tabular-nums text-ink">{Math.round(overall * 100)}%</p>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                핵심 단계 {sectionsDone}/{sectionsTotal} · 학습을 마친 주차 {weeksDone}/{rows.length}
+              </p>
+            </div>
+          </section>
           <Link
             href="/feedback"
-            className={`block rounded-xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
+            className={`flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
               fb.newCount > 0 ? "border-[var(--series-orange)]" : "border-[var(--border-hairline)]"
             }`}
           >
-            <h2 className="text-sm font-black text-ink-muted">새 운영자 피드백</h2>
-            <p className="mt-1 text-lg font-black text-ink">
-              {fb.newCount > 0 ? `${fb.newCount}개 확인하지 않음` : "새 피드백 없음"}
-            </p>
-            <p className="text-xs text-ink-muted">채점 결과 · 재제출 요청 · 채팅 → 피드백함</p>
+            <span>
+              <span className="block text-sm font-black text-ink-muted">새 운영자 피드백</span>
+              <span className="block text-lg font-black text-ink">{fb.newCount > 0 ? `${fb.newCount}개` : "없음"}</span>
+            </span>
+            <span className="text-sm font-bold text-[var(--series-blue)]">피드백함 →</span>
           </Link>
-
         </div>
       </div>
 
-      {/* ── 진행 현황: 학습 진행률(핵심 단계)과 백지공부·과제 ─── */}
-      <h2 className="mt-12 mb-3 text-xl font-black text-ink">진행 현황</h2>
+      {/* ── 주차별 진행: 한 주 흐름 4단계 ───────────────────────── */}
+      <div className="mt-12 mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-xl font-black text-ink">주차별 진행</h2>
+        <p className="flex flex-wrap items-center gap-3 text-xs font-bold text-ink-muted">
+          {["핵심 단계", "확인 문제", "백지공부", "과제"].map((l, i) => (
+            <span key={l}>
+              {i + 1} {l}
+            </span>
+          ))}
+        </p>
+      </div>
+      <ol className="grid gap-3 md:grid-cols-2">
+        {rows.map(({ week, status, grade, supplement, advanced }) => {
+          const isFocus = week.slug === focus.week.slug;
+          const core = status.sections.filter((r) => r.section.tier === "core");
+          const checks = core.reduce((a, r) => ({ done: a.done + r.progress.checksDone, total: a.total + r.progress.checksTotal }), { done: 0, total: 0 });
+          const steps = [
+            { label: `핵심 ${status.tiers.core.done}/${status.tiers.core.total}`, done: status.coreDone },
+            { label: `문제 ${checks.done}/${checks.total}`, done: checks.total > 0 && checks.done >= checks.total },
+            { label: status.worksheetSubmitted ? "백지공부 ✓" : "백지공부", done: status.worksheetSubmitted },
+            {
+              label:
+                status.assignment.status === "graded"
+                  ? `과제 ${status.assignment.score ?? "-"}/${status.assignment.maxScore}점`
+                  : `과제 ${ASSIGNMENT_STATUS_LABEL[status.assignment.status]}`,
+              done: status.assignment.status !== "none" && status.assignment.status !== "revision",
+            },
+          ];
+          return (
+            <li key={week.slug}>
+              <Link
+                href={status.currentSection ? `/weeks/${week.slug}/sections/${status.currentSection.id}` : `/weeks/${week.slug}`}
+                className={`flex h-full flex-col gap-3 rounded-2xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
+                  isFocus ? "border-[var(--series-blue)] shadow-sm" : "border-[var(--border-hairline)]"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <ProgressRing ratio={status.ratio} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-ink-muted">
+                      {week.number}주차
+                      {isFocus && <span className="ml-2 rounded-full bg-[var(--series-blue)] px-2 py-0.5 text-[10px] font-black text-white">학습 중</span>}
+                    </p>
+                    <p className="truncate text-sm font-black text-ink">{week.title}</p>
+                  </div>
+                  <span className="shrink-0 text-xs font-bold text-[var(--series-blue)]">{!status.currentSection ? "보기 →" : status.tiers.core.done === 0 ? "시작 →" : "이어서 →"}</span>
+                </div>
+                <ol className="grid grid-cols-4 gap-1.5" aria-label="한 주 흐름">
+                  {steps.map((st, i) => (
+                    <li
+                      key={i}
+                      className={`truncate rounded-md px-1.5 py-1 text-center text-[11px] font-bold ${
+                        st.done
+                          ? "bg-[color-mix(in_srgb,var(--status-good)_14%,transparent)] text-[var(--status-good)]"
+                          : "bg-[var(--surface-card-2)] text-ink-muted"
+                      }`}
+                    >
+                      {st.label}
+                    </li>
+                  ))}
+                </ol>
+                {(supplement.sections.total > 0 || advanced.total > 0 || grade?.decision === "revision") && (
+                  <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-muted">
+                    {grade?.decision === "revision" && <span className="font-bold text-[var(--status-serious)]">재제출 요청</span>}
+                    {supplement.sections.total > 0 && (
+                      <span className={supplement.complete ? "text-[var(--status-good)]" : ""}>
+                        보충 {supplement.sections.done}/{supplement.sections.total}
+                      </span>
+                    )}
+                    {advanced.total > 0 && (
+                      <span style={advanced.complete ? { color: TIER_INFO.advanced.color, fontWeight: 700 } : undefined}>
+                        {advanced.complete ? "✦ 심화 달성" : `심화 ${advanced.earned}/${advanced.total}`}
+                      </span>
+                    )}
+                    {settings.dueDates[week.slug] && <span>마감 {settings.dueDates[week.slug].slice(5).replace("-", "/")}</span>}
+                  </p>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
 
-      <section aria-labelledby="learning-heading" className="flex flex-wrap items-center gap-5 rounded-xl border border-[var(--series-blue)] bg-card p-5">
-        <ProgressRing ratio={overall} size={64} />
-        <div className="min-w-[12rem] flex-1">
-          <h3 id="learning-heading" className="text-sm font-black text-ink-muted">
-            학습 진행률
-          </h3>
-          <p className="text-3xl font-black tabular-nums text-ink">{Math.round(overall * 100)}%</p>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            핵심 단계 {sectionsDone}/{sectionsTotal} · 학습을 마친 주차 {weeksDone}/{rows.length}
-          </p>
-        </div>
-        <Link
-          href={next ? `/weeks/${focus.week.slug}/sections/${next.id}` : `/weeks/${focus.week.slug}`}
-          className="w-full rounded-lg border border-[var(--series-blue)] px-4 py-2 text-center text-sm font-bold text-[var(--series-blue)] sm:w-auto sm:shrink-0 hover:bg-[color-mix(in_srgb,var(--series-blue)_8%,transparent)]"
-        >
-          {next ? "학습 자료 이어서 →" : "학습 자료 보기 →"}
-        </Link>
-      </section>
-
-      <h3 className="mt-6 mb-2 flex items-center gap-2 text-sm font-black text-ink">
-        백지공부 · 과제
-      </h3>
+      {/* ── 백지공부·과제, 보충·심화 기록 ────────────────────────── */}
+      <h2 className="mt-12 mb-3 text-xl font-black text-ink">기록</h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Rate label="백지공부 제출" percent={pct(worksheetsDone, rows.length)} detail={`제출 ${worksheetsDone}/${rows.length}주`} />
-        <Rate
-          label="과제 제출"
-          percent={pct(submitted, rows.length)}
-          detail={`제출 ${submitted}/${rows.length} · 채점 ${graded.length}${revisions ? ` · 재제출 ${revisions}` : ""}`}
-        />
+        <Rate label="백지공부 제출" percent={pct(worksheetsDone, rows.length)} detail={`${worksheetsDone}/${rows.length}주`} />
+        <Rate label="과제 제출" percent={pct(submitted, rows.length)} detail={`${submitted}/${rows.length}주 · 채점 ${graded.length}${revisions ? ` · 재제출 ${revisions}` : ""}`} />
+        <Rate label="보충 단계" percent={pct(supplementDone, supplementTotal)} detail={`${supplementDone}/${supplementTotal}단계`} />
+        <Rate label="심화 기록" percent={pct(advancedEarned, advancedTotal)} detail={`${advancedEarned}/${advancedTotal}`} />
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
           <p className="text-xs font-bold text-ink-muted">채점된 과제 합계</p>
-          <p className="mt-1 text-2xl font-black tabular-nums text-ink">{graded.length ? `${scoreSum}/${scoreMax}` : "-"}</p>
-          <p className="mt-1.5 text-xs text-ink-muted">{graded.length ? `채점 ${graded.length}주` : "채점 없음"}</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-ink">{graded.length ? `${scoreSum}/${scoreMax}점` : "-"}</p>
         </div>
-        <Rate
-          label="피드백 확인"
-          percent={fb.gradesTotal + (fb.chatUnread > 0 ? 1 : 0) === 0 ? 100 : pct(fb.gradesSeen, fb.gradesTotal + (fb.chatUnread > 0 ? 1 : 0))}
-          detail={fb.gradesTotal === 0 && fb.chatUnread === 0 ? "받은 피드백 없음" : `확인 ${fb.gradesSeen}/${fb.gradesTotal}${fb.chatUnread ? ` · 안 읽은 채팅 ${fb.chatUnread}` : ""}`}
-        />
-      </div>
-
-      {/* ── 보충·심화: 주차 완료와 별개의 선택 기록 ───────────── */}
-      <h2 className="mt-10 mb-1 text-xl font-black text-ink">보충 · 심화 기록</h2>
-      <p className="mb-3 text-sm text-ink-muted">
-        선택 과정입니다. 한 주의 심화 단계·심화 실습·과제 심화 문제를 모두 마치면 그 주에 <strong>✦ 심화 달성</strong>이 표시됩니다.
-      </p>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Rate label="보충 단계" percent={pct(supplementDone, supplementTotal)} detail={`보충 단계 ${supplementDone}/${supplementTotal}`} />
-        <Rate label="심화 기록" percent={pct(advancedEarned, advancedTotal)} detail={`심화 단계·실습·심화 문제 ${advancedEarned}/${advancedTotal}`} />
         <div className="rounded-xl border bg-card p-4" style={{ borderColor: advancedWeeks.length > 0 ? TIER_INFO.advanced.color : "var(--border-hairline)" }}>
           <p className="flex items-center gap-2 text-xs font-bold text-ink-muted">
             심화 달성 <TierBadge tier="advanced" compact />
@@ -238,56 +292,8 @@ export default async function ProgressPage() {
             {advancedWeeks.length}
             <span className="text-sm font-bold text-ink-muted"> / {rows.length}주</span>
           </p>
-          <p className="mt-1.5 text-xs text-ink-muted">
-            {advancedWeeks.length > 0 ? advancedWeeks.map((r) => `${r.week.number}주차`).join(" · ") : "아직 없습니다. 핵심 과정을 마친 주차부터 도전해 보십시오."}
-          </p>
+          {advancedWeeks.length > 0 && <p className="mt-1 text-xs text-ink-muted">{advancedWeeks.map((r) => `${r.week.number}주차`).join(" · ")}</p>}
         </div>
-      </div>
-
-      <h2 className="mt-10 mb-3 text-xl font-black text-ink">주차별 기록</h2>
-      <div className="space-y-3">
-        {rows.map(({ week, status, grade, supplement, advanced }) => (
-          <Link
-            key={week.slug}
-            href={status.currentSection ? `/weeks/${week.slug}/sections/${status.currentSection.id}` : `/weeks/${week.slug}`}
-            className="flex items-center gap-4 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]"
-          >
-            <ProgressRing ratio={status.ratio} size={40} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-ink">
-                {week.number}주차 · {week.title}
-              </p>
-              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-muted">
-                <span className={status.coreDone ? "font-bold text-[var(--status-good)]" : "font-bold text-ink-secondary"}>
-                  {status.coreDone ? "✓" : "○"} 핵심 {status.tiers.core.done}/{status.tiers.core.total}
-                </span>
-                <span aria-hidden="true" className="text-[var(--border-strong)]">|</span>
-                <span className={status.worksheetSubmitted ? "text-[var(--status-good)]" : ""}>
-                  {status.worksheetSubmitted ? "✓" : "○"} 백지공부
-                </span>
-                <span className={status.assignment.status !== "none" ? "text-[var(--status-good)]" : ""}>
-                  {status.assignment.status !== "none" ? "✓" : "○"} 과제 {ASSIGNMENT_STATUS_LABEL[status.assignment.status]}
-                  {status.assignment.status === "graded" && ` ${status.assignment.score ?? "-"}/${status.assignment.maxScore}점`}
-                </span>
-                {settings.dueDates[week.slug] && <span>마감 {settings.dueDates[week.slug].slice(5).replace("-", "/")}</span>}
-                {supplement.sections.total > 0 && (
-                  <span className={supplement.complete ? "text-[var(--status-good)]" : ""}>
-                    보충 {supplement.sections.done}/{supplement.sections.total}
-                  </span>
-                )}
-                {advanced.total > 0 && (
-                  <span style={advanced.complete ? { color: TIER_INFO.advanced.color, fontWeight: 700 } : undefined}>
-                    {advanced.complete ? "✦ 심화 달성" : `심화 ${advanced.earned}/${advanced.total}`}
-                  </span>
-                )}
-              </div>
-              {grade?.decision === "revision" && (
-                <p className="mt-1 text-xs font-bold text-[var(--status-serious)]">운영자가 재제출을 요청했습니다.</p>
-              )}
-            </div>
-            <span className="shrink-0 text-xs font-bold text-[var(--series-blue)]">{status.currentSection ? "이어서 →" : "보기 →"}</span>
-          </Link>
-        ))}
       </div>
     </div>
   );
