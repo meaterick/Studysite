@@ -223,7 +223,6 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
 
   const canSeeSolution = passed || (attempts > 0 && hintsShown >= view.hints.length);
   const loadSolution = async () => {
-    if (!passed && !confirm("모범 답안을 보면 스스로 해결할 기회가 사라집니다. 그래도 보시겠습니까?")) return;
     setSolutionError(null);
     try {
       const r = await getExerciseSolution(view.slug, view.id);
