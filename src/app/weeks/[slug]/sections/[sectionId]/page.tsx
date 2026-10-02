@@ -11,11 +11,9 @@ import WeekFrame from "@/components/WeekFrame";
 import CheckSequence from "@/components/section/CheckSequence";
 import StageFooter from "@/components/section/StageFooter";
 import { loadWeekPage } from "@/lib/weekPage";
-import { canOpenSection, sectionPractice, sectionProgress, unfinishedBefore, type WeekStatus } from "@/lib/study";
+import { canOpenSection, sectionProgress, unfinishedBefore, type WeekStatus } from "@/lib/study";
 import UnfinishedWarning from "@/components/UnfinishedWarning";
-import { readLabState, readSectionState } from "@/lib/learningStore";
-import CodingExercise from "@/components/lab/CodingExercise";
-import { exerciseView } from "@/lib/labView";
+import { readSectionState } from "@/lib/learningStore";
 import { getWeekLab } from "@/content/labs";
 import { cookies } from "next/headers";
 import { STAGE_LIST_COOKIE } from "@/lib/stageListCookie";
@@ -36,6 +34,10 @@ export async function generateMetadata({
   return { title: `${week.number}주차 ${sectionLabel(section)}단계 · ${section.title}` };
 }
 
+const PART_LINKS = [
+  { id: "learn", label: "학습" },
+  { id: "check", label: "확인 문제" },
+];
 
 export default async function SectionPage({ params }: { params: Promise<{ slug: string; sectionId: string }> }) {
   const { slug, sectionId } = await params;
@@ -46,32 +48,20 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
   const { sections } = getWeekOutline(week);
   const state = readSectionState(record, slug, sectionId);
-  const progress = sectionProgress(section, state, sectionPractice(slug, section, record));
+  const progress = sectionProgress(section, state);
   // 이전·다음 링크는 본문 순서(핵심 → 보충 → 심화)를 따르고, 완료 후 이동은 같은 갈래 안에서 이어진다.
   const prev = sections[section.order - 2];
   const next = sections[section.order];
   const continueTo = nextSectionAfter(week, section);
-  // 단계 흐름: 학습 → 짧은 실습(이 단계와 같은 구분의 코딩 실습) → 확인 문제.
-  // 서술형·추가 퀴즈와 다른 구분의 실습은 적용과 복습의 선택 과정에서 한다.
+  // 서술형·코딩 실습·추가 퀴즈는 "적용과 복습"에서 한다. 단계 화면에는 이어지는 활동의 개수와 링크만 둔다.
   const lab = getWeekLab(slug);
-  const labState = readLabState(record, slug);
-  const practice = (lab?.exercises ?? []).filter((e) => e.sectionId === sectionId && e.tier === section.tier);
-  const practicePassed = practice.filter((e) => labState.exercises[e.id]?.passedAt).length;
   const related = {
     descriptive: section.meta.quizIds.length + (lab?.quiz.filter((q) => q.sectionId === sectionId && q.kind === "descriptive").length ?? 0),
-    lab: (lab?.exercises.filter((e) => e.sectionId === sectionId).length ?? 0) - practice.length,
+    lab: lab?.exercises.filter((e) => e.sectionId === sectionId).length ?? 0,
     drill: lab?.quiz.filter((q) => q.sectionId === sectionId && q.kind !== "descriptive").length ?? 0,
   };
-  const partLinks = [
-    { id: "learn", label: "학습" },
-    ...(practice.length > 0 ? [{ id: "practice", label: "짧은 실습" }] : []),
-    { id: "check", label: "확인 문제" },
-  ];
 
-  const requirements = [
-    ...(practice.length > 0 ? [{ label: "짧은 실습", done: progress.practiceDone, total: progress.practiceTotal }] : []),
-    { label: "확인 문제", done: progress.checksDone, total: progress.checksTotal },
-  ];
+  const requirements = [{ label: "확인 문제", done: progress.checksDone, total: progress.checksTotal }];
 
   const isCore = section.tier === "core";
   const endHref = isCore ? `/weeks/${slug}/apply?finished=1` : `/weeks/${slug}#record-heading`;
@@ -130,7 +120,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
 
           <nav aria-label="이 단계의 구성" className="mt-5 flex flex-wrap items-center gap-2 text-xs font-bold">
             <span className="text-ink-muted">바로 가기</span>
-            {partLinks.map((s) => (
+            {PART_LINKS.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
@@ -144,21 +134,6 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
           <section id="learn" aria-label="학습" className="mt-8 scroll-mt-24">
             <BlocksRenderer blocks={section.learn} docKey={`${slug}:${sectionId}`} interactiveCode />
           </section>
-
-          {practice.length > 0 && (
-            <section id="practice" aria-labelledby="practice-heading" className="mt-12 scroll-mt-24">
-              <StepHeading
-                id="practice-heading"
-                title="짧은 실습"
-                desc={`TODO를 채우고 ✓ 채점을 누릅니다. 통과 ${practicePassed}/${practice.length}`}
-              />
-              <div className="space-y-5">
-                {practice.map((ex) => (
-                  <CodingExercise key={ex.id} view={{ ...exerciseView(week, ex, labState, status, isAdmin), section: undefined }} />
-                ))}
-              </div>
-            </section>
-          )}
 
           <section id="check" aria-labelledby="check-heading" className="mt-12 scroll-mt-24">
             <StepHeading

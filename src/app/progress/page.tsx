@@ -7,8 +7,7 @@ import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission, latestGrade } from "@/lib/submissionStore";
 import { ASSIGNMENT_STATUS_LABEL, weekStatus } from "@/lib/study";
 import { memberFeedback } from "@/lib/feedback";
-import { dueDateEnd, getSettings } from "@/lib/settingsStore";
-import { formatDate } from "@/lib/datetime";
+import { getSettings } from "@/lib/settingsStore";
 import { tierRecord } from "@/lib/achievement";
 import { sectionLabel, TIER_INFO } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
@@ -35,19 +34,10 @@ function hoursLabel(minutes: number): string {
   return `약 ${h}시간`;
 }
 
-/** 한국 날짜 기준 D-day(오늘 마감이면 0, 지났으면 음수) */
-function daysLeft(date: string, now: Date): number {
-  const today = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
-  const todayKst = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  const [y, m, d] = date.split("-").map(Number);
-  return Math.round((Date.UTC(y, m - 1, d) - todayKst) / 86_400_000);
-}
-
 export default async function ProgressPage() {
   const user = await requireUser("/progress");
   const record = getLearningRecord(user.id);
   const settings = getSettings();
-  const now = new Date();
   const rows = WEEKS.map((week) => {
     const submission = findUserSubmission(user.id, week.slug);
     const status = weekStatus(week, record, submission, settings.progressionMode);
@@ -97,14 +87,6 @@ export default async function ProgressPage() {
     focus.status.sections.filter((s) => s.section.tier === "core" && s.access !== "completed").reduce((sum, s) => sum + s.section.minutes, 0) +
     (focus.status.worksheetSubmitted ? 0 : WORKSHEET_MINUTES) +
     (focus.status.assignment.status === "none" || focus.status.assignment.status === "revision" ? ASSIGNMENT_MINUTES : 0);
-
-  // ── 가장 가까운 마감: 아직 제출하지 않았거나 재제출을 요청받은 과제 중 마감일이 정해진 것
-  const deadlines = rows
-    .filter((r) => settings.dueDates[r.week.slug] && (r.status.assignment.status === "none" || r.status.assignment.status === "revision"))
-    .map((r) => ({ row: r, date: settings.dueDates[r.week.slug], days: daysLeft(settings.dueDates[r.week.slug], now) }))
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const nearest = deadlines.find((d) => d.days >= 0) ?? deadlines[deadlines.length - 1];
-  const overdue = deadlines.filter((d) => d.days < 0);
 
   // ── 진행률(따로 계산)
   const sectionsDone = rows.reduce((sum, r) => sum + r.status.tiers.core.done, 0);
@@ -179,28 +161,7 @@ export default async function ProgressPage() {
           </div>
         </section>
 
-        <div className="grid gap-4">
-          <section aria-labelledby="due-heading" className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
-            <h2 id="due-heading" className="text-sm font-black text-ink-muted">
-              가장 가까운 마감
-            </h2>
-            {nearest ? (
-              <Link href={`/weeks/${nearest.row.week.slug}/assignment`} className="mt-1 block hover:underline">
-                <span className="text-lg font-black text-ink">{nearest.row.week.number}주차 과제</span>{" "}
-                <span
-                  className="ml-1 rounded-full px-2 py-0.5 text-xs font-bold text-white"
-                  style={{ background: nearest.days < 0 ? "var(--status-critical)" : nearest.days <= 2 ? "var(--series-orange)" : "var(--series-blue)" }}
-                >
-                  {nearest.days < 0 ? `${-nearest.days}일 지남` : nearest.days === 0 ? "오늘 마감" : `D-${nearest.days}`}
-                </span>
-                <span className="mt-0.5 block text-xs text-ink-muted">{formatDate(dueDateEnd(nearest.date).toISOString())} 23:59까지</span>
-              </Link>
-            ) : (
-              <p className="mt-1 text-sm text-ink-secondary">{focus.week.dueNote}</p>
-            )}
-            {overdue.length > 1 && <p className="mt-1 text-xs font-bold text-[var(--status-critical)]">마감이 지난 과제가 {overdue.length}개 있습니다.</p>}
-          </section>
-
+        <div className="grid content-start gap-4">
           <Link
             href="/feedback"
             className={`block rounded-xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
@@ -214,34 +175,6 @@ export default async function ProgressPage() {
             <p className="text-xs text-ink-muted">채점 결과 · 재제출 요청 · 채팅 → 피드백함</p>
           </Link>
 
-          <section aria-labelledby="review-heading" className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
-            <h2 id="review-heading" className="text-sm font-black text-ink-muted">
-              복습이 필요한 개념
-            </h2>
-            {fb.review.length === 0 ? (
-              <p className="mt-1 text-sm text-ink-secondary">아직 없습니다.</p>
-            ) : (
-              <ul className="mt-1 space-y-1 text-sm">
-                {fb.review.slice(0, 3).map((r) => (
-                  <li key={`${r.weekSlug}:${r.sectionId}`}>
-                    <Link href={r.href} className="text-ink-secondary hover:text-[var(--series-blue)]">
-                      <strong className="text-ink">
-                        {r.weekNumber}주 {r.sectionLabel}
-                      </strong>{" "}
-                      {r.sectionTitle}
-                    </Link>
-                  </li>
-                ))}
-                {fb.review.length > 3 && (
-                  <li>
-                    <Link href="/feedback" className="text-xs font-bold text-[var(--series-blue)]">
-                      외 {fb.review.length - 3}개 더 보기 →
-                    </Link>
-                  </li>
-                )}
-              </ul>
-            )}
-          </section>
         </div>
       </div>
 
