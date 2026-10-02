@@ -49,7 +49,7 @@ export default async function WeekOverviewPage({
       <div className="space-y-10">
         {finished && status.coreDone && (
           <div className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
-            <p className="font-black text-ink">이번 주의 핵심 과정을 모두 마쳤습니다. 주차 학습 완료입니다.</p>
+            <p className="font-black text-ink">이번 주의 핵심 과정을 모두 마쳤습니다. 주차 학습 진행률 100%입니다.</p>
             <p className="mt-1 text-sm text-ink-secondary">
               <strong>적용과 복습</strong>에서 백지공부로 배운 내용을 떠올려 본 뒤, 과제를 작성해 제출하십시오. 제출한 과제는 운영자가 채점하고 피드백을 남깁니다.
               여유가 있다면 <strong>보충 과정</strong>으로 폭을 넓히고 <strong>심화 과정</strong>에 도전해 심화 달성 기록을 남겨 보십시오.
@@ -89,7 +89,7 @@ export default async function WeekOverviewPage({
             <div className="mt-2 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm text-ink-secondary">
-                  백지공부와 과제(필수), 서술형·코딩 실습·추가 퀴즈·복습 노트(추가 활동)가 기다리고 있습니다.
+                  백지공부와 과제(평가 활동), 서술형·코딩 실습·추가 퀴즈·복습 노트(추가 활동)가 기다리고 있습니다.
                 </p>
                 <Link href={`/weeks/${slug}/apply`} className="shrink-0 rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90">
                   적용과 복습으로 →
@@ -217,7 +217,7 @@ export default async function WeekOverviewPage({
                 : `백지공부와 과제는 핵심 단계를 모두 마친 뒤에 하는 것을 권장합니다. 아직 끝내지 않은 핵심 단계가 ${status.tiers.core.total - status.tiers.core.done}개 있습니다.`}
           </p>
           <h3 className="mb-2 flex items-center gap-2 text-sm font-black text-ink">
-            <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">필수</span> 진행률에 들어가는 활동
+            <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">평가</span> 제출하면 스터디 평가에 반영되는 활동(진행률과는 별개)
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <FinaleCard

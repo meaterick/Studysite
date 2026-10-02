@@ -70,7 +70,7 @@ export async function submitAssignmentWork(slug: string, formData: FormData): Pr
     const first = missing[0];
     return {
       ok: false,
-      error: `필수 답안 ${missing.length}개가 비어 있거나 너무 짧습니다. 예: [${first.task}] ${first.prompt.slice(0, 60)}`,
+      error: `핵심 과제 항목의 답안 ${missing.length}개가 비어 있거나 너무 짧습니다. 예: [${first.task}] ${first.prompt.slice(0, 60)}`,
     };
   }
 

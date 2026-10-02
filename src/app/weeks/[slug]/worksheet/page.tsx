@@ -81,7 +81,7 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
       )}
       <section id="worksheet" className="scroll-mt-24">
         <h2 className="mb-1 flex flex-wrap items-center gap-2 text-xl font-black text-ink">
-          백지공부 <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">필수</span>
+          백지공부 <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">평가</span>
         </h2>
         <p className="mb-4 text-sm text-ink-muted">
           읽기만 한 내용은 쉽게 잊히지만, 스스로 떠올려 쓴 내용은 오래 기억됩니다(인출 연습). 제출하면 비교 자료가 공개됩니다. 백지공부를 마친 뒤에는{" "}
@@ -101,7 +101,7 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
         />
       </section>
       <div className="mt-10">
-        <NextActivity slug={slug} href="assignment" label="과제 (필수)" desc="이번 주 내용을 실제 문제에 적용해 보고서로 제출합니다." />
+        <NextActivity slug={slug} href="assignment" label="과제 (평가)" desc="이번 주 내용을 실제 문제에 적용해 보고서로 제출합니다." />
       </div>
     </WeekFrame>
   );
