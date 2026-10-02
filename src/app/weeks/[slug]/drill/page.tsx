@@ -119,7 +119,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="drill-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
-                추가 퀴즈 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가 활동</span>
+                추가 퀴즈 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
               </h2>
               <p className="mt-1 text-sm text-ink-muted">
                 단계 끝의 확인 문제보다 한 걸음 더 나아간 문제입니다. 개념을 다른 상황에 적용하고, 코드를 읽고 결과를 예측해 봅니다. 주차 완료 조건과는 무관합니다.
@@ -183,7 +183,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           );
         })}
 
-        <NextActivity slug={slug} href="worksheet" label="백지공부 (평가)" desc="이제 자료를 덮고 이번 주 내용을 스스로 떠올려 적어 봅니다." />
+        <NextActivity slug={slug} href="quiz" label="복습 노트" desc="틀렸던 문제를 다시 봅니다." />
       </div>
     </WeekFrame>
   );

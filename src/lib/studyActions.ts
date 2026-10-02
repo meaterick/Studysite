@@ -14,7 +14,7 @@ import {
   type QuizReviewStatus,
   type WorksheetMark,
 } from "./learningStore";
-import { canOpenSection, sectionProgress, weekStatus } from "./study";
+import { canOpenSection, sectionPractice, sectionProgress, weekStatus } from "./study";
 
 // 모든 액션은 브라우저에서 임의로 호출될 수 있으므로, 화면에서 이미 막았더라도
 // 여기서 로그인·단계 잠금·입력값을 다시 검증한다.
@@ -99,8 +99,8 @@ export async function completeSection(slug: string, sectionId: string) {
   const { user, week, section } = await loadSectionContext(slug, sectionId);
   const record = getLearningRecord(user.id);
   const state = ensureSectionState(record, slug, sectionId);
-  if (!sectionProgress(section, state).ready) {
-    return { ok: false as const, error: "확인 문제를 모두 맞힌 뒤에 단계를 완료할 수 있습니다." };
+  if (!sectionProgress(section, state, sectionPractice(slug, section, record)).ready) {
+    return { ok: false as const, error: "짧은 실습을 통과하고 확인 문제를 모두 맞히면 완료할 수 있습니다." };
   }
   await updateLearningRecord(user.id, (r) => {
     const s = ensureSectionState(r, slug, sectionId);

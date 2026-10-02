@@ -104,7 +104,7 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
 
         <section aria-labelledby="overview-heading">
           <p className="flex items-center gap-2 text-sm font-bold text-[var(--series-blue)]">
-            {week.number}주차 과제 <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">평가</span>
+            {week.number}주차 과제
           </p>
           <h2 id="overview-heading" className="mt-1 text-2xl font-black text-ink">
             {spec.title}

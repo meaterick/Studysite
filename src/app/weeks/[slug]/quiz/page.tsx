@@ -211,7 +211,7 @@ export default async function WeekReviewPage({
       <div className="space-y-8">
         <section aria-labelledby="notes-intro">
           <h2 id="notes-intro" className="flex flex-wrap items-center gap-2 text-xl font-black text-ink">
-            복습 노트 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가 활동</span>
+            복습 노트 <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">선택</span>
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-ink-muted">
             한 번이라도 틀린 문제와 &lsquo;보완이 필요합니다&rsquo;로 표시한 답을 단계별로 모았습니다. 시험 전이나 다음 주로 넘어가기 전에 이 목록만 다시 보면 됩니다.

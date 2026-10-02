@@ -245,7 +245,7 @@ export default async function ProgressPage() {
         </div>
       </div>
 
-      {/* ── 진행 현황: 학습 진행률(핵심 단계)과 평가 활동(백지공부·과제)을 나눠 보여 준다 ─── */}
+      {/* ── 진행 현황: 학습 진행률(핵심 단계)과 백지공부·과제 ─── */}
       <h2 className="mt-12 mb-3 text-xl font-black text-ink">진행 현황</h2>
 
       <section aria-labelledby="learning-heading" className="flex flex-wrap items-center gap-5 rounded-xl border border-[var(--series-blue)] bg-card p-5">
