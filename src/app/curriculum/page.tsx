@@ -4,6 +4,7 @@ import { WEEKS } from "@/content/weeks";
 import { TIER_INFO, type Tier } from "@/content/tiers";
 import Markdown from "@/components/MarkdownBlocks";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/dal";
 
 export const metadata: Metadata = { title: "커리큘럼" };
 
@@ -53,7 +54,8 @@ function SectionHeading({ id, children }: { id: string; children: React.ReactNod
   );
 }
 
-export default function CurriculumPage() {
+export default async function CurriculumPage() {
+  const user = await getCurrentUser();
   const phases = [...new Set(WEEKS.map((w) => w.phase))];
 
   return (
@@ -183,30 +185,32 @@ export default function CurriculumPage() {
         </ul>
       </section>
 
-      {/* ── 처음이라면 ─────────────────────────────────────── */}
-      <section className="mt-12 rounded-2xl border border-[color-mix(in_srgb,var(--series-blue)_40%,transparent)] bg-card p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="start" className="text-xl font-black text-ink">
-            처음이라면
-          </h2>
-          <Link href="/weeks" className="w-full rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-center text-sm font-bold text-white hover:opacity-90 sm:w-auto">
-            주차별 자료 →
-          </Link>
-        </div>
-        <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {START.map((s, i) => (
-            <li key={s.title} className="flex items-start gap-3">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--series-blue)_12%,transparent)] text-xs font-black text-[var(--series-blue)]">
-                {i + 1}
-              </span>
-              <div>
-                <p className="text-sm font-black text-ink">{s.title}</p>
-                <p className="text-xs text-ink-muted">{s.desc}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
+      {/* ── 처음이라면(로그인 전에만) ───────────────────────────────── */}
+      {!user && (
+        <section className="mt-12 rounded-2xl border border-[color-mix(in_srgb,var(--series-blue)_40%,transparent)] bg-card p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="start" className="text-xl font-black text-ink">
+              처음이라면
+            </h2>
+            <Link href="/weeks" className="w-full rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-center text-sm font-bold text-white hover:opacity-90 sm:w-auto">
+              주차별 자료 →
+            </Link>
+          </div>
+          <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {START.map((s, i) => (
+              <li key={s.title} className="flex items-start gap-3">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--series-blue)_12%,transparent)] text-xs font-black text-[var(--series-blue)]">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="text-sm font-black text-ink">{s.title}</p>
+                  <p className="text-xs text-ink-muted">{s.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {/* ── 설계 원칙 ──────────────────────────────────────── */}
       <p className="mt-10 border-t border-[var(--border-hairline)] pt-6 text-sm text-ink-muted">{syllabus.designNote}</p>
