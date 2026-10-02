@@ -61,7 +61,6 @@ export default function CurriculumPage() {
       {/* ── 머리말 ─────────────────────────────────────────── */}
       <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">8주 커리큘럼</p>
       <h1 className="mb-3 text-2xl font-black leading-tight text-ink sm:text-3xl">{syllabus.title}</h1>
-      <p className="max-w-3xl text-sm text-ink-secondary">{syllabus.designNote}</p>
       <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { k: "기간", v: "8주" },
@@ -209,18 +208,8 @@ export default function CurriculumPage() {
         </ol>
       </section>
 
-      {/* ── 참고자료(펼쳐 보기) ─────────────────────────────── */}
-      <details id="resources" className="group mt-10 scroll-mt-24 rounded-xl border border-[var(--border-hairline)] bg-card">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
-          <span className="text-lg font-black text-ink">핵심 참고자료</span>
-          <span aria-hidden="true" className="text-xs text-ink-muted transition group-open:rotate-180">
-            ▾
-          </span>
-        </summary>
-        <div className="border-t border-[var(--border-hairline)] p-4 sm:p-5 [&_h2:first-child]:hidden">
-          <Markdown source={syllabus.resourcesMd} />
-        </div>
-      </details>
+      {/* ── 설계 원칙 ──────────────────────────────────────── */}
+      <p className="mt-10 border-t border-[var(--border-hairline)] pt-6 text-sm text-ink-muted">{syllabus.designNote}</p>
     </div>
   );
 }

@@ -12,25 +12,4 @@ export const syllabus = {
 5. AI의 한계·편향·안전 문제를 비판적으로 논의할 수 있다.
 
 `,
-  resourcesMd: `
-## 핵심 참고자료 {#resources}
-
-### 교재
-
-- Goodfellow, Bengio, Courville. *Deep Learning*: [deeplearningbook.org](https://www.deeplearningbook.org/)
-- Zhang et al. *Dive into Deep Learning*: [d2l.ai](https://d2l.ai/) (코드 포함 무료, [한국어판](https://ko.d2l.ai/))
-- Prince. *Understanding Deep Learning*: [udlbook.github.io/udlbook](https://udlbook.github.io/udlbook/)
-- James et al. *An Introduction to Statistical Learning (ISLP)*, [statlearning.com](https://www.statlearning.com/)
-- Deisenroth et al. *Mathematics for Machine Learning*: [mml-book.com](https://mml-book.github.io/)
-- Russell & Norvig. *Artificial Intelligence: A Modern Approach* (전체 지형 참고)
-- Jurafsky & Martin. *Speech and Language Processing (3판 초안)*: [web.stanford.edu/~jurafsky/slp3](https://web.stanford.edu/~jurafsky/slp3/)
-- Chip Huyen. *AI Engineering* (활용 단계)
-
-### 대학 강의
-
-- Stanford [CS229](https://cs229.stanford.edu/) (ML), [CS231n](https://cs231n.stanford.edu/) (Vision), [CS224n](https://web.stanford.edu/class/cs224n/) (NLP), [CS336](https://stanford-cs336.github.io/) (LLM from Scratch)
-- MIT 6.S191 Intro to Deep Learning: [introtodeeplearning.com](https://introtodeeplearning.com/)
-- Andrej Karpathy, Neural Networks: Zero to Hero: [karpathy.ai/zero-to-hero.html](https://karpathy.ai/zero-to-hero.html)
-- 3Blue1Brown: [Essence of Linear Algebra](https://www.3blue1brown.com/topics/linear-algebra) / [Neural Networks](https://www.3blue1brown.com/topics/neural-networks) 시리즈
-`,
 };
