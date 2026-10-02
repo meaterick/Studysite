@@ -53,9 +53,9 @@ export default function WeekFrame({
             )}
           </div>
         </div>
-        <div className="shrink-0 text-center" title="학습 자료의 핵심 단계 완료 비율(백지공부·과제와 보충·심화는 따로 기록)">
+        <div className="shrink-0 text-center" title="학습 진행률: 학습 자료의 핵심 단계 완료 비율(백지공부·과제·보충·심화는 포함하지 않음)">
           <ProgressRing ratio={status.ratio} size={56} />
-          <p className="mt-1 text-[11px] font-bold text-ink-muted">진행률</p>
+          <p className="mt-1 text-[11px] font-bold text-ink-muted">학습 진행률</p>
         </div>
       </div>
       <WeekTabs
@@ -63,8 +63,8 @@ export default function WeekFrame({
         stageHref={continueHref(week.slug, status)}
         stageSub={`핵심 ${status.tiers.core.done}/${status.tiers.core.total} 완료`}
         stageDone={status.coreDone}
-        applySub={`필수 ${summary.requiredDone}/${summary.requiredTotal} 완료`}
-        applyDone={summary.requiredDone === summary.requiredTotal}
+        applySub={`제출 ${summary.gradedDone}/${summary.gradedTotal}`}
+        applyDone={summary.gradedDone === summary.gradedTotal}
       />
       {apply && <ApplyNav slug={week.slug} summary={summary} active={apply} />}
       {children}

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WEEKS } from "@/content/weeks";
-import { getWeekOutline } from "@/content/sections";
 import ProgressRing from "@/components/ProgressRing";
 import { requireUser } from "@/lib/dal";
-import { getLearningRecord, readSectionState } from "@/lib/learningStore";
+import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission, latestGrade } from "@/lib/submissionStore";
 import { ASSIGNMENT_STATUS_LABEL, weekStatus } from "@/lib/study";
 import { memberFeedback } from "@/lib/feedback";
@@ -121,7 +120,9 @@ export default async function ProgressPage() {
   const revisions = rows.filter((r) => r.status.assignment.status === "revision").length;
   const scoreSum = graded.reduce((sum, r) => sum + (r.status.assignment.score ?? 0), 0);
   const scoreMax = graded.reduce((sum, r) => sum + r.status.assignment.maxScore, 0);
-  const overall = rows.reduce((sum, r) => sum + r.status.ratio, 0) / rows.length;
+  // 학습 진행률: 학습 자료의 핵심 단계만 센다(백지공부·과제·보충·심화는 넣지 않는다)
+  const overall = sectionsTotal === 0 ? 0 : sectionsDone / sectionsTotal;
+  const weeksDone = rows.filter((r) => r.status.coreDone).length;
   const pct = (a: number, b: number) => (b === 0 ? 0 : Math.round((a / b) * 100));
 
   return (
@@ -167,7 +168,7 @@ export default async function ProgressPage() {
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-hairline)] pt-3">
             <p className="text-xs text-ink-muted">
-              {focus.week.number}주차에 남은 학습 {hoursLabel(weekRemaining)} (핵심 단계·백지공부·과제 포함)
+              {focus.week.number}주차에 남은 예상 시간 {hoursLabel(weekRemaining)} (핵심 단계·백지공부·과제 포함)
             </p>
             <Link
               href={next ? `/weeks/${focus.week.slug}/sections/${next.id}` : `/weeks/${focus.week.slug}`}
@@ -244,16 +245,48 @@ export default async function ProgressPage() {
         </div>
       </div>
 
-      {/* ── 진행률: 학습 / 백지공부 / 과제 / 피드백 확인을 따로 ─────── */}
-      <h2 className="mt-12 mb-3 text-xl font-black text-ink">진행 현황</h2>
+      {/* ── 진행 현황: 학습 진행률(핵심 단계)과 평가 활동(백지공부·과제)을 나눠 보여 준다 ─── */}
+      <h2 className="mt-12 mb-1 text-xl font-black text-ink">진행 현황</h2>
+      <p className="mb-3 text-sm text-ink-muted">
+        <strong className="text-ink-secondary">학습 진행률</strong>은 학습 자료의 핵심 단계 완료만으로 계산합니다. 백지공부와 과제는 진행률과 별개로,
+        제출하면 스터디 평가에 반영되는 <strong className="text-ink-secondary">평가 활동</strong>입니다.
+      </p>
+
+      <section aria-labelledby="learning-heading" className="flex flex-wrap items-center gap-5 rounded-xl border border-[var(--series-blue)] bg-card p-5">
+        <ProgressRing ratio={overall} size={64} />
+        <div className="min-w-[12rem] flex-1">
+          <h3 id="learning-heading" className="text-sm font-black text-ink-muted">
+            학습 진행률
+          </h3>
+          <p className="text-3xl font-black tabular-nums text-ink">{Math.round(overall * 100)}%</p>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            핵심 단계 {sectionsDone}/{sectionsTotal} · 학습을 마친 주차 {weeksDone}/{rows.length}
+          </p>
+        </div>
+        <Link
+          href={next ? `/weeks/${focus.week.slug}/sections/${next.id}` : `/weeks/${focus.week.slug}`}
+          className="w-full rounded-lg border border-[var(--series-blue)] px-4 py-2 text-center text-sm font-bold text-[var(--series-blue)] sm:w-auto sm:shrink-0 hover:bg-[color-mix(in_srgb,var(--series-blue)_8%,transparent)]"
+        >
+          {next ? "학습 자료 이어서 →" : "학습 자료 보기 →"}
+        </Link>
+      </section>
+
+      <h3 className="mt-6 mb-2 flex items-center gap-2 text-sm font-black text-ink">
+        <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">평가</span> 평가 활동
+        <span className="font-bold text-ink-muted">· 진행률에는 들어가지 않습니다</span>
+      </h3>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Rate label="핵심 학습 진행률" percent={pct(sectionsDone, sectionsTotal)} detail={`핵심 단계 ${sectionsDone}/${sectionsTotal}`} />
-        <Rate label="백지공부" percent={pct(worksheetsDone, rows.length)} detail={`제출 ${worksheetsDone}/${rows.length}주`} />
+        <Rate label="백지공부 제출" percent={pct(worksheetsDone, rows.length)} detail={`제출 ${worksheetsDone}/${rows.length}주`} />
         <Rate
-          label="과제"
+          label="과제 제출"
           percent={pct(submitted, rows.length)}
           detail={`제출 ${submitted}/${rows.length} · 채점 ${graded.length}${revisions ? ` · 재제출 ${revisions}` : ""}`}
         />
+        <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+          <p className="text-xs font-bold text-ink-muted">채점된 과제 합계</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-ink">{graded.length ? `${scoreSum}/${scoreMax}` : "-"}</p>
+          <p className="mt-1.5 text-xs text-ink-muted">{graded.length ? `${graded.length}개 주차 채점 완료` : "아직 채점된 과제가 없습니다"}</p>
+        </div>
         <Rate
           label="피드백 확인"
           percent={fb.gradesTotal + (fb.chatUnread > 0 ? 1 : 0) === 0 ? 100 : pct(fb.gradesSeen, fb.gradesTotal + (fb.chatUnread > 0 ? 1 : 0))}
@@ -261,21 +294,10 @@ export default async function ProgressPage() {
         />
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-4 rounded-xl border border-[var(--border-hairline)] bg-card p-4">
-        <ProgressRing ratio={overall} size={52} />
-        <div>
-          <p className="text-lg font-black text-ink">전체 {Math.round(overall * 100)}%</p>
-          <p className="text-xs text-ink-muted">학습 자료의 핵심 단계 완료 비율(백지공부·과제와 보충·심화는 따로 기록)</p>
-        </div>
-        <p className="ml-auto text-sm text-ink-secondary">
-          채점된 과제 합계 <strong className="text-ink">{graded.length ? `${scoreSum}/${scoreMax}점` : "아직 없음"}</strong>
-        </p>
-      </div>
-
       {/* ── 보충·심화: 주차 완료와 별개의 선택 기록 ───────────── */}
       <h2 className="mt-10 mb-1 text-xl font-black text-ink">보충 · 심화 기록</h2>
       <p className="mb-3 text-sm text-ink-muted">
-        주차 완료와 별개로 쌓이는 선택 과정입니다. 한 주의 심화 단계·심화 실습·과제 심화 문제를 모두 마치면 그 주에 <strong>✦ 심화 달성</strong>이 표시됩니다.
+        학습 진행률과 별개로 쌓이는 선택 과정입니다. 한 주의 심화 단계·심화 실습·과제 심화 문제를 모두 마치면 그 주에 <strong>✦ 심화 달성</strong>이 표시됩니다.
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <Rate label="보충 단계" percent={pct(supplementDone, supplementTotal)} detail={`보충 단계 ${supplementDone}/${supplementTotal}`} />
@@ -294,7 +316,8 @@ export default async function ProgressPage() {
         </div>
       </div>
 
-      <h2 className="mt-10 mb-3 text-xl font-black text-ink">주차별 기록</h2>
+      <h2 className="mt-10 mb-1 text-xl font-black text-ink">주차별 기록</h2>
+      <p className="mb-3 text-sm text-ink-muted">원형 표시는 그 주의 학습 진행률(핵심 단계)입니다. 백지공부·과제는 평가 활동으로 따로 표시합니다.</p>
       <div className="space-y-3">
         {rows.map(({ week, status, grade, supplement, advanced }) => (
           <Link
@@ -308,9 +331,10 @@ export default async function ProgressPage() {
                 {week.number}주차 · {week.title}
               </p>
               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-ink-muted">
-                <span className={status.coreDone ? "text-[var(--status-good)]" : ""}>
-                  {status.coreDone ? "✓" : "○"} 핵심 {status.tiers.core.done}/{status.tiers.core.total}
+                <span className={status.coreDone ? "font-bold text-[var(--status-good)]" : "font-bold text-ink-secondary"}>
+                  {status.coreDone ? "✓" : "○"} 학습 {Math.round(status.ratio * 100)}% (핵심 {status.tiers.core.done}/{status.tiers.core.total})
                 </span>
+                <span aria-hidden="true" className="text-[var(--border-strong)]">|</span>
                 <span className={status.worksheetSubmitted ? "text-[var(--status-good)]" : ""}>
                   {status.worksheetSubmitted ? "✓" : "○"} 백지공부
                 </span>

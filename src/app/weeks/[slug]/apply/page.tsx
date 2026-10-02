@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 /**
- * 적용과 복습 · 한눈에 보기: 필수 경로(핵심 단계 → 백지공부 → 과제)와 여섯 활동의 권장 순서·진행 상태를 보여 주고,
+ * 적용과 복습 · 한눈에 보기: 학습 진행률(핵심 단계)과 제출할 평가 활동(백지공부·과제), 여섯 활동의 권장 순서·진행 상태를 보여 주고,
  * 지금 할 일을 하나로 정해 준다.
  */
 export default async function ApplyHubPage({
@@ -33,27 +33,27 @@ export default async function ApplyHubPage({
   const { week, record, status } = await loadWeekPage(slug, `/weeks/${slug}/apply`);
   const summary = applySummary(week, record, status);
   const coreLeft = status.tiers.core.total - status.tiers.core.done;
-  const allRequired = summary.requiredDone === summary.requiredTotal;
+  const allGraded = summary.gradedDone === summary.gradedTotal;
 
-  // 지금 할 일: 핵심 단계가 남았으면 학습 자료, 아니면 다음 필수 활동, 다 끝났으면 추가 활동 중 아직 덜 한 것
-  const nextExtra = summary.items.find((i) => !i.required && i.key !== "notes" && i.total > 0 && !i.complete);
+  // 지금 할 일: 핵심 단계가 남았으면 학습 자료, 아니면 아직 제출하지 않은 평가 활동, 다 끝났으면 추가 활동 중 아직 덜 한 것
+  const nextExtra = summary.items.find((i) => !i.graded && i.key !== "notes" && i.total > 0 && !i.complete);
   const nextStep: { label: string; detail: string; href: string } = !status.coreDone
     ? {
         label: "핵심 단계 마저 학습하기",
         detail: `핵심 단계가 ${coreLeft}개 남았습니다. 백지공부와 과제는 핵심 단계를 모두 마친 뒤에 하는 것이 효과적입니다.`,
         href: continueHref(slug, status),
       }
-    : summary.nextRequired
+    : summary.nextGraded
       ? {
-          label: `${summary.nextRequired.label} ${summary.nextRequired.key === "assignment" ? "작성·제출하기" : "작성하기"}`,
-          detail: summary.nextRequired.desc,
-          href: summary.nextRequired.href,
+          label: `${summary.nextGraded.label} ${summary.nextGraded.key === "assignment" ? "작성·제출하기" : "작성하기"}`,
+          detail: summary.nextGraded.desc,
+          href: summary.nextGraded.href,
         }
       : nextExtra
-        ? { label: `${nextExtra.label} 이어서 하기`, detail: "필수 활동을 모두 마쳤습니다. 추가 활동으로 실력을 더 다져 보십시오.", href: nextExtra.href }
+        ? { label: `${nextExtra.label} 이어서 하기`, detail: "백지공부와 과제를 모두 제출했습니다. 추가 활동으로 실력을 더 다져 보십시오.", href: nextExtra.href }
         : { label: "복습 노트 보기", detail: "이번 주의 모든 활동을 마쳤습니다. 다시 볼 문항을 정리해 두십시오.", href: `/weeks/${slug}/quiz` };
 
-  const required = summary.items.filter((i) => i.required);
+  const graded = summary.items.filter((i) => i.graded);
 
   return (
     <WeekFrame week={week} status={status} record={record} apply="hub">
@@ -62,7 +62,7 @@ export default async function ApplyHubPage({
           <div role="status" className="rounded-xl border-l-4 border-[var(--status-good)] bg-[color-mix(in_srgb,var(--status-good)_10%,transparent)] px-5 py-4">
             <p className="font-black text-ink">핵심 단계를 모두 마쳤습니다. 이번 주 학습 완료입니다!</p>
             <p className="mt-1 text-sm text-ink-secondary">
-              이제 배운 내용을 직접 꺼내 쓰고 적용해 볼 차례입니다. <strong>백지공부</strong>와 <strong>과제</strong>가 필수이고, 나머지는 원하는 만큼 골라서 하면 됩니다.
+              이제 배운 내용을 직접 꺼내 쓰고 적용해 볼 차례입니다. <strong>백지공부</strong>와 <strong>과제</strong>는 제출하면 스터디 평가에 반영되고, 나머지는 원하는 만큼 골라서 하면 됩니다.
             </p>
           </div>
         )}
@@ -79,8 +79,8 @@ export default async function ApplyHubPage({
           </p>
         </section>
 
-        {/* ── 지금 할 일 + 필수 경로 ───────────────────────────── */}
-        <section aria-labelledby="required-heading" className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--series-blue)_40%,transparent)] bg-card">
+        {/* ── 지금 할 일 + 학습 진행률 + 평가 활동 ─────────────── */}
+        <section aria-labelledby="graded-heading" className="overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--series-blue)_40%,transparent)] bg-card">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border-hairline)] p-5 sm:p-6">
             <div className="min-w-0">
               <p className="text-xs font-black text-[var(--series-blue)]">지금 할 일</p>
@@ -93,32 +93,32 @@ export default async function ApplyHubPage({
           </div>
           <div className="p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 id="required-heading" className="text-sm font-black text-ink">
-                필수 경로 <span className="font-bold text-ink-muted">· 이것만 하면 이번 주 진행률 100%</span>
+              <h3 id="graded-heading" className="text-sm font-black text-ink">
+                이번 주 흐름 <span className="font-bold text-ink-muted">· 진행률은 핵심 단계로, 평가는 제출한 백지공부·과제로 반영</span>
               </h3>
-              <span className={`text-xs font-bold ${allRequired && status.coreDone ? "text-[var(--status-good)]" : "text-ink-muted"}`}>
-                {status.coreDone && allRequired ? "✓ 모두 완료" : `${(status.coreDone ? 1 : 0) + summary.requiredDone}/${1 + summary.requiredTotal} 완료`}
+              <span className={`text-xs font-bold ${allGraded && status.coreDone ? "text-[var(--status-good)]" : "text-ink-muted"}`}>
+                {status.coreDone && allGraded ? "✓ 모두 완료" : `학습 진행률 ${Math.round(status.ratio * 100)}% · 제출 ${summary.gradedDone}/${summary.gradedTotal}`}
               </span>
             </div>
             <ol className="mt-4 grid gap-3 sm:grid-cols-3">
               <PathNode
                 step={1}
                 title="핵심 단계"
-                place="학습 자료"
+                place="학습 진행률"
                 state={status.coreDone ? "완료" : `${status.tiers.core.done}/${status.tiers.core.total}단계`}
                 done={status.coreDone}
                 current={!status.coreDone}
                 href={continueHref(slug, status)}
               />
-              {required.map((item, i) => (
+              {graded.map((item, i) => (
                 <PathNode
                   key={item.key}
                   step={i + 2}
                   title={item.label}
-                  place="적용과 복습"
+                  place="평가 활동"
                   state={item.locked ? "핵심 단계를 마치면 열림" : item.state}
                   done={item.complete}
-                  current={status.coreDone && summary.nextRequired?.key === item.key}
+                  current={status.coreDone && summary.nextGraded?.key === item.key}
                   locked={item.locked}
                   href={item.href}
                 />
@@ -135,7 +135,7 @@ export default async function ApplyHubPage({
             </h2>
             <p className="flex items-center gap-3 text-xs font-bold text-ink-muted">
               <span className="flex items-center gap-1.5">
-                <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full bg-[var(--series-blue)]" /> 필수
+                <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full bg-[var(--series-blue)]" /> 평가(제출)
               </span>
               <span className="flex items-center gap-1.5">
                 <span aria-hidden="true" className="inline-block h-3 w-3 rounded-full border-2 border-dashed border-[var(--border-strong)]" /> 추가 활동(선택)
@@ -223,7 +223,7 @@ function ActivityRow({ item, index }: { item: ApplyItem; index: number }) {
         className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-black ${
             item.complete
               ? "bg-[var(--status-good)] text-white"
-              : item.required
+              : item.graded
                 ? "bg-[var(--series-blue)] text-white"
                 : "border-2 border-dashed border-[var(--border-strong)] bg-card text-ink-muted"
           }`}
@@ -236,8 +236,8 @@ function ActivityRow({ item, index }: { item: ApplyItem; index: number }) {
             {item.locked && <span aria-hidden="true">🔒 </span>}
             {item.label}
           </h3>
-          {item.required ? (
-            <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">필수</span>
+          {item.graded ? (
+            <span className="rounded-md bg-[var(--series-blue)] px-1.5 py-0.5 text-[11px] font-black text-white">평가</span>
           ) : (
             <span className="rounded-md border border-dashed border-[var(--border-strong)] px-1.5 py-0.5 text-[11px] font-bold text-ink-muted">추가</span>
           )}
@@ -280,7 +280,7 @@ function ActivityRow({ item, index }: { item: ApplyItem; index: number }) {
     </div>
   );
   const cls = `block rounded-xl border p-4 transition ${
-    item.required ? "border-[color-mix(in_srgb,var(--series-blue)_35%,transparent)] bg-card" : "border-[var(--border-hairline)] bg-card"
+    item.graded ? "border-[color-mix(in_srgb,var(--series-blue)_35%,transparent)] bg-card" : "border-[var(--border-hairline)] bg-card"
   }`;
   return (
     <li>

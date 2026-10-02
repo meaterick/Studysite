@@ -659,7 +659,7 @@ export default function Workspace({
                 {submitting ? "제출 중…" : resubmit ? "새 버전으로 다시 제출" : "과제 제출"}
               </button>
               {missingCount > 0 && (
-                <p className="text-xs text-ink-muted">필수 과제의 답안 {missingCount}개를 작성하면 제출할 수 있습니다.</p>
+                <p className="text-xs text-ink-muted">핵심 과제 항목의 답안 {missingCount}개를 작성하면 제출할 수 있습니다.</p>
               )}
               {submitMessage && (
                 <p

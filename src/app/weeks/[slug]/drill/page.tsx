@@ -183,7 +183,7 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           );
         })}
 
-        <NextActivity slug={slug} href="worksheet" label="백지공부 (필수)" desc="이제 자료를 덮고 이번 주 내용을 스스로 떠올려 적어 봅니다." />
+        <NextActivity slug={slug} href="worksheet" label="백지공부 (평가)" desc="이제 자료를 덮고 이번 주 내용을 스스로 떠올려 적어 봅니다." />
       </div>
     </WeekFrame>
   );

@@ -10,7 +10,7 @@ type Tab = { href: string; step: number; label: string; sub?: string; done?: boo
 
 /**
  * 주차 메뉴: 개요 → 학습 자료 → 적용과 복습, 세 단계로 이어지는 흐름을 번호와 함께 보여 준다.
- * stageSub / applySub: 탭 아래 작은 진행 상태(예: "핵심 3/7", "필수 1/2")
+ * stageSub / applySub: 탭 아래 작은 진행 상태(예: "핵심 3/7 완료", "제출 1/2")
  */
 export default function WeekTabs({
   slug,
