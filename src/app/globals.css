@@ -95,6 +95,8 @@
   --color-ink-secondary: var(--text-secondary);
   --color-ink-muted: var(--text-muted);
   --font-sans: var(--font-sans-kr);
+  /* 900은 화면 전체가 무겁게 보여 제목 굵기를 800으로 한 단계 낮춘다(font-black 전체에 적용). */
+  --font-weight-black: 800;
   --font-mono: var(--font-mono-code);
 }
 
@@ -222,6 +224,14 @@ code {
   .btn-danger:hover:not(:disabled) {
     background: color-mix(in srgb, var(--status-critical) 86%, #000);
   }
+  .btn-light {
+    background: #fff;
+    color: #0b0b0b;
+    box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.5);
+  }
+  .btn-light:hover:not(:disabled) {
+    background: #e9eefb;
+  }
   .btn-operator {
     background: var(--series-orange);
     color: #fff;
@@ -254,6 +264,28 @@ code {
     }
   }
 
+  /* 스포트라이트: 화면마다 하나뿐인 "지금 할 일". 메인 화면과 같은 깊은 남색으로 다른 요소와 확실히 구분한다. */
+  .spotlight {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background: radial-gradient(120% 140% at 100% 0%, rgba(110, 140, 255, 0.28), transparent 55%),
+      radial-gradient(90% 120% at 0% 100%, rgba(150, 100, 255, 0.18), transparent 60%), #0b1022;
+    color: #f4f7ff;
+    box-shadow: 0 24px 48px -28px rgba(11, 16, 34, 0.75);
+  }
+  .spotlight::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(138, 184, 255, 0.18);
+  }
+  .spotlight-muted {
+    color: rgba(214, 224, 255, 0.72);
+  }
+
   /* 페이지 머리글(PageHeader.tsx) */
   .eyebrow {
     display: inline-flex;
@@ -266,9 +298,9 @@ code {
   }
   .page-title {
     font-size: 1.75rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.2;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: var(--text-primary);
   }
   @media (min-width: 640px) {
@@ -283,9 +315,9 @@ code {
     color: var(--text-secondary);
   }
   .section-title {
-    font-size: 1.25rem;
-    font-weight: 900;
-    letter-spacing: -0.01em;
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
   }
 

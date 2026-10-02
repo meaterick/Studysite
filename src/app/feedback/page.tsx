@@ -10,6 +10,7 @@ import { WEEKS } from "@/content/weeks";
 import { weekStatus } from "@/lib/study";
 import { applySummary } from "@/lib/applyView";
 import PageHeader from "@/components/PageHeader";
+import NextStep from "@/components/NextStep";
 
 export const metadata: Metadata = { title: "피드백함" };
 
@@ -33,6 +34,7 @@ export default async function FeedbackPage() {
     sheet: fb.weakWorksheet.find((w) => w.weekSlug === week.slug)?.count ?? 0,
   }));
   const reviewTotal = reviewWeeks.reduce((sum, w) => sum + w.weak, 0);
+  const firstWeak = reviewWeeks.find((w) => w.weak > 0);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
@@ -48,6 +50,28 @@ export default async function FeedbackPage() {
           </Link>
         }
       />
+
+      {openRevisions.length > 0 ? (
+        <div className="mb-4">
+          <NextStep
+            eyebrow="재제출 요청"
+            title={openRevisions[0].title}
+            detail={openRevisions.length > 1 ? `재제출을 기다리는 과제가 ${openRevisions.length}개 있습니다.` : "운영자 코멘트를 확인하고 과제를 다시 제출해 주십시오."}
+            href={openRevisions[0].href}
+            cta="확인하고 다시 제출"
+          />
+        </div>
+      ) : firstWeak ? (
+        <div className="mb-4">
+          <NextStep
+            eyebrow="복습할 차례"
+            title={`${firstWeak.week.number}주차 다시 볼 문항 ${firstWeak.weak}개`}
+            detail="틀렸던 확인 문제와 보완이 필요한 답을 복습 노트에서 다시 풀어 보십시오."
+            href={`/feedback/review/${firstWeak.week.slug}`}
+            cta="복습 노트 열기"
+          />
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="새 피드백" value={fb.newCount} tone={fb.newCount > 0 ? "var(--series-orange)" : undefined} />
@@ -176,9 +200,9 @@ export default async function FeedbackPage() {
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
-    <div className="surface p-4">
+    <div className="surface px-4 py-3.5">
       <p className="text-xs font-bold text-ink-muted">{label}</p>
-      <p className="mt-1 text-2xl font-black tabular-nums" style={{ color: tone ?? "var(--text-primary)" }}>
+      <p className="mt-1 text-2xl font-black tabular-nums" style={{ color: tone ?? "var(--text-muted)" }}>
         {value}
       </p>
     </div>

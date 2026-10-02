@@ -12,6 +12,7 @@ import { tierRecord } from "@/lib/achievement";
 import { sectionLabel, TIER_INFO, TIER_ORDER, type Tier } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
 import PageHeader from "@/components/PageHeader";
+import NextStep from "@/components/NextStep";
 
 export const metadata: Metadata = { title: "내 학습 진도" };
 
@@ -82,7 +83,6 @@ export default async function ProgressPage() {
     todos.push({ label: `${focus.week.number}주차 과제 · ${focus.week.assignment.title}`, detail: "적용과 복습", href: `/weeks/${focus.week.slug}/assignment`, minutes: ASSIGNMENT_MINUTES });
   }
   const today = todos.slice(0, 3);
-  const todayMinutes = today.reduce((sum, t) => sum + (t.minutes ?? 0), 0);
   const weekRemaining =
     focus.status.sections.filter((s) => s.section.tier === "core" && s.access !== "completed").reduce((sum, s) => sum + s.section.minutes, 0) +
     (focus.status.worksheetSubmitted ? 0 : WORKSHEET_MINUTES) +
@@ -113,75 +113,66 @@ export default async function ProgressPage() {
       <PageHeader
         eyebrow="내 학습 진도"
         title={`${user.name}님, 오늘은 이것부터`}
-        description={`지금 집중할 주차: ${focus.week.number}주차 · ${focus.week.title}`}
+        description={`지금 집중할 주차 · ${focus.week.number}주차 ${focus.week.title}`}
         className="mb-6"
       />
 
-      {/* ── 첫 영역: 오늘 할 일 + 학습 진행률·피드백 ─────────────── */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <section aria-labelledby="today-heading" className="surface border-[color-mix(in_srgb,var(--series-blue)_45%,transparent)] p-5 sm:p-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="today-heading" className="text-lg font-black text-ink">
-              오늘 할 일
-            </h2>
-            {todayMinutes > 0 && <p className="text-sm font-bold text-ink-secondary">예상 {hoursLabel(todayMinutes)}</p>}
-          </div>
-          {today.length === 0 ? (
-            <p className="mt-3 text-sm text-ink-secondary">8주 과정을 모두 마쳤습니다.</p>
+      {/* ── 첫 영역: 지금 할 일 하나만 크게, 그다음 할 일·진행률·피드백은 조용하게 ─────────── */}
+      {today.length === 0 ? (
+        <NextStep eyebrow="과정 완료" title="8주 과정을 모두 마쳤습니다" detail="복습 노트로 헷갈렸던 문항을 다시 확인해 보십시오." href="/feedback#review" cta="복습 노트 보기" />
+      ) : (
+        <NextStep
+          title={today[0].label}
+          detail={`${today[0].detail} · ${focus.week.number}주차 남은 시간 ${hoursLabel(weekRemaining)}`}
+          href={today[0].href}
+          cta={today[0].tone ? "다시 제출하기" : "이어서 학습"}
+          meta={today[0].minutes ? `예상 ${hoursLabel(today[0].minutes)}` : undefined}
+        />
+      )}
+
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <section aria-labelledby="later-heading" className="surface p-5">
+          <h2 id="later-heading" className="text-sm font-bold text-ink-muted">
+            그다음 할 일
+          </h2>
+          {today.length <= 1 ? (
+            <p className="mt-3 text-sm text-ink-muted">위의 할 일을 마치면 다음 할 일이 이곳에 나타납니다.</p>
           ) : (
-            <ol className="mt-3 space-y-2">
-              {today.map((t, i) => (
+            <ol className="mt-2 divide-y divide-[var(--border-hairline)]">
+              {today.slice(1).map((t, i) => (
                 <li key={t.href + i}>
-                  <Link
-                    href={t.href}
-                    className="group flex items-center gap-3 rounded-xl border border-[var(--border-hairline)] px-3 py-3 transition hover:border-[var(--series-blue)] hover:bg-[color-mix(in_srgb,var(--series-blue)_5%,transparent)]"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-black text-white"
-                      style={{ background: t.tone ?? "var(--series-blue)" }}
-                    >
-                      {i + 1}
+                  <Link href={t.href} className="group flex items-center gap-3 py-3">
+                    <span aria-hidden="true" className="w-5 shrink-0 font-mono text-xs font-bold text-ink-muted">
+                      {String(i + 2).padStart(2, "0")}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block font-bold text-ink">{t.label}</span>
+                      <span className="block truncate font-bold text-ink group-hover:text-[var(--series-blue)]">{t.label}</span>
                       <span className="block text-xs text-ink-muted">{t.detail}</span>
                     </span>
-                    {t.minutes && <span className="shrink-0 text-xs font-bold text-ink-muted">{hoursLabel(t.minutes)}</span>}
+                    {t.minutes && <span className="shrink-0 text-xs text-ink-muted">{hoursLabel(t.minutes)}</span>}
                   </Link>
                 </li>
               ))}
             </ol>
           )}
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-hairline)] pt-3">
-            <p className="text-xs text-ink-muted">
-              {focus.week.number}주차 남은 시간 {hoursLabel(weekRemaining)}
-            </p>
-            <Link
-              href={next ? `/weeks/${focus.week.slug}/sections/${next.id}` : `/weeks/${focus.week.slug}`}
-              className="btn btn-primary"
-            >
-              이어서 학습 →
-            </Link>
-          </div>
         </section>
 
         <div className="grid content-start gap-4">
           <section aria-labelledby="learning-heading" className="surface p-5">
-            <h2 id="learning-heading" className="text-sm font-black text-ink-muted">
+            <h2 id="learning-heading" className="text-sm font-bold text-ink-muted">
               학습 자료 진행
             </h2>
             <div className="mt-3 flex items-center gap-5">
-              <TierRings counts={tierTotals} size={96} />
+              <TierRings counts={tierTotals} size={80} />
               <ul className="min-w-0 flex-1 space-y-1.5">
                 {TIER_ORDER.map((t) => (
                   <li key={t} className="flex items-baseline justify-between gap-2 text-sm">
-                    <span className="flex items-center gap-1.5 font-black" style={{ color: TIER_INFO[t].color }}>
-                      <span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: TIER_INFO[t].color }} />
+                    <span className="flex items-center gap-1.5 font-bold text-ink-secondary">
+                      <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full" style={{ background: TIER_INFO[t].color }} />
                       {TIER_INFO[t].label}
                     </span>
                     <span className="tabular-nums text-ink">
-                      <span className="font-black">{pct(tierTotals[t].done, tierTotals[t].total)}%</span>
+                      <span className="font-bold">{pct(tierTotals[t].done, tierTotals[t].total)}%</span>
                       <span className="ml-1.5 text-xs text-ink-muted">
                         {tierTotals[t].done}/{tierTotals[t].total}
                       </span>
@@ -194,15 +185,11 @@ export default async function ProgressPage() {
               학습을 마친 주차 {weeksDone}/{rows.length}
             </p>
           </section>
-          <Link
-            href="/feedback"
-            className={`surface surface-link flex items-center justify-between gap-3 p-4 ${fb.newCount > 0 ? "border-[var(--series-orange)]" : ""}`}
-          >
-            <span>
-              <span className="block text-sm font-black text-ink-muted">새 운영자 피드백</span>
-              <span className="block text-lg font-black text-ink">{fb.newCount > 0 ? `${fb.newCount}개` : "없음"}</span>
+          <Link href="/feedback" className={`surface surface-link flex items-center justify-between gap-3 p-4 ${fb.newCount > 0 ? "border-[var(--series-orange)]" : ""}`}>
+            <span className="text-sm font-bold text-ink-muted">새 운영자 피드백</span>
+            <span className={`text-sm font-bold ${fb.newCount > 0 ? "text-[var(--series-orange)]" : "text-ink-muted"}`}>
+              {fb.newCount > 0 ? `${fb.newCount}개 확인 →` : "없음"}
             </span>
-            <span className="text-sm font-bold text-[var(--series-blue)]">피드백함 →</span>
           </Link>
         </div>
       </div>
@@ -210,16 +197,8 @@ export default async function ProgressPage() {
       {/* ── 주차별 진행: 한 주 흐름 4단계 ───────────────────────── */}
       <div className="mt-12 mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="section-title">주차별 진행</h2>
-        <p className="flex flex-wrap items-center gap-3 text-xs font-bold text-ink-muted">
-          {TIER_ORDER.map((t) => (
-            <span key={t} className="flex items-center gap-1">
-              <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full" style={{ background: TIER_INFO[t].color }} />
-              {TIER_INFO[t].label}
-            </span>
-          ))}
-        </p>
       </div>
-      <ol className="grid gap-3 md:grid-cols-2">
+      <ol className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {rows.map(({ week, status, grade, advanced }) => {
           const isFocus = week.slug === focus.week.slug;
           const core = status.sections.filter((r) => r.section.tier === "core");
@@ -242,42 +221,33 @@ export default async function ProgressPage() {
                   isFocus ? "border-[var(--series-blue)] ring-1 ring-[color-mix(in_srgb,var(--series-blue)_35%,transparent)]" : ""
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <TierRings counts={status.tiers} size={44} />
+                <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-ink-muted">
-                      {week.number}주차
-                      {isFocus && <span className="ml-2 rounded-full bg-[var(--series-blue)] px-2 py-0.5 text-[10px] font-black text-white">학습 중</span>}
+                    <p className="flex items-center gap-2 font-mono text-xs font-bold text-ink-muted">
+                      WEEK {String(week.number).padStart(2, "0")}
+                      {isFocus && <span className="pill font-sans [--pill:var(--series-blue)]">학습 중</span>}
                     </p>
-                    <p className="truncate text-sm font-black text-ink">{week.title}</p>
+                    <p className="mt-1 truncate font-extrabold tracking-[-0.01em] text-ink">{week.title}</p>
                   </div>
-                  <span className="shrink-0 text-xs font-bold text-[var(--series-blue)]">{!status.currentSection ? "보기 →" : status.tiers.core.done === 0 ? "시작 →" : "이어서 →"}</span>
+                  <span className={`shrink-0 text-xs font-bold ${isFocus ? "text-[var(--series-blue)]" : "text-ink-muted"}`}>
+                    {!status.currentSection ? "보기 →" : status.tiers.core.done === 0 ? "시작 →" : "이어서 →"}
+                  </span>
                 </div>
-                <div className="space-y-1.5" aria-label="학습 자료">
-                  {TIER_ORDER.map((t) => {
-                    const rowsOfTier = status.sections.filter((r) => r.section.tier === t);
-                    if (rowsOfTier.length === 0) return null;
-                    const color = TIER_INFO[t].color;
-                    return (
-                      <div key={t} className="flex items-center gap-2">
-                        <span className="w-7 shrink-0 text-[11px] font-black" style={{ color }}>
-                          {TIER_INFO[t].label}
-                        </span>
-                        <span className="flex flex-1 gap-0.5" aria-hidden="true">
-                          {rowsOfTier.map((r) => (
-                            <span
-                              key={r.section.id}
-                              className="h-2 flex-1 rounded-sm"
-                              style={{ background: r.progress.completed ? color : `color-mix(in srgb, ${color} 14%, transparent)` }}
-                            />
-                          ))}
-                        </span>
-                        <span className="w-9 shrink-0 text-right text-[11px] font-bold tabular-nums text-ink-muted">
-                          {status.tiers[t].done}/{status.tiers[t].total}
-                        </span>
-                      </div>
-                    );
-                  })}
+                <div aria-label="학습 자료">
+                  <div className="flex items-baseline justify-between text-xs text-ink-muted">
+                    <span>
+                      핵심 <span className="font-bold tabular-nums text-ink">{status.tiers.core.done}/{status.tiers.core.total}</span>
+                    </span>
+                    <span className="tabular-nums">
+                      보충 {status.tiers.supplement.done}/{status.tiers.supplement.total} · 심화 {status.tiers.advanced.done}/{status.tiers.advanced.total}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[var(--surface-card-2)]" aria-hidden="true">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${Math.round(status.ratio * 100)}%`, background: status.coreDone ? "var(--status-good)" : "var(--series-blue)" }}
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 border-t border-[var(--border-hairline)] pt-2.5 text-[11px] font-bold">
                   <span className="rounded-md bg-[var(--surface-card-2)] px-1.5 py-0.5 text-ink-muted">

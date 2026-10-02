@@ -48,7 +48,7 @@ export default async function WeekOverviewPage({
 
   return (
     <WeekFrame week={week} status={status} record={record}>
-      <div className="space-y-10">
+      <div className="space-y-12">
         {finished && status.coreDone && (
           <div role="status" className="callout callout-good px-5 py-4">
             <p className="font-black text-ink">이번 주 핵심 단계를 모두 마쳤습니다.</p>
@@ -66,11 +66,11 @@ export default async function WeekOverviewPage({
         {/* ── 학습 목표 ─────────────────────────────────────── */}
         <section id="goals" aria-labelledby="goals-heading">
           <h2 id="goals-heading" className="section-title mb-3">학습 목표</h2>
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="surface divide-y divide-[var(--border-hairline)] px-4 sm:px-5">
             {coreGoals.map((g, i) => (
-              <li key={i} className="flex gap-2.5 surface p-3 text-[15px] text-ink-secondary">
-                <span aria-hidden="true" className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--series-blue)_14%,transparent)] text-[11px] font-black text-[var(--series-blue)]">
-                  {i + 1}
+              <li key={i} className="flex gap-3 py-3 text-[15px] leading-relaxed text-ink-secondary">
+                <span aria-hidden="true" className="w-5 shrink-0 pt-px font-mono text-xs font-bold text-ink-muted">
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="min-w-0">
                   <Inline text={g.text} />
@@ -227,7 +227,7 @@ function SectionRow({
     <div className="flex items-start gap-3">
       <span
         aria-hidden="true"
-        className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-black"
+        className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border-[1.5px] text-xs font-black"
         style={{ borderColor: access === "completed" ? style.ring : color, color: access === "locked" ? "var(--text-muted)" : access === "completed" ? style.ring : color }}
       >
         {access === "completed" ? "✓" : section.number}
