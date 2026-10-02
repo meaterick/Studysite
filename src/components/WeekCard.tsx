@@ -36,7 +36,7 @@ export default function WeekCard({
     <Link
       href={locked ? loginHref(href) : href}
       prefetch={locked ? false : undefined}
-      className="group flex h-full flex-col gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)] hover:shadow-sm sm:p-5"
+      className="surface surface-link group flex h-full flex-col gap-3 p-4 sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

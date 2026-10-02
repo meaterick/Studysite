@@ -8,6 +8,15 @@ import { loginHref } from "@/lib/returnPath";
 import { getLearningRecord } from "@/lib/learningStore";
 import { findUserSubmission } from "@/lib/submissionStore";
 import { weekStatus } from "@/lib/study";
+import PageHeader from "@/components/PageHeader";
+
+// 부(phase)마다 커리큘럼과 같은 색을 써서 두 화면이 한 체계로 읽히게 한다.
+const PHASE_COLOR: Record<string, string> = {
+  "1부 · 기초": "var(--series-blue)",
+  "2부 · 딥러닝": "var(--series-aqua)",
+  "3부 · 현대 AI": "var(--series-violet)",
+  "4부 · 활용·책임": "var(--series-orange)",
+};
 
 export const metadata: Metadata = { title: "주차별 자료" };
 
@@ -21,19 +30,38 @@ export default async function WeeksIndexPage() {
   const phases = Array.from(new Set(WEEKS.map((w) => w.phase)));
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">1~8주차</p>
-      <h1 className="mb-8 text-3xl font-black text-ink">주차별 학습 자료</h1>
+      <PageHeader
+        eyebrow="1~8주차"
+        title="주차별 학습 자료"
+        description="주차를 고르면 개요 → 학습 자료 → 적용과 복습 순서로 진행합니다."
+        actions={
+          <Link href="/curriculum" className="btn btn-secondary">
+            커리큘럼 보기
+          </Link>
+        }
+      />
       {!user && (
-        <p className="-mt-4 mb-8 rounded-lg border border-[var(--border-hairline)] bg-card px-4 py-3 text-sm text-ink-secondary">
-          각 주차의 학습 자료·실습·과제는 로그인한 스터디원만 볼 수 있습니다.{" "}
-          <Link href={loginHref("/weeks")} className="font-bold text-[var(--series-blue)] hover:underline">
+        <div className="callout mb-10 flex flex-wrap items-center justify-between gap-3">
+          <p>각 주차의 학습 자료·실습·과제는 로그인한 스터디원만 볼 수 있습니다.</p>
+          <Link href={loginHref("/weeks")} className="btn btn-primary btn-sm">
             로그인하기 →
           </Link>
-        </p>
+        </div>
       )}
-      {phases.map((phase) => (
-        <section key={phase} className="mb-10">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-ink-muted">{phase}</h2>
+      {phases.map((phase, pi) => (
+        <section key={phase} aria-labelledby={`phase-${pi}`} className="mb-12">
+          <div className="mb-4 flex items-center gap-3">
+            <span aria-hidden="true" className="h-5 w-1.5 rounded-full" style={{ background: PHASE_COLOR[phase] ?? "var(--series-blue)" }} />
+            <h2 id={`phase-${pi}`} className="text-base font-black text-ink">
+              {phase}
+            </h2>
+            <span className="text-xs font-bold text-ink-muted">
+              {WEEKS.filter((w) => w.phase === phase)
+                .map((w) => `${w.number}주차`)
+                .join(" · ")}
+            </span>
+            <span aria-hidden="true" className="h-px flex-1 bg-[var(--border-hairline)]" />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {WEEKS.filter((w) => w.phase === phase).map((w) => (
               <WeekCard

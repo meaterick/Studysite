@@ -85,7 +85,7 @@ export default function Worksheet({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
+      <div className="surface p-5">
         {draftIsNewer && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--surface-card-2)] px-3 py-2 text-sm print:hidden">
             <span className="text-ink-secondary">저장하지 않은 작성 내용이 이 브라우저에 남아 있습니다.</span>
@@ -108,7 +108,7 @@ export default function Worksheet({
           <button
             type="button"
             onClick={() => window.print()}
-            className="print:hidden rounded-md border border-[var(--border-hairline)] px-3 py-1.5 text-xs font-medium text-ink-secondary hover:bg-[var(--surface-card-2)]"
+            className="btn btn-secondary btn-sm print:hidden font-medium"
           >
             인쇄·PDF 저장
           </button>
@@ -162,7 +162,7 @@ export default function Worksheet({
             type="button"
             onClick={() => persist(true)}
             disabled={pending}
-            className="rounded-lg bg-[var(--series-blue)] px-5 py-2 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+            className="btn btn-primary"
           >
             {pending ? "저장 중…" : submittedAt ? "수정 내용 저장" : "제출 후 비교 자료 보기"}
           </button>
@@ -171,7 +171,7 @@ export default function Worksheet({
               type="button"
               onClick={() => persist(false)}
               disabled={pending}
-              className="rounded-lg border border-[var(--border-hairline)] px-4 py-2 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)]"
+              className="btn btn-secondary"
             >
               임시 저장
             </button>

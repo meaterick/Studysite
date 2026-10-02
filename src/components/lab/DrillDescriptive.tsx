@@ -127,7 +127,7 @@ export default function DrillDescriptive({
             type="button"
             onClick={save}
             disabled={!text.trim() || pending}
-            className="rounded-md bg-[var(--series-blue)] px-4 py-1.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+            className="btn btn-primary"
           >
             {pending ? "저장 중…" : answered ? "수정한 답안 저장" : "답안 저장 후 모범답안 보기"}
           </button>

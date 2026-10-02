@@ -11,7 +11,7 @@ export default function WeekFlowCard({ flow }: { flow: WeekFlow }) {
           <p className="mt-1 text-lg font-black text-ink">{flow.next.label}</p>
           <p className="mt-0.5 text-sm text-ink-secondary">{flow.next.detail}</p>
         </div>
-        <Link href={flow.next.href} className="w-full shrink-0 rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-center text-sm font-bold text-white hover:opacity-90 sm:w-auto">
+        <Link href={flow.next.href} className="btn btn-primary w-full shrink-0 sm:w-auto">
           시작하기 →
         </Link>
       </div>

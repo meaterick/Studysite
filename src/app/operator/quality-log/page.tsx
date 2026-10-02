@@ -1,4 +1,5 @@
 import { qualityLog } from "@/content/operator/qualityLog";
+import PageHeader from "@/components/PageHeader";
 import Markdown from "@/components/MarkdownBlocks";
 import { requireAdmin } from "@/lib/dal";
 
@@ -8,8 +9,7 @@ export default async function QualityLogPage() {
   await requireAdmin("/operator/quality-log");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <h1 className="mb-2 text-3xl font-black text-ink">{qualityLog.title}</h1>
-      <p className="mb-8 text-sm text-ink-secondary">{qualityLog.subtitle}</p>
+      <PageHeader tone="operator" eyebrow="운영자" title={qualityLog.title} description={qualityLog.subtitle} />
       <Markdown source={qualityLog.md} />
     </div>
   );

@@ -5,6 +5,7 @@ import { TIER_INFO, type Tier } from "@/content/tiers";
 import Markdown from "@/components/MarkdownBlocks";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/dal";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata: Metadata = { title: "커리큘럼" };
 
@@ -48,7 +49,7 @@ const START = [
 
 function SectionHeading({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="mb-4 scroll-mt-24 text-xl font-black text-ink">
+    <h2 id={id} className="section-title mb-4 scroll-mt-24">
       {children}
     </h2>
   );
@@ -61,18 +62,42 @@ export default async function CurriculumPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       {/* ── 머리말 ─────────────────────────────────────────── */}
-      <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">8주 커리큘럼</p>
-      <h1 className="mb-3 text-2xl font-black leading-tight text-ink sm:text-3xl">{syllabus.title}</h1>
-      <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <PageHeader
+        eyebrow="8주 커리큘럼"
+        title={syllabus.title}
+        className="mb-6"
+        actions={
+          <Link href="/weeks" className="btn btn-primary">
+            주차별 자료 보기 →
+          </Link>
+        }
+      />
+      <nav aria-label="이 페이지의 구성" className="mb-6 flex flex-wrap gap-1.5 text-xs font-bold">
+        {[
+          { id: "phases", label: "4부 구성" },
+          { id: "week-page", label: "주차 페이지" },
+          { id: "flow", label: "한 주 학습 순서" },
+          { id: "tiers", label: "단계 구분" },
+        ].map((l) => (
+          <a
+            key={l.id}
+            href={`#${l.id}`}
+            className="rounded-full border border-[var(--border-hairline)] bg-card px-3 py-1.5 text-ink-secondary transition hover:border-[var(--series-blue)] hover:text-[var(--series-blue)]"
+          >
+            {l.label}
+          </a>
+        ))}
+      </nav>
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { k: "기간", v: "8주" },
           { k: "구성", v: `${phases.length}부 · ${WEEKS.length}주차` },
           { k: "주차 페이지", v: "개요 · 학습 자료 · 적용과 복습" },
           { k: "단계", v: "핵심 · 보충 · 심화" },
         ].map((f) => (
-          <div key={f.k} className="rounded-xl border border-[var(--border-hairline)] bg-card px-4 py-3">
+          <div key={f.k} className="surface px-4 py-3.5">
             <dt className="text-xs font-bold text-ink-muted">{f.k}</dt>
-            <dd className="mt-0.5 text-sm font-black text-ink">{f.v}</dd>
+            <dd className="mt-1 text-[15px] font-black text-ink">{f.v}</dd>
           </div>
         ))}
       </dl>
@@ -90,8 +115,8 @@ export default async function CurriculumPage() {
             const info = PHASE_INFO[phase] ?? { color: "var(--series-blue)", focus: "" };
             const weeks = WEEKS.filter((w) => w.phase === phase);
             return (
-              <li key={phase} className="flex flex-col overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card">
-                <div className="px-4 py-3 text-white" style={{ background: info.color }}>
+              <li key={phase} className="surface flex flex-col overflow-hidden">
+                <div className="px-4 py-3.5 text-white" style={{ background: `linear-gradient(135deg, ${info.color}, color-mix(in srgb, ${info.color} 75%, #000))` }}>
                   <p className="text-xs font-bold opacity-90">
                     W{weeks[0].number}–W{weeks[weeks.length - 1].number}
                   </p>
@@ -121,7 +146,7 @@ export default async function CurriculumPage() {
         <SectionHeading id="week-page">주차 페이지 구성</SectionHeading>
         <ol className="grid gap-3 sm:grid-cols-3">
           {TABS.map((t, i) => (
-            <li key={t.title} className="flex items-start gap-3 rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+            <li key={t.title} className="flex items-start gap-3 surface p-4">
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-[var(--series-blue)] text-xs font-black text-[var(--series-blue)]">
                 {i + 1}
               </span>
@@ -139,7 +164,7 @@ export default async function CurriculumPage() {
         <SectionHeading id="flow">한 주 학습 순서</SectionHeading>
         <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {FLOW.map((f, i) => (
-            <li key={f.title} className="relative rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+            <li key={f.title} className="relative surface p-4">
               <div className="flex items-center gap-2">
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--series-blue)] text-xs font-black text-white">
                   {i + 1}
@@ -168,7 +193,7 @@ export default async function CurriculumPage() {
           {(Object.keys(TIER_INFO) as Tier[]).map((tier) => {
             const info = TIER_INFO[tier];
             return (
-              <li key={tier} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4" style={{ borderTop: `4px solid ${info.color}` }}>
+              <li key={tier} className="surface p-4" style={{ borderTop: `4px solid ${info.color}` }}>
                 <p className="flex items-baseline gap-2">
                   <span className="text-lg font-black" style={{ color: info.color }}>
                     {info.label}
@@ -192,8 +217,8 @@ export default async function CurriculumPage() {
             <h2 id="start" className="text-xl font-black text-ink">
               처음이라면
             </h2>
-            <Link href="/weeks" className="w-full rounded-lg bg-[var(--series-blue)] px-5 py-2.5 text-center text-sm font-bold text-white hover:opacity-90 sm:w-auto">
-              주차별 자료 →
+            <Link href="/login" className="btn btn-primary w-full sm:w-auto">
+              로그인하고 시작하기 →
             </Link>
           </div>
           <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

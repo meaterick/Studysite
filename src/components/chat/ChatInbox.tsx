@@ -32,7 +32,7 @@ export default function ChatInbox({ initial }: { initial: InboxItemView[] }) {
 
   return (
     <aside
-      className={`flex min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card ${
+      className={`flex min-h-0 flex-col overflow-hidden surface ${
         selected ? "hidden lg:flex" : "flex"
       } h-[min(72dvh,720px)] min-h-[420px]`}
     >

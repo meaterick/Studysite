@@ -22,7 +22,7 @@ export default async function WeekWorksheetPage({ params }: { params: Promise<{ 
 
   // 제출 전에는 비교 자료를 내려보내지 않는다 — 보면서 쓰면 백지공부가 아니다.
   const review = sheet.submittedAt ? (
-    <section aria-labelledby="ws-review" className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
+    <section aria-labelledby="ws-review" className="surface p-5">
       <h3 id="ws-review" className="text-base font-black text-ink">내 답안과 비교하기</h3>
       <p className="mt-1 text-sm text-ink-muted">
         빠뜨린 키워드나 설명하지 못한 단계 목표가 있다면 해당 칸에 &lsquo;보완 필요&rsquo;를 표시하고 그 단계를 다시 읽어 보십시오.

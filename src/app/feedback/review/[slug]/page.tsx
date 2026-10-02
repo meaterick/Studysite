@@ -209,13 +209,16 @@ export default async function WeekReviewPage({
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <div className="space-y-8">
         <section aria-labelledby="notes-intro">
-          <Link href="/feedback#review" className="text-sm font-bold text-ink-secondary hover:text-[var(--series-blue)]">
-            ← 피드백함
+          <Link href="/feedback#review" className="group mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-ink-muted transition hover:text-ink">
+            <span aria-hidden="true" className="transition group-hover:-translate-x-0.5">
+              ←
+            </span>
+            피드백함
           </Link>
-          <p className="mt-3 text-sm font-bold text-[var(--series-blue)]">
+          <p className="eyebrow mb-2">
             {week.number}주차 · {week.title}
           </p>
-          <h1 id="notes-intro" className="text-2xl font-black text-ink">
+          <h1 id="notes-intro" className="page-title">
             복습 노트
           </h1>
           <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -225,7 +228,7 @@ export default async function WeekReviewPage({
               { label: "추가 퀴즈", n: weakBySource("drill") },
               { label: "백지공부", n: sheetWeak.length },
             ].map((c) => (
-              <div key={c.label} className="rounded-xl border border-[var(--border-hairline)] bg-card px-3 py-2.5">
+              <div key={c.label} className="surface px-3 py-2.5">
                 <dt className="text-xs font-bold text-ink-muted">{c.label}</dt>
                 <dd className={`text-xl font-black ${c.n > 0 ? "text-[var(--status-critical)]" : "text-ink-muted"}`}>
                   {c.n}
@@ -284,7 +287,7 @@ export default async function WeekReviewPage({
             if (shown.length === 0) return null;
             const weak = notes.filter((n) => n.weak).length;
             return (
-              <details key={section.id} open={mode === "weak" || weak > 0} className="group rounded-xl border border-[var(--border-hairline)] bg-card">
+              <details key={section.id} open={mode === "weak" || weak > 0} className="group surface">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 sm:px-5 [&::-webkit-details-marker]:hidden">
                   <span className="min-w-0">
                     <span className="flex flex-wrap items-center gap-2 font-black text-ink">

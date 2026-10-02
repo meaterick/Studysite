@@ -9,6 +9,7 @@ import MarkFeedbackSeen from "@/components/feedback/MarkFeedbackSeen";
 import { WEEKS } from "@/content/weeks";
 import { weekStatus } from "@/lib/study";
 import { applySummary } from "@/lib/applyView";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata: Metadata = { title: "피드백함" };
 
@@ -36,12 +37,19 @@ export default async function FeedbackPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <MarkFeedbackSeen hasNew={fb.newCount > 0} />
-      <h1 className="text-3xl font-black text-ink">피드백함</h1>
-      <p className="mt-1 text-sm text-ink-secondary">
-        운영자 피드백 · 복습 노트
-      </p>
+      <PageHeader
+        eyebrow="운영자 피드백 · 복습 노트"
+        title="피드백함"
+        description="채점 결과와 재제출 요청, 다시 볼 문항을 한곳에서 확인합니다."
+        className="mb-6"
+        actions={
+          <Link href="/chat" className="btn btn-secondary">
+            운영자에게 질문하기
+          </Link>
+        }
+      />
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="새 피드백" value={fb.newCount} tone={fb.newCount > 0 ? "var(--series-orange)" : undefined} />
         <Stat label="재제출 요청" value={openRevisions.length} tone={openRevisions.length > 0 ? "var(--status-serious)" : undefined} />
         <Stat label="읽지 않은 채팅" value={fb.chatUnread} tone={fb.chatUnread > 0 ? "var(--series-orange)" : undefined} />
@@ -49,11 +57,11 @@ export default async function FeedbackPage() {
       </div>
 
       <section aria-labelledby="operator-heading" className="mt-10">
-        <h2 id="operator-heading" className="mb-3 text-xl font-black text-ink">
+        <h2 id="operator-heading" className="section-title mb-3">
           운영자 피드백
         </h2>
         {fb.items.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-[var(--border-hairline)] p-5 text-sm text-ink-muted">
+          <p className="rounded-2xl border border-dashed border-[var(--border-strong)] px-5 py-8 text-center text-sm text-ink-muted">
             아직 받은 피드백이 없습니다. 과제를 제출하면 채점 결과와 코멘트가 이곳에 표시됩니다.
           </p>
         ) : (
@@ -62,9 +70,7 @@ export default async function FeedbackPage() {
               <li key={item.id}>
                 <Link
                   href={item.href}
-                  className={`block rounded-xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
-                    item.isNew ? "border-[var(--series-orange)]" : "border-[var(--border-hairline)]"
-                  }`}
+                  className={`surface surface-link block p-4 ${item.isNew ? "border-[var(--series-orange)]" : ""}`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <span
@@ -91,7 +97,7 @@ export default async function FeedbackPage() {
       </section>
 
       <section id="review" aria-labelledby="review-heading" className="mt-10 scroll-mt-24">
-        <h2 id="review-heading" className="mb-3 text-xl font-black text-ink">
+        <h2 id="review-heading" className="section-title mb-3">
           복습
         </h2>
         <nav aria-label="주차별 복습 노트" className="mb-4 flex flex-wrap items-center gap-1.5">
@@ -111,7 +117,7 @@ export default async function FeedbackPage() {
           ))}
         </nav>
         {reviewTotal === 0 ? (
-          <p className="rounded-xl border border-dashed border-[var(--border-hairline)] p-5 text-sm text-ink-muted">다시 볼 문항이 없습니다.</p>
+          <p className="rounded-2xl border border-dashed border-[var(--border-strong)] px-5 py-8 text-center text-sm text-ink-muted">다시 볼 문항이 없습니다. 틀린 확인 문제나 보완이 필요한 답이 생기면 이곳에 모입니다.</p>
         ) : (
           <ul className="space-y-3">
             {reviewWeeks
@@ -120,7 +126,7 @@ export default async function FeedbackPage() {
                 <li key={week.slug}>
                   <Link
                     href={`/feedback/review/${week.slug}`}
-                    className="block rounded-xl border border-[var(--border-hairline)] bg-card p-4 transition hover:border-[var(--series-blue)]"
+                    className="surface surface-link block p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="min-w-0 font-black text-ink">
@@ -164,20 +170,13 @@ export default async function FeedbackPage() {
         )}
       </section>
 
-      <p className="mt-10 text-sm text-ink-muted">
-        궁금한 점은{" "}
-        <Link href="/chat" className="font-bold text-[var(--series-blue)] hover:underline">
-          운영자 채팅
-        </Link>
-        으로 물어볼 수 있습니다.
-      </p>
     </div>
   );
 }
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
-    <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+    <div className="surface p-4">
       <p className="text-xs font-bold text-ink-muted">{label}</p>
       <p className="mt-1 text-2xl font-black tabular-nums" style={{ color: tone ?? "var(--text-primary)" }}>
         {value}

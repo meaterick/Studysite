@@ -126,7 +126,7 @@ export default async function WeekDescriptivePage({ params }: { params: Promise<
                       key={section.id}
                       id={`sec-${section.id}`}
                       open={section.id === firstOpen || (g.weak > 0 && !g.locked)}
-                      className="group scroll-mt-24 rounded-xl border border-[var(--border-hairline)] bg-card"
+                      className="group scroll-mt-24 surface"
                     >
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 sm:px-5 [&::-webkit-details-marker]:hidden">
                         <span className="min-w-0">

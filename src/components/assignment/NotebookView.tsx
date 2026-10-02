@@ -92,7 +92,7 @@ export default function NotebookView({
           type="button"
           onClick={() => void rerun()}
           disabled={running}
-          className="rounded-md border border-[var(--border-hairline)] px-3 py-1.5 text-xs font-bold text-ink-secondary hover:bg-[var(--surface-card-2)] disabled:opacity-50"
+          className="btn btn-secondary btn-sm"
         >
           {running ? "실행 중…" : "처음부터 다시 실행해 재현성 확인"}
         </button>
@@ -112,7 +112,7 @@ export default function NotebookView({
         const cells = notebook.tasks[task.id]?.cells ?? [];
         const comment = taskComments?.[task.id];
         return (
-          <section key={task.id} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+          <section key={task.id} className="surface p-4">
             <h4 className="font-black text-ink">
               과제 {i + 1}. {task.title}
               <span className="ml-2 align-middle">

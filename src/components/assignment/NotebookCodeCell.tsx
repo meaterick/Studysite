@@ -113,7 +113,7 @@ export default function NotebookCodeCell({
             onClick={onRun}
             disabled={running || disabled}
             title="Shift+Enter"
-            className="rounded-md bg-[var(--series-blue)] px-3 py-1 text-xs font-bold text-white hover:opacity-90 disabled:opacity-50"
+            className="btn btn-primary btn-sm"
           >
             {running ? "실행 중…" : "▶ 실행"}
           </button>

@@ -8,6 +8,7 @@ import ApplyNav from "./ApplyNav";
 import ProgressRing from "./ProgressRing";
 import DifficultyBadge from "./DifficultyBadge";
 import HashTarget from "./HashTarget";
+import Link from "next/link";
 
 /**
  * 주차 머리글 + 학습 흐름 탭(개요 · 학습 자료 · 적용과 복습). 진행 상태가 페이지마다 최신이어야 해서
@@ -29,13 +30,21 @@ export default function WeekFrame({
   const summary = applySummary(week, record, status);
   return (
     <>
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex items-start justify-between gap-4 sm:mb-8">
         <div className="min-w-0">
-          <p className="mb-1 text-sm font-bold text-[var(--series-blue)]">{week.phase}</p>
-          <h1 className="text-2xl font-black leading-tight text-ink sm:text-3xl">
+          <nav aria-label="현재 위치" className="mb-2 flex flex-wrap items-center gap-1.5 text-[13px] font-bold print:hidden">
+            <Link href="/weeks" className="text-ink-muted transition hover:text-ink">
+              주차별 자료
+            </Link>
+            <span aria-hidden="true" className="text-ink-muted">
+              /
+            </span>
+            <span className="text-[var(--series-blue)]">{week.phase}</span>
+          </nav>
+          <h1 className="page-title">
             {week.number}주차 · {week.title}
           </h1>
-          <p className="mt-2 max-w-2xl text-ink-secondary">{week.subtitle}</p>
+          <p className="page-lead mt-2">{week.subtitle}</p>
           <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-ink-muted">
             <DifficultyBadge level={week.difficulty} />
             <span title="주차 완료는 핵심 단계만으로 판단합니다">

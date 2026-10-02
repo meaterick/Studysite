@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata: Metadata = {
   title: "개인정보처리방침",
@@ -20,17 +21,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function PrivacyPage() {
   return (
     <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
-      <p className="mb-2 text-sm font-bold text-[var(--series-blue)]">Aegis AI 스터디</p>
-      <h1 className="text-3xl font-black tracking-tight text-ink">개인정보처리방침</h1>
-      <p className="mt-3 text-sm text-ink-muted">시행일: {UPDATED_AT}</p>
-      <p className="mt-8 rounded-xl bg-[var(--surface-card-2)] p-5 text-sm leading-7 text-ink-secondary">
+      <PageHeader eyebrow="Aegis AI 스터디" title="개인정보처리방침" description={`시행일: ${UPDATED_AT}`} className="mb-6" />
+      <p className="surface p-5 text-sm leading-7 text-ink-secondary">
         Aegis AI 스터디(이하 “서비스”)는 학습 서비스 제공에 필요한 최소한의 개인정보만 처리합니다. 이 방침은
         서비스에서 어떤 정보를 왜 처리하는지와 이용자가 행사할 수 있는 권리를 설명합니다.
       </p>
 
       <div className="mt-10">
         <Section title="1. 처리하는 개인정보와 목적">
-          <div className="overflow-x-auto rounded-lg border border-[var(--border-hairline)]">
+          <div className="surface overflow-x-auto rounded-xl">
             <table className="w-full min-w-[620px] text-left text-xs leading-6 sm:text-sm">
               <thead className="bg-[var(--surface-card-2)] text-ink">
                 <tr>

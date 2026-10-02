@@ -169,7 +169,7 @@ export default function ChatPanel({
   const inputId = `chat-input-${targetUserId ?? "me"}`;
 
   return (
-    <div className={`relative flex flex-col overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card ${className}`}>
+    <div className={`relative flex flex-col overflow-hidden surface ${className}`}>
       <div className="flex items-center justify-end gap-1.5 border-b border-[var(--border-hairline)] px-4 py-1.5 text-[11px] text-ink-muted">
         <span
           aria-hidden
@@ -270,7 +270,7 @@ export default function ChatPanel({
             type="button"
             onClick={() => void send()}
             disabled={sending || !text.trim()}
-            className="h-10 shrink-0 rounded-lg bg-[var(--series-blue)] px-4 text-sm font-bold text-white hover:opacity-90 disabled:opacity-40"
+            className="btn btn-primary h-10 shrink-0"
           >
             보내기
           </button>

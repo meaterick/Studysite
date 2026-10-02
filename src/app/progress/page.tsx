@@ -11,6 +11,7 @@ import { getSettings } from "@/lib/settingsStore";
 import { tierRecord } from "@/lib/achievement";
 import { sectionLabel, TIER_INFO, TIER_ORDER, type Tier } from "@/content/tiers";
 import TierBadge from "@/components/TierBadge";
+import PageHeader from "@/components/PageHeader";
 
 export const metadata: Metadata = { title: "내 학습 진도" };
 
@@ -109,12 +110,16 @@ export default async function ProgressPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <p className="mb-1 text-sm font-bold text-[var(--series-blue)]">내 학습 진도</p>
-      <h1 className="mb-6 text-3xl font-black text-ink">오늘은 이것부터</h1>
+      <PageHeader
+        eyebrow="내 학습 진도"
+        title={`${user.name}님, 오늘은 이것부터`}
+        description={`지금 집중할 주차: ${focus.week.number}주차 · ${focus.week.title}`}
+        className="mb-6"
+      />
 
       {/* ── 첫 영역: 오늘 할 일 + 학습 진행률·피드백 ─────────────── */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <section aria-labelledby="today-heading" className="rounded-2xl border border-[var(--series-blue)] bg-card p-5">
+        <section aria-labelledby="today-heading" className="surface border-[color-mix(in_srgb,var(--series-blue)_45%,transparent)] p-5 sm:p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="today-heading" className="text-lg font-black text-ink">
               오늘 할 일
@@ -129,7 +134,7 @@ export default async function ProgressPage() {
                 <li key={t.href + i}>
                   <Link
                     href={t.href}
-                    className="flex items-center gap-3 rounded-xl border border-[var(--border-hairline)] px-3 py-2.5 transition hover:border-[var(--series-blue)]"
+                    className="group flex items-center gap-3 rounded-xl border border-[var(--border-hairline)] px-3 py-3 transition hover:border-[var(--series-blue)] hover:bg-[color-mix(in_srgb,var(--series-blue)_5%,transparent)]"
                   >
                     <span
                       aria-hidden="true"
@@ -154,7 +159,7 @@ export default async function ProgressPage() {
             </p>
             <Link
               href={next ? `/weeks/${focus.week.slug}/sections/${next.id}` : `/weeks/${focus.week.slug}`}
-              className="rounded-lg bg-[var(--series-blue)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+              className="btn btn-primary"
             >
               이어서 학습 →
             </Link>
@@ -162,7 +167,7 @@ export default async function ProgressPage() {
         </section>
 
         <div className="grid content-start gap-4">
-          <section aria-labelledby="learning-heading" className="rounded-2xl border border-[var(--border-hairline)] bg-card p-5">
+          <section aria-labelledby="learning-heading" className="surface p-5">
             <h2 id="learning-heading" className="text-sm font-black text-ink-muted">
               학습 자료 진행
             </h2>
@@ -191,9 +196,7 @@ export default async function ProgressPage() {
           </section>
           <Link
             href="/feedback"
-            className={`flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
-              fb.newCount > 0 ? "border-[var(--series-orange)]" : "border-[var(--border-hairline)]"
-            }`}
+            className={`surface surface-link flex items-center justify-between gap-3 p-4 ${fb.newCount > 0 ? "border-[var(--series-orange)]" : ""}`}
           >
             <span>
               <span className="block text-sm font-black text-ink-muted">새 운영자 피드백</span>
@@ -206,7 +209,7 @@ export default async function ProgressPage() {
 
       {/* ── 주차별 진행: 한 주 흐름 4단계 ───────────────────────── */}
       <div className="mt-12 mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-xl font-black text-ink">주차별 진행</h2>
+        <h2 className="section-title">주차별 진행</h2>
         <p className="flex flex-wrap items-center gap-3 text-xs font-bold text-ink-muted">
           {TIER_ORDER.map((t) => (
             <span key={t} className="flex items-center gap-1">
@@ -235,8 +238,8 @@ export default async function ProgressPage() {
             <li key={week.slug}>
               <Link
                 href={status.currentSection ? `/weeks/${week.slug}/sections/${status.currentSection.id}` : `/weeks/${week.slug}`}
-                className={`flex h-full flex-col gap-3 rounded-2xl border bg-card p-4 transition hover:border-[var(--series-blue)] ${
-                  isFocus ? "border-[var(--series-blue)] shadow-sm" : "border-[var(--border-hairline)]"
+                className={`surface surface-link flex h-full flex-col gap-3 p-4 ${
+                  isFocus ? "border-[var(--series-blue)] ring-1 ring-[color-mix(in_srgb,var(--series-blue)_35%,transparent)]" : ""
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -301,15 +304,15 @@ export default async function ProgressPage() {
       </ol>
 
       {/* ── 백지공부·과제·심화 기록 ──────────────────────────────── */}
-      <h2 className="mt-12 mb-3 text-xl font-black text-ink">기록</h2>
+      <h2 className="section-title mt-12 mb-3">기록</h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Rate label="백지공부 제출" percent={pct(worksheetsDone, rows.length)} detail={`${worksheetsDone}/${rows.length}주`} />
         <Rate label="과제 제출" percent={pct(submitted, rows.length)} detail={`${submitted}/${rows.length}주 · 채점 ${graded.length}${revisions ? ` · 재제출 ${revisions}` : ""}`} />
-        <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+        <div className="surface p-4">
           <p className="text-xs font-bold text-ink-muted">채점된 과제 합계</p>
           <p className="mt-1 text-2xl font-black tabular-nums text-ink">{graded.length ? `${scoreSum}/${scoreMax}점` : "-"}</p>
         </div>
-        <div className="rounded-xl border bg-card p-4" style={{ borderColor: advancedWeeks.length > 0 ? TIER_INFO.advanced.color : "var(--border-hairline)" }}>
+        <div className="surface p-4" style={advancedWeeks.length > 0 ? { borderColor: TIER_INFO.advanced.color } : undefined}>
           <p className="flex items-center gap-2 text-xs font-bold text-ink-muted">
             심화 달성 <TierBadge tier="advanced" compact />
           </p>
@@ -326,7 +329,7 @@ export default async function ProgressPage() {
 
 function Rate({ label, percent, detail }: { label: string; percent: number; detail: string }) {
   return (
-    <div className="rounded-xl border border-[var(--border-hairline)] bg-card p-4">
+    <div className="surface p-4">
       <p className="text-xs font-bold text-ink-muted">{label}</p>
       <p className="mt-1 text-2xl font-black tabular-nums text-ink">{percent}%</p>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-card-2)]" aria-hidden="true">

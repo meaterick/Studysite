@@ -5,14 +5,18 @@
   /* 글꼴(layout.tsx에서 @fontsource로 불러온다) */
   --font-sans-kr: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono-code: "JetBrains Mono", ui-monospace, monospace;
-  --surface-page: #f9f9f7;
-  --surface-card: #fcfcfb;
-  --surface-card-2: #f2f1ee;
+  /* 바탕과 카드의 밝기 차이를 조금 벌려, 테두리에만 기대지 않고도 카드가 구분되게 한다. */
+  --surface-page: #f6f6f3;
+  --surface-card: #ffffff;
+  --surface-card-2: #f1f0ec;
   --text-primary: #0b0b0b;
   --text-secondary: #52514e;
-  --text-muted: #898781;
+  /* #898781은 흰 바탕에서 대비가 3.5:1 정도라 작은 글자에 부족해 조금 진하게 했다(약 4.6:1). */
+  --text-muted: #73716b;
   --border-hairline: rgba(11, 11, 11, 0.1);
   --border-strong: #c3c2b7;
+  --shadow-card: 0 1px 2px rgba(11, 11, 11, 0.04);
+  --shadow-raised: 0 10px 28px -14px rgba(11, 11, 11, 0.22), 0 2px 6px -2px rgba(11, 11, 11, 0.06);
 
   --series-blue: #2a78d6;
   --series-orange: #eb6834;
@@ -43,9 +47,11 @@
     --surface-card-2: #232322;
     --text-primary: #ffffff;
     --text-secondary: #c3c2b7;
-    --text-muted: #898781;
+    --text-muted: #96948d;
     --border-hairline: rgba(255, 255, 255, 0.1);
     --border-strong: #383835;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-raised: 0 12px 30px -14px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
 
     --series-blue: #3987e5;
     --series-orange: #d95926;
@@ -65,9 +71,11 @@
   --surface-card-2: #232322;
   --text-primary: #ffffff;
   --text-secondary: #c3c2b7;
-  --text-muted: #898781;
+  --text-muted: #96948d;
   --border-hairline: rgba(255, 255, 255, 0.1);
   --border-strong: #383835;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-raised: 0 12px 30px -14px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
 
   --series-blue: #3987e5;
   --series-orange: #d95926;
@@ -135,6 +143,215 @@ code {
   padding: 0.05rem 0.35rem;
   font-family: var(--font-mono-code), ui-monospace, monospace;
   font-size: 0.88em;
+}
+
+/* ─── 공통 UI 요소 ────────────────────────────────────────────
+   메인 화면을 뺀 모든 화면이 같은 버튼·카드·머리글 모양을 쓰도록 한곳에 모아 둔다.
+   components 층에 두어 페이지에서 Tailwind 유틸리티로 덮어쓸 수 있다. */
+@layer components {
+  /* 버튼: 높이·모서리·글자 굵기를 통일하고, 누를 때 살짝 눌리는 느낌을 준다. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.625rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.25;
+    white-space: nowrap;
+    transition:
+      background-color 0.15s,
+      border-color 0.15s,
+      color 0.15s,
+      box-shadow 0.15s,
+      transform 0.1s;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .btn-sm {
+    min-height: 2rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+  }
+  .btn-lg {
+    min-height: 3rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9375rem;
+  }
+  .btn-primary {
+    background: var(--series-blue);
+    color: #fff;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--series-blue) 40%, transparent);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--series-blue) 86%, #000);
+  }
+  .btn-secondary {
+    border-color: var(--border-hairline);
+    background: var(--surface-card);
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-card);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--border-strong);
+    background: var(--surface-card-2);
+    color: var(--text-primary);
+  }
+  .btn-ghost {
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--surface-card-2);
+    color: var(--text-primary);
+  }
+  .btn-danger {
+    background: var(--status-critical);
+    color: #fff;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--status-critical) 86%, #000);
+  }
+  .btn-operator {
+    background: var(--series-orange);
+    color: #fff;
+  }
+  .btn-operator:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--series-orange) 86%, #000);
+  }
+
+  /* 카드: 바탕보다 밝은 면 + 얇은 테두리 + 아주 옅은 그림자 */
+  .surface {
+    border: 1px solid var(--border-hairline);
+    border-radius: 1rem;
+    background: var(--surface-card);
+    box-shadow: var(--shadow-card);
+  }
+  /* 누를 수 있는 카드: 마우스를 올리면 살짝 떠오르고 테두리가 강조색으로 바뀐다. */
+  .surface-link {
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s,
+      transform 0.2s;
+  }
+  .surface-link:hover {
+    border-color: color-mix(in srgb, var(--series-blue) 60%, var(--border-hairline));
+    box-shadow: var(--shadow-raised);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .surface-link:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  /* 페이지 머리글(PageHeader.tsx) */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--series-blue);
+  }
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+  @media (min-width: 640px) {
+    .page-title {
+      font-size: 2.125rem;
+    }
+  }
+  .page-lead {
+    max-width: 42rem;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  /* 안내 상자: 정보·성공·주의·위험 */
+  .callout {
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--callout, var(--series-blue)) 22%, transparent);
+    /* 사이트 곳곳의 안내 상자가 쓰던 왼쪽 강조선과 같은 모양으로 맞춘다. */
+    border-left: 4px solid var(--callout, var(--series-blue));
+    background: color-mix(in srgb, var(--callout, var(--series-blue)) 8%, var(--surface-card));
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  .callout-good {
+    --callout: var(--status-good);
+  }
+  .callout-warn {
+    --callout: var(--status-serious);
+  }
+  .callout-danger {
+    --callout: var(--status-critical);
+  }
+
+  /* 상태 알약 */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 999px;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--pill, var(--text-secondary));
+    background: color-mix(in srgb, var(--pill, var(--text-muted)) 13%, transparent);
+  }
+
+  /* 표: 운영자 화면 등 */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .data-table th {
+    border-bottom: 1px solid var(--border-hairline);
+    background: var(--surface-card-2);
+    padding: 0.625rem 0.75rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .data-table td {
+    border-bottom: 1px solid var(--border-hairline);
+    padding: 0.625rem 0.75rem;
+    vertical-align: top;
+  }
+  .data-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .data-table tbody tr:hover td {
+    background: color-mix(in srgb, var(--surface-card-2) 50%, transparent);
+  }
 }
 
 /* 3D 기울기 카드 */

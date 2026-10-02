@@ -1,4 +1,5 @@
 import { quizAnswers } from "@/content/quizAnswers";
+import PageHeader from "@/components/PageHeader";
 import { WEEKS } from "@/content/weeks";
 import { getWeekOutline } from "@/content/sections";
 import { requireAdmin } from "@/lib/dal";
@@ -11,10 +12,12 @@ export default async function QuizAnswersPage() {
   await requireAdmin("/operator/quiz-answers");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <h1 className="mb-2 text-3xl font-black text-ink">정답·과제 모범 방향</h1>
-      <p className="mb-8 text-sm text-ink-muted">
-        주차별 과제 모범 방향과, 단계별 확인 문제(객관식) 정답·서술형 모범답안 전체입니다.
-      </p>
+      <PageHeader
+        tone="operator"
+        eyebrow="운영자"
+        title="정답·과제 모범 방향"
+        description="주차별 과제 모범 방향과, 단계별 확인 문제(객관식) 정답·서술형 모범답안 전체입니다."
+      />
 
       <div className="space-y-6">
         {WEEKS.map((week) => {
@@ -22,8 +25,8 @@ export default async function QuizAnswersPage() {
           const questionText = new Map(week.quiz.map((q) => [q.id, q.question]));
           const { sections } = getWeekOutline(week);
           return (
-            <details key={week.slug} className="rounded-xl border border-[var(--border-hairline)] bg-card p-5">
-              <summary className="cursor-pointer text-lg font-black text-ink">
+            <details key={week.slug} className="surface p-5">
+              <summary className="cursor-pointer text-base font-black text-ink">
                 {week.number}주차 · {week.title}
               </summary>
               {set && (

@@ -1,4 +1,5 @@
 import { operatorGuide } from "@/content/operator/guide";
+import PageHeader from "@/components/PageHeader";
 import Markdown from "@/components/MarkdownBlocks";
 import { requireAdmin } from "@/lib/dal";
 
@@ -8,8 +9,7 @@ export default async function OperatorGuidePage() {
   await requireAdmin("/operator/guide");
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-      <h1 className="mb-2 text-3xl font-black text-ink">{operatorGuide.title}</h1>
-      <p className="mb-8 text-sm text-ink-secondary">{operatorGuide.subtitle}</p>
+      <PageHeader tone="operator" eyebrow="운영자" title={operatorGuide.title} description={operatorGuide.subtitle} />
       <Markdown source={operatorGuide.md} />
     </div>
   );

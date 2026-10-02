@@ -21,8 +21,8 @@ export default function DeleteAccountButton() {
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="block w-full rounded-lg px-4 py-3 text-center text-sm font-bold text-white transition hover:opacity-90"
-        style={{ background: "var(--status-critical)" }}
+        // 되돌릴 수 없는 동작의 시작 버튼은 눈에 덜 띄는 외곽선 모양으로 두고, 확인 창에서만 빨간 버튼을 쓴다.
+        className="btn border-[color-mix(in_srgb,var(--status-critical)_45%,transparent)] bg-card text-[var(--status-critical)] hover:bg-[color-mix(in_srgb,var(--status-critical)_8%,var(--surface-card))]"
       >
         회원 탈퇴
       </button>
@@ -37,7 +37,7 @@ export default function DeleteAccountButton() {
         onCancel={(e) => {
           if (pending) e.preventDefault();
         }}
-        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-xl border border-[var(--border-hairline)] bg-card p-0 text-ink shadow-xl backdrop:bg-black/50"
+        className="surface m-auto w-[calc(100%-2rem)] max-w-sm p-0 text-ink shadow-[var(--shadow-raised)] backdrop:bg-black/50 backdrop:backdrop-blur-sm"
       >
         <form action={formAction}>
           <div className="p-5">
@@ -59,15 +59,14 @@ export default function DeleteAccountButton() {
               onClick={close}
               disabled={pending}
               autoFocus
-              className="flex-1 rounded-lg border border-[var(--border-hairline)] px-4 py-2.5 text-sm font-bold text-ink-secondary hover:bg-[var(--surface-card-2)] disabled:opacity-40"
+              className="btn btn-secondary flex-1"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={pending}
-              className="flex-1 rounded-lg px-4 py-2.5 text-sm font-bold text-white hover:opacity-90 disabled:opacity-60"
-              style={{ background: "var(--status-critical)" }}
+              className="btn btn-danger flex-1"
             >
               {pending ? "탈퇴하는 중…" : "탈퇴하기"}
             </button>
