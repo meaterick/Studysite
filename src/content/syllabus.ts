@@ -11,9 +11,6 @@ export const syllabus = {
 4. 프롬프트·RAG·에이전트로 실제 문제를 해결하고, 평가셋으로 성능을 측정할 수 있다.
 5. AI의 한계·편향·안전 문제를 비판적으로 논의할 수 있다.
 
-## 학습 구조 한눈에 보기 {#structure}
-
-[[diagram:phase-roadmap]]
 `,
   resourcesMd: `
 ## 핵심 참고자료 {#resources}
