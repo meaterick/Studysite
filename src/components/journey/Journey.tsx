@@ -60,8 +60,12 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       // 모바일 주소창 때문에 100vh와 실제 보이는 높이가 다를 수 있어 창 높이로 맞춘다.
       root.style.height = `${n * window.innerHeight}px`;
       stage.style.height = `${window.innerHeight}px`;
-      const availH = stage.clientHeight - 150;
-      const availW = stage.clientWidth - 32;
+      // 장면 안쪽 여백(머리글·진행 표시 자리)은 CSS가 화면 크기마다 정한다.
+      const cs = sceneRefs.current[0] ? getComputedStyle(sceneRefs.current[0]) : null;
+      const padY = cs ? parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) : 150;
+      const padX = cs ? parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) : 40;
+      const availH = stage.clientHeight - padY;
+      const availW = stage.clientWidth - padX;
       innerRefs.current.forEach((inner) => {
         if (!inner) return;
         inner.style.setProperty("--fit", "1");
@@ -115,6 +119,49 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(frame);
     };
+
+    // 전환 구간에서 스크롤이 멈추면 장면이 작거나 흐린 채로 남는다. 멈추고 잠시 뒤에도 전환 구간이면
+    // 움직이던 방향으로 전환을 마저 끝낸다. 멈춰 있는 구간(HOLD)은 이미 선명하므로 그대로 둔다.
+    let settleTimer = 0;
+    let touching = false;
+    let lastY = window.scrollY;
+    let dir = 0;
+    const settle = () => {
+      if (touching) return;
+      const vh = window.innerHeight;
+      const top = root.getBoundingClientRect().top + window.scrollY;
+      const raw = (window.scrollY - top) / vh;
+      if (raw <= 0 || raw >= n - 1) return;
+      const i = Math.floor(raw);
+      const u = raw - i;
+      if (u <= HOLD) return;
+      // 화면에 보이는 전환 정도(p)를 기준으로, 움직이던 쪽에 조금 더 기울여 고른다.
+      // 거의 다 넘어온 상태에서 살짝 되돌린 것처럼 눈에 띄지 않는 움직임으로 장면이 크게 바뀌지 않게 한다.
+      const p = smooth((u - HOLD) / (1 - HOLD));
+      const forward = dir > 0 ? p > 0.02 : dir < 0 ? p > 0.9 : p >= 0.5;
+      const target = forward ? top + (i + 1) * vh : Math.floor(top + (i + HOLD) * vh) - 1;
+      window.scrollTo({ top: target, behavior: "smooth" });
+    };
+    const queueSettle = () => {
+      clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(settle, 140);
+    };
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y !== lastY) dir = Math.sign(y - lastY);
+      lastY = y;
+      schedule();
+      queueSettle();
+    };
+    const onTouchStart = () => {
+      touching = true;
+      clearTimeout(settleTimer);
+    };
+    const onTouchEnd = () => {
+      touching = false;
+      queueSettle();
+    };
+
     const onResize = () => {
       fit();
       schedule();
@@ -130,7 +177,10 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       const idx = scenes.findIndex((sc) => `#${sc.id}` === window.location.hash);
       if (idx > 0) window.scrollTo({ top: sceneScrollTop(idx) + 2 });
     }
-    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     window.addEventListener("resize", onResize);
     root.addEventListener("focusin", onFocusIn);
     const ro = new ResizeObserver(onResize);
@@ -138,7 +188,11 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     document.fonts?.ready.then(onResize).catch(() => undefined);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", schedule);
+      clearTimeout(settleTimer);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
       window.removeEventListener("resize", onResize);
       root.removeEventListener("focusin", onFocusIn);
       ro.disconnect();
