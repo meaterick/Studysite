@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useUserScope } from "@/components/UserScope";
+import { useProgressItem } from "@/components/progress/ProgressStore";
 import { reviewQuizAnswer, saveQuizAnswer } from "@/lib/studyActions";
+import { descKey } from "@/lib/progressIds";
 
 /**
  * 서술형 점검 문항: 먼저 직접 쓰고(능동 회상) → 모범답안과 비교 → 스스로 평가.
- * 모범답안은 답을 저장한 뒤에만 서버가 내려준다.
+ * 모범답안은 답을 저장한 뒤에만 서버 액션이 돌려준다. 화면 전체를 다시 받지 않고 이 문항과 진행 저장소만 고친다.
  */
 export default function DescriptiveQuestion({
   slug,
@@ -14,9 +16,9 @@ export default function DescriptiveQuestion({
   quizId,
   index,
   question,
-  savedText,
-  review,
-  modelAnswer,
+  savedText: serverText,
+  review: serverReview,
+  modelAnswer: serverModelAnswer,
 }: {
   slug: string;
   sectionId: string;
@@ -29,6 +31,12 @@ export default function DescriptiveQuestion({
 }) {
   const uid = useUserScope();
   const draftKey = `aegis:draft:${uid}:${quizId}`;
+  const [entry, update] = useProgressItem(descKey(quizId), {
+    done: !!serverReview,
+    weak: serverReview === "incorrect",
+    view: { savedText: serverText, review: serverReview, modelAnswer: serverModelAnswer },
+  });
+  const { savedText, review, modelAnswer } = entry.view;
   const [text, setText] = useState(savedText ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +87,8 @@ export default function DescriptiveQuestion({
         const result = await saveQuizAnswer(slug, sectionId, quizId, text);
         if (!result.ok) setError(result.error);
         else {
+          update({ ...entry, view: { ...entry.view, savedText: result.text, modelAnswer: result.modelAnswer } });
+          setText(result.text);
           clearDraft();
           setRestored(false);
         }
@@ -91,7 +101,8 @@ export default function DescriptiveQuestion({
   const mark = (value: "correct" | "incorrect") => {
     startTransition(async () => {
       try {
-        await reviewQuizAnswer(slug, sectionId, quizId, value);
+        const result = await reviewQuizAnswer(slug, sectionId, quizId, value);
+        if (result.ok) update({ done: true, weak: value === "incorrect", view: { ...entry.view, review: value } });
       } catch {
         setError("저장에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도해 주십시오.");
       }

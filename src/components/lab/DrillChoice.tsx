@@ -3,6 +3,8 @@
 import Icon from "@/components/Icon";
 import { useState, useTransition, type ReactNode } from "react";
 import { answerDrillChoice } from "@/lib/labActions";
+import { drillKey } from "@/lib/progressIds";
+import { useProgressItem } from "@/components/progress/ProgressStore";
 
 export interface DrillChoiceState {
   correct: boolean;
@@ -10,16 +12,20 @@ export interface DrillChoiceState {
   attempts: number;
 }
 
-/** 퀴즈 객관식. 정답 번호는 클라이언트로 보내지 않고 서버 액션이 비교한다(맞히면 정답 번호와 해설이 내려온다). */
+/**
+ * 퀴즈 객관식. 정답 번호는 클라이언트로 보내지 않고 서버 액션이 비교한다(맞히면 정답 번호와 해설을 돌려준다).
+ * 화면 전체를 다시 받지 않고 이 문항과 진행 저장소만 고친다.
+ */
 export default function DrillChoice({
   slug,
   itemId,
   label,
   question,
   choices,
-  state,
-  explanation,
-  correctIndex,
+  state: serverState,
+  explanation: serverExplanation,
+  correctIndex: serverCorrectIndex,
+  weak = false,
   footer,
 }: {
   slug: string;
@@ -30,8 +36,16 @@ export default function DrillChoice({
   state: DrillChoiceState | null;
   explanation?: ReactNode;
   correctIndex?: number;
+  /** 서버가 본 처음 상태가 다시 볼 문항인지 */
+  weak?: boolean;
   footer?: ReactNode;
 }) {
+  const [entry, update] = useProgressItem(drillKey(itemId), {
+    done: !!serverState?.correct,
+    weak,
+    view: { state: serverState, explanation: serverExplanation, correctIndex: serverCorrectIndex },
+  });
+  const { state, explanation, correctIndex } = entry.view;
   const [selected, setSelected] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +57,8 @@ export default function DrillChoice({
     setError(null);
     startTransition(async () => {
       try {
-        await answerDrillChoice(slug, itemId, selected);
+        const r = await answerDrillChoice(slug, itemId, selected);
+        update({ done: r.done, weak: r.weak, view: { state: r.state, explanation: r.explanation, correctIndex: r.correctIndex } });
       } catch {
         setError("채점 요청에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도해 주십시오.");
       }

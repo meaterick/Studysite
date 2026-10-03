@@ -166,6 +166,61 @@ export function sanitizeDraft(spec: AssignmentSpec, raw: unknown): AssignmentDra
   return draft;
 }
 
+// ─── 자동 저장 변경분 ────────────────────────────────────────────────────
+// 작업 공간은 입력이 멈출 때마다 저장한다. 매번 초안 전체(그림 포함 수십~수백 KB)를 보내지 않고,
+// 서버에 저장된 것으로 확인된 초안과 비교해 바뀐 과제의 셀 순서와 바뀐 셀만 보낸다.
+
+/** 자동 저장 변경분. 바뀐 과제마다 셀 순서(order)와 바뀐 셀(cells)만 담는다. */
+export interface DraftPatch {
+  /** 이 변경분의 기준 초안이 서버에 저장된 시각(updatedAt). 서버 초안이 그 사이 바뀌었으면 전체 저장으로 돌아간다. */
+  base: string;
+  tasks: Record<string, { order: string[]; cells: NotebookCell[] }>;
+}
+
+/**
+ * prev(서버에 저장된 것으로 확인된 초안)와 next를 비교한다. 화면은 셀을 고칠 때 그 셀(과 과제) 객체만 새로 만들므로
+ * 참조가 같으면 바뀌지 않은 것이다. 과제가 없어지는 등 비교할 수 없으면 null(전체 저장).
+ */
+export function diffDraft(prev: AssignmentDraft, next: AssignmentDraft): DraftPatch["tasks"] | null {
+  for (const id of Object.keys(prev.tasks)) if (!next.tasks[id]) return null;
+  const out: DraftPatch["tasks"] = {};
+  for (const [taskId, task] of Object.entries(next.tasks)) {
+    const before = prev.tasks[taskId];
+    if (before === task) continue;
+    const beforeCells = new Map((before?.cells ?? []).map((c) => [c.id, c]));
+    out[taskId] = { order: task.cells.map((c) => c.id), cells: task.cells.filter((c) => beforeCells.get(c.id) !== c) };
+  }
+  return out;
+}
+
+/**
+ * 저장된 초안에 변경분을 합친다(서버). 순서에 있는 셀을 변경분에서도 저장본에서도 찾지 못하면 null(전체 저장 필요).
+ * 합친 결과는 전체 저장과 똑같이 sanitizeDraft로 다시 검증한다.
+ */
+export function applyDraftPatch(stored: AssignmentDraft, rawTasks: unknown): AssignmentDraft | null {
+  if (!rawTasks || typeof rawTasks !== "object") return null;
+  const tasks: Record<string, NotebookTaskState> = { ...stored.tasks };
+  for (const [taskId, raw] of Object.entries(rawTasks as Record<string, unknown>)) {
+    // 저장본에 있는 과제만 받는다(처음 저장은 전체 저장이라 모든 과제가 들어 있다). "__proto__" 같은 키도 여기서 걸러진다.
+    if (!Object.hasOwn(stored.tasks, taskId) || !raw || typeof raw !== "object") return null;
+    const { order, cells } = raw as { order?: unknown; cells?: unknown };
+    if (!Array.isArray(order) || !Array.isArray(cells) || order.length > NOTEBOOK_LIMITS.cellsPerTask) return null;
+    const changed = new Map<string, NotebookCell>();
+    for (const c of cells) {
+      if (c && typeof c === "object" && typeof (c as { id?: unknown }).id === "string") changed.set((c as NotebookCell).id, c as NotebookCell);
+    }
+    const storedCells = new Map((stored.tasks[taskId]?.cells ?? []).map((c) => [c.id, c]));
+    const merged: NotebookCell[] = [];
+    for (const id of order) {
+      const cell = typeof id === "string" ? (changed.get(id) ?? storedCells.get(id)) : undefined;
+      if (!cell) return null;
+      merged.push(cell);
+    }
+    tasks[taskId] = { cells: merged };
+  }
+  return { tasks, updatedAt: stored.updatedAt };
+}
+
 export interface TaskCheck {
   taskId: string;
   title: string;

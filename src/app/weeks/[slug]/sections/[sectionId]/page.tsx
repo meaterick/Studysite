@@ -19,6 +19,8 @@ import { readSectionState } from "@/lib/learningStore";
 import { getWeekLab } from "@/content/labs";
 import { cookies } from "next/headers";
 import { STAGE_LIST_COOKIE } from "@/lib/stageListCookie";
+import { ProgressCount, ProgressProvider } from "@/components/progress/ProgressStore";
+import { checkKey } from "@/lib/progressIds";
 
 export function generateStaticParams() {
   return WEEKS.flatMap((w) => getWeekOutline(w).sections.map((s) => ({ slug: w.slug, sectionId: s.id })));
@@ -64,7 +66,10 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
     drillAnchor: drillHere[0] ? `#drill-${drillHere[0].id}` : "",
   };
 
-  const requirements = [{ label: "확인 문제", done: progress.checksDone, total: progress.checksTotal }];
+  // 확인 문제를 풀면 화면을 다시 받지 않고 진행 저장소로 숫자·완료 버튼을 고친다.
+  const checkIds = section.meta.checks.map((c) => checkKey(c.id));
+  const checkStatuses = Object.fromEntries(section.meta.checks.map((c) => [checkKey(c.id), { done: !!state.checks[c.id]?.correct, weak: false }]));
+  const requirements = [{ label: "확인 문제", done: progress.checksDone, total: progress.checksTotal, ids: checkIds }];
 
   const isCore = section.tier === "core";
   const endHref = isCore ? `/weeks/${slug}/apply?finished=1` : `/weeks/${slug}#record-heading`;
@@ -91,127 +96,129 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
         initialCollapsed={listCollapsed}
         list={<StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />}
       >
-        <article className="min-w-0 max-w-[46rem]">
-          {isAdmin && status.sections.find((r) => r.section.id === sectionId)?.access === "locked" && (
-            <p className="callout mb-6 text-xs">운영자 미리보기: 스터디원에게는 아직 잠겨 있는 단계입니다.</p>
-          )}
-          <UnfinishedWarning
-            context={isCore ? "이 단계 앞에" : "보충·심화 단계는 핵심 단계를 마친 뒤에 보는 것을 권장합니다."}
-            items={skipped.map((s) => ({ label: sectionLabel(s), title: s.title, href: `/weeks/${slug}/sections/${s.id}` }))}
-          />
-
-          <header>
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-muted">
-              <TierBadge tier={section.tier} compact />
-              <span className="tabular-nums">
-                {section.number} / {status.tiers[section.tier].total}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span>약 {section.minutes}분</span>
-              {!isCore && <span className="pill">선택</span>}
-            </p>
-            <h2 className="mt-3 text-[1.75rem] font-bold leading-[1.25] tracking-[-0.035em] text-ink sm:text-[2.125rem]">{section.title}</h2>
-            {section.meta.goal && (
-              <p className="mt-4 text-[17px] leading-relaxed text-ink-secondary">
-                <Inline text={section.meta.goal} />
-              </p>
+        <ProgressProvider key={sectionId} items={checkStatuses}>
+          <article className="min-w-0 max-w-[46rem]">
+            {isAdmin && status.sections.find((r) => r.section.id === sectionId)?.access === "locked" && (
+              <p className="callout mb-6 text-xs">운영자 미리보기: 스터디원에게는 아직 잠겨 있는 단계입니다.</p>
             )}
-            <a href="#check" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink">
-              확인 문제 {progress.checksDone}/{progress.checksTotal}
-              <Icon name="chevronDown" size={14} />
-            </a>
-          </header>
+            <UnfinishedWarning
+              context={isCore ? "이 단계 앞에" : "보충·심화 단계는 핵심 단계를 마친 뒤에 보는 것을 권장합니다."}
+              items={skipped.map((s) => ({ label: sectionLabel(s), title: s.title, href: `/weeks/${slug}/sections/${s.id}` }))}
+            />
 
-          <section id="learn" aria-label="학습" className="mt-10 scroll-mt-24 border-t border-[var(--border-hairline)] pt-10">
-            <BlocksRenderer blocks={section.learn} docKey={`${slug}:${sectionId}`} interactiveCode />
-          </section>
+            <header>
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-muted">
+                <TierBadge tier={section.tier} compact />
+                <span className="tabular-nums">
+                  {section.number} / {status.tiers[section.tier].total}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>약 {section.minutes}분</span>
+                {!isCore && <span className="pill">선택</span>}
+              </p>
+              <h2 className="mt-3 text-[1.75rem] font-bold leading-[1.25] tracking-[-0.035em] text-ink sm:text-[2.125rem]">{section.title}</h2>
+              {section.meta.goal && (
+                <p className="mt-4 text-[17px] leading-relaxed text-ink-secondary">
+                  <Inline text={section.meta.goal} />
+                </p>
+              )}
+              <a href="#check" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink">
+                확인 문제 <ProgressCount ids={checkIds} />/{progress.checksTotal}
+                <Icon name="chevronDown" size={14} />
+              </a>
+            </header>
 
-          <section id="check" aria-labelledby="check-heading" className="mt-16 scroll-mt-24 border-t border-[var(--border-hairline)] pt-10">
-            <h3 id="check-heading" className="mb-6 text-xl font-bold tracking-[-0.03em] text-ink">
-              확인 문제
-            </h3>
-            <CheckSequence
+            <section id="learn" aria-label="학습" className="mt-10 scroll-mt-24 border-t border-[var(--border-hairline)] pt-10">
+              <BlocksRenderer blocks={section.learn} docKey={`${slug}:${sectionId}`} interactiveCode />
+            </section>
+
+            <section id="check" aria-labelledby="check-heading" className="mt-16 scroll-mt-24 border-t border-[var(--border-hairline)] pt-10">
+              <h3 id="check-heading" className="mb-6 text-xl font-bold tracking-[-0.03em] text-ink">
+                확인 문제
+              </h3>
+              <CheckSequence
+                slug={slug}
+                sectionId={sectionId}
+                completed={progress.completed}
+                items={section.meta.checks.map((check) => {
+                  const checkState = state.checks[check.id] ?? null;
+                  const reveal = !!checkState && (checkState.correct || checkState.wrong.length >= 2);
+                  return {
+                    checkId: check.id,
+                    question: <Inline text={check.question} />,
+                    choices: check.choices.map((c, j) => <Inline key={j} text={c} />),
+                    state: checkState,
+                    explanation: reveal ? <Inline text={check.explanation} /> : undefined,
+                    correctIndex: checkState?.correct ? check.answer : undefined,
+                  };
+                })}
+              />
+            </section>
+
+            {related.descriptive + related.lab + related.drill > 0 && <RelatedActivities slug={slug} sectionId={sectionId} related={related} />}
+
+            {section.meta.references && section.meta.references.length > 0 && (
+              <section aria-labelledby="refs-heading" className="mt-14">
+                <h3 id="refs-heading" className="mb-3 text-[13px] font-medium text-ink-muted">
+                  더 알아보기
+                </h3>
+                <ul className="rows border-y border-[var(--border-hairline)]">
+                  {section.meta.references.map((ref) => (
+                    <li key={ref.url}>
+                      <a href={ref.url} target="_blank" rel="noopener noreferrer" className="group row-hover -mx-3 flex items-start gap-3 rounded-xl px-3 py-3.5 text-sm">
+                        <span className="min-w-0 flex-1">
+                          <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">{ref.title}</span>
+                          <span className="sr-only"> (새 창에서 열림)</span>
+                          {ref.note && <span className="mt-0.5 block text-ink-muted">{ref.note}</span>}
+                        </span>
+                        <Icon name="arrowUpRight" size={16} className="mt-0.5 shrink-0 text-ink-muted transition group-hover:text-ink" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <nav aria-label="단계 이동" className="mt-16 grid grid-cols-2 gap-6 border-t border-[var(--border-hairline)] pt-8">
+              {prev ? (
+                <Link href={`/weeks/${slug}/sections/${prev.id}`} className="group min-w-0">
+                  <span className="kicker block">Previous</span>
+                  <span className="mt-2 block truncate text-[15px] font-semibold tracking-[-0.02em] text-ink-secondary transition group-hover:text-ink">
+                    {prev.title}
+                  </span>
+                </Link>
+              ) : (
+                <Link href={`/weeks/${slug}`} className="group min-w-0">
+                  <span className="kicker block">Overview</span>
+                  <span className="mt-2 block text-[15px] font-semibold tracking-[-0.02em] text-ink-secondary transition group-hover:text-ink">주차 개요</span>
+                </Link>
+              )}
+              {next && (progress.completed || isAdmin || status.mode === "warn") ? (
+                <Link href={`/weeks/${slug}/sections/${next.id}`} className="group min-w-0 text-right">
+                  <span className="kicker block">Next</span>
+                  <span className="mt-2 block truncate text-[15px] font-semibold tracking-[-0.02em] text-ink-secondary transition group-hover:text-ink">
+                    {next.title}
+                  </span>
+                  {!progress.completed && !isAdmin && <span className="mt-1 block text-xs text-ink-muted">이 단계는 미완료로 남습니다</span>}
+                </Link>
+              ) : (
+                <span />
+              )}
+            </nav>
+
+            <StageFooter
               slug={slug}
               sectionId={sectionId}
+              requirements={requirements}
+              ready={progress.ready}
               completed={progress.completed}
-              items={section.meta.checks.map((check) => {
-                const checkState = state.checks[check.id] ?? null;
-                const reveal = !!checkState && (checkState.correct || checkState.wrong.length >= 2);
-                return {
-                  checkId: check.id,
-                  question: <Inline text={check.question} />,
-                  choices: check.choices.map((c, j) => <Inline key={j} text={c} />),
-                  state: checkState,
-                  explanation: reveal ? <Inline text={check.explanation} /> : undefined,
-                  correctIndex: checkState?.correct ? check.answer : undefined,
-                };
-              })}
+              isLast={!continueTo && isCore}
+              nextHref={finishHref}
+              nextLabel={footerNextLabel}
+              skipHref={skipHref}
             />
-          </section>
-
-          {related.descriptive + related.lab + related.drill > 0 && <RelatedActivities slug={slug} sectionId={sectionId} related={related} />}
-
-          {section.meta.references && section.meta.references.length > 0 && (
-            <section aria-labelledby="refs-heading" className="mt-14">
-              <h3 id="refs-heading" className="mb-3 text-[13px] font-medium text-ink-muted">
-                더 알아보기
-              </h3>
-              <ul className="rows border-y border-[var(--border-hairline)]">
-                {section.meta.references.map((ref) => (
-                  <li key={ref.url}>
-                    <a href={ref.url} target="_blank" rel="noopener noreferrer" className="group row-hover -mx-3 flex items-start gap-3 rounded-xl px-3 py-3.5 text-sm">
-                      <span className="min-w-0 flex-1">
-                        <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">{ref.title}</span>
-                        <span className="sr-only"> (새 창에서 열림)</span>
-                        {ref.note && <span className="mt-0.5 block text-ink-muted">{ref.note}</span>}
-                      </span>
-                      <Icon name="arrowUpRight" size={16} className="mt-0.5 shrink-0 text-ink-muted transition group-hover:text-ink" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          <nav aria-label="단계 이동" className="mt-16 grid grid-cols-2 gap-6 border-t border-[var(--border-hairline)] pt-8">
-            {prev ? (
-              <Link href={`/weeks/${slug}/sections/${prev.id}`} className="group min-w-0">
-                <span className="kicker block">Previous</span>
-                <span className="mt-2 block truncate text-[15px] font-semibold tracking-[-0.02em] text-ink-secondary transition group-hover:text-ink">
-                  {prev.title}
-                </span>
-              </Link>
-            ) : (
-              <Link href={`/weeks/${slug}`} className="group min-w-0">
-                <span className="kicker block">Overview</span>
-                <span className="mt-2 block text-[15px] font-semibold tracking-[-0.02em] text-ink-secondary transition group-hover:text-ink">주차 개요</span>
-              </Link>
-            )}
-            {next && (progress.completed || isAdmin || status.mode === "warn") ? (
-              <Link href={`/weeks/${slug}/sections/${next.id}`} className="group min-w-0 text-right">
-                <span className="kicker block">Next</span>
-                <span className="mt-2 block truncate text-[15px] font-semibold tracking-[-0.02em] text-ink-secondary transition group-hover:text-ink">
-                  {next.title}
-                </span>
-                {!progress.completed && !isAdmin && <span className="mt-1 block text-xs text-ink-muted">이 단계는 미완료로 남습니다</span>}
-              </Link>
-            ) : (
-              <span />
-            )}
-          </nav>
-
-          <StageFooter
-            slug={slug}
-            sectionId={sectionId}
-            requirements={requirements}
-            ready={progress.ready}
-            completed={progress.completed}
-            isLast={!continueTo && isCore}
-            nextHref={finishHref}
-            nextLabel={footerNextLabel}
-            skipHref={skipHref}
-          />
-        </article>
+          </article>
+        </ProgressProvider>
       </StageLayout>
     </WeekFrame>
   );

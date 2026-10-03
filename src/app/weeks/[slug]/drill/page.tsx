@@ -17,6 +17,8 @@ import { readLabState, type LabQuizState } from "@/lib/learningStore";
 import { QUIZ_KIND_LABEL, quizItemDone, quizItemWeak } from "@/lib/labView";
 import { sectionLabel, TIER_INFO, TIER_ORDER } from "@/content/tiers";
 import Icon from "@/components/Icon";
+import { ProgressCount, ProgressProvider, ProgressShow } from "@/components/progress/ProgressStore";
+import { drillKey } from "@/lib/progressIds";
 
 export function generateStaticParams() {
   return WEEKS.map((w) => ({ slug: w.slug }));
@@ -40,15 +42,18 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
   if (!lab) notFound();
   const state = readLabState(record, slug);
   const items = lab.quiz.filter((q) => q.kind !== "descriptive");
-  const doneCount = items.filter((q) => quizItemDone(q, state.quiz[q.id])).length;
-  const weakCount = items.filter((q) => quizItemWeak(q, state.quiz[q.id])).length;
+  // 답해도 화면을 다시 받지 않으므로 완료·다시 볼 문항 숫자는 진행 저장소에서 센다.
+  const allIds = items.map((q) => drillKey(q.id));
+  const statuses = Object.fromEntries(items.map((q) => [drillKey(q.id), { done: quizItemDone(q, state.quiz[q.id]), weak: quizItemWeak(q, state.quiz[q.id]) }]));
   const sections = new Map(getWeekOutline(week).sections.map((s) => [s.id, s]));
 
-  const footer = (item: LabQuizItem, weak: boolean): ReactNode => {
+  const footer = (item: LabQuizItem): ReactNode => {
     const s = sections.get(item.sectionId);
     return (
       <p className="mt-4 flex flex-wrap items-center gap-3 text-xs text-ink-muted">
-        {weak && <span className="pill [--pill:var(--status-critical)]">다시 볼 문항</span>}
+        <ProgressShow ids={[drillKey(item.id)]} when="anyWeak">
+          <span className="pill [--pill:var(--status-critical)]">다시 볼 문항</span>
+        </ProgressShow>
         {s && (
           <Link href={`/weeks/${slug}/sections/${s.id}`} className="transition hover:text-ink">
             관련 단계 · {sectionLabel(s)}. {s.title}
@@ -93,7 +98,8 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           state={s ? { correct: !!s.correct, wrong: s.wrong ?? [], attempts: s.attempts } : null}
           explanation={reveal ? <Inline text={item.explanation} /> : undefined}
           correctIndex={s?.correct ? item.answer : undefined}
-          footer={footer(item, weak)}
+          weak={weak}
+          footer={footer(item)}
         />
       );
     }
@@ -110,7 +116,8 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
           state={s ? { correct: !!s.correct, attempts: s.attempts, lastAnswer: s.lastAnswer, revealed } : null}
           expected={revealed ? item.expected : undefined}
           explanation={revealed ? <Inline text={item.explanation} /> : undefined}
-          footer={footer(item, weak)}
+          weak={weak}
+          footer={footer(item)}
         />
       );
     }
@@ -119,71 +126,76 @@ export default async function WeekDrillPage({ params }: { params: Promise<{ slug
 
   return (
     <WeekFrame week={week} status={status} record={record} apply="drill" compact>
-      <div className="space-y-16">
-        <section aria-labelledby="drill-intro">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 id="drill-intro" className="flex flex-wrap items-center gap-3 text-[1.75rem] font-bold tracking-[-0.035em] text-ink">
-                추가 퀴즈 <span className="pill align-middle text-xs">선택</span>
-              </h2>
-              <p className="mt-2 text-[15px] text-ink-secondary">객관식과 코드 출력 예측으로 이해를 한 번 더 점검합니다.</p>
-            </div>
-            <p className="text-[13px] tabular-nums text-ink-muted">
-              완료 {doneCount}/{items.length}
-              {weakCount > 0 && <span className="ml-2 text-[var(--status-critical)]">다시 볼 문항 {weakCount}</span>}
-            </p>
-          </div>
-          <nav aria-label="단계 구분" className="mt-5 flex flex-wrap gap-1">
-            {TIER_ORDER.map((tier) => {
-              const inTier = items.filter((q) => q.tier === tier);
-              if (inTier.length === 0) return null;
-              const done = inTier.filter((q) => quizItemDone(q, state.quiz[q.id])).length;
-              return (
-                <a key={tier} href={`#tier-${tier}`} className="chip border border-[var(--border-hairline)]">
-                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ background: TIER_INFO[tier].color }} />
-                  {TIER_INFO[tier].label}
-                  <span className="tabular-nums text-ink-muted">
-                    {done}/{inTier.length}
-                  </span>
-                </a>
-              );
-            })}
-          </nav>
-        </section>
-
-        {TIER_ORDER.map((tier) => {
-          const tierItems = KIND_ORDER.flatMap((kind) => items.filter((q) => q.tier === tier && q.kind === kind));
-          if (tierItems.length === 0) return null;
-          const counters: Partial<Record<LabQuizItem["kind"], number>> = {};
-          const openItems: DrillSequenceItem[] = [];
-          const lockedRows: ReactNode[] = [];
-          for (const item of tierItems) {
-            counters[item.kind] = (counters[item.kind] ?? 0) + 1;
-            const index = counters[item.kind]! - 1;
-            if (isLocked(item)) {
-              lockedRows.push(lockedRow(item, `${QUIZ_KIND_LABEL[item.kind]} ${index + 1}`));
-              continue;
-            }
-            openItems.push({ id: item.id, done: quizItemDone(item, state.quiz[item.id]), node: render(item, index) });
-          }
-          return (
-            <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-heading`} className="scroll-mt-24">
-              <div className="mb-5 flex items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-3">
-                <h2 id={`tier-${tier}-heading`} className="flex items-center gap-2 text-lg font-bold tracking-[-0.03em] text-ink">
-                  <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: TIER_INFO[tier].color }} />
-                  {TIER_INFO[tier].label} 문항
-                  <span className="text-xs font-normal text-ink-muted">{TIER_INFO[tier].audience}</span>
+      <ProgressProvider items={statuses}>
+        <div className="space-y-16">
+          <section aria-labelledby="drill-intro">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 id="drill-intro" className="flex flex-wrap items-center gap-3 text-[1.75rem] font-bold tracking-[-0.035em] text-ink">
+                  추가 퀴즈 <span className="pill align-middle text-xs">선택</span>
                 </h2>
-                <span className="text-[13px] tabular-nums text-ink-muted">{tierItems.length}문항</span>
+                <p className="mt-2 text-[15px] text-ink-secondary">객관식과 코드 출력 예측으로 이해를 한 번 더 점검합니다.</p>
               </div>
-              {openItems.length > 0 && <DrillSequence items={openItems} />}
-              {lockedRows.length > 0 && <div className={`space-y-3 ${openItems.length > 0 ? "mt-5" : ""}`}>{lockedRows}</div>}
-            </section>
-          );
-        })}
+              <p className="text-[13px] tabular-nums text-ink-muted">
+                완료 <ProgressCount ids={allIds} />/{items.length}
+                <ProgressShow ids={allIds} when="anyWeak">
+                  <span className="ml-2 text-[var(--status-critical)]">
+                    다시 볼 문항 <ProgressCount ids={allIds} field="weak" />
+                  </span>
+                </ProgressShow>
+              </p>
+            </div>
+            <nav aria-label="단계 구분" className="mt-5 flex flex-wrap gap-1">
+              {TIER_ORDER.map((tier) => {
+                const inTier = items.filter((q) => q.tier === tier);
+                if (inTier.length === 0) return null;
+                return (
+                  <a key={tier} href={`#tier-${tier}`} className="chip border border-[var(--border-hairline)]">
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ background: TIER_INFO[tier].color }} />
+                    {TIER_INFO[tier].label}
+                    <span className="tabular-nums text-ink-muted">
+                      <ProgressCount ids={inTier.map((q) => drillKey(q.id))} />/{inTier.length}
+                    </span>
+                  </a>
+                );
+              })}
+            </nav>
+          </section>
 
-        <NextActivity slug={slug} href={`/feedback/review/${slug}`} label="복습 노트" />
-      </div>
+          {TIER_ORDER.map((tier) => {
+            const tierItems = KIND_ORDER.flatMap((kind) => items.filter((q) => q.tier === tier && q.kind === kind));
+            if (tierItems.length === 0) return null;
+            const counters: Partial<Record<LabQuizItem["kind"], number>> = {};
+            const openItems: DrillSequenceItem[] = [];
+            const lockedRows: ReactNode[] = [];
+            for (const item of tierItems) {
+              counters[item.kind] = (counters[item.kind] ?? 0) + 1;
+              const index = counters[item.kind]! - 1;
+              if (isLocked(item)) {
+                lockedRows.push(lockedRow(item, `${QUIZ_KIND_LABEL[item.kind]} ${index + 1}`));
+                continue;
+              }
+              openItems.push({ id: item.id, done: quizItemDone(item, state.quiz[item.id]), node: render(item, index) });
+            }
+            return (
+              <section key={tier} id={`tier-${tier}`} aria-labelledby={`tier-${tier}-heading`} className="scroll-mt-24">
+                <div className="mb-5 flex items-baseline justify-between gap-2 border-b border-[var(--border-hairline)] pb-3">
+                  <h2 id={`tier-${tier}-heading`} className="flex items-center gap-2 text-lg font-bold tracking-[-0.03em] text-ink">
+                    <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: TIER_INFO[tier].color }} />
+                    {TIER_INFO[tier].label} 문항
+                    <span className="text-xs font-normal text-ink-muted">{TIER_INFO[tier].audience}</span>
+                  </h2>
+                  <span className="text-[13px] tabular-nums text-ink-muted">{tierItems.length}문항</span>
+                </div>
+                {openItems.length > 0 && <DrillSequence items={openItems} />}
+                {lockedRows.length > 0 && <div className={`space-y-3 ${openItems.length > 0 ? "mt-5" : ""}`}>{lockedRows}</div>}
+              </section>
+            );
+          })}
+
+          <NextActivity slug={slug} href={`/feedback/review/${slug}`} label="복습 노트" />
+        </div>
+      </ProgressProvider>
     </WeekFrame>
   );
 }

@@ -2,8 +2,11 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { createElement, type ReactNode } from "react";
 import { getWeek } from "@/content/weeks";
 import { getSection, nextSectionAfter } from "@/content/sections";
+import { quizAnswers } from "@/content/quizAnswers";
+import { Inline } from "@/components/MarkdownBlocks";
 import { requireUser } from "./dal";
 import { consumeRate, RateLimitError, RATE_LIMIT_MESSAGE, RATE_RULES, type RateRule } from "./rateLimit";
 import {
@@ -37,12 +40,19 @@ async function loadSectionContext(slug: string, sectionId: string) {
   return { user, week, section };
 }
 
-export async function answerCheck(
-  slug: string,
-  sectionId: string,
-  checkId: string,
-  choice: number
-): Promise<{ correct: boolean }> {
+// 확인 문제·서술형 액션은 화면 전체를 다시 그리지 않고(refresh 없음) 바뀐 문항의 결과만 돌려준다.
+// 화면은 그 결과로 문항과 진행 숫자를 고친다(components/progress/ProgressStore). 응답이 작아지고 서버가 화면을 다시 만들지 않는다.
+
+export interface CheckResult {
+  correct: boolean;
+  state: { correct: boolean; wrong: number[]; attempts: number };
+  /** 맞힌 뒤에만 */
+  correctIndex?: number;
+  /** 맞히거나 두 번 틀린 뒤에만 */
+  explanation?: ReactNode;
+}
+
+export async function answerCheck(slug: string, sectionId: string, checkId: string, choice: number): Promise<CheckResult> {
   const { user, section } = await loadSectionContext(slug, sectionId);
   limit(user.id, "check", RATE_RULES.checkAnswer);
   const check = section.meta.checks.find((c) => c.id === checkId);
@@ -50,23 +60,29 @@ export async function answerCheck(
     throw new Error("INVALID_CHOICE");
   }
   const correct = choice === check.answer;
-  await updateLearningRecord(user.id, (record) => {
-    const state = ensureSectionState(record, slug, sectionId);
-    state.startedAt ??= new Date().toISOString();
-    const prev = state.checks[checkId] ?? { correct: false, attempts: 0, wrong: [] };
-    if (prev.correct) return;
-    state.checks[checkId] = {
+  const state = await updateLearningRecord(user.id, (record) => {
+    const st = ensureSectionState(record, slug, sectionId);
+    st.startedAt ??= new Date().toISOString();
+    const prev = st.checks[checkId] ?? { correct: false, attempts: 0, wrong: [] };
+    if (prev.correct) return prev;
+    st.checks[checkId] = {
       correct,
       attempts: prev.attempts + 1,
       wrong: correct || prev.wrong.includes(choice) ? prev.wrong : [...prev.wrong, choice],
     };
+    return st.checks[checkId];
   });
-  refresh();
-  return { correct };
+  const reveal = state.correct || state.wrong.length >= 2;
+  return {
+    correct: state.correct,
+    state: { correct: state.correct, wrong: state.wrong, attempts: state.attempts },
+    correctIndex: state.correct ? check.answer : undefined,
+    explanation: reveal ? createElement(Inline, { text: check.explanation }) : undefined,
+  };
 }
 
 export async function saveQuizAnswer(slug: string, sectionId: string, quizId: string, text: string) {
-  const { user, section } = await loadSectionContext(slug, sectionId);
+  const { user, week, section } = await loadSectionContext(slug, sectionId);
   if (!consumeRate(`learn:${user.id}`, RATE_RULES.learningWrite)) return { ok: false as const, error: RATE_LIMIT_MESSAGE };
   if (!section.meta.quizIds.includes(quizId)) throw new Error("INVALID_QUESTION");
   const trimmed = String(text ?? "").trim().slice(0, ANSWER_MAX);
@@ -77,8 +93,9 @@ export async function saveQuizAnswer(slug: string, sectionId: string, quizId: st
     const prev = state.answers[quizId];
     state.answers[quizId] = { text: trimmed, answeredAt: new Date().toISOString(), review: prev?.review };
   });
-  refresh();
-  return { ok: true as const };
+  // 모범답안은 답을 저장한 뒤에만 내려준다.
+  const model = quizAnswers.find((a) => a.week === week.number)?.answers[quizId] ?? "(모범답안 준비 중)";
+  return { ok: true as const, text: trimmed, modelAnswer: createElement(Inline, { text: model }) as ReactNode };
 }
 
 export async function reviewQuizAnswer(slug: string, sectionId: string, quizId: string, review: QuizReviewStatus) {
@@ -87,12 +104,13 @@ export async function reviewQuizAnswer(slug: string, sectionId: string, quizId: 
   if (!section.meta.quizIds.includes(quizId) || (review !== "correct" && review !== "incorrect")) {
     throw new Error("INVALID_REVIEW");
   }
-  await updateLearningRecord(user.id, (record) => {
+  const saved = await updateLearningRecord(user.id, (record) => {
     const state = ensureSectionState(record, slug, sectionId);
     const answer = state.answers[quizId];
     if (answer) answer.review = review;
+    return !!answer;
   });
-  refresh();
+  return { ok: saved, review };
 }
 
 export async function completeSection(slug: string, sectionId: string) {
