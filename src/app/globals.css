@@ -2,9 +2,10 @@
 
 /* ─── 디자인 토큰 ─────────────────────────────────────────────
    흑백을 바탕으로 강조색 하나만 아껴 쓴다.
-   - 화이트 모드: 흰 종이 위의 먹색 글자, 얇은 선
+   - 화이트 모드: 흰 종이 위의 짙은 남색 글자, 얇은 선. 회색은 강조색(남보라)과 어울리도록 푸른 기가 도는
+     회색(slate)으로 통일하고, 스포트라이트·주 버튼도 순수한 검정 대신 메인 화면과 같은 깊은 남색을 쓴다.
    - 블랙 모드: 깊은 검정 위의 밝은 회색 글자, 한 단계 밝은 면
-   강조색(--accent)은 "지금 할 차례", 진행 막대, 링크, 초점 표시에만 쓴다.
+   강조색(--accent)은 "지금 할 차례", 진행 막대, 링크, 초점 표시, 선택된 칩에만 쓴다.
    --series-*는 도표(diagrams)용 데이터 색이라 UI 강조색과 따로 둔다. */
 :root {
   color-scheme: light;
@@ -15,25 +16,30 @@
 
   --surface-page: #ffffff;
   --surface-card: #ffffff;
-  --surface-card-2: #f5f5f4;
-  --text-primary: #0a0a0a;
-  --text-body: #262626;
-  --text-secondary: #525252;
-  --text-muted: #737373;
-  --border-hairline: rgba(10, 10, 10, 0.08);
-  --border-strong: rgba(10, 10, 10, 0.16);
+  --surface-card-2: #f1f4f9;
+  --text-primary: #0f172a;
+  --text-body: #1e293b;
+  --text-secondary: #475569;
+  /* 흰 바탕 5.9:1, 옅은 면(--surface-card-2) 위에서도 5.3:1 */
+  --text-muted: #5b6577;
+  --border-hairline: rgba(15, 23, 42, 0.09);
+  --border-strong: rgba(15, 23, 42, 0.18);
 
   --accent: #3451d1;
   --on-accent: #ffffff;
-  /* 주 버튼·스포트라이트: 화이트 모드에서는 먹색, 블랙 모드에서는 흰색 */
-  --inverse-bg: #0a0a0a;
+  /* 주 버튼: 화이트 모드에서는 짙은 남색, 블랙 모드에서는 흰색 */
+  --inverse-bg: #0f172a;
   --inverse-fg: #ffffff;
-  --inverse-hover: #2a2a2a;
-  --spotlight-bg: #0a0a0a;
-  --spotlight-ring: rgba(255, 255, 255, 0.06);
+  --inverse-hover: #26324a;
+  /* 스포트라이트: 메인 화면(.journey-theme)과 같은 계열의 깊은 남색 면 */
+  --spotlight-bg: #0c1326;
+  --spotlight-ring: rgba(138, 184, 255, 0.14);
+  /* 선택된 칩: 화이트 모드에서는 강조색을 옅게 깐 알약, 블랙 모드에서는 흰 알약 */
+  --chip-active-bg: color-mix(in srgb, var(--accent) 10%, var(--surface-card));
+  --chip-active-fg: var(--accent);
 
-  --shadow-card: 0 1px 2px rgba(10, 10, 10, 0.03);
-  --shadow-raised: 0 16px 40px -20px rgba(10, 10, 10, 0.22), 0 2px 6px -3px rgba(10, 10, 10, 0.06);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-raised: 0 16px 40px -20px rgba(15, 23, 42, 0.28), 0 2px 6px -3px rgba(15, 23, 42, 0.08);
 
   /* 핵심·보충·심화 */
   --tier-core: #3451d1;
@@ -49,14 +55,15 @@
   /* 코드 강조색: 밝은 바탕에서도 4.5:1 이상 */
   --syn-keyword: #7c3aed;
   --syn-string: #0f766e;
-  --syn-comment: #737373;
+  --syn-comment: #64748b;
   --syn-number: #b45309;
   --syn-call: #1d4ed8;
   --syn-builtin: #be185d;
-  --code-bg: #f6f6f5;
+  --code-bg: #f6f8fb;
 
   --status-good: #15803d;
-  --status-warning: #ca8a04;
+  /* 글자로도 쓰므로 흰 바탕에서 4.5:1 이상 */
+  --status-warning: #a16207;
   --status-serious: #c2410c;
   --status-critical: #dc2626;
   --status-bad: var(--status-critical);
@@ -100,6 +107,8 @@
     --inverse-hover: #ffffff;
     --spotlight-bg: #141414;
     --spotlight-ring: rgba(255, 255, 255, 0.1);
+    --chip-active-bg: var(--inverse-bg);
+    --chip-active-fg: var(--inverse-fg);
 
     --shadow-card: none;
     --shadow-raised: 0 18px 44px -22px rgba(0, 0, 0, 0.9);
@@ -121,15 +130,7 @@
     --syn-builtin: #f9a8d4;
     --code-bg: #161616;
 
-    --syn-keyword: #c4b5fd;
-  --syn-string: #5eead4;
-  --syn-comment: #8a8a8a;
-  --syn-number: #fdba74;
-  --syn-call: #93c5fd;
-  --syn-builtin: #f9a8d4;
-  --code-bg: #161616;
-
-  --status-good: #4ade80;
+    --status-good: #4ade80;
     --status-warning: #facc15;
     --status-serious: #fb923c;
     --status-critical: #f87171;
@@ -164,6 +165,8 @@
   --inverse-hover: #ffffff;
   --spotlight-bg: #141414;
   --spotlight-ring: rgba(255, 255, 255, 0.1);
+  --chip-active-bg: var(--inverse-bg);
+  --chip-active-fg: var(--inverse-fg);
 
   --shadow-card: none;
   --shadow-raised: 0 18px 44px -22px rgba(0, 0, 0, 0.9);
@@ -176,6 +179,14 @@
   --phase-2: #5fd0d6;
   --phase-3: #b4a2ff;
   --phase-4: #f2b35b;
+
+  --syn-keyword: #c4b5fd;
+  --syn-string: #5eead4;
+  --syn-comment: #8a8a8a;
+  --syn-number: #fdba74;
+  --syn-call: #93c5fd;
+  --syn-builtin: #f9a8d4;
+  --code-bg: #161616;
 
   --status-good: #4ade80;
   --status-warning: #facc15;
@@ -525,8 +536,9 @@ code {
     color: var(--text-primary);
   }
   .chip[aria-current] {
-    background: var(--inverse-bg);
-    color: var(--inverse-fg);
+    background: var(--chip-active-bg);
+    color: var(--chip-active-fg);
+    font-weight: 600;
   }
 
   /* 진행 막대 */
