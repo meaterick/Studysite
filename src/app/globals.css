@@ -662,7 +662,8 @@ code {
 /* ─── 메인 화면 ────────────────────────────────────────────────
    거의 검은 배경, 흰 글자의 밝기 차이, 강조색 하나, 얇은 선으로만 구성한다.
    기본(자바스크립트 없음·동작 줄이기): 장면을 세로로 차례대로 보여 준다.
-   html[data-motion="full"]: 무대를 화면에 고정하고 장면을 깊이 방향으로 이어 놓는다(Journey.tsx). */
+   html[data-motion="full"]: 화면 한 장 크기의 덱에서 장면을 한 장씩 넘긴다(Journey.tsx).
+   덱은 스크롤되지 않으므로 휴대폰 브라우저의 주소창·도구 막대가 움직이지 않고, 장면 전환은 정해진 길이의 CSS 전환이다. */
 .journey-theme {
   /* 회색빛을 피하려고 순수한 검정·회색 대신 아주 깊은 남색 바탕과 푸른 기가 도는 흰 글자를 쓴다. */
   --journey-accent: #8ab8ff;
@@ -681,15 +682,36 @@ code {
   background-clip: text;
   color: transparent;
 }
-/* 은은한 빛: 두 개의 큰 색 번짐이 진행도에 따라 천천히 자리를 옮긴다. */
+/* 은은한 빛: 두 개의 큰 색 번짐이 진행도(--p, 0~1)에 따라 천천히 자리를 옮긴다.
+   번짐마다 층을 따로 두고 transform으로 옮겨, 장면을 넘길 때 배경을 다시 칠하지 않는다. */
 .journey-glow {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   pointer-events: none;
-  background:
-    radial-gradient(60vmax 45vmax at calc(18% + var(--journey-progress, 0) * 55%) calc(12% + var(--journey-progress, 0) * 20%), rgba(64, 104, 255, 0.28), transparent 70%),
-    radial-gradient(55vmax 40vmax at calc(88% - var(--journey-progress, 0) * 50%) calc(95% - var(--journey-progress, 0) * 25%), rgba(150, 90, 255, 0.2), transparent 70%),
-    radial-gradient(40vmax 30vmax at 50% 50%, rgba(40, 170, 220, 0.07), transparent 70%);
+  background: radial-gradient(40vmax 30vmax at 50% 50%, rgba(40, 170, 220, 0.07), transparent 70%);
+}
+.journey-glow__blob {
+  position: absolute;
+  transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.journey-glow__blob--a {
+  left: 18%;
+  top: 12%;
+  width: 120vmax;
+  height: 90vmax;
+  margin: -45vmax 0 0 -60vmax;
+  background: radial-gradient(closest-side, rgba(64, 104, 255, 0.28), transparent 70%);
+  transform: translate3d(calc(var(--p, 0) * 55vw), calc(var(--p, 0) * 20vh), 0);
+}
+.journey-glow__blob--b {
+  left: 88%;
+  top: 95%;
+  width: 110vmax;
+  height: 80vmax;
+  margin: -40vmax 0 0 -55vmax;
+  background: radial-gradient(closest-side, rgba(150, 90, 255, 0.2), transparent 70%);
+  transform: translate3d(calc(var(--p, 0) * -50vw), calc(var(--p, 0) * -25vh), 0);
 }
 .journey-stage {
   position: relative;
@@ -711,47 +733,72 @@ code {
   display: none;
 }
 
+/* 덱: 화면 한 장(막대가 보일 때의 높이, svh). 머리글 높이(SiteHeader: h-16 + 아래 선 1px)만큼 위로 당겨
+   머리글이 덱 위에 겹쳐 보이게 한다(장면 위쪽 여백이 그 자리를 비워 둔다). */
 html[data-motion="full"] .journey {
   position: relative;
-  height: calc(var(--scene-count) * 100vh);
-  /* 머리글 높이(SiteHeader: h-16 + 아래 선 1px)만큼 위로 당겨, 무대가 첫 화면부터 화면에 고정된 자리에 놓이게 한다.
-     (머리글은 고정된 무대 위에 겹쳐 보인다 — 장면 위쪽 여백이 그 자리를 비워 둔다.)
-     당기지 않으면 첫 화면에서만 무대가 머리글 아래에 놓여, 처음 스크롤하는 동안 무대 전체가 밀려 올라가고
-     왼쪽 아래 장면 번호도 화면 밖에서 올라온 뒤에야 3D 전환이 시작되어 한 번 끊겨 보인다. */
-  margin-top: calc(-4rem - 1px);
-}
-/* 휴대폰 브라우저의 주소창·아래 도구 막대는 스크롤할 때 숨겨졌다 나타난다. 그때마다 크기를 다시 재서 맞추면 화면이 튀므로,
-   크기가 변하지 않는 두 기준만 쓴다(Journey.tsx도 이 크기를 읽기만 한다).
-   - 무대(배경·진행 표시): 막대가 모두 숨겨졌을 때의 높이(lvh). 막대가 사라져도 아래가 비지 않는다.
-   - 장면 상자: 막대가 모두 보일 때의 높이(svh). 막대가 있어도 내용이 가려지지 않고, 막대가 움직여도 내용은 그대로다.
-   lvh·svh를 모르는 옛 브라우저는 vh를 쓴다(휴대폰 브라우저에서 vh는 lvh와 같다). */
-html[data-motion="full"] .journey-stage {
-  position: sticky;
-  top: 0;
   height: 100vh;
-  height: 100lvh;
+  height: 100svh;
+  margin-top: calc(-4rem - 1px);
+  /* clip: hidden과 달리 주소의 #장면이나 포커스 이동이 덱 안쪽을 스크롤시키지 못한다. */
   overflow: hidden;
+  overflow: clip;
+}
+html[data-motion="full"] .journey-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  overflow: clip;
   perspective: 1400px;
   perspective-origin: 50% 45%;
-  perspective-origin: 50% 45svh;
 }
 html[data-motion="full"] .journey-world {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
 }
+/* 장면 상태: current(보이는 장면) · past(지나간 장면, 카메라 쪽으로 다가오며 사라짐) · future(다음 장면, 멀리 깊은 곳).
+   들어오는 장면은 current 규칙의 전환(천천히 멈추며 다가옴), 나가는 장면은 past·future 규칙의 전환(빠르게 흐려짐)을 쓴다.
+   멈춘 장면은 transform이 none이라 글자가 선명하다. 자바스크립트가 상태를 붙이기 전에는 첫 장면만 보인다. */
 html[data-motion="full"] .journey-scene {
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 100vh;
-  height: 100svh;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 5rem 1.25rem 4.5rem;
   border: 0;
-  will-change: transform, opacity;
   backface-visibility: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 90px, -1200px) rotateX(-6deg);
+  transition:
+    transform 0.7s cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 0.38s ease,
+    visibility 0s linear 0.7s;
+}
+html[data-motion="full"] .journey-scene[data-state="past"] {
+  transform: translate3d(0, -60px, 520px);
+}
+html[data-motion="full"] .journey-scene[data-state="current"],
+html[data-motion="full"] .journey-world:not([data-deck]) > .journey-scene:first-child {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.6s ease 0.12s,
+    visibility 0s;
+}
+/* 손가락으로 끄는 동안: 보이는 장면이 손가락을 따라 조금 움직인다(놓으면 위 전환으로 넘어가거나 제자리로 돌아온다). */
+html[data-motion="full"] .journey-world[data-dragging] > .journey-scene[data-state="current"] {
+  transform: translate3d(0, calc(var(--drag, 0) * 1px), 0);
+  opacity: calc(1 - var(--drag-abs, 0) / 400);
+  transition: none;
+}
+/* 주소(#장면)로 바로 들어왔을 때는 전환 없이 그 장면을 보여 준다. */
+html[data-motion="full"] .journey-world[data-instant] > .journey-scene {
+  transition: none;
 }
 /* 좁은 화면에는 오른쪽 아래 SCROLL 표시가 없고 진행 번호만 한 줄 있으므로 아래 여백을 줄여 장면을 덜 축소한다. */
 @media (max-width: 767px) {
@@ -770,8 +817,11 @@ html[data-motion="full"] .journey-progress {
   left: 0;
   top: 0;
   height: 1px;
-  width: calc(var(--journey-progress, 0) * 100%);
+  width: 100%;
   background: var(--journey-accent);
+  transform: scaleX(var(--p, 0));
+  transform-origin: left center;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 3;
 }
 
@@ -780,9 +830,7 @@ html[data-motion="full"] .journey-rail {
   display: block;
   position: absolute;
   left: 1.5rem;
-  /* 무대(lvh) 바닥이 아니라 막대가 보일 때의 화면 바닥(svh)에 맞춘다: 막대에 가리지 않고, 막대가 움직여도 제자리에 있다. */
   bottom: 1.5rem;
-  bottom: calc(1.5rem + 100lvh - 100svh);
   z-index: 3;
 }
 .journey-rail ol {
@@ -823,7 +871,6 @@ html[data-motion="full"] .journey-next {
   position: absolute;
   right: 1.5rem;
   bottom: 1.5rem;
-  bottom: calc(1.5rem + 100lvh - 100svh);
   z-index: 3;
   flex-direction: column;
   align-items: center;
@@ -870,6 +917,7 @@ html[data-motion="full"] .journey-next {
   html[data-motion="full"] .journey {
     height: auto !important;
     margin-top: 0;
+    overflow: visible;
   }
   html[data-motion="full"] .journey-stage,
   html[data-motion="full"] .journey-world,
@@ -878,7 +926,6 @@ html[data-motion="full"] .journey-next {
     height: auto !important;
     transform: none !important;
     opacity: 1 !important;
-    filter: none !important;
     visibility: visible !important;
   }
 }
