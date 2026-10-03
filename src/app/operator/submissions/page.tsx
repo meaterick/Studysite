@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
-import { listSubmissions, latestGrade, latestVersion, type SubmissionStatus } from "@/lib/submissionStore";
+import { listSubmissionSummaries, type SubmissionStatus } from "@/lib/submissionStore";
 import { listUsers } from "@/lib/userStore";
 import { WEEKS } from "@/content/weeks";
-import { listConversations, unreadCount } from "@/lib/chatStore";
+import { listConversationSummaries } from "@/lib/chatStore";
 import { formatDateTime } from "@/lib/datetime";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
@@ -30,7 +30,7 @@ export default async function SubmissionsPage({
   await requireAdmin("/operator/submissions");
   const { week, status } = await searchParams;
   const users = new Map(listUsers().map((u) => [u.id, u]));
-  const all = listSubmissions();
+  const all = listSubmissionSummaries();
   const filtered = all.filter(
     (s) => (!week || s.weekSlug === week) && (!status || s.status === status)
   );
@@ -38,7 +38,7 @@ export default async function SubmissionsPage({
   const order: Record<SubmissionStatus, number> = { submitted: 0, revision: 1, graded: 2 };
   filtered.sort((a, b) => order[a.status] - order[b.status] || a.updatedAt.localeCompare(b.updatedAt));
   const pendingCount = all.filter((s) => s.status === "submitted").length;
-  const unansweredThreads = listConversations().filter((c) => unreadCount(c, "admin") > 0);
+  const unansweredThreads = listConversationSummaries().filter((c) => c.unreadForAdmin > 0);
 
   const filterHref = (next: { week?: string; status?: string }) => {
     const params = new URLSearchParams();
@@ -70,14 +70,13 @@ export default async function SubmissionsPage({
           <ul className="rows border-y border-[var(--border-hairline)]">
             {unansweredThreads.map((t) => {
               const u = users.get(t.userId);
-              const last = t.messages[t.messages.length - 1];
               return (
                 <li key={t.userId}>
                   <Link href={`/operator/chat/${t.userId}`} className="group row-hover -mx-3 flex items-center gap-4 rounded-xl px-3 py-3.5 text-sm">
                     <span className="min-w-0 flex-1">
                       <span className="font-medium text-ink">{u?.name ?? "(탈퇴한 사용자)"}</span>
                       <span className="ml-2 text-xs tabular-nums text-ink-muted">{formatDateTime(t.updatedAt)}</span>
-                      <span className="mt-0.5 block truncate text-ink-muted">{last?.text.slice(0, 120)}</span>
+                      <span className="mt-0.5 block truncate text-ink-muted">{t.lastText?.slice(0, 120)}</span>
                     </span>
                     <span className="shrink-0 text-[13px] font-medium text-ink">답변하기</span>
                     <Icon name="chevronRight" size={16} className="shrink-0 text-ink-muted transition group-hover:translate-x-0.5" />
@@ -122,8 +121,7 @@ export default async function SubmissionsPage({
             {filtered.map((s) => {
               const w = WEEKS.find((x) => x.slug === s.weekSlug);
               const user = users.get(s.userId);
-              const grade = latestGrade(s);
-              const latest = latestVersion(s);
+              const grade = s.latestGrade;
               return (
                 <tr key={s.id}>
                   <td>
@@ -137,8 +135,8 @@ export default async function SubmissionsPage({
                     <span className="font-medium text-ink">{user?.name ?? "(탈퇴한 사용자)"}</span>
                     <span className="block text-xs text-ink-muted">{user?.email}</span>
                   </td>
-                  <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">{formatDateTime(latest.submittedAt)}</td>
-                  <td className="tabular-nums text-ink-secondary">v{latest.version}</td>
+                  <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">{formatDateTime(s.latestSubmittedAt)}</td>
+                  <td className="tabular-nums text-ink-secondary">v{s.latestVersion}</td>
                   <td className="tabular-nums text-ink-secondary">{grade?.decision === "graded" ? `${grade.score}/${grade.maxScore}` : "-"}</td>
                   <td className="text-right">
                     <Link href={`/operator/submissions/${s.id}`} className={`btn btn-sm ${s.status === "submitted" ? "btn-primary" : "btn-secondary"}`}>

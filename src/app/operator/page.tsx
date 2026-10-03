@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
-import { listSubmissions } from "@/lib/submissionStore";
+import { countSubmissionsByStatus } from "@/lib/submissionStore";
 import { adminUnreadTotal } from "@/lib/chatView";
-import { listUsers } from "@/lib/userStore";
+import { countUsersByRole } from "@/lib/userStore";
 import PageHeader from "@/components/PageHeader";
 import NextStep from "@/components/NextStep";
 
@@ -11,14 +11,15 @@ export const metadata = { title: "운영자 대시보드" };
 // 운영자 화면 사이 이동은 위의 운영자 메뉴가 맡는다. 대시보드는 지금 할 일과 숫자 네 개만 보여 준다.
 export default async function OperatorHome() {
   await requireAdmin("/operator");
-  const submissions = listSubmissions();
-  const pending = submissions.filter((s) => s.status === "submitted").length;
+  const byStatus = countSubmissionsByStatus();
+  const pending = byStatus.submitted;
+  const totalSubmissions = byStatus.submitted + byStatus.graded + byStatus.revision;
   const questions = adminUnreadTotal().conversations;
-  const members = listUsers().filter((u) => u.role !== "admin").length;
+  const members = countUsersByRole().member;
   const stats = [
     { label: "채점 대기", value: pending, href: "/operator/submissions?status=submitted", hot: pending > 0 },
     { label: "새 메시지", value: questions, href: "/operator/chat", hot: questions > 0 },
-    { label: "전체 제출", value: submissions.length, href: "/operator/submissions", hot: false },
+    { label: "전체 제출", value: totalSubmissions, href: "/operator/submissions", hot: false },
     { label: "스터디원", value: members, href: "/operator/members", hot: false },
   ];
   return (

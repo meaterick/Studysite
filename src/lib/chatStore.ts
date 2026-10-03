@@ -1,18 +1,11 @@
 import "server-only";
-import fs from "fs";
-import path from "path";
 import crypto from "crypto";
 import { EventEmitter } from "events";
+import { all, get, run, tx } from "./db";
 
-// 스터디원 ↔ 운영자 채팅. 스터디원마다 대화 하나를 두고, 과제와 상관없이 언제든 메시지를
-// 주고받는다(운영자는 누구나 답할 수 있다). 읽음 시각을 양쪽에 따로 기록해 새 메시지를 표시하고,
-// 메시지가 바뀌면 같은 프로세스 안의 구독자(SSE 스트림)에게 곧바로 알린다.
-//
-// 예전의 과제별 대화(threads.json)가 있으면 처음 읽을 때 한 번 이 형식으로 옮긴다.
-
-const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(process.cwd(), "data");
-const CHATS_FILE = path.join(DATA_DIR, "chats.json");
-const LEGACY_THREADS_FILE = path.join(DATA_DIR, "threads.json");
+// 스터디원 ↔ 운영자 채팅. 스터디원마다 대화 하나를 두고(conversations), 과제와 상관없이 언제든 메시지를
+// 주고받는다(chat_messages, 운영자는 누구나 답할 수 있다). 읽음 시각을 양쪽에 따로 기록해 새 메시지를
+// 표시하고, 메시지가 바뀌면 같은 프로세스 안의 구독자(SSE 스트림)에게 곧바로 알린다.
 
 export const CHAT_LIMITS = { messageMax: 4000, messagesMax: 1000 } as const;
 
@@ -37,72 +30,6 @@ export interface Conversation {
   updatedAt: string;
 }
 
-// ─── 저장 ────────────────────────────────────────────────────────────────
-
-interface LegacyThread {
-  userId: string;
-  weekSlug: string;
-  messages: Omit<ChatMessage, "topic">[];
-  memberReadAt?: string;
-  adminReadAt?: string;
-  updatedAt: string;
-}
-
-function migrateLegacyThreads() {
-  if (fs.existsSync(CHATS_FILE) || !fs.existsSync(LEGACY_THREADS_FILE)) return;
-  let legacy: LegacyThread[];
-  try {
-    const parsed = JSON.parse(fs.readFileSync(LEGACY_THREADS_FILE, "utf8"));
-    legacy = Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return;
-  }
-  const byUser = new Map<string, Conversation>();
-  const maxIso = (a?: string, b?: string) => (!a ? b : !b ? a : a > b ? a : b);
-  for (const t of legacy) {
-    const conv = byUser.get(t.userId) ?? { userId: t.userId, messages: [], updatedAt: t.updatedAt };
-    const week = /^week(\d+)$/.exec(t.weekSlug)?.[1];
-    const topic = week ? `${week}주차 과제` : "과제";
-    conv.messages.push(...t.messages.map((m) => ({ ...m, topic })));
-    conv.memberReadAt = maxIso(conv.memberReadAt, t.memberReadAt);
-    conv.adminReadAt = maxIso(conv.adminReadAt, t.adminReadAt);
-    conv.updatedAt = maxIso(conv.updatedAt, t.updatedAt) ?? t.updatedAt;
-    byUser.set(t.userId, conv);
-  }
-  for (const conv of byUser.values()) {
-    conv.messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    conv.messages = conv.messages.slice(-CHAT_LIMITS.messagesMax);
-  }
-  writeAll([...byUser.values()]);
-  // 내용은 모두 chats.json으로 옮겼으므로, 탈퇴 시 지워지지 않는 사본이 남지 않도록 원본을 없앤다.
-  fs.rmSync(LEGACY_THREADS_FILE, { force: true });
-}
-
-function readAll(): Conversation[] {
-  migrateLegacyThreads();
-  if (!fs.existsSync(CHATS_FILE)) return [];
-  try {
-    const parsed = JSON.parse(fs.readFileSync(CHATS_FILE, "utf8"));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeAll(next: Conversation[]) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const tmp = `${CHATS_FILE}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(next, null, 2), "utf8");
-  fs.renameSync(tmp, CHATS_FILE);
-}
-
-let writeChain: Promise<unknown> = Promise.resolve();
-function enqueue<T>(task: () => T): Promise<T> {
-  const run = writeChain.then(task);
-  writeChain = run.catch(() => undefined);
-  return run;
-}
-
 // ─── 변경 알림 ───────────────────────────────────────────────────────────
 // 서버는 PM2 fork 모드 단일 프로세스로 돈다(ecosystem.config.js). 개발 서버의 모듈 재로딩에도
 // 구독자가 끊기지 않도록 이벤트 버스는 globalThis에 하나만 둔다.
@@ -118,18 +45,48 @@ export function subscribeChat(listener: (userId: string) => void): () => void {
   };
 }
 
-function notify(userId: string) {
+/** 대화가 바뀌었음을 열려 있는 채팅 창에 알린다(계정 삭제처럼 이 모듈 밖에서 대화가 지워질 때도 부른다). */
+export function notifyChatChange(userId: string): void {
   bus.emit("change", userId);
 }
 
-// ─── 조회·쓰기 ───────────────────────────────────────────────────────────
+// ─── 조회 ────────────────────────────────────────────────────────────────
 
-export function findConversation(userId: string): Conversation | undefined {
-  return readAll().find((c) => c.userId === userId);
+interface MessageRow {
+  id: string;
+  author_id: string;
+  author_name: string;
+  role: ChatRole;
+  text: string;
+  created_at: string;
+  topic: string | null;
 }
 
-export function listConversations(): Conversation[] {
-  return readAll().sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+export function findConversation(userId: string): Conversation | undefined {
+  const conv = get<{ member_read_at: string | null; admin_read_at: string | null; updated_at: string }>(
+    "SELECT member_read_at, admin_read_at, updated_at FROM conversations WHERE user_id = ?",
+    userId
+  );
+  if (!conv) return undefined;
+  const messages = all<MessageRow>(
+    "SELECT id, author_id, author_name, role, text, created_at, topic FROM chat_messages WHERE user_id = ? ORDER BY created_at, rowid",
+    userId
+  );
+  return {
+    userId,
+    messages: messages.map((m) => ({
+      id: m.id,
+      authorId: m.author_id,
+      authorName: m.author_name,
+      role: m.role,
+      text: m.text,
+      createdAt: m.created_at,
+      topic: m.topic ?? undefined,
+    })),
+    memberReadAt: conv.member_read_at ?? undefined,
+    adminReadAt: conv.admin_read_at ?? undefined,
+    updatedAt: conv.updated_at,
+  };
 }
 
 /** 상대방이 보낸 메시지 중 내가 아직 읽지 않은 것의 수 */
@@ -139,70 +96,141 @@ export function unreadCount(conv: Conversation | undefined, viewer: ChatRole): n
   return conv.messages.filter((m) => m.role !== viewer && (!readAt || m.createdAt > readAt)).length;
 }
 
+/** 운영자 목록용: 대화마다 마지막 메시지와 운영자가 읽지 않은 메시지 수(최근 대화 순) */
+export interface ConversationSummary {
+  userId: string;
+  updatedAt: string;
+  lastText?: string;
+  lastRole?: ChatRole;
+  unreadForAdmin: number;
+}
+
+export function listConversationSummaries(): ConversationSummary[] {
+  const rows = all<{ user_id: string; updated_at: string; last_text: string | null; last_role: ChatRole | null; unread: number }>(
+    `SELECT c.user_id, c.updated_at, last.text AS last_text, last.role AS last_role,
+            (SELECT COUNT(*) FROM chat_messages m
+              WHERE m.user_id = c.user_id AND m.role = 'member'
+                AND (c.admin_read_at IS NULL OR m.created_at > c.admin_read_at)) AS unread
+       FROM conversations c
+       LEFT JOIN chat_messages last ON last.rowid = (
+         SELECT rowid FROM chat_messages WHERE user_id = c.user_id ORDER BY created_at DESC, rowid DESC LIMIT 1)
+      ORDER BY c.updated_at DESC`
+  );
+  return rows.map((r) => ({
+    userId: r.user_id,
+    updatedAt: r.updated_at,
+    lastText: r.last_text ?? undefined,
+    lastRole: r.last_role ?? undefined,
+    unreadForAdmin: r.unread,
+  }));
+}
+
+/** 운영자가 읽지 않은 메시지가 있는 대화 수와 메시지 수 */
+export function adminUnreadTotals(): { conversations: number; messages: number } {
+  const row = get<{ conversations: number; messages: number }>(
+    `SELECT COUNT(DISTINCT m.user_id) AS conversations, COUNT(*) AS messages
+       FROM chat_messages m JOIN conversations c ON c.user_id = m.user_id
+      WHERE m.role = 'member' AND (c.admin_read_at IS NULL OR m.created_at > c.admin_read_at)`
+  );
+  return { conversations: row?.conversations ?? 0, messages: row?.messages ?? 0 };
+}
+
+// ─── 쓰기 ────────────────────────────────────────────────────────────────
+
+const INSERT_MESSAGE =
+  "INSERT INTO chat_messages (id, user_id, author_id, author_name, role, text, created_at, topic) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+/** 대화 하나를 메시지까지 통째로 써 넣는다(같은 사용자의 대화가 있으면 바꾼다). 옛 JSON 가져오기에 쓴다. */
+export function replaceConversation(conv: Conversation): void {
+  tx(() => {
+    run("DELETE FROM conversations WHERE user_id = ?", conv.userId);
+    run(
+      "INSERT INTO conversations (user_id, member_read_at, admin_read_at, updated_at) VALUES (?, ?, ?, ?)",
+      conv.userId,
+      conv.memberReadAt,
+      conv.adminReadAt,
+      conv.updatedAt
+    );
+    for (const m of conv.messages.slice(-CHAT_LIMITS.messagesMax)) {
+      run(INSERT_MESSAGE, m.id, conv.userId, m.authorId, m.authorName, m.role, m.text, m.createdAt, m.topic);
+    }
+  });
+}
+
 export function postChatMessage(input: {
   userId: string;
   author: { id: string; name: string; role: ChatRole };
   text: string;
 }): Promise<ChatMessage> {
-  return enqueue(() => {
-    const all = readAll();
-    const now = new Date().toISOString();
-    let conv = all.find((c) => c.userId === input.userId);
-    if (!conv) {
-      conv = { userId: input.userId, messages: [], updatedAt: now };
-      all.push(conv);
-    }
-    const message: ChatMessage = {
-      id: crypto.randomUUID(),
-      authorId: input.author.id,
-      authorName: input.author.name,
-      role: input.author.role,
-      text: input.text,
-      createdAt: now,
-    };
-    conv.messages.push(message);
-    conv.messages = conv.messages.slice(-CHAT_LIMITS.messagesMax);
-    // 자기가 보낸 메시지까지는 읽은 것으로 본다.
-    if (input.author.role === "admin") conv.adminReadAt = now;
-    else conv.memberReadAt = now;
-    conv.updatedAt = now;
-    writeAll(all);
-    notify(input.userId);
-    return message;
-  });
+  const message: ChatMessage = {
+    id: crypto.randomUUID(),
+    authorId: input.author.id,
+    authorName: input.author.name,
+    role: input.author.role,
+    text: input.text,
+    createdAt: new Date().toISOString(),
+  };
+  try {
+    tx(() => {
+      const now = message.createdAt;
+      run("INSERT INTO conversations (user_id, updated_at) VALUES (?, ?) ON CONFLICT (user_id) DO NOTHING", input.userId, now);
+      run(INSERT_MESSAGE, message.id, input.userId, message.authorId, message.authorName, message.role, message.text, now, null);
+      // 대화마다 최근 메시지만 남긴다.
+      run(
+        `DELETE FROM chat_messages WHERE user_id = ? AND rowid NOT IN (
+           SELECT rowid FROM chat_messages WHERE user_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?)`,
+        input.userId,
+        input.userId,
+        CHAT_LIMITS.messagesMax
+      );
+      // 자기가 보낸 메시지까지는 읽은 것으로 본다.
+      run(
+        `UPDATE conversations SET ${input.author.role === "admin" ? "admin_read_at" : "member_read_at"} = ?, updated_at = ? WHERE user_id = ?`,
+        now,
+        now,
+        input.userId
+      );
+    });
+  } catch (err) {
+    return Promise.reject(err);
+  }
+  notifyChatChange(input.userId);
+  return Promise.resolve(message);
 }
 
 export function markChatRead(userId: string, viewer: ChatRole): Promise<void> {
-  return enqueue(() => {
-    const all = readAll();
-    const conv = all.find((c) => c.userId === userId);
-    if (!conv || unreadCount(conv, viewer) === 0) return;
-    const now = new Date().toISOString();
-    if (viewer === "admin") conv.adminReadAt = now;
-    else conv.memberReadAt = now;
-    writeAll(all);
-    notify(userId);
+  const column = viewer === "admin" ? "admin_read_at" : "member_read_at";
+  const changed = tx(() => {
+    const conv = get<{ read_at: string | null }>(`SELECT ${column} AS read_at FROM conversations WHERE user_id = ?`, userId);
+    if (!conv) return false;
+    const unread = get(
+      "SELECT 1 FROM chat_messages WHERE user_id = ? AND role != ? AND (? IS NULL OR created_at > ?) LIMIT 1",
+      userId,
+      viewer,
+      conv.read_at,
+      conv.read_at
+    );
+    if (!unread) return false;
+    run(`UPDATE conversations SET ${column} = ? WHERE user_id = ?`, new Date().toISOString(), userId);
+    return true;
   });
+  if (changed) notifyChatChange(userId);
+  return Promise.resolve();
 }
 
+/** 한 스터디원과의 대화를 지운다. */
 export function deleteUserChats(userId: string): Promise<void> {
-  return enqueue(() => {
-    const all = readAll();
-    const next = all.filter((c) => c.userId !== userId);
-    if (next.length !== all.length) {
-      writeAll(next);
-      notify(userId);
-    }
-  });
+  if (run("DELETE FROM conversations WHERE user_id = ?", userId).changes > 0) notifyChatChange(userId);
+  return Promise.resolve();
 }
 
 /** 운영자가 모든 대화를 지운다. 지운 대화 수를 돌려준다. 열려 있는 채팅 창에도 곧바로 반영된다. */
 export function deleteAllChats(): Promise<number> {
-  return enqueue(() => {
-    const all = readAll();
-    if (all.length === 0) return 0;
-    writeAll([]);
-    for (const c of all) notify(c.userId);
-    return all.length;
+  const ids = tx(() => {
+    const ids = all<{ user_id: string }>("SELECT user_id FROM conversations").map((r) => r.user_id);
+    run("DELETE FROM conversations");
+    return ids;
   });
+  for (const id of ids) notifyChatChange(id);
+  return Promise.resolve(ids.length);
 }

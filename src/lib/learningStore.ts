@@ -1,14 +1,9 @@
 import "server-only";
-import fs from "fs";
-import path from "path";
+import { all, get, run, tx } from "./db";
 
-// 스터디원 한 명의 학습 기록(단계 진행·확인 문제·서술형 답·백지공부)을 서버의
-// data/learning.json에 저장한다. 과제 제출물은 용량이 커서 submissionStore가 따로 관리한다.
+// 스터디원 한 명의 학습 기록(단계 진행·확인 문제·서술형 답·백지공부·코딩 실습·퀴즈)을 DB에 저장한다.
 // 로그인한 사용자만 학습 구역에 들어올 수 있으므로 서버 기록을 진도의 "원본"으로 쓰고,
 // 덕분에 다른 기기에서 로그인해도 이어서 학습할 수 있다.
-
-const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(process.cwd(), "data");
-const LEARNING_FILE = path.join(DATA_DIR, "learning.json");
 
 export type QuizReviewStatus = "correct" | "incorrect";
 
@@ -96,66 +91,146 @@ export interface LabWeekState {
   quiz: Record<string, LabQuizState>;
 }
 
-type LearningFile = Record<string, Partial<LearningRecord>>;
+// ─── 기록 ↔ 행 ───────────────────────────────────────────────────────────
+// 학습 기록 하나를 항목별 행(learning_items)으로 나눠 저장한다. 화면 코드는 지금처럼 기록 전체를 객체로
+// 읽고 고치며, 저장할 때는 고치기 전과 비교해 바뀐 항목의 행만 쓴다.
 
-function normalize(record: Partial<LearningRecord> | undefined): LearningRecord {
-  return { ...record, sections: record?.sections ?? {}, worksheets: record?.worksheets ?? {} };
+type ItemKind = "section" | "worksheet" | "lab_exercise" | "lab_quiz" | "meta";
+
+interface ItemRow {
+  kind: ItemKind;
+  week_slug: string;
+  item_id: string;
+  data: string;
 }
 
-function readAll(): LearningFile {
-  if (!fs.existsSync(LEARNING_FILE)) return {};
-  try {
-    const parsed = JSON.parse(fs.readFileSync(LEARNING_FILE, "utf8"));
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as LearningFile) : {};
-  } catch {
-    return {};
+interface FlatItem extends ItemRow {
+  completedAt: string | null;
+}
+
+const keyOf = (r: Pick<ItemRow, "kind" | "week_slug" | "item_id">) => `${r.kind}\u0001${r.week_slug}\u0001${r.item_id}`;
+
+/** 기록을 행으로 나눈다. sections·worksheets·labs 밖의 필드는 meta 행 하나에 모은다. */
+function flattenLearningRecord(record: Partial<LearningRecord>): FlatItem[] {
+  const items: FlatItem[] = [];
+  const push = (kind: ItemKind, week: string, item: string, value: unknown, completedAt: string | null = null) =>
+    items.push({ kind, week_slug: week, item_id: item, data: JSON.stringify(value), completedAt });
+  for (const [slug, sections] of Object.entries(record.sections ?? {})) {
+    for (const [id, state] of Object.entries(sections ?? {})) push("section", slug, id, state, state?.completedAt ?? null);
+  }
+  for (const [slug, sheet] of Object.entries(record.worksheets ?? {})) push("worksheet", slug, "", sheet);
+  for (const [slug, lab] of Object.entries(record.labs ?? {})) {
+    for (const [id, ex] of Object.entries(lab?.exercises ?? {})) push("lab_exercise", slug, id, ex);
+    for (const [id, q] of Object.entries(lab?.quiz ?? {})) push("lab_quiz", slug, id, q);
+  }
+  const rest: Record<string, unknown> = { ...record };
+  delete rest.sections;
+  delete rest.worksheets;
+  delete rest.labs;
+  push("meta", "", "", rest);
+  return items;
+}
+
+function assemble(rows: ItemRow[]): LearningRecord {
+  const record: LearningRecord = { sections: {}, worksheets: {} };
+  for (const row of rows) {
+    const value = JSON.parse(row.data);
+    switch (row.kind) {
+      case "meta":
+        Object.assign(record, value);
+        break;
+      case "section":
+        (record.sections[row.week_slug] ??= {})[row.item_id] = value;
+        break;
+      case "worksheet":
+        record.worksheets[row.week_slug] = value;
+        break;
+      case "lab_exercise":
+        ((record.labs ??= {})[row.week_slug] ??= { exercises: {}, quiz: {} }).exercises[row.item_id] = value;
+        break;
+      case "lab_quiz":
+        ((record.labs ??= {})[row.week_slug] ??= { exercises: {}, quiz: {} }).quiz[row.item_id] = value;
+        break;
+    }
+  }
+  return record;
+}
+
+const UPSERT_ITEM = `INSERT INTO learning_items (user_id, kind, week_slug, item_id, data, completed_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT (user_id, kind, week_slug, item_id)
+  DO UPDATE SET data = excluded.data, completed_at = excluded.completed_at, updated_at = excluded.updated_at`;
+
+/** 기록 전체를 행으로 써 넣는다(prev에 없거나 내용이 다른 행만 쓰고, record에 없는 행은 지운다). */
+function writeLearningItems(userId: string, record: Partial<LearningRecord>, updatedAt: string, prev: ItemRow[] = []): void {
+  const before = new Map(prev.map((r) => [keyOf(r), r.data]));
+  const next = flattenLearningRecord(record);
+  const nextKeys = new Set<string>();
+  for (const item of next) {
+    const key = keyOf(item);
+    nextKeys.add(key);
+    if (before.get(key) === item.data) continue;
+    run(UPSERT_ITEM, userId, item.kind, item.week_slug, item.item_id, item.data, item.completedAt, updatedAt);
+  }
+  for (const row of prev) {
+    if (!nextKeys.has(keyOf(row))) {
+      run("DELETE FROM learning_items WHERE user_id = ? AND kind = ? AND week_slug = ? AND item_id = ?", userId, row.kind, row.week_slug, row.item_id);
+    }
   }
 }
 
-function writeAll(next: LearningFile) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const tmp = `${LEARNING_FILE}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(next, null, 2), "utf8");
-  fs.renameSync(tmp, LEARNING_FILE);
+function readItems(userId: string): ItemRow[] {
+  return all<ItemRow>("SELECT kind, week_slug, item_id, data FROM learning_items WHERE user_id = ?", userId);
 }
 
-// 읽기-수정-쓰기 전체를 하나의 체인으로 직렬화한다. 읽기를 체인 밖에서 하면
-// 두 사람이 동시에 저장할 때 먼저 쓴 사람의 기록이 덮어써져 사라진다.
-let writeChain: Promise<unknown> = Promise.resolve();
-
-function enqueue<T>(task: () => T): Promise<T> {
-  const run = writeChain.then(task);
-  writeChain = run.catch(() => undefined);
-  return run;
-}
-
+/** 기록을 읽고 고친 뒤 바뀐 부분만 저장한다. 읽기부터 쓰기까지 한 트랜잭션이라 동시 저장에도 안전하다. */
 export function updateLearningRecord<T>(userId: string, mutate: (record: LearningRecord) => T): Promise<T> {
-  return enqueue(() => {
-    const all = readAll();
-    const record = normalize(all[userId]);
-    const result = mutate(record);
-    record.updatedAt = new Date().toISOString();
-    writeAll({ ...all, [userId]: record });
-    return result;
-  });
+  try {
+    return Promise.resolve(
+      tx(() => {
+        const prev = readItems(userId);
+        const record = assemble(prev);
+        const result = mutate(record);
+        record.updatedAt = new Date().toISOString();
+        writeLearningItems(userId, record, record.updatedAt, prev);
+        return result;
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
 }
 
 export function getLearningRecord(userId: string): LearningRecord {
-  return normalize(readAll()[userId]);
+  return assemble(readItems(userId));
 }
 
-export function listLearningRecords(): Record<string, LearningRecord> {
-  return Object.fromEntries(Object.entries(readAll()).map(([id, record]) => [id, normalize(record)]));
+/** 기록 전체를 주어진 내용으로 바꾼다(옛 JSON 가져오기용). */
+export function replaceLearningRecord(userId: string, record: Partial<LearningRecord>, updatedAt: string): void {
+  tx(() => writeLearningItems(userId, record, updatedAt, readItems(userId)));
 }
 
-export function deleteLearningRecord(userId: string): Promise<void> {
-  return enqueue(() => {
-    const all = readAll();
-    if (!(userId in all)) return;
-    const next = { ...all };
-    delete next[userId];
-    writeAll(next);
-  });
+/** 사용자의 학습 기록이 마지막으로 바뀐 시각(기록이 없으면 undefined) */
+export function learningUpdatedAt(userId: string): string | undefined {
+  return get<{ at: string | null }>("SELECT MAX(updated_at) AS at FROM learning_items WHERE user_id = ?", userId)?.at ?? undefined;
+}
+
+/** 사용자별로, 주어진 단계("주차 slug/단계 id") 가운데 완료한 단계 수 */
+export function countCompletedSections(sectionKeys: string[]): Map<string, number> {
+  const rows = all<{ user_id: string; n: number }>(
+    `SELECT user_id, COUNT(*) AS n FROM learning_items
+      WHERE kind = 'section' AND completed_at IS NOT NULL
+        AND (week_slug || '/' || item_id) IN (SELECT value FROM json_each(?))
+      GROUP BY user_id`,
+    JSON.stringify(sectionKeys)
+  );
+  return new Map(rows.map((r) => [r.user_id, r.n]));
+}
+
+/** 사용자별 마지막 학습 기록 시각 */
+export function lastLearningActivity(): Map<string, string> {
+  const rows = all<{ user_id: string; at: string }>("SELECT user_id, MAX(updated_at) AS at FROM learning_items GROUP BY user_id");
+  return new Map(rows.map((r) => [r.user_id, r.at]));
 }
 
 function emptySectionState(): SectionState {

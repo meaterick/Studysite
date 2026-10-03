@@ -52,7 +52,7 @@ npm run start
    - **핵심(초심자)**: 이번 주를 끝내는 데 꼭 필요한 개념. **핵심 단계만 마치면 주차 학습이 완료**되고 백지공부·과제가 열립니다.
    - **보충(중급자)**: 핵심을 실무 도구·다른 방법으로 넓히는 선택 과정. 보충 기록만 남습니다.
    - **심화(전문가)**: 수식 유도·최신 기법·연구 수준의 선택 과정. 심화 단계·심화 실습·과제 심화 문제를 모두 마치면 그 주의 **심화 달성**이 별도로 표시됩니다(`src/lib/achievement.ts`).
-   본문은 핵심 → 보충 → 심화 순서로 배치하고, 단계 번호는 구분 안에서 매깁니다("핵심 3", "심화 1"). 기본 진행 방식은 **미완료 경고**라 순서를 안내만 하고, 앞 단계를 끝내지 않아도 다음 단계·백지공부·과제로 넘어갈 수 있으며 끝내지 않은 단계가 있다는 경고를 보여 줍니다. 운영 설정에서 **잠금**으로 바꾸면 핵심 단계를 하나 끝내야 다음 핵심 단계가 열리고, 보충·심화 단계는 핵심 단계를 모두 마치면 열립니다(`src/lib/settingsStore.ts`, `data/settings.json`).
+   본문은 핵심 → 보충 → 심화 순서로 배치하고, 단계 번호는 구분 안에서 매깁니다("핵심 3", "심화 1"). 기본 진행 방식은 **미완료 경고**라 순서를 안내만 하고, 앞 단계를 끝내지 않아도 다음 단계·백지공부·과제로 넘어갈 수 있으며 끝내지 않은 단계가 있다는 경고를 보여 줍니다. 운영 설정에서 **잠금**으로 바꾸면 핵심 단계를 하나 끝내야 다음 핵심 단계가 열리고, 보충·심화 단계는 핵심 단계를 모두 마치면 열립니다(`src/lib/settingsStore.ts`).
 2. 단계 완료 조건: 객관식 확인 문제 전부 정답. 서술형 문항(직접 쓰고 모범답안과 비교해 자기평가)과 실습은 권장 활동이며 완료 조건에 들어가지 않습니다.
 3. 핵심 단계를 마친 뒤 백지공부와 과제로 마무리합니다(잠금 모드에서는 핵심 단계를 모두 마쳐야 열림). 실습 끝의 "실습을 마쳤습니다" 표시는 완료 조건이 아니고 실습 완료율에만 쓰입니다.
 4. 과제는 과제 탭의 작업 공간에서 진행합니다. 코드 셀은 과제마다 하나의 Python 이름공간을 공유하며(Pyodide, 브라우저 실행),
@@ -97,7 +97,7 @@ npm run start
   - `quiz`: 문항마다 `tier`. `choice`(객관식), `predict`(코드와 기대 출력, 공백 차이는 `normalizeOutput`으로 무시, `alternatives`로 복수 정답), `descriptive`(모범답안·핵심 요소).
   - `assignment`: `requirements`(과제 페이지 상단 요약), `autoTests`(과제 작업 공간의 이름공간에서 실행하는 자동 테스트, `taskId`로 과제 항목에 연결),
     `challenges`(과제 페이지의 심화 문제, 실습과 같은 형식, `tier: "advanced"`).
-  - 채점 프로그램 생성은 `src/lib/labHarness.ts`, 기록은 `src/lib/labActions.ts`(서버 액션, `learning.json`의 `labs`)에 있습니다.
+  - 채점 프로그램 생성은 `src/lib/labHarness.ts`, 기록은 `src/lib/labActions.ts`(서버 액션, 학습 기록의 `labs`)에 있습니다.
 - 커리큘럼 총괄: `src/content/syllabus.ts`, 운영자 전용 문서: `src/content/operator/*.ts`
 - 다이어그램: `src/components/diagrams/*.tsx` (주차별 파일 + `index.tsx`의
   `DIAGRAMS` 레지스트리에 id로 등록). 새 다이어그램을 추가하면 콘텐츠에서
@@ -114,7 +114,7 @@ npm run start
 ## 로그인·관리자 구역
 
 별도 회원가입 화면은 없습니다. Google 로그인 시 Google이 확인한 이메일과 사용자 식별자를
-서버의 `data/users.json`(배포 시에는 `DATA_DIR`, 아래 참고)에 저장하며, 처음 로그인한
+서버 DB(`DATA_DIR/aegis.db`, 아래 "데이터 저장소" 참고)에 저장하며, 처음 로그인한
 사용자의 스터디원 계정을 자동 생성합니다. 이메일·비밀번호 로그인은 제공하지 않습니다.
 세션은 서명된(JWT, `SESSION_SECRET`) httpOnly 쿠키로 관리합니다
 (`src/lib/session.ts`, `src/lib/dal.ts`).
@@ -133,6 +133,7 @@ npm run start
   있습니다. 마지막 남은 관리자 계정은 탈퇴/강등할 수 없습니다.
 - `/operator/members`에서 관리자가 가입자 목록을 보고 권한을 부여/회수하거나
   계정을 삭제할 수 있습니다.
+- `/operator/system`에서 DB·디스크·메모리 상태, 백업 목록(내려받기·지금 백업), 최근 서버 오류를 볼 수 있습니다.
 
 ## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음
 
@@ -209,14 +210,53 @@ Google 자격 증명을 GitHub Actions Secrets로 등록하면 다음 `main` 배
 - `curl -I http://meaterickedu.kro.kr`로 301이 뜨는지, `curl -Ik
   https://meaterickedu.kro.kr`로 200이 뜨는지로 빠르게 확인할 수 있습니다.
 
+## 데이터 저장소와 백업
+
+계정·학습 기록·과제 제출·채팅·운영 설정은 `DATA_DIR/aegis.db`(SQLite) 하나에 저장합니다(`src/lib/db.ts`).
+Node.js에 들어 있는 `node:sqlite`를 쓰므로 따로 설치할 것이 없고, 빌드 서버와 운영 서버의 Node 버전이 달라도 됩니다.
+
+- **쓰기 비용이 사용자 수와 무관합니다.** 예전에는 확인 문제 하나를 풀어도 전체 학습 기록 파일(사용자 수에 비례해 커짐)을
+  통째로 다시 썼지만, 지금은 바뀐 단계·문항의 행만 씁니다. 1,000명 분량(약 120MB)에서 확인 문제 저장은 1~2ms,
+  스터디원 관리·제출함 화면은 전체 기록을 읽지 않고 필요한 숫자만 DB에서 모읍니다.
+- **WAL 모드**라 읽기와 쓰기가 서로 막지 않고, 무중단 배포 중 두 버전이 함께 떠 있어도 같은 DB를 안전하게 씁니다.
+  가입처럼 "확인 후 생성"하는 작업은 트랜잭션 하나로 처리해 동시에 일어나도 겹치지 않습니다.
+- **구조 변경(마이그레이션)** 은 서버가 시작할 때 `src/lib/db.ts`의 `MIGRATIONS` 순서대로 자동 적용되고, 적용 전 DB 스냅숏을
+  `backups/…-pre-migration-v<N>.db`로 남깁니다. 무중단 배포 중에는 이전 버전이 아직 돌고 있으므로 열·표를 **추가만** 하고,
+  지우거나 이름을 바꾸는 변경은 그 열을 더 이상 쓰지 않는 버전을 먼저 배포한 다음에 합니다.
+- **예전 JSON 저장소에서 옮기기** — 서버가 시작할 때 `DATA_DIR`에 `users.json`·`learning.json`·`submissions.json`·
+  `chats.json`(또는 `threads.json`)·`settings.json`이 있으면 DB로 옮깁니다(`src/lib/legacyImport.ts`). 무중단 배포 중
+  이전 버전이 그 사이 JSON에 쓴 내용도 3분 동안 따라잡은 뒤 원본을 `legacy-json/<시각>/`으로 옮겨 6주 동안 보관합니다.
+  JSON을 읽지 못하면 서버가 상태 확인에 실패해 배포가 취소되고, 사이트는 이전 버전으로 계속 동작합니다.
+  옮긴 결과는 `/operator/system`에 표시됩니다.
+- **백업** — 매일 새벽 4시 무렵(한국 시간) DB 전체를 `backups/aegis-<시각>-daily.db.gz`로 백업하고, 최근 7일치는 모두,
+  그 이전 5주는 주마다 하나를 남깁니다(수동·업그레이드 전 백업은 종류별 최근 5개). 어떤 백업도 6주를 넘겨 보관하지 않습니다 —
+  탈퇴한 사용자의 기록이 백업에 남는 기간의 상한으로, 개인정보처리방침에 적혀 있습니다. 서버가 그 시간에 꺼져 있었으면 다시 켜질 때 만듭니다. `/operator/system`에서
+  바로 백업하거나 내려받을 수 있습니다. 같은 디스크의 백업은 실수를 되돌리는 용도이므로, 디스크 고장에 대비하려면
+  가끔 내려받아 두거나 `BACKUP_MIRROR_DIR`(다른 볼륨)을 지정하세요. 첨부 파일(`uploads/`)은 백업에 들어가지 않습니다.
+- **오류 기록** — 요청 처리 중 난 서버 오류는 최근 300건까지 DB에 남아 `/operator/system`에서 볼 수 있습니다(경로만 기록하고
+  쿼리 문자열은 남기지 않습니다). 전체 로그는 `DEPLOY_DIR/logs/`에 있습니다.
+
+백업에서 되돌리기(서버에서):
+
+```bash
+cd /home/ubuntu/aegis-ai-study
+APP="$(cat active-name)"
+pm2 stop "$APP"
+for f in aegis.db aegis.db-wal aegis.db-shm; do [ -f "data/$f" ] && mv "data/$f" "data/$f.before-restore"; done
+gunzip -c data/backups/aegis-<시각>-daily.db.gz > data/aegis.db   # 업그레이드 전 스냅숏(.db)은 cp로 복사
+pm2 start "$APP"
+```
+
+이 저장 방식 이전 버전(JSON 파일)으로 되돌려 배포하면 그 버전은 DB를 읽지 못합니다. 그럴 일이 있으면 먼저
+`legacy-json/<시각>/`의 파일(6주 동안 보관)을 `data/`로 되돌려야 하며, 옮긴 뒤에 생긴 기록은 그 버전에서 보이지 않습니다.
+
 ## 스택
 
 - Next.js 16 (App Router, Server Actions, Turbopack)
 - TypeScript, Tailwind CSS 4
-- 데이터는 서버의 `DATA_DIR`(기본 `data/`)에 JSON 파일로 저장합니다:
-  `users.json`(계정), `learning.json`(단계별 확인 문제·서술형 답·완료 상태, 백지공부, 코딩 실습 채점·힌트 사용·퀴즈 답 기록),
-  `drafts/<사용자 id>/<주차 slug>.json`(과제 작업 공간 초안), `chats.json`(스터디원↔운영자 채팅. 예전 `threads.json`이 있으면 처음 실행할 때 자동으로 옮긴 뒤 지웁니다),
-  `submissions.json`(과제 제출 버전·채점 기록), `uploads/<제출 id>/`(제출본 `notebook-v<N>.json`과 첨부 파일).
+- 데이터는 서버의 `DATA_DIR`(기본 `data/`)에 둡니다. 계정·학습 기록·과제 제출과 채점·채팅·운영 설정은 SQLite DB
+  `aegis.db`에, 과제 작업 공간 초안은 `drafts/<사용자 id>/<주차 slug>.json`에, 제출본(`notebook-v<N>.json`)과 첨부 파일은
+  `uploads/<제출 id>/`에 저장합니다. 자세한 내용은 위 "데이터 저장소와 백업"을 참고하세요.
   계정을 삭제하면 해당 사용자의 학습 기록, 초안, 대화, 제출물이 함께 삭제됩니다.
   첨부 파일은 최대 3개·각 5MB·합계 9MB이며, 제출자 본인과 관리자만 내려받을 수 있습니다.
 - 브라우저 실행 코드는 Pyodide(웹 워커)로 실행됩니다. 학습 자료의 코드 셀은 하나의 이름공간을, 과제 작업 공간은 과제마다 별도의 이름공간을 씁니다.
