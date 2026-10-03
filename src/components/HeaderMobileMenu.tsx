@@ -55,7 +55,7 @@ function MobileMenuPanel({ children }: { children: ReactNode }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-3 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-[var(--border-hairline)] bg-card p-2 shadow-[var(--shadow-raised)]">
+        <div className="absolute right-0 top-full z-50 mt-3 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-[var(--border-hairline)] bg-[var(--menu-bg,var(--surface-card))] p-2 shadow-[var(--shadow-raised)]">
           {children}
         </div>
       )}

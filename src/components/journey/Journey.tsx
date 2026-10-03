@@ -8,7 +8,8 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Reac
 // 장면은 깊이 방향으로 한 줄로 놓여, 다음 장면이 멀리서 조용히 다가오고 지나간 장면은 카메라 쪽으로 흐려지며 사라진다.
 // 배경의 은은한 빛도 진행도에 따라 자리를 옮겨 장면 사이가 끊기지 않는다.
 //
-// - 장면마다 스크롤 한 화면 분량을 배정하고, 앞부분(HOLD)은 장면이 멈춰 있어 읽을 수 있다(이때 변환 0 → 글자 선명).
+// - 장면마다 스크롤 한 화면 분량을 배정한다. 다만 한 화면을 다 내리지 않아도 된다: 조금만 스크롤하고 멈추면
+//   움직이던 방향의 다음(이전) 장면까지 부드럽게 마저 넘어간다(settle). 장면이 멈춘 자리에서는 변환이 0이라 글자가 선명하다.
 // - 장면이 화면보다 크면 자동으로 줄여 맞춘다.
 // - html[data-motion="full"](JavaScript 켜짐 + 동작 줄이기 아님)일 때만 3D 모드가 되고, 그 밖에는 세로 배치로 보인다.
 
@@ -20,7 +21,11 @@ export interface JourneyScene {
 }
 
 const DEPTH = 1200; // 장면 사이 깊이(px)
-const HOLD = 0.38; // 장면마다 멈춰 있는 스크롤 비율
+// 장면 자리에서 아주 조금(화면 높이의 4%) 움직인 것은 장면을 그대로 둔다(손이 살짝 닿은 정도의 흔들림 방지).
+// 크게 두면 스크롤해도 한동안 아무 변화가 없어 "많이 내려야 넘어가는" 느낌이 된다.
+const HOLD = 0.04;
+// 멈춘 뒤 이어서 넘길지 정하는 기준(장면 한 칸 대비 스크롤한 비율). 움직이던 방향으로 이만큼만 움직였어도 그쪽으로 넘긴다.
+const NUDGE = 0.03;
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
@@ -33,16 +38,17 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
   const [active, setActive] = useState(0);
   const n = scenes.length;
 
+  // 장면 i가 멈춰 있는 스크롤 위치. 첫 장면은 문서 맨 위(처음 열었을 때와 같은 모습)다.
   const sceneScrollTop = useCallback((i: number) => {
     const root = rootRef.current;
-    if (!root) return 0;
+    if (!root || i <= 0) return 0;
     return root.getBoundingClientRect().top + window.scrollY + i * window.innerHeight;
   }, []);
 
   const goTo = useCallback(
     (i: number) => {
       const target = Math.max(0, Math.min(n - 1, i));
-      window.scrollTo({ top: sceneScrollTop(target) + 2, behavior: "smooth" });
+      window.scrollTo({ top: sceneScrollTop(target), behavior: "smooth" });
     },
     [n, sceneScrollTop]
   );
@@ -120,8 +126,8 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       if (!raf) raf = requestAnimationFrame(frame);
     };
 
-    // 전환 구간에서 스크롤이 멈추면 장면이 작거나 흐린 채로 남는다. 멈추고 잠시 뒤에도 전환 구간이면
-    // 움직이던 방향으로 전환을 마저 끝낸다. 멈춰 있는 구간(HOLD)은 이미 선명하므로 그대로 둔다.
+    // 스크롤이 장면 자리가 아닌 곳에서 멈추면, 잠시 뒤 움직이던 방향으로 장면 하나를 마저 넘긴다.
+    // 조금만 내려도(NUDGE) 다음 장면으로, 조금만 올려도 이전 장면으로 간다. 방향을 모르면 가까운 쪽으로 간다.
     let settleTimer = 0;
     let touching = false;
     let lastY = window.scrollY;
@@ -129,22 +135,19 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     const settle = () => {
       if (touching) return;
       const vh = window.innerHeight;
-      const top = root.getBoundingClientRect().top + window.scrollY;
-      const raw = (window.scrollY - top) / vh;
-      if (raw <= 0 || raw >= n - 1) return;
-      const i = Math.floor(raw);
-      const u = raw - i;
-      if (u <= HOLD) return;
-      // 화면에 보이는 전환 정도(p)를 기준으로, 움직이던 쪽에 조금 더 기울여 고른다.
-      // 거의 다 넘어온 상태에서 살짝 되돌린 것처럼 눈에 띄지 않는 움직임으로 장면이 크게 바뀌지 않게 한다.
-      const p = smooth((u - HOLD) / (1 - HOLD));
-      const forward = dir > 0 ? p > 0.02 : dir < 0 ? p > 0.9 : p >= 0.5;
-      const target = forward ? top + (i + 1) * vh : Math.floor(top + (i + HOLD) * vh) - 1;
-      window.scrollTo({ top: target, behavior: "smooth" });
+      const y = window.scrollY;
+      const top = root.getBoundingClientRect().top + y;
+      const rest = sceneScrollTop;
+      if (y <= 0 || y >= rest(n - 1)) return; // 맨 위, 또는 마지막 장면 뒤(바닥글)는 그대로 둔다
+      const i = Math.max(0, Math.min(n - 2, Math.floor((y - top) / vh)));
+      const u = (y - rest(i)) / (rest(i + 1) - rest(i));
+      if (u < 0.002 || u > 0.998) return; // 이미 장면 자리
+      const forward = dir > 0 ? u > NUDGE : dir < 0 ? u > 1 - NUDGE : u >= 0.5;
+      window.scrollTo({ top: rest(forward ? i + 1 : i), behavior: "smooth" });
     };
     const queueSettle = () => {
       clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(settle, 140);
+      settleTimer = window.setTimeout(settle, 120);
     };
     const onScroll = () => {
       const y = window.scrollY;
@@ -168,14 +171,14 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     };
     const onFocusIn = (e: FocusEvent) => {
       const idx = sceneRefs.current.findIndex((el) => el?.contains(e.target as Node));
-      if (idx >= 0 && idx !== Math.round(progressRef.current)) window.scrollTo({ top: sceneScrollTop(idx) + 2 });
+      if (idx >= 0 && idx !== Math.round(progressRef.current)) window.scrollTo({ top: sceneScrollTop(idx) });
     };
 
     fit();
     frame();
     if (window.location.hash) {
       const idx = scenes.findIndex((sc) => `#${sc.id}` === window.location.hash);
-      if (idx > 0) window.scrollTo({ top: sceneScrollTop(idx) + 2 });
+      if (idx > 0) window.scrollTo({ top: sceneScrollTop(idx) });
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true });

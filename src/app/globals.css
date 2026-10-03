@@ -881,6 +881,8 @@ body:has(.journey) header {
   --inverse-fg: #050814;
   --inverse-hover: rgba(255, 255, 255, 0.85);
   color: #fff;
+  /* 펼침 메뉴(좁은 화면)는 뒤의 장면이 비치지 않도록 불투명한 면을 쓴다. */
+  --menu-bg: #0b1124;
   /* 다른 화면의 머리글보다 덜 투명하게: 뒤의 흰 바탕이 비쳐 회색으로 보이지 않도록 예전 값을 그대로 쓴다. */
   background-color: color-mix(in oklab, #050814 90%, transparent);
   backdrop-filter: blur(8px);
