@@ -2,30 +2,39 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/dal";
-import { getLearningRecord, readLabState, readSectionState, readWorksheetState, type LearningRecord, type QuizReviewStatus } from "@/lib/learningStore";
+import { getLearningRecord, learningActivityByWeek, learningUpdatedAt } from "@/lib/learningStore";
 import { findUserById } from "@/lib/userStore";
 import { listUserSubmissions } from "@/lib/submissionStore";
+import { readDraft } from "@/lib/assignmentDraftStore";
 import { ASSIGNMENT_STATUS_LABEL, weekStatus } from "@/lib/study";
 import { WEEKS } from "@/content/weeks";
-import { getWeekLab } from "@/content/labs";
-import type { LabQuizItem, WeekMeta, WeekSection } from "@/content/types";
-import { sectionLabel, type Tier } from "@/content/tiers";
+import type { Tier } from "@/content/tiers";
 import { tierRecord } from "@/lib/achievement";
-import { Inline } from "@/components/MarkdownBlocks";
 import ProgressRing from "@/components/ProgressRing";
 import Icon from "@/components/Icon";
-import ReviewPill from "@/components/ReviewPill";
 import { formatDateTime, formatDate } from "@/lib/datetime";
+import MemberWeekRecord from "./MemberWeekRecord";
 
-export const metadata = { title: "스터디원 학습 현황" };
+export const metadata = { title: "스터디원 학습 기록" };
 
-export default async function MemberLearningPage({ params }: { params: Promise<{ id: string }> }) {
+// 스터디원 한 명의 학습 기록 전체. 위에는 주차별 요약, 아래에는 고른 주차의 기록을 모두 펼쳐 보여 준다
+// (단계 진행·확인 문제 오답·서술형·백지공부·코딩 실습·추가 퀴즈·과제 제출본과 작성 중인 초안).
+export default async function MemberLearningPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ week?: string }>;
+}) {
   await requireAdmin("/operator/members");
   const { id } = await params;
+  const { week: weekParam } = await searchParams;
   const member = findUserById(id);
   if (!member) notFound();
   const learning = getLearningRecord(id);
   const submissions = listUserSubmissions(id);
+  const activity = learningActivityByWeek(id);
+  const lastActivity = learningUpdatedAt(id);
   const rows = WEEKS.map((week) => {
     const submission = submissions.find((s) => s.weekSlug === week.slug);
     return { week, submission, status: weekStatus(week, learning, submission) };
@@ -33,12 +42,27 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
   const sum = (tier: Tier, key: "done" | "total") => rows.reduce((acc, r) => acc + r.status.tiers[tier][key], 0);
   const advancedWeeks = rows.filter((r) => tierRecord(r.week, learning, r.status, "advanced").complete).length;
 
+  // 주차를 고르지 않았으면 가장 최근에 학습한 주차를 펼친다.
+  const recentWeek = [...activity].sort((a, b) => b[1].localeCompare(a[1]))[0]?.[0];
+  const selected = rows.find((r) => r.week.slug === weekParam) ?? rows.find((r) => r.week.slug === recentWeek) ?? rows[0];
+  const draft = readDraftSafe(id, selected.week.slug);
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6 sm:py-20">
+    <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
       <PageHeader
         back={{ href: "/operator/members", label: "스터디원 관리" }}
-        title={`${member.name}님의 학습 현황`}
+        title={`${member.name}님의 학습 기록`}
         description={`${member.email} · 가입일 ${formatDate(member.createdAt)}`}
+        actions={
+          <>
+            <Link href={`/operator/answers?week=${selected.week.slug}&member=${member.id}`} className="btn btn-ghost btn-sm">
+              서술형 응답
+            </Link>
+            <Link href={`/operator/chat/${member.id}`} className="btn btn-secondary btn-sm">
+              채팅
+            </Link>
+          </>
+        }
       />
 
       <div className="mb-14 grid grid-cols-1 border-y border-[var(--border-hairline)] sm:grid-cols-2">
@@ -48,162 +72,68 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
           value={`보충 ${sum("supplement", "done")}/${sum("supplement", "total")} · 심화 ${sum("advanced", "done")}/${sum("advanced", "total")}${advancedWeeks > 0 ? ` · 심화 달성 ${advancedWeeks}주` : ""}`}
         />
         <Stat label="과제 제출" value={`${submissions.length} / ${WEEKS.length}주차`} />
-        <Stat label="마지막 학습 기록" value={learning.updatedAt ? formatDateTime(learning.updatedAt) : "아직 없음"} />
+        <Stat label="마지막 학습 기록" value={lastActivity ? formatDateTime(lastActivity) : "아직 없음"} />
       </div>
 
-      <div className="rows border-y border-[var(--border-hairline)]">
-        {rows.map(({ week, submission, status }) => {
-          const worksheet = readWorksheetState(learning, week.slug);
-          const weakMarks = week.worksheet.filter((_, i) => worksheet.marks[String(i)] === "weak");
-          const descriptive = descriptiveAnswers(week, status.sections.map((r) => r.section), learning);
-          const weakDescriptive = descriptive.filter((d) => d.review === "incorrect").length;
+      <h2 className="section-title mb-2">주차별 진행</h2>
+      <ul className="rows border-y border-[var(--border-hairline)]">
+        {rows.map(({ week, status }) => {
+          const current = week.slug === selected.week.slug;
+          const at = activity.get(week.slug);
           return (
-            <details key={week.slug} className="group">
-              <summary className="flex cursor-pointer list-none items-center gap-4 py-4 [&::-webkit-details-marker]:hidden">
+            <li key={week.slug}>
+              <Link
+                href={`/operator/members/${member.id}?week=${week.slug}#week-record`}
+                aria-current={current ? "true" : undefined}
+                className={`group row-hover -mx-3 flex items-center gap-4 rounded-xl px-3 py-3.5 ${current ? "bg-[var(--surface-card-2)]" : ""}`}
+              >
                 <ProgressRing ratio={status.ratio} size={40} />
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-[15px] font-medium text-ink">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-medium text-ink">
                     {week.number}주차 · {week.title}
-                  </h2>
-                  <p className="mt-1 text-xs tabular-nums text-ink-muted">
+                  </span>
+                  <span className="mt-1 block text-xs tabular-nums text-ink-muted">
                     핵심 {status.tiers.core.done}/{status.tiers.core.total} · 보충 {status.tiers.supplement.done}/{status.tiers.supplement.total} · 심화{" "}
                     {status.tiers.advanced.done}/{status.tiers.advanced.total} · 백지공부 {status.worksheetSubmitted ? "제출" : "미제출"} · 과제{" "}
                     {ASSIGNMENT_STATUS_LABEL[status.assignment.status]}
                     {status.assignment.status === "graded" && ` ${status.assignment.score}/${status.assignment.maxScore}점`}
-                  </p>
-                </div>
-                {submission && (
-                  <Link href={`/operator/submissions/${submission.id}`} className="btn btn-secondary btn-sm shrink-0">
-                    과제 보기
-                  </Link>
-                )}
-                <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
-              </summary>
-
-              <div className="space-y-5 pb-6 text-sm">
-                <table className="data-table text-xs">
-                  <thead>
-                    <tr>
-                      <th>단계</th>
-                      <th>상태</th>
-                      <th>객관식 (오답 시도)</th>
-                      <th>서술형 자기평가</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {status.sections.map(({ section, access, progress }) => {
-                      const state = readSectionState(learning, week.slug, section.id);
-                      const wrongTries = Object.values(state.checks).reduce((sum, c) => sum + c.wrong.length, 0);
-                      const weak = section.meta.quizIds.filter((q) => state.answers[q]?.review === "incorrect").length;
-                      return (
-                        <tr key={section.id} className="text-ink-secondary">
-                          <td>
-                            {sectionLabel(section)}. {section.title}
-                          </td>
-                          <td className={access === "completed" ? "text-[var(--status-good)]" : ""}>{access === "completed" ? "완료" : access === "current" ? "진행 중" : "—"}</td>
-                          <td className="tabular-nums">
-                            {progress.checksDone}/{progress.checksTotal}
-                            {wrongTries > 0 && <span className="text-[var(--status-critical)]"> ({wrongTries})</span>}
-                          </td>
-                          <td className="tabular-nums">
-                            {progress.quizDone}/{progress.quizTotal}
-                            {weak > 0 && <span className="text-[var(--status-critical)]"> · 보완 필요 {weak}</span>}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-
-                {worksheet.submittedAt && (
-                  <div className="rounded-xl bg-[var(--surface-card-2)] px-4 py-4">
-                    <p className="text-xs text-ink-muted">백지공부 · {formatDateTime(worksheet.submittedAt)}</p>
-                    <dl className="mt-2 space-y-2">
-                      {week.worksheet.map((field, i) => (
-                        <div key={field.label}>
-                          <dt className="text-xs font-medium text-ink">
-                            {field.label}
-                            {worksheet.marks[String(i)] === "weak" && <span className="ml-1 text-[var(--status-critical)]">(보완 필요)</span>}
-                          </dt>
-                          <dd className="whitespace-pre-wrap text-xs text-ink-secondary">{worksheet.answers[String(i)] || "—"}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                    {weakMarks.length > 0 && (
-                      <p className="mt-2 text-xs text-[var(--status-critical)]">본인이 보완 필요로 표시한 항목: {weakMarks.map((f) => f.label).join(", ")}</p>
-                    )}
-                  </div>
-                )}
-
-                {descriptive.length > 0 && (
-                  <div>
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <p className="text-xs font-medium text-ink">
-                        서술형 답안 {descriptive.length}개
-                        {weakDescriptive > 0 && <span className="text-[var(--status-critical)]"> · 보완 필요 {weakDescriptive}</span>}
-                      </p>
-                      <Link href={`/operator/answers?week=${week.slug}`} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted transition hover:text-ink">
-                        다른 스터디원의 답과 비교
-                        <Icon name="arrowRight" size={12} />
-                      </Link>
-                    </div>
-                    <ul className="mt-2 space-y-2">
-                      {descriptive.map((d) => (
-                        <li key={d.id} className="rounded-xl border border-[var(--border-hairline)] px-4 py-3">
-                          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-muted">
-                            <span>
-                              {sectionLabel(d.section)} · {d.lab ? "실습 서술형" : "서술형"}
-                            </span>
-                            <ReviewPill review={d.review} />
-                            {d.at && <span className="ml-auto tabular-nums">{formatDateTime(d.at)}</span>}
-                          </p>
-                          <p className="mt-1.5 text-xs font-medium text-ink">
-                            <Inline text={d.question} />
-                          </p>
-                          <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-ink-secondary">{d.text}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </details>
+                  </span>
+                </span>
+                <span className="hidden shrink-0 text-xs tabular-nums text-ink-muted sm:block">{at ? formatDateTime(at) : "기록 없음"}</span>
+                <Icon name={current ? "chevronDown" : "chevronRight"} size={16} className="shrink-0 text-ink-muted" />
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ul>
+
+      <section id="week-record" aria-labelledby="week-record-heading" className="mt-16 scroll-mt-20">
+        <p className="eyebrow">{member.name}님의 기록</p>
+        <h2 id="week-record-heading" className="mt-1 text-[1.5rem] font-bold tracking-[-0.03em] text-ink">
+          {selected.week.number}주차 · {selected.week.title}
+        </h2>
+        <div className="mt-5">
+          <MemberWeekRecord
+            memberId={member.id}
+            week={selected.week}
+            status={selected.status}
+            learning={learning}
+            submission={selected.submission}
+            draftSavedAt={draft ? (draft.updatedAt ?? "") : undefined}
+          />
+        </div>
+      </section>
     </div>
   );
 }
 
-interface DescriptiveAnswer {
-  id: string;
-  section: WeekSection;
-  lab: boolean;
-  question: string;
-  text: string;
-  at?: string;
-  review?: QuizReviewStatus;
-}
-
-/** 한 주차에서 이 스터디원이 쓴 서술형 답(단계 서술형 + 실습 서술형), 단계 순서대로 */
-function descriptiveAnswers(week: WeekMeta, sections: WeekSection[], learning: LearningRecord): DescriptiveAnswer[] {
-  const lab = readLabState(learning, week.slug);
-  const labItems = (getWeekLab(week.slug)?.quiz ?? []).filter((q): q is Extract<LabQuizItem, { kind: "descriptive" }> => q.kind === "descriptive");
-  const questionText = new Map(week.quiz.map((q) => [q.id, q.question]));
-  return sections.flatMap((section) => {
-    const state = readSectionState(learning, week.slug, section.id);
-    const fromSection = section.meta.quizIds.flatMap((id): DescriptiveAnswer[] => {
-      const a = state.answers[id];
-      return a?.text ? [{ id, section, lab: false, question: questionText.get(id) ?? id, text: a.text, at: a.answeredAt, review: a.review }] : [];
-    });
-    const fromLab = labItems
-      .filter((q) => q.sectionId === section.id)
-      .flatMap((q): DescriptiveAnswer[] => {
-        const s = lab.quiz[q.id];
-        return s?.text ? [{ id: q.id, section, lab: true, question: q.question, text: s.text, at: s.answeredAt, review: s.review }] : [];
-      });
-    return [...fromSection, ...fromLab];
-  });
+/** 초안 파일을 읽지 못해도(손상·권한) 화면은 그대로 보여 준다. */
+function readDraftSafe(userId: string, slug: string) {
+  try {
+    return readDraft(userId, slug);
+  } catch {
+    return undefined;
+  }
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

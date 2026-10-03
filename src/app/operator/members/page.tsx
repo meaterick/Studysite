@@ -112,9 +112,10 @@ function MemberRow({
   return (
     <tr>
       <td>
-        <span className="font-medium text-ink">
-          {member.name} {member.id === adminId && <span className="text-xs font-normal text-ink-muted">(나)</span>}
-        </span>
+        <Link href={`/operator/members/${member.id}`} className="font-medium text-ink underline-offset-2 hover:underline">
+          {member.name}
+        </Link>{" "}
+        {member.id === adminId && <span className="text-xs font-normal text-ink-muted">(나)</span>}
         <span className="block text-xs text-ink-muted">{member.email}</span>
       </td>
       <td className="whitespace-nowrap text-ink-secondary">{ROLE_LABEL[member.role]}</td>
@@ -130,7 +131,7 @@ function MemberRow({
       <td>
         <div className="flex items-center justify-end gap-1">
           <Link href={`/operator/members/${member.id}`} className="btn btn-secondary btn-sm">
-            상세
+            학습 기록
           </Link>
           <form action={removeMember}>
             <input type="hidden" name="id" value={member.id} />

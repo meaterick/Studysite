@@ -206,7 +206,7 @@ export default async function OperatorAnswersPage({
       <p className="mt-1 text-[13px] text-ink-muted">
         {member && (
           <>
-            <Link href={`/operator/members/${member.id}`} className="font-medium text-ink underline-offset-2 hover:underline">
+            <Link href={`/operator/members/${member.id}?week=${week.slug}#week-record`} className="font-medium text-ink underline-offset-2 hover:underline">
               {member.name}
             </Link>
             님의 답만 보는 중 ·{" "}
@@ -263,7 +263,7 @@ export default async function OperatorAnswersPage({
                       )}
                     </div>
                   </details>
-                  <AnswerList answers={q.answers} names={names} />
+                  <AnswerList answers={q.answers} names={names} weekSlug={week.slug} />
                 </article>
               ))}
             </div>
@@ -282,7 +282,7 @@ export default async function OperatorAnswersPage({
                 <article key={f.label} className="surface p-5 sm:p-6">
                   <p className="text-xs font-medium text-ink-muted">백지공부</p>
                   <p className="mt-1.5 text-[15px] font-medium leading-relaxed text-ink">{f.label}</p>
-                  <AnswerList answers={f.answers} names={names} />
+                  <AnswerList answers={f.answers} names={names} weekSlug={week.slug} />
                 </article>
               ))}
             </div>
@@ -293,13 +293,13 @@ export default async function OperatorAnswersPage({
   );
 }
 
-function AnswerList({ answers, names }: { answers: Answer[]; names: Map<string, string> }) {
+function AnswerList({ answers, names, weekSlug }: { answers: Answer[]; names: Map<string, string>; weekSlug: string }) {
   return (
     <ul className="rows mt-5 border-t border-[var(--border-hairline)]">
       {answers.map((a) => (
           <li key={a.userId} className="py-4 last:pb-0">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <Link href={`/operator/members/${a.userId}`} className="text-[13px] font-semibold text-ink underline-offset-2 hover:underline">
+              <Link href={`/operator/members/${a.userId}?week=${weekSlug}#week-record`} className="text-[13px] font-semibold text-ink underline-offset-2 hover:underline">
                 {names.get(a.userId) ?? "(탈퇴한 사용자)"}
               </Link>
               <ReviewPill review={a.review} />
