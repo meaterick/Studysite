@@ -3,12 +3,13 @@ import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { deleteUser, listUsers } from "@/lib/userStore";
-import { countCompletedSections, lastLearningActivity } from "@/lib/learningStore";
+import { countCompletedSections, countDescriptiveAnswers, lastLearningActivity, type AnswerCount } from "@/lib/learningStore";
 import { submissionCountsByUser, type SubmissionStatus } from "@/lib/submissionStore";
 import { WEEKS } from "@/content/weeks";
 import { getWeekOutline } from "@/content/sections";
 import { formatDateTime, formatDate } from "@/lib/datetime";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
+import MembersTabs from "./MembersTabs";
 
 export const metadata = { title: "스터디원 관리" };
 
@@ -28,6 +29,7 @@ export default async function MembersPage({
   const coreDone = countCompletedSections(coreKeys);
   const lastActivity = lastLearningActivity();
   const submissionCounts = submissionCountsByUser();
+  const answerCounts = countDescriptiveAnswers("user_id");
 
   async function removeMember(formData: FormData) {
     "use server";
@@ -46,7 +48,8 @@ export default async function MembersPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
-      <PageHeader title="스터디원 관리" description={`가입 ${members.length}명 · 관리자 ${adminCount}명`} />
+      <PageHeader title="스터디원 관리" description={`가입 ${members.length}명 · 관리자 ${adminCount}명. 이름을 누르면 그 스터디원의 학습 기록 전체를 봅니다.`} />
+      <MembersTabs current="list" />
 
       {error === "lastadmin" && (
         <p role="alert" className="callout callout-danger mb-6 text-[var(--status-critical)]">
@@ -63,7 +66,7 @@ export default async function MembersPage({
         <table className="data-table">
           <thead>
             <tr>
-              {["이름", "역할", "가입일", "핵심 단계", "과제", "마지막 기록", ""].map((h) => (
+              {["이름", "역할", "가입일", "핵심 단계", "서술형 답", "과제", "마지막 기록", ""].map((h) => (
                 <th key={h}>{h}</th>
               ))}
             </tr>
@@ -78,6 +81,7 @@ export default async function MembersPage({
                 totalItems={coreKeys.length}
                 lastActivity={lastActivity.get(m.id)}
                 submissions={submissionCounts.get(m.id) ?? { submitted: 0, graded: 0, revision: 0 }}
+                answers={answerCounts.get(m.id) ?? { total: 0, weak: 0 }}
                 removeMember={removeMember}
               />
             ))}
@@ -95,6 +99,7 @@ function MemberRow({
   totalItems,
   lastActivity,
   submissions,
+  answers,
   removeMember,
 }: {
   member: ReturnType<typeof listUsers>[number];
@@ -103,6 +108,7 @@ function MemberRow({
   totalItems: number;
   lastActivity: string | undefined;
   submissions: Record<SubmissionStatus, number>;
+  answers: AnswerCount;
   removeMember: (formData: FormData) => Promise<void>;
 }) {
   const pending = submissions.submitted;
@@ -122,6 +128,16 @@ function MemberRow({
       <td className="whitespace-nowrap tabular-nums text-ink-secondary">{formatDate(member.createdAt)}</td>
       <td className="whitespace-nowrap tabular-nums text-ink-secondary">
         {completed} / {totalItems}
+      </td>
+      <td className="whitespace-nowrap tabular-nums text-ink-secondary">
+        {answers.total > 0 ? (
+          <Link href={`/operator/members/${member.id}`} className="underline-offset-2 hover:text-ink hover:underline">
+            {answers.total}개
+            {answers.weak > 0 && <span className="text-[var(--status-critical)]"> · 보완 필요 {answers.weak}</span>}
+          </Link>
+        ) : (
+          <span className="text-ink-muted">없음</span>
+        )}
       </td>
       <td className="whitespace-nowrap text-ink-secondary">
         제출 {total} · 채점 {graded}

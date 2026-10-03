@@ -35,6 +35,10 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "10mb" },
     proxyClientMaxBodySize: "10mb",
   },
+  async redirects() {
+    // 서술형 응답 화면은 스터디원 관리 안으로 옮겼다. 예전 주소(즐겨찾기)는 새 주소로 보낸다(쿼리는 그대로 따라간다).
+    return [{ source: "/operator/answers", destination: "/operator/members/answers", permanent: false }];
+  },
   async headers() {
     return [
       {

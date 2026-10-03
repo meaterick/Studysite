@@ -54,14 +54,9 @@ export default async function MemberLearningPage({
         title={`${member.name}님의 학습 기록`}
         description={`${member.email} · 가입일 ${formatDate(member.createdAt)}`}
         actions={
-          <>
-            <Link href={`/operator/answers?week=${selected.week.slug}&member=${member.id}`} className="btn btn-ghost btn-sm">
-              서술형 응답
-            </Link>
-            <Link href={`/operator/chat/${member.id}`} className="btn btn-secondary btn-sm">
-              채팅
-            </Link>
-          </>
+          <Link href={`/operator/chat/${member.id}`} className="btn btn-secondary btn-sm">
+            채팅
+          </Link>
         }
       />
 

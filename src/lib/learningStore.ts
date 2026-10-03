@@ -242,21 +242,32 @@ export function learningActivityByWeek(userId: string): Map<string, string> {
   return new Map(rows.map((r) => [r.week_slug, r.at]));
 }
 
-/** 주차별 서술형 답안 수(모든 사용자): 단계 서술형·실습 서술형 답안과 제출한 백지공부의 칸 수 */
-export function countDescriptiveAnswersByWeek(): Map<string, number> {
-  const rows = all<{ week_slug: string; n: number }>(
-    `SELECT week_slug, SUM(n) AS n FROM (
-        SELECT li.week_slug, COUNT(*) AS n FROM learning_items li, json_each(li.data, '$.answers') a
-          WHERE li.kind = 'section' AND json_extract(a.value, '$.text') != '' GROUP BY li.week_slug
+export interface AnswerCount {
+  total: number;
+  /** 스터디원이 보완 필요로 자기평가한 답(백지공부는 보완 필요로 표시한 칸) */
+  weak: number;
+}
+
+/**
+ * 서술형 답안 수를 주차별(week_slug) 또는 사용자별(user_id)로 센다: 단계 서술형·실습 서술형 답과
+ * 제출한 백지공부의 칸. 운영자 화면이 모든 기록을 읽지 않고 숫자만 얻는 데 쓴다.
+ */
+export function countDescriptiveAnswers(by: "week_slug" | "user_id"): Map<string, AnswerCount> {
+  const rows = all<{ k: string; n: number; weak: number }>(
+    `SELECT k, SUM(n) AS n, SUM(weak) AS weak FROM (
+        SELECT li.${by} AS k, COUNT(*) AS n, SUM(json_extract(a.value, '$.review') = 'incorrect') AS weak
+          FROM learning_items li, json_each(li.data, '$.answers') a
+          WHERE li.kind = 'section' AND json_extract(a.value, '$.text') != '' GROUP BY li.${by}
         UNION ALL
-        SELECT week_slug, COUNT(*) FROM learning_items
-          WHERE kind = 'lab_quiz' AND json_extract(data, '$.text') != '' GROUP BY week_slug
+        SELECT ${by}, COUNT(*), SUM(json_extract(data, '$.review') = 'incorrect') FROM learning_items
+          WHERE kind = 'lab_quiz' AND json_extract(data, '$.text') != '' GROUP BY ${by}
         UNION ALL
-        SELECT li.week_slug, COUNT(*) FROM learning_items li, json_each(li.data, '$.answers') a
-          WHERE li.kind = 'worksheet' AND json_extract(li.data, '$.submittedAt') IS NOT NULL AND trim(a.value) != '' GROUP BY li.week_slug
-      ) GROUP BY week_slug`
+        SELECT li.${by}, COUNT(*), SUM(json_extract(li.data, '$.marks."' || a.key || '"') = 'weak')
+          FROM learning_items li, json_each(li.data, '$.answers') a
+          WHERE li.kind = 'worksheet' AND json_extract(li.data, '$.submittedAt') IS NOT NULL AND trim(a.value) != '' GROUP BY li.${by}
+      ) GROUP BY k`
   );
-  return new Map(rows.map((r) => [r.week_slug, r.n]));
+  return new Map(rows.map((r) => [r.k, { total: r.n, weak: r.weak ?? 0 }]));
 }
 
 /** 한 주차에서 모든 사용자가 쓴 서술형 기록. 키는 모두 사용자 id다. */

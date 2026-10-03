@@ -2,7 +2,7 @@ import Link from "next/link";
 import Form from "next/form";
 import { requireAdmin } from "@/lib/dal";
 import { listUsers } from "@/lib/userStore";
-import { countDescriptiveAnswersByWeek, readWeekAnswerRecords, type QuizReviewStatus } from "@/lib/learningStore";
+import { countDescriptiveAnswers, readWeekAnswerRecords, type QuizReviewStatus } from "@/lib/learningStore";
 import { formatDateTime } from "@/lib/datetime";
 import { WEEKS, getWeek } from "@/content/weeks";
 import { getWeekOutline } from "@/content/sections";
@@ -15,11 +15,12 @@ import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import ReviewPill from "@/components/ReviewPill";
+import MembersTabs from "../MembersTabs";
 
-export const metadata = { title: "서술형 응답" };
+export const metadata = { title: "서술형 응답 · 스터디원 관리" };
 
 // 스터디원이 쓴 서술형 답(단계 서술형·실습 서술형·백지공부)을 문항별로 모아, 같은 문항에 대한 답을 나란히 비교한다.
-// 스터디원 한 명의 답만 보려면 스터디원을 고르거나 스터디원 학습 현황에서 넘어온다.
+// 스터디원 관리의 한 화면이다. 스터디원 한 명의 기록 전체는 스터디원 학습 기록 화면에서 본다.
 
 type Filter = "all" | "weak" | "unreviewed";
 
@@ -48,15 +49,15 @@ export default async function OperatorAnswersPage({
 }: {
   searchParams: Promise<{ week?: string; member?: string; filter?: string }>;
 }) {
-  await requireAdmin("/operator/answers");
+  await requireAdmin("/operator/members/answers");
   const params = await searchParams;
-  const counts = countDescriptiveAnswersByWeek();
+  const counts = countDescriptiveAnswers("week_slug");
   const members = listUsers();
   const names = new Map(members.map((m) => [m.id, m.name]));
   const joinOrder = new Map(members.map((m, i) => [m.id, i]));
 
   // 주차를 고르지 않았으면 답이 있는 가장 최근 주차(스터디가 진행 중인 주차)를 보여 준다.
-  const week = getWeek(params.week ?? "") ?? [...WEEKS].reverse().find((w) => (counts.get(w.slug) ?? 0) > 0) ?? WEEKS[0];
+  const week = getWeek(params.week ?? "") ?? [...WEEKS].reverse().find((w) => (counts.get(w.slug)?.total ?? 0) > 0) ?? WEEKS[0];
   const member = members.find((m) => m.id === params.member);
   const filter: Filter = FILTERS.find((f) => f.key === params.filter)?.key ?? "all";
 
@@ -142,21 +143,22 @@ export default async function OperatorAnswersPage({
     if (m) qs.set("member", m);
     const f = next.filter ?? filter;
     if (f !== "all") qs.set("filter", f);
-    return `/operator/answers?${qs}`;
+    return `/operator/members/answers?${qs}`;
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6 sm:py-20">
+    <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
       <PageHeader
-        title="서술형 응답"
+        title="스터디원 관리"
         description="스터디원이 쓴 서술형 답안과 백지공부를 문항별로 모아 봅니다. 자기평가 결과를 함께 보여 주므로 보완이 필요한 개념을 먼저 짚을 수 있습니다."
       />
+      <MembersTabs current="answers" />
 
       <nav aria-label="주차" className="flex flex-wrap gap-1">
         {WEEKS.map((w) => (
           <Link key={w.slug} href={href({ week: w.slug })} aria-current={w.slug === week.slug ? "true" : undefined} className="chip">
             {w.number}주차
-            <span className="tabular-nums opacity-70">{counts.get(w.slug) ?? 0}</span>
+            <span className="tabular-nums opacity-70">{counts.get(w.slug)?.total ?? 0}</span>
           </Link>
         ))}
       </nav>
@@ -168,7 +170,7 @@ export default async function OperatorAnswersPage({
             </Link>
           ))}
         </nav>
-        <Form action="/operator/answers" className="flex items-center gap-2">
+        <Form action="/operator/members/answers" className="flex items-center gap-2">
           <input type="hidden" name="week" value={week.slug} />
           {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
           <label htmlFor="answers-member" className="text-[13px] text-ink-muted">
