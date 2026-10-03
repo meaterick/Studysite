@@ -21,11 +21,11 @@ export interface JourneyScene {
 }
 
 const DEPTH = 1200; // 장면 사이 깊이(px)
-// 장면 자리에서 아주 조금(화면 높이의 4%) 움직인 것은 장면을 그대로 둔다(손이 살짝 닿은 정도의 흔들림 방지).
+// 장면 자리에서 아주 조금(화면 높이의 1%) 움직인 것은 장면을 그대로 둔다(손이 살짝 닿은 정도의 흔들림 방지).
 // 크게 두면 스크롤해도 한동안 아무 변화가 없어 "많이 내려야 넘어가는" 느낌이 된다.
-const HOLD = 0.04;
-// 멈춘 뒤 이어서 넘길지 정하는 기준(장면 한 칸 대비 스크롤한 비율). 움직이던 방향으로 이만큼만 움직였어도 그쪽으로 넘긴다.
-const NUDGE = 0.03;
+const HOLD = 0.01;
+// 멈춘 뒤 이어서 넘길지 정하는 기준(px). 움직이던 방향으로 이만큼만 움직였어도 그쪽 장면으로 넘긴다.
+const NUDGE_PX = 8;
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
@@ -127,7 +127,7 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     };
 
     // 스크롤이 장면 자리가 아닌 곳에서 멈추면, 잠시 뒤 움직이던 방향으로 장면 하나를 마저 넘긴다.
-    // 조금만 내려도(NUDGE) 다음 장면으로, 조금만 올려도 이전 장면으로 간다. 방향을 모르면 가까운 쪽으로 간다.
+    // 조금만 내려도(NUDGE_PX) 다음 장면으로, 조금만 올려도 이전 장면으로 간다. 방향을 모르면 가까운 쪽으로 간다.
     let settleTimer = 0;
     let touching = false;
     let lastY = window.scrollY;
@@ -140,14 +140,15 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       const rest = sceneScrollTop;
       if (y <= 0 || y >= rest(n - 1)) return; // 맨 위, 또는 마지막 장면 뒤(바닥글)는 그대로 둔다
       const i = Math.max(0, Math.min(n - 2, Math.floor((y - top) / vh)));
-      const u = (y - rest(i)) / (rest(i + 1) - rest(i));
-      if (u < 0.002 || u > 0.998) return; // 이미 장면 자리
-      const forward = dir > 0 ? u > NUDGE : dir < 0 ? u > 1 - NUDGE : u >= 0.5;
+      const from = y - rest(i); // 장면 i 자리에서 내려온 거리
+      const to = rest(i + 1) - y; // 장면 i+1 자리까지 남은 거리
+      if (from < 2 || to < 2) return; // 이미 장면 자리
+      const forward = dir > 0 ? from >= NUDGE_PX : dir < 0 ? to < NUDGE_PX : from >= to;
       window.scrollTo({ top: rest(forward ? i + 1 : i), behavior: "smooth" });
     };
     const queueSettle = () => {
       clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(settle, 120);
+      settleTimer = window.setTimeout(settle, 100);
     };
     const onScroll = () => {
       const y = window.scrollY;
