@@ -5,13 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type 
 import type { AssignmentSpec } from "@/content/types";
 import {
   checkTasks,
+  diffDraft,
   newCellId,
   NOTEBOOK_LIMITS,
   type AssignmentDraft,
   type NotebookCell,
   type NotebookOutput,
 } from "@/lib/notebook";
-import { saveAssignmentDraft, submitAssignmentWork } from "@/lib/assignmentActions";
+import { saveAssignmentDraft, saveAssignmentDraftPatch, submitAssignmentWork, type ActionResult } from "@/lib/assignmentActions";
 import { forceStop, onRuntimeReset, preloadPyodide, resetNamespace, runPython, writeRuntimeFiles, type RunStatus } from "@/lib/pyRunner";
 import AnswerCell from "./AnswerCell";
 import AutoTestPanel, { type AutoTestView } from "@/components/lab/AutoTestPanel";
@@ -113,6 +114,9 @@ export default function Workspace({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saving = useRef<Promise<boolean> | null>(null);
   const dirtySince = useRef(0);
+  // 이 화면이 보낸 뒤 서버가 저장을 확인한 초안. 다음 저장부터는 이것과 비교해 바뀐 셀만 보낸다.
+  // (처음 저장은 전체를 보낸다. 화면의 초안은 명세에 맞춰 고친 것이라 서버 파일과 다를 수 있기 때문이다.)
+  const confirmed = useRef<{ draft: AssignmentDraft; savedAt: string } | null>(null);
 
   const [runningCell, setRunningCell] = useState<string | null>(null);
   const [runStatus, setRunStatus] = useState<string | null>(null);
@@ -140,7 +144,20 @@ export default function Workspace({
     const task = (async () => {
       setSaveState("saving");
       try {
-        const result = await saveAssignmentDraft(slug, draftRef.current);
+        const snapshot = draftRef.current;
+        const base = confirmed.current;
+        const tasks = base ? diffDraft(base.draft, snapshot) : null;
+        let result: ActionResult;
+        if (base && tasks && Object.keys(tasks).length === 0) {
+          result = { ok: true, savedAt: base.savedAt };
+        } else if (base && tasks) {
+          result = await saveAssignmentDraftPatch(slug, { base: base.savedAt, tasks });
+          // 다른 탭에서 저장하는 등 서버 초안이 기준과 다르면 전체를 보낸다.
+          if (!result.ok && result.stale) result = await saveAssignmentDraft(slug, snapshot);
+        } else {
+          result = await saveAssignmentDraft(slug, snapshot);
+        }
+        if (result.ok && result.savedAt) confirmed.current = { draft: snapshot, savedAt: result.savedAt };
         if (!result.ok) {
           setSaveState("error");
           setSaveError(result.error);

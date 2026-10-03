@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { completeSection } from "@/lib/studyActions";
 import Icon from "@/components/Icon";
+import { useProgressStatuses } from "@/components/progress/ProgressStore";
 
 export interface StageRequirement {
   label: string;
@@ -11,6 +12,8 @@ export interface StageRequirement {
   total: number;
   /** 선택 활동(서술형): 진행만 보여 주고 완료 조건에는 넣지 않는다. */
   optional?: boolean;
+  /** 진행 저장소의 문항 id. 있으면 done을 저장소에서 센다(문제를 풀 때 화면을 다시 받지 않으므로). */
+  ids?: string[];
 }
 
 /**
@@ -41,6 +44,10 @@ export default function StageFooter({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const statuses = useProgressStatuses();
+  const doneOf = (r: StageRequirement) => (r.ids && statuses ? r.ids.filter((id) => statuses[id]?.done).length : r.done);
+  const live = requirements.some((r) => r.ids) && statuses;
+  const canFinish = live ? requirements.every((r) => r.optional || doneOf(r) >= r.total) : ready;
 
   const finish = () => {
     setError(null);
@@ -65,11 +72,12 @@ export default function StageFooter({
             </li>
           ) : (
             requirements.map((r) => {
-              const done = r.done >= r.total;
+              const count = doneOf(r);
+              const done = count >= r.total;
               return (
                 <li key={r.label} className={`flex items-center gap-1.5 tabular-nums ${done ? "font-medium text-[var(--status-good)]" : "text-ink-secondary"}`}>
                   {done && <Icon name="check" size={15} />}
-                  {r.label} {r.done}/{r.total}
+                  {r.label} {count}/{r.total}
                   {r.optional && <span className="text-xs text-ink-muted">(선택)</span>}
                   <span className="sr-only">{done ? " (완료)" : r.optional ? " (선택 사항)" : " (미완료)"}</span>
                 </li>
@@ -89,7 +97,7 @@ export default function StageFooter({
                 <Icon name="arrowRight" size={15} />
               </Link>
             )
-          ) : ready ? (
+          ) : canFinish ? (
             <button
               type="button"
               onClick={finish}

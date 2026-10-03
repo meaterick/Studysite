@@ -2,22 +2,24 @@
 
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useUserScope } from "@/components/UserScope";
+import { useProgressItem } from "@/components/progress/ProgressStore";
 import { reviewDrillDescriptive, saveDrillDescriptive } from "@/lib/labActions";
+import { drillKey } from "@/lib/progressIds";
 
 /**
  * 퀴즈 서술형: 직접 쓰고 → 모범답안·핵심 요소와 비교 → 빠뜨린 요소를 체크하며 자기평가.
- * 모범답안과 핵심 요소는 답을 저장한 뒤에만 서버가 내려준다.
+ * 모범답안과 핵심 요소는 답을 저장한 뒤에만 서버 액션이 돌려준다. 화면 전체를 다시 받지 않고 이 문항과 진행 저장소만 고친다.
  */
 export default function DrillDescriptive({
   slug,
   itemId,
   label,
   question,
-  savedText,
-  review,
+  savedText: serverText,
+  review: serverReview,
   checkedPoints,
-  modelAnswer,
-  keyPoints,
+  modelAnswer: serverModelAnswer,
+  keyPoints: serverKeyPoints,
   footer,
 }: {
   slug: string;
@@ -33,8 +35,14 @@ export default function DrillDescriptive({
 }) {
   const uid = useUserScope();
   const draftKey = `aegis:drill-draft:${uid}:${itemId}`;
+  const [entry, update] = useProgressItem(drillKey(itemId), {
+    done: !!serverReview,
+    weak: serverReview === "incorrect",
+    view: { savedText: serverText, review: serverReview, checkedPoints, modelAnswer: serverModelAnswer, keyPoints: serverKeyPoints },
+  });
+  const { savedText, review, modelAnswer, keyPoints } = entry.view;
   const [text, setText] = useState(savedText ?? "");
-  const [checked, setChecked] = useState<Set<number>>(new Set(checkedPoints ?? []));
+  const [checked, setChecked] = useState<Set<number>>(new Set(entry.view.checkedPoints ?? []));
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,12 +80,15 @@ export default function DrillDescriptive({
       try {
         const r = await saveDrillDescriptive(slug, itemId, text);
         if (!r.ok) setError(r.error);
-        else
+        else {
+          update({ ...entry, view: { ...entry.view, savedText: r.text, modelAnswer: r.modelAnswer, keyPoints: r.keyPoints } });
+          setText(r.text);
           try {
             localStorage.removeItem(draftKey);
           } catch {
             // 무시
           }
+        }
       } catch {
         setError("저장에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도해 주십시오.");
       }
@@ -96,7 +107,8 @@ export default function DrillDescriptive({
   const mark = (value: "correct" | "incorrect") => {
     startTransition(async () => {
       try {
-        await reviewDrillDescriptive(slug, itemId, value, [...checked]);
+        const r = await reviewDrillDescriptive(slug, itemId, value, [...checked]);
+        if (r.ok) update({ done: r.done, weak: r.weak, view: { ...entry.view, review: r.review, checkedPoints: r.checkedPoints } });
       } catch {
         setError("저장에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도해 주십시오.");
       }

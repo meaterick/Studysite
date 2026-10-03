@@ -5,7 +5,9 @@ import CodeBlock from "@/components/CodeBlock";
 import CellOutputs from "@/components/assignment/CellOutputs";
 import type { NotebookOutput } from "@/lib/notebook";
 import { forceStop, resetNamespace, runPython } from "@/lib/pyRunner";
-import { answerDrillPredict, revealDrillPredict } from "@/lib/labActions";
+import { answerDrillPredict, revealDrillPredict, type DrillPredictResult } from "@/lib/labActions";
+import { drillKey } from "@/lib/progressIds";
+import { useProgressItem } from "@/components/progress/ProgressStore";
 
 export interface DrillPredictState {
   correct: boolean;
@@ -17,6 +19,7 @@ export interface DrillPredictState {
 /**
  * 코드 출력 예측. 먼저 실행하지 않고 출력을 예측해 적으면 서버가 정답과 비교한다(공백 차이는 무시).
  * 맞히거나 두 번 틀리거나 정답 보기를 누르면 정답·해설이 공개되고, 그때부터 코드를 브라우저에서 직접 실행해 확인할 수 있다.
+ * 채점 결과는 서버 액션이 돌려주는 값으로 이 문항과 진행 저장소만 고친다(화면 전체를 다시 받지 않는다).
  */
 export default function DrillPredict({
   slug,
@@ -24,9 +27,10 @@ export default function DrillPredict({
   label,
   question,
   code,
-  state,
-  expected,
-  explanation,
+  state: serverState,
+  expected: serverExpected,
+  explanation: serverExplanation,
+  weak = false,
   footer,
 }: {
   slug: string;
@@ -38,8 +42,17 @@ export default function DrillPredict({
   /** 공개된 뒤에만 전달된다 */
   expected?: string;
   explanation?: ReactNode;
+  /** 서버가 본 처음 상태가 다시 볼 문항인지 */
+  weak?: boolean;
   footer?: ReactNode;
 }) {
+  const [entry, update] = useProgressItem(drillKey(itemId), {
+    done: !!serverState?.correct || !!serverState?.revealed,
+    weak,
+    view: { state: serverState, expected: serverExpected, explanation: serverExplanation },
+  });
+  const { state, expected, explanation } = entry.view;
+  const apply = (r: DrillPredictResult) => update({ done: r.done, weak: r.weak, view: { state: r.state, expected: r.expected, explanation: r.explanation } });
   const [answer, setAnswer] = useState(state?.lastAnswer ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +67,7 @@ export default function DrillPredict({
       try {
         const r = await answerDrillPredict(slug, itemId, answer);
         if (!r.ok) setError(r.error);
+        else apply(r);
       } catch {
         setError("채점 요청에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도해 주십시오.");
       }
@@ -64,7 +78,7 @@ export default function DrillPredict({
     if (!confirm("정답을 보면 이 문항은 정답으로 기록되지 않습니다. 정답을 보시겠습니까?")) return;
     startTransition(async () => {
       try {
-        await revealDrillPredict(slug, itemId);
+        apply(await revealDrillPredict(slug, itemId));
       } catch {
         setError("요청에 실패했습니다. 잠시 후 다시 시도해 주십시오.");
       }

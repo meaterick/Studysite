@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Icon from "@/components/Icon";
+import { useProgressStatuses } from "@/components/progress/ProgressStore";
+import { drillKey } from "@/lib/progressIds";
 
 export interface DrillSequenceItem {
   /** DrillChoice·DrillPredict가 자신의 뿌리 요소에 매기는 id(`drill-{id}`)와 같은 문항 id */
@@ -16,8 +18,11 @@ export interface DrillSequenceItem {
  * 맞히면(또는 출력 예측에서 정답을 공개하면) 바로 「다음 문항」 버튼이 나타난다.
  * 위의 번호 막대로 이미 마친 문항을 다시 볼 수 있다.
  * 다른 화면의 "관련 추가 퀴즈" 링크(#drill-{id})로 들어오면 그 문항을 바로 연다.
+ * 문항을 마쳤는지는 진행 저장소(ProgressStore)에서 읽는다(답할 때 화면을 다시 받지 않으므로).
  */
-export default function DrillSequence({ items }: { items: DrillSequenceItem[] }) {
+export default function DrillSequence({ items: serverItems }: { items: DrillSequenceItem[] }) {
+  const statuses = useProgressStatuses();
+  const items = serverItems.map((it) => ({ ...it, done: statuses?.[drillKey(it.id)]?.done ?? it.done }));
   const firstUndone = items.findIndex((it) => !it.done);
   const allDone = firstUndone === -1;
   const [index, setIndex] = useState(allDone ? items.length : firstUndone);

@@ -2,6 +2,8 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { answerCheck } from "@/lib/studyActions";
+import { checkKey } from "@/lib/progressIds";
+import { useProgressItem } from "@/components/progress/ProgressStore";
 import Icon from "@/components/Icon";
 
 export interface CheckStateView {
@@ -12,7 +14,8 @@ export interface CheckStateView {
 
 /**
  * 객관식 확인 문제. 정답 번호는 클라이언트로 보내지 않고 서버 액션이 채점한다.
- * 정답을 맞히거나 두 번 틀리면 서버가 해설(explanation)을 내려준다.
+ * 정답을 맞히거나 두 번 틀리면 서버 액션이 해설(explanation)과 정답 번호를 함께 돌려준다.
+ * 화면 전체를 다시 받지 않고 이 문항과 진행 저장소만 고친다.
  */
 export default function CheckQuestion({
   slug,
@@ -21,9 +24,9 @@ export default function CheckQuestion({
   index,
   question,
   choices,
-  state,
-  explanation,
-  correctIndex,
+  state: serverState,
+  explanation: serverExplanation,
+  correctIndex: serverCorrectIndex,
 }: {
   slug: string;
   sectionId: string;
@@ -36,6 +39,12 @@ export default function CheckQuestion({
   /** 정답을 맞힌 뒤에만 전달된다 */
   correctIndex?: number;
 }) {
+  const [entry, update] = useProgressItem(checkKey(checkId), {
+    done: !!serverState?.correct,
+    weak: false,
+    view: { state: serverState, explanation: serverExplanation, correctIndex: serverCorrectIndex },
+  });
+  const { state, explanation, correctIndex } = entry.view;
   const [selected, setSelected] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +57,8 @@ export default function CheckQuestion({
     setError(null);
     startTransition(async () => {
       try {
-        await answerCheck(slug, sectionId, checkId, selected);
+        const r = await answerCheck(slug, sectionId, checkId, selected);
+        update({ done: r.state.correct, weak: false, view: { state: r.state, explanation: r.explanation, correctIndex: r.correctIndex } });
       } catch {
         setError("채점 요청에 실패했습니다. 페이지를 새로 고친 뒤 다시 시도해 주십시오.");
       }
