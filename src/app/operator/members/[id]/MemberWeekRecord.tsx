@@ -156,7 +156,7 @@ export default function MemberWeekRecord({
           title="서술형 답안"
           note={weakDescriptive > 0 ? `보완 필요 ${weakDescriptive}` : undefined}
           action={
-            <Link href={`/operator/answers?week=${week.slug}`} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted transition hover:text-ink">
+            <Link href={`/operator/members/answers?week=${week.slug}`} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted transition hover:text-ink">
               다른 스터디원의 답과 비교
               <Icon name="arrowRight" size={12} />
             </Link>
