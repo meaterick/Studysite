@@ -1,17 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 
-// 메인 화면의 이어지는 장면 구성.
+// 메인 화면: 장면을 한 장씩 넘기는 덱(deck).
 //
-// 화면 전체를 덮는 무대(stage)를 스크롤하는 동안 고정하고, 스크롤이 카메라를 3D 공간 안쪽으로 전진시킨다.
-// 장면은 깊이 방향으로 한 줄로 놓여, 다음 장면이 멀리서 조용히 다가오고 지나간 장면은 카메라 쪽으로 흐려지며 사라진다.
-// 배경의 은은한 빛도 진행도에 따라 자리를 옮겨 장면 사이가 끊기지 않는다.
+// 덱은 화면 한 장 크기로 고정되어 스크롤되지 않는다. 휠·스와이프·키보드·진행 표시는 "다음/이전 장면"이라는 신호만 보내고,
+// 장면 전환은 정해진 길이의 CSS 전환(transform·opacity, globals.css)이라 어떤 입력이든 같은 모습으로 매끄럽게 움직인다.
+// (예전에는 문서를 스크롤해 장면을 움직였는데, 장면 위치가 스크롤 위치·화면 높이에 묶여 있어서 휴대폰 브라우저의
+// 주소창·도구 막대가 움직일 때마다 화면이 튀고, 애매한 위치에서 멈추면 자리를 다시 잡아야 했다.)
 //
-// - 장면마다 스크롤 한 화면 분량을 배정한다. 다만 한 화면을 다 내리지 않아도 된다: 조금만 스크롤하고 멈추면
-//   움직이던 방향의 다음(이전) 장면까지 부드럽게 마저 넘어간다(settle). 장면이 멈춘 자리에서는 변환이 0이라 글자가 선명하다.
+// - 휠: 한 번 굴리거나 트랙패드로 살짝 밀면(WHEEL_THRESHOLD) 한 장면. 관성으로 이어지는 휠 이벤트는 무시한다.
+// - 터치: 끄는 동안 장면이 손가락을 조금 따라오고, 놓을 때 SWIPE_THRESHOLD 이상 밀었거나 빠르게 튕겼으면 넘긴다.
+// - 키보드: ↓·PageDown·Space 다음, ↑·PageUp·Shift+Space 이전, Home·End 처음·끝.
+// - 마지막 장면에서 더 내리면 평소처럼 문서가 스크롤되어 바닥글이 나온다.
 // - 장면이 화면보다 크면 자동으로 줄여 맞춘다.
-// - html[data-motion="full"](JavaScript 켜짐 + 동작 줄이기 아님)일 때만 3D 모드가 되고, 그 밖에는 세로 배치로 보인다.
+// - html[data-motion="full"](JavaScript 켜짐 + 동작 줄이기 아님)일 때만 덱이 되고, 그 밖에는 장면이 세로로 이어진다.
 
 export interface JourneyScene {
   id: string;
@@ -20,107 +23,110 @@ export interface JourneyScene {
   content: ReactNode;
 }
 
-const DEPTH = 1200; // 장면 사이 깊이(px)
-// 장면 자리에서 아주 조금(화면 높이의 1%) 움직인 것은 장면을 그대로 둔다(손이 살짝 닿은 정도의 흔들림 방지).
-// 크게 두면 스크롤해도 한동안 아무 변화가 없어 "많이 내려야 넘어가는" 느낌이 된다.
-const HOLD = 0.01;
-// 멈춘 뒤 이어서 넘길지 정하는 기준(px). 움직이던 방향으로 이만큼만 움직였어도 그쪽 장면으로 넘긴다.
-const NUDGE_PX = 8;
-// 스크롤이 멈췄다고 보고 장면 자리로 옮기기 시작할 때까지의 대기(ms). 휠 한 칸의 스크롤 이벤트 간격보다는 길어야 한다.
-const SETTLE_DELAY = 70;
-// 장면 자리를 지나쳐 이 비율(화면 높이 대비)보다 덜 간 채 멈추면 지나친 장면으로 돌아간다.
-const CROSS_BACK = 0.25;
+// 장면을 넘긴 뒤 다음 넘기기를 받기까지(ms). 전환이 대부분 끝나 다음 장면이 자리를 잡은 시점이다.
+const BUSY_MS = 550;
+// 트랙패드로 이만큼(px) 밀면 넘긴다. 마우스 휠 한 칸(보통 100px)은 바로 넘어간다.
+const WHEEL_THRESHOLD = 24;
+// 휠 이벤트 사이가 이보다 길면(ms) 새로 굴린 것으로 본다. 짧으면 같은 동작(관성 포함)이다.
+const WHEEL_GAP = 150;
+// 손가락을 이만큼(px) 밀었거나, 짧게라도(SWIPE_MIN px 이상) 빠르게(SWIPE_VELOCITY px/ms) 튕기면 넘긴다.
+const SWIPE_THRESHOLD = 24;
+const SWIPE_MIN = 10;
+const SWIPE_VELOCITY = 0.25;
 
-const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
-const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+// 덱 모드인지(html[data-motion="full"]). 이 값은 첫 화면을 그리기 전에 정해지고(layout.tsx) 바뀌지 않는다.
+const subscribeNever = () => () => {};
+const readMotionFull = () => document.documentElement.dataset.motion === "full";
+const readMotionServer = () => false;
 
 export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
+  const n = scenes.length;
+  const deck = useSyncExternalStore(subscribeNever, readMotionFull, readMotionServer);
+  const [index, setIndex] = useState(0);
+  const indexRef = useRef(0);
+  const busyUntilRef = useRef(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const worldRef = useRef<HTMLDivElement>(null);
   const sceneRefs = useRef<(HTMLElement | null)[]>([]);
   const innerRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const progressRef = useRef(0);
-  // 장면 하나에 배정한 스크롤 길이 = 장면 상자의 높이(px, CSS의 100svh). 휴대폰 브라우저의 주소창·아래 도구 막대가
-  // 숨겨지거나 나타나도 바뀌지 않는다. 바뀌면 같은 스크롤 위치가 다른 장면 위치로 계산되고 장면이 다시 가운데 맞춰져 화면이 튄다.
-  const unitRef = useRef(0);
-  const [active, setActive] = useState(0);
-  const n = scenes.length;
 
-  // 장면 i가 멈춰 있는 스크롤 위치. 첫 장면은 문서 맨 위(처음 열었을 때와 같은 모습)다.
-  const sceneScrollTop = useCallback((i: number) => {
-    const root = rootRef.current;
-    if (!root || i <= 0) return 0;
-    return root.getBoundingClientRect().top + window.scrollY + i * (unitRef.current || window.innerHeight);
-  }, []);
-
-  // 장면 자리로 옮기는 스크롤. 브라우저 기본 smooth 스크롤은 거리가 길수록 느리게 오래 움직이고 길이를 정할 수 없어,
-  // 처음에 빠르게 움직이다 부드럽게 멈추는(ease-out) 짧은 애니메이션으로 직접 옮긴다.
-  // 가까운 자리는 약 0.25초, 장면 하나는 약 0.4초, 멀리 건너뛰어도 0.6초를 넘지 않는다.
-  const glideRef = useRef(0);
-  const stopGlide = useCallback(() => {
-    if (!glideRef.current) return;
-    cancelAnimationFrame(glideRef.current);
-    glideRef.current = 0;
-    document.documentElement.style.scrollBehavior = "";
-  }, []);
-  const glideTo = useCallback(
-    (top: number) => {
-      stopGlide();
-      const from = window.scrollY;
-      const dist = top - from;
-      if (Math.abs(dist) < 1) return;
-      const duration = Math.min(600, 220 + Math.abs(dist) * 0.22);
-      const t0 = performance.now();
-      // 프레임마다 정확한 위치로 옮겨야 하므로, 옮기는 동안만 html의 scroll-behavior: smooth를 끈다.
-      document.documentElement.style.scrollBehavior = "auto";
-      const step = (now: number) => {
-        const t = Math.min(1, (now - t0) / duration);
-        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-        window.scrollTo(0, from + dist * eased);
-        if (t < 1) glideRef.current = requestAnimationFrame(step);
-        else {
-          glideRef.current = 0;
-          document.documentElement.style.scrollBehavior = "";
-        }
-      };
-      glideRef.current = requestAnimationFrame(step);
-    },
-    [stopGlide]
-  );
-
-  const goTo = useCallback(
+  /** 장면 i로 넘긴다. 넘겼으면 true */
+  const go = useCallback(
     (i: number) => {
-      const target = Math.max(0, Math.min(n - 1, i));
-      glideTo(sceneScrollTop(target));
+      const target = clamp(i, 0, n - 1);
+      if (target === indexRef.current) return false;
+      indexRef.current = target;
+      busyUntilRef.current = performance.now() + BUSY_MS;
+      setIndex(target);
+      return true;
     },
-    [n, sceneScrollTop, glideTo]
+    [n]
   );
 
+  // 진행 표시·다음 버튼: 바닥글을 보고 있었다면 덱으로 올라온 뒤 넘긴다.
+  const goFromControl = useCallback(
+    (i: number) => {
+      if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: "smooth" });
+      go(i);
+    },
+    [go]
+  );
+
+  // 숫자가 올라가는 통계 등 장면마다 시작하는 효과(CountUp)에 지금 장면을 알린다.
   useEffect(() => {
-    const root = rootRef.current;
-    if (!root || document.documentElement.dataset.motion !== "full") return;
+    if (deck) window.dispatchEvent(new CustomEvent("journey:active", { detail: index }));
+  }, [deck, index]);
 
-    let raf = 0;
-    let lastActive = -1;
-    const stage = root.querySelector<HTMLElement>(".journey-stage");
-    // 마지막으로 장면을 맞춘 크기. 주소창·도구 막대만 움직였을 때는 같으므로 아무것도 다시 배치하지 않는다.
-    let fittedFor = "";
+  // 주소에 장면 id(#cycle 등)가 있으면 그 장면에서 시작한다(전환 없이).
+  // 브라우저는 주소의 #id로 문서를 스크롤하는데, 덱에서는 장면이 모두 화면 맨 위에 겹쳐 있으므로 맨 위로 되돌린다.
+  useEffect(() => {
+    if (!deck) return;
+    const fromHash = () => scenes.findIndex((sc) => `#${sc.id}` === window.location.hash);
+    const toTop = () => {
+      if (window.scrollY <= 0) return;
+      const html = document.documentElement;
+      html.style.scrollBehavior = "auto"; // html의 scroll-behavior: smooth 없이 바로
+      window.scrollTo(0, 0);
+      html.style.scrollBehavior = "";
+    };
+    const initial = fromHash();
+    if (initial >= 0) {
+      // 브라우저는 문서를 다 받을 때까지 주소의 #id로 다시 스크롤하므로, 다 받은 뒤에도 한 번 더 되돌린다.
+      toTop();
+      requestAnimationFrame(toTop);
+      if (document.readyState !== "complete") window.addEventListener("load", () => requestAnimationFrame(toTop), { once: true });
+    }
+    if (initial > 0) {
+      const world = worldRef.current;
+      world?.setAttribute("data-instant", "");
+      indexRef.current = initial;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 마운트 시 한 번, 브라우저 주소(외부 상태)에서 시작 장면을 읽는다
+      setIndex(initial);
+      requestAnimationFrame(() => requestAnimationFrame(() => world?.removeAttribute("data-instant")));
+    }
+    const onHash = () => {
+      const i = fromHash();
+      if (i < 0) return;
+      requestAnimationFrame(toTop);
+      go(i);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [deck, scenes, go]);
 
-    // 크기는 CSS가 정하고(무대 100lvh, 장면 상자 100svh — globals.css) 여기서는 읽기만 한다.
-    const fit = (force = false) => {
-      if (!stage) return;
-      const unit = sceneRefs.current[0]?.clientHeight || window.innerHeight;
-      const stageH = stage.clientHeight;
-      const key = `${stage.clientWidth}x${unit}x${stageH}`;
-      if (!force && key === fittedFor) return;
-      fittedFor = key;
-      unitRef.current = unit;
-      // 마지막 장면 자리까지 무대가 고정되도록 전체 길이는 (장면 수 - 1) × 장면 높이 + 무대 높이로 둔다.
-      root.style.height = `${(n - 1) * unit + stageH}px`;
-      // 장면 안쪽 여백(머리글·진행 표시 자리)은 CSS가 화면 크기마다 정한다.
-      const cs = sceneRefs.current[0] ? getComputedStyle(sceneRefs.current[0]) : null;
+  // 장면이 화면보다 크면 줄여 맞춘다(덱 크기는 CSS가 정하고 여기서는 읽기만 한다).
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!deck || !stage) return;
+    const fit = () => {
+      const first = sceneRefs.current[0];
+      const cs = first ? getComputedStyle(first) : null;
       const padY = cs ? parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) : 150;
       const padX = cs ? parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) : 40;
-      const availH = unit - padY;
+      const availH = stage.clientHeight - padY;
       const availW = stage.clientWidth - padX;
       innerRefs.current.forEach((inner) => {
         if (!inner) return;
@@ -129,164 +135,184 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
         inner.style.setProperty("--fit", String(Math.max(0.6, k)));
       });
     };
-
-    const frame = () => {
-      raf = 0;
-      const vh = unitRef.current;
-      const y = window.scrollY - (root.getBoundingClientRect().top + window.scrollY);
-      const raw = clamp(y / vh, 0, n - 1);
-      const i = Math.floor(raw);
-      const u = raw - i;
-      const s = Math.min(n - 1, i + smooth(clamp((u - HOLD) / (1 - HOLD))));
-      progressRef.current = s;
-      root.style.setProperty("--journey-progress", String(s / Math.max(1, n - 1)));
-
-      sceneRefs.current.forEach((el, k) => {
-        if (!el) return;
-        const r = k - s; // 양수: 다가올 장면, 음수: 지나간 장면
-        let transform = "";
-        let opacity = 1;
-        if (r > 0.001) {
-          // 멀리서 조금 아래쪽에서 떠오르듯 다가온다.
-          transform = `translate3d(0, ${Math.min(r, 1.5) * 90}px, ${-r * DEPTH}px) rotateX(${Math.min(r, 1.5) * -6}deg)`;
-          opacity = Math.pow(clamp(1 - r), 1.6);
-        } else if (r < -0.001) {
-          // 카메라 쪽으로 다가오며 위로 흩어지듯 사라진다.
-          const p = -r;
-          transform = `translate3d(0, ${-p * 60}px, ${p * 700}px)`;
-          opacity = clamp(1 - p * 2.2);
-        }
-        el.style.transform = transform;
-        el.style.opacity = String(opacity);
-        el.style.filter = r < -0.001 ? `blur(${Math.min(8, -r * 14)}px)` : "";
-        const live = Math.abs(r) < 0.35;
-        el.style.pointerEvents = live ? "auto" : "none";
-        el.style.visibility = opacity <= 0.01 ? "hidden" : "visible";
-        el.setAttribute("aria-hidden", live ? "false" : "true");
-      });
-
-      const current = Math.round(s);
-      if (current !== lastActive) {
-        lastActive = current;
-        setActive(current);
-        window.dispatchEvent(new CustomEvent("journey:active", { detail: current }));
-      }
-    };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
-    };
-
-    // 스크롤이 장면 자리가 아닌 곳에서 멈추면, 곧바로(SETTLE_DELAY) 움직이던 방향으로 장면 하나를 마저 넘긴다.
-    // 조금만 내려도(NUDGE_PX) 다음 장면으로, 조금만 올려도 이전 장면으로 간다. 방향을 모르면 가까운 쪽으로 간다.
-    // 다만 장면 자리 하나를 지나쳐 조금만(CROSS_BACK) 더 간 채 멈췄으면 그 장면으로 돌아간다: 관성으로 살짝 넘친 것이지
-    // 장면을 하나 더 넘기려던 것이 아니다(바닥글에서 올라오다 마지막 장면을 지나친 경우도 같다).
-    let settleTimer = 0;
-    let touching = false;
-    let lastY = window.scrollY;
-    let dir = 0;
-    let idle = true; // 스크롤이 멈춰 있는 상태(다음 스크롤이 새 동작의 시작)
-    let gestureFrom = window.scrollY; // 이번 스크롤 동작을 시작한 위치
-    const settle = () => {
-      if (touching || glideRef.current) return; // 아직 동작 중(손가락이 닿아 있거나 장면 자리로 옮기는 중)
-      idle = true;
-      const vh = unitRef.current;
-      const y = window.scrollY;
-      const top = root.getBoundingClientRect().top + y;
-      const rest = sceneScrollTop;
-      if (y <= 0 || y >= rest(n - 1)) return; // 맨 위, 또는 마지막 장면 뒤(바닥글)는 그대로 둔다
-      const i = Math.max(0, Math.min(n - 2, Math.floor((y - top) / vh)));
-      const from = y - rest(i); // 장면 i 자리에서 내려온 거리
-      const to = rest(i + 1) - y; // 장면 i+1 자리까지 남은 거리
-      if (from < 2 || to < 2) return; // 이미 장면 자리
-      const crossBack = vh * CROSS_BACK;
-      let target: number;
-      if (dir > 0 && gestureFrom < rest(i) - 2 && from < crossBack) target = i; // 장면 i를 지나쳐 조금 내려감
-      else if (dir < 0 && gestureFrom > rest(i + 1) + 2 && to < crossBack) target = i + 1; // 장면 i+1을 지나쳐 조금 올라감
-      else target = (dir > 0 ? from >= NUDGE_PX : dir < 0 ? to < NUDGE_PX : from >= to) ? i + 1 : i;
-      glideTo(rest(target));
-    };
-    const queueSettle = () => {
-      clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(settle, SETTLE_DELAY);
-    };
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (idle) {
-        idle = false;
-        gestureFrom = lastY;
-      }
-      if (y !== lastY) dir = Math.sign(y - lastY);
-      lastY = y;
-      schedule();
-      queueSettle();
-    };
-    const onTouchStart = () => {
-      touching = true;
-      clearTimeout(settleTimer);
-      stopGlide();
-    };
-    const onTouchEnd = () => {
-      touching = false;
-      queueSettle();
-    };
-
-    // 장면 내용 크기가 바뀌면(글꼴 로드 등) 장면을 다시 맞춘다.
-    const refit = () => {
-      fit(true);
-      schedule();
-    };
-    // 회전·창 크기 조절이면 새 크기에 맞추고, 주소창·도구 막대만 움직였으면(크기 기준이 같으면) 그대로 둔다.
-    const onResize = () => {
-      fit();
-      schedule();
-    };
-    const onFocusIn = (e: FocusEvent) => {
-      const idx = sceneRefs.current.findIndex((el) => el?.contains(e.target as Node));
-      if (idx >= 0 && idx !== Math.round(progressRef.current)) window.scrollTo({ top: sceneScrollTop(idx) });
-    };
-
-    fit(true);
-    frame();
-    if (window.location.hash) {
-      const idx = scenes.findIndex((sc) => `#${sc.id}` === window.location.hash);
-      if (idx > 0) window.scrollTo({ top: sceneScrollTop(idx) });
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
-    // 장면 자리로 옮기는 중에 사용자가 다시 스크롤하면 바로 손을 뗀다(사용자 입력이 우선).
-    window.addEventListener("wheel", stopGlide, { passive: true });
-    window.addEventListener("keydown", stopGlide);
-    window.addEventListener("pointerdown", stopGlide);
-    window.addEventListener("resize", onResize);
-    root.addEventListener("focusin", onFocusIn);
-    const ro = new ResizeObserver(refit);
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(stage);
     innerRefs.current.forEach((el) => el && ro.observe(el));
-    document.fonts?.ready.then(refit).catch(() => undefined);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearTimeout(settleTimer);
-      stopGlide();
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchcancel", onTouchEnd);
-      window.removeEventListener("wheel", stopGlide);
-      window.removeEventListener("keydown", stopGlide);
-      window.removeEventListener("pointerdown", stopGlide);
-      window.removeEventListener("resize", onResize);
-      root.removeEventListener("focusin", onFocusIn);
-      ro.disconnect();
+    document.fonts?.ready.then(fit).catch(() => undefined);
+    return () => ro.disconnect();
+  }, [deck]);
+
+  // 입력 → 장면 넘기기
+  useEffect(() => {
+    const root = rootRef.current;
+    const world = worldRef.current;
+    if (!deck || !root || !world) return;
+
+    const atTop = () => window.scrollY <= 1; // 덱이 화면을 다 덮고 있다(바닥글을 보는 중이 아니다)
+    const isLast = () => indexRef.current >= n - 1;
+    const ready = () => performance.now() >= busyUntilRef.current;
+
+    // ── 휠 ──
+    let lastWheel = 0;
+    let lastAbs = 0;
+    let accum = 0;
+    let spent = false; // 이번 동작으로 이미 넘겼다(관성으로 이어지는 이벤트는 무시)
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) return; // 핀치 확대
+      const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+      if (Math.abs(dy) <= Math.abs(e.deltaX)) return; // 가로 스크롤
+      const now = performance.now();
+      const abs = Math.abs(dy);
+      const gap = now - lastWheel;
+      lastWheel = now;
+      // 새 동작: 잠시 멈췄다 다시 굴렸거나, 관성으로 줄어들던 값이 다시 크게 늘었다(트랙패드로 한 번 더 밂).
+      if (gap > WHEEL_GAP || (spent && abs > lastAbs * 1.5 + 8)) {
+        accum = 0;
+        spent = false;
+      }
+      lastAbs = abs;
+      // 바닥글을 보는 중이거나 마지막 장면에서 아래로: 평소처럼 스크롤한다. 이 동작(관성 포함)이 이어져 덱에 닿아도 넘기지 않는다.
+      if (!atTop() || (dy > 0 && isLast())) {
+        spent = true;
+        return;
+      }
+      e.preventDefault();
+      if (spent || !ready()) return;
+      accum += dy;
+      if (Math.abs(accum) >= WHEEL_THRESHOLD) {
+        spent = true;
+        go(indexRef.current + Math.sign(accum));
+        accum = 0;
+      }
     };
-  }, [n, scenes, sceneScrollTop, glideTo, stopGlide]);
+
+    // ── 터치 ──
+    let startX = 0;
+    let startY = 0;
+    // 손을 떼기 직전의 속도를 재려고 최근 위치(약 0.1초)를 남긴다(천천히 끌다가 마지막에 튕겨도 튕긴 것으로 본다).
+    let recent: { t: number; y: number }[] = [];
+    let mode: "undecided" | "deck" | "native" = "native";
+    const endDrag = () => {
+      world.removeAttribute("data-dragging");
+      world.style.removeProperty("--drag");
+      world.style.removeProperty("--drag-abs");
+    };
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) {
+        if (mode === "deck") endDrag();
+        mode = "native";
+        return;
+      }
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      recent = [{ t: performance.now(), y: startY }];
+      mode = "undecided";
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (mode === "native") return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      const now = performance.now();
+      recent.push({ t: now, y: e.touches[0].clientY });
+      while (recent.length > 2 && now - recent[0].t > 100) recent.shift();
+      if (mode === "undecided") {
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return; // 아직 방향을 모른다
+        // 가로로 끌거나, 바닥글을 보는 중이거나, 마지막 장면에서 위로 밀면(아래로 스크롤) 평소처럼 스크롤한다.
+        if (Math.abs(dx) > Math.abs(dy) || !atTop() || (dy < 0 && isLast())) {
+          mode = "native";
+          return;
+        }
+        mode = "deck";
+        world.setAttribute("data-dragging", "");
+      }
+      e.preventDefault();
+      // 끝 장면에서 더 갈 곳이 없는 쪽으로 끌면 무겁게 따라온다.
+      const edge = (dy > 0 && indexRef.current === 0) || (dy < 0 && isLast());
+      const drag = clamp(dy * (edge ? 0.12 : 0.35), -90, 90);
+      world.style.setProperty("--drag", drag.toFixed(1));
+      world.style.setProperty("--drag-abs", Math.abs(drag).toFixed(1));
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (mode !== "deck") {
+        mode = "native";
+        return;
+      }
+      mode = "native";
+      endDrag();
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      const dy = touch.clientY - startY;
+      const from = recent[0];
+      const velocity = from ? Math.abs(touch.clientY - from.y) / Math.max(1, performance.now() - from.t) : 0;
+      if (ready() && (Math.abs(dy) >= SWIPE_THRESHOLD || (velocity >= SWIPE_VELOCITY && Math.abs(dy) >= SWIPE_MIN))) {
+        go(indexRef.current + (dy < 0 ? 1 : -1));
+      }
+    };
+
+    // ── 키보드 ──
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || !atTop()) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+      const onControl = !!target?.closest("button, a, summary");
+      let next: number;
+      switch (e.key) {
+        case "ArrowDown":
+        case "PageDown":
+          next = indexRef.current + 1;
+          break;
+        case " ":
+          if (onControl) return; // 버튼·링크에서의 Space는 누르기
+          next = indexRef.current + (e.shiftKey ? -1 : 1);
+          break;
+        case "ArrowUp":
+        case "PageUp":
+          next = indexRef.current - 1;
+          break;
+        case "Home":
+          next = 0;
+          break;
+        case "End":
+          next = n - 1;
+          break;
+        default:
+          return;
+      }
+      if (next > n - 1) return; // 마지막 장면에서 아래로: 바닥글로(평소 스크롤)
+      e.preventDefault();
+      if (ready()) go(next);
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    root.addEventListener("touchstart", onTouchStart, { passive: true });
+    root.addEventListener("touchmove", onTouchMove, { passive: false });
+    root.addEventListener("touchend", onTouchEnd, { passive: true });
+    root.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      root.removeEventListener("touchstart", onTouchStart);
+      root.removeEventListener("touchmove", onTouchMove);
+      root.removeEventListener("touchend", onTouchEnd);
+      root.removeEventListener("touchcancel", onTouchEnd);
+      window.removeEventListener("keydown", onKeyDown);
+      endDrag();
+    };
+  }, [deck, n, go]);
+
+  const progress = n > 1 ? index / (n - 1) : 0;
+  const stateOf = (i: number) => (i === index ? "current" : i < index ? "past" : "future");
 
   return (
-    <div ref={rootRef} className="journey" style={{ "--scene-count": n } as CSSProperties}>
-      <div className="journey-stage">
-        {/* 배경: 장면이 넘어갈 때마다 천천히 자리를 옮기는 부드러운 빛(점·입자 없이) */}
-        <div className="journey-glow" aria-hidden="true" />
-        <div className="journey-world">
+    <div ref={rootRef} className="journey">
+      <div ref={stageRef} className="journey-stage" style={{ "--p": progress } as CSSProperties}>
+        {/* 배경: 장면을 넘길 때마다 천천히 자리를 옮기는 부드러운 빛(점·입자 없이) */}
+        <div className="journey-glow" aria-hidden="true">
+          <span className="journey-glow__blob journey-glow__blob--a" />
+          <span className="journey-glow__blob journey-glow__blob--b" />
+        </div>
+        <div ref={worldRef} className="journey-world" data-deck={deck ? "" : undefined}>
           {scenes.map((sc, i) => (
             <section
               key={sc.id}
@@ -296,6 +322,9 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
               }}
               aria-label={sc.label}
               className="journey-scene"
+              data-state={deck ? stateOf(i) : undefined}
+              // 덱에서는 보이지 않는 장면을 키보드 이동·화면 읽기에서 뺀다.
+              inert={deck && i !== index ? true : undefined}
             >
               <div
                 ref={(el) => {
@@ -314,7 +343,7 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
           <ol>
             {scenes.map((sc, i) => (
               <li key={sc.id}>
-                <button type="button" onClick={() => goTo(i)} aria-current={active === i ? "step" : undefined} className="journey-rail__item">
+                <button type="button" onClick={() => goFromControl(i)} aria-current={index === i ? "step" : undefined} className="journey-rail__item">
                   <span className="journey-rail__num">{String(i + 1).padStart(2, "0")}</span>
                   <span className="journey-rail__label">{sc.label}</span>
                 </button>
@@ -323,8 +352,8 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
           </ol>
         </nav>
 
-        {active < n - 1 && (
-          <button type="button" onClick={() => goTo(active + 1)} className="journey-next" aria-label="다음 장면으로">
+        {index < n - 1 && (
+          <button type="button" onClick={() => goFromControl(index + 1)} className="journey-next" aria-label="다음 장면으로">
             <span className="journey-next__line" aria-hidden="true" />
             <span className="font-mono text-[10px] tracking-[0.3em]">SCROLL</span>
           </button>
