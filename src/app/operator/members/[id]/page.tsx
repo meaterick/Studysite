@@ -2,16 +2,19 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/dal";
-import { getLearningRecord, readSectionState, readWorksheetState } from "@/lib/learningStore";
+import { getLearningRecord, readLabState, readSectionState, readWorksheetState, type LearningRecord, type QuizReviewStatus } from "@/lib/learningStore";
 import { findUserById } from "@/lib/userStore";
 import { listUserSubmissions } from "@/lib/submissionStore";
 import { ASSIGNMENT_STATUS_LABEL, weekStatus } from "@/lib/study";
 import { WEEKS } from "@/content/weeks";
+import { getWeekLab } from "@/content/labs";
+import type { LabQuizItem, WeekMeta, WeekSection } from "@/content/types";
 import { sectionLabel, type Tier } from "@/content/tiers";
 import { tierRecord } from "@/lib/achievement";
 import { Inline } from "@/components/MarkdownBlocks";
 import ProgressRing from "@/components/ProgressRing";
 import Icon from "@/components/Icon";
+import ReviewPill from "@/components/ReviewPill";
 import { formatDateTime, formatDate } from "@/lib/datetime";
 
 export const metadata = { title: "스터디원 학습 현황" };
@@ -52,6 +55,8 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
         {rows.map(({ week, submission, status }) => {
           const worksheet = readWorksheetState(learning, week.slug);
           const weakMarks = week.worksheet.filter((_, i) => worksheet.marks[String(i)] === "weak");
+          const descriptive = descriptiveAnswers(week, status.sections.map((r) => r.section), learning);
+          const weakDescriptive = descriptive.filter((d) => d.review === "incorrect").length;
           return (
             <details key={week.slug} className="group">
               <summary className="flex cursor-pointer list-none items-center gap-4 py-4 [&::-webkit-details-marker]:hidden">
@@ -130,23 +135,34 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
                   </div>
                 )}
 
-                {status.sections.some(({ section }) =>
-                  section.meta.quizIds.some((q) => readSectionState(learning, week.slug, section.id).answers[q]?.review === "incorrect")
-                ) && (
+                {descriptive.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[var(--status-critical)]">보완 필요로 표시한 서술형 문항</p>
-                    <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-ink-secondary">
-                      {status.sections.flatMap(({ section }) => {
-                        const state = readSectionState(learning, week.slug, section.id);
-                        return section.meta.quizIds
-                          .filter((q) => state.answers[q]?.review === "incorrect")
-                          .map((q) => (
-                            <li key={q}>
-                              <Inline text={week.quiz.find((x) => x.id === q)?.question ?? q} />
-                              <span className="block whitespace-pre-wrap text-ink-muted">답: {state.answers[q]?.text}</span>
-                            </li>
-                          ));
-                      })}
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <p className="text-xs font-medium text-ink">
+                        서술형 답안 {descriptive.length}개
+                        {weakDescriptive > 0 && <span className="text-[var(--status-critical)]"> · 보완 필요 {weakDescriptive}</span>}
+                      </p>
+                      <Link href={`/operator/answers?week=${week.slug}`} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted transition hover:text-ink">
+                        다른 스터디원의 답과 비교
+                        <Icon name="arrowRight" size={12} />
+                      </Link>
+                    </div>
+                    <ul className="mt-2 space-y-2">
+                      {descriptive.map((d) => (
+                        <li key={d.id} className="rounded-xl border border-[var(--border-hairline)] px-4 py-3">
+                          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-muted">
+                            <span>
+                              {sectionLabel(d.section)} · {d.lab ? "실습 서술형" : "서술형"}
+                            </span>
+                            <ReviewPill review={d.review} />
+                            {d.at && <span className="ml-auto tabular-nums">{formatDateTime(d.at)}</span>}
+                          </p>
+                          <p className="mt-1.5 text-xs font-medium text-ink">
+                            <Inline text={d.question} />
+                          </p>
+                          <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-ink-secondary">{d.text}</p>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -157,6 +173,37 @@ export default async function MemberLearningPage({ params }: { params: Promise<{
       </div>
     </div>
   );
+}
+
+interface DescriptiveAnswer {
+  id: string;
+  section: WeekSection;
+  lab: boolean;
+  question: string;
+  text: string;
+  at?: string;
+  review?: QuizReviewStatus;
+}
+
+/** 한 주차에서 이 스터디원이 쓴 서술형 답(단계 서술형 + 실습 서술형), 단계 순서대로 */
+function descriptiveAnswers(week: WeekMeta, sections: WeekSection[], learning: LearningRecord): DescriptiveAnswer[] {
+  const lab = readLabState(learning, week.slug);
+  const labItems = (getWeekLab(week.slug)?.quiz ?? []).filter((q): q is Extract<LabQuizItem, { kind: "descriptive" }> => q.kind === "descriptive");
+  const questionText = new Map(week.quiz.map((q) => [q.id, q.question]));
+  return sections.flatMap((section) => {
+    const state = readSectionState(learning, week.slug, section.id);
+    const fromSection = section.meta.quizIds.flatMap((id): DescriptiveAnswer[] => {
+      const a = state.answers[id];
+      return a?.text ? [{ id, section, lab: false, question: questionText.get(id) ?? id, text: a.text, at: a.answeredAt, review: a.review }] : [];
+    });
+    const fromLab = labItems
+      .filter((q) => q.sectionId === section.id)
+      .flatMap((q): DescriptiveAnswer[] => {
+        const s = lab.quiz[q.id];
+        return s?.text ? [{ id: q.id, section, lab: true, question: q.question, text: s.text, at: s.answeredAt, review: s.review }] : [];
+      });
+    return [...fromSection, ...fromLab];
+  });
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

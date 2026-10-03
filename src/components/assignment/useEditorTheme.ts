@@ -16,18 +16,18 @@ export function defineEditorThemes(monaco: Monaco) {
     rules: [
       { token: "keyword", foreground: "7c3aed" },
       { token: "string", foreground: "0f766e" },
-      { token: "comment", foreground: "737373", fontStyle: "italic" },
+      { token: "comment", foreground: "64748b", fontStyle: "italic" },
       { token: "number", foreground: "b45309" },
     ],
     colors: {
-      "editor.background": "#f6f6f5",
-      "editorGutter.background": "#f6f6f5",
-      "editorLineNumber.foreground": "#b4b4b4",
-      "editorLineNumber.activeForeground": "#525252",
+      "editor.background": "#f6f8fb",
+      "editorGutter.background": "#f6f8fb",
+      "editorLineNumber.foreground": "#a7b0bf",
+      "editorLineNumber.activeForeground": "#475569",
       "editor.lineHighlightBackground": "#00000000",
       "editor.selectionBackground": "#3451d12e",
-      "editorCursor.foreground": "#0a0a0a",
-      "editorIndentGuide.background1": "#0000000f",
+      "editorCursor.foreground": "#0f172a",
+      "editorIndentGuide.background1": "#0f172a12",
     },
   });
   monaco.editor.defineTheme("aegis-dark", {

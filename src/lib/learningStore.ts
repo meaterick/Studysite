@@ -233,6 +233,60 @@ export function lastLearningActivity(): Map<string, string> {
   return new Map(rows.map((r) => [r.user_id, r.at]));
 }
 
+/** 주차별 서술형 답안 수(모든 사용자): 단계 서술형·실습 서술형 답안과 제출한 백지공부의 칸 수 */
+export function countDescriptiveAnswersByWeek(): Map<string, number> {
+  const rows = all<{ week_slug: string; n: number }>(
+    `SELECT week_slug, SUM(n) AS n FROM (
+        SELECT li.week_slug, COUNT(*) AS n FROM learning_items li, json_each(li.data, '$.answers') a
+          WHERE li.kind = 'section' AND json_extract(a.value, '$.text') != '' GROUP BY li.week_slug
+        UNION ALL
+        SELECT week_slug, COUNT(*) FROM learning_items
+          WHERE kind = 'lab_quiz' AND json_extract(data, '$.text') != '' GROUP BY week_slug
+        UNION ALL
+        SELECT li.week_slug, COUNT(*) FROM learning_items li, json_each(li.data, '$.answers') a
+          WHERE li.kind = 'worksheet' AND json_extract(li.data, '$.submittedAt') IS NOT NULL AND trim(a.value) != '' GROUP BY li.week_slug
+      ) GROUP BY week_slug`
+  );
+  return new Map(rows.map((r) => [r.week_slug, r.n]));
+}
+
+/** 한 주차에서 모든 사용자가 쓴 서술형 기록. 키는 모두 사용자 id다. */
+export interface WeekAnswerRecords {
+  /** 단계 id → 단계 상태(서술형 답은 answers) */
+  sections: Map<string, Record<string, SectionState>>;
+  /** 퀴즈 문항 id → 기록. 답을 저장한 문항(서술형)만 담는다. */
+  labQuiz: Map<string, Record<string, LabQuizState>>;
+  worksheets: Map<string, WorksheetState>;
+}
+
+/** 운영자 화면용: 한 주차의 서술형 답안이 들어 있는 행만 모든 사용자에 대해 읽는다. */
+export function readWeekAnswerRecords(weekSlug: string): WeekAnswerRecords {
+  const rows = all<{ user_id: string; kind: ItemKind; item_id: string; data: string }>(
+    `SELECT user_id, kind, item_id, data FROM learning_items
+      WHERE week_slug = ?
+        AND (kind = 'worksheet'
+          OR (kind = 'section' AND json_extract(data, '$.answers') IS NOT NULL AND json_extract(data, '$.answers') != '{}')
+          OR (kind = 'lab_quiz' AND json_extract(data, '$.text') IS NOT NULL))`,
+    weekSlug
+  );
+  const result: WeekAnswerRecords = { sections: new Map(), labQuiz: new Map(), worksheets: new Map() };
+  for (const row of rows) {
+    const value = JSON.parse(row.data);
+    if (row.kind === "section") {
+      const byUser = result.sections.get(row.user_id) ?? {};
+      byUser[row.item_id] = value;
+      result.sections.set(row.user_id, byUser);
+    } else if (row.kind === "lab_quiz") {
+      const byUser = result.labQuiz.get(row.user_id) ?? {};
+      byUser[row.item_id] = value;
+      result.labQuiz.set(row.user_id, byUser);
+    } else if (row.kind === "worksheet") {
+      result.worksheets.set(row.user_id, value);
+    }
+  }
+  return result;
+}
+
 function emptySectionState(): SectionState {
   return { checks: {}, answers: {} };
 }
