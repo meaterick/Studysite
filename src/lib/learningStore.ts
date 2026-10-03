@@ -233,6 +233,15 @@ export function lastLearningActivity(): Map<string, string> {
   return new Map(rows.map((r) => [r.user_id, r.at]));
 }
 
+/** 한 사용자의 주차별 마지막 학습 기록 시각(주차 slug → 시각) */
+export function learningActivityByWeek(userId: string): Map<string, string> {
+  const rows = all<{ week_slug: string; at: string }>(
+    "SELECT week_slug, MAX(updated_at) AS at FROM learning_items WHERE user_id = ? AND week_slug != '' GROUP BY week_slug",
+    userId
+  );
+  return new Map(rows.map((r) => [r.week_slug, r.at]));
+}
+
 /** 주차별 서술형 답안 수(모든 사용자): 단계 서술형·실습 서술형 답안과 제출한 백지공부의 칸 수 */
 export function countDescriptiveAnswersByWeek(): Map<string, number> {
   const rows = all<{ week_slug: string; n: number }>(
