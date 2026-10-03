@@ -952,6 +952,17 @@ body:has(.journey) header {
   background-color: color-mix(in oklab, #050814 90%, transparent);
   backdrop-filter: blur(8px);
 }
+/* 덱(장면 넘기기)에서는 머리글 아래로 내용이 지나가지 않으므로 머리글을 따로 칠하지 않는다:
+   배경 빛이 화면 맨 위까지 끊기지 않고 이어지고, 글자가 또렷하도록 위쪽만 아주 살짝 어둡게 한다. 아래 선도 없앤다.
+   (세로로 스크롤하는 화면 — 동작 줄이기·자바스크립트 없음 — 에서는 위의 불투명한 머리글을 그대로 쓴다.) */
+html[data-motion="full"] body:has(.journey) header {
+  background: linear-gradient(to bottom, rgba(5, 8, 20, 0.55), rgba(5, 8, 20, 0));
+  /* 그라데이션이 투명해진 아래 선 자리까지 이어지게 한다(기본값이면 선 자리에 그라데이션 첫 줄이 반복되어 어두운 줄이 생긴다). */
+  background-origin: border-box;
+  border-bottom-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 
 /* 스크롤바는 모든 화면에서 숨긴다. 스크롤 자체(휠·터치·키보드·드래그)는 그대로 동작한다. */
 html,
