@@ -714,6 +714,11 @@ code {
 html[data-motion="full"] .journey {
   position: relative;
   height: calc(var(--scene-count) * 100vh);
+  /* 머리글 높이(SiteHeader: h-16 + 아래 선 1px)만큼 위로 당겨, 무대가 첫 화면부터 화면에 고정된 자리에 놓이게 한다.
+     (머리글은 고정된 무대 위에 겹쳐 보인다 — 장면 위쪽 여백이 그 자리를 비워 둔다.)
+     당기지 않으면 첫 화면에서만 무대가 머리글 아래에 놓여, 처음 스크롤하는 동안 무대 전체가 밀려 올라가고
+     왼쪽 아래 장면 번호도 화면 밖에서 올라온 뒤에야 3D 전환이 시작되어 한 번 끊겨 보인다. */
+  margin-top: calc(-4rem - 1px);
 }
 html[data-motion="full"] .journey-stage {
   position: sticky;
@@ -852,6 +857,7 @@ html[data-motion="full"] .journey-next {
 @media print {
   html[data-motion="full"] .journey {
     height: auto !important;
+    margin-top: 0;
   }
   html[data-motion="full"] .journey-stage,
   html[data-motion="full"] .journey-world,
