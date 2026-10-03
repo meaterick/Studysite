@@ -30,9 +30,6 @@ const NUDGE_PX = 8;
 const SETTLE_DELAY = 70;
 // 장면 자리를 지나쳐 이 비율(화면 높이 대비)보다 덜 간 채 멈추면 지나친 장면으로 돌아간다.
 const CROSS_BACK = 0.25;
-// 휴대폰 주소창이 숨겨지거나 나타날 때의 높이 변화(보통 50~120px)는 화면 크기 변경으로 보지 않는다.
-// 이보다 크게 바뀌거나(창 크기 조절) 너비가 바뀌면(회전) 장면 크기를 다시 잡는다.
-const VIEWPORT_JITTER = 160;
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
@@ -42,8 +39,8 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
   const sceneRefs = useRef<(HTMLElement | null)[]>([]);
   const innerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const progressRef = useRef(0);
-  // 장면 하나에 배정한 스크롤 길이이자 장면 상자의 높이(px). 처음 화면 높이로 정하고, 주소창이 움직여도 바꾸지 않는다.
-  // 바꾸면 같은 스크롤 위치가 다른 장면 위치로 계산되고 장면이 다시 가운데 맞춰져, 첫 스크롤(주소창이 숨겨지는 순간)에 화면이 튄다.
+  // 장면 하나에 배정한 스크롤 길이 = 장면 상자의 높이(px, CSS의 100svh). 휴대폰 브라우저의 주소창·아래 도구 막대가
+  // 숨겨지거나 나타나도 바뀌지 않는다. 바뀌면 같은 스크롤 위치가 다른 장면 위치로 계산되고 장면이 다시 가운데 맞춰져 화면이 튄다.
   const unitRef = useRef(0);
   const [active, setActive] = useState(0);
   const n = scenes.length;
@@ -104,27 +101,21 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
 
     let raf = 0;
     let lastActive = -1;
-    let viewW = window.innerWidth;
-    unitRef.current = window.innerHeight;
     const stage = root.querySelector<HTMLElement>(".journey-stage");
+    // 마지막으로 장면을 맞춘 크기. 주소창·도구 막대만 움직였을 때는 같으므로 아무것도 다시 배치하지 않는다.
+    let fittedFor = "";
 
-    // 무대(배경·진행 표시)는 지금 보이는 높이를 채우고, 스크롤 길이와 장면 상자는 고정 단위(unitRef)를 쓴다.
-    // 마지막 장면 자리까지 무대가 고정되도록 전체 길이는 (장면 수 - 1) × 단위 + 무대 높이로 둔다.
-    const sizeStage = () => {
+    // 크기는 CSS가 정하고(무대 100lvh, 장면 상자 100svh — globals.css) 여기서는 읽기만 한다.
+    const fit = (force = false) => {
       if (!stage) return;
-      const unit = unitRef.current;
-      const h = window.innerHeight;
-      root.style.height = `${(n - 1) * unit + Math.max(unit, h)}px`;
-      stage.style.height = `${h}px`;
-    };
-
-    const fit = () => {
-      if (!stage) return;
-      sizeStage();
-      const unit = unitRef.current;
-      sceneRefs.current.forEach((el) => {
-        if (el) el.style.height = `${unit}px`;
-      });
+      const unit = sceneRefs.current[0]?.clientHeight || window.innerHeight;
+      const stageH = stage.clientHeight;
+      const key = `${stage.clientWidth}x${unit}x${stageH}`;
+      if (!force && key === fittedFor) return;
+      fittedFor = key;
+      unitRef.current = unit;
+      // 마지막 장면 자리까지 무대가 고정되도록 전체 길이는 (장면 수 - 1) × 장면 높이 + 무대 높이로 둔다.
+      root.style.height = `${(n - 1) * unit + stageH}px`;
       // 장면 안쪽 여백(머리글·진행 표시 자리)은 CSS가 화면 크기마다 정한다.
       const cs = sceneRefs.current[0] ? getComputedStyle(sceneRefs.current[0]) : null;
       const padY = cs ? parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) : 150;
@@ -241,21 +232,12 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
 
     // 장면 내용 크기가 바뀌면(글꼴 로드 등) 장면을 다시 맞춘다.
     const refit = () => {
-      fit();
+      fit(true);
       schedule();
     };
+    // 회전·창 크기 조절이면 새 크기에 맞추고, 주소창·도구 막대만 움직였으면(크기 기준이 같으면) 그대로 둔다.
     const onResize = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      if (w !== viewW || Math.abs(h - unitRef.current) > VIEWPORT_JITTER) {
-        // 회전·창 크기 조절: 장면 크기와 스크롤 단위를 새 화면에 맞춘다.
-        viewW = w;
-        unitRef.current = h;
-        fit();
-      } else {
-        // 주소창만 움직였다: 무대 높이만 맞추고 장면 위치·크기·스크롤 단위는 그대로 둔다.
-        sizeStage();
-      }
+      fit();
       schedule();
     };
     const onFocusIn = (e: FocusEvent) => {
@@ -263,7 +245,7 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       if (idx >= 0 && idx !== Math.round(progressRef.current)) window.scrollTo({ top: sceneScrollTop(idx) });
     };
 
-    fit();
+    fit(true);
     frame();
     if (window.location.hash) {
       const idx = scenes.findIndex((sc) => `#${sc.id}` === window.location.hash);

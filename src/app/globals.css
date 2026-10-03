@@ -720,13 +720,20 @@ html[data-motion="full"] .journey {
      왼쪽 아래 장면 번호도 화면 밖에서 올라온 뒤에야 3D 전환이 시작되어 한 번 끊겨 보인다. */
   margin-top: calc(-4rem - 1px);
 }
+/* 휴대폰 브라우저의 주소창·아래 도구 막대는 스크롤할 때 숨겨졌다 나타난다. 그때마다 크기를 다시 재서 맞추면 화면이 튀므로,
+   크기가 변하지 않는 두 기준만 쓴다(Journey.tsx도 이 크기를 읽기만 한다).
+   - 무대(배경·진행 표시): 막대가 모두 숨겨졌을 때의 높이(lvh). 막대가 사라져도 아래가 비지 않는다.
+   - 장면 상자: 막대가 모두 보일 때의 높이(svh). 막대가 있어도 내용이 가려지지 않고, 막대가 움직여도 내용은 그대로다.
+   lvh·svh를 모르는 옛 브라우저는 vh를 쓴다(휴대폰 브라우저에서 vh는 lvh와 같다). */
 html[data-motion="full"] .journey-stage {
   position: sticky;
   top: 0;
   height: 100vh;
+  height: 100lvh;
   overflow: hidden;
   perspective: 1400px;
   perspective-origin: 50% 45%;
+  perspective-origin: 50% 45svh;
 }
 html[data-motion="full"] .journey-world {
   position: absolute;
@@ -735,7 +742,9 @@ html[data-motion="full"] .journey-world {
 }
 html[data-motion="full"] .journey-scene {
   position: absolute;
-  inset: 0;
+  inset: 0 0 auto 0;
+  height: 100vh;
+  height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -771,7 +780,9 @@ html[data-motion="full"] .journey-rail {
   display: block;
   position: absolute;
   left: 1.5rem;
+  /* 무대(lvh) 바닥이 아니라 막대가 보일 때의 화면 바닥(svh)에 맞춘다: 막대에 가리지 않고, 막대가 움직여도 제자리에 있다. */
   bottom: 1.5rem;
+  bottom: calc(1.5rem + 100lvh - 100svh);
   z-index: 3;
 }
 .journey-rail ol {
@@ -812,6 +823,7 @@ html[data-motion="full"] .journey-next {
   position: absolute;
   right: 1.5rem;
   bottom: 1.5rem;
+  bottom: calc(1.5rem + 100lvh - 100svh);
   z-index: 3;
   flex-direction: column;
   align-items: center;
