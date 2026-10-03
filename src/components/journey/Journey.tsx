@@ -26,6 +26,10 @@ const DEPTH = 1200; // 장면 사이 깊이(px)
 const HOLD = 0.01;
 // 멈춘 뒤 이어서 넘길지 정하는 기준(px). 움직이던 방향으로 이만큼만 움직였어도 그쪽 장면으로 넘긴다.
 const NUDGE_PX = 8;
+// 스크롤이 멈췄다고 보고 장면 자리로 옮기기 시작할 때까지의 대기(ms). 휠 한 칸의 스크롤 이벤트 간격보다는 길어야 한다.
+const SETTLE_DELAY = 70;
+// 장면 자리를 지나쳐 이 비율(화면 높이 대비)보다 덜 간 채 멈추면 지나친 장면으로 돌아간다.
+const CROSS_BACK = 0.25;
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
@@ -45,12 +49,47 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     return root.getBoundingClientRect().top + window.scrollY + i * window.innerHeight;
   }, []);
 
+  // 장면 자리로 옮기는 스크롤. 브라우저 기본 smooth 스크롤은 거리가 길수록 느리게 오래 움직이고 길이를 정할 수 없어,
+  // 처음에 빠르게 움직이다 부드럽게 멈추는(ease-out) 짧은 애니메이션으로 직접 옮긴다.
+  // 가까운 자리는 약 0.25초, 장면 하나는 약 0.4초, 멀리 건너뛰어도 0.6초를 넘지 않는다.
+  const glideRef = useRef(0);
+  const stopGlide = useCallback(() => {
+    if (!glideRef.current) return;
+    cancelAnimationFrame(glideRef.current);
+    glideRef.current = 0;
+    document.documentElement.style.scrollBehavior = "";
+  }, []);
+  const glideTo = useCallback(
+    (top: number) => {
+      stopGlide();
+      const from = window.scrollY;
+      const dist = top - from;
+      if (Math.abs(dist) < 1) return;
+      const duration = Math.min(600, 220 + Math.abs(dist) * 0.22);
+      const t0 = performance.now();
+      // 프레임마다 정확한 위치로 옮겨야 하므로, 옮기는 동안만 html의 scroll-behavior: smooth를 끈다.
+      document.documentElement.style.scrollBehavior = "auto";
+      const step = (now: number) => {
+        const t = Math.min(1, (now - t0) / duration);
+        const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+        window.scrollTo(0, from + dist * eased);
+        if (t < 1) glideRef.current = requestAnimationFrame(step);
+        else {
+          glideRef.current = 0;
+          document.documentElement.style.scrollBehavior = "";
+        }
+      };
+      glideRef.current = requestAnimationFrame(step);
+    },
+    [stopGlide]
+  );
+
   const goTo = useCallback(
     (i: number) => {
       const target = Math.max(0, Math.min(n - 1, i));
-      window.scrollTo({ top: sceneScrollTop(target), behavior: "smooth" });
+      glideTo(sceneScrollTop(target));
     },
-    [n, sceneScrollTop]
+    [n, sceneScrollTop, glideTo]
   );
 
   useEffect(() => {
@@ -126,14 +165,19 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       if (!raf) raf = requestAnimationFrame(frame);
     };
 
-    // 스크롤이 장면 자리가 아닌 곳에서 멈추면, 잠시 뒤 움직이던 방향으로 장면 하나를 마저 넘긴다.
+    // 스크롤이 장면 자리가 아닌 곳에서 멈추면, 곧바로(SETTLE_DELAY) 움직이던 방향으로 장면 하나를 마저 넘긴다.
     // 조금만 내려도(NUDGE_PX) 다음 장면으로, 조금만 올려도 이전 장면으로 간다. 방향을 모르면 가까운 쪽으로 간다.
+    // 다만 장면 자리 하나를 지나쳐 조금만(CROSS_BACK) 더 간 채 멈췄으면 그 장면으로 돌아간다: 관성으로 살짝 넘친 것이지
+    // 장면을 하나 더 넘기려던 것이 아니다(바닥글에서 올라오다 마지막 장면을 지나친 경우도 같다).
     let settleTimer = 0;
     let touching = false;
     let lastY = window.scrollY;
     let dir = 0;
+    let idle = true; // 스크롤이 멈춰 있는 상태(다음 스크롤이 새 동작의 시작)
+    let gestureFrom = window.scrollY; // 이번 스크롤 동작을 시작한 위치
     const settle = () => {
-      if (touching) return;
+      if (touching || glideRef.current) return; // 아직 동작 중(손가락이 닿아 있거나 장면 자리로 옮기는 중)
+      idle = true;
       const vh = window.innerHeight;
       const y = window.scrollY;
       const top = root.getBoundingClientRect().top + y;
@@ -143,15 +187,23 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       const from = y - rest(i); // 장면 i 자리에서 내려온 거리
       const to = rest(i + 1) - y; // 장면 i+1 자리까지 남은 거리
       if (from < 2 || to < 2) return; // 이미 장면 자리
-      const forward = dir > 0 ? from >= NUDGE_PX : dir < 0 ? to < NUDGE_PX : from >= to;
-      window.scrollTo({ top: rest(forward ? i + 1 : i), behavior: "smooth" });
+      const crossBack = vh * CROSS_BACK;
+      let target: number;
+      if (dir > 0 && gestureFrom < rest(i) - 2 && from < crossBack) target = i; // 장면 i를 지나쳐 조금 내려감
+      else if (dir < 0 && gestureFrom > rest(i + 1) + 2 && to < crossBack) target = i + 1; // 장면 i+1을 지나쳐 조금 올라감
+      else target = (dir > 0 ? from >= NUDGE_PX : dir < 0 ? to < NUDGE_PX : from >= to) ? i + 1 : i;
+      glideTo(rest(target));
     };
     const queueSettle = () => {
       clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(settle, 100);
+      settleTimer = window.setTimeout(settle, SETTLE_DELAY);
     };
     const onScroll = () => {
       const y = window.scrollY;
+      if (idle) {
+        idle = false;
+        gestureFrom = lastY;
+      }
       if (y !== lastY) dir = Math.sign(y - lastY);
       lastY = y;
       schedule();
@@ -160,6 +212,7 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     const onTouchStart = () => {
       touching = true;
       clearTimeout(settleTimer);
+      stopGlide();
     };
     const onTouchEnd = () => {
       touching = false;
@@ -185,6 +238,10 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    // 장면 자리로 옮기는 중에 사용자가 다시 스크롤하면 바로 손을 뗀다(사용자 입력이 우선).
+    window.addEventListener("wheel", stopGlide, { passive: true });
+    window.addEventListener("keydown", stopGlide);
+    window.addEventListener("pointerdown", stopGlide);
     window.addEventListener("resize", onResize);
     root.addEventListener("focusin", onFocusIn);
     const ro = new ResizeObserver(onResize);
@@ -193,15 +250,19 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(settleTimer);
+      stopGlide();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("touchcancel", onTouchEnd);
+      window.removeEventListener("wheel", stopGlide);
+      window.removeEventListener("keydown", stopGlide);
+      window.removeEventListener("pointerdown", stopGlide);
       window.removeEventListener("resize", onResize);
       root.removeEventListener("focusin", onFocusIn);
       ro.disconnect();
     };
-  }, [n, scenes, sceneScrollTop]);
+  }, [n, scenes, sceneScrollTop, glideTo, stopGlide]);
 
   return (
     <div ref={rootRef} className="journey" style={{ "--scene-count": n } as CSSProperties}>
