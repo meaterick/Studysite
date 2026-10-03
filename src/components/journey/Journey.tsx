@@ -30,6 +30,9 @@ const NUDGE_PX = 8;
 const SETTLE_DELAY = 70;
 // 장면 자리를 지나쳐 이 비율(화면 높이 대비)보다 덜 간 채 멈추면 지나친 장면으로 돌아간다.
 const CROSS_BACK = 0.25;
+// 휴대폰 주소창이 숨겨지거나 나타날 때의 높이 변화(보통 50~120px)는 화면 크기 변경으로 보지 않는다.
+// 이보다 크게 바뀌거나(창 크기 조절) 너비가 바뀌면(회전) 장면 크기를 다시 잡는다.
+const VIEWPORT_JITTER = 160;
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const smooth = (t: number) => t * t * t * (t * (t * 6 - 15) + 10); // smootherstep
@@ -39,6 +42,9 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
   const sceneRefs = useRef<(HTMLElement | null)[]>([]);
   const innerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const progressRef = useRef(0);
+  // 장면 하나에 배정한 스크롤 길이이자 장면 상자의 높이(px). 처음 화면 높이로 정하고, 주소창이 움직여도 바꾸지 않는다.
+  // 바꾸면 같은 스크롤 위치가 다른 장면 위치로 계산되고 장면이 다시 가운데 맞춰져, 첫 스크롤(주소창이 숨겨지는 순간)에 화면이 튄다.
+  const unitRef = useRef(0);
   const [active, setActive] = useState(0);
   const n = scenes.length;
 
@@ -46,7 +52,7 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
   const sceneScrollTop = useCallback((i: number) => {
     const root = rootRef.current;
     if (!root || i <= 0) return 0;
-    return root.getBoundingClientRect().top + window.scrollY + i * window.innerHeight;
+    return root.getBoundingClientRect().top + window.scrollY + i * (unitRef.current || window.innerHeight);
   }, []);
 
   // 장면 자리로 옮기는 스크롤. 브라우저 기본 smooth 스크롤은 거리가 길수록 느리게 오래 움직이고 길이를 정할 수 없어,
@@ -98,18 +104,32 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
 
     let raf = 0;
     let lastActive = -1;
+    let viewW = window.innerWidth;
+    unitRef.current = window.innerHeight;
+    const stage = root.querySelector<HTMLElement>(".journey-stage");
+
+    // 무대(배경·진행 표시)는 지금 보이는 높이를 채우고, 스크롤 길이와 장면 상자는 고정 단위(unitRef)를 쓴다.
+    // 마지막 장면 자리까지 무대가 고정되도록 전체 길이는 (장면 수 - 1) × 단위 + 무대 높이로 둔다.
+    const sizeStage = () => {
+      if (!stage) return;
+      const unit = unitRef.current;
+      const h = window.innerHeight;
+      root.style.height = `${(n - 1) * unit + Math.max(unit, h)}px`;
+      stage.style.height = `${h}px`;
+    };
 
     const fit = () => {
-      const stage = root.querySelector<HTMLElement>(".journey-stage");
       if (!stage) return;
-      // 모바일 주소창 때문에 100vh와 실제 보이는 높이가 다를 수 있어 창 높이로 맞춘다.
-      root.style.height = `${n * window.innerHeight}px`;
-      stage.style.height = `${window.innerHeight}px`;
+      sizeStage();
+      const unit = unitRef.current;
+      sceneRefs.current.forEach((el) => {
+        if (el) el.style.height = `${unit}px`;
+      });
       // 장면 안쪽 여백(머리글·진행 표시 자리)은 CSS가 화면 크기마다 정한다.
       const cs = sceneRefs.current[0] ? getComputedStyle(sceneRefs.current[0]) : null;
       const padY = cs ? parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) : 150;
       const padX = cs ? parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) : 40;
-      const availH = stage.clientHeight - padY;
+      const availH = unit - padY;
       const availW = stage.clientWidth - padX;
       innerRefs.current.forEach((inner) => {
         if (!inner) return;
@@ -121,7 +141,7 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
 
     const frame = () => {
       raf = 0;
-      const vh = window.innerHeight;
+      const vh = unitRef.current;
       const y = window.scrollY - (root.getBoundingClientRect().top + window.scrollY);
       const raw = clamp(y / vh, 0, n - 1);
       const i = Math.floor(raw);
@@ -178,7 +198,7 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     const settle = () => {
       if (touching || glideRef.current) return; // 아직 동작 중(손가락이 닿아 있거나 장면 자리로 옮기는 중)
       idle = true;
-      const vh = window.innerHeight;
+      const vh = unitRef.current;
       const y = window.scrollY;
       const top = root.getBoundingClientRect().top + y;
       const rest = sceneScrollTop;
@@ -219,8 +239,23 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
       queueSettle();
     };
 
-    const onResize = () => {
+    // 장면 내용 크기가 바뀌면(글꼴 로드 등) 장면을 다시 맞춘다.
+    const refit = () => {
       fit();
+      schedule();
+    };
+    const onResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (w !== viewW || Math.abs(h - unitRef.current) > VIEWPORT_JITTER) {
+        // 회전·창 크기 조절: 장면 크기와 스크롤 단위를 새 화면에 맞춘다.
+        viewW = w;
+        unitRef.current = h;
+        fit();
+      } else {
+        // 주소창만 움직였다: 무대 높이만 맞추고 장면 위치·크기·스크롤 단위는 그대로 둔다.
+        sizeStage();
+      }
       schedule();
     };
     const onFocusIn = (e: FocusEvent) => {
@@ -244,9 +279,9 @@ export default function Journey({ scenes }: { scenes: JourneyScene[] }) {
     window.addEventListener("pointerdown", stopGlide);
     window.addEventListener("resize", onResize);
     root.addEventListener("focusin", onFocusIn);
-    const ro = new ResizeObserver(onResize);
+    const ro = new ResizeObserver(refit);
     innerRefs.current.forEach((el) => el && ro.observe(el));
-    document.fonts?.ready.then(onResize).catch(() => undefined);
+    document.fonts?.ready.then(refit).catch(() => undefined);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(settleTimer);
