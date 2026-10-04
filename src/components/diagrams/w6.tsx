@@ -1292,3 +1292,418 @@ export function HallucinationMap() {
     </DiagramFrame>
   );
 }
+
+export function RlLlmMapping() {
+  // 본문의 대응: Agent = LLM, State = 지금까지의 문맥, Action = 다음 토큰, Reward = 응답이 끝난 뒤의 점수. 예제: r = (0, 0, 1), γ = 0.9 → G₀ = 0.81.
+  const rows = [
+    { k: "에이전트", rl: "행동을 고르는 주체", llm: "LLM" },
+    { k: "상태 s_t", rl: "지금 환경의 모습", llm: "대화 + 지금까지 생성한 토큰" },
+    { k: "행동 a_t", rl: "고를 수 있는 선택", llm: "다음 토큰 하나" },
+    { k: "정책 π(a | s)", rl: "상태 → 행동의 규칙", llm: "언어모델의 다음 토큰 분포" },
+    { k: "보상 r_t", rl: "행동 직후의 평가", llm: "응답이 끝난 뒤 보상모델 점수" },
+  ];
+  const tokens = ["오늘", "날씨는", "맑습니다", "<끝>"];
+  return (
+    <DiagramFrame
+      title="강화학습의 언어로 다시 쓴 LLM 생성"
+      caption="왼쪽: 강화학습의 요소가 RLHF에서 무엇에 해당하는지다. LLM이 에이전트이고, 지금까지의 문맥이 상태, 다음 토큰 하나를 고르는 것이 행동, 다음 토큰 분포 자체가 정책이다. 오른쪽: 보상은 토큰마다 주어지지 않고 응답이 끝난 뒤에 한 번 주어진다. 본문 예제처럼 보상이 0, 0, 1이고 γ = 0.9이면 첫 시점의 이득은 0 + 0.9 × 0 + 0.9² × 1 = 0.81이다. 같은 보상이라도 늦게 받을수록 할인된다."
+      viewBox="0 0 720 232"
+      minWidth={600}
+    >
+      <text x={92} y={18} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={inkSecondary}>
+        요소
+      </text>
+      <text x={210} y={18} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={inkSecondary}>
+        일반 강화학습
+      </text>
+      <text x={344} y={18} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        RLHF에서
+      </text>
+      {rows.map((r, i) => {
+        const y = 28 + i * 36;
+        return (
+          <g key={r.k}>
+            <rect x={30} y={y} width={124} height={30} rx={6} fill={card2Bg} stroke="var(--border-strong)" />
+            <text x={92} y={y + 19} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink} fontFamily={mono}>
+              {r.k}
+            </text>
+            <text x={210} y={y + 19} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+              {r.rl}
+            </text>
+            <rect x={266} y={y} width={156} height={30} rx={6} fill={colors.violet} fillOpacity={0.1} stroke={colors.violet} strokeOpacity={0.6} />
+            <text x={344} y={y + 19} textAnchor="middle" fontSize={10} fontWeight={700} fill={ink}>
+              {r.llm}
+            </text>
+          </g>
+        );
+      })}
+      <line x1={440} y1={10} x2={440} y2={220} stroke="var(--border-hairline)" />
+      <text x={580} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        보상은 응답이 끝난 뒤에 한 번
+      </text>
+      {tokens.map((tk, i) => (
+        <g key={tk}>
+          {chip6(456 + i * 64, 36, tk, i === 3 ? colors.red : colors.blue, 58, 26, 0.14, 10.5)}
+          <text x={485 + i * 64} y={80} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={i === 3 ? colors.green : inkSecondary}>
+            {i === 3 ? "보상 R" : "r = 0"}
+          </text>
+        </g>
+      ))}
+      <line x1={452} x2={708} y1={98} y2={98} stroke="var(--border-hairline)" />
+      <text x={580} y={118} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        본문 예제: γ = 0.9로 할인한 이득
+      </text>
+      {[
+        { t: "t = 0", r: 0, w: "× 1" },
+        { t: "t = 1", r: 0, w: "× 0.9" },
+        { t: "t = 2", r: 1, w: "× 0.81" },
+      ].map((s, i) => (
+        <g key={s.t}>
+          <text x={490 + i * 80} y={142} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+            {s.t}
+          </text>
+          {chip6(462 + i * 80, 148, `r = ${s.r}`, s.r ? colors.green : inkMuted, 56, 24, 0.14, 10.5)}
+          <text x={490 + i * 80} y={188} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.violet}>
+            {s.w}
+          </text>
+        </g>
+      ))}
+      <text x={580} y={214} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
+        G₀ = 0 + 0 + 0.81 × 1 = 0.81
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function ValueIteration() {
+  // 본문 코드: 칸 5개, 4번 칸 도착 시 보상 1, γ = 0.9. 한 번 훑을 때마다(왼쪽→오른쪽, 제자리 갱신) 가치가 한 칸씩 왼쪽으로 퍼진다.
+  const n = 5;
+  const gamma = 0.9;
+  const V = new Array(n).fill(0);
+  const hist: number[][] = [];
+  for (let sweep = 0; sweep < 4; sweep++) {
+    for (let s = 0; s < n - 1; s++) {
+      const right = s + 1 === n - 1 ? 1 : gamma * V[s + 1];
+      const left = gamma * V[Math.max(s - 1, 0)];
+      V[s] = Math.max(right, left);
+    }
+    hist.push([...V]);
+  }
+  const cw = 78;
+  const x0 = 120;
+  return (
+    <DiagramFrame
+      title="가치 반복: 목표의 가치가 한 칸씩 거꾸로 퍼진다"
+      caption="본문 코드를 그대로 돌린 결과다. 오른쪽 끝(4번 칸)에 도착하면 보상 1을 받고 끝나며, 각 칸은 '오른쪽/왼쪽 중 더 좋은 행동의 값'으로 갱신된다(벨만 최적 방정식). 첫 번째 훑기에서는 목표 바로 옆 칸만 1이 되고, 훑을 때마다 가치가 한 칸씩 왼쪽으로 전해진다. 네 번째 훑기 뒤에는 [0.729, 0.81, 0.9, 1]로 수렴해 더 이상 바뀌지 않는다. 한 칸 멀어질 때마다 γ = 0.9배가 되고, 모든 칸의 최선의 행동은 오른쪽(→)이다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      {Array.from({ length: n }, (_, j) => (
+        <text key={j} x={x0 + j * cw + cw / 2} y={22} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={j === n - 1 ? colors.green : inkSecondary}>
+          {j === n - 1 ? "4번 (목표)" : `${j}번 칸`}
+        </text>
+      ))}
+      {hist.map((row, r) => (
+        <g key={r}>
+          <text x={x0 - 10} y={50 + r * 40} textAnchor="end" fontSize={10.5} fill={inkSecondary}>
+            {`${r + 1}번째 훑기 후`}
+          </text>
+          {row.map((v, j) => {
+            const goal = j === n - 1;
+            return (
+              <g key={j}>
+                <rect x={x0 + j * cw + 2} y={30 + r * 40} width={cw - 4} height={32} rx={6} fill={goal ? colors.green : colors.violet} fillOpacity={goal ? 0.2 : 0.06 + 0.5 * v} stroke={goal ? colors.green : "var(--border-strong)"} />
+                <text x={x0 + j * cw + cw / 2} y={51 + r * 40} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink} fontFamily={mono}>
+                  {goal ? "+1 끝" : v === 0 ? "0" : String(Number(v.toFixed(3)))}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      ))}
+      {Array.from({ length: n - 1 }, (_, j) => (
+        <text key={j} x={x0 + j * cw + cw / 2} y={210} textAnchor="middle" fontSize={14} fontWeight={800} fill={colors.violet}>
+          →
+        </text>
+      ))}
+      <text x={x0 - 10} y={210} textAnchor="end" fontSize={10.5} fill={inkSecondary}>
+        최선의 행동
+      </text>
+      {[0, 1, 2].map((j) => (
+        <text key={j} x={x0 + (j + 1) * cw} y={228} textAnchor="middle" fontSize={9.5} fill={colors.violet} fontWeight={700}>
+          × 0.9
+        </text>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function EpsilonGreedy() {
+  // 본문 코드(rng 시드 0, 2000번)의 실제 출력. 당첨 확률 0.3·0.5·0.7. 최선 머신만 누르면 기대 보상 0.7.
+  const runs = [
+    { eps: "ε = 0", avg: 0.289, counts: [2000, 0, 0], note: "처음 당첨된 0.3에 갇힘" },
+    { eps: "ε = 0.1", avg: 0.677, counts: [96, 73, 1831], note: "균형: 대부분 0.7을 누름" },
+    { eps: "ε = 0.5", avg: 0.587, counts: [333, 341, 1326], note: "탐색이 너무 잦음" },
+  ];
+  const mc = [colors.red, colors.orange, colors.green];
+  const bx = linear(0, 2000, 0, 300);
+  const ay = linear(0, 0.8, 196, 40);
+  return (
+    <DiagramFrame
+      title="ε-탐욕: 탐색과 활용의 균형"
+      caption="본문 코드의 실제 출력이다(당첨 확률 0.3, 0.5, 0.7인 슬롯머신 세 대, 2,000번). 왼쪽은 머신별로 누른 횟수다. ε = 0은 처음 당첨된 0번 머신(0.3)만 2,000번 눌러 평균 보상이 0.289에 그친다. ε = 0.5는 좋은 머신을 알고도 절반 가까이 다른 것을 눌러 0.587이다. ε = 0.1은 대부분 0.7짜리를 누르면서도 가끔 탐색해 0.677로, 최선 머신만 누를 때의 기대값 0.7(점선)에 가장 가깝다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <text x={20} y={20} fontSize={11.5} fontWeight={800} fill={ink}>
+        머신별 선택 횟수 (2,000번 중)
+      </text>
+      {runs.map((r, i) => {
+        const y = 40 + i * 58;
+        let acc = 0;
+        return (
+          <g key={r.eps}>
+            <text x={20} y={y + 15} fontSize={11.5} fontWeight={800} fill={ink}>
+              {r.eps}
+            </text>
+            {r.counts.map((c, k) => {
+              const x = 84 + bx(acc);
+              acc += c;
+              const w = bx(c);
+              return (
+                <g key={k}>
+                  {w > 0 && <rect x={x} y={y} width={w} height={22} fill={mc[k]} fillOpacity={0.6} stroke="var(--surface-card)" />}
+                  {w > 34 && (
+                    <text x={x + w / 2} y={y + 15} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+                      {c}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+            <text x={84} y={y + 38} fontSize={9.5} fill={inkSecondary}>
+              {`${r.note}${r.counts[0] && r.counts[1] ? ` (0.3: ${r.counts[0]}, 0.5: ${r.counts[1]})` : ""}`}
+            </text>
+          </g>
+        );
+      })}
+      {["0.3", "0.5", "0.7"].map((t, k) => (
+        <g key={t}>
+          <rect x={84 + k * 92} y={212} width={12} height={12} rx={2} fill={mc[k]} fillOpacity={0.6} />
+          <text x={100 + k * 92} y={222} fontSize={10} fill={ink}>
+            {`당첨 ${t} 머신`}
+          </text>
+        </g>
+      ))}
+      <line x1={420} y1={14} x2={420} y2={226} stroke="var(--border-hairline)" />
+      <text x={560} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        평균 보상
+      </text>
+      <line x1={450} x2={690} y1={ay(0.7)} y2={ay(0.7)} stroke={colors.green} strokeDasharray="5 3" />
+      <text x={690} y={ay(0.7) - 5} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.green}>
+        최선 머신만: 0.7
+      </text>
+      <line x1={450} x2={690} y1={ay(0)} y2={ay(0)} stroke={inkMuted} />
+      {runs.map((r, i) => {
+        const cx = 490 + i * 80;
+        return (
+          <g key={`a${r.eps}`}>
+            <rect x={cx - 24} y={ay(r.avg)} width={48} height={ay(0) - ay(r.avg)} rx={3} fill={i === 1 ? colors.green : colors.blue} fillOpacity={i === 1 ? 0.7 : 0.45} />
+            <text x={cx} y={ay(r.avg) + 16} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+              {r.avg.toFixed(3)}
+            </text>
+            <text x={cx} y={ay(0) + 16} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+              {r.eps}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function RlMethodMap() {
+  // 본문이 소개한 방법들의 관계: 가치 기반(Q-Learning → DQN), 정책 기반(정책 경사), 둘을 합친 액터-크리틱(→ PPO → RLHF).
+  const P = "rmm";
+  return (
+    <DiagramFrame
+      title="강화학습 방법의 지도: 가치를 배우거나, 정책을 배우거나, 둘 다"
+      caption="가치 기반 방법은 벨만 방정식으로 Q(s, a)를 배운 뒤 Q가 가장 큰 행동을 고른다. 상태가 적으면 표(Q-Learning)로, 많으면 신경망(DQN)으로 Q를 근사한다. 정책 기반 방법은 Q를 거치지 않고 정책 π(a | s) 자체를 신경망으로 두고 기대 이득이 커지는 기울기 방향으로 직접 갱신한다. 액터-크리틱은 둘을 합쳐 critic(가치)이 actor(정책)의 갱신을 평가해 분산을 줄인다. PPO는 여기에 '기존 정책에서 너무 멀리 가지 않게' 하는 제약을 더한 방법이고, RLHF가 LLM을 학습시킬 때 쓴다."
+      viewBox="0 0 720 222"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, violet: colors.violet }} />
+      <Tag x={20} y={20} w={200} h={46} lines={["가치 기반", "Q(s, a)를 배우고 최댓값 행동 선택"]} color={colors.blue} size={11.5} />
+      <Tag x={20} y={90} w={92} h={46} lines={["Q-Learning", "Q를 표로"]} color={colors.blue} size={10.5} tint={0.08} />
+      <Tag x={128} y={90} w={92} h={46} lines={["DQN", "Q를 신경망으로"]} color={colors.blue} size={10.5} tint={0.08} />
+      <Arr x1={66} y1={68} x2={66} y2={88} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={174} y1={68} x2={174} y2={88} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={500} y={20} w={200} h={46} lines={["정책 기반 (정책 경사)", "π(a | s)를 직접 기울기로 갱신"]} color={colors.orange} size={11.5} />
+      <Tag x={250} y={90} w={220} h={46} lines={["액터-크리틱", "actor = 정책, critic = 가치 평가"]} color={colors.violet} size={11.5} />
+      <Arr x1={220} y1={50} x2={300} y2={88} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={500} y1={50} x2={420} y2={88} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={270} y={160} w={180} h={42} lines={["PPO", "멀리 가지 않게 제약 (Proximal)"]} color={colors.violet} size={11.5} tint={0.2} />
+      <Arr x1={360} y1={138} x2={360} y2={158} color={colors.violet} marker={`${P}-violet`} width={1.6} />
+      <Tag x={510} y={160} w={190} h={42} lines={["RLHF", "보상 = 보상모델 점수, 정책 = LLM"]} color={colors.green} size={11.5} />
+      <Arr x1={452} y1={181} x2={508} y2={181} color={colors.violet} marker={`${P}-violet`} width={1.6} />
+      <Lines x={120} y={168} lines={["바탕: 벨만 방정식", "Q(s, a) = E[r + γ Q(s′, a′)]"]} size={10.5} color={inkSecondary} weight={600} />
+    </DiagramFrame>
+  );
+}
+
+export function MajorityVote() {
+  // 본문: 정답·오답 두 갈래면 이항분포로 과반 확률. 오답이 세 갈래(0.2씩)로 흩어지면 최다 득표만 받으면 된다(동점은 무작위).
+  const ns = Array.from({ length: 21 }, (_, i) => 2 * i + 1);
+  const lfact = (k: number) => {
+    let s = 0;
+    for (let i = 2; i <= k; i++) s += Math.log(i);
+    return s;
+  };
+  const binom = (p: number, n: number) => {
+    let s = 0;
+    for (let k = Math.floor(n / 2) + 1; k <= n; k++) s += Math.exp(lfact(n) - lfact(k) - lfact(n - k) + k * Math.log(p) + (n - k) * Math.log(1 - p));
+    return s;
+  };
+  const plural = (n: number) => {
+    const pr = [0.4, 0.2, 0.2, 0.2];
+    let tot = 0;
+    for (let a = 0; a <= n; a++)
+      for (let b = 0; b <= n - a; b++)
+        for (let c = 0; c <= n - a - b; c++) {
+          const d = n - a - b - c;
+          const ks = [a, b, c, d];
+          const m = Math.max(...ks);
+          if (a !== m) continue;
+          const ties = ks.filter((k) => k === m).length;
+          let lp = lfact(n);
+          ks.forEach((k, i) => (lp += -lfact(k) + k * Math.log(pr[i])));
+          tot += Math.exp(lp) / ties;
+        }
+    return tot;
+  };
+  const G = { left: 56, top: 18, width: 430, height: 180 };
+  const sx = linear(1, 41, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const series = [
+    { t: "p = 0.8", f: (n: number) => binom(0.8, n), c: colors.green },
+    { t: "p = 0.6", f: (n: number) => binom(0.6, n), c: colors.blue },
+    { t: "p = 0.4, 오답이 흩어짐 (0.2 × 3)", f: plural, c: colors.violet },
+    { t: "p = 0.4, 오답이 한 갈래", f: (n: number) => binom(0.4, n), c: colors.red },
+  ].map((s) => ({ ...s, ys: ns.map((n) => s.f(n)) }));
+  const p21 = series[2].ys[10];
+  return (
+    <DiagramFrame
+      title="자기일관성(다수결): 대체로 맞히는 문제만 더 확실해진다"
+      caption={`같은 문제를 n번 풀어 다수결한 정답률이다. 한 번 정답률이 0.8이면 세 번만 풀어도 0.896(본문 예제), 0.6이면 101번에 0.98까지 오른다. 정답·오답 두 갈래이고 한 번 정답률이 0.4이면 반대로 n을 늘릴수록 떨어진다(세 번이면 0.352). 하지만 오답이 여러 갈래로 흩어지면 정답이 과반일 필요 없이 가장 많은 표만 받으면 되므로, 정답 0.4에 오답 세 개가 0.2씩인 경우 21표 다수결은 약 ${Math.round(p21 * 100)}%까지 오른다(동점은 무작위로 고른다고 할 때). 표본이 독립이라는 가정이 깨져 오답이 한곳에 몰리면 이 이득은 사라진다.`}
+      viewBox="0 0 720 240"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 5, 11, 21, 31, 41]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="푼 횟수 n (다수결)" yLabel="정답률" />
+      {series.map((s) => (
+        <g key={s.t}>
+          <path d={linePath(ns.map((n, i) => [sx(n), sy(s.ys[i])] as [number, number]))} fill="none" stroke={s.c} strokeWidth={2.4} />
+          {ns.map((n, i) => (
+            <circle key={n} cx={sx(n)} cy={sy(s.ys[i])} r={2.2} fill={s.c} />
+          ))}
+        </g>
+      ))}
+      <circle cx={sx(3)} cy={sy(0.896)} r={5} fill="none" stroke={colors.green} strokeWidth={1.8} />
+      <text x={sx(3) + 6} y={sy(0.896) + 16} fontSize={10} fontWeight={800} fill={colors.green}>
+        0.896
+      </text>
+      <circle cx={sx(3)} cy={sy(0.352)} r={5} fill="none" stroke={colors.red} strokeWidth={1.8} />
+      <text x={sx(3) + 8} y={sy(0.352) + 4} fontSize={10} fontWeight={800} fill={colors.red}>
+        0.352
+      </text>
+      <circle cx={sx(21)} cy={sy(p21)} r={5} fill="none" stroke={colors.violet} strokeWidth={1.8} />
+      <text x={sx(21) + 4} y={sy(p21) + 18} fontSize={10} fontWeight={800} fill={colors.violet}>
+        {`21표: ${Math.round(p21 * 100)}%`}
+      </text>
+      {series.map((s, i) => (
+        <g key={`l${s.t}`}>
+          <line x1={506} x2={530} y1={50 + i * 34} y2={50 + i * 34} stroke={s.c} strokeWidth={2.4} />
+          <Lines x={536} y={54 + i * 34} lines={s.t.split(", ")} size={10.5} anchor="start" color={s.c} weight={700} gap={1.2} />
+        </g>
+      ))}
+      <text x={506} y={196} fontSize={10} fill={inkSecondary}>
+        p = 한 번 풀 때의 정답률
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function BestOfN() {
+  // 본문 best_of_n: p = 0.3, 통과한 후보가 없으면 오답. 상한 = p·TPR / (p·TPR + (1 − p)·FPR).
+  const p = 0.3;
+  const vs = [
+    { tpr: 1.0, fpr: 0.0, c: colors.green, t: "완벽한 검증기" },
+    { tpr: 0.9, fpr: 0.1, c: colors.blue, t: "TPR 0.9, FPR 0.1" },
+    { tpr: 0.9, fpr: 0.5, c: colors.red, t: "TPR 0.9, FPR 0.5" },
+  ];
+  const bon = (n: number, tpr: number, fpr: number) => {
+    const a = p * tpr;
+    const b = (1 - p) * fpr;
+    return (1 - (1 - a - b) ** n) * (a / (a + b));
+  };
+  const G = { left: 300, top: 18, width: 300, height: 180 };
+  const sx = log10Scale(1, 64, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const P = "bon";
+  return (
+    <DiagramFrame
+      title="best-of-n: 표본을 늘려도 검증기의 정밀도에서 멈춘다"
+      caption="왼쪽: 후보 n개를 만들고 검증기가 통과시킨 것 하나를 고른다. 오른쪽: 본문 코드의 best_of_n(p = 0.3)이다. 검증기가 완벽하면 '적어도 하나가 맞을 확률' 1 − 0.7ⁿ을 따라 16개면 99.7%가 된다. 오답을 10% 통과시키는 검증기는 79.4%, 50% 통과시키는 검증기는 43.5%에서 멈춘다(점선). 이 상한 p·TPR / (p·TPR + (1 − p)·FPR)은 2주차의 Precision과 같은 식이라, n을 16에서 64로 늘려도 거의 변하지 않는다. 그 지점부터는 생성이 아니라 검증이 병목이다."
+      viewBox="0 0 720 240"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {chip6(14, 92, "문제", colors.violet, 52, 28, 0.14, 11)}
+      <Arr x1={68} y1={106} x2={88} y2={106} color={inkSecondary} marker={`${P}-ink`} />
+      {["✓", "✗", "✗", "✓", "✗"].map((m, i) => (
+        <g key={i}>
+          <rect x={92} y={28 + i * 30} width={66} height={24} rx={5} fill={m === "✓" ? colors.green : colors.red} fillOpacity={0.12} stroke={m === "✓" ? colors.green : colors.red} />
+          <text x={125} y={44 + i * 30} textAnchor="middle" fontSize={10} fontWeight={700} fill={ink}>
+            {`후보 ${i + 1} ${m}`}
+          </text>
+        </g>
+      ))}
+      <Arr x1={162} y1={106} x2={182} y2={106} color={inkSecondary} marker={`${P}-ink`} />
+      <rect x={186} y={78} width={74} height={56} rx={8} fill={colors.blue} fillOpacity={0.12} stroke={colors.blue} />
+      <text x={223} y={100} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.blue}>
+        검증기
+      </text>
+      <text x={223} y={116} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+        정답 통과 TPR
+      </text>
+      <text x={223} y={128} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+        오답 통과 FPR
+      </text>
+      <Lines x={223} y={160} lines={["통과한 것 중", "하나를 낸다"]} size={10} color={ink} weight={700} />
+      <text x={125} y={196} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        한 번 정답률 p = 0.3
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 2, 4, 8, 16, 32, 64]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="후보 수 n (로그 눈금)" />
+      {vs.map((v) => {
+        const cap = (p * v.tpr) / (p * v.tpr + (1 - p) * v.fpr);
+        return (
+          <g key={v.t}>
+            <line x1={G.left} x2={G.left + G.width} y1={sy(cap)} y2={sy(cap)} stroke={v.c} strokeDasharray="4 3" strokeOpacity={0.7} />
+            <path d={linePath(sample((lx) => bon(10 ** lx, v.tpr, v.fpr), 0, Math.log10(64), 80).map(([x, y]) => [sx(10 ** x), sy(y)] as [number, number]))} fill="none" stroke={v.c} strokeWidth={2.4} />
+            {[1, 4, 16, 64].map((n) => (
+              <circle key={n} cx={sx(n)} cy={sy(bon(n, v.tpr, v.fpr))} r={3.2} fill={v.c} />
+            ))}
+          </g>
+        );
+      })}
+      {vs.map((v, i) => {
+        const cap = (p * v.tpr) / (p * v.tpr + (1 - p) * v.fpr);
+        return (
+          <g key={`l${v.t}`}>
+            <line x1={614} x2={634} y1={50 + i * 44} y2={50 + i * 44} stroke={v.c} strokeWidth={2.4} />
+            <Lines x={640} y={46 + i * 44} lines={[v.t, `상한 ${(cap * 100).toFixed(1)}%`]} size={9.5} anchor="start" color={v.c} weight={700} gap={1.3} />
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
