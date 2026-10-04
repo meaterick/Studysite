@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, linePath, seeded, gaussian, mono } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, linePath, sample, seeded, gaussian, mono } from "./chart";
 
 export function NistFramework() {
   const cx = 280;
@@ -1246,6 +1246,698 @@ export function PaperTimeline() {
           {y}
         </text>
       ))}
+    </DiagramFrame>
+  );
+}
+
+export function LlmHostingChoices() {
+  // 개념도: API는 종량제(원점에서 출발하는 직선), 자체 호스팅은 고정비 + 작은 변동비. 트래픽이 손익분기점을 넘으면 자체 호스팅이 싸진다.
+  const P = "lhc";
+  const G = { left: 44, top: 22, width: 280, height: 160 };
+  const sx = linear(0, 10, G.left, G.left + G.width);
+  const sy = linear(0, 10, G.top + G.height, G.top);
+  const api = (x: number) => 0.9 * x;
+  const local = (x: number) => 3.6 + 0.25 * x;
+  const be = 3.6 / (0.9 - 0.25);
+  return (
+    <DiagramFrame
+      title="LLM을 어디서 돌릴까: API와 자체 호스팅, 그리고 서빙 도구"
+      caption="왼쪽은 개념도다. API는 쓴 만큼 내는 종량제라 비용이 트래픽에 비례하고(원점에서 출발), 자체 호스팅은 GPU 서버라는 고정비가 먼저 들지만 호출당 추가 비용이 작다. 트래픽이 두 선이 만나는 손익분기점을 넘으면 자체 호스팅이 싸진다. 여기에 데이터가 외부로 나가면 안 되는지, 지연시간에 얼마나 민감한지가 함께 판단 기준이 된다. 오른쪽: 자체 호스팅을 고르면 Hugging Face Transformers로 모델을 가져오고, 실제 트래픽 앞에는 vLLM(대규모 동시 서빙)이나 Ollama(개인·소규모 실험)를 세운다."
+      viewBox="0 0 720 230"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[]} yTicks={[]} xLabel="월 트래픽 →" yLabel="월 비용" grid={false} />
+      <rect x={sx(be)} y={G.top} width={sx(10) - sx(be)} height={G.height} fill={colors.green} fillOpacity={0.07} />
+      <path d={linePath(sample(api, 0, 10, 20).map(([x, y]) => [sx(x), sy(Math.min(y, 10))] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <path d={linePath(sample(local, 0, 10, 20).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <circle cx={sx(be)} cy={sy(api(be))} r={5} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <text x={sx(be) + 8} y={sy(api(be)) + 16} fontSize={10} fontWeight={800} fill={colors.orange}>
+        손익분기점
+      </text>
+      <text x={sx(2.6)} y={sy(api(2.6)) + 20} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        API (종량제)
+      </text>
+      <text x={sx(7.6)} y={sy(local(7.6)) + 18} fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        자체 호스팅 (고정비 + α)
+      </text>
+      <text x={sx(1.6)} y={G.top + 14} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        API가 유리
+      </text>
+      <text x={sx(8.4)} y={G.top + 14} textAnchor="middle" fontSize={9.5} fill={colors.green} fontWeight={700}>
+        자체 호스팅이 유리
+      </text>
+      <line x1={366} y1={14} x2={366} y2={220} stroke="var(--border-hairline)" />
+      <Tag x={384} y={86} w={140} h={50} lines={["HF Transformers", "모델·토크나이저를 가져온다"]} color={colors.orange} size={11} />
+      <Arr x1={526} y1={100} x2={556} y2={64} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={526} y1={122} x2={556} y2={158} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={560} y={30} w={146} h={56} lines={["vLLM", "대규모 동시 서빙", "PagedAttention으로 KV 캐시 관리"]} color={colors.blue} size={11} />
+      <Tag x={560} y={132} w={146} h={50} lines={["Ollama", "개인·소규모 실험, 명령 몇 줄"]} color={colors.green} size={11} />
+      <text x={545} y={206} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        모델을 어디서 가져올까 → 트래픽 앞에 어떻게 세울까
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function TokenCostBreakdown() {
+  // 본문 예제: 단가 입력 3달러·출력 15달러 / 100만 토큰. 기본(2,000 + 500) 0.0135달러, RAG(6,000 + 500) 0.0255달러. 하루 1만 회 × 30일.
+  const rows = [
+    { t: "기본 호출", nin: 2000, nout: 500 },
+    { t: "RAG (검색 조각 추가)", nin: 6000, nout: 500 },
+  ].map((r) => ({ ...r, cin: (r.nin * 3) / 1e6, cout: (r.nout * 15) / 1e6 }));
+  const bx = linear(0, 0.034, 0, 420);
+  return (
+    <DiagramFrame
+      title="호출 비용 = 입력 토큰 × 입력 단가 + 출력 토큰 × 출력 단가"
+      caption="본문 예제의 단가(입력 100만 토큰당 3달러, 출력 15달러)다. 입력 2,000·출력 500토큰 호출은 0.006 + 0.0075 = 0.0135달러로, 하루 1만 번씩 30일이면 약 4,050달러다. RAG가 검색 조각을 붙여 입력이 6,000토큰이 되면 0.018 + 0.0075 = 0.0255달러, 한 달 약 7,650달러로 두 배 가까이 된다. 출력 단가가 입력의 5배여도, 입력이 긴 RAG에서는 비용의 70% 이상이 입력에서 나온다. 검색 결과를 얼마나 압축해 넣을지가 성능뿐 아니라 비용 문제인 이유다."
+      viewBox="0 0 720 200"
+      minWidth={600}
+    >
+      <text x={180} y={20} fontSize={10.5} fontWeight={800} fill={inkSecondary}>
+        호출 1회 비용 (달러)
+      </text>
+      <text x={690} y={20} textAnchor="end" fontSize={10.5} fontWeight={800} fill={inkSecondary}>
+        하루 1만 회 × 30일
+      </text>
+      {rows.map((r, i) => {
+        const y = 34 + i * 70;
+        const total = r.cin + r.cout;
+        return (
+          <g key={r.t}>
+            <text x={14} y={y + 14} fontSize={11.5} fontWeight={800} fill={ink}>
+              {r.t}
+            </text>
+            <text x={14} y={y + 30} fontSize={9.5} fill={inkSecondary}>
+              {`입력 ${r.nin.toLocaleString("en-US")} · 출력 ${r.nout}토큰`}
+            </text>
+            <rect x={180} y={y} width={bx(r.cin)} height={30} fill={colors.blue} fillOpacity={0.6} />
+            <rect x={180 + bx(r.cin)} y={y} width={bx(r.cout)} height={30} fill={colors.orange} fillOpacity={0.6} />
+            <text x={180 + bx(r.cin) / 2} y={y + 19} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+              {`입력 ${r.cin.toFixed(4).replace(/0+$/, "")} (${Math.round((r.cin / total) * 100)}%)`}
+            </text>
+            <text x={180 + bx(r.cin) + bx(r.cout) / 2} y={y + 19} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+              {`출력 ${r.cout.toFixed(4)}`}
+            </text>
+            <text x={180 + bx(total) + 8} y={y + 19} fontSize={11} fontWeight={800} fill={ink}>
+              {`= ${total.toFixed(4)}`}
+            </text>
+            <text x={690} y={y + 20} textAnchor="end" fontSize={13} fontWeight={800} fill={i === 0 ? colors.blue : colors.red}>
+              {`약 ${Math.round(total * 300000).toLocaleString("en-US")}달러`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={14} y={186} fontSize={10} fill={inkSecondary}>
+        단가: 입력 3달러 / 100만 토큰 (파랑), 출력 15달러 / 100만 토큰 (주황)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function TraceWaterfall() {
+  // 예시: 에이전트 요청 하나의 트레이스. 각 줄이 한 구간(span)이고 가로 위치가 시간이다.
+  const spans = [
+    { t: "요청 전체", a: 0, b: 4.2, c: inkMuted, d: 0 },
+    { t: "LLM 호출 ① 계획", a: 0.05, b: 1.1, c: colors.violet, d: 1, note: "입력 820 · 출력 95토큰" },
+    { t: "도구: 문서 검색", a: 1.1, b: 1.6, c: colors.green, d: 1 },
+    { t: "LLM 호출 ② 다음 행동", a: 1.6, b: 2.4, c: colors.violet, d: 1 },
+    { t: "도구: DB 조회", a: 2.4, b: 2.65, c: colors.red, d: 1, note: "✗ 타임아웃" },
+    { t: "도구: DB 조회 (재시도)", a: 2.65, b: 3.0, c: colors.green, d: 1 },
+    { t: "LLM 호출 ③ 최종 답", a: 3.0, b: 4.2, c: colors.violet, d: 1, note: "출력 310토큰" },
+  ];
+  const sx = linear(0, 4.4, 200, 690);
+  return (
+    <DiagramFrame
+      title="트레이스: 요청 하나가 거친 단계를 시간 순서로 다시 그린다"
+      caption="예시다. 사용자 요청 하나가 내부적으로 LLM 호출 세 번과 도구 호출 세 번(그중 하나는 타임아웃 뒤 재시도)을 거쳤다. 각 막대가 한 구간이고 가로 위치가 시간이라, 어느 단계가 느렸는지, 어디서 실패하고 재시도했는지가 한눈에 보인다. 로그는 이 구간들의 원문 입력·출력을, 메트릭은 이런 요청 수천 개의 지연시간 분포·토큰 수·에러율 같은 집계를 맡는다. 에이전트처럼 여러 단계로 이어지는 시스템은 트레이스 없이는 '어느 단계에서 왜 실패했는가'를 재구성하기 어렵다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      {[0, 1, 2, 3, 4].map((t) => (
+        <g key={t}>
+          <line x1={sx(t)} x2={sx(t)} y1={20} y2={204} stroke="var(--border-hairline)" />
+          <text x={sx(t)} y={218} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+            {`${t}초`}
+          </text>
+        </g>
+      ))}
+      {spans.map((s, i) => {
+        const y = 24 + i * 26;
+        return (
+          <g key={s.t}>
+            <text x={14 + s.d * 12} y={y + 13} fontSize={10.5} fontWeight={i === 0 ? 800 : 600} fill={ink}>
+              {s.t}
+            </text>
+            <rect x={sx(s.a)} y={y} width={sx(s.b) - sx(s.a)} height={18} rx={3} fill={s.c} fillOpacity={i === 0 ? 0.25 : 0.6} />
+            {s.note && (
+              <text x={s.b > 3.8 ? sx(s.b) - 6 : sx(s.b) + 6} y={y + 13} textAnchor={s.b > 3.8 ? "end" : "start"} fontSize={9.5} fontWeight={700} fill={s.c === colors.red ? colors.red : s.b > 3.8 ? ink : inkSecondary}>
+                {s.note}
+              </text>
+            )}
+          </g>
+        );
+      })}
+      <text x={sx(4.2)} y={36} textAnchor="end" fontSize={10} fontWeight={800} fill={ink}>
+        4.2초
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function GuardrailLayers() {
+  // 본문 output_guard: 전화번호 정규식 01[016789]-?\d{3,4}-?\d{4}. 표현을 바꾸면 통과한다.
+  const P = "grl";
+  return (
+    <DiagramFrame
+      title="가드레일: 모델의 입출력을 감시하는 별도의 층"
+      caption="입력 가드는 프롬프트 인젝션 같은 악의적 지시를, 출력 가드는 개인정보·유해 콘텐츠를 걸러 낸다. 모델 자체를 안전하게 만드는 것이 아니라 모델 앞뒤에 감시 층을 덧대는 방식이다. 아래는 본문 코드의 출력 가드다. '010-1234-5678'은 정규식에 걸려 가려지지만, 같은 번호를 '공일공 일이삼사 오육칠팔'로 쓰면 그대로 통과한다. 가드레일은 확률적인 필터일 뿐이므로, 최소 권한·사람 승인처럼 행동 자체를 막는 장치와 함께 써야 한다."
+      viewBox="0 0 720 222"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {chip8(14, 30, "사용자 입력", inkMuted, 86, 30, 0.16, 11)}
+      <Arr x1={102} y1={45} x2={124} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={128} y={20} w={140} h={50} lines={["입력 가드", "인젝션·악의적 지시 탐지"]} color={colors.orange} size={11} />
+      <Arr x1={270} y1={45} x2={292} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={296} y={20} w={110} h={50} lines={["LLM", "답을 생성"]} color={colors.violet} size={11} />
+      <Arr x1={408} y1={45} x2={430} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={434} y={20} w={150} h={50} lines={["출력 가드", "개인정보·유해 내용 검사"]} color={colors.orange} size={11} />
+      <Arr x1={586} y1={45} x2={608} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      {chip8(612, 30, "사용자에게", inkMuted, 94, 30, 0.16, 11)}
+      <line x1={14} x2={706} y1={88} y2={88} stroke="var(--border-hairline)" />
+      <text x={14} y={110} fontSize={11} fontWeight={800} fill={ink}>
+        본문 코드의 출력 가드 (전화번호 정규식)
+      </text>
+      <rect x={14} y={120} width={300} height={30} rx={6} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={24} y={140} fontSize={10.5} fill={ink}>
+        담당자 연락처는 010-1234-5678입니다.
+      </text>
+      <Arr x1={318} y1={135} x2={350} y2={135} color={colors.green} marker={`${P}-ink`} />
+      <rect x={354} y={120} width={352} height={30} rx={6} fill={colors.green} fillOpacity={0.1} stroke={colors.green} />
+      <text x={364} y={140} fontSize={10.5} fill={ink}>
+        담당자 연락처는 [전화번호 가림]입니다. ✓
+      </text>
+      <rect x={14} y={162} width={300} height={30} rx={6} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={24} y={182} fontSize={10.5} fill={ink}>
+        연락처는 공일공 일이삼사 오육칠팔입니다.
+      </text>
+      <Arr x1={318} y1={177} x2={350} y2={177} color={colors.red} marker={`${P}-ink`} />
+      <rect x={354} y={162} width={352} height={30} rx={6} fill={colors.red} fillOpacity={0.1} stroke={colors.red} />
+      <text x={364} y={182} fontSize={10.5} fill={ink}>
+        연락처는 공일공 일이삼사 오육칠팔입니다. ✗ 통과
+      </text>
+      <text x={360} y={212} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.red}>
+        표현을 바꾸면 뚫린다 → 최소 권한·사람 승인 같은 장치와 함께
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function TokenBucket() {
+  // 본문 코드: rate = 1(초당 1개 충전), capacity = 3. 요청 시각 [0, 0.1, 0.2, 0.3, 0.4, 1.5, 1.6] → 허용 [T, T, T, F, F, T, F].
+  const times = [0, 0.1, 0.2, 0.3, 0.4, 1.5, 1.6];
+  const rate = 1;
+  const cap = 3;
+  let tokens = cap;
+  let last = 0;
+  const events = times.map((t) => {
+    tokens = Math.min(cap, tokens + (t - last) * rate);
+    last = t;
+    const ok = tokens >= 1;
+    const before = tokens;
+    if (ok) tokens -= 1;
+    return { t, ok, before, after: tokens };
+  });
+  const pts: [number, number][] = [[0, cap]];
+  events.forEach((e, i) => {
+    const prevT = i === 0 ? 0 : events[i - 1].t;
+    const prevAfter = i === 0 ? cap : events[i - 1].after;
+    const full = prevT + (cap - prevAfter) / rate;
+    if (i > 0 && full < e.t) pts.push([full, cap]);
+    pts.push([e.t, e.before], [e.t, e.after]);
+  });
+  const end = 2.2;
+  const lastE = events[events.length - 1];
+  pts.push([Math.min(end, lastE.t + (cap - lastE.after) / rate), Math.min(cap, lastE.after + (end - lastE.t) * rate)]);
+  if (lastE.t + (cap - lastE.after) / rate < end) pts.push([end, cap]);
+  const G = { left: 60, top: 18, width: 470, height: 140 };
+  const sx = linear(0, end, G.left, G.left + G.width);
+  const sy = linear(0, 3.4, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="토큰 버킷: 평균 속도는 제한하고 순간적인 몰림은 받아 준다"
+      caption="본문 코드의 토큰 버킷(초당 1개씩 차고, 최대 3개까지 쌓임)이다. 보라색 선이 버킷에 남은 토큰 수이고, 요청이 허용될 때마다 1개씩 줄어든다. 0~0.2초에 몰린 요청 세 개는 쌓여 있던 토큰으로 바로 허용되지만, 0.3초와 0.4초의 요청은 토큰이 1개가 안 되어 거부된다. 1.5초에는 토큰이 1.5개까지 다시 차서 허용되고, 바로 뒤 1.6초 요청은 0.6개뿐이라 거부된다. 순간적으로는 3개까지 받아 주되, 오래 보면 초당 1회로 묶인다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.5, 1, 1.5, 2]} yTicks={[0, 1, 2, 3]} fmtX={(v) => `${v}초`} yLabel="남은 토큰" />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(1)} y2={sy(1)} stroke={colors.orange} strokeDasharray="4 3" />
+      <text x={G.left + G.width + 6} y={sy(1) + 4} fontSize={9.5} fontWeight={700} fill={colors.orange}>
+        ← 요청 1개에 토큰 1개
+      </text>
+      <path d={linePath(pts.map(([t, v]) => [sx(t), sy(v)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      {events.map((e) => (
+        <g key={e.t}>
+          <line x1={sx(e.t)} x2={sx(e.t)} y1={G.top + G.height + 20} y2={G.top + G.height + 26} stroke={e.ok ? colors.green : colors.red} strokeWidth={2} />
+          <text x={sx(e.t)} y={G.top + G.height + 38} textAnchor="middle" fontSize={11} fontWeight={800} fill={e.ok ? colors.green : colors.red}>
+            {e.ok ? "✓" : "✗"}
+          </text>
+        </g>
+      ))}
+      <text x={G.left} y={G.top + G.height + 54} fontSize={9.5} fill={inkSecondary}>
+        요청 시각: 0, 0.1, 0.2, 0.3, 0.4, 1.5, 1.6초 (✓ 허용, ✗ 거부)
+      </text>
+      <Lines x={552} y={46} lines={["허용 ✓ 4건 · 거부 ✗ 3건", "", "rate = 초당 1개 충전", "capacity = 최대 3개"]} size={10.5} anchor="start" color={ink} weight={600} />
+    </DiagramFrame>
+  );
+}
+
+export function QuasiIdentifier() {
+  // 본문 코드(가상 1,000명): (나이 50가지, 성별, 동네 30곳)으로 유일 71.7%, 나이를 10년 단위로 3.8%(k = 1). Sweeney(2000)의 미국 추정 87%.
+  const bars = [
+    { t: "(나이, 성별, 동네)", sub: "50 × 2 × 30 = 3,000가지 조합에 1,000명", v: 0.717, c: colors.red },
+    { t: "나이를 10년 단위로", sub: "5 × 2 × 30 = 300가지 조합에 1,000명", v: 0.038, c: colors.orange },
+  ];
+  const bx = linear(0, 1, 0, 300);
+  return (
+    <DiagramFrame
+      title="이름을 지워도 사람은 특정된다: 준식별자의 조합"
+      caption="본문 코드의 가상 1,000명 데이터다. 나이(50가지)·성별·동네(30곳) 세 값의 조합은 3,000가지라 사람 수보다 많고, 그 결과 72%가 자기만의 조합을 가져 유일하게 특정된다. 나이를 10년 단위로 뭉뚱그리면 조합이 300가지로 줄어 유일한 사람이 4%로 떨어지지만, 아직 혼자인 사람이 있어 k = 1이다. Sweeney(2000)는 미국 인구의 약 87%가 우편번호·성별·생년월일만으로 유일하게 특정된다고 추정했다. 특징이 많을수록 한 사람의 조합은 더 독특해진다."
+      viewBox="0 0 720 196"
+      minWidth={580}
+    >
+      <text x={20} y={20} fontSize={11} fontWeight={800} fill={inkSecondary}>
+        준식별자 조합이 유일한 사람의 비율
+      </text>
+      {bars.map((b, i) => {
+        const y = 34 + i * 62;
+        return (
+          <g key={b.t}>
+            <text x={20} y={y + 14} fontSize={11.5} fontWeight={800} fill={ink}>
+              {b.t}
+            </text>
+            <text x={20} y={y + 30} fontSize={9.5} fill={inkSecondary}>
+              {b.sub}
+            </text>
+            <rect x={250} y={y} width={bx(1)} height={26} rx={3} fill="var(--border-hairline)" />
+            <rect x={250} y={y} width={Math.max(3, bx(b.v))} height={26} rx={3} fill={b.c} fillOpacity={0.65} />
+            <text x={250 + Math.max(3, bx(b.v)) + 8} y={y + 18} fontSize={12} fontWeight={800} fill={ink}>
+              {`${Math.round(b.v * 100)}%`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={250} y={178} fontSize={10} fill={inkSecondary}>
+        뭉뚱그린 뒤에도 가장 작은 묶음 k = 1 → 아직 k-익명성이 아니다
+      </text>
+      <Tag x={570} y={40} w={136} h={70} lines={["실제 사례", "미국 인구의 약 87%", "우편번호·성별·생년월일"]} color={colors.violet} size={11} />
+    </DiagramFrame>
+  );
+}
+
+export function KAnonymityTable() {
+  // 설명용 예시 기록 6개: 동네를 구로, 나이를 10년 단위로 뭉뚱그려 k = 3. 둘째 묶음은 병명이 모두 같아 동질성 공격에 노출된다.
+  const raw = [
+    ["23", "여", "역삼동", "감기"],
+    ["27", "여", "대치동", "위염"],
+    ["25", "여", "삼성동", "천식"],
+    ["34", "남", "서초동", "당뇨"],
+    ["38", "남", "반포동", "당뇨"],
+    ["31", "남", "방배동", "당뇨"],
+  ];
+  const gen = [
+    ["20대", "여", "강남구"],
+    ["30대", "남", "서초구"],
+  ];
+  const cw = [40, 34, 62, 50];
+  const heads = ["나이", "성별", "동네", "병명"];
+  const rowH = 24;
+  const table = (x0: number, rows: string[][], generalized: boolean) => (
+    <g>
+      {heads.map((h, j) => (
+        <text key={h} x={x0 + cw.slice(0, j).reduce((a, b) => a + b, 0) + cw[j] / 2} y={44} textAnchor="middle" fontSize={10} fontWeight={800} fill={j === 3 ? colors.red : inkSecondary}>
+          {h}
+        </text>
+      ))}
+      {rows.map((r, i) => {
+        const g = Math.floor(i / 3);
+        const vals = generalized ? [...gen[g], r[3]] : r;
+        return vals.map((v, j) => {
+          const x = x0 + cw.slice(0, j).reduce((a, b) => a + b, 0);
+          return (
+            <g key={`${i}-${j}`}>
+              <rect x={x} y={52 + i * rowH} width={cw[j]} height={rowH} fill={generalized && j < 3 ? (g === 0 ? colors.blue : colors.orange) : card2Bg} fillOpacity={generalized && j < 3 ? 0.14 : 1} stroke="var(--border-strong)" strokeWidth={0.7} />
+              <text x={x + cw[j] / 2} y={52 + i * rowH + 16} textAnchor="middle" fontSize={10.5} fill={ink} fontWeight={j === 3 && generalized && g === 1 ? 800 : 400}>
+                {v}
+              </text>
+            </g>
+          );
+        });
+      })}
+    </g>
+  );
+  const P = "kat";
+  return (
+    <DiagramFrame
+      title="k-익명성(k = 3)과 동질성 공격"
+      caption="설명용 예시다. 왼쪽 원본은 나이·성별·동네가 사람마다 달라, 이 셋을 아는 공격자는 그 사람의 병명을 바로 찾는다. 오른쪽은 나이를 10년 단위로, 동네를 구로 뭉뚱그려 같은 조합을 세 명씩 공유하게 만든 것이다(k = 3). 강남구 20대 여성은 감기·위염·천식 중 누구인지 알 수 없다. 그런데 서초구 30대 남성 세 명은 모두 당뇨라, 누구인지 몰라도 병명은 드러난다(동질성 공격). 그래서 묶음 안의 민감 정보가 충분히 다양하도록 요구하는 l-다양성이 나왔다."
+      viewBox="0 0 720 230"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={113} y={22} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        원본 (이름만 지움)
+      </text>
+      {table(20, raw, false)}
+      <Arr x1={216} y1={124} x2={252} y2={124} color={inkSecondary} marker={`${P}-ink`} width={1.8} />
+      <text x={234} y={114} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        뭉뚱그리기
+      </text>
+      <text x={353} y={22} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        k = 3으로 일반화
+      </text>
+      {table(260, raw, true)}
+      <rect x={258} y={124} width={190} height={74} rx={4} fill="none" stroke={colors.red} strokeWidth={2} />
+      <Tag x={474} y={58} w={232} h={50} lines={["강남구 · 20대 · 여: 3명", "병명이 감기·위염·천식으로 다양 ✓"]} color={colors.blue} size={10.5} />
+      <Tag x={474} y={134} w={232} h={56} lines={["서초구 · 30대 · 남: 3명", "모두 당뇨 → 누구든 병명이 드러남 ✗", "(동질성 공격)"]} color={colors.red} size={10.5} />
+    </DiagramFrame>
+  );
+}
+
+export function RandomizedResponse() {
+  // 본문: 첫 동전 앞면이면 사실대로, 뒷면이면 두 번째 동전대로. P(예 | 사실 예) = 0.75, P(예 | 사실 아니오) = 0.25 → 비 3 = e^ε, ε = ln 3.
+  const P = "rrs";
+  return (
+    <DiagramFrame
+      title="무작위 응답: 개인은 부정할 수 있고, 집단은 추정할 수 있다"
+      caption="응답자는 몰래 동전을 던져, 앞면이면 사실대로 답하고 뒷면이면 동전을 한 번 더 던져 앞면이면 '예', 뒷면이면 '아니오'라고 답한다. 사실이 '예'인 사람이 '예'라고 답할 확률은 1/2 + 1/4 = 0.75, 사실이 '아니오'인 사람은 1/4 = 0.25로, 어느 쪽이든 '예'가 나올 수 있어 개인은 언제든 부정할 수 있다. 두 확률의 비 3이 차등 프라이버시의 e^ε에 해당해 ε = ln 3 ≈ 1.1이다. 집단 비율은 π̂ = 2(P̂(예) − 1/4)로 되돌린다. 본문 예제처럼 1,000명 중 400명이 '예'면 0.3이다."
+      viewBox="0 0 720 226"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {chip8(14, 92, "응답자", inkMuted, 70, 30, 0.16, 11)}
+      <Arr x1={86} y1={100} x2={150} y2={56} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={86} y1={114} x2={150} y2={158} color={inkSecondary} marker={`${P}-ink`} />
+      <text x={104} y={68} fontSize={9.5} fill={inkSecondary}>
+        앞면 1/2
+      </text>
+      <text x={104} y={156} fontSize={9.5} fill={inkSecondary}>
+        뒷면 1/2
+      </text>
+      {chip8(154, 40, "사실대로 답한다", colors.blue, 120, 30, 0.14, 11)}
+      {chip8(154, 144, "동전을 한 번 더", colors.orange, 120, 30, 0.14, 11)}
+      <Arr x1={276} y1={150} x2={318} y2={130} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={276} y1={168} x2={318} y2={188} color={inkSecondary} marker={`${P}-ink`} />
+      {chip8(322, 116, "'예' (1/4)", colors.orange, 84, 26, 0.14, 10.5)}
+      {chip8(322, 178, "'아니오' (1/4)", colors.orange, 84, 26, 0.14, 10.5)}
+      <line x1={426} y1={14} x2={426} y2={214} stroke="var(--border-hairline)" />
+      <text x={566} y={24} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        &apos;예&apos;라고 답할 확률
+      </text>
+      {[
+        { t: "사실이 '예'인 사람", v: 0.75, f: "1/2 + 1/4", c: colors.red },
+        { t: "사실이 '아니오'인 사람", v: 0.25, f: "1/4", c: colors.blue },
+      ].map((b, i) => (
+        <g key={b.t}>
+          <text x={442} y={50 + i * 46} fontSize={10.5} fontWeight={700} fill={ink}>
+            {b.t}
+          </text>
+          <rect x={442} y={56 + i * 46} width={b.v * 220} height={16} rx={3} fill={b.c} fillOpacity={0.6} />
+          <text x={442 + b.v * 220 + 6} y={68 + i * 46} fontSize={10.5} fontWeight={800} fill={ink}>
+            {`${b.v} (${b.f})`}
+          </text>
+        </g>
+      ))}
+      <text x={566} y={156} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet}>
+        0.75 / 0.25 = 3 = e^ε → ε = ln 3 ≈ 1.1
+      </text>
+      <text x={566} y={182} textAnchor="middle" fontSize={10.5} fill={ink}>
+        1,000명 중 400명 &apos;예&apos; → π̂ = 2(0.4 − 0.25) = 0.3
+      </text>
+      <text x={566} y={202} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        대가: 오차가 직접 물을 때(±0.022)의 두 배 넘게(±0.058)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function LaplaceNoise() {
+  // 본문: 참 개수 12에 척도 1/ε 라플라스 잡음. 점은 본문 코드의 실제 공개값(시드 0). 두 ε의 높이 차가 커서 위아래로 나눠 그린다.
+  const truth = 12;
+  const cfg = [
+    { eps: "1", b: 1, c: colors.blue, samples: [12.1, 14.4, 12.5, 13.5, 12.5], top: 22 },
+    { eps: "0.1", b: 10, c: colors.red, samples: [-1.9, 30.3, 39.7, 24.1, 15.2], top: 112 },
+  ];
+  const sx = linear(-30, 54, 50, 560);
+  const ph = 70;
+  const lap = (b: number) => (x: number) => Math.exp(-Math.abs(x - truth) / b) / (2 * b);
+  return (
+    <DiagramFrame
+      title="라플라스 메커니즘: ε가 작을수록 잡음이 커진다"
+      caption="참 개수 12에 척도 1/ε인 라플라스 잡음을 더해 공개할 때 나올 수 있는 값의 분포다(두 그래프의 세로 눈금은 다르다). 개수 질의는 한 사람이 들어가거나 빠져도 답이 최대 1만 바뀌므로(민감도 1), 이렇게 공개하면 ε-차등 프라이버시가 된다. ε = 1이면 잡음이 ±1~2 정도라 본문 코드의 공개값(점)도 12.1~14.4에 모였지만, ε = 0.1이면 잡음의 평균 크기가 10이라 공개값이 −1.9부터 39.7까지 흩어졌다. 같은 잡음이 큰 집단의 개수에는 거의 티가 나지 않고, 작은 집단의 개수는 크게 흔든다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      {cfg.map((c) => {
+        const sy = linear(0, 1 / (2 * c.b), c.top + ph, c.top + 6);
+        return (
+          <g key={c.eps}>
+            <path d={`${linePath(sample(lap(c.b), -30, 54, 300).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} L${sx(54)},${sy(0)} L${sx(-30)},${sy(0)} Z`} fill={c.c} fillOpacity={0.14} stroke={c.c} strokeWidth={2} />
+            <line x1={sx(-30)} x2={sx(54)} y1={sy(0)} y2={sy(0)} stroke={inkMuted} />
+            <line x1={sx(truth)} x2={sx(truth)} y1={c.top} y2={sy(0)} stroke={ink} strokeDasharray="4 3" />
+            {c.samples.map((v, i) => (
+              <circle key={i} cx={sx(v)} cy={sy(0) - 5} r={4.2} fill={c.c} stroke="var(--surface-card)" strokeWidth={1.2} />
+            ))}
+            <text x={574} y={c.top + 22} fontSize={11.5} fontWeight={800} fill={c.c}>
+              {`ε = ${c.eps}`}
+            </text>
+            <text x={574} y={c.top + 40} fontSize={10} fill={inkSecondary}>
+              {`잡음 척도 1/ε = ${c.b}`}
+            </text>
+            <text x={574} y={c.top + 58} fontSize={9.5} fill={ink}>
+              {`공개값 ${c.samples.map((v) => String(v).replace("-", "−")).join(", ")}`}
+            </text>
+          </g>
+        );
+      })}
+      {[-30, -20, -10, 0, 10, 20, 30, 40, 50].map((t) => (
+        <text key={t} x={sx(t)} y={200} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {String(t).replace("-", "−")}
+        </text>
+      ))}
+      <text x={sx(12)} y={16} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+        참 개수 12
+      </text>
+      <text x={sx(12)} y={222} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        공개되는 값
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function MitigationStages() {
+  // 본문: 개입 시점 셋. 전처리(재가중 등) · 학습 중(공정성 벌점·제약·적대적 완화) · 후처리(집단별 임계값). 보호 속성 제거만으로는 대리 변수 때문에 부족.
+  const P = "mts";
+  const stages = [
+    { t: "전처리", sub: "데이터를 고친다", how: ["재가중 · 재표집", "라벨 수정", "부족한 집단 데이터 수집"], pro: "모델과 무관하게 적용", con: "데이터만으로 격차가 다 안 풀릴 수 있다", c: colors.blue, x: 14 },
+    { t: "학습 중", sub: "손실을 바꾼다", how: ["교차 엔트로피 + λ·격차²", "제약 조건 최적화", "적대적 완화"], pro: "λ로 격차를 정밀 조절", con: "다시 학습해야 한다", c: colors.violet, x: 250 },
+    { t: "후처리", sub: "판정을 고친다", how: ["집단별 임계값", "(TPR·FPR 동시는 무작위화)"], pro: "재학습 없이 어떤 기준이든", con: "판정 때 보호 속성 필요(법적 문제)", c: colors.orange, x: 486 },
+  ];
+  return (
+    <DiagramFrame
+      title="편향 완화의 세 시점: 데이터 · 학습 · 판정"
+      caption="격차를 줄이는 개입은 세 시점에 할 수 있다. 학습 전에 데이터를 고치는 전처리(재가중, 재표집, 라벨 수정, 무엇보다 부족한 집단의 데이터를 더 모으기), 학습하면서 손실에 격차 벌점이나 제약을 거는 학습 중 처리, 학습이 끝난 점수에 집단별 임계값을 쓰는 후처리다. 어느 방법이든 얻는 것과 내주는 것이 있다. 보호 속성을 입력에서 빼기만 하는 것('모르는 척')은 동네·학교 같은 대리 변수가 남아 있으면 모델이 집단을 다시 알아내므로 완화가 되지 않는다."
+      viewBox="0 0 720 248"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {stages.map((s, i) => (
+        <g key={s.t}>
+          <rect x={s.x} y={14} width={220} height={176} rx={10} fill={s.c} fillOpacity={0.06} stroke={s.c} />
+          <text x={s.x + 110} y={36} textAnchor="middle" fontSize={13} fontWeight={800} fill={s.c}>
+            {s.t}
+          </text>
+          <text x={s.x + 110} y={52} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+            {s.sub}
+          </text>
+          <Lines x={s.x + 14} y={76} lines={s.how.map((h) => `· ${h}`)} size={10.5} anchor="start" color={ink} weight={600} gap={1.5} />
+          <text x={s.x + 14} y={150} fontSize={10} fontWeight={700} fill={colors.green}>
+            {`+ ${s.pro}`}
+          </text>
+          <text x={s.x + 14} y={172} fontSize={10} fontWeight={700} fill={colors.red}>
+            {`− ${s.con}`}
+          </text>
+          {i < 2 && <Arr x1={s.x + 222} y1={102} x2={s.x + 234} y2={102} color={inkSecondary} marker={`${P}-ink`} />}
+        </g>
+      ))}
+      <rect x={14} y={202} width={692} height={36} rx={8} fill={colors.red} fillOpacity={0.06} stroke={colors.red} strokeDasharray="5 3" />
+      <text x={360} y={225} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={ink}>
+        &apos;모르는 척&apos;(보호 속성 빼기) ✗ → 동네·학교 같은 대리 변수로 집단을 다시 알아낸다. 격차 측정도 못 하게 된다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function Reweighing() {
+  // 본문 예제: A 100명 중 합격 50, B 100명 중 합격 20. w(g, y) = P(G = g)P(Y = y) / P(G = g, Y = y).
+  const cells = [
+    { g: "A", y: 1, n: 50 },
+    { g: "A", y: 0, n: 50 },
+    { g: "B", y: 1, n: 20 },
+    { g: "B", y: 0, n: 80 },
+  ].map((c) => {
+    const pg = 0.5;
+    const py = c.y === 1 ? 0.35 : 0.65;
+    return { ...c, w: (pg * py) / (c.n / 200) };
+  });
+  const rate = (g: string, weighted: boolean) => {
+    const pos = cells.find((c) => c.g === g && c.y === 1)!;
+    const neg = cells.find((c) => c.g === g && c.y === 0)!;
+    const wp = weighted ? pos.w : 1;
+    const wn = weighted ? neg.w : 1;
+    return (pos.n * wp) / (pos.n * wp + neg.n * wn);
+  };
+  const by = linear(0, 0.6, 186, 40);
+  return (
+    <DiagramFrame
+      title="재가중: 집단과 정답의 연관을 끊는 가중치"
+      caption="본문 예제다. 과거 기록에서 A 집단은 100명 중 50명, B 집단은 100명 중 20명이 합격했다. 재가중은 칸마다 w = P(집단)·P(정답) / P(집단, 정답)을 준다. 집단과 정답이 독립이었다면 기대되는 인원보다 많이 나타난 칸(A 합격)은 1보다 작은 0.7을, 적게 나타난 칸(B 합격)은 1보다 큰 1.75를 받는다. 이 가중치로 세면 두 집단의 합격 비율이 모두 전체 비율 0.35로 같아지고, 이 가중치로 학습한 모델은 '집단'과 '합격'의 연관을 덜 배운다."
+      viewBox="0 0 720 230"
+      minWidth={600}
+    >
+      <text x={150} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        칸별 인원과 가중치
+      </text>
+      <text x={110} y={44} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.green}>
+        합격 (y = 1)
+      </text>
+      <text x={220} y={44} textAnchor="middle" fontSize={10} fontWeight={800} fill={inkSecondary}>
+        불합격 (y = 0)
+      </text>
+      {["A", "B"].map((g, i) => (
+        <text key={g} x={40} y={86 + i * 64} textAnchor="end" fontSize={12} fontWeight={800} fill={g === "A" ? colors.blue : colors.orange}>
+          {`집단 ${g}`}
+        </text>
+      ))}
+      {cells.map((c) => {
+        const x = c.y === 1 ? 56 : 166;
+        const y = c.g === "A" ? 54 : 118;
+        const up = c.w > 1;
+        return (
+          <g key={`${c.g}${c.y}`}>
+            <rect x={x} y={y} width={108} height={58} rx={6} fill={up ? colors.green : colors.red} fillOpacity={0.1} stroke={up ? colors.green : colors.red} />
+            <text x={x + 54} y={y + 22} textAnchor="middle" fontSize={11} fontWeight={700} fill={ink}>
+              {`${c.n}명`}
+            </text>
+            <text x={x + 54} y={y + 44} textAnchor="middle" fontSize={12} fontWeight={800} fill={up ? colors.green : colors.red} fontFamily={mono}>
+              {`w = ${Number(c.w.toFixed(4))}`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={150} y={200} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        예: B 합격 = 0.5 × 0.35 / 0.1 = 1.75
+      </text>
+      <line x1={300} y1={14} x2={300} y2={216} stroke="var(--border-hairline)" />
+      <text x={500} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        합격 비율
+      </text>
+      <line x1={330} x2={690} y1={by(0)} y2={by(0)} stroke={inkMuted} />
+      <line x1={330} x2={690} y1={by(0.35)} y2={by(0.35)} stroke={colors.violet} strokeDasharray="4 3" />
+      <text x={690} y={by(0.35) - 5} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.violet}>
+        전체 0.35
+      </text>
+      {[
+        { t: "원래 기록", w: false, x: 360 },
+        { t: "가중치 적용", w: true, x: 540 },
+      ].map((s) => (
+        <g key={s.t}>
+          {["A", "B"].map((g, k) => {
+            const v = rate(g, s.w);
+            const x = s.x + k * 62;
+            return (
+              <g key={g}>
+                <rect x={x} y={by(v)} width={48} height={by(0) - by(v)} rx={3} fill={g === "A" ? colors.blue : colors.orange} fillOpacity={0.6} />
+                <text x={x + 24} y={by(v) - 6} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+                  {v.toFixed(2)}
+                </text>
+                <text x={x + 24} y={by(0) + 14} textAnchor="middle" fontSize={10} fontWeight={700} fill={inkSecondary}>
+                  {g}
+                </text>
+              </g>
+            );
+          })}
+          <text x={s.x + 55} y={by(0) + 30} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+            {s.t}
+          </text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function GroupThresholds() {
+  // 본문 시뮬레이션(시드 0, 집단당 500명)의 실제 점수 히스토그램(0.05 간격). B 집단은 같은 실력이어도 점수가 0.1쯤 낮다.
+  const bins = 20;
+  const data = {
+    A: { pos: [0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 8, 7, 21, 18, 23, 36, 28, 32, 25, 21], neg: [24, 18, 32, 36, 42, 37, 27, 18, 21, 9, 8, 3, 2, 0, 0, 0, 0, 0, 0, 0] },
+    B: { pos: [0, 0, 0, 0, 0, 2, 1, 6, 9, 15, 18, 17, 27, 31, 35, 24, 24, 16, 16, 11], neg: [73, 33, 33, 23, 30, 27, 12, 7, 4, 1, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0] },
+  };
+  const sx = linear(0, 1, 60, 470);
+  const bw = (sx(1) - sx(0)) / bins;
+  const panel = (g: "A" | "B", y0: number) => {
+    const sy = linear(0, 75, y0 + 74, y0);
+    return (
+      <g>
+        <text x={14} y={y0 + 14} fontSize={12} fontWeight={800} fill={g === "A" ? colors.blue : colors.orange}>
+          {`집단 ${g}`}
+        </text>
+        {data[g].neg.map((v, i) => (
+          <rect key={`n${i}`} x={sx(i / bins) + 0.5} y={sy(v)} width={bw - 1} height={sy(0) - sy(v)} fill={inkMuted} fillOpacity={0.45} />
+        ))}
+        {data[g].pos.map((v, i) => (
+          <rect key={`p${i}`} x={sx(i / bins) + 0.5} y={sy(v)} width={bw - 1} height={sy(0) - sy(v)} fill={colors.green} fillOpacity={0.55} />
+        ))}
+        <line x1={sx(0)} x2={sx(1)} y1={sy(0)} y2={sy(0)} stroke={inkMuted} />
+        <line x1={sx(0.5)} x2={sx(0.5)} y1={y0 - 4} y2={y0 + 78} stroke={colors.red} strokeWidth={1.8} strokeDasharray={g === "B" ? "5 3" : undefined} />
+        {g === "B" && <line x1={sx(0.4)} x2={sx(0.4)} y1={y0 - 4} y2={y0 + 78} stroke={colors.violet} strokeWidth={2.2} />}
+      </g>
+    );
+  };
+  return (
+    <DiagramFrame
+      title="후처리: 집단별 임계값으로 TPR 격차를 줄인다"
+      caption="본문 시뮬레이션의 실제 점수 분포다(초록 = 실제 우수 인재, 회색 = 그렇지 않은 사람). B 집단은 같은 실력이어도 모델 점수가 0.1쯤 낮게 나온다. 공통 임계값 0.5(빨강)에서는 A의 TPR이 0.98인데 B는 0.87로, 우수 인재인데도 B 집단이라 놓치는 비율이 더 높다. B에만 임계값을 0.4(보라)로 낮추면 TPR이 0.96으로 A에 가까워지고, 대가로 FPR이 0.02에서 0.04로 조금 오른다. 다시 학습하지 않고 숫자 하나로 격차를 줄였지만, 판정할 때 지원자의 집단을 알아야 한다."
+      viewBox="0 0 720 238"
+      minWidth={600}
+    >
+      {panel("A", 20)}
+      {panel("B", 122)}
+      {[0, 0.2, 0.4, 0.6, 0.8, 1].map((t) => (
+        <text key={t} x={sx(t)} y={214} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {t}
+        </text>
+      ))}
+      <text x={sx(0.5)} y={230} textAnchor="middle" fontSize={10} fontWeight={700} fill={inkSecondary}>
+        모델 점수
+      </text>
+      <text x={sx(0.5) + 4} y={14} fontSize={9.5} fontWeight={700} fill={colors.red}>
+        임계값 0.5
+      </text>
+      <text x={sx(0.4) - 4} y={118} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.violet}>
+        B만 0.4
+      </text>
+      <Lines x={492} y={40} lines={["공통 0.5", "A: TPR 0.98 · FPR 0.05", "B: TPR 0.87 · FPR 0.02"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.5} />
+      <Lines x={492} y={124} lines={["B만 0.4로", "A: TPR 0.98 · FPR 0.05", "B: TPR 0.96 · FPR 0.04"]} size={10.5} anchor="start" color={colors.violet} weight={700} gap={1.5} />
+      <rect x={492} y={178} width={12} height={12} fill={colors.green} fillOpacity={0.55} />
+      <text x={508} y={188} fontSize={10} fill={ink}>
+        실제 우수 인재
+      </text>
+      <rect x={600} y={178} width={12} height={12} fill={inkMuted} fillOpacity={0.45} />
+      <text x={616} y={188} fontSize={10} fill={ink}>
+        그 밖
+      </text>
     </DiagramFrame>
   );
 }
