@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, gridline, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, linePath, sample, seeded, gaussian, mono, solveLinear, starPath, normCdf } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, pow10Label, linePath, sample, seeded, gaussian, mono, solveLinear, starPath, normCdf } from "./chart";
 
 export function ConfusionMatrix() {
   const cell = 110;
@@ -2491,6 +2491,854 @@ export function ReliabilityDiagram() {
         (1/n) Σ (pᵢ − yᵢ)²
       </text>
       <Lines x={314} y={186} lines={["확률 예측의 평균제곱오차, 작을수록 좋다.", "항상 0.5만 말하는 모델이 0.25다."]} size={10.5} anchor="start" color={inkSecondary} />
+    </DiagramFrame>
+  );
+}
+
+const DD_P = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 48, 50, 52, 55, 60, 65, 70, 80, 90, 100, 120, 140, 160, 200, 250, 300, 400, 500, 600, 800];
+const DD_MN = [0.856, 0.7438, 0.6892, 0.6609, 0.5806, 0.5209, 0.4592, 0.433, 0.4123, 0.3857, 0.3781, 0.3842, 0.4116, 0.4401, 0.4746, 0.5271, 0.5893, 0.6817, 0.8205, 1.0767, 1.5779, 2.0702, 2.9035, 4.5245, 16.5116, 4.5992, 2.9307, 1.9599, 1.5083, 1.0927, 0.8344, 0.6957, 0.6135, 0.5214, 0.422, 0.3473, 0.3161, 0.258, 0.2288, 0.2084, 0.1806, 0.1628, 0.1514, 0.1388, 0.1292, 0.1237, 0.1179, 0.1138, 0.1116, 0.1088];
+const DD_RIDGE = [0.8536, 0.7451, 0.6726, 0.6477, 0.5704, 0.5148, 0.4328, 0.4098, 0.3777, 0.3495, 0.3305, 0.3356, 0.3415, 0.3321, 0.3359, 0.3512, 0.35, 0.3487, 0.3506, 0.3469, 0.3407, 0.3379, 0.3401, 0.3344, 0.3306, 0.3322, 0.3282, 0.3307, 0.3329, 0.3241, 0.3106, 0.3041, 0.2971, 0.2869, 0.2695, 0.2567, 0.2461, 0.223, 0.2056, 0.1903, 0.1716, 0.1585, 0.149, 0.1378, 0.1288, 0.1233, 0.1177, 0.1138, 0.1116, 0.1088];
+const DD_SMIN = [1.2839, 1.0672, 0.9495, 0.8716, 0.8118, 0.7567, 0.6737, 0.5992, 0.5453, 0.495, 0.4427, 0.4016, 0.3538, 0.3165, 0.2801, 0.2425, 0.2085, 0.1737, 0.1408, 0.1074, 0.0754, 0.0593, 0.0417, 0.0302, 0.0135, 0.0289, 0.0465, 0.0595, 0.072, 0.0988, 0.1238, 0.1457, 0.1751, 0.2053, 0.2569, 0.3146, 0.3699, 0.4651, 0.5505, 0.6367, 0.7867, 0.9363, 1.0663, 1.3046, 1.5704, 1.82, 2.2485, 2.6245, 2.9551, 3.5572];
+const SEP_POS = "2.41,1.04 0.417,1.431 2.46,1.384 -0.702,0.663 2.152,1.723 0.255,1.54 2.607,1.206 0.395,0.976 1.274,1.442 2.409,0.855";
+const SEP_NEG = "-1.692,-1.212 -1.757,-0.869 -1.844,-1.225 -2.935,-1.149 -2.445,-0.54 -1.466,-1.136 -1.511,-1.61 -1.992,-1.161 -0.779,-1.123 -2.79,-1.275";
+const SEP_TRACE = [[1, 1.011, 35.61], [2, 1.207, 38.06], [3, 1.345, 39.89], [6, 1.623, 43.83], [10, 1.863, 47.49], [18, 2.180, 52.58], [32, 2.545, 58.41], [56, 2.968, 64.49], [100, 3.494, 70.44], [178, 4.102, 75.25], [316, 4.772, 78.68], [562, 5.491, 80.99], [1000, 6.242, 82.50], [1778, 7.018, 83.52], [3162, 7.815, 84.24], [5623, 8.631, 84.75], [10000, 9.464, 85.14], [17783, 10.312, 85.43], [31623, 11.173, 85.66], [56234, 12.044, 85.85], [100000, 12.924, 86.01], [177828, 13.810, 86.14], [316228, 14.701, 86.25], [562341, 15.596, 86.34], [1000000, 16.494, 86.43]];
+
+export function NoisePriorLoss() {
+  // 분산이 1로 같은 두 분포: 가우시안 N(0, 1), 라플라스 b = 1/√2(분산 2b² = 1). −log 밀도에서 상수를 빼면 ε²/2와 √2·|ε|.
+  const b = Math.SQRT1_2;
+  const gpdf = (e: number) => Math.exp((-e * e) / 2) / Math.sqrt(2 * Math.PI);
+  const lpdf = (e: number) => Math.exp(-Math.abs(e) / b) / (2 * b);
+  const A = { left: 52, top: 30, width: 250, height: 74 };
+  const B = { left: 52, top: 148, width: 250, height: 74 };
+  const sx = linear(-4, 4, A.left, A.left + A.width);
+  const ay = linear(0, 0.75, A.top + A.height, A.top);
+  const by = linear(0, 8, B.top + B.height, B.top);
+  const curve = (f: (e: number) => number, sy: (v: number) => number, a = -4, z = 4) =>
+    linePath(sample(f, a, z, 200).map(([x, y]) => [sx(x), sy(y)] as [number, number]));
+  const x0 = 372;
+  const cw = [128, 104, 104];
+  const cx = [x0, x0 + cw[0] + 2, x0 + cw[0] + cw[1] + 4];
+  const rows = [
+    { t: ["잡음 ε의 분포로 가정", "→ 최대가능도(MLE)"], g: ["MSE", "제곱 오차"], l: ["MAE", "절댓값 오차"] },
+    { t: ["가중치 w의 사전분포로", "→ 최대사후확률(MAP)"], g: ["L2 벌점", "Ridge"], l: ["L1 벌점", "Lasso"] },
+  ];
+  return (
+    <DiagramFrame
+      title="가우시안은 제곱, 라플라스는 절댓값: 분포의 −log가 곧 손실이다"
+      caption="왼쪽 위: 분산이 같은(1) 두 분포다. 라플라스는 0에서 더 뾰족하고 꼬리가 더 두꺼워 큰 값이 상대적으로 자주 나온다. 왼쪽 아래: 각 밀도에 −log를 취하고 상수를 뺀 것이다. 가우시안은 ε²/2(제곱), 라플라스는 √2·|ε|(절댓값)가 된다. 오른쪽: 이 짝이 두 번 쓰인다. 잔차 ε의 분포로 가정하면 최대가능도가 MSE·MAE 최소화가 되고, 가중치 w의 사전분포로 가정하면 MAP의 벌점 항이 L2·L1 정규화가 된다. 큰 오차를 제곱으로 벌하는 MSE가 이상치에 민감한 것도, 0에서 뾰족한 라플라스 사전이 가중치를 정확히 0으로 만드는 것도 모두 분포의 모양에서 나온다."
+      viewBox="0 0 720 262"
+      minWidth={600}
+    >
+      <text x={A.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        확률밀도 p(ε): 같은 분산, 다른 모양
+      </text>
+      <Axes {...A} sx={sx} sy={ay} xTicks={[-4, -2, 0, 2, 4]} yTicks={[0, 0.25, 0.5, 0.75]} fmtY={(v) => (v === 0 ? "0" : String(v))} />
+      <path d={`${curve(gpdf, ay)} L${sx(4)},${ay(0)} L${sx(-4)},${ay(0)} Z`} fill={colors.blue} fillOpacity={0.1} />
+      <path d={curve(gpdf, ay)} fill="none" stroke={colors.blue} strokeWidth={2.2} />
+      <path d={curve(lpdf, ay)} fill="none" stroke={colors.orange} strokeWidth={2.2} />
+      <line x1={sx(1.55)} x2={sx(2.05)} y1={ay(0.66)} y2={ay(0.66)} stroke={colors.blue} strokeWidth={2.2} />
+      <text x={sx(2.15)} y={ay(0.66) + 3.5} fontSize={10} fontWeight={700} fill={colors.blue}>
+        가우시안 N(0, 1)
+      </text>
+      <line x1={sx(1.55)} x2={sx(2.05)} y1={ay(0.48)} y2={ay(0.48)} stroke={colors.orange} strokeWidth={2.2} />
+      <text x={sx(2.15)} y={ay(0.48) + 3.5} fontSize={10} fontWeight={700} fill={colors.orange}>
+        라플라스(분산 1)
+      </text>
+      <text x={sx(-2.4)} y={ay(0.16)} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={colors.orange}>
+        꼬리가 두껍다
+      </text>
+      <text x={B.left} y={136} fontSize={11.5} fontWeight={800} fill={ink}>
+        −log p(ε) (상수 제외) = 손실
+      </text>
+      <Axes {...B} sx={sx} sy={by} xTicks={[-4, -2, 0, 2, 4]} yTicks={[0, 4, 8]} xLabel="ε (잔차 또는 가중치)" />
+      <path d={curve((e) => (e * e) / 2, by, -4, 4)} fill="none" stroke={colors.blue} strokeWidth={2.2} />
+      <path d={curve((e) => Math.SQRT2 * Math.abs(e), by)} fill="none" stroke={colors.orange} strokeWidth={2.2} />
+      <text x={sx(4) + 4} y={by(7.6)} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        ε²/2
+      </text>
+      <text x={sx(4) + 4} y={by(5.4)} fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        √2·|ε|
+      </text>
+      <text x={cx[1] + cw[1] / 2} y={42} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.blue}>
+        가우시안
+      </text>
+      <text x={cx[2] + cw[2] / 2} y={42} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.orange}>
+        라플라스
+      </text>
+      {rows.map((r, i) => {
+        const y = 54 + i * 70;
+        return (
+          <g key={i}>
+            <rect x={cx[0]} y={y} width={cw[0]} height={62} rx={6} fill={card2Bg} stroke="var(--border-strong)" />
+            <Lines x={cx[0] + 10} y={y + 27} lines={r.t} size={10.5} anchor="start" color={ink} weight={700} gap={1.5} />
+            <Tag x={cx[1]} y={y} w={cw[1]} h={62} lines={r.g} color={colors.blue} size={13} weight={800} />
+            <Tag x={cx[2]} y={y} w={cw[2]} h={62} lines={r.l} color={colors.orange} size={13} weight={800} />
+          </g>
+        );
+      })}
+      <Lines x={x0} y={214} lines={["가우시안 잡음 + 가우시안 사전 → Ridge의 λ = σ²/τ²", "라플라스 사전은 0에서 뾰족해 가중치를 정확히 0으로"]} size={10} anchor="start" color={inkSecondary} gap={1.55} />
+    </DiagramFrame>
+  );
+}
+
+export function MeanMedianLoss() {
+  // 본문 코드: y = [1, 2, 3, 10]. MSE(c)의 최소는 평균 4(값 12.5), MAE(c)의 최소는 2~3 구간 전체(값 2.5, 중앙값 2.5 포함).
+  const ys = [1, 2, 3, 10];
+  const mse = (c: number) => ys.reduce((s, v) => s + (v - c) ** 2, 0) / ys.length;
+  const mae = (c: number) => ys.reduce((s, v) => s + Math.abs(v - c), 0) / ys.length;
+  const L = { left: 52, top: 30, width: 270, height: 150 };
+  const R = { left: 420, top: 30, width: 270, height: 150 };
+  const lx = linear(0, 11, L.left, L.left + L.width);
+  const ly = linear(0, 40, L.top + L.height, L.top);
+  const rx = linear(0, 11, R.left, R.left + R.width);
+  const ry = linear(0, 8, R.top + R.height, R.top);
+  const rug = (sx: (v: number) => number, base: number) =>
+    ys.map((v) => <circle key={v} cx={sx(v)} cy={base} r={4.5} fill={v === 10 ? colors.red : ink} stroke="var(--surface-card)" strokeWidth={1.5} />);
+  return (
+    <DiagramFrame
+      title="상수 하나로 예측할 때: MSE는 평균, MAE는 중앙값을 고른다"
+      caption="본문 코드의 데이터 y = [1, 2, 3, 10](점, 빨강이 튀는 값 10)에 상수 c 하나로 예측할 때 손실을 c에 따라 그렸다. 왼쪽: MSE는 매끈한 포물선이고 최소는 평균 4다. 10과의 거리를 제곱으로 벌하므로 튀는 값 하나가 답을 2 근처에서 4까지 끌고 간다. 오른쪽: MAE는 꺾인 직선들로 이루어지고 2~3 구간 전체에서 최소(2.5)다. 중앙값 2.5가 이 구간에 들어 있다. 10이 100으로 바뀌어도 MAE의 최소 구간은 그대로다. 가우시안 가정(MSE)은 큰 잔차를 매우 드문 일로 보고 설명하려 애쓰고, 라플라스 가정(MAE)은 큰 잔차를 어느 정도 예상해 덜 휘둘린다."
+      viewBox="0 0 720 240"
+      minWidth={600}
+    >
+      <text x={L.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        MSE(c) = 평균 (y − c)²
+      </text>
+      <Axes {...L} sx={lx} sy={ly} xTicks={[0, 2, 4, 6, 8, 10]} yTicks={[0, 10, 20, 30, 40]} xLabel="상수 예측 c" />
+      <path d={linePath(sample(mse, 0, 9.24, 160).map(([x, y]) => [lx(x), ly(y)] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <line x1={lx(4)} x2={lx(4)} y1={ly(12.5)} y2={ly(0)} stroke={colors.blue} strokeDasharray="4 3" />
+      <circle cx={lx(4)} cy={ly(12.5)} r={4.5} fill={colors.blue} />
+      <text x={lx(4) + 8} y={ly(12.5) + 16} fontSize={10.5} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        최소: c = 4 (평균)
+      </text>
+      {rug(lx, ly(0))}
+      <text x={lx(10)} y={ly(0) - 10} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.red}>
+        튀는 값
+      </text>
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        MAE(c) = 평균 |y − c|
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 2, 4, 6, 8, 10]} yTicks={[0, 2, 4, 6, 8]} xLabel="상수 예측 c" />
+      <path d={linePath(sample(mae, 0, 11, 220).map(([x, y]) => [rx(x), ry(y)] as [number, number]))} fill="none" stroke={colors.orange} strokeWidth={2.4} />
+      <line x1={rx(2)} x2={rx(3)} y1={ry(2.5)} y2={ry(2.5)} stroke={colors.orange} strokeWidth={7} strokeOpacity={0.4} strokeLinecap="round" />
+      <line x1={rx(2.5)} x2={rx(2.5)} y1={ry(2.5)} y2={ry(0)} stroke={colors.orange} strokeDasharray="4 3" />
+      <text x={rx(3.4)} y={ry(2.5) + 18} fontSize={10.5} fontWeight={800} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        최소: 2 ≤ c ≤ 3 (중앙값 2.5 포함)
+      </text>
+      {rug(rx, ry(0))}
+      <text x={rx(10)} y={ry(0) - 10} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.red}>
+        튀는 값
+      </text>
+    </DiagramFrame>
+  );
+}
+
+const RIDGE_OLS =
+  "-1.48,3.33 2.39,-0.37 0.93,0.97 2.75,-0.61 0.56,1.50 1.68,0.20 1.31,0.61 3.11,-1.04 2.33,-0.34 0.27,1.76 -0.06,1.98 3.12,-1.17 -1.39,3.40 2.85,-0.72 3.23,-1.05 " +
+  "-3.78,5.79 3.38,-1.53 -0.51,2.56 0.04,1.83 1.01,0.85 3.34,-1.37 3.20,-1.33 2.05,-0.07 2.90,-0.75 3.36,-1.29 -0.96,2.80 -0.51,2.48 -1.13,2.97 1.39,0.77 -0.20,2.32 " +
+  "-1.56,3.58 -0.58,2.62 -1.45,3.45 3.90,-2.00 2.98,-1.01 3.16,-1.10 1.43,0.54 0.91,1.19 0.55,1.26 2.53,-0.55 -2.87,4.81 1.76,0.31 2.32,-0.40 1.65,0.23 -1.61,3.64 " +
+  "2.07,0.10 -2.03,3.97 0.21,1.91 0.01,1.94 0.62,1.35 2.84,-0.89 0.96,0.99 -1.40,3.40 -0.34,2.46 2.27,-0.38 0.87,1.25 1.79,0.14 0.96,1.06 -0.53,2.66 0.95,0.98";
+const RIDGE_R =
+  "0.826,1.002 1.045,0.947 0.936,0.939 1.115,0.994 1.003,1.039 0.951,0.899 0.958,0.934 1.098,0.949 1.029,0.934 0.971,1.026 0.913,0.988 1.039,0.884 0.907,1.083 1.115,0.987 1.153,0.999 " +
+  "0.824,1.173 1.002,0.825 0.955,1.068 0.891,0.957 0.920,0.916 1.059,0.889 1.004,0.840 1.015,0.939 1.127,0.995 1.105,0.938 0.844,0.982 0.920,1.030 0.833,0.983 1.074,1.053 1.001,1.093 " +
+  "0.905,1.092 0.948,1.066 0.896,1.075 1.043,0.830 1.043,0.899 1.094,0.941 0.986,0.956 1.032,1.043 0.881,0.909 1.032,0.921 0.822,1.102 1.048,0.996 0.993,0.895 0.952,0.901 0.909,1.101 " +
+  "1.106,1.037 0.850,1.070 1.017,1.080 0.927,0.999 0.958,0.986 1.030,0.896 0.963,0.965 0.899,1.074 0.995,1.098 0.978,0.883 1.040,1.055 0.983,0.925 0.997,1.002 0.996,1.114 0.952,0.955";
+
+export function RidgeCollinear() {
+  // x2 = x1 + 0.05·잡음(상관 거의 1)인 특징 두 개, y = x1 + x2 + 0.5·잡음, n = 30. 같은 입력에 잡음만 새로 뽑아 60번 학습한 계수(numpy).
+  // XᵀX의 고유값 77.53, 0.0377(κ ≈ 2059). λ = 1을 더하면 78.53, 1.0377(κ ≈ 75.7).
+  const pts = (s: string) => s.split(" ").map((p) => p.split(",").map(Number));
+  const S = 23;
+  const G = { left: 48, top: 16, width: 8 * S, height: 8.2 * S };
+  const sx = linear(-4, 4, G.left, G.left + G.width);
+  const sy = linear(-2.2, 6, G.top + G.height, G.top);
+  const E = { left: 400, top: 30, width: 290, height: 160 };
+  const ey = log10Scale(0.01, 300, E.top + E.height, E.top);
+  const groups = [
+    { t: "OLS (λ = 0)", vals: [77.53, 0.0377], k: "κ ≈ 2059", c: colors.blue, x: 450 },
+    { t: "Ridge (λ = 1)", vals: [78.53, 1.0377], k: "κ ≈ 76", c: colors.orange, x: 610 },
+  ];
+  return (
+    <DiagramFrame
+      title="다중공선성: OLS 계수는 크게 흔들리고, Ridge는 고유값을 들어 올려 안정시킨다"
+      caption="거의 같은 특징 두 개(x₂ = x₁ + 작은 잡음)로 y = x₁ + x₂ + 잡음을 학습하되, 같은 입력에 잡음만 새로 뽑아 60번 반복했다. 왼쪽: OLS 계수(파랑)는 합 w₁ + w₂ ≈ 2만 정해지고 나머지 방향으로는 −4에서 4까지 흔들린다. 같은 정보를 두 특징이 어떻게 나눠 가질지 데이터가 거의 알려 주지 않기 때문이다. Ridge(λ = 1, 주황)는 참값 (1, 1) 근처에 촘촘히 모인다. 오른쪽: 원인은 XᵀX의 고유값이다. 작은 고유값 0.04는 그 방향(w₁ − w₂ 방향)으로 데이터가 거의 퍼져 있지 않다는 뜻이라, 역행렬을 곱하면 그 방향의 잡음이 1/0.04 ≈ 27배로 커진다. λI를 더하면 모든 고유값이 λ만큼 올라가 조건수가 약 2059에서 76으로 줄어든다."
+      viewBox="0 0 720 258"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-4, -2, 0, 2, 4]} yTicks={[-2, 0, 2, 4, 6]} xLabel="w₁" yLabel="w₂" />
+      <line x1={sx(-4)} y1={sy(6)} x2={sx(4)} y2={sy(-2)} stroke={inkMuted} strokeDasharray="5 4" />
+      <g opacity={0.75}>
+        {pts(RIDGE_OLS).map(([a, b2], i) => (
+          <circle key={i} cx={sx(a)} cy={sy(b2)} r={3.2} fill={colors.blue} />
+        ))}
+      </g>
+      <g opacity={0.8}>
+        {pts(RIDGE_R).map(([a, b2], i) => (
+          <circle key={i} cx={sx(a)} cy={sy(b2)} r={2.4} fill={colors.orange} />
+        ))}
+      </g>
+      <path d={starPath(sx(1), sy(1), 6)} fill={ink} stroke="var(--surface-card)" strokeWidth={1} />
+      <Lines x={sx(-3.8)} y={sy(1.3)} lines={["OLS 60번:", "w₁ + w₂ ≈ 2 선을 따라", "크게 흔들린다"]} size={10} anchor="start" color={colors.blue} weight={700} gap={1.4} />
+      <line x1={sx(1.25)} y1={sy(1.25)} x2={sx(1.9)} y2={sy(3.9)} stroke={colors.orange} strokeWidth={1} />
+      <Lines x={sx(1.6)} y={sy(4.9)} lines={["Ridge 60번:", "참값 ★(1, 1) 근처"]} size={10} anchor="start" color={colors.orange} weight={700} gap={1.4} />
+      <line x1={330} y1={14} x2={330} y2={240} stroke="var(--border-hairline)" />
+      <text x={E.left + E.width / 2} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        XᵀX의 고유값 (로그 눈금)
+      </text>
+      <Axes {...E} sx={linear(0, 1, E.left, E.left + E.width)} sy={ey} yTicks={[0.01, 0.1, 1, 10, 100]} fmtY={pow10Label} />
+      {groups.map((g) => (
+        <g key={g.t}>
+          {g.vals.map((v, j) => {
+            const x = g.x - 34 + j * 40;
+            return (
+              <g key={j}>
+                <rect x={x} y={ey(v)} width={28} height={ey(0.01) - ey(v)} rx={3} fill={g.c} fillOpacity={j === 0 ? 0.35 : 0.75} />
+                <text x={x + 14} y={ey(v) - 5} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+                  {v >= 10 ? v.toFixed(1) : v.toFixed(v < 0.1 ? 3 : 2)}
+                </text>
+              </g>
+            );
+          })}
+          <text x={g.x} y={E.top + E.height + 16} textAnchor="middle" fontSize={11} fontWeight={800} fill={g.c}>
+            {g.t}
+          </text>
+          <text x={g.x} y={E.top + E.height + 32} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+            {g.k}
+          </text>
+        </g>
+      ))}
+      <text x={530} y={ey(0.2)} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.green}>
+        + λ
+      </text>
+      <line x1={496} y1={ey(0.0377)} x2={576} y2={ey(1.0377)} stroke={colors.green} strokeWidth={1.4} strokeDasharray="4 3" />
+    </DiagramFrame>
+  );
+}
+
+export function SeparableLogistic() {
+  // 선형분리 가능한 2차원 데이터 20개(numpy 시드 37), 절편 없는 로지스틱 회귀, 규제 없음, 경사하강법 학습률 1.
+  // SEP_TRACE: [스텝 t, ‖w‖, w의 각도(도)]. 하드 마진 SVM(절편 없음)의 방향 87.77°, 마진 0.635, 서포트 벡터 2개.
+  const pts = (s: string) => s.split(" ").map((p) => p.split(",").map(Number));
+  const S = 38;
+  const G = { left: 30, top: 30, width: 6.2 * S, height: 4 * S };
+  const sx = (x: number) => G.left + (x + 3.2) * S;
+  const sy = (y: number) => G.top + (2 - y) * S;
+  const svmDeg = 87.77;
+  const margin = 0.635;
+  const seg = (deg: number, off = 0) => {
+    const r = (deg * Math.PI) / 180;
+    const [c, s] = [Math.cos(r), Math.sin(r)];
+    return { x1: sx(off * c + 6 * s), y1: sy(off * s - 6 * c), x2: sx(off * c - 6 * s), y2: sy(off * s + 6 * c) };
+  };
+  const at = (t: number) => SEP_TRACE.find((r) => r[0] === t) as number[];
+  const bounds = [
+    { t: 10, label: "t = 10", c: colors.yellow },
+    { t: 100, label: "t = 100", c: colors.orange },
+    { t: 10000, label: "t = 10⁴", c: colors.violet },
+  ];
+  const T1 = { left: 372, top: 24, width: 320, height: 76 };
+  const T2 = { left: 372, top: 142, width: 320, height: 76 };
+  const tx = log10Scale(1, 1e6, T1.left, T1.left + T1.width);
+  const ny = linear(0, 18, T1.top + T1.height, T1.top);
+  const dy = linear(30, 90, T2.top + T2.height, T2.top);
+  const tTicks = [1, 10, 100, 1e3, 1e4, 1e5, 1e6];
+  return (
+    <DiagramFrame
+      title="선형분리 데이터의 로지스틱 회귀: ‖w‖는 끝없이 커지고, 방향은 SVM으로 간다"
+      caption="선형분리 가능한 2차원 데이터 20개(원 = 양성, 네모 = 음성)에 절편 없는 로지스틱 회귀를 규제 없이 경사하강법(학습률 1)으로 학습한 실제 기록이다. 왼쪽: 결정 경계가 스텝마다 돌아가 최대 마진 SVM의 경계(초록 점선, 옆의 옅은 점선은 마진, 동그라미 친 두 점은 서포트 벡터) 쪽으로 다가간다. 오른쪽 위: 모든 점을 이미 맞힌 뒤에도 손실을 더 줄이려고 ‖w‖가 log t에 비례해 끝없이 커지고, 예측 확률은 0과 1로 치닫는다. 오른쪽 아래: w의 방향은 SVM 방향(87.8°)으로 수렴하지만 속도가 1/log t 정도로 매우 느려 100만 스텝에도 86.4°다. L2 규제를 넣으면 ‖w‖가 유한한 곳에서 멈춘다."
+      viewBox="0 0 720 262"
+      minWidth={620}
+    >
+      <defs>
+        <clipPath id="sepl-clip">
+          <rect x={G.left} y={G.top} width={G.width} height={G.height} />
+        </clipPath>
+      </defs>
+      <text x={G.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        결정 경계가 돌아간다
+      </text>
+      <rect x={G.left} y={G.top} width={G.width} height={G.height} fill="none" stroke={inkMuted} strokeOpacity={0.6} />
+      <g clipPath="url(#sepl-clip)">
+        <line x1={sx(-3.2)} x2={sx(3)} y1={sy(0)} y2={sy(0)} stroke={gridline} />
+        <line x1={sx(0)} x2={sx(0)} y1={sy(2)} y2={sy(-2)} stroke={gridline} />
+        <line {...seg(svmDeg, margin)} stroke={colors.green} strokeOpacity={0.45} strokeDasharray="3 3" />
+        <line {...seg(svmDeg, -margin)} stroke={colors.green} strokeOpacity={0.45} strokeDasharray="3 3" />
+        {bounds.map((b) => (
+          <line key={b.t} {...seg(at(b.t)[2])} stroke={b.c} strokeWidth={1.8} />
+        ))}
+        <line {...seg(svmDeg)} stroke={colors.green} strokeWidth={2} strokeDasharray="6 3" />
+      </g>
+      {pts(SEP_POS).map(([x, y], i) => (
+        <circle key={`p${i}`} cx={sx(x)} cy={sy(y)} r={4.2} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={1.2} />
+      ))}
+      {pts(SEP_NEG).map(([x, y], i) => (
+        <rect key={`n${i}`} x={sx(x) - 4} y={sy(y) - 4} width={8} height={8} fill={colors.red} stroke="var(--surface-card)" strokeWidth={1.2} />
+      ))}
+      {[
+        [-0.702, 0.663],
+        [-2.445, -0.54],
+      ].map(([x, y]) => (
+        <circle key={x} cx={sx(x)} cy={sy(y)} r={8.5} fill="none" stroke={colors.green} strokeWidth={1.6} />
+      ))}
+      <text x={sx(-1.95)} y={sy(1.72)} fontSize={10} fontWeight={800} fill={colors.yellow} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        t = 10
+      </text>
+      <text x={sx(-3.1)} y={sy(1.32)} fontSize={10} fontWeight={800} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        t = 100
+      </text>
+      <text x={sx(-3.1)} y={sy(0.42)} fontSize={10} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        t = 10⁴
+      </text>
+      <text x={sx(2.95)} y={sy(-0.42)} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        SVM 경계
+      </text>
+      <Axes {...T1} sx={tx} sy={ny} xTicks={tTicks} yTicks={[0, 6, 12, 18]} fmtX={() => ""} />
+      <text x={T1.left} y={T1.top - 8} fontSize={11} fontWeight={800} fill={ink}>
+        ‖w‖: log t에 비례해 끝없이 커진다
+      </text>
+      <path d={linePath(SEP_TRACE.map((r) => [tx(r[0]), ny(r[1])] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <text x={tx(1e6) - 4} y={ny(SEP_TRACE[SEP_TRACE.length - 1][1]) + 16} textAnchor="end" fontSize={10} fontWeight={700} fill={colors.blue}>
+        16.5
+      </text>
+      <Axes {...T2} sx={tx} sy={dy} xTicks={tTicks} yTicks={[30, 60, 90]} fmtX={pow10Label} fmtY={(v) => `${v}°`} xLabel="경사하강법 스텝 t (로그 눈금)" />
+      <text x={T2.left} y={T2.top - 8} fontSize={11} fontWeight={800} fill={ink}>
+        w의 방향(각도): SVM 방향으로 아주 느리게 수렴
+      </text>
+      <line x1={T2.left} x2={T2.left + T2.width} y1={dy(svmDeg)} y2={dy(svmDeg)} stroke={colors.green} strokeWidth={1.4} strokeDasharray="6 3" />
+      <text x={tx(1.5)} y={dy(svmDeg) + 13} fontSize={10} fontWeight={800} fill={colors.green}>
+        SVM 87.8°
+      </text>
+      <path d={linePath(SEP_TRACE.map((r) => [tx(r[0]), dy(r[2])] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <text x={tx(1e6) - 4} y={dy(86.43) + 14} textAnchor="end" fontSize={10} fontWeight={700} fill={colors.violet}>
+        86.4°
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function EnsembleCorrelation() {
+  // Var(평균) = ρσ² + (1 − ρ)σ²/B, σ² = 1. 본문 시뮬레이션: B = 50, ρ = 0.5 → 0.51.
+  const G = { left: 56, top: 22, width: 380, height: 186 };
+  const sx = linear(1, 60, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const P = "ens";
+  const rhos = [
+    { r: 0.8, c: colors.red },
+    { r: 0.5, c: colors.violet },
+    { r: 0.2, c: colors.blue },
+    { r: 0, c: colors.green },
+  ];
+  const v = (r: number, B: number) => r + (1 - r) / B;
+  return (
+    <DiagramFrame
+      title="평균 내기의 한계: 상관 ρ가 분산의 바닥을 정한다"
+      caption="분산이 1이고 서로의 상관이 ρ인 예측 B개를 평균했을 때의 분산 ρ + (1 − ρ)/B다. 모델을 많이 모을수록 둘째 항은 0으로 가지만 첫째 항 ρ는 그대로 남아, 곡선은 점선(바닥 ρ)에 붙는다. 상관이 0이면 50개 평균의 분산이 0.02까지 내려가지만, 상관이 0.5면 0.51에서 멈춘다(본문 시뮬레이션). 배깅만 하면 트리들이 같은 강한 특징으로 비슷하게 갈라져 ρ가 크다. 랜덤 포레스트는 분할마다 특징 일부만 후보로 줘서 개별 트리를 조금 약하게 만드는 대신 ρ를 낮춰 바닥 자체를 끌어내린다."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ green: colors.green }} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 20, 30, 40, 50, 60]} yTicks={[0, 0.2, 0.4, 0.6, 0.8, 1]} xLabel="평균한 모델 수 B" yLabel="평균 예측의 분산" />
+      {rhos.map((o) => (
+        <g key={o.r}>
+          {o.r > 0 && <line x1={sx(1)} x2={sx(60)} y1={sy(o.r)} y2={sy(o.r)} stroke={o.c} strokeDasharray="4 3" strokeOpacity={0.7} />}
+          <path d={linePath(sample((B) => v(o.r, B), 1, 60, 240).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={o.c} strokeWidth={2.4} />
+          <text x={sx(60) + 6} y={sy(v(o.r, 60)) + 4} fontSize={10.5} fontWeight={800} fill={o.c}>
+            {`ρ = ${o.r}`}
+          </text>
+        </g>
+      ))}
+      <circle cx={sx(50)} cy={sy(0.51)} r={5} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <text x={sx(50)} y={sy(0.51) - 10} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        B = 50 → 0.51
+      </text>
+      <Arr x1={sx(50)} y1={sy(0.51) + 8} x2={sx(50)} y2={sy(0.216) - 8} color={colors.green} marker={`${P}-green`} width={1.8} />
+      <circle cx={sx(50)} cy={sy(0.216)} r={4} fill={colors.blue} />
+      <text x={sx(50) - 8} y={sy(0.36)} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        특징 무작위 선택으로 ρ↓
+      </text>
+      <text x={sx(50)} y={sy(0.216) + 16} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        0.22
+      </text>
+      <rect x={500} y={30} width={206} height={170} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={514} y={54} fontSize={11.5} fontWeight={800} fill={ink}>
+        분산 = ρσ² + (1 − ρ)σ²/B
+      </text>
+      <Lines x={514} y={80} lines={["ρσ²: 모델을 아무리 모아도", "줄지 않는 바닥"]} size={10.5} anchor="start" color={colors.violet} weight={700} gap={1.4} />
+      <Lines x={514} y={122} lines={["(1 − ρ)σ²/B: 모을수록", "0으로 사라지는 부분"]} size={10.5} anchor="start" color={inkSecondary} weight={700} gap={1.4} />
+      <Lines x={514} y={164} lines={["→ 바닥을 낮추려면 B가 아니라", "ρ를 낮춰야 한다"]} size={10.5} anchor="start" color={colors.green} weight={800} gap={1.4} />
+    </DiagramFrame>
+  );
+}
+
+export function DoubleDescent() {
+  // 잠재 요인 3개 z에서 나온 잡음 섞인 특징 x_j = w_jᵀz + u_j, y = θᵀz + ε(σ = 0.3), n = 40. 앞에서부터 특징 p개를 쓴다.
+  // 200회 반복 시뮬레이션의 중앙값(numpy): 최소 노름 최소제곱(pinv), Ridge(λ = 4), X/√n의 가장 작은 (0이 아닌) 특이값.
+  const G = { left: 60, top: 26, width: 340, height: 180 };
+  const sx = log10Scale(1, 800, G.left, G.left + G.width);
+  const sy = log10Scale(0.06, 40, G.top + G.height, G.top);
+  const H = { left: 478, top: 26, width: 220, height: 180 };
+  const hx = log10Scale(1, 800, H.left, H.left + H.width);
+  const hy = log10Scale(0.01, 3, H.top + H.height, H.top);
+  const xt = [1, 4, 10, 40, 100, 400];
+  const path = (ys: number[], fx: (v: number) => number, fy: (v: number) => number) => linePath(DD_P.map((p, i) => [fx(p), fy(ys[i])] as [number, number]));
+  return (
+    <DiagramFrame
+      title="이중 하강: 파라미터가 샘플보다 많아지면 테스트 오차가 다시 내려간다"
+      caption="잠재 요인 3개에서 나온 잡음 섞인 특징을 앞에서부터 p개 쓰는 선형회귀를 샘플 n = 40개로 학습한 시뮬레이션이다(200회 반복의 중앙값, 두 축 모두 로그 눈금). 빨강은 최소 노름 최소제곱이다(p > n이면 훈련 데이터를 정확히 지나는 해 중 노름이 가장 작은 해). p가 작을 때는 고전적인 U자를 그리다가(p = 16에서 0.38), 보간 문턱 p = n = 40에서 16.5로 폭발하고, p > n에서 다시 내려가 p = 800에서는 0.11로 p < n의 어떤 모델보다도 낮다. 오른쪽: 정점의 원인은 X의 가장 작은 특이값이 p = n 근처에서 0에 가까워지는 것이다. 유사역행렬은 그 역수를 곱하므로 잡음이 거대하게 증폭된다. 파란 점선처럼 적당한 Ridge 규제(λ = 4)를 넣으면 정점이 사라진다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={xt} yTicks={[0.1, 0.3, 1, 3, 10, 30]} xLabel="특징(파라미터) 수 p" yLabel="테스트 오차" />
+      <rect x={sx(1)} y={G.top} width={sx(40) - sx(1)} height={G.height} fill={colors.blue} fillOpacity={0.04} />
+      <line x1={sx(40)} x2={sx(40)} y1={G.top} y2={G.top + G.height} stroke={ink} strokeDasharray="4 3" />
+      <text x={sx(40)} y={G.top - 6} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+        p = n = 40
+      </text>
+      <line x1={G.left} x2={G.left + G.width} y1={sy(0.09)} y2={sy(0.09)} stroke={inkMuted} strokeDasharray="2 3" />
+      <text x={sx(1.1)} y={sy(0.09) - 5} fontSize={9.5} fill={inkSecondary}>
+        잡음 바닥 σ² = 0.09
+      </text>
+      <path d={path(DD_RIDGE, sx, sy)} fill="none" stroke={colors.blue} strokeWidth={2} strokeDasharray="6 3" />
+      <path d={path(DD_MN, sx, sy)} fill="none" stroke={colors.red} strokeWidth={2.4} />
+      <circle cx={sx(16)} cy={sy(0.3781)} r={4} fill={colors.red} />
+      <text x={sx(16)} y={sy(0.3781) + 16} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        U자의 바닥 0.38
+      </text>
+      <circle cx={sx(800)} cy={sy(0.1088)} r={4} fill={colors.red} />
+      <text x={sx(800) - 4} y={sy(0.1088) - 9} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        0.11
+      </text>
+      <text x={sx(40) + 6} y={sy(16.5) + 4} fontSize={9.5} fontWeight={800} fill={colors.red}>
+        16.5
+      </text>
+      <text x={sx(1.15)} y={sy(22)} fontSize={10} fontWeight={800} fill={colors.blue}>
+        p &lt; n: 고전적 U자
+      </text>
+      <text x={sx(700)} y={sy(22)} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.red}>
+        p &gt; n: 다시 하강
+      </text>
+      <line x1={sx(1.3)} x2={sx(2.2)} y1={sy(6)} y2={sy(6)} stroke={colors.red} strokeWidth={2.4} />
+      <text x={sx(2.4)} y={sy(6) + 3.5} fontSize={9.5} fontWeight={700} fill={colors.red}>
+        최소 노름 해
+      </text>
+      <line x1={sx(1.3)} x2={sx(2.2)} y1={sy(3.2)} y2={sy(3.2)} stroke={colors.blue} strokeWidth={2} strokeDasharray="6 3" />
+      <text x={sx(2.4)} y={sy(3.2) + 3.5} fontSize={9.5} fontWeight={700} fill={colors.blue}>
+        Ridge (λ = 4)
+      </text>
+      <Axes {...H} sx={hx} sy={hy} xTicks={[1, 10, 40, 400]} yTicks={[0.01, 0.1, 1]} fmtY={(v) => String(v)} xLabel="p" />
+      <text x={H.left} y={H.top - 8} fontSize={11} fontWeight={800} fill={ink}>
+        X의 가장 작은 특이값
+      </text>
+      <line x1={hx(40)} x2={hx(40)} y1={H.top} y2={H.top + H.height} stroke={ink} strokeDasharray="4 3" />
+      <path d={path(DD_SMIN, hx, hy)} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <Lines x={hx(50) + 2} y={hy(0.032)} lines={["p = n에서 거의 0", "→ 잡음 증폭"]} size={9.5} anchor="start" color={colors.violet} weight={800} gap={1.35} />
+    </DiagramFrame>
+  );
+}
+
+export function FoldOverlap() {
+  // 5-Fold에서 fold k는 블록 k로 검증하고 나머지 4블록으로 훈련한다. 어느 두 fold든 훈련 블록 3개가 같다(75%).
+  const bw = 50;
+  const bh = 24;
+  const x0 = 78;
+  const y0 = 44;
+  const bx = (j: number) => x0 + j * (bw + 2);
+  const by = (k: number) => y0 + k * 32;
+  const scores = [0.95, 0.97, 0.96, 0.99, 0.98];
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const ss = scores.reduce((a, b) => a + (b - mean) ** 2, 0);
+  const sd0 = Math.sqrt(ss / 5);
+  const sd1 = Math.sqrt(ss / 4);
+  const dx = linear(0.94, 1.0, 498, 690);
+  return (
+    <DiagramFrame
+      title="fold 점수는 독립 표본이 아니다: 훈련 데이터가 75%씩 겹친다"
+      caption="5-Fold 교차검증에서 각 fold는 블록 하나(주황)로 검증하고 나머지 넷(파랑)으로 훈련한다. fold 1과 fold 2의 훈련 데이터를 비교하면 블록 3·4·5가 같아 4블록 중 3블록(75%)이 겹친다. 어느 두 fold를 골라도 마찬가지라, 다섯 점수는 서로 상관된 값이고 독립 표본처럼 다룰 수 없다. 그래서 '0.97 ± 0.01'의 ±는 점수의 흩어짐을 요약한 것일 뿐 신뢰구간이 아니다. 오른쪽: 같은 점수 5개라도 N으로 나누는 np.std(ddof=0)와 N − 1로 나누는 pandas의 .std()(ddof=1)는 √(5/4) ≈ 1.12배, 약 12% 다르다. 리포트에는 무엇을 계산했는지 밝힌다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <text x={x0} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        5-Fold: 블록 5개를 돌아가며 검증
+      </text>
+      <rect x={bx(2) - 4} y={by(0) - 4} width={3 * (bw + 2) + 6} height={32 + bh + 8} rx={6} fill={colors.green} fillOpacity={0.08} stroke={colors.green} strokeWidth={1.6} />
+      {[0, 1, 2, 3, 4].map((k) => (
+        <g key={k}>
+          <text x={x0 - 8} y={by(k) + 16} textAnchor="end" fontSize={10.5} fontWeight={700} fill={k < 2 ? ink : inkSecondary}>
+            {`fold ${k + 1}`}
+          </text>
+          {[0, 1, 2, 3, 4].map((j) => (
+            <rect key={j} x={bx(j)} y={by(k)} width={bw} height={bh} rx={3} fill={j === k ? colors.orange : colors.blue} fillOpacity={j === k ? 0.75 : k < 2 ? 0.45 : 0.22} />
+          ))}
+        </g>
+      ))}
+      {[0, 1, 2, 3, 4].map((j) => (
+        <text key={j} x={bx(j) + bw / 2} y={by(4) + bh + 15} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {`블록 ${j + 1}`}
+        </text>
+      ))}
+      <Lines x={bx(5) + 8} y={by(0) + 12} lines={["fold 1과 2의", "훈련 데이터:", "4블록 중 3블록", "같다 (75%)"]} size={10.5} anchor="start" color={colors.green} weight={800} gap={1.35} />
+      <rect x={bx(5) + 8} y={by(3) + 2} width={12} height={10} fill={colors.blue} fillOpacity={0.45} />
+      <text x={bx(5) + 24} y={by(3) + 11} fontSize={10} fill={inkSecondary}>
+        훈련
+      </text>
+      <rect x={bx(5) + 8} y={by(3) + 20} width={12} height={10} fill={colors.orange} fillOpacity={0.75} />
+      <text x={bx(5) + 24} y={by(3) + 29} fontSize={10} fill={inkSecondary}>
+        검증
+      </text>
+      <line x1={470} y1={14} x2={470} y2={222} stroke="var(--border-hairline)" />
+      <text x={490} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        같은 점수 5개, 다른 표준편차
+      </text>
+      <line x1={dx(0.94)} x2={dx(1.0)} y1={66} y2={66} stroke={inkMuted} />
+      {[0.94, 0.96, 0.98, 1.0].map((t) => (
+        <text key={t} x={dx(t)} y={82} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {t.toFixed(2)}
+        </text>
+      ))}
+      {scores.map((s) => (
+        <circle key={s} cx={dx(s)} cy={58} r={5} fill={colors.violet} />
+      ))}
+      <line x1={dx(mean)} x2={dx(mean)} y1={44} y2={70} stroke={ink} strokeWidth={1.4} />
+      <text x={dx(mean)} y={40} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={ink}>
+        {`평균 ${mean.toFixed(2)}`}
+      </text>
+      <text x={490} y={112} fontSize={10.5} fontWeight={700} fill={ink} fontFamily={mono}>
+        np.std(scores)
+      </text>
+      <text x={700} y={112} textAnchor="end" fontSize={11} fontWeight={800} fill={colors.blue} fontFamily={mono}>
+        {sd0.toFixed(4)}
+      </text>
+      <text x={490} y={128} fontSize={9.5} fill={inkSecondary}>
+        ddof=0: N으로 나눈다
+      </text>
+      <text x={490} y={154} fontSize={10.5} fontWeight={700} fill={ink} fontFamily={mono}>
+        pd.Series(scores).std()
+      </text>
+      <text x={700} y={154} textAnchor="end" fontSize={11} fontWeight={800} fill={colors.orange} fontFamily={mono}>
+        {sd1.toFixed(4)}
+      </text>
+      <text x={490} y={170} fontSize={9.5} fill={inkSecondary}>
+        ddof=1: N − 1로 나눈다
+      </text>
+      <Lines x={490} y={198} lines={["비율 √(5/4) ≈ 1.12 → 약 12% 차이", "어느 쪽도 평균의 신뢰구간은 아니다"]} size={10} anchor="start" color={ink} weight={700} gap={1.5} />
+    </DiagramFrame>
+  );
+}
+
+export function WinnersCurse() {
+  // 순수한 잡음 데이터(특징 5개, 레이블 무작위, n = 100)에 KNN의 k 후보 7개로 GridSearchCV(5-fold)를 400번 반복한 실제 결과(sklearn).
+  // 구간 0.30~0.74(폭 0.02)의 도수. 중첩 교차검증은 100번 반복.
+  const edges = Array.from({ length: 22 }, (_, i) => 0.3 + i * 0.02);
+  const single = [0, 0, 1, 6, 12, 15, 21, 35, 55, 53, 57, 45, 43, 22, 17, 10, 5, 1, 2, 0, 0, 0];
+  const best = [0, 0, 0, 0, 0, 1, 2, 10, 20, 32, 44, 62, 67, 68, 35, 28, 20, 8, 2, 1, 0, 0];
+  const G = { left: 52, top: 26, width: 360, height: 170 };
+  const sx = linear(0.34, 0.72, G.left, G.left + G.width);
+  const sy = linear(0, 70, G.top + G.height, G.top);
+  const rows = [
+    { t: "k = 7을 미리 고정", m: 0.506, s: 0.057, c: inkSecondary },
+    { t: "best_score_ (7개 중 최고)", m: 0.554, s: 0.048, c: colors.red },
+    { t: "중첩 교차검증", m: 0.496, s: 0.056, c: colors.green },
+  ];
+  const mx = linear(0.4, 0.66, 600, 700);
+  return (
+    <DiagramFrame
+      title="승자의 저주: 가장 좋은 점수를 고르면 그 점수는 부풀려진다"
+      caption="참 정확도가 0.5일 수밖에 없는 순수한 잡음 데이터(레이블 무작위, 샘플 100개)에서 KNN의 k 후보 7개를 5-fold GridSearchCV로 고르는 실험을 400번 반복한 실제 결과다. 회색: 미리 정해 둔 k = 7 하나의 교차검증 점수는 0.5 근처에 고르게 흩어진다(평균 0.506). 빨강: 7개 중 가장 좋은 점수인 best_score_는 오른쪽으로 밀려 평균 0.554, 중앙값 0.56이다. 잡음뿐인데도 '56% 맞히는 모델'로 보고될 수 있다. 오른쪽: 고르는 과정까지 바깥 fold로 평가하는 중첩 교차검증은 평균 0.496으로 참값을 되찾는다(100번 반복). 후보가 많을수록, 데이터가 적을수록 부풀림이 커진다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0.4, 0.5, 0.6, 0.7]} yTicks={[0, 20, 40, 60]} xLabel="교차검증 정확도" yLabel="횟수 (400번 중)" />
+      {edges.map((e, i) =>
+        e >= 0.34 && e < 0.72 ? (
+          <g key={e}>
+            <rect x={sx(e) + 1} y={sy(single[i])} width={sx(e + 0.02) - sx(e) - 2} height={sy(0) - sy(single[i])} fill={inkMuted} fillOpacity={0.45} />
+            <rect x={sx(e) + 1} y={sy(best[i])} width={sx(e + 0.02) - sx(e) - 2} height={sy(0) - sy(best[i])} fill={colors.red} fillOpacity={0.22} stroke={colors.red} strokeWidth={1.2} />
+          </g>
+        ) : null,
+      )}
+      <line x1={sx(0.5)} x2={sx(0.5)} y1={G.top} y2={G.top + G.height} stroke={ink} strokeWidth={1.4} strokeDasharray="4 3" />
+      <text x={sx(0.5)} y={G.top - 7} textAnchor="end" fontSize={10} fontWeight={800} fill={ink}>
+        참 정확도 0.5
+      </text>
+      <line x1={sx(0.554)} x2={sx(0.554)} y1={G.top - 4} y2={G.top + G.height} stroke={colors.red} strokeWidth={1.6} />
+      <text x={sx(0.554) + 4} y={G.top - 7} fontSize={10} fontWeight={800} fill={colors.red}>
+        best_score_ 평균 0.554
+      </text>
+      <rect x={sx(0.352)} y={G.top + 6} width={12} height={10} fill={inkMuted} fillOpacity={0.45} />
+      <text x={sx(0.352) + 16} y={G.top + 15} fontSize={10} fill={inkSecondary}>
+        미리 정한 k = 7
+      </text>
+      <rect x={sx(0.352)} y={G.top + 24} width={12} height={10} fill={colors.red} fillOpacity={0.22} stroke={colors.red} />
+      <text x={sx(0.352) + 16} y={G.top + 33} fontSize={10} fill={inkSecondary}>
+        7개 중 최고 점수
+      </text>
+      <line x1={440} y1={14} x2={440} y2={236} stroke="var(--border-hairline)" />
+      <text x={456} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        평균 ± 표준편차
+      </text>
+      <line x1={mx(0.5)} x2={mx(0.5)} y1={40} y2={196} stroke={ink} strokeDasharray="4 3" />
+      {rows.map((r, i) => {
+        const y = 66 + i * 52;
+        return (
+          <g key={r.t}>
+            <Lines x={456} y={y} lines={[r.t, r.m.toFixed(3)]} size={10.5} anchor="start" color={r.c} weight={800} gap={1.4} />
+            <line x1={mx(r.m - r.s)} x2={mx(r.m + r.s)} y1={y + 2} y2={y + 2} stroke={r.c} strokeWidth={2} />
+            <circle cx={mx(r.m)} cy={y + 2} r={5} fill={r.c} />
+          </g>
+        );
+      })}
+      {[0.4, 0.5, 0.6].map((t) => (
+        <text key={t} x={mx(t)} y={214} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {t.toFixed(1)}
+        </text>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function NestedCv() {
+  // 중첩 교차검증의 구조: 바깥 5-fold × 안쪽 4-fold. 바깥 fold 1을 펼쳐 보인다.
+  const P = "ncv";
+  const ow = 62;
+  const ox = (j: number) => 40 + j * (ow + 2);
+  const iw = 60;
+  const ix = (j: number) => ox(1) + j * (iw + 2);
+  const iy = (k: number) => 104 + k * 24;
+  const chosen = ["C = 1", "C = 1", "C = 10", "C = 1", "C = 0.1"];
+  return (
+    <DiagramFrame
+      title="중첩 교차검증: 고르는 과정까지 바깥 fold로 평가한다"
+      caption="바깥 교차검증(여기서는 5-fold)의 각 fold마다 바깥 테스트 블록(빨강)을 떼어 두고, 나머지 바깥 훈련 데이터 안에서만 안쪽 교차검증(4-fold)으로 하이퍼파라미터 후보를 비교해 하나를 고른다. 고른 설정으로 바깥 훈련 데이터 전체에 다시 학습한 뒤, 한 번도 고르는 데 쓰이지 않은 바깥 테스트 블록으로 평가한다. 이것을 바깥 fold 5개에 반복해 얻은 점수의 평균이 '이 튜닝 절차로 만든 모델'의 성능 추정이다. fold마다 고른 설정이 달라도 괜찮다. 평가 대상이 특정 설정이 아니라 고르는 절차이기 때문이다."
+      viewBox="0 0 720 262"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={40} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        바깥 fold 1을 펼쳐 보면
+      </text>
+      {[0, 1, 2, 3, 4].map((j) => (
+        <rect key={j} x={ox(j)} y={34} width={ow} height={24} rx={3} fill={j === 0 ? colors.red : colors.blue} fillOpacity={j === 0 ? 0.7 : 0.4} />
+      ))}
+      <text x={ox(0) + ow / 2} y={50} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+        바깥 테스트
+      </text>
+      <text x={(ox(1) + ox(4) + ow) / 2} y={50} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+        바깥 훈련 (이 안에서만 고른다)
+      </text>
+      <path d={`M${ox(1)},64 L${ox(1)},70 L${ox(4) + ow},70 L${ox(4) + ow},64`} fill="none" stroke={inkSecondary} />
+      <Arr x1={(ox(1) + ox(4) + ow) / 2} y1={70} x2={(ox(1) + ox(4) + ow) / 2} y2={92} color={inkSecondary} marker={`${P}-ink`} />
+      {[0, 1, 2, 3].map((k) => (
+        <g key={k}>
+          <text x={ix(0) - 8} y={iy(k) + 13} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+            {`안쪽 ${k + 1}`}
+          </text>
+          {[0, 1, 2, 3].map((j) => (
+            <rect key={j} x={ix(j)} y={iy(k)} width={iw} height={18} rx={2} fill={j === k ? colors.orange : colors.blue} fillOpacity={j === k ? 0.7 : 0.25} />
+          ))}
+        </g>
+      ))}
+      <text x={ix(0)} y={iy(4) + 10} fontSize={10} fontWeight={700} fill={inkSecondary}>
+        후보 7개 각각을 안쪽 4-fold로 채점
+      </text>
+      <Tag x={364} y={96} w={146} h={40} lines={["① 안쪽 CV 점수가", "가장 좋은 설정 선택"]} color={colors.orange} size={10.5} />
+      <Tag x={364} y={146} w={146} h={40} lines={["② 그 설정으로 바깥", "훈련 전체에 재학습"]} color={colors.blue} size={10.5} />
+      <Tag x={364} y={196} w={146} h={40} lines={["③ 바깥 테스트로 한 번", "평가 → 점수₁"]} color={colors.red} size={10.5} />
+      <Arr x1={437} y1={136} x2={437} y2={144} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={437} y1={186} x2={437} y2={194} color={inkSecondary} marker={`${P}-ink`} />
+      <line x1={520} y1={14} x2={520} y2={248} stroke="var(--border-hairline)" />
+      <text x={536} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        바깥 fold 5개 반복
+      </text>
+      {chosen.map((c, k) => (
+        <g key={k}>
+          {[0, 1, 2, 3, 4].map((j) => (
+            <rect key={j} x={536 + j * 18} y={36 + k * 26} width={16} height={18} rx={2} fill={j === k ? colors.red : colors.blue} fillOpacity={j === k ? 0.7 : 0.3} />
+          ))}
+          <text x={632} y={49 + k * 26} fontSize={10} fontWeight={700} fill={ink}>
+            {c}
+          </text>
+          <text x={704} y={49 + k * 26} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.red}>
+            {`점수${"₁₂₃₄₅"[k]}`}
+          </text>
+        </g>
+      ))}
+      <Lines x={536} y={182} lines={["평균(점수₁…점수₅)", "= 이 튜닝 절차의 성능", "고른 설정은 달라도 된다"]} size={10.5} anchor="start" color={ink} weight={700} gap={1.45} />
+      <text x={40} y={246} fontSize={10} fill={inkSecondary} fontFamily={mono}>
+        cross_val_score(GridSearchCV(…), X, y, cv=outer)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function PairedT() {
+  // 유방암 데이터(sklearn load_breast_cancer), 5-fold × 3회 반복의 같은 분할 15개에서 로지스틱 회귀(표준화) vs 랜덤 포레스트(트리 200개).
+  // 차이 평균 0.0105, 표준편차 0.0163. 보통 t = 2.50(p = 0.026), Nadeau–Bengio 보정 t = 1.15(p = 0.27), 자유도 14.
+  const A = [0.9561, 0.9737, 0.9825, 1.0, 0.9823, 0.9386, 0.9912, 0.9561, 0.9825, 0.9912, 0.9737, 0.9912, 0.9649, 0.9737, 0.9735];
+  const Bs = [0.9386, 0.9649, 0.9825, 0.9561, 0.9912, 0.9561, 0.9737, 0.9649, 0.9561, 0.9646, 0.9561, 0.9737, 0.9649, 0.9737, 0.9558];
+  const d = A.map((a, i) => a - Bs[i]);
+  const G1 = { left: 50, top: 30, width: 220, height: 160 };
+  const x1 = linear(0.5, 15.5, G1.left, G1.left + G1.width);
+  const y1 = linear(0.93, 1.0, G1.top + G1.height, G1.top);
+  const G2 = { left: 318, top: 30, width: 200, height: 160 };
+  const x2 = linear(-0.03, 0.05, G2.left, G2.left + G2.width);
+  const G3 = { left: 572, top: 30, width: 130, height: 160 };
+  const x3 = linear(1, 50, G3.left, G3.left + G3.width);
+  const y3 = linear(0, 1, G3.top + G3.height, G3.top);
+  const stack = new Map<number, number>();
+  const dots = d.map((v) => {
+    const key = Math.round(v * 400) / 400;
+    const n = stack.get(key) ?? 0;
+    stack.set(key, n + 1);
+    return { x: x2(key), y: G2.top + 66 - n * 9 };
+  });
+  const cis = [
+    { t: "보통 t: p = 0.026", lo: 0.0015, hi: 0.0196, c: colors.red, y: G2.top + 104 },
+    { t: "보정 t: p = 0.27", lo: -0.0092, hi: 0.0303, c: colors.green, y: G2.top + 140 },
+  ];
+  return (
+    <DiagramFrame
+      title="두 모델 비교: 같은 분할의 짝지은 차이와 보정된 t 검정"
+      caption="유방암 데이터(sklearn)에서 로지스틱 회귀와 랜덤 포레스트를 같은 분할 15개(5-fold × 3회 반복)로 평가한 실제 결과다. 왼쪽: 분할마다 두 점수가 함께 오르내리므로 분할의 난이도를 상쇄하도록 분할별 차이 d를 본다. 가운데: 차이의 평균은 0.0105다. 평범한 t 검정으로 구간을 만들면 0을 포함하지 않아 p = 0.026으로 '유의'해 보이지만, 훈련 데이터의 겹침을 반영한 Nadeau–Bengio 보정을 하면 구간이 0을 포함하고 p = 0.27이다. 오른쪽: 표준오차를 표본표준편차 s의 몇 배로 잡는지다. 보통 t는 1/√J라 반복을 늘릴수록 0으로 줄지만, 보정 t는 √(1/J + 0.25)라 0.5 밑으로 내려가지 않는다. 반복을 많이 해서 유의하게 만드는 착시를 막는 장치다."
+      viewBox="0 0 720 256"
+      minWidth={640}
+    >
+      <text x={G1.left} y={18} fontSize={11} fontWeight={800} fill={ink}>
+        분할 15개의 정확도
+      </text>
+      <Axes {...G1} sx={x1} sy={y1} yTicks={[0.94, 0.96, 0.98, 1]} fmtY={(v) => v.toFixed(2)} xLabel="분할 (5-fold × 3회)" />
+      {[5.5, 10.5].map((s) => (
+        <line key={s} x1={x1(s)} x2={x1(s)} y1={G1.top} y2={G1.top + G1.height} stroke={inkMuted} strokeDasharray="3 3" />
+      ))}
+      {A.map((a, i) => (
+        <g key={i}>
+          <line x1={x1(i + 1)} x2={x1(i + 1)} y1={y1(a)} y2={y1(Bs[i])} stroke={inkMuted} strokeWidth={1.2} />
+          <rect x={x1(i + 1) - 3.5} y={y1(Bs[i]) - 3.5} width={7} height={7} fill={colors.orange} />
+          <circle cx={x1(i + 1)} cy={y1(a)} r={3.8} fill={colors.blue} />
+        </g>
+      ))}
+      <circle cx={G1.left + 8} cy={G1.top + G1.height + 40} r={3.8} fill={colors.blue} />
+      <text x={G1.left + 16} y={G1.top + G1.height + 44} fontSize={10} fontWeight={700} fill={colors.blue}>
+        로지스틱 0.975
+      </text>
+      <rect x={G1.left + 116} y={G1.top + G1.height + 36.5} width={7} height={7} fill={colors.orange} />
+      <text x={G1.left + 128} y={G1.top + G1.height + 44} fontSize={10} fontWeight={700} fill={colors.orange}>
+        랜덤 포레스트 0.965
+      </text>
+      <text x={G2.left} y={18} fontSize={11} fontWeight={800} fill={ink}>
+        차이 d = 로지스틱 − RF
+      </text>
+      <line x1={G2.left} x2={G2.left + G2.width} y1={G2.top + G2.height} y2={G2.top + G2.height} stroke={inkMuted} strokeWidth={1.2} />
+      {[-0.02, 0, 0.02, 0.04].map((t) => (
+        <text key={t} x={x2(t)} y={G2.top + G2.height + 15} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+          {t === 0 ? "0" : t.toFixed(2).replace("-", "−")}
+        </text>
+      ))}
+      <line x1={x2(0)} x2={x2(0)} y1={G2.top} y2={G2.top + G2.height} stroke={ink} strokeDasharray="4 3" />
+      {dots.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={4} fill={colors.violet} fillOpacity={0.8} />
+      ))}
+      <text x={x2(0.0105)} y={G2.top + 84} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.violet}>
+        평균 0.0105
+      </text>
+      {cis.map((c) => (
+        <g key={c.t}>
+          <line x1={x2(c.lo)} x2={x2(c.hi)} y1={c.y} y2={c.y} stroke={c.c} strokeWidth={3} />
+          <line x1={x2(c.lo)} x2={x2(c.lo)} y1={c.y - 6} y2={c.y + 6} stroke={c.c} strokeWidth={2} />
+          <line x1={x2(c.hi)} x2={x2(c.hi)} y1={c.y - 6} y2={c.y + 6} stroke={c.c} strokeWidth={2} />
+          <circle cx={x2(0.0105)} cy={c.y} r={4} fill={c.c} />
+          <text x={x2(-0.029)} y={c.y - 9} fontSize={10} fontWeight={800} fill={c.c}>
+            {c.t}
+          </text>
+        </g>
+      ))}
+      <text x={G2.left + G2.width / 2} y={G2.top + G2.height + 32} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        95% 구간: 0을 포함하는가?
+      </text>
+      <text x={G3.left - 6} y={18} fontSize={11} fontWeight={800} fill={ink}>
+        표준오차 ÷ s
+      </text>
+      <Axes {...G3} sx={x3} sy={y3} xTicks={[1, 15, 30, 50]} yTicks={[0, 0.5, 1]} xLabel="평가 횟수 J" />
+      <line x1={G3.left} x2={G3.left + G3.width} y1={y3(0.5)} y2={y3(0.5)} stroke={colors.green} strokeDasharray="4 3" />
+      <path d={linePath(sample((J) => 1 / Math.sqrt(J), 1, 50, 120).map(([x, y]) => [x3(x), y3(y)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.2} />
+      <path d={linePath(sample((J) => Math.sqrt(1 / J + 0.25), 1, 50, 120).map(([x, y]) => [x3(x), y3(y)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.2} />
+      <circle cx={x3(15)} cy={y3(1 / Math.sqrt(15))} r={3.5} fill={colors.red} />
+      <circle cx={x3(15)} cy={y3(Math.sqrt(1 / 15 + 0.25))} r={3.5} fill={colors.green} />
+      <text x={x3(50)} y={y3(0.5) - 18} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.green}>
+        보정: 바닥 0.5
+      </text>
+      <text x={x3(50)} y={y3(1 / Math.sqrt(50)) - 7} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.red}>
+        보통: 1/√J → 0
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function McnemarTest() {
+  // 본문 예제: 테스트셋 200개, A만 맞힘 b = 8, B만 맞힘 c = 2 → χ² = (|8 − 2| − 1)²/10 = 2.5, p ≈ 0.11. b = 40, c = 10이면 χ² ≈ 16.8.
+  const cell = 92;
+  const tx0 = 96;
+  const ty0 = 48;
+  const chi = (x: number) => Math.exp(-x / 2) / Math.sqrt(2 * Math.PI * x);
+  const G = { left: 452, top: 30, width: 248, height: 150 };
+  const sx = linear(0, 18, G.left, G.left + G.width);
+  const sy = linear(0, 0.8, G.top + G.height, G.top);
+  const tail = sample(chi, 3.84, 18, 80).map(([x, y]) => [sx(x), sy(y)] as [number, number]);
+  return (
+    <DiagramFrame
+      title="McNemar 검정: 결론을 가르는 것은 엇갈린 샘플의 수다"
+      caption="본문 예제다. 테스트셋 200개에서 두 모델이 같은 결과를 낸 190개(둘 다 맞히거나 둘 다 틀림, 회색)는 우열에 대한 정보가 없어 비교에서 빠지고, A만 맞힌 b = 8개와 B만 맞힌 c = 2개만 쓴다. 통계량 χ² = (|b − c| − 1)²/(b + c) = 2.5는 자유도 1인 카이제곱 분포에서 5% 기준값 3.84(빨간 영역의 시작)보다 작아 p ≈ 0.11이다. 엇갈린 샘플이 10개뿐이라 증거가 부족하다. 같은 4 : 1 비율이라도 b = 40, c = 10이면 χ² ≈ 16.8로 분명히 유의하다."
+      viewBox="0 0 720 260"
+      minWidth={600}
+    >
+      <text x={tx0 + cell} y={22} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        모델 B
+      </text>
+      <text x={tx0 + cell / 2} y={40} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        맞힘
+      </text>
+      <text x={tx0 + cell * 1.5} y={40} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        틀림
+      </text>
+      <text transform={`translate(${tx0 - 46}, ${ty0 + cell}) rotate(-90)`} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        모델 A
+      </text>
+      <text x={tx0 - 8} y={ty0 + cell / 2 + 4} textAnchor="end" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        맞힘
+      </text>
+      <text x={tx0 - 8} y={ty0 + cell * 1.5 + 4} textAnchor="end" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        틀림
+      </text>
+      <rect x={tx0} y={ty0} width={cell} height={cell} fill={inkMuted} fillOpacity={0.14} stroke="var(--border-strong)" />
+      <rect x={tx0 + cell} y={ty0 + cell} width={cell} height={cell} fill={inkMuted} fillOpacity={0.14} stroke="var(--border-strong)" />
+      <rect x={tx0 + cell} y={ty0} width={cell} height={cell} fill={colors.blue} fillOpacity={0.18} stroke={colors.blue} strokeWidth={2} />
+      <rect x={tx0} y={ty0 + cell} width={cell} height={cell} fill={colors.orange} fillOpacity={0.18} stroke={colors.orange} strokeWidth={2} />
+      <Lines x={tx0 + cell / 2} y={ty0 + cell / 2 - 2} lines={["둘 다 맞힘", "비교에 안 씀"]} size={10} color={inkSecondary} gap={1.5} />
+      <Lines x={tx0 + cell * 1.5} y={ty0 + cell * 1.5 - 2} lines={["둘 다 틀림", "비교에 안 씀"]} size={10} color={inkSecondary} gap={1.5} />
+      <text x={tx0 + cell} y={ty0 + 2 * cell + 18} textAnchor="middle" fontSize={10} fontWeight={700} fill={inkSecondary}>
+        회색 두 칸의 합 = 190개
+      </text>
+      <Lines x={tx0 + cell * 1.5} y={ty0 + cell / 2 - 2} lines={["b = 8", "A만 맞힘"]} size={13} color={colors.blue} weight={800} gap={1.3} />
+      <Lines x={tx0 + cell / 2} y={ty0 + cell * 1.5 - 2} lines={["c = 2", "B만 맞힘"]} size={13} color={colors.orange} weight={800} gap={1.3} />
+      <Lines x={300} y={96} lines={["χ² = (|b − c| − 1)² / (b + c)", "= (|8 − 2| − 1)² / 10", "= 2.5"]} size={11} anchor="start" color={ink} weight={700} gap={1.6} />
+      <text x={300} y={168} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        p ≈ 0.11: 증거 부족
+      </text>
+      <text x={G.left} y={18} fontSize={11} fontWeight={800} fill={ink}>
+        자유도 1인 카이제곱 분포
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 3.84, 10, 16.8]} yTicks={[]} fmtX={(v) => (v === 0 ? "0" : String(v))} xLabel="χ²" />
+      <path d={`M${sx(3.84)},${sy(0)} ${linePath(tail).replace("M", "L")} L${sx(18)},${sy(0)} Z`} fill={colors.red} fillOpacity={0.18} />
+      <path d={linePath(sample(chi, 0.2, 18, 200).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={ink} strokeWidth={2} />
+      <line x1={sx(3.84)} x2={sx(3.84)} y1={G.top + 30} y2={sy(0)} stroke={colors.red} strokeDasharray="4 3" />
+      <text x={sx(3.84) + 4} y={G.top + 40} fontSize={9.5} fontWeight={800} fill={colors.red}>
+        5% 기준 3.84
+      </text>
+      <line x1={sx(2.5)} x2={sx(2.5)} y1={sy(chi(2.5)) - 30} y2={sy(0)} stroke={colors.blue} strokeWidth={2} />
+      <text x={sx(2.5) - 4} y={sy(chi(2.5)) - 34} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.blue}>
+        2.5
+      </text>
+      <line x1={sx(16.8)} x2={sx(16.8)} y1={sy(0.25)} y2={sy(0)} stroke={colors.violet} strokeWidth={2} />
+      <Lines x={sx(16.8)} y={sy(0.25) - 18} lines={["b = 40, c = 10", "p < 0.001"]} size={9.5} anchor="middle" color={colors.violet} weight={800} gap={1.3} />
     </DiagramFrame>
   );
 }
