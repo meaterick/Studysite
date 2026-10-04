@@ -148,7 +148,27 @@ import {
   RegressionGrid,
   EvalCycle,
 } from "./w7";
-import { NistFramework, CapstoneTimeline, FairnessGrid, DeployStrategies } from "./w8";
+import {
+  NistFramework,
+  CapstoneTimeline,
+  FairnessGrid,
+  DeployStrategies,
+  FgsmVsRandom,
+  SubgroupBoundary,
+  GenderShades,
+  FairnessMetrics,
+  ThresholdTradeoff,
+  IntersectionalGap,
+  EuAiActPyramid,
+  ModelCardLabel,
+  ServingFlow,
+  MlPipelines,
+  DriftTypes,
+  PsiBins,
+  AblationBars,
+  SeedPaired,
+  PaperTimeline,
+} from "./w8";
 import { PhaseRoadmap, DifficultyCurve } from "./shared";
 import InteractiveGradientDescent from "./InteractiveGradientDescent";
 import InteractiveBiasVariance from "./InteractiveBiasVariance";
@@ -303,6 +323,21 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "nist-framework": NistFramework,
   "deploy-strategies": DeployStrategies,
   "capstone-timeline": CapstoneTimeline,
+  "fgsm-vs-random": FgsmVsRandom,
+  "subgroup-boundary": SubgroupBoundary,
+  "gender-shades": GenderShades,
+  "fairness-metrics": FairnessMetrics,
+  "threshold-tradeoff": ThresholdTradeoff,
+  "intersectional-gap": IntersectionalGap,
+  "eu-ai-act-pyramid": EuAiActPyramid,
+  "model-card-label": ModelCardLabel,
+  "serving-flow": ServingFlow,
+  "ml-pipelines": MlPipelines,
+  "drift-types": DriftTypes,
+  "psi-bins": PsiBins,
+  "ablation-bars": AblationBars,
+  "seed-paired": SeedPaired,
+  "paper-timeline": PaperTimeline,
   "phase-roadmap": PhaseRoadmap,
   "difficulty-curve": DifficultyCurve,
 };
