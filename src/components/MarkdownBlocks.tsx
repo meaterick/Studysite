@@ -179,7 +179,8 @@ export function BlocksRenderer({
                   alt={b.alt}
                   width={b.width}
                   height={b.height}
-                  className="w-full"
+                  // 투명 배경 그림(검은 선의 SVG 등)이 어두운 테마에서도 보이도록 흰 바탕 위에 그린다.
+                  className="w-full bg-white"
                   sizes="(max-width: 768px) 100vw, 768px"
                 />
                 {(b.caption || b.credit) && (
