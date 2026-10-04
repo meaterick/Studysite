@@ -62,6 +62,17 @@ export function log10Scale(d0: number, d1: number, r0: number, r1: number): Scal
   return (v) => r0 + ((Math.log10(v) - l0) / (l1 - l0)) * (r1 - r0);
 }
 
+/** 10의 거듭제곱 눈금 글자: 1e-5 → "10⁻⁵", 1 → "1" */
+export function pow10Label(v: number) {
+  const e = Math.round(Math.log10(v));
+  if (e === 0) return "1";
+  const sup: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+  return `10${String(e)
+    .split("")
+    .map((ch) => sup[ch] ?? ch)
+    .join("")}`;
+}
+
 /** 화면 좌표 점들을 꺾은선 path로 */
 export function linePath(points: [number, number][]): string {
   return points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");

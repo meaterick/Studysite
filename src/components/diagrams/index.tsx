@@ -44,7 +44,24 @@ import {
   RocFiveSamples,
   R2Squares,
 } from "./w2";
-import { ComputationalGraph, MlpDiagram, XorHidden } from "./w3";
+import {
+  ComputationalGraph,
+  MlpDiagram,
+  XorHidden,
+  NeuronAnatomy,
+  ReluPieces,
+  ReluVsGelu,
+  BackpropGates,
+  BackpropShapes,
+  ClosureRecursion,
+  MicrogradTopo,
+  GradAccumulate,
+  OptimizerPaths,
+  MomentumVelocity,
+  InitSignalPropagation,
+  TrainingLoop,
+  BroadcastBug,
+} from "./w3";
 import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
 import { LlmPipeline, ScalingLawPlot, AttentionPatterns, LoraDiagram } from "./w6";
@@ -106,6 +123,19 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "computational-graph": ComputationalGraph,
   "mlp-diagram": MlpDiagram,
   "xor-hidden": XorHidden,
+  "neuron-anatomy": NeuronAnatomy,
+  "relu-pieces": ReluPieces,
+  "relu-vs-gelu": ReluVsGelu,
+  "backprop-gates": BackpropGates,
+  "backprop-shapes": BackpropShapes,
+  "closure-recursion": ClosureRecursion,
+  "micrograd-topo": MicrogradTopo,
+  "grad-accumulate": GradAccumulate,
+  "optimizer-paths": OptimizerPaths,
+  "momentum-velocity": MomentumVelocity,
+  "init-signal-propagation": InitSignalPropagation,
+  "training-loop": TrainingLoop,
+  "broadcast-bug": BroadcastBug,
   "conv-operation": InteractiveConv,
   "conv-channels": ConvChannels,
   "resnet-skip": ResNetSkip,
