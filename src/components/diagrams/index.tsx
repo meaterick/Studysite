@@ -20,6 +20,18 @@ import {
   LrConvergenceModes,
   ChainRuleChain,
   CriticalPoints,
+  ClassObjects,
+  ExceptionFlow,
+  RunningMeanTrace,
+  VenvIsolation,
+  GitFlow,
+  BasisChange,
+  MatmulRowCol,
+  MatmulOrder,
+  InverseSingular,
+  NormalRule,
+  CltSums,
+  SigmaSpread,
 } from "./w1";
 import {
   ConfusionMatrix,
@@ -178,6 +190,18 @@ import InteractiveDecodingTemperature from "./InteractiveDecodingTemperature";
 import InteractiveThreshold from "./InteractiveThreshold";
 
 export const DIAGRAMS: Record<string, ComponentType> = {
+  "class-objects": ClassObjects,
+  "exception-flow": ExceptionFlow,
+  "running-mean-trace": RunningMeanTrace,
+  "venv-isolation": VenvIsolation,
+  "git-flow": GitFlow,
+  "basis-change": BasisChange,
+  "matmul-rowcol": MatmulRowCol,
+  "matmul-order": MatmulOrder,
+  "inverse-singular": InverseSingular,
+  "normal-rule": NormalRule,
+  "clt-sums": CltSums,
+  "sigma-spread": SigmaSpread,
   "ai-hierarchy": AiHierarchy,
   "ml-loop": MlLoop,
   "numpy-axis": NumpyAxis,

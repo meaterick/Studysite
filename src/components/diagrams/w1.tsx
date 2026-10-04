@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, starPath, mono } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, starPath, mono, normCdf } from "./chart";
 
 export function AiHierarchy() {
   // AI ⊃ ML ⊃ DL ⊃ LLM은 "방법" 기준의 포함관계다. 생성형 AI는 "기능" 기준이라 ML·DL 경계를 가로질러 겹쳐 그린다.
@@ -1515,6 +1515,732 @@ export function CriticalPoints() {
       <text x={proj(0, 1)[0] - 6} y={proj(0, 1)[1] + 16} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.orange} {...halo}>
         이 방향은 내리막
       </text>
+    </DiagramFrame>
+  );
+}
+
+// ───────────────────────── 1주차 보충 과정 그림 ─────────────────────────
+
+const chip1 = (x: number, y: number, text: string, color: string, w = 64, h = 24, tint = 0.14, size = 11, weight = 700, font?: string) => (
+  <g key={`${x}-${y}-${text}`}>
+    <rect x={x} y={y} width={w} height={h} rx={6} fill={color} fillOpacity={tint} stroke={color} strokeWidth={1.2} />
+    <text x={x + w / 2} y={y + h / 2 + size * 0.36} textAnchor="middle" fontSize={size} fontWeight={weight} fill={ink} fontFamily={font}>
+      {text}
+    </text>
+  </g>
+);
+
+export function ClassObjects() {
+  // 본문 코드의 Perceptron 클래스: 틀(클래스) 하나로 w, b가 다른 객체를 여러 개 찍어 낸다.
+  const P = "clo";
+  return (
+    <DiagramFrame
+      title="클래스는 틀, 객체는 그 틀로 찍어 낸 하나하나"
+      caption="왼쪽의 Perceptron 클래스는 '어떤 속성(w, b)을 갖고 어떤 동작(predict)을 하는가'를 적은 틀이다. Perceptron(w=2, b=1)처럼 부르면 __init__이 자동으로 실행되어 자기만의 w, b를 가진 객체가 하나 생긴다. 같은 틀로 만든 p와 q는 서로의 값을 건드리지 않는다. p.predict(3)을 부르면 파이썬이 self 자리에 p를 넣어 주므로, 계산에는 p의 w와 b가 쓰인다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, violet: colors.violet }} />
+      <rect x={14} y={20} width={220} height={150} rx={10} fill={colors.violet} fillOpacity={0.06} stroke={colors.violet} strokeWidth={1.6} strokeDasharray="6 4" />
+      <text x={26} y={42} fontSize={12.5} fontWeight={800} fill={colors.violet} fontFamily={mono}>
+        class Perceptron
+      </text>
+      <text x={224} y={42} textAnchor="end" fontSize={10} fill={inkSecondary}>
+        틀 (설계도)
+      </text>
+      {[
+        { y: 68, indent: 0, t: "def __init__(self, w, b):" },
+        { y: 84, indent: 1, t: "self.w = w" },
+        { y: 100, indent: 1, t: "self.b = b" },
+        { y: 126, indent: 0, t: "def predict(self, x):" },
+        { y: 142, indent: 1, t: "return self.w * x + self.b" },
+      ].map((l) => (
+        <text key={l.y} x={26 + l.indent * 18} y={l.y} fontSize={10.5} fill={ink} fontFamily={mono}>
+          {l.t}
+        </text>
+      ))}
+      {[
+        { y: 22, name: "p = Perceptron(w=2, b=1)", w: "2", b: "1", c: colors.blue },
+        { y: 112, name: "q = Perceptron(w=-1, b=0.5)", w: "−1", b: "0.5", c: colors.orange },
+      ].map((o) => (
+        <g key={o.name}>
+          <Arr x1={236} y1={95} x2={286} y2={o.y + 30} color={inkSecondary} marker={`${P}-ink`} />
+          <text x={292} y={o.y + 6} fontSize={10} fill={inkSecondary} fontFamily={mono}>
+            {o.name}
+          </text>
+          <rect x={292} y={o.y + 14} width={150} height={56} rx={10} fill={o.c} fillOpacity={0.12} stroke={o.c} strokeWidth={1.6} />
+          <text x={304} y={o.y + 36} fontSize={11.5} fontWeight={800} fill={o.c}>
+            {o.name[0]} (객체)
+          </text>
+          <text x={304} y={o.y + 56} fontSize={11} fill={ink} fontFamily={mono}>
+            {`w = ${o.w},  b = ${o.b}`}
+          </text>
+        </g>
+      ))}
+      <rect x={470} y={38} width={236} height={124} rx={10} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={482} y={60} fontSize={11.5} fontWeight={800} fill={ink} fontFamily={mono}>
+        p.predict(3)
+      </text>
+      <Arr x1={588} y1={66} x2={588} y2={80} color={colors.violet} marker={`${P}-violet`} />
+      <text x={482} y={98} fontSize={10.5} fill={inkSecondary} fontFamily={mono}>
+        predict(self=p, x=3)
+      </text>
+      <Arr x1={588} y1={104} x2={588} y2={118} color={colors.violet} marker={`${P}-violet`} />
+      <text x={482} y={136} fontSize={11} fontWeight={700} fill={ink} fontFamily={mono}>
+        p.w × 3 + p.b = 2×3 + 1 = 7
+      </text>
+      <text x={588} y={186} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.violet}>
+        self = 이 메서드를 부른 객체 자신
+      </text>
+      <text x={124} y={196} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        붕어빵 틀 하나로 속이 다른 붕어빵을 여러 개
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function ExceptionFlow() {
+  // 본문 코드의 safe_divide와 RunningMean.result()의 raise.
+  const P = "exf";
+  const box = (x: number, y: number, w: number, lines: string[], c: string, tint = 0.1) => (
+    <g>
+      <rect x={x} y={y} width={w} height={lines.length * 15 + 12} rx={6} fill={c} fillOpacity={tint} stroke={c} strokeWidth={1.2} />
+      {lines.map((l, i) => (
+        // 앞 공백 두 칸 = 들여쓰기 한 단계 (SVG는 공백을 합쳐 버리므로 x로 민다)
+        <text key={i} x={x + 10 + ((l.length - l.trimStart().length) / 2) * 12} y={y + 18 + i * 13.8} fontSize={10.2} fill={ink}>
+          {l.trimStart()}
+        </text>
+      ))}
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="예외 처리: 오류가 나면 except로 건너뛴다"
+      caption="왼쪽: safe_divide(10, 2)는 try 블록을 끝까지 실행해 5.0을 돌려준다. 가운데: safe_divide(10, 0)은 a / b에서 ZeroDivisionError가 발생하는 순간 try의 나머지를 건너뛰고 except 블록으로 넘어가, 경고를 출력하고 None을 돌려준다. 프로그램은 멈추지 않는다. 오른쪽: 함수 안에서 raise로 일으킨 예외는 그 함수를 빠져나와 호출한 쪽으로 올라가고, 호출한 쪽의 try/except가 받아서 처리한다. 잡는 곳이 없으면 그때 프로그램이 멈춘다."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ green: colors.green, orange: colors.orange, red: colors.red }} />
+      <text x={110} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.green}>
+        safe_divide(10, 2)
+      </text>
+      {box(20, 30, 180, ["try:", "  return a / b   → 5.0"], colors.green)}
+      <Arr x1={110} y1={74} x2={110} y2={104} color={colors.green} marker={`${P}-green`} />
+      {chip1(40, 108, "5.0을 돌려줌", colors.green, 140, 28, 0.14, 11)}
+      <text x={355} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.orange}>
+        safe_divide(10, 0)
+      </text>
+      {box(260, 30, 190, ["try:", "  return a / b   ✗ 0으로 나눔"], colors.orange)}
+      <text x={355} y={96} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.red} stroke="var(--surface-card)" strokeWidth={4} paintOrder="stroke">
+        ZeroDivisionError 발생 → 나머지를 건너뜀
+      </text>
+      <Arr x1={355} y1={74} x2={355} y2={118} color={colors.red} marker={`${P}-red`} width={1.8} />
+      {box(260, 122, 190, ["except ZeroDivisionError:", "  print(\"0으로 나눌 수 없습니다.\")", "  return None"], colors.orange)}
+      <Arr x1={355} y1={181} x2={355} y2={198} color={colors.orange} marker={`${P}-orange`} />
+      {chip1(275, 202, "None, 프로그램은 계속", colors.orange, 160, 28, 0.14, 11)}
+      <line x1={476} y1={14} x2={476} y2={240} stroke="var(--border-hairline)" />
+      <text x={596} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
+        raise: 호출한 쪽으로 알린다
+      </text>
+      {box(494, 30, 212, ["valid_loss.result()", "  count == 0 → raise ValueError(...)"], colors.violet)}
+      <ArrPath d="M600,74 C600,96 600,104 600,118" color={colors.red} marker={`${P}-red`} width={1.8} />
+      <text x={608} y={100} fontSize={9.5} fontWeight={700} fill={colors.red}>
+        함수를 빠져나와 위로
+      </text>
+      {box(494, 122, 212, ["호출한 쪽:", "try: valid_loss.result()", "except ValueError as e:", "  print(\"처리한 오류:\", e)"], colors.violet)}
+      <text x={600} y={214} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        잡는 except가 없으면 프로그램이 멈춘다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function RunningMeanTrace() {
+  // 본문 코드의 RunningMean: 2, 4, 9를 차례로 더한다. 새 평균 = 옛 평균 + (새 값 − 옛 평균) / 개수.
+  const P = "rmt";
+  const sx = linear(0, 10, 150, 560);
+  const steps = [
+    { x: 2, n: 1, old: 0, neu: 2 },
+    { x: 4, n: 2, old: 2, neu: 3 },
+    { x: 9, n: 3, old: 3, neu: 5 },
+  ];
+  return (
+    <DiagramFrame
+      title="평균을 이어서 계산하기: 새 값 쪽으로 1/개수만큼만 다가간다"
+      caption="본문 RunningMean의 add()가 하는 일이다. 새 값이 들어오면 지금 평균에서 새 값까지 거리의 1/개수만큼만 움직인다. 첫 값 2에는 끝까지(1/1), 두 번째 값 4에는 절반(1/2)만 다가가 3, 세 번째 값 9에는 1/3만 다가가 5가 된다. 결과는 (2 + 4 + 9) / 3 = 5와 같지만, 값을 모두 저장하지 않고 개수와 평균 두 숫자만 들고 다닌다. 값이 쌓일수록 새 값 하나가 평균을 움직이는 폭이 작아진다."
+      viewBox="0 0 720 204"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ violet: colors.violet }} />
+      {steps.map((st, i) => {
+        const y = 30 + i * 50;
+        return (
+          <g key={i}>
+            <text x={14} y={y + 5} fontSize={11} fontWeight={700} fill={ink} fontFamily={mono}>
+              {`add(${st.x})  count=${st.n}`}
+            </text>
+            <line x1={sx(0)} x2={sx(10)} y1={y} y2={y} stroke="var(--border-strong)" />
+            <circle cx={sx(st.old)} cy={y} r={5} fill={inkMuted} />
+            <text x={sx(st.old)} y={y + 18} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+              {`옛 평균 ${st.old}`}
+            </text>
+            {st.neu !== st.old && <Arr x1={sx(st.old) + 6} y1={y - 3} x2={sx(st.neu) - 3} y2={y - 3} color={colors.violet} marker={`${P}-violet`} width={2.2} />}
+            <circle cx={sx(st.neu)} cy={y} r={st.neu === st.x ? 7 : 5} fill={colors.violet} />
+            <path d={starPath(sx(st.x), y, st.neu === st.x ? 5 : 7)} fill={colors.orange} />
+            <text x={sx(st.x)} y={y - 10} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={colors.orange}>
+              {`새 값 ${st.x}`}
+            </text>
+            <text x={588} y={y + 4} fontSize={10.5} fontWeight={700} fill={colors.violet} fontFamily={mono}>
+              {`${st.old} + (${st.x}−${st.old})/${st.n} = ${st.neu}`}
+            </text>
+          </g>
+        );
+      })}
+      {[0, 2, 4, 6, 8, 10].map((t) => (
+        <text key={t} x={sx(t)} y={186} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {t}
+        </text>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function VenvIsolation() {
+  // 가상환경이 없으면 모든 프로젝트가 한 설치 공간을 공유해 버전이 부딪친다. venv는 프로젝트마다 따로 둔다.
+  const pkg = (x: number, y: number, t: string, c: string) => chip1(x, y, t, c, 108, 22, 0.14, 10, 600, mono);
+  return (
+    <DiagramFrame
+      title="가상환경(venv): 프로젝트마다 따로 쓰는 설치 공간"
+      caption="왼쪽: 가상환경 없이 설치하면 모든 프로젝트가 컴퓨터의 설치 공간 하나를 함께 쓴다. 프로젝트 A가 numpy 1.26을, B가 numpy 2.1을 요구하면 둘 중 하나는 깨진다. 오른쪽: python -m venv .venv로 프로젝트 폴더 안에 독립된 설치 공간을 만들고 활성화한 뒤 설치하면, 각 프로젝트가 자기 버전을 따로 가진다. 필요한 패키지 목록은 requirements.txt로 공유한다."
+      viewBox="0 0 720 220"
+      minWidth={580}
+    >
+      <text x={175} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.red}>
+        가상환경 없이: 한곳에 모두 설치
+      </text>
+      <rect x={20} y={30} width={310} height={170} rx={10} fill={colors.red} fillOpacity={0.04} stroke={colors.red} strokeWidth={1.2} />
+      {chip1(36, 44, "프로젝트 A", colors.blue, 120, 26, 0.12, 11)}
+      {chip1(194, 44, "프로젝트 B", colors.orange, 120, 26, 0.12, 11)}
+      <text x={175} y={96} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        둘 다 같은 설치 공간을 쓴다
+      </text>
+      <rect x={60} y={106} width={230} height={70} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      {pkg(72, 116, "numpy 1.26?", colors.blue)}
+      {pkg(170, 116, "numpy 2.1?", colors.orange)}
+      <text x={175} y={164} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.red}>
+        ✗ 한 버전만 남는다 → 충돌
+      </text>
+      <line x1={360} y1={14} x2={360} y2={206} stroke="var(--border-hairline)" />
+      <text x={545} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.green}>
+        가상환경: 프로젝트마다 독립
+      </text>
+      {[
+        { x: 380, name: "프로젝트 A/", pk: ["numpy 1.26", "pandas 2.0"], c: colors.blue },
+        { x: 550, name: "프로젝트 B/", pk: ["numpy 2.1", "torch 2.4"], c: colors.orange },
+      ].map((p) => (
+        <g key={p.name}>
+          <rect x={p.x} y={30} width={156} height={170} rx={10} fill={p.c} fillOpacity={0.05} stroke={p.c} strokeWidth={1.2} />
+          <text x={p.x + 12} y={50} fontSize={11.5} fontWeight={800} fill={p.c}>
+            {p.name}
+          </text>
+          <rect x={p.x + 12} y={62} width={132} height={86} rx={8} fill={card2Bg} stroke="var(--border-strong)" strokeDasharray="4 3" />
+          <text x={p.x + 22} y={80} fontSize={10.5} fontWeight={700} fill={ink} fontFamily={mono}>
+            .venv/
+          </text>
+          {p.pk.map((k, i) => pkg(p.x + 24, 88 + i * 26, k, p.c))}
+          <text x={p.x + 78} y={170} textAnchor="middle" fontSize={9.5} fill={inkSecondary} fontFamily={mono}>
+            requirements.txt
+          </text>
+          <text x={p.x + 78} y={188} textAnchor="middle" fontSize={9.5} fill={colors.green} fontWeight={700}>
+            ✓ 자기 버전 유지
+          </text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function GitFlow() {
+  // Git의 네 영역과 명령. .gitignore에 적은 파일은 처음부터 스테이징에 들어가지 않는다.
+  const P = "gtf";
+  const areas = [
+    { t: "작업 폴더", s: "지금 고치는 파일들", x: 14, c: colors.blue },
+    { t: "스테이징", s: "다음 커밋에 담을 변경", x: 194, c: colors.violet },
+    { t: "로컬 저장소", s: "커밋 기록 (내 컴퓨터)", x: 374, c: colors.orange },
+    { t: "원격 저장소", s: "GitHub (공유)", x: 554, c: colors.green },
+  ];
+  const w = 152;
+  return (
+    <DiagramFrame
+      title="Git의 네 영역: add → commit → push, 그리고 pull"
+      caption="파일을 고치면 작업 폴더가 바뀐다. git add로 다음 기록에 담을 변경을 고르고(스테이징), git commit -m '무엇을 왜'로 하나의 기록을 남긴다. git push는 그 기록을 GitHub에 올리고, git pull은 남이 올린 기록을 받아 온다. git clone은 원격 저장소를 처음 통째로 받는 명령이고, git status는 지금 무엇이 바뀌었는지 보여 준다. .gitignore에 적은 비밀값(.env), 가상환경(.venv/), 큰 데이터는 처음부터 기록에 들어가지 않는다. 한 번 올라간 비밀값은 지워도 기록에 남으므로 키 자체를 폐기해야 한다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, green: colors.green, red: colors.red }} />
+      {areas.map((a) => (
+        <g key={a.t}>
+          <rect x={a.x} y={40} width={w} height={70} rx={10} fill={a.c} fillOpacity={0.12} stroke={a.c} strokeWidth={1.6} />
+          <text x={a.x + w / 2} y={68} textAnchor="middle" fontSize={13} fontWeight={800} fill={ink}>
+            {a.t}
+          </text>
+          <text x={a.x + w / 2} y={88} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+            {a.s}
+          </text>
+        </g>
+      ))}
+      {[
+        { from: 0, cmd: "git add" },
+        { from: 1, cmd: "git commit" },
+        { from: 2, cmd: "git push" },
+      ].map((e) => (
+        <g key={e.cmd}>
+          <Arr x1={areas[e.from].x + w + 2} y1={62} x2={areas[e.from + 1].x - 4} y2={62} color={inkSecondary} marker={`${P}-ink`} width={1.8} />
+          <text x={(areas[e.from].x + w + areas[e.from + 1].x) / 2} y={30} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink} fontFamily={mono}>
+            {e.cmd}
+          </text>
+        </g>
+      ))}
+      <ArrPath d={`M${areas[3].x + 40},112 C${areas[3].x + 20},160 ${areas[0].x + 140},160 ${areas[0].x + 110},114`} color={colors.green} marker={`${P}-green`} width={1.8} />
+      <text x={360} y={160} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.green} fontFamily={mono}>
+        git pull (처음엔 git clone)
+      </text>
+      <rect x={14} y={178} width={340} height={46} rx={8} fill={colors.red} fillOpacity={0.06} stroke={colors.red} strokeDasharray="5 4" />
+      <text x={24} y={196} fontSize={10.5} fontWeight={800} fill={colors.red} fontFamily={mono}>
+        .gitignore
+      </text>
+      <text x={100} y={196} fontSize={10.5} fill={ink}>
+        .env (API 키) · .venv/ · 큰 데이터·모델
+      </text>
+      <text x={24} y={214} fontSize={10} fill={inkSecondary}>
+        → 처음부터 기록에 넣지 않는다
+      </text>
+      <rect x={374} y={178} width={332} height={46} rx={8} fill={card2Bg} stroke="var(--border-hairline)" />
+      <text x={384} y={196} fontSize={10.5} fontWeight={700} fill={ink}>
+        하루 흐름: ① pull ② venv 활성화·설치 ③ 실험
+      </text>
+      <text x={384} y={214} fontSize={10.5} fontWeight={700} fill={ink}>
+        ④ add → commit -m &quot;무엇을 왜&quot; → push
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function BasisChange() {
+  // 본문 예제: v = [3, 1]. 표준기저로는 (3, 1), 기저 b₁ = [1, 1], b₂ = [1, −1]로는 (2, 1).
+  const P = "bch";
+  const S = 26;
+  const panel = (ox: number, oy: number, basis: [number[], number[]], coords: [number, number], colorsP: [string, string], title: string) => {
+    const tx = (a: number, b: number) => ({ x: ox + (a * basis[0][0] + b * basis[1][0]) * S, y: oy - (a * basis[0][1] + b * basis[1][1]) * S });
+    const lines = [];
+    for (let k = -4; k <= 4; k++) {
+      const p0 = tx(k, -4);
+      const p1 = tx(k, 4);
+      const q0 = tx(-4, k);
+      const q1 = tx(4, k);
+      lines.push(<line key={`a${k}`} x1={p0.x} y1={p0.y} x2={p1.x} y2={p1.y} stroke={colorsP[1]} strokeOpacity={0.18} />);
+      lines.push(<line key={`b${k}`} x1={q0.x} y1={q0.y} x2={q1.x} y2={q1.y} stroke={colorsP[0]} strokeOpacity={0.18} />);
+    }
+    const mid = tx(coords[0], 0);
+    const end = tx(coords[0], coords[1]);
+    const e1 = tx(1, 0);
+    const e2 = tx(0, 1);
+    return (
+      <g>
+        <clipPath id={`${P}-c${ox}`}>
+          <rect x={ox - 110} y={oy - 112} width={250} height={170} />
+        </clipPath>
+        <g clipPath={`url(#${P}-c${ox})`}>{lines}</g>
+        <rect x={ox - 110} y={oy - 112} width={250} height={170} fill="none" stroke="var(--border-hairline)" />
+        <text x={ox + 15} y={oy - 122} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+          {title}
+        </text>
+        <Arr x1={ox} y1={oy} x2={e1.x} y2={e1.y} color={colorsP[0]} marker={`${P}-a`} width={2.4} />
+        <Arr x1={ox} y1={oy} x2={e2.x} y2={e2.y} color={colorsP[1]} marker={`${P}-b`} width={2.4} />
+        <line x1={ox} y1={oy} x2={mid.x} y2={mid.y} stroke={colorsP[0]} strokeWidth={1.6} strokeDasharray="4 3" />
+        <line x1={mid.x} y1={mid.y} x2={end.x} y2={end.y} stroke={colorsP[1]} strokeWidth={1.6} strokeDasharray="4 3" />
+        <Arr x1={ox} y1={oy} x2={end.x} y2={end.y} color={colors.red} marker={`${P}-v`} width={2.6} />
+        <circle cx={ox} cy={oy} r={2.5} fill={ink} />
+        <text x={end.x + 6} y={end.y - 6} fontSize={11.5} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+          v = [3, 1]
+        </text>
+      </g>
+    );
+  };
+  return (
+    <DiagramFrame
+      title="같은 벡터, 다른 자: 기저를 바꾸면 좌표가 바뀐다"
+      caption="빨간 화살표는 두 그림에서 똑같은 벡터 v = [3, 1]이다. 왼쪽은 표준기저 e₁ = [1, 0], e₂ = [0, 1]의 격자로 잰 것이라 v = 3e₁ + 1e₂, 좌표는 (3, 1)이다. 오른쪽은 b₁ = [1, 1], b₂ = [1, −1]로 만든 비스듬한 격자로 잰 것이라 v = 2b₁ + 1b₂, 좌표는 (2, 1)이다. 점선은 각 기저 방향으로 몇 칸 갔는지를 보여 준다. 벡터는 그대로이고 자(기저)만 바뀌었다. PCA와 고유벡터는 데이터를 재기에 더 좋은 자를 찾는 일이다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ a: colors.blue, b: colors.orange, v: colors.red }} />
+      {panel(140, 172, [[1, 0], [0, 1]], [3, 1], [colors.blue, colors.orange], "표준기저: 좌표 (3, 1)")}
+      {panel(470, 160, [[1, 1], [1, -1]], [2, 1], [colors.blue, colors.orange], "기저 b₁, b₂: 좌표 (2, 1)")}
+      <text x={140 + 26 / 2 + 18} y={196} fontSize={10.5} fontWeight={700} fill={colors.blue}>
+        e₁
+      </text>
+      <text x={120} y={150} fontSize={10.5} fontWeight={700} fill={colors.orange}>
+        e₂
+      </text>
+      <text x={484} y={130} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.blue}>
+        b₁
+      </text>
+      <text x={486} y={198} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.orange}>
+        b₂
+      </text>
+      <Lines x={640} y={70} lines={["3e₁ + 1e₂", "= 2b₁ + 1b₂", "= [3, 1]"]} size={11} anchor="start" color={ink} weight={700} gap={1.6} />
+    </DiagramFrame>
+  );
+}
+
+export function MatmulRowCol() {
+  // 본문 예제: A = [[1, 2], [0, 1]], B = [[1, 0], [3, 1]] → AB = [[7, 2], [3, 1]]. C₁₁ = A의 1행 · B의 1열 = 1·1 + 2·3 = 7.
+  const A = [
+    [1, 2],
+    [0, 1],
+  ];
+  const B = [
+    [1, 0],
+    [3, 1],
+  ];
+  const C = [
+    [7, 2],
+    [3, 1],
+  ];
+  const c = 38;
+  const mat = (x: number, y: number, M: number[][], label: string, hi: (i: number, j: number) => boolean, color: string) => (
+    <g>
+      <text x={x + c} y={y - 10} textAnchor="middle" fontSize={13} fontWeight={800} fill={ink}>
+        {label}
+      </text>
+      {M.map((row, i) =>
+        row.map((v, j) => (
+          <g key={`${i}${j}`}>
+            <rect x={x + j * c} y={y + i * c} width={c - 3} height={c - 3} rx={4} fill={hi(i, j) ? color : inkMuted} fillOpacity={hi(i, j) ? 0.3 : 0.08} stroke={hi(i, j) ? color : "var(--border-hairline)"} strokeWidth={hi(i, j) ? 1.6 : 1} />
+            <text x={x + j * c + (c - 3) / 2} y={y + i * c + c / 2 + 3} textAnchor="middle" fontSize={14} fontWeight={700} fill={ink}>
+              {v}
+            </text>
+          </g>
+        )),
+      )}
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="행렬 곱 C = AB: C의 (i, j)칸 = A의 i행 · B의 j열"
+      caption="AB의 1행 1열은 A의 1행 [1, 2](파랑)와 B의 1열 [1, 3](주황)을 내적한 1·1 + 2·3 = 7이다. 나머지 칸도 같은 방식으로 '행 하나 · 열 하나'를 내적해 채운다. 그래서 A의 열 개수와 B의 행 개수(안쪽)가 같아야 곱할 수 있고, 결과의 모양은 A의 행 개수 × B의 열 개수(바깥)가 된다."
+      viewBox="0 0 720 196"
+      minWidth={560}
+    >
+      {mat(20, 50, A, "A", (i) => i === 0, colors.blue)}
+      <text x={110} y={92} textAnchor="middle" fontSize={18} fontWeight={700} fill={inkSecondary}>
+        ×
+      </text>
+      {mat(130, 50, B, "B", (_, j) => j === 0, colors.orange)}
+      <text x={220} y={92} textAnchor="middle" fontSize={18} fontWeight={700} fill={inkSecondary}>
+        =
+      </text>
+      {mat(240, 50, C, "AB", (i, j) => i === 0 && j === 0, colors.violet)}
+      <text x={20} y={156} fontSize={12} fontWeight={700} fill={ink} fontFamily={mono}>
+        C₁₁ = [1, 2] · [1, 3] = 1·1 + 2·3 = 7
+      </text>
+      <line x1={352} y1={14} x2={352} y2={182} stroke="var(--border-hairline)" />
+      <text x={370} y={34} fontSize={12} fontWeight={800} fill={ink}>
+        모양 규칙: (m × n)(n × p) = (m × p)
+      </text>
+      {[
+        { a: "2 × 3", b: "3 × 4", r: "= 2 × 4", ok: true },
+        { a: "2 × 3", b: "2 × 3", r: "안쪽 3 ≠ 2 → 곱할 수 없다", ok: false },
+        { a: "n × d", b: "d × 1", r: "= n × 1 (행렬 × 벡터)", ok: true },
+      ].map((r, i) => {
+        const y = 62 + i * 40;
+        return (
+          <g key={i}>
+            {chip1(370, y, r.a, colors.blue, 64, 26, 0.12, 11.5, 700, mono)}
+            {chip1(442, y, r.b, colors.orange, 64, 26, 0.12, 11.5, 700, mono)}
+            <text x={514} y={y + 18} fontSize={11} fontWeight={700} fill={r.ok ? colors.green : colors.red}>
+              {`${r.ok ? "✓" : "✗"} ${r.r}`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={370} y={182} fontSize={10.5} fill={inkSecondary}>
+        안쪽 두 숫자가 맞아야 하고, 바깥 두 숫자가 결과의 모양이다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function MatmulOrder() {
+  // 같은 x = [1, 1]에 A, B를 다른 순서로: (AB)x = A(Bx) = [9, 4], (BA)x = B(Ax) = [3, 10].
+  const P = "mor";
+  const G = { left: 50, top: 18, width: 300, height: 190 };
+  const sx = linear(-1, 11, G.left, G.left + G.width);
+  const sy = linear(-1, 11, G.top + G.height, G.top);
+  const pts = {
+    x: [1, 1],
+    Bx: [1, 4],
+    ABx: [9, 4],
+    Ax: [3, 1],
+    BAx: [3, 10],
+  };
+  const dot = (p: number[], c: string, label: string, dx = 8, dy = -6, anchor: "start" | "middle" | "end" = "start") => (
+    <g>
+      <circle cx={sx(p[0])} cy={sy(p[1])} r={4.5} fill={c} />
+      <text x={sx(p[0]) + dx} y={sy(p[1]) + dy} textAnchor={anchor} fontSize={10.5} fontWeight={700} fill={c} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {label}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="순서를 바꾸면 결과가 바뀐다: AB ≠ BA"
+      caption="(AB)x는 A(Bx)라서 오른쪽의 B를 먼저 적용한다. A는 '둘째 좌표의 2배를 첫째 좌표에 더하기', B는 '첫째 좌표의 3배를 둘째 좌표에 더하기'다. 같은 x = [1, 1]에서 출발해 B 먼저(파랑) 가면 [1, 4]를 거쳐 [9, 4]에, A 먼저(주황) 가면 [3, 1]을 거쳐 [3, 10]에 도착한다. 함수 합성 f(g(x))와 g(f(x))가 다르듯, 앞 변환의 출력이 뒤 변환의 입력이 되므로 순서가 결과를 바꾼다."
+      viewBox="0 0 720 240"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue, orange: colors.orange }} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 2, 4, 6, 8, 10]} yTicks={[0, 2, 4, 6, 8, 10]} />
+      <Arr x1={sx(1)} y1={sy(1)} x2={sx(1)} y2={sy(4) + 6} color={colors.blue} marker={`${P}-blue`} width={2.2} />
+      <Arr x1={sx(1) + 5} y1={sy(4)} x2={sx(9) - 6} y2={sy(4)} color={colors.blue} marker={`${P}-blue`} width={2.2} />
+      <Arr x1={sx(1) + 5} y1={sy(1)} x2={sx(3) - 6} y2={sy(1)} color={colors.orange} marker={`${P}-orange`} width={2.2} />
+      <Arr x1={sx(3)} y1={sy(1) - 5} x2={sx(3)} y2={sy(10) + 6} color={colors.orange} marker={`${P}-orange`} width={2.2} />
+      {dot(pts.x, ink, "x = [1, 1]", 0, 18, "middle")}
+      {dot(pts.Bx, colors.blue, "Bx = [1, 4]", 0, -10, "middle")}
+      {dot(pts.ABx, colors.blue, "A(Bx) = [9, 4]", 0, -10, "middle")}
+      {dot(pts.Ax, colors.orange, "Ax = [3, 1]", 9, 4)}
+      {dot(pts.BAx, colors.orange, "B(Ax) = [3, 10]", 9, 4)}
+      <Lines x={390} y={44} lines={["A = [[1, 2], [0, 1]]", "B = [[1, 0], [3, 1]]"]} size={11.5} anchor="start" color={ink} weight={700} gap={1.5} />
+      <Lines x={390} y={100} lines={["AB = [[7, 2], [3, 1]]  (B 먼저)", "BA = [[1, 2], [3, 7]]  (A 먼저)"]} size={11} anchor="start" color={inkSecondary} gap={1.5} />
+      <Lines x={390} y={156} lines={["역전파에서는 이 순서를 거꾸로,", "전치해서 되짚어 간다: (AB)ᵀ = BᵀAᵀ"]} size={10.5} anchor="start" color={colors.violet} weight={700} gap={1.5} />
+    </DiagramFrame>
+  );
+}
+
+export function InverseSingular() {
+  // 본문 예제: A = [[1, 2], [0, 1]]은 행렬식 1, A⁻¹ = [[1, −2], [0, 1]]로 되돌린다. [[1, 2], [2, 4]]는 행렬식 0이라 평면을 직선으로 뭉갠다.
+  const P = "ivs";
+  const S = 24;
+  const sq = [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ];
+  const poly = (ox: number, oy: number, M: number[][], pts: number[][]) =>
+    pts
+      .map(([a, b], i) => {
+        const x = M[0][0] * a + M[0][1] * b;
+        const y = M[1][0] * a + M[1][1] * b;
+        return `${i === 0 ? "M" : "L"}${ox + x * S},${oy - y * S}`;
+      })
+      .join(" ") + " Z";
+  const I = [
+    [1, 0],
+    [0, 1],
+  ];
+  const A = [
+    [1, 2],
+    [0, 1],
+  ];
+  const grid = (ox: number, oy: number, w: number, h: number) =>
+    Array.from({ length: 9 }, (_, k) => (
+      <g key={k}>
+        <line x1={ox + (k - 1) * S} y1={oy - h} x2={ox + (k - 1) * S} y2={oy + 30} stroke="var(--border-hairline)" />
+        <line x1={ox - 30} y1={oy - (k - 1) * S} x2={ox + w} y2={oy - (k - 1) * S} stroke="var(--border-hairline)" />
+      </g>
+    ));
+  return (
+    <DiagramFrame
+      title="역행렬은 변환을 되돌린다, 행렬식이 0이면 되돌릴 수 없다"
+      caption="왼쪽: A는 단위 정사각형(회색)을 오른쪽으로 민 평행사변형(파랑)으로 바꾼다. 넓이는 행렬식 1·1 − 2·0 = 1 그대로다. A⁻¹ = [[1, −2], [0, 1]]은 둘째 좌표의 2배를 다시 빼서 정확히 원래 정사각형으로 되돌린다(AA⁻¹ = I). 오른쪽: [[1, 2], [2, 4]]는 행렬식이 1·4 − 2·2 = 0이라, 정사각형 전체를 직선 y = 2x 위의 선분(빨강)으로 뭉갠다. 서로 다른 점들이 같은 점으로 겹쳐 버리므로 원래 위치를 되찾을 방법이 없고, 그래서 역행렬이 없다."
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {grid(70, 196, 220, 170)}
+      <path d={poly(70, 196, I, sq)} fill={inkMuted} fillOpacity={0.25} stroke={inkSecondary} strokeWidth={1.4} />
+      <path d={poly(70, 196, A, sq)} fill={colors.blue} fillOpacity={0.2} stroke={colors.blue} strokeWidth={2} />
+      <text x={150} y={32} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.blue}>
+        A: 행렬식 1 → 되돌릴 수 있다
+      </text>
+      <ArrPath d="M150,150 C130,120 100,130 92,160" color={colors.green} marker={`${P}-ink`} width={1.6} />
+      <text x={134} y={112} fontSize={10.5} fontWeight={700} fill={colors.green}>
+        A⁻¹로 원래대로
+      </text>
+      <text x={186} y={174} fontSize={10.5} fontWeight={700} fill={colors.blue}>
+        A × 정사각형
+      </text>
+      <line x1={340} y1={14} x2={340} y2={222} stroke="var(--border-hairline)" />
+      {grid(420, 206, 260, 190)}
+      <path d={poly(420, 206, I, sq)} fill={inkMuted} fillOpacity={0.25} stroke={inkSecondary} strokeWidth={1.4} />
+      <line x1={420} y1={206} x2={420 + 3 * S} y2={206 - 6 * S} stroke={colors.red} strokeWidth={4} strokeLinecap="round" />
+      <line x1={420 - 10} y1={206 + 20} x2={420 + 4.2 * S} y2={206 - 8.4 * S} stroke={colors.red} strokeWidth={1} strokeDasharray="4 3" opacity={0.6} />
+      <text x={560} y={32} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.red}>
+        [[1, 2], [2, 4]]: 행렬식 0
+      </text>
+      <Lines x={520} y={100} lines={["정사각형 전체가", "선분 하나로 뭉개짐", "(1, 0) → (1, 2)", "(0, 1) → (2, 4)", "(1, 1) → (3, 6)"]} size={10.5} anchor="start" color={ink} />
+      <text x={520} y={196} fontSize={10.5} fontWeight={700} fill={colors.red}>
+        ✗ 원래 점을 되찾을 수 없다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function NormalRule() {
+  // 본문 예제: 키 ~ N(170, 6²). 68-95-99.7 규칙과 182cm(z = 2) → 상위 약 2.5%.
+  const mu = 170;
+  const sd = 6;
+  const G = { left: 50, top: 22, width: 560, height: 150 };
+  const sx = linear(mu - 3.6 * sd, mu + 3.6 * sd, G.left, G.left + G.width);
+  const pdf = (x: number) => Math.exp(-((x - mu) ** 2) / (2 * sd * sd)) / (sd * Math.sqrt(2 * Math.PI));
+  const sy = linear(0, pdf(mu), G.top + G.height, G.top + 62);
+  const area = (a: number, b: number) => `${linePath([[sx(a), sy(0)], ...sample(pdf, a, b, 80).map(([x, y]) => [sx(x), sy(y)] as [number, number]), [sx(b), sy(0)]])} Z`;
+  const bands = [
+    { k: 3, c: colors.blue, o: 0.12, t: "99.7%" },
+    { k: 2, c: colors.blue, o: 0.2, t: "95%" },
+    { k: 1, c: colors.blue, o: 0.3, t: "68%" },
+  ];
+  return (
+    <DiagramFrame
+      title="정규분포의 68-95-99.7 규칙과 z-점수"
+      caption="평균 170cm, 표준편차 6cm인 키의 분포다. 값의 약 68%가 평균 ± 1σ(164~176cm), 약 95%가 ± 2σ(158~182cm), 약 99.7%가 ± 3σ(152~188cm) 안에 든다. 182cm는 z = (182 − 170) / 6 = 2로 '평균에서 표준편차 2개만큼 위'다. ± 2σ 밖이 약 5%이고 정규분포는 좌우 대칭이므로, 182cm 이상(빨강)은 그 절반인 약 2.5%다. 곡선은 확률이 아니라 밀도이고, 확률은 곡선 아래 넓이다."
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      {bands.map((b) => (
+        <path key={b.k} d={area(mu - b.k * sd, mu + b.k * sd)} fill={b.c} fillOpacity={b.o} />
+      ))}
+      <path d={area(182, mu + 3.6 * sd)} fill={colors.red} fillOpacity={0.55} />
+      <path d={linePath(sample(pdf, mu - 3.6 * sd, mu + 3.6 * sd, 160).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={ink} strokeWidth={2} />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(0)} y2={sy(0)} stroke={inkMuted} />
+      {[-3, -2, -1, 0, 1, 2, 3].map((z) => (
+        <g key={z}>
+          <line x1={sx(mu + z * sd)} x2={sx(mu + z * sd)} y1={sy(0)} y2={sy(0) + 5} stroke={inkMuted} />
+          <text x={sx(mu + z * sd)} y={sy(0) + 18} textAnchor="middle" fontSize={10.5} fill={ink}>
+            {mu + z * sd}
+          </text>
+          <text x={sx(mu + z * sd)} y={sy(0) + 32} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+            {z === 0 ? "μ" : `${z > 0 ? "+" : "−"}${Math.abs(z)}σ`}
+          </text>
+        </g>
+      ))}
+      {bands.map((b, i) => {
+        const y = G.top + 12 + i * 20;
+        return (
+          <g key={`l${b.k}`}>
+            {[-1, 1].map((sgn) => (
+              <line key={sgn} x1={sx(mu + sgn * b.k * sd)} x2={sx(mu + sgn * b.k * sd)} y1={y} y2={sy(pdf(mu + b.k * sd))} stroke={colors.blue} strokeOpacity={0.45} strokeDasharray="3 3" />
+            ))}
+            <line x1={sx(mu - b.k * sd)} x2={sx(mu + b.k * sd)} y1={y} y2={y} stroke={colors.blue} strokeWidth={1.4} />
+            <text x={sx(mu)} y={y - 4} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+              {`± ${b.k}σ: ${b.t}`}
+            </text>
+          </g>
+        );
+      })}
+      <Lines x={sx(182) + 5} y={sy(pdf(182)) - 22} lines={["182cm 이상", "약 2.5%"]} size={10.5} anchor="start" color={colors.red} weight={800} />
+      <Lines x={622} y={70} lines={["z = (x − μ)/σ", "", "182cm:", "(182 − 170)/6", "= 2"]} size={10.5} anchor="start" color={ink} weight={700} />
+    </DiagramFrame>
+  );
+}
+
+export function CltSums() {
+  // 균등분포 U(0, 1)을 n개 더한 값의 분포(Irwin–Hall). 점선은 같은 평균(n/2)·분산(n/12)의 정규분포.
+  const fact = (k: number): number => (k <= 1 ? 1 : k * fact(k - 1));
+  const choose = (n: number, k: number) => fact(n) / (fact(k) * fact(n - k));
+  const irwin = (n: number) => (x: number) => {
+    if (x < 0 || x > n) return 0;
+    let s = 0;
+    for (let k = 0; k <= Math.floor(x); k++) s += (k % 2 === 0 ? 1 : -1) * choose(n, k) * (x - k) ** (n - 1);
+    return s / fact(n - 1);
+  };
+  const ns = [1, 2, 3, 12];
+  const ticks = [
+    [0, 0.5, 1],
+    [0, 1, 2],
+    [0, 1.5, 3],
+    [3, 6, 9],
+  ];
+  const pw = 160;
+  return (
+    <DiagramFrame
+      title="중심극한정리: 작은 원인을 여러 개 더하면 종 모양이 된다"
+      caption="0~1 사이 균등분포(평평한 직사각형)를 따르는 값을 1개, 2개, 3개, 12개 더한 합의 분포다(파랑). 하나일 때는 평평하고, 둘이면 삼각형, 셋이면 벌써 종에 가까워지며, 열둘이면 같은 평균·분산의 정규분포(점선)와 거의 겹친다. 원래 원인이 어떤 분포든, 작고 서로 무관한 원인이 많이 더해진 결과는 정규분포에 가까워진다. 측정 오차와 센서 잡음을 정규분포로 흉내 내는 이유다."
+      viewBox="0 0 720 196"
+      minWidth={580}
+    >
+      {ns.map((n, j) => {
+        const x0 = 20 + j * (pw + 16);
+        const f = irwin(n);
+        const mu = n / 2;
+        const sd = Math.sqrt(n / 12);
+        const g = (x: number) => Math.exp(-((x - mu) ** 2) / (2 * sd * sd)) / (sd * Math.sqrt(2 * Math.PI));
+        const top = n === 1 ? 1.25 : g(mu) * 1.25;
+        const sx = linear(n === 1 ? -0.3 : mu - 3.6 * sd, n === 1 ? 1.3 : mu + 3.6 * sd, x0, x0 + pw);
+        const sy = linear(0, top, 150, 40);
+        const lo = n === 1 ? -0.3 : mu - 3.6 * sd;
+        const hi = n === 1 ? 1.3 : mu + 3.6 * sd;
+        return (
+          <g key={n}>
+            <text x={x0 + pw / 2} y={24} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+              {n === 1 ? "균등분포 1개" : `${n}개의 합`}
+            </text>
+            <path d={`${linePath(sample(f, lo, hi, 200).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} L${sx(hi)},${sy(0)} L${sx(lo)},${sy(0)} Z`} fill={colors.blue} fillOpacity={0.25} stroke={colors.blue} strokeWidth={2} />
+            {n > 1 && <path d={linePath(sample(g, lo, hi, 120).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.orange} strokeWidth={1.6} strokeDasharray="5 3" />}
+            <line x1={x0} x2={x0 + pw} y1={sy(0)} y2={sy(0)} stroke={inkMuted} />
+            {ticks[j].map((t) => (
+              <g key={t}>
+                <line x1={sx(t)} x2={sx(t)} y1={sy(0)} y2={sy(0) + 4} stroke={inkMuted} />
+                <text x={sx(t)} y={168} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+                  {t}
+                </text>
+              </g>
+            ))}
+          </g>
+        );
+      })}
+      <line x1={500} x2={520} y1={186} y2={186} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="5 3" />
+      <text x={526} y={190} fontSize={10} fill={inkSecondary}>
+        같은 평균·분산의 정규분포
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function SigmaSpread() {
+  // 본문 코드: σ = 0.2와 σ = 1.5의 정규 잡음에서 |값| > 1인 비율. 0.2는 5σ 밖(사실상 0), 1.5는 약 50.5%.
+  const G = { left: 50, top: 18, width: 420, height: 150 };
+  const sx = linear(-4, 4, G.left, G.left + G.width);
+  const sy = linear(0, 2.15, G.top + G.height, G.top);
+  const pdf = (sd: number) => (x: number) => Math.exp(-(x * x) / (2 * sd * sd)) / (sd * Math.sqrt(2 * Math.PI));
+  const tail = (sd: number) => 2 * (1 - normCdf(1 / sd));
+  const area = (f: (x: number) => number, a: number, b: number) => `${linePath([[sx(a), sy(0)], ...sample(f, a, b, 60).map(([x, y]) => [sx(x), sy(y)] as [number, number]), [sx(b), sy(0)]])} Z`;
+  const curves = [
+    { sd: 0.2, c: colors.violet },
+    { sd: 1.5, c: colors.orange },
+  ];
+  return (
+    <DiagramFrame
+      title="σ가 클수록 넓게 퍼진다: |값| > 1인 비율"
+      caption={`본문 코드의 두 잡음이다. σ = 0.2(보라)는 평균 근처에 촘촘히 몰려 있어, 1 이상 벗어나려면 5σ 밖으로 나가야 하므로 그런 값은 사실상 없다(5000개 중 0개 수준). σ = 1.5(주황)는 넓게 퍼져서 0.67σ만 벗어나도 |값| > 1이 되므로 약 ${(tail(1.5) * 100).toFixed(1)}%, 5000개 중 2,500개 안팎이 해당한다(칠한 부분). σ = 0.2 곡선의 꼭대기는 약 2.0으로 1보다 크다. 곡선은 확률이 아니라 밀도이고, 전체 넓이가 1이면 된다.`}
+      viewBox="0 0 720 216"
+      minWidth={560}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-4, -2, -1, 0, 1, 2, 4]} yTicks={[0, 1, 2]} fmtX={(v) => String(v).replace("-", "−")} xLabel="잡음 값" yLabel="밀도" />
+      {curves.map((c) => (
+        <g key={c.sd}>
+          <path d={area(pdf(c.sd), -4, -1)} fill={c.c} fillOpacity={0.3} />
+          <path d={area(pdf(c.sd), 1, 4)} fill={c.c} fillOpacity={0.3} />
+          <path d={linePath(sample(pdf(c.sd), -4, 4, 400).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={c.c} strokeWidth={2.2} />
+        </g>
+      ))}
+      <line x1={sx(-1)} x2={sx(-1)} y1={G.top} y2={sy(0)} stroke={inkSecondary} strokeDasharray="4 3" />
+      <line x1={sx(1)} x2={sx(1)} y1={G.top} y2={sy(0)} stroke={inkSecondary} strokeDasharray="4 3" />
+      <Lines x={sx(1) + 8} y={sy(1.99) + 4} lines={["← 꼭대기 ≈ 2.0", "(밀도는 1보다 클 수 있다)"]} size={10.5} anchor="start" color={colors.violet} weight={700} gap={1.4} />
+      <Lines x={496} y={60} lines={["σ = 0.2", `|값| > 1: ${(tail(0.2) * 100).toFixed(5)}%`, "→ 5000개 중 거의 0개"]} size={11} anchor="start" color={colors.violet} weight={700} />
+      <Lines x={496} y={130} lines={["σ = 1.5", `|값| > 1: ${(tail(1.5) * 100).toFixed(1)}%`, "→ 5000개 중 약 2,500개"]} size={11} anchor="start" color={colors.orange} weight={700} />
     </DiagramFrame>
   );
 }
