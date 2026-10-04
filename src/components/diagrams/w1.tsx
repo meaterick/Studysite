@@ -2244,3 +2244,618 @@ export function SigmaSpread() {
     </DiagramFrame>
   );
 }
+/** 본문 SVD 코드의 X(앞 두 열)와 rank-1 근사 X1(앞 두 열): "x,y,x1,y1" 50개 */
+const LOWRANK_PTS =
+  "0.38,-0.04,0.35,0.01 1.92,0.03,1.91,0.05 -1.61,0.11,-1.53,-0.04 3.91,0.28,4.01,0.1 -2.11,-0.38,-2.28,-0.05 " +
+  "-1.87,0.01,-1.84,-0.04 -6.98,-0.07,-6.92,-0.17 -3.74,-0.22,-3.8,-0.09 -1.63,-0.09,-1.66,-0.04 " +
+  "1.23,0.31,1.38,0.03 -0.39,0.41,-0.17,-0.0 -2.0,0.11,-1.92,-0.05 2.71,0.03,2.69,0.06 -2.23,-0.28,-2.34,-0.06 " +
+  "-1.37,0.07,-1.32,-0.03 -3.03,-0.06,-3.02,-0.07 -0.48,0.16,-0.39,-0.01 0.64,0.11,0.69,0.02 " +
+  "-1.96,-0.04,-1.96,-0.05 2.35,0.45,2.55,0.06 -3.78,0.45,-3.5,-0.08 4.04,0.23,4.11,0.1 0.79,-0.09,0.74,0.02 " +
+  "4.37,0.59,4.62,0.11 5.4,0.39,5.54,0.13 1.07,-0.36,0.87,0.02 -0.01,0.2,0.09,0.0 -3.87,0.12,-3.76,-0.09 " +
+  "1.29,0.21,1.38,0.03 -3.55,-0.2,-3.61,-0.09 -1.31,-0.35,-1.47,-0.04 5.22,-0.15,5.08,0.12 0.99,-0.08,0.94,0.02 " +
+  "4.75,0.4,4.9,0.12 1.9,-0.66,1.54,0.04 0.16,0.21,0.26,0.01 3.01,-0.19,2.88,0.07 5.47,-0.4,5.2,0.12 " +
+  "-1.98,0.28,-1.82,-0.04 0.15,0.6,0.45,0.01 0.57,-0.19,0.46,0.01 -1.13,-0.33,-1.29,-0.03 -3.83,0.19,-3.69,-0.09 " +
+  "1.74,0.39,1.92,0.05 -2.26,0.51,-1.98,-0.05 -0.86,0.47,-0.61,-0.01 -1.3,-0.22,-1.4,-0.03 0.75,0.31,0.9,0.02 " +
+  "0.48,-0.18,0.39,0.01 -4.02,-0.42,-4.19,-0.1";
+
+export function NormBalls() {
+  // 본문 예제: a = [3, 4]의 L2 노름 5(직선), L1 노름 7(축을 따라 3 + 4). 오른쪽은 노름이 1인 점들의 모양.
+  const P = "nbl";
+  const S = 34;
+  const ox = 60;
+  const oy = 190;
+  const px = (x: number) => ox + x * S;
+  const py = (y: number) => oy - y * S;
+  const R = 62;
+  const cx = 560;
+  const cy = 112;
+  return (
+    <DiagramFrame
+      title="노름은 '크기'를 재는 잣대: L2는 직선 거리, L1은 축을 따라 간 거리"
+      caption="왼쪽: 본문 예제 a = [3, 4]다. L2 노름은 원점에서 끝점까지의 직선 거리 √(3² + 4²) = 5이고, L1 노름은 좌표축을 따라서만 움직인 거리 |3| + |4| = 7(맨해튼 거리)이다. 오른쪽: 노름이 정확히 1인 점들을 모으면 L2는 원, L1은 꼭짓점이 축 위에 있는 마름모가 된다. 2주차의 L2·L1 정규화가 파라미터를 이 모양 안쪽으로 끌어당기며, 마름모의 뾰족한 꼭짓점 때문에 L1은 일부 파라미터를 정확히 0으로 만들기 쉽다."
+      viewBox="0 0 720 232"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue }} />
+      {Array.from({ length: 6 }, (_, k) => (
+        <g key={k}>
+          <line x1={px(k)} x2={px(k)} y1={py(0)} y2={py(5)} stroke="var(--border-hairline)" />
+          <line x1={px(0)} x2={px(5)} y1={py(k)} y2={py(k)} stroke="var(--border-hairline)" />
+          <text x={px(k)} y={py(0) + 14} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+            {k}
+          </text>
+          <text x={px(0) - 6} y={py(k) + 3} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+            {k}
+          </text>
+        </g>
+      ))}
+      <path d={`M${px(0)},${py(0)} L${px(3)},${py(0)} L${px(3)},${py(4)}`} fill="none" stroke={colors.orange} strokeWidth={3} strokeDasharray="7 4" />
+      <Arr x1={px(0)} y1={py(0)} x2={px(3)} y2={py(4)} color={colors.blue} marker={`${P}-blue`} width={3} />
+      <circle cx={px(3)} cy={py(4)} r={4} fill={ink} />
+      <text x={px(3) + 8} y={py(4) - 4} fontSize={11} fontWeight={800} fill={ink}>
+        a = [3, 4]
+      </text>
+      <text x={px(1.1)} y={py(2.4)} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        L2 = 5
+      </text>
+      <text x={px(1.5)} y={py(0) - 8} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        3
+      </text>
+      <text x={px(3) + 8} y={py(2)} fontSize={10.5} fontWeight={800} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        4
+      </text>
+      <Lines x={300} y={70} lines={["L2 = √(3² + 4²) = 5", "L1 = |3| + |4| = 7"]} size={12} anchor="start" color={ink} weight={800} gap={1.7} />
+      <text x={300} y={130} fontSize={10.5} fill={colors.blue} fontWeight={700}>
+        ─ 파랑: 대각선으로 곧장 (L2)
+      </text>
+      <text x={300} y={150} fontSize={10.5} fill={colors.orange} fontWeight={700}>
+        ┄ 주황: 축을 따라서만 (L1)
+      </text>
+      <line x1={cx - R - 20} x2={cx + R + 20} y1={cy} y2={cy} stroke={inkMuted} />
+      <line x1={cx} x2={cx} y1={cy - R - 20} y2={cy + R + 20} stroke={inkMuted} />
+      <circle cx={cx} cy={cy} r={R} fill={colors.blue} fillOpacity={0.08} stroke={colors.blue} strokeWidth={2} />
+      <path d={`M${cx + R},${cy} L${cx},${cy - R} L${cx - R},${cy} L${cx},${cy + R} Z`} fill={colors.orange} fillOpacity={0.12} stroke={colors.orange} strokeWidth={2} />
+      <text x={cx + R + 4} y={cy - 6} fontSize={9.5} fill={inkSecondary}>
+        1
+      </text>
+      <text x={cx + 6} y={cy - R - 6} fontSize={9.5} fill={inkSecondary}>
+        1
+      </text>
+      <text x={cx + R * 0.72} y={cy - R * 0.72 - 6} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        ‖x‖₂ = 1
+      </text>
+      <line x1={cx - R * 0.5 - 2} y1={cy + R * 0.5 + 2} x2={cx - R - 2} y2={cy + R * 0.82} stroke={colors.orange} strokeWidth={1} />
+      <text x={cx - R - 5} y={cy + R * 0.82 + 4} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        ‖x‖₁ = 1
+      </text>
+      <text x={cx} y={cy + R + 36} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={ink}>
+        노름이 1인 점들의 모양
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function EigenDirections() {
+  // 본문 예제 A = [[2, 1], [1, 2]]: 고유벡터 [1, 1](λ = 3), [1, −1](λ = 1). 단위원 위의 벡터들을 A로 보낸다.
+  const P = "egd";
+  const S = 34;
+  const cx = 180;
+  const cy = 116;
+  const A = [
+    [2, 1],
+    [1, 2],
+  ];
+  const n = 16;
+  const vecs = Array.from({ length: n }, (_, i) => {
+    const t = (i / n) * Math.PI * 2;
+    const v = [Math.cos(t), Math.sin(t)];
+    const w = [A[0][0] * v[0] + A[0][1] * v[1], A[1][0] * v[0] + A[1][1] * v[1]];
+    const eig = Math.abs(Math.abs(v[0]) - Math.abs(v[1])) < 1e-9;
+    return { v, w, eig, t };
+  });
+  return (
+    <DiagramFrame
+      title="고유벡터: 변환해도 방향이 그대로인 벡터"
+      caption="본문 예제 A = [[2, 1], [1, 2]]다. 단위원 위의 벡터(회색 점)를 A로 보내면(화살표 끝) 대부분 방향이 틀어지며 타원 위로 옮겨 간다. 그런데 [1, 1] 방향(파랑)은 방향이 그대로인 채 길이만 3배가 되고(고유값 3), [1, −1] 방향(주황)은 방향도 길이도 그대로다(고유값 1). 이 두 방향이 A의 고유벡터이고, 그 축 위에서 보면 A가 하는 일은 '한 축은 3배, 다른 축은 1배'로 단순해진다. 타원의 긴 축과 짧은 축이 바로 고유벡터 방향이다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted, blue: colors.blue, orange: colors.orange }} />
+      <line x1={cx - 120} x2={cx + 120} y1={cy} y2={cy} stroke="var(--border-hairline)" />
+      <line x1={cx} x2={cx} y1={cy - 112} y2={cy + 112} stroke="var(--border-hairline)" />
+      <circle cx={cx} cy={cy} r={S} fill="none" stroke={inkMuted} strokeDasharray="3 3" />
+      <ellipse cx={cx} cy={cy} rx={3 * S} ry={S} transform={`rotate(-45 ${cx} ${cy})`} fill={colors.violet} fillOpacity={0.05} stroke={colors.violet} strokeOpacity={0.5} strokeDasharray="4 3" />
+      {vecs.map((e, i) =>
+        e.eig ? null : (
+          <g key={i}>
+            <line x1={cx + e.v[0] * S} y1={cy - e.v[1] * S} x2={cx + e.w[0] * S} y2={cy - e.w[1] * S} stroke={inkMuted} strokeWidth={1} opacity={0.7} markerEnd={`url(#${P}-ink)`} />
+            <circle cx={cx + e.v[0] * S} cy={cy - e.v[1] * S} r={2.4} fill={inkMuted} />
+          </g>
+        ),
+      )}
+      {[
+        { v: [1, 1], lam: 3, c: colors.blue, m: "blue" },
+        { v: [-1, -1], lam: 3, c: colors.blue, m: "blue" },
+        { v: [1, -1], lam: 1, c: colors.orange, m: "orange" },
+        { v: [-1, 1], lam: 1, c: colors.orange, m: "orange" },
+      ].map((e, i) => {
+        const u = [e.v[0] / Math.SQRT2, e.v[1] / Math.SQRT2];
+        return (
+          <g key={i}>
+            <line x1={cx - u[0] * 110} y1={cy + u[1] * 110} x2={cx + u[0] * 110} y2={cy - u[1] * 110} stroke={e.c} strokeOpacity={0.25} />
+            <Arr x1={cx} y1={cy} x2={cx + u[0] * S * e.lam} y2={cy - u[1] * S * e.lam} color={e.c} marker={`${P}-${e.m}`} width={2.6} />
+            <circle cx={cx + u[0] * S} cy={cy - u[1] * S} r={3.2} fill={e.c} />
+          </g>
+        );
+      })}
+      <text x={cx + 3 * S * 0.707 + 8} y={cy - 3 * S * 0.707} fontSize={11} fontWeight={800} fill={colors.blue}>
+        [1, 1] → 3배
+      </text>
+      <text x={cx + S * 0.707 + 10} y={cy + S * 0.707 + 14} fontSize={11} fontWeight={800} fill={colors.orange}>
+        [1, −1] → 1배
+      </text>
+      <Lines x={380} y={44} lines={["A = [[2, 1], [1, 2]]", "", "A[1, 1] = [3, 3] = 3·[1, 1]", "A[1, −1] = [1, −1] = 1·[1, −1]", "", "특성방정식 (2 − λ)² − 1 = 0", "→ λ = 3, λ = 1"]} size={11.5} anchor="start" color={ink} weight={600} gap={1.45} />
+      <text x={380} y={210} fontSize={10} fill={inkSecondary}>
+        회색: 단위원 위의 벡터 v → 화살표 끝 Av (방향이 틀어진다)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function SvdSteps() {
+  // 전단 행렬 M = [[1, 1], [0, 1]]의 SVD: M = U Σ Vᵀ, 특이값 1.618과 0.618. 단위원과 두 기준 벡터가 단계마다 어떻게 바뀌는지.
+  const M = [
+    [1, 1],
+    [0, 1],
+  ];
+  const ata = [
+    [M[0][0] * M[0][0] + M[1][0] * M[1][0], M[0][0] * M[0][1] + M[1][0] * M[1][1]],
+    [M[0][1] * M[0][0] + M[1][1] * M[1][0], M[0][1] * M[0][1] + M[1][1] * M[1][1]],
+  ];
+  const tr = ata[0][0] + ata[1][1];
+  const det = ata[0][0] * ata[1][1] - ata[0][1] * ata[1][0];
+  const l1 = tr / 2 + Math.sqrt((tr * tr) / 4 - det);
+  const l2 = tr / 2 - Math.sqrt((tr * tr) / 4 - det);
+  const s1 = Math.sqrt(l1);
+  const s2 = Math.sqrt(l2);
+  const v1 = (() => {
+    const x = [ata[0][1], l1 - ata[0][0]];
+    const n = Math.hypot(x[0], x[1]);
+    return [x[0] / n, x[1] / n];
+  })();
+  const v2 = [-v1[1], v1[0]];
+  const mul = (A: number[][], x: number[]) => [A[0][0] * x[0] + A[0][1] * x[1], A[1][0] * x[0] + A[1][1] * x[1]];
+  const Vt = [v1, v2];
+  const u1 = mul(M, v1).map((t) => t / s1);
+  const u2 = mul(M, v2).map((t) => t / s2);
+  const U = [
+    [u1[0], u2[0]],
+    [u1[1], u2[1]],
+  ];
+  const stages = [
+    { t: "단위원", f: (x: number[]) => x },
+    { t: "① Vᵀ: 회전", f: (x: number[]) => mul(Vt, x) },
+    { t: "② Σ: 축 방향으로 늘이기", f: (x: number[]) => { const y = mul(Vt, x); return [s1 * y[0], s2 * y[1]]; } },
+    { t: "③ U: 다시 회전 = M", f: (x: number[]) => { const y = mul(Vt, x); return mul(U, [s1 * y[0], s2 * y[1]]); } },
+  ];
+  const S = 46;
+  const P = "svd";
+  return (
+    <DiagramFrame
+      title="SVD: 어떤 행렬이든 회전 → 늘이기 → 회전"
+      caption={`전단 행렬 M = [[1, 1], [0, 1]](본문 모나리자 그림의 변환과 같은 종류)을 M = UΣVᵀ로 나눈 것이다. 단위원과 두 기준 벡터 e₁(파랑), e₂(주황)가 단계마다 어떻게 바뀌는지 따라가 보자. ① Vᵀ는 원을 돌리기만 하고, ② Σ는 가로·세로 축 방향으로 특이값 ${s1.toFixed(3)}배와 ${s2.toFixed(3)}배로 늘이고 줄여 타원을 만들며, ③ U가 그 타원을 다시 돌린다. 마지막 결과는 M을 한 번에 곱한 것과 같다(e₁ → [1, 0], e₂ → [1, 1]). 특이값은 이 타원의 반지름이고, 큰 특이값 방향이 데이터의 '큰 구조'를 담는다.`}
+      viewBox="0 0 720 210"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue, orange: colors.orange, ink: inkSecondary }} />
+      {stages.map((st, j) => {
+        const cx = 90 + j * 180;
+        const cy = 104;
+        const circle = Array.from({ length: 73 }, (_, i) => {
+          const t = (i / 72) * Math.PI * 2;
+          const p = st.f([Math.cos(t), Math.sin(t)]);
+          return [cx + p[0] * S, cy - p[1] * S] as [number, number];
+        });
+        const e1 = st.f([1, 0]);
+        const e2 = st.f([0, 1]);
+        return (
+          <g key={j}>
+            <text x={cx} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+              {st.t}
+            </text>
+            <line x1={cx - 78} x2={cx + 78} y1={cy} y2={cy} stroke="var(--border-hairline)" />
+            <line x1={cx} x2={cx} y1={cy - 78} y2={cy + 78} stroke="var(--border-hairline)" />
+            <path d={`${linePath(circle)} Z`} fill={colors.violet} fillOpacity={0.08} stroke={colors.violet} strokeWidth={1.8} />
+            <Arr x1={cx} y1={cy} x2={cx + e1[0] * S} y2={cy - e1[1] * S} color={colors.blue} marker={`${P}-blue`} width={2.4} />
+            <Arr x1={cx} y1={cy} x2={cx + e2[0] * S} y2={cy - e2[1] * S} color={colors.orange} marker={`${P}-orange`} width={2.4} />
+            {j < 3 && <Arr x1={cx + 80} y1={cy} x2={cx + 100} y2={cy} color={inkSecondary} marker={`${P}-ink`} width={1.4} />}
+          </g>
+        );
+      })}
+      <text x={360} y={200} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        {`M = U Σ Vᵀ, 특이값 σ₁ = ${s1.toFixed(3)}, σ₂ = ${s2.toFixed(3)} (σ₁·σ₂ = |det M| = 1)`}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function LowRankApprox() {
+  // 본문 코드: X(50 × 3, 셋째 열 = 앞 두 열의 합) 특이값 [28.11, 2.54, 0], rank-1 근사의 상대 오차 0.09.
+  const pts = LOWRANK_PTS.split(" ").map((t) => t.split(",").map(Number));
+  const G = { left: 50, top: 22, width: 330, height: 150 };
+  const sx = linear(-7.5, 6, G.left, G.left + G.width);
+  const sy = linear(-0.8, 0.8, G.top + G.height, G.top);
+  const S = [28.11, 2.54, 0];
+  const tot = S.reduce((a, s) => a + s * s, 0);
+  const by = linear(0, 30, 172, 40);
+  return (
+    <DiagramFrame
+      title="저랭크 근사: 큰 특이값 몇 개만 남긴다"
+      caption="본문 코드의 데이터(50 × 3, 셋째 열 = 앞 두 열의 합)다. 왼쪽은 앞 두 열을 점으로 찍은 것이고(세로를 크게 확대했다), 주황 점은 가장 큰 특이값 하나만 남긴 rank-1 근사다. 데이터가 한 방향으로 길쭉해서 근사 점들이 한 직선 위에 놓이고, 원래 점과의 차이(회색 선)는 작다. 오른쪽: 특이값은 [28.11, 2.54, 0]이다. 셋째 값이 0이라 셋째 방향에는 정보가 없고(rank 2), 첫째 특이값이 '에너지'(특이값 제곱)의 99.2%를 담아 rank-1 근사의 상대 오차는 약 9%에 그친다. 이미지 압축, PCA, LoRA가 모두 이 저랭크 근사의 아이디어다."
+      viewBox="0 0 720 222"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-6, -3, 0, 3, 6]} yTicks={[-0.5, 0, 0.5]} fmtX={(v) => String(v).replace("-", "−")} fmtY={(v) => String(v).replace("-", "−")} xLabel="첫째 열" yLabel="둘째 열" />
+      {pts.map((p, i) => (
+        <line key={`l${i}`} x1={sx(p[0])} y1={sy(p[1])} x2={sx(p[2])} y2={sy(p[3])} stroke={inkMuted} strokeWidth={0.9} />
+      ))}
+      {pts.map((p, i) => (
+        <circle key={`o${i}`} cx={sx(p[0])} cy={sy(p[1])} r={3} fill={colors.blue} fillOpacity={0.75} />
+      ))}
+      {pts.map((p, i) => (
+        <circle key={`r${i}`} cx={sx(p[2])} cy={sy(p[3])} r={2.4} fill={colors.orange} />
+      ))}
+      <text x={G.left + 8} y={G.top + 12} fontSize={9.5} fontWeight={700} fill={colors.blue}>
+        ● 원래 데이터
+      </text>
+      <text x={G.left + 100} y={G.top + 12} fontSize={9.5} fontWeight={700} fill={colors.orange}>
+        ● rank-1 근사
+      </text>
+      <line x1={420} y1={14} x2={420} y2={210} stroke="var(--border-hairline)" />
+      <text x={566} y={22} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        특이값과 담는 에너지
+      </text>
+      <line x1={450} x2={690} y1={by(0)} y2={by(0)} stroke={inkMuted} />
+      {S.map((s, i) => (
+        <g key={i}>
+          <rect x={470 + i * 74} y={by(s)} width={46} height={Math.max(1, by(0) - by(s))} rx={3} fill={i === 0 ? colors.violet : colors.blue} fillOpacity={i === 0 ? 0.7 : 0.45} />
+          <text x={493 + i * 74} y={by(s) - 6} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+            {s}
+          </text>
+          <text x={493 + i * 74} y={by(0) + 14} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+            {`σ${"₁₂₃"[i]}`}
+          </text>
+          <text x={493 + i * 74} y={by(0) + 28} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={i === 0 ? colors.violet : inkSecondary}>
+            {`${((s * s * 100) / tot).toFixed(1)}%`}
+          </text>
+        </g>
+      ))}
+      <text x={566} y={216} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        σ₁만 남기면 상대 오차 ≈ 0.09
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function ProbVsLikelihood() {
+  // 같은 이항식 C(10, k)·p^k·(1 − p)^(10 − k)을 p = 0.5로 고정하고 k를 바꾸면 확률, k = 7로 고정하고 p를 바꾸면 가능도.
+  const choose = (n: number, k: number) => {
+    let c = 1;
+    for (let i = 0; i < k; i++) c = (c * (n - i)) / (i + 1);
+    return c;
+  };
+  const pmf = Array.from({ length: 11 }, (_, k) => choose(10, k) * 0.5 ** 10);
+  const L = (p: number) => choose(10, 7) * p ** 7 * (1 - p) ** 3;
+  const G1 = { left: 50, top: 24, width: 270, height: 150 };
+  const bx = linear(-0.6, 10.6, G1.left, G1.left + G1.width);
+  const by = linear(0, 0.3, G1.top + G1.height, G1.top);
+  const G2 = { left: 420, top: 24, width: 270, height: 150 };
+  const lx = linear(0, 1, G2.left, G2.left + G2.width);
+  const ly = linear(0, 0.3, G2.top + G2.height, G2.top);
+  return (
+    <DiagramFrame
+      title="같은 식, 다른 질문: 확률과 가능도"
+      caption="두 그림 모두 같은 식 C(10, k)·pᵏ(1 − p)¹⁰⁻ᵏ에서 나온다. 왼쪽은 동전이 공정하다(p = 0.5)고 고정하고 앞면 횟수 k를 바꾼 확률이다. 막대를 모두 더하면 1이고, 정확히 7번이 나올 확률은 약 11.7%다. 오른쪽은 '10번 중 7번'이라는 데이터를 고정하고 p를 바꾼 가능도다. 이 곡선은 넓이가 1일 필요가 없는 p의 함수이고, 가장 높은 곳 p = 0.7이 최대가능도추정값이다. 두 그림의 주황 점(k = 7, p = 0.5)은 같은 값 0.117이다."
+      viewBox="0 0 720 226"
+      minWidth={600}
+    >
+      <text x={G1.left + G1.width / 2} y={14} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.blue}>
+        확률: p = 0.5 고정, k가 변수
+      </text>
+      <Axes {...G1} sx={bx} sy={by} xTicks={[0, 2, 4, 6, 8, 10]} yTicks={[0, 0.1, 0.2, 0.3]} xLabel="앞면 횟수 k" />
+      {pmf.map((v, k) => (
+        <rect key={k} x={bx(k) - 9} y={by(v)} width={18} height={by(0) - by(v)} rx={2} fill={k === 7 ? colors.orange : colors.blue} fillOpacity={k === 7 ? 0.8 : 0.45} />
+      ))}
+      <text x={bx(7)} y={by(pmf[7]) - 6} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        0.117
+      </text>
+      <text x={G1.left + G1.width - 4} y={G1.top + 12} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+        막대의 합 = 1
+      </text>
+      <line x1={370} y1={14} x2={370} y2={214} stroke="var(--border-hairline)" />
+      <text x={G2.left + G2.width / 2} y={14} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
+        가능도: k = 7 고정, p가 변수
+      </text>
+      <Axes {...G2} sx={lx} sy={ly} xTicks={[0, 0.25, 0.5, 0.7, 1]} yTicks={[0, 0.1, 0.2, 0.3]} xLabel="앞면 확률 p" />
+      <path d={linePath(sample(L, 0, 1, 160).map(([x, y]) => [lx(x), ly(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <line x1={lx(0.7)} x2={lx(0.7)} y1={ly(L(0.7))} y2={ly(0)} stroke={colors.violet} strokeDasharray="4 3" />
+      <circle cx={lx(0.7)} cy={ly(L(0.7))} r={4.5} fill={colors.violet} />
+      <text x={lx(0.7) - 9} y={ly(L(0.7)) - 3} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`최대: p̂ = 0.7 (L = ${L(0.7).toFixed(3)})`}
+      </text>
+      <circle cx={lx(0.5)} cy={ly(L(0.5))} r={4.5} fill={colors.orange} />
+      <text x={lx(0.5) - 8} y={ly(L(0.5)) - 6} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        0.117
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function MleVsMap() {
+  // 본문 예제: 10번 중 7번 앞면. 가능도 p⁷(1 − p)³의 최대는 0.7, 사전분포 Beta(2, 2)를 곱한 사후 p⁸(1 − p)⁴의 최대는 8/12 ≈ 0.667.
+  const norm = (f: (p: number) => number) => {
+    const xs = sample(f, 0, 1, 400);
+    const m = Math.max(...xs.map(([, y]) => y));
+    return (p: number) => f(p) / m;
+  };
+  const prior = norm((p) => p * (1 - p));
+  const lik = norm((p) => p ** 7 * (1 - p) ** 3);
+  const post = norm((p) => p ** 8 * (1 - p) ** 4);
+  const G = { left: 50, top: 22, width: 420, height: 160 };
+  const sx = linear(0, 1, G.left, G.left + G.width);
+  const sy = linear(0, 1.12, G.top + G.height, G.top);
+  const curves = [
+    { f: prior, c: inkMuted, t: "사전분포 Beta(2, 2)", dash: "5 4", peak: 0.5 },
+    { f: lik, c: colors.blue, t: "가능도 p⁷(1 − p)³", dash: undefined, peak: 0.7 },
+    { f: post, c: colors.violet, t: "사후 ∝ 가능도 × 사전", dash: undefined, peak: 8 / 12 },
+  ];
+  return (
+    <DiagramFrame
+      title="MLE와 MAP: 사전 지식이 추정값을 당긴다"
+      caption="본문 예제(10번 중 7번 앞면)다. 세 곡선은 모양을 비교하려고 각자의 최댓값이 1이 되게 맞췄다. 가능도(파랑)는 p = 0.7에서 가장 높아 MLE는 0.7이다. '동전은 대체로 공정하다'는 사전분포 Beta(2, 2)(회색 점선, 0.5 근처를 선호)를 곱한 사후분포(보라)는 p⁸(1 − p)⁴에 비례하고, 그 최대인 MAP는 8/12 ≈ 0.667로 0.5 쪽으로 조금 당겨진다. 데이터가 많아질수록 가능도가 뾰족해져 사전분포의 영향은 줄고, MAP는 MLE에 가까워진다."
+      viewBox="0 0 720 226"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.25, 0.5, 0.75, 1]} yTicks={[]} xLabel="앞면 확률 p" grid={false} />
+      {curves.map((c) => (
+        <g key={c.t}>
+          <path d={linePath(sample(c.f, 0, 1, 200).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={c.c} strokeWidth={2.4} strokeDasharray={c.dash} />
+          <line x1={sx(c.peak)} x2={sx(c.peak)} y1={sy(1)} y2={sy(0)} stroke={c.c} strokeDasharray="2 3" opacity={0.7} />
+        </g>
+      ))}
+      <text x={sx(0.7) + 4} y={sy(0) - 6} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        MLE 0.7
+      </text>
+      <text x={sx(8 / 12) - 4} y={sy(0) - 6} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        MAP 0.667
+      </text>
+      <text x={sx(0.5) - 4} y={sy(1) - 6} textAnchor="end" fontSize={10} fontWeight={700} fill={inkSecondary}>
+        사전의 중심 0.5
+      </text>
+      {curves.map((c, i) => (
+        <g key={`l${c.t}`}>
+          <line x1={496} x2={522} y1={56 + i * 30} y2={56 + i * 30} stroke={c.c} strokeWidth={2.4} strokeDasharray={c.dash} />
+          <text x={528} y={60 + i * 30} fontSize={10.5} fontWeight={700} fill={c.c}>
+            {c.t}
+          </text>
+        </g>
+      ))}
+      <Lines x={496} y={160} lines={["로그를 취해 미분:", "8/p = 4/(1 − p) → p = 8/12"]} size={10.5} anchor="start" color={ink} weight={600} />
+    </DiagramFrame>
+  );
+}
+
+export function LogUnderflow() {
+  // 본문 코드: 0.5¹⁰⁰⁰ ≈ 9.3×10⁻³⁰², 0.5¹¹⁰⁰ = 0.0(언더플로). float64의 가장 작은 정규수 약 2.2×10⁻³⁰⁸, 가장 작은 비정규수 약 4.9×10⁻³²⁴(= 0.5¹⁰⁷⁴).
+  const G = { left: 64, top: 20, width: 400, height: 170 };
+  const sx = linear(0, 1200, G.left, G.left + G.width);
+  const sy = linear(-360, 0, G.top + G.height, G.top);
+  const lg = (n: number) => n * Math.log10(0.5);
+  return (
+    <DiagramFrame
+      title="가능도를 곱하면 0이 된다: 로그의 합으로 계산하는 이유"
+      caption="확률 0.5를 n번 곱한 값의 크기(10의 몇 제곱인지)다. 곱은 n에 비례해 지수적으로 작아져 n = 1000이면 9.3 × 10⁻³⁰²로 아직 표현되지만, float64의 가장 작은 정규수(약 2.2 × 10⁻³⁰⁸)를 지나 가장 작은 비정규수(약 4.9 × 10⁻³²⁴ = 0.5¹⁰⁷⁴)보다 작아지면 그냥 0이 된다(본문 코드의 0.5¹¹⁰⁰ = 0.0). 로그를 취하면 곱이 합 n·log 0.5가 되어 n = 1100에서도 −762.46으로 아무 문제 없이 계산된다. 그래서 실제 구현은 언제나 로그가능도(또는 음의 로그가능도)를 쓴다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 300, 600, 900, 1200]} yTicks={[0, -100, -200, -300]} fmtY={(v) => (v === 0 ? "1" : `10${String(v).replace("-", "⁻").replace(/\d/g, (d) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[Number(d)])}`)} xLabel="곱한 횟수 n" />
+      <rect x={G.left} y={sy(-323.3)} width={G.width} height={sy(-360) - sy(-323.3)} fill={colors.red} fillOpacity={0.1} />
+      <text x={G.left + 6} y={sy(-345)} fontSize={10} fontWeight={700} fill={colors.red}>
+        이 아래는 표현 불가 → 0.0
+      </text>
+      <line x1={G.left} x2={G.left + G.width} y1={sy(-307.65)} y2={sy(-307.65)} stroke={colors.orange} strokeDasharray="4 3" />
+      <text x={G.left + 6} y={sy(-307.65) - 5} fontSize={9.5} fill={colors.orange} fontWeight={700}>
+        가장 작은 정규수 ≈ 2.2×10⁻³⁰⁸
+      </text>
+      <path d={linePath(sample(lg, 0, 1074, 100).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <line x1={sx(1074)} x2={sx(1200)} y1={sy(-360)} y2={sy(-360)} stroke={colors.red} strokeWidth={3} />
+      <circle cx={sx(1000)} cy={sy(lg(1000))} r={4.5} fill={colors.blue} />
+      <line x1={sx(1000) - 64} y1={sy(lg(1000)) - 17} x2={sx(1000) - 5} y2={sy(lg(1000)) - 2} stroke={colors.blue} strokeWidth={1} />
+      <text x={sx(1000) - 67} y={sy(lg(1000)) - 14} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.blue}>
+        n = 1000: 9.3×10⁻³⁰²
+      </text>
+      <circle cx={sx(1100)} cy={sy(-360)} r={4.5} fill={colors.red} />
+      <text x={sx(1100)} y={sy(-360) - 10} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        n = 1100: 0.0
+      </text>
+      <line x1={490} y1={14} x2={490} y2={224} stroke="var(--border-hairline)" />
+      <text x={600} y={34} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        로그로 더하면
+      </text>
+      <Lines x={506} y={64} lines={["곱: 0.5 × 0.5 × … (1100번)", "= 0.0 (언더플로)", "", "로그의 합: 1100 × ln 0.5", "= −762.46 ✓"]} size={11} anchor="start" color={ink} weight={600} gap={1.5} />
+      <Lines x={600} y={178} lines={["그래서 학습은 가능도 최대화 대신", "−log 가능도 최소화로 푼다"]} size={10} anchor="middle" color={inkSecondary} gap={1.45} />
+    </DiagramFrame>
+  );
+}
+
+export function CrossEntropyDecomp() {
+  // 본문 숫자: H(fair) = 1, H(fair, biased) = 1.737 → KL(fair‖biased) = 0.737. H(biased) = 0.469, H(biased, fair) = 1 → KL(biased‖fair) = 0.531.
+  const lg = (x: number) => Math.log2(x);
+  const fair = [0.5, 0.5];
+  const biased = [0.9, 0.1];
+  const H = (p: number[]) => -p.reduce((s, v) => s + (v > 0 ? v * lg(v) : 0), 0);
+  const CE = (p: number[], q: number[]) => -p.reduce((s, v, i) => s + v * lg(q[i]), 0);
+  const rows = [
+    { t: "기준 p = 공정한 동전 (0.5, 0.5)", sub: "모델 q = (0.9, 0.1)", h: H(fair), ce: CE(fair, biased) },
+    { t: "기준 p = 치우친 동전 (0.9, 0.1)", sub: "모델 q = (0.5, 0.5)", h: H(biased), ce: CE(biased, fair) },
+  ];
+  const bx = linear(0, 2, 0, 380);
+  return (
+    <DiagramFrame
+      title="교차 엔트로피 = 엔트로피 + KL 발산, 그리고 KL은 방향이 있다"
+      caption="본문의 숫자다(단위: 비트). 위: 실제 분포가 공정한 동전인데 모델이 (0.9, 0.1)이라고 예측하면 교차 엔트로피는 1.737비트로, 실제 분포의 엔트로피 1비트보다 0.737비트 크다. 이 차이가 '잘못된 분포를 써서 낭비한 비트', 즉 KL(p‖q)다. 아래: 기준과 모델을 바꾸면 엔트로피는 0.469, 교차 엔트로피는 1이라 KL은 0.531로 달라진다. KL은 거리처럼 보이지만 대칭이 아니다. 앞쪽 분포에서 자주 나오는 사건을 뒤쪽 분포가 얼마나 낮게 보는지에 벌점을 주기 때문이다."
+      viewBox="0 0 720 200"
+      minWidth={580}
+    >
+      {rows.map((r, i) => {
+        const y = 30 + i * 74;
+        const kl = r.ce - r.h;
+        return (
+          <g key={r.t}>
+            <text x={14} y={y + 12} fontSize={11} fontWeight={800} fill={ink}>
+              {r.t}
+            </text>
+            <text x={14} y={y + 28} fontSize={10} fill={inkSecondary}>
+              {r.sub}
+            </text>
+            <rect x={250} y={y} width={bx(r.h)} height={30} fill={colors.blue} fillOpacity={0.55} />
+            <rect x={250 + bx(r.h)} y={y} width={bx(kl)} height={30} fill={colors.red} fillOpacity={0.55} />
+            <text x={250 + bx(r.h) / 2} y={y + 19} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+              {`H(p) = ${r.h.toFixed(3)}`}
+            </text>
+            <text x={250 + bx(r.h) + bx(kl) / 2} y={y + 19} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+              {`KL = ${kl.toFixed(3)}`}
+            </text>
+            <text x={250 + bx(r.ce) + 8} y={y + 19} fontSize={11} fontWeight={800} fill={colors.violet}>
+              {`= H(p, q) = ${r.ce.toFixed(3)}`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={250} y={188} fontSize={10} fill={inkSecondary}>
+        파랑 = 피할 수 없는 불확실성 H(p), 빨강 = 모델이 틀려서 더 쓰는 비트 KL(p‖q)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function KlDirection() {
+  // 두 봉우리 분포 p = ½N(−2, 0.6²) + ½N(2, 0.6²)에 정규분포 q 하나를 맞출 때. KL(p‖q) 최소: N(0, 2.09²), KL(q‖p) 최소: N(2.0, 0.61²)(수치 최적화).
+  const npdf = (x: number, m: number, s: number) => Math.exp(-((x - m) ** 2) / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI));
+  const p = (x: number) => 0.5 * npdf(x, -2, 0.6) + 0.5 * npdf(x, 2, 0.6);
+  const panels = [
+    { t: "KL(p‖q) 최소화", sub: "p가 있는 곳을 모두 덮는다 (평균 찾기)", q: (x: number) => npdf(x, 0, 2.088), c: colors.blue, note: "q = N(0, 2.09²)" },
+    { t: "KL(q‖p) 최소화", sub: "봉우리 하나에 집중한다 (모드 찾기)", q: (x: number) => npdf(x, 1.997, 0.605), c: colors.orange, note: "q = N(2.0, 0.61²)" },
+  ];
+  const pw = 300;
+  return (
+    <DiagramFrame
+      title="KL 발산의 방향이 맞추는 모양을 바꾼다"
+      caption="봉우리가 둘인 분포 p(회색)에 정규분포 q 하나를 맞춘다고 하자(수치 최적화 결과). KL(p‖q)를 줄이면 p가 확률을 두는 곳에서 q가 작으면 큰 벌점을 받으므로, q가 두 봉우리를 모두 덮도록 넓게 퍼진다(평균은 0, 표준편차 2.09). 반대로 KL(q‖p)를 줄이면 q가 확률을 두는 곳에서 p가 작으면 벌점을 받으므로, q는 봉우리 하나에만 좁게 붙는다(평균 2, 표준편차 0.61). 6주차 RLHF의 KL 벌점과 4주차 VAE에서 어느 방향을 쓰느냐가 결과의 성격을 바꾸는 이유다."
+      viewBox="0 0 720 210"
+      minWidth={600}
+    >
+      {panels.map((pn, j) => {
+        const x0 = 30 + j * (pw + 50);
+        const sx = linear(-5, 5, x0, x0 + pw);
+        const sy = linear(0, 0.72, 170, 40);
+        return (
+          <g key={pn.t}>
+            <text x={x0 + pw / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={pn.c}>
+              {pn.t}
+            </text>
+            <text x={x0 + pw / 2} y={31} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+              {pn.sub}
+            </text>
+            <path d={`${linePath(sample(p, -5, 5, 240).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} L${sx(5)},${sy(0)} L${sx(-5)},${sy(0)} Z`} fill={inkMuted} fillOpacity={0.25} stroke={inkMuted} strokeWidth={1.6} />
+            <path d={linePath(sample(pn.q, -5, 5, 240).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={pn.c} strokeWidth={2.6} />
+            <line x1={x0} x2={x0 + pw} y1={sy(0)} y2={sy(0)} stroke={inkMuted} />
+            {[-4, -2, 0, 2, 4].map((t) => (
+              <text key={t} x={sx(t)} y={sy(0) + 14} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+                {String(t).replace("-", "−")}
+              </text>
+            ))}
+            <text x={x0 + pw / 2} y={198} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={pn.c}>
+              {pn.note}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function ConditionZigzag() {
+  // 곡률이 가로 1, 세로 κ = 10인 이차 함수 L = ½(x² + 10y²)에서 최선의 고정 학습률 2/(a_max + a_min)로 경사하강법(같은 축척).
+  // 두 방향 모두 스텝마다 (κ − 1)/(κ + 1) = 0.82배가 되고, 세로는 부호가 바뀐다. 오른쪽은 본문 코드의 스텝 수(1, 69, 691, 6908).
+  const kappa = 10;
+  const lr = 2 / (kappa + 1);
+  const path: [number, number][] = [[3, 0.8]];
+  for (let t = 0; t < 16; t++) {
+    const [x, y] = path[path.length - 1];
+    path.push([x - lr * x, y - lr * kappa * y]);
+  }
+  const S = 46;
+  const cx = 205;
+  const cy = 122;
+  const tx = (x: number) => cx + x * S;
+  const ty = (y: number) => cy - y * S;
+  const f0 = 0.5 * (path[0][0] ** 2 + kappa * path[0][1] ** 2);
+  const steps = [
+    { k: 1, n: 1 },
+    { k: 10, n: 69 },
+    { k: 100, n: 691 },
+    { k: 1000, n: 6908 },
+  ];
+  const bx = (n: number) => (Math.log10(n) / 4) * 180;
+  return (
+    <DiagramFrame
+      title="조건수가 크면 경사하강법이 지그재그로 느려진다"
+      caption={`왼쪽: 가로 방향 곡률 1, 세로 방향 곡률 10(κ = 10)인 이차 함수의 등고선(가로세로 같은 축척)과, 최선의 고정 학습률 2/(a_max + a_min)로 움직인 경사하강법의 경로다(원점이 최솟값). 가파른 세로 방향에서는 스텝마다 부호가 바뀌며 벽 사이를 오가고, 완만한 가로 방향으로는 스텝마다 오차의 ${((kappa - 1) / (kappa + 1)).toFixed(2)}배씩만 줄어 계곡 바닥을 따라 느리게 내려간다. 오른쪽: 본문 코드로 오차를 10⁻⁶ 아래로 줄이는 데 걸린 스텝 수다. 조건수가 10배가 될 때마다 스텝 수도 약 10배(69 → 691 → 6908)가 되지만, 곡률로 걸음을 정하는 뉴턴 방법은 κ와 상관없이 한 스텝에 끝난다.`}
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <text x={14} y={20} fontSize={11} fontWeight={800} fill={ink}>
+        κ = 10: 가로 곡률 1, 세로 곡률 10
+      </text>
+      <line x1={tx(-4.2)} x2={tx(4.2)} y1={cy} y2={cy} stroke={inkMuted} strokeOpacity={0.5} />
+      <line x1={cx} x2={cx} y1={ty(1.6)} y2={ty(-1.6)} stroke={inkMuted} strokeOpacity={0.5} />
+      {[1, 0.55, 0.25, 0.08].map((r) => (
+        <ellipse key={r} cx={cx} cy={cy} rx={Math.sqrt(2 * f0 * r) * S} ry={Math.sqrt((2 * f0 * r) / kappa) * S} fill="none" stroke={inkMuted} strokeOpacity={0.6} />
+      ))}
+      <path d={linePath(path.map(([x, y]) => [tx(x), ty(y)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={1.8} />
+      {path.map(([x, y], i) => (
+        <circle key={i} cx={tx(x)} cy={ty(y)} r={i === 0 ? 4.5 : 2.6} fill={colors.red} />
+      ))}
+      <circle cx={cx} cy={cy} r={4.5} fill={ink} />
+      <text x={tx(path[0][0]) + 8} y={ty(path[0][1]) - 4} fontSize={10.5} fontWeight={800} fill={ink}>
+        출발
+      </text>
+      <text x={cx - 8} y={cy + 16} textAnchor="end" fontSize={10} fontWeight={700} fill={inkSecondary} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        최솟값
+      </text>
+      <text x={14} y={204} fontSize={10.5} fontWeight={800} fill={colors.red}>
+        ● 경사하강법: 세로로 튕기며 가로로는 0.82배씩
+      </text>
+      <text x={14} y={221} fontSize={10} fill={inkSecondary}>
+        같은 축척으로 그려 등고선이 가로로 √10 ≈ 3.2배 길다
+      </text>
+      <line x1={412} y1={14} x2={412} y2={224} stroke="var(--border-hairline)" />
+      <text x={566} y={24} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        오차 10⁻⁶까지 걸린 스텝 (로그 막대)
+      </text>
+      {steps.map((s, i) => (
+        <g key={s.k}>
+          <text x={430} y={62 + i * 38} fontSize={10.5} fontWeight={700} fill={ink}>
+            {`κ = ${s.k}`}
+          </text>
+          <rect x={490} y={50 + i * 38} width={Math.max(3, bx(s.n))} height={18} rx={3} fill={colors.red} fillOpacity={0.3 + 0.12 * i} />
+          <text x={490 + Math.max(3, bx(s.n)) + 6} y={63 + i * 38} fontSize={11} fontWeight={800} fill={ink}>
+            {s.n.toLocaleString("en-US")}
+          </text>
+        </g>
+      ))}
+      <Lines x={566} y={204} lines={["스텝 수 ≈ (κ/2)·ln(1/ε), 조건수에 비례", "뉴턴 방법은 κ와 상관없이 1스텝"]} size={10} anchor="middle" color={inkSecondary} gap={1.5} />
+    </DiagramFrame>
+  );
+}
