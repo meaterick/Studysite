@@ -103,6 +103,8 @@ export function parseMarkdownUncached(source: string): Block[] {
             credit: fields.credit,
             width: Number(fields.width),
             height: Number(fields.height),
+            // 선택: 표시 최대 폭(px). 세로로 긴 그래프처럼 본문 폭 전체로 늘리면 지나치게 커지는 그림에 쓴다.
+            ...(fields.maxWidth ? { maxWidth: Number(fields.maxWidth) } : {}),
           });
         }
       } else {

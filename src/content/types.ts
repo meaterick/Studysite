@@ -13,7 +13,7 @@ export type Block =
   /** text: 본문을 한 줄로 이은 것(검색·분량 계산용). blocks: 본문을 블록으로 다시 해석한 것(표·목록·코드·수식 지원) */
   | { type: "callout"; tone: CalloutTone; title?: string; text: string; blocks: Block[] }
   | { type: "diagram"; id: string }
-  | { type: "image"; src: string; alt: string; caption?: string; credit?: string; width: number; height: number };
+  | { type: "image"; src: string; alt: string; caption?: string; credit?: string; width: number; height: number; maxWidth?: number };
 
 export type CalloutTone = "info" | "warn" | "example" | "quote" | "tip" | "task";
 
