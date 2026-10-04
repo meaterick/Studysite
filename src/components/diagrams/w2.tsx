@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, gridline, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Label } from "./primitives";
-import { Axes, Markers, Arr, Lines, Tag, linear, linePath, sample, seeded, gaussian, mono, solveLinear } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, linePath, sample, seeded, gaussian, mono, solveLinear, starPath, normCdf } from "./chart";
 
 export function ConfusionMatrix() {
   const cell = 110;
@@ -1487,6 +1487,1010 @@ export function R2Squares() {
         R² = 1 − (모델 넓이 2.5) / (베이스라인 넓이 20) = 1 − 0.125 = 0.875
       </text>
       <line x1={360} y1={14} x2={360} y2={240} stroke="var(--border-hairline)" />
+    </DiagramFrame>
+  );
+}
+
+/** 클래스 0은 파란 원, 클래스 1은 주황 사각형 */
+const classMark = (x: number, y: number, c: number, r = 5.5) =>
+  c === 0 ? (
+    <circle cx={x} cy={y} r={r} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={1} />
+  ) : (
+    <rect x={x - r} y={y - r} width={2 * r} height={2 * r} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={1} />
+  );
+
+export function KnnVote() {
+  // 본문 예제: 클래스 0 A(1,1)·B(2,1)·C(1,2), 클래스 1 D(5,5)·E(6,5)·F(5,6), 새 샘플 X(2,2), K = 3.
+  const G = { left: 46, top: 26, width: 210, height: 210 };
+  const sx = linear(0, 7, G.left, G.left + G.width);
+  const sy = linear(0, 7, G.top + G.height, G.top);
+  const X = [2, 2];
+  const pts = [
+    { n: "A", p: [1, 1], c: 0, dx: -9, dy: 4, a: "end" as const },
+    { n: "B", p: [2, 1], c: 0, dx: 9, dy: 4, a: "start" as const },
+    { n: "C", p: [1, 2], c: 0, dx: -9, dy: 4, a: "end" as const },
+    { n: "D", p: [5, 5], c: 1, dx: -9, dy: 4, a: "end" as const },
+    { n: "E", p: [6, 5], c: 1, dx: 9, dy: 4, a: "start" as const },
+    { n: "F", p: [5, 6], c: 1, dx: -9, dy: 4, a: "end" as const },
+  ].map((q) => ({ ...q, d: Math.hypot(q.p[0] - X[0], q.p[1] - X[1]) }));
+  const ranked = [...pts].sort((a, b) => a.d - b.d || a.n.localeCompare(b.n));
+  const r3 = ranked[2].d;
+  const bx = linear(0, 5, 432, 622);
+  return (
+    <DiagramFrame
+      title="KNN(K = 3): 가장 가까운 세 이웃의 다수결"
+      caption="본문 예제의 여섯 점과 새 샘플 X(2, 2)다. X에서 각 점까지 유클리드 거리를 재어 가까운 순으로 줄 세우면 B(1.000), C(1.000), A(1.414)가 앞의 세 자리를 차지한다(점선 원 안). 셋 모두 클래스 0이므로 다수결로 X는 클래스 0이 된다. 학습 단계에서 하는 일은 훈련 데이터를 저장하는 것뿐이고, 계산은 예측할 때 일어난다."
+      viewBox="0 0 720 262"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 1, 2, 3, 4, 5, 6, 7]} yTicks={[0, 1, 2, 3, 4, 5, 6, 7]} />
+      <circle cx={sx(X[0])} cy={sy(X[1])} r={sx(r3) - sx(0)} fill={colors.violet} fillOpacity={0.07} stroke={colors.violet} strokeWidth={1.4} strokeDasharray="5 3" />
+      {ranked.map((q, i) => (
+        <line key={q.n} x1={sx(X[0])} y1={sy(X[1])} x2={sx(q.p[0])} y2={sy(q.p[1])} stroke={i < 3 ? colors.violet : inkMuted} strokeWidth={i < 3 ? 1.6 : 1} strokeDasharray={i < 3 ? undefined : "3 3"} opacity={i < 3 ? 0.9 : 0.6} />
+      ))}
+      {pts.map((q) => (
+        <g key={q.n}>
+          {classMark(sx(q.p[0]), sy(q.p[1]), q.c)}
+          <text x={sx(q.p[0]) + q.dx} y={sy(q.p[1]) + q.dy} textAnchor={q.a} fontSize={11} fontWeight={800} fill={q.c === 0 ? colors.blue : colors.orange}>
+            {q.n}
+          </text>
+        </g>
+      ))}
+      <path d={starPath(sx(X[0]), sy(X[1]), 8)} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1} />
+      <text x={sx(X[0]) + 10} y={sy(X[1]) - 9} fontSize={11} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        X (2, 2)
+      </text>
+      <text x={310} y={26} fontSize={12} fontWeight={800} fill={ink}>
+        X까지의 거리 순위
+      </text>
+      <rect x={302} y={36} width={404} height={84} rx={8} fill={colors.violet} fillOpacity={0.07} stroke={colors.violet} strokeOpacity={0.5} />
+      {ranked.map((q, i) => {
+        const y = 56 + i * 27 + (i >= 3 ? 8 : 0);
+        return (
+          <g key={q.n}>
+            <text x={312} y={y + 4} fontSize={11} fontWeight={700} fill={inkSecondary}>
+              {i + 1}
+            </text>
+            <text x={330} y={y + 4} fontSize={11} fontWeight={800} fill={ink}>
+              {`${q.n} (${q.p[0]}, ${q.p[1]})`}
+            </text>
+            {classMark(406, y, q.c, 5)}
+            <rect x={bx(0)} y={y - 6} width={bx(q.d) - bx(0)} height={12} rx={3} fill={i < 3 ? colors.violet : inkMuted} fillOpacity={i < 3 ? 0.55 : 0.35} />
+            <text x={bx(q.d) + 6} y={y + 4} fontSize={10.5} fontWeight={700} fill={ink} fontFamily={mono}>
+              {q.d.toFixed(3)}
+            </text>
+          </g>
+        );
+      })}
+      <text x={504} y={248} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet}>
+        K = 3: B, C, A 모두 클래스 0 → X는 클래스 0
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function KnnKEffect() {
+  // 겹치는 두 클래스(시드 고정, 클래스 0이 32개·클래스 1이 28개)에 K = 1, 9, 60을 적용한 결정 영역. 새 데이터 정확도는 같은 분포에서 뽑은 600개로 잰다.
+  const rand = seeded(17);
+  const make = (n0: number, n1: number) => {
+    const out: { x: number; y: number; c: number }[] = [];
+    for (let i = 0; i < n0; i++) out.push({ x: -0.8 + gaussian(rand), y: gaussian(rand), c: 0 });
+    for (let i = 0; i < n1; i++) out.push({ x: 0.8 + gaussian(rand), y: 0.2 + gaussian(rand), c: 1 });
+    return out;
+  };
+  const train = make(32, 28);
+  const test = make(320, 280);
+  const predict = (x: number, y: number, k: number) => {
+    const near = train
+      .map((p) => ({ d: (p.x - x) ** 2 + (p.y - y) ** 2, c: p.c }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, k);
+    return near.reduce((s, q) => s + q.c, 0) * 2 > k ? 1 : 0;
+  };
+  const acc = (set: { x: number; y: number; c: number }[], k: number) => set.filter((p) => predict(p.x, p.y, k) === p.c).length / set.length;
+  const pw = 214;
+  const ph = 150;
+  const cell = 7;
+  const panels = [
+    { k: 1, t: "K = 1", sub: "이웃 하나의 잡음까지 따라간다", c: colors.red },
+    { k: 9, t: "K = 9", sub: "경계가 적당히 매끈하다", c: colors.green },
+    { k: 60, t: "K = 60 (전체)", sub: "모든 곳이 다수 클래스 0", c: colors.red },
+  ];
+  return (
+    <DiagramFrame
+      title="K가 정하는 복잡도: 작으면 과적합, 크면 과소적합"
+      caption={`겹치는 두 클래스(파란 원 32개, 주황 사각형 28개)에 KNN을 적용해 평면의 각 위치를 어느 클래스로 예측하는지 칠했다. K = 1은 훈련 점마다 섬을 만들어 훈련 정확도가 100%지만 같은 분포에서 새로 뽑은 데이터에서는 떨어진다(분산이 큰 모델). K = 60은 모든 이웃을 세므로 어디서나 다수 클래스 0을 답한다(편향이 큰 모델). 그 사이의 K가 새 데이터에서 가장 잘 맞는다. K는 교차검증으로 고르는 하이퍼파라미터다.`}
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      {panels.map((pn, j) => {
+        const x0 = 14 + j * (pw + 22);
+        const y0 = 34;
+        const sx = linear(-3.5, 3.5, x0, x0 + pw);
+        const sy = linear(-2.45, 2.45, y0 + ph, y0);
+        const cells = [];
+        for (let gx = x0; gx < x0 + pw; gx += cell) {
+          for (let gy = y0; gy < y0 + ph; gy += cell) {
+            const c = predict(-3.5 + ((gx + cell / 2 - x0) / pw) * 7, 2.45 - ((gy + cell / 2 - y0) / ph) * 4.9, pn.k);
+            cells.push(<rect key={`${gx}-${gy}`} x={gx} y={gy} width={Math.min(cell, x0 + pw - gx)} height={Math.min(cell, y0 + ph - gy)} fill={c === 0 ? colors.blue : colors.orange} fillOpacity={0.16} />);
+          }
+        }
+        return (
+          <g key={pn.k}>
+            <text x={x0 + pw / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+              {pn.t}
+            </text>
+            <text x={x0 + pw / 2} y={29} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+              {pn.sub}
+            </text>
+            <clipPath id={`kke-c${j}`}>
+              <rect x={x0} y={y0} width={pw} height={ph} />
+            </clipPath>
+            <g clipPath={`url(#kke-c${j})`}>
+              {cells}
+              {train.map((p, i) => (
+                <g key={i}>{classMark(sx(p.x), sy(p.y), p.c, 3.6)}</g>
+              ))}
+            </g>
+            <rect x={x0} y={y0} width={pw} height={ph} fill="none" stroke="var(--border-strong)" />
+            <text x={x0 + pw / 2} y={y0 + ph + 18} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+              {`훈련 ${Math.round(acc(train, pn.k) * 100)}%`}
+              <tspan dx={8} fontWeight={800} fill={pn.c}>{`새 데이터 ${Math.round(acc(test, pn.k) * 100)}%`}</tspan>
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function KnnScaling() {
+  // 본문 예제: A = (30세, 3000만), B = (31, 3500), C = (58, 3050). 정규화는 나이 범위 40, 연봉 범위 6000.
+  const P = "kns";
+  const A = [30, 3000];
+  const B = [31, 3500];
+  const C = [58, 3050];
+  type Lab = { dx: number; dy: number; anchor: "start" | "middle" | "end" };
+  const panel = (ox: number, s: number, f: (v: number[]) => number[], o: { title: string; sub: string; xl: string; yl: string; dAB: string; dAC: string; nearIsB: boolean; bl: Lab; cl: Lab; tx: number }) => {
+    const oy = 226;
+    const pt = (v: number[]) => {
+      const a = f(A);
+      const q = f(v);
+      return { x: ox + (q[0] - a[0]) * s, y: oy - (q[1] - a[1]) * s };
+    };
+    const a = pt(A);
+    const b = pt(B);
+    const c = pt(C);
+    const near = o.nearIsB ? b : c;
+    return (
+      <g>
+        <text x={ox + 100} y={20} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+          {o.title}
+        </text>
+        <text x={ox + 100} y={36} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+          {o.sub}
+        </text>
+        <Arr x1={ox - 30} y1={oy + 22} x2={ox + 240} y2={oy + 22} color={inkMuted} marker={`${P}-ink`} width={1} />
+        <text x={ox + 240} y={oy + 36} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+          {o.xl}
+        </text>
+        <Arr x1={ox - 30} y1={oy + 22} x2={ox - 30} y2={62} color={inkMuted} marker={`${P}-ink`} width={1} />
+        <text x={ox - 30} y={54} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {o.yl}
+        </text>
+        <circle cx={a.x} cy={a.y} r={Math.hypot(near.x - a.x, near.y - a.y)} fill={colors.green} fillOpacity={0.08} stroke={colors.green} strokeWidth={1.3} strokeDasharray="4 3" />
+        <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={colors.blue} strokeWidth={1.6} />
+        <line x1={a.x} y1={a.y} x2={c.x} y2={c.y} stroke={colors.orange} strokeWidth={1.6} />
+        <circle cx={a.x} cy={a.y} r={5} fill={ink} />
+        <circle cx={b.x} cy={b.y} r={5} fill={colors.blue} />
+        <circle cx={c.x} cy={c.y} r={5} fill={colors.orange} />
+        <text x={a.x + 8} y={a.y + 17} fontSize={10.5} fontWeight={800} fill={ink} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+          A (30세, 3000만)
+        </text>
+        <text x={b.x + o.bl.dx} y={b.y + o.bl.dy} textAnchor={o.bl.anchor} fontSize={10.5} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+          B (31세, 3500만)
+        </text>
+        <text x={c.x + o.cl.dx} y={c.y + o.cl.dy} textAnchor={o.cl.anchor} fontSize={10.5} fontWeight={800} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+          C (58세, 3050만)
+        </text>
+        <Lines x={o.tx} y={112} lines={[`d(A, B) ≈ ${o.dAB}`, `d(A, C) ≈ ${o.dAC}`]} size={11} anchor="start" color={ink} weight={700} />
+        <text x={o.tx} y={152} fontSize={10.5} fontWeight={800} fill={o.nearIsB ? colors.green : colors.red}>
+          {o.nearIsB ? "가장 가까운 이웃: B ✓" : "가장 가까운 이웃: C ✗"}
+        </text>
+      </g>
+    );
+  };
+  return (
+    <DiagramFrame
+      title="거리는 단위를 탄다: 정규화 전후로 '가장 가까운 이웃'이 바뀐다"
+      caption="두 그림 모두 KNN이 실제로 계산하는 거리 그대로, 가로와 세로를 같은 비율로 그렸다(A를 기준점에 두었다). 왼쪽은 원래 단위다. 연봉 1만 원 차이와 나이 1살 차이가 똑같이 취급되므로 연봉이 500만 원 다른 B는 멀리 위로 떨어져 있고, 28살이나 많은 C는 A 바로 옆에 붙는다. 오른쪽은 나이를 범위 40으로, 연봉을 범위 6000으로 나눈 Min-Max 정규화 뒤다. 이제 나이 차이가 제 몫을 해서 B가 가장 가까운 이웃이 된다. 거리를 쓰는 KNN·K-Means·SVM 앞에는 항상 스케일링을 둔다."
+      viewBox="0 0 720 276"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted }} />
+      {panel(100, 0.3, (v) => v, { title: "원래 단위", sub: "연봉 차이가 거리를 독차지한다", xl: "나이 차이 (세)", yl: "연봉 차이 (만 원)", dAB: "500", dAC: "57", nearIsB: false, bl: { dx: 10, dy: 4, anchor: "start" }, cl: { dx: 10, dy: -6, anchor: "start" }, tx: 200 })}
+      <line x1={372} y1={14} x2={372} y2={262} stroke="var(--border-hairline)" />
+      {panel(460, 230, (v) => [v[0] / 40, v[1] / 6000], { title: "Min-Max 정규화 후", sub: "나이 차이도 거리에 반영된다", xl: "나이 차이 (÷ 40)", yl: "연봉 차이 (÷ 6000)", dAB: "0.087", dAC: "0.700", nearIsB: true, bl: { dx: 8, dy: -8, anchor: "start" }, cl: { dx: 0, dy: -11, anchor: "middle" }, tx: 540 })}
+    </DiagramFrame>
+  );
+}
+
+export function NbEvidence() {
+  // 본문 스팸 예제: 사전 0.3 / 0.7, P(무료|·) = 0.6 / 0.05, P(당첨|·) = 0.4 / 0.02 → 0.072 / 0.0007 → 99.0%.
+  const steps = [
+    { t: "① 사전 확률", sub: "메일 100통 중 스팸 30통", s: 0.3, h: 0.7, score: "0.3 : 0.7" },
+    { t: "② × '무료'", sub: "P(무료|스팸) 0.6 · P(무료|정상) 0.05", s: 0.3 * 0.6, h: 0.7 * 0.05, score: "0.18 : 0.035" },
+    { t: "③ × '당첨'", sub: "P(당첨|스팸) 0.4 · P(당첨|정상) 0.02", s: 0.3 * 0.6 * 0.4, h: 0.7 * 0.05 * 0.02, score: "0.072 : 0.0007" },
+  ];
+  const bx = linear(0, 1, 236, 566);
+  return (
+    <DiagramFrame
+      title="나이브 베이즈: 단어 하나하나가 증거로 곱해진다"
+      caption="막대는 각 단계에서 스팸과 정상의 점수를 합이 1이 되도록 정규화한 비율이다. 사전 확률(30%)에서 출발해, '무료'의 가능도를 곱하면 스팸이 정상보다 12배(0.6 / 0.05) 그럴듯해져 83.7%가 되고, '당첨'(20배)까지 곱하면 99.0%가 된다. 특징들이 클래스 안에서 서로 독립이라는 가정 덕분에 단어마다 따로 곱하기만 하면 된다. 하나라도 0인 확률이 끼면 곱 전체가 0이 되므로 라플라스 스무딩으로 0을 피한다."
+      viewBox="0 0 720 214"
+      minWidth={580}
+    >
+      <text x={bx(0.5)} y={18} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        정규화한 비율 (스팸 + 정상 = 1)
+      </text>
+      <text x={644} y={18} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        곱한 점수 (스팸 : 정상)
+      </text>
+      {steps.map((st, i) => {
+        const y = 34 + i * 58;
+        const ps = st.s / (st.s + st.h);
+        return (
+          <g key={i}>
+            <text x={14} y={y + 15} fontSize={12} fontWeight={800} fill={ink}>
+              {st.t}
+            </text>
+            <text x={14} y={y + 31} fontSize={9.5} fill={inkSecondary}>
+              {st.sub}
+            </text>
+            <rect x={bx(0)} y={y} width={bx(ps) - bx(0)} height={36} fill={colors.orange} fillOpacity={0.75} />
+            <rect x={bx(ps)} y={y} width={bx(1) - bx(ps)} height={36} fill={colors.blue} fillOpacity={0.35} />
+            <text x={bx(0) + 8} y={y + 23} fontSize={12} fontWeight={800} fill={ink}>
+              {`스팸 ${(ps * 100).toFixed(1)}%`}
+            </text>
+            {1 - ps > 0.12 ? (
+              <text x={bx(1) - 8} y={y + 23} textAnchor="end" fontSize={12} fontWeight={800} fill={ink}>
+                {`정상 ${((1 - ps) * 100).toFixed(1)}%`}
+              </text>
+            ) : (
+              <text x={bx(1) - 6} y={y + 52} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.blue}>
+                {`정상 ${((1 - ps) * 100).toFixed(1)}% ↑`}
+              </text>
+            )}
+            <text x={644} y={y + 23} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={ink} fontFamily={mono}>
+              {st.score}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function KernelLift() {
+  // 1차원에서 안쪽(파랑)·바깥쪽(주황)으로 섞인 점을 φ(x) = (x, x²)로 들어 올리면 수평선 하나로 갈린다.
+  const P = "kel";
+  const inner = [-0.9, -0.5, -0.2, 0.3, 0.6, 1.0];
+  const outer = [-2.6, -2.1, -1.6, 1.5, 2.0, 2.5];
+  const lx = linear(-3, 3, 30, 300);
+  const G = { left: 420, top: 26, width: 270, height: 190 };
+  const rx = linear(-3, 3, G.left, G.left + G.width);
+  const ry = linear(0, 7.2, G.top + G.height, G.top);
+  const cut = 1.6;
+  return (
+    <DiagramFrame
+      title="커널의 아이디어: 차원을 올리면 직선으로 갈라진다"
+      caption="왼쪽: 1차원 위에서 파란 점은 가운데에, 주황 점은 양쪽 바깥에 있다. 문턱(점선)을 어디에 하나 그어도 두 클래스를 가를 수 없다. 오른쪽: 각 점 x를 (x, x²)로 옮기면 바깥 점은 위로 높이 올라가고 안쪽 점은 아래에 남아, 수평선 x² = 1.6 하나로 깔끔하게 갈린다. 이 직선을 원래 1차원으로 되돌리면 |x| < 1.26이라는 구간 경계가 된다. RBF 같은 커널은 이런 고차원 사상을 직접 계산하지 않고 점들 사이의 내적만으로 같은 효과를 낸다(커널 트릭)."
+      viewBox="0 0 720 250"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={165} y={40} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        1차원: 문턱 하나로는 못 가른다
+      </text>
+      <line x1={lx(-3)} x2={lx(3)} y1={140} y2={140} stroke={inkMuted} strokeWidth={1.2} />
+      {[-3, -2, -1, 0, 1, 2, 3].map((t) => (
+        <g key={t}>
+          <line x1={lx(t)} x2={lx(t)} y1={140} y2={145} stroke={inkMuted} />
+          <text x={lx(t)} y={160} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+            {String(t).replace("-", "−")}
+          </text>
+        </g>
+      ))}
+      <line x1={lx(1.25)} x2={lx(1.25)} y1={98} y2={182} stroke={colors.red} strokeWidth={1.2} strokeDasharray="4 3" />
+      <text x={lx(1.25)} y={196} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.red}>
+        ✗ 어디에 그어도 한쪽이 섞인다
+      </text>
+      {inner.map((x) => (
+        <g key={`i${x}`}>{classMark(lx(x), 140, 0, 5.5)}</g>
+      ))}
+      {outer.map((x) => (
+        <g key={`o${x}`}>{classMark(lx(x), 140, 1, 5)}</g>
+      ))}
+      <Arr x1={316} y1={140} x2={392} y2={140} color={inkSecondary} marker={`${P}-ink`} width={2} />
+      <text x={354} y={130} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink} fontFamily={mono}>
+        φ(x) = (x, x²)
+      </text>
+      <Axes {...G} sx={rx} sy={ry} xTicks={[-3, -2, -1, 0, 1, 2, 3]} yTicks={[0, 2, 4, 6]} fmtX={(v) => String(v).replace("-", "−")} xLabel="x" />
+      <text x={G.left + 6} y={G.top + 4} fontSize={11} fontWeight={700} fill={inkSecondary}>
+        x²
+      </text>
+      <path d={linePath(sample((x) => x * x, -2.68, 2.68, 120).map(([x, y]) => [rx(x), ry(y)] as [number, number]))} fill="none" stroke={inkMuted} strokeWidth={1.2} strokeDasharray="2 3" />
+      <line x1={G.left} x2={G.left + G.width} y1={ry(cut)} y2={ry(cut)} stroke={colors.green} strokeWidth={2} />
+      <text x={G.left + 6} y={ry(cut) - 6} fontSize={10.5} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        직선 x² = 1.6 하나로 갈린다
+      </text>
+      {inner.map((x) => (
+        <g key={`ri${x}`}>{classMark(rx(x), ry(x * x), 0, 5.5)}</g>
+      ))}
+      {outer.map((x) => (
+        <g key={`ro${x}`}>{classMark(rx(x), ry(x * x), 1, 5)}</g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function KmeansIterations() {
+  // 세 덩어리(시드 고정)에 K = 3, 나쁜 초기 중심 (0.5, 1)·(1.5, 0.5)·(1, 2.5)에서 Lloyd 반복: 할당 → 평균으로 갱신 → 할당이 그대로면 멈춤.
+  const rand = seeded(3);
+  const pts: number[][] = [];
+  for (const [cx, cy] of [
+    [2, 2],
+    [6, 2.5],
+    [4, 6],
+  ]) {
+    for (let i = 0; i < 15; i++) pts.push([cx + 0.75 * gaussian(rand), cy + 0.75 * gaussian(rand)]);
+  }
+  const assign = (C: number[][]) => pts.map((p) => C.map((c) => (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2).reduce((bi, d, i, arr) => (d < arr[bi] ? i : bi), 0));
+  const hist: number[][][] = [
+    [
+      [0.5, 1],
+      [1.5, 0.5],
+      [1, 2.5],
+    ],
+  ];
+  let prev: number[] | null = null;
+  for (let it = 0; it < 20; it++) {
+    const C = hist[hist.length - 1];
+    const a = assign(C);
+    if (prev && a.every((v, i) => v === prev![i])) break;
+    prev = a;
+    hist.push(
+      C.map((c, k) => {
+        const m = pts.filter((_, i) => a[i] === k);
+        return m.length ? [m.reduce((s, p) => s + p[0], 0) / m.length, m.reduce((s, p) => s + p[1], 0) / m.length] : c;
+      }),
+    );
+  }
+  const updates = hist.length - 1;
+  const shown = [0, 1, 2, updates];
+  const cols = [colors.blue, colors.orange, colors.green];
+  const pw = 160;
+  return (
+    <DiagramFrame
+      title="K-Means: 할당과 갱신을 바뀌지 않을 때까지 반복"
+      caption={`점의 색은 그 시점의 중심(×) 중 가장 가까운 것에 배정된 결과(할당)이고, 옅은 원과 점선은 중심이 지나온 자리다. 일부러 왼쪽 아래에 몰아 둔 나쁜 초기 중심에서 출발해도, 할당 → 각 군집의 평균으로 중심 갱신을 되풀이하면 중심이 세 덩어리의 가운데로 옮겨 간다. 이 데이터에서는 ${updates}번 갱신한 뒤 할당이 더 이상 바뀌지 않아 멈췄다. 초기 중심에 따라 결과가 달라질 수 있어 실무에서는 k-means++로 여러 번 시작해 가장 좋은 결과를 고른다.`}
+      viewBox="0 0 720 214"
+      minWidth={600}
+    >
+      {shown.map((h, j) => {
+        const x0 = 16 + j * (pw + 16);
+        const y0 = 30;
+        const sx = linear(0, 7.5, x0, x0 + pw);
+        const sy = linear(0, 7.5, y0 + pw, y0);
+        const C = hist[h];
+        const a = assign(C);
+        return (
+          <g key={j}>
+            <text x={x0 + pw / 2} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+              {h === 0 ? "초기 중심 + 첫 할당" : h === updates ? `수렴 (${updates}번 갱신)` : `${h}번 갱신 후`}
+            </text>
+            <rect x={x0} y={y0} width={pw} height={pw} fill="none" stroke="var(--border-strong)" />
+            {pts.map((p, i) => (
+              <circle key={i} cx={sx(p[0])} cy={sy(p[1])} r={3.4} fill={cols[a[i]]} fillOpacity={0.8} />
+            ))}
+            {C.map((_, k) => {
+              const trail = hist.slice(0, h + 1).map((hc) => hc[k]);
+              return (
+                <g key={k}>
+                  {trail.length > 1 && <path d={linePath(trail.map((c) => [sx(c[0]), sy(c[1])] as [number, number]))} fill="none" stroke={cols[k]} strokeWidth={1.4} strokeDasharray="3 2" />}
+                  {trail.slice(0, -1).map((c, t) => (
+                    <circle key={t} cx={sx(c[0])} cy={sy(c[1])} r={3.2} fill="var(--surface-card)" stroke={cols[k]} strokeWidth={1.2} />
+                  ))}
+                </g>
+              );
+            })}
+            {C.map((c, k) => (
+              <g key={`x${k}`}>
+                <path d={`M${sx(c[0]) - 6},${sy(c[1]) - 6} L${sx(c[0]) + 6},${sy(c[1]) + 6} M${sx(c[0]) - 6},${sy(c[1]) + 6} L${sx(c[0]) + 6},${sy(c[1]) - 6}`} stroke="var(--surface-card)" strokeWidth={5} />
+                <path d={`M${sx(c[0]) - 6},${sy(c[1]) - 6} L${sx(c[0]) + 6},${sy(c[1]) + 6} M${sx(c[0]) - 6},${sy(c[1]) + 6} L${sx(c[0]) + 6},${sy(c[1]) - 6}`} stroke={cols[k]} strokeWidth={2.6} />
+              </g>
+            ))}
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function PcaProjection() {
+  // 상관된 2차원 점 40개(시드 고정): 공분산 행렬의 고유벡터가 PC1·PC2, 점을 PC1 위로 수직 투영하면 1차원 좌표가 된다.
+  const P = "pcp";
+  const rand = seeded(9);
+  const pts: number[][] = [];
+  for (let i = 0; i < 40; i++) {
+    const x = gaussian(rand);
+    pts.push([x, 0.8 * x + 0.45 * gaussian(rand)]);
+  }
+  const n = pts.length;
+  const mx = pts.reduce((s, p) => s + p[0], 0) / n;
+  const my = pts.reduce((s, p) => s + p[1], 0) / n;
+  const a = pts.reduce((s, p) => s + (p[0] - mx) ** 2, 0) / n;
+  const c = pts.reduce((s, p) => s + (p[1] - my) ** 2, 0) / n;
+  const b = pts.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0) / n;
+  const l1 = (a + c) / 2 + Math.sqrt(((a - c) / 2) ** 2 + b * b);
+  const l2 = (a + c) / 2 - Math.sqrt(((a - c) / 2) ** 2 + b * b);
+  const vlen = Math.hypot(b, l1 - a);
+  const v1 = [b / vlen, (l1 - a) / vlen];
+  const v2 = [-v1[1], v1[0]];
+  const ratio = l1 / (l1 + l2);
+  const G = { left: 30, top: 14, width: 236, height: 236 };
+  const sx = linear(-3.2, 3.2, G.left, G.left + G.width);
+  const sy = linear(-3.2, 3.2, G.top + G.height, G.top);
+  const proj = pts.map((p) => (p[0] - mx) * v1[0] + (p[1] - my) * v1[1]);
+  const tMax = Math.max(...proj.map((t) => Math.abs(t))) * 1.05;
+  const tx = linear(-tMax, tMax, 330, 690);
+  return (
+    <DiagramFrame
+      title="PCA: 가장 넓게 퍼진 방향으로 투영해 차원을 줄인다"
+      caption={`파란 점은 서로 상관된 두 특징이다. 공분산 행렬의 가장 큰 고윳값에 대응하는 고유벡터가 PC1(보라 직선)으로, 데이터가 가장 넓게 퍼진 방향이다. PC2는 그에 수직이다. 각 점을 PC1 위로 수직으로 내리면(회색 선) 2차원 점이 PC1 좌표 하나로 줄어든다(오른쪽 위). 회색 선의 길이, 즉 PC2 방향의 흩어짐이 버려지는 정보다. 이 데이터에서는 PC1 하나가 전체 분산의 ${(ratio * 100).toFixed(0)}%를 설명한다.`}
+      viewBox="0 0 720 262"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ violet: colors.violet, aqua: colors.aqua }} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-3, -2, -1, 0, 1, 2, 3]} yTicks={[-3, -2, -1, 0, 1, 2, 3]} fmtX={() => ""} fmtY={() => ""} />
+      <clipPath id={`${P}-clip`}>
+        <rect {...{ x: G.left, y: G.top, width: G.width, height: G.height }} />
+      </clipPath>
+      <g clipPath={`url(#${P}-clip)`}>
+        <line x1={sx(mx - 5 * v1[0])} y1={sy(my - 5 * v1[1])} x2={sx(mx + 5 * v1[0])} y2={sy(my + 5 * v1[1])} stroke={colors.violet} strokeWidth={2} />
+        {pts.map((p, i) => (
+          <line key={i} x1={sx(p[0])} y1={sy(p[1])} x2={sx(mx + proj[i] * v1[0])} y2={sy(my + proj[i] * v1[1])} stroke={inkMuted} strokeWidth={0.9} />
+        ))}
+        {pts.map((p, i) => (
+          <circle key={`f${i}`} cx={sx(mx + proj[i] * v1[0])} cy={sy(my + proj[i] * v1[1])} r={2.2} fill={colors.violet} />
+        ))}
+        {pts.map((p, i) => (
+          <circle key={`p${i}`} cx={sx(p[0])} cy={sy(p[1])} r={3.6} fill={colors.blue} fillOpacity={0.85} />
+        ))}
+      </g>
+      <Arr x1={sx(mx)} y1={sy(my)} x2={sx(mx + 2 * Math.sqrt(l1) * v1[0])} y2={sy(my + 2 * Math.sqrt(l1) * v1[1])} color={colors.violet} marker={`${P}-violet`} width={3} />
+      <Arr x1={sx(mx)} y1={sy(my)} x2={sx(mx + 2 * Math.sqrt(l2) * v2[0])} y2={sy(my + 2 * Math.sqrt(l2) * v2[1])} color={colors.aqua} marker={`${P}-aqua`} width={3} />
+      <text x={sx(mx + 2 * Math.sqrt(l1) * v1[0]) + 6} y={sy(my + 2 * Math.sqrt(l1) * v1[1]) + 14} fontSize={11.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        PC1
+      </text>
+      <text x={sx(mx + 2 * Math.sqrt(l2) * v2[0]) - 6} y={sy(my + 2 * Math.sqrt(l2) * v2[1]) - 4} textAnchor="end" fontSize={11.5} fontWeight={800} fill={colors.aqua} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        PC2
+      </text>
+      <text x={330} y={34} fontSize={12} fontWeight={800} fill={ink}>
+        PC1 좌표만 남긴 1차원 표현
+      </text>
+      <line x1={330} x2={690} y1={70} y2={70} stroke={colors.violet} strokeWidth={1.6} />
+      {proj.map((t, i) => (
+        <circle key={i} cx={tx(t)} cy={70} r={3.4} fill={colors.violet} fillOpacity={0.6} />
+      ))}
+      <text x={330} y={128} fontSize={12} fontWeight={800} fill={ink}>
+        분산이 나뉘는 비율 (고윳값)
+      </text>
+      <rect x={330} y={140} width={360 * ratio} height={28} fill={colors.violet} fillOpacity={0.7} />
+      <rect x={330 + 360 * ratio} y={140} width={360 * (1 - ratio)} height={28} fill={colors.aqua} fillOpacity={0.6} />
+      <text x={340} y={159} fontSize={11.5} fontWeight={800} fill={ink}>
+        {`PC1 ${(ratio * 100).toFixed(0)}%`}
+      </text>
+      <text x={690} y={186} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.aqua}>
+        {`PC2 ${((1 - ratio) * 100).toFixed(0)}% ↑`}
+      </text>
+      <Lines x={330} y={214} lines={["PC1 하나만 남겨도(2차원 → 1차원)", "분산 대부분이 보존된다"]} size={11} anchor="start" color={inkSecondary} />
+    </DiagramFrame>
+  );
+}
+
+export function PcaCumulative() {
+  // 본문 코드(유방암 데이터 30특징, 표준화 후 PCA)의 explained_variance_ratio_ 앞 15개. 표준화 없이는 PC1 = 0.982.
+  const ratio = [0.4427, 0.1897, 0.0939, 0.066, 0.055, 0.0402, 0.0225, 0.0159, 0.0139, 0.0117, 0.0098, 0.0087, 0.008, 0.0052, 0.0031];
+  const cum = ratio.reduce<number[]>((acc, r) => [...acc, (acc[acc.length - 1] ?? 0) + r], []);
+  const G = { left: 50, top: 16, width: 400, height: 180 };
+  const sx = linear(0.4, 15.6, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const bw = 18;
+  const k95 = cum.findIndex((c) => c >= 0.95) + 1;
+  return (
+    <DiagramFrame
+      title="주성분 개수는 누적 설명 비율로 고른다 (유방암 데이터, 특징 30개)"
+      caption="본문 코드의 결과다. 막대는 표준화한 뒤 각 주성분이 설명하는 분산의 비율, 선은 앞에서부터 더한 누적 비율이다. PC1이 44%, PC2까지 63%를 설명하고, 처음 10개가 95% 선을 넘는다. 30차원을 10차원으로 줄여도 분산의 95%가 남는다는 뜻이다. 오른쪽: 표준화하지 않으면 값이 큰 몇 개 특징(면적 등)의 분산이 압도해 PC1 하나가 98%를 설명하는 것처럼 보인다. 단위 때문에 생긴 착시이므로 PCA 앞에는 표준화를 둔다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 5, 10, 15]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="주성분 번호" />
+      {ratio.map((r, i) => (
+        <rect key={i} x={sx(i + 1) - bw / 2} y={sy(r)} width={bw} height={sy(0) - sy(r)} fill={colors.blue} fillOpacity={i < k95 ? 0.7 : 0.3} />
+      ))}
+      <line x1={G.left} x2={G.left + G.width} y1={sy(0.95)} y2={sy(0.95)} stroke={colors.red} strokeWidth={1.2} strokeDasharray="5 3" />
+      <text x={G.left + G.width - 4} y={sy(0.95) + 14} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.red}>
+        95%
+      </text>
+      <path d={linePath(cum.map((c, i) => [sx(i + 1), sy(c)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.2} />
+      {cum.map((c, i) => (
+        <circle key={i} cx={sx(i + 1)} cy={sy(c)} r={i + 1 === k95 ? 5 : 3} fill={colors.violet} stroke={i + 1 === k95 ? "var(--surface-card)" : "none"} strokeWidth={1.5} />
+      ))}
+      <text x={sx(k95)} y={sy(cum[k95 - 1]) - 12} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`${k95}개 → ${(cum[k95 - 1] * 100).toFixed(1)}%`}
+      </text>
+      <text x={sx(1) + 14} y={sy(ratio[0]) + 4} fontSize={10.5} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        PC1 44.3%
+      </text>
+      <text x={sx(3)} y={sy(cum[2]) - 10} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        누적
+      </text>
+      <text x={586} y={34} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        PC1이 설명하는 비율
+      </text>
+      {[
+        { t: "표준화 없이", v: 0.982, c: colors.red },
+        { t: "표준화 후", v: 0.4427, c: colors.blue },
+      ].map((r, i) => {
+        const y = 54 + i * 62;
+        return (
+          <g key={r.t}>
+            <text x={486} y={y + 12} fontSize={11} fontWeight={700} fill={ink}>
+              {r.t}
+            </text>
+            <rect x={486} y={y + 20} width={200} height={20} rx={3} fill="var(--border-hairline)" />
+            <rect x={486} y={y + 20} width={200 * r.v} height={20} rx={3} fill={r.c} fillOpacity={0.7} />
+            <text x={486 + 200 * r.v - 6} y={y + 34} textAnchor="end" fontSize={11} fontWeight={800} fill={ink}>
+              {`${(r.v * 100).toFixed(1)}%`}
+            </text>
+          </g>
+        );
+      })}
+      <Lines x={486} y={196} lines={["단위가 큰 특징 하나가", "첫 주성분을 독차지한다"]} size={10.5} anchor="start" color={inkSecondary} />
+    </DiagramFrame>
+  );
+}
+
+export function ColumnTransformerFlow() {
+  // 본문 코드의 df(나이·소득·도시)를 ColumnTransformer에 넣은 실제 출력(scikit-learn 1.9로 확인).
+  const P = "ctf";
+  const raw = [
+    ["25", "210", "서울"],
+    ["47", "NaN", "부산"],
+    ["33", "260", "서울"],
+    ["52", "400", "대구"],
+    ["41", "NaN", "부산"],
+  ];
+  const out = [
+    ["−1.51", "−1.06", "0", "0", "1"],
+    ["0.77", "−0.28", "0", "1", "0"],
+    ["−0.68", "−0.28", "0", "0", "1"],
+    ["1.28", "1.91", "1", "0", "0"],
+    ["0.14", "−0.28", "0", "1", "0"],
+  ];
+  const rh = 22;
+  const top = 44;
+  const lx = [14, 60, 110];
+  const lw = [46, 50, 48];
+  const ox = 404;
+  const ow = 60;
+  const heads = ["나이", "소득", "대구", "부산", "서울"];
+  return (
+    <DiagramFrame
+      title="ColumnTransformer: 열 종류마다 다른 전처리를 하나로 묶는다"
+      caption="본문 코드를 실제로 실행한 결과다. 숫자 열(나이·소득)은 결측을 중앙값 260으로 채운 뒤(노란 칸) 평균 0, 표준편차 1로 표준화하고, 범주 열(도시)은 원-핫 열 3개로 펼친다. 결과는 숫자 2열 + 도시 3열의 5열 표다. 이 전처리 전체를 make_pipeline으로 모델 앞에 붙이면 fit 한 번에 훈련 데이터의 중앙값·평균·표준편차·범주 목록을 배우므로, 교차검증의 fold마다 검증 데이터가 새어 들어가지 않는다."
+      viewBox="0 0 720 262"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, blue: colors.blue, orange: colors.orange }} />
+      <text x={86} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        원본 df
+      </text>
+      {["나이", "소득", "도시"].map((h, j) => (
+        <text key={h} x={lx[j] + lw[j] / 2} y={top - 6} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={j < 2 ? colors.blue : colors.orange}>
+          {h}
+        </text>
+      ))}
+      {raw.map((row, i) =>
+        row.map((v, j) => (
+          <g key={`${i}-${j}`}>
+            <rect x={lx[j]} y={top + i * rh} width={lw[j]} height={rh} fill={v === "NaN" ? colors.red : j < 2 ? colors.blue : colors.orange} fillOpacity={v === "NaN" ? 0.18 : 0.07} stroke="var(--border-strong)" strokeWidth={0.8} />
+            <text x={lx[j] + lw[j] / 2} y={top + i * rh + 15} textAnchor="middle" fontSize={10.5} fontWeight={v === "NaN" ? 800 : 400} fill={v === "NaN" ? colors.red : ink} fontFamily={j < 2 ? mono : undefined}>
+              {v}
+            </text>
+          </g>
+        )),
+      )}
+      <Arr x1={162} y1={70} x2={178} y2={70} color={colors.blue} marker={`${P}-blue`} width={1.6} />
+      <Arr x1={162} y1={128} x2={178} y2={150} color={colors.orange} marker={`${P}-orange`} width={1.6} />
+      <Tag x={182} y={36} w={206} h={68} lines={["num: 나이, 소득", "SimpleImputer(strategy='median')", "→ StandardScaler()"]} color={colors.blue} size={11} />
+      <Tag x={182} y={122} w={206} h={60} lines={["cat: 도시", "OneHotEncoder(", "handle_unknown='ignore')"]} color={colors.orange} size={11} />
+      <Arr x1={390} y1={70} x2={400} y2={70} color={colors.blue} marker={`${P}-blue`} width={1.6} />
+      <Arr x1={390} y1={150} x2={400} y2={132} color={colors.orange} marker={`${P}-orange`} width={1.6} />
+      <text x={ox + (5 * ow) / 2} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        fit_transform 결과 (5열)
+      </text>
+      {heads.map((h, j) => (
+        <text key={h} x={ox + j * ow + ow / 2} y={top - 6} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={j < 2 ? colors.blue : colors.orange}>
+          {h}
+        </text>
+      ))}
+      {out.map((row, i) =>
+        row.map((v, j) => {
+          const imputed = j === 1 && raw[i][1] === "NaN";
+          return (
+            <g key={`o${i}-${j}`}>
+              <rect x={ox + j * ow} y={top + i * rh} width={ow} height={rh} fill={imputed ? colors.yellow : j < 2 ? colors.blue : colors.orange} fillOpacity={imputed ? 0.35 : j >= 2 && v === "1" ? 0.3 : 0.07} stroke="var(--border-strong)" strokeWidth={0.8} />
+              <text x={ox + j * ow + ow / 2} y={top + i * rh + 15} textAnchor="middle" fontSize={10.5} fontWeight={j >= 2 && v === "1" ? 800 : 400} fill={ink} fontFamily={mono}>
+                {v}
+              </text>
+            </g>
+          );
+        }),
+      )}
+      <text x={ox + ow} y={top + 5 * rh + 16} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        표준화(평균 0, 표준편차 1)
+      </text>
+      <text x={ox + 3.5 * ow} y={top + 5 * rh + 16} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        도시_대구 · 도시_부산 · 도시_서울
+      </text>
+      <rect x={14} y={204} width={692} height={40} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={360} y={222} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink} fontFamily={mono}>
+        model = make_pipeline(pre, LogisticRegression())
+      </text>
+      <text x={360} y={237} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        전처리 + 모델이 하나의 추정기: fit 한 번에 훈련 데이터의 중앙값·평균·범주 목록까지 배운다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function GridVsRandom() {
+  // Bergstra & Bengio(2012)의 그림을 다시 그렸다: 같은 9번의 시도에서 격자는 중요한 축의 값을 3개만, 무작위는 9개를 시험한다.
+  const f = (x: number) => 0.2 + 0.78 * Math.exp(-(((x - 0.72) / 0.09) ** 2));
+  const g = (y: number) => 0.5 + 0.04 * Math.sin(6 * y);
+  const grid = [1 / 6, 1 / 2, 5 / 6].flatMap((x) => [1 / 6, 1 / 2, 5 / 6].map((y) => [x, y]));
+  const rnd = [
+    [0.08, 0.62],
+    [0.27, 0.15],
+    [0.35, 0.81],
+    [0.49, 0.44],
+    [0.58, 0.93],
+    [0.69, 0.29],
+    [0.76, 0.55],
+    [0.88, 0.07],
+    [0.95, 0.71],
+  ];
+  const panel = (x0: number, pts: number[][], title: string, col: string) => {
+    const S = 168;
+    const y0 = 76;
+    const sx = linear(0, 1, x0, x0 + S);
+    const sy = linear(0, 1, y0 + S, y0);
+    const fy = linear(0, 1, y0 - 8, y0 - 56);
+    const gx = linear(0.3, 0.7, x0 - 8, x0 - 40);
+    const best = pts.reduce((bi, p, i) => (f(p[0]) > f(pts[bi][0]) ? i : bi), 0);
+    return (
+      <g>
+        <text x={x0 + S / 2} y={14} textAnchor="middle" fontSize={12} fontWeight={800} fill={col}>
+          {title}
+        </text>
+        <path d={linePath(sample(f, 0, 1, 160).map(([x, y]) => [sx(x), fy(y)] as [number, number]))} fill="none" stroke={inkMuted} strokeWidth={1.6} />
+        <path d={linePath(sample(g, 0, 1, 60).map(([y, v]) => [gx(v), sy(y)] as [number, number]))} fill="none" stroke={inkMuted} strokeWidth={1.6} />
+        <rect x={x0} y={y0} width={S} height={S} fill="none" stroke="var(--border-strong)" />
+        <text x={x0 - 6} y={fy(0.2) + 4} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+          검증 점수
+        </text>
+        {pts.map((p, i) => (
+          <g key={i}>
+            <line x1={sx(p[0])} x2={sx(p[0])} y1={sy(p[1])} y2={fy(f(p[0]))} stroke={col} strokeWidth={0.8} strokeDasharray="2 3" opacity={0.6} />
+            <circle cx={sx(p[0])} cy={fy(f(p[0]))} r={i === best ? 5 : 3.5} fill={col} stroke={i === best ? "var(--surface-card)" : "none"} strokeWidth={1.5} />
+            <circle cx={sx(p[0])} cy={sy(p[1])} r={5} fill={col} fillOpacity={0.85} />
+          </g>
+        ))}
+        <text x={x0 + S / 2} y={y0 + S + 16} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+          중요한 하이퍼파라미터 →
+        </text>
+        <text transform={`translate(${x0 - 48}, ${y0 + S / 2}) rotate(-90)`} textAnchor="middle" fontSize={10} fontWeight={700} fill={inkSecondary}>
+          덜 중요한 하이퍼파라미터 →
+        </text>
+        <text x={x0 + S / 2} y={y0 + S + 34} textAnchor="middle" fontSize={11} fontWeight={800} fill={col}>
+          {`중요한 축의 값 ${new Set(pts.map((p) => p[0].toFixed(3))).size}개 · 찾은 최고 점수 ${f(pts[best][0]).toFixed(2)}`}
+        </text>
+      </g>
+    );
+  };
+  return (
+    <DiagramFrame
+      title="같은 9번이라면: 격자 탐색 vs 무작위 탐색"
+      caption="네모 안의 점은 시험한 하이퍼파라미터 조합이고, 위쪽 곡선은 중요한 하이퍼파라미터에 따른 검증 점수, 왼쪽 곡선은 덜 중요한 하이퍼파라미터의 영향(거의 평평)이다. 격자 탐색(왼쪽)은 3 × 3 = 9번을 시도해도 중요한 축에서는 같은 값 3개를 세 번씩 반복해 시험할 뿐이라 점수가 높은 좁은 구간을 놓친다. 무작위 탐색(오른쪽)은 같은 9번으로 중요한 축의 서로 다른 값 9개를 시험한다. 중요한 하이퍼파라미터가 한두 개뿐인 경우가 많아 같은 예산이면 무작위 탐색이 유리한 경우가 많다(Bergstra & Bengio, 2012의 그림을 다시 그림)."
+      viewBox="0 0 720 300"
+      minWidth={600}
+    >
+      {panel(110, grid, "격자 탐색 (GridSearchCV)", colors.blue)}
+      {panel(460, rnd, "무작위 탐색 (RandomizedSearchCV)", colors.green)}
+    </DiagramFrame>
+  );
+}
+
+export function CvSplitters() {
+  // 환자 A~D가 샘플 3개씩(총 12개). 무작위 KFold의 한 fold, GroupKFold(4), 그리고 본문 코드의 TimeSeriesSplit(n_splits=3).
+  const cw = 24;
+  const gap = 2;
+  const pat = ["A", "A", "A", "B", "B", "B", "C", "C", "C", "D", "D", "D"];
+  const cellFill = (role: "tr" | "va" | "no") => (role === "tr" ? colors.blue : role === "va" ? colors.orange : inkMuted);
+  const row = (x0: number, y: number, roles: ("tr" | "va" | "no")[], labels: string[], key: string) => (
+    <g key={key}>
+      {roles.map((r, i) => (
+        <g key={i}>
+          <rect x={x0 + i * (cw + gap)} y={y} width={cw} height={20} rx={3} fill={cellFill(r)} fillOpacity={r === "no" ? 0.08 : r === "va" ? 0.55 : 0.28} stroke={cellFill(r)} strokeWidth={1} strokeDasharray={r === "no" ? "2 2" : undefined} />
+          <text x={x0 + i * (cw + gap) + cw / 2} y={y + 14} textAnchor="middle" fontSize={10} fontWeight={700} fill={r === "no" ? inkMuted : ink}>
+            {labels[i]}
+          </text>
+        </g>
+      ))}
+    </g>
+  );
+  const kf: ("tr" | "va")[] = pat.map((_, i) => ([1, 5, 7].includes(i) ? "va" : "tr"));
+  return (
+    <DiagramFrame
+      title="나누는 단위가 누수를 막는다: KFold · GroupKFold · TimeSeriesSplit"
+      caption="파랑은 훈련, 주황은 검증, 점선은 쓰지 않는 샘플이다. 위 왼쪽: 환자 A~D의 샘플을 무작위로 나누면, 검증에 들어간 A·B·C 샘플의 같은 환자 기록이 훈련에도 남아 모델이 환자를 외워서 맞힌다. 위 오른쪽: GroupKFold는 환자 단위로 fold를 만들어 검증 환자를 훈련에서 완전히 뺀다. 아래: 본문 코드의 TimeSeriesSplit(n_splits=3)은 훈련 구간을 [0~2] → [0~5] → [0~8]로 늘려 가며 항상 바로 뒤의 3개로 검증한다. 미래 데이터는 훈련에 쓰지 않는다."
+      viewBox="0 0 720 284"
+      minWidth={620}
+    >
+      <text x={20} y={18} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        무작위 KFold의 한 fold ✗
+      </text>
+      {row(20, 30, kf, pat, "kf")}
+      {[1, 5, 7].map((i) => (
+        <text key={i} x={20 + i * (cw + gap) + cw / 2} y={64} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.red}>
+          ↑
+        </text>
+      ))}
+      <Lines x={20} y={84} lines={["검증의 A·B·C와 같은 환자의 다른 샘플이", "훈련에 있다 → 환자를 외워서 맞힌다"]} size={10.5} anchor="start" color={colors.red} weight={700} />
+      <text x={20} y={136} fontSize={10} fill={inkSecondary}>
+        같은 글자 = 같은 환자
+      </text>
+      <text x={384} y={18} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        GroupKFold(n_splits=4) ✓
+      </text>
+      {[0, 1, 2, 3].map((k) => (
+        <g key={k}>
+          <text x={378} y={44 + k * 26} textAnchor="end" fontSize={10} fill={inkSecondary}>
+            {`fold ${k + 1}`}
+          </text>
+          {row(
+            384,
+            30 + k * 26,
+            pat.map((p) => (p === "ABCD"[k] ? "va" : "tr")),
+            pat,
+            `g${k}`,
+          )}
+        </g>
+      ))}
+      <line x1={14} x2={706} y1={150} y2={150} stroke="var(--border-hairline)" />
+      <text x={20} y={172} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        TimeSeriesSplit(n_splits=3) ✓
+      </text>
+      {[0, 1, 2].map((k) => (
+        <g key={k}>
+          <text x={110} y={198 + k * 26} textAnchor="end" fontSize={10} fill={inkSecondary}>
+            {`분할 ${k + 1}`}
+          </text>
+          {row(
+            116,
+            184 + k * 26,
+            pat.map((_, i) => (i < 3 * (k + 1) ? "tr" : i < 3 * (k + 2) ? "va" : "no")),
+            pat.map((_, i) => String(i)),
+            `t${k}`,
+          )}
+        </g>
+      ))}
+      <Arr x1={116} y1={268} x2={116 + 12 * (cw + gap) - gap} y2={268} color={inkMuted} marker="cvs-ink" width={1.2} />
+      <Markers prefix="cvs" colors={{ ink: inkMuted }} />
+      <text x={116 + 6 * (cw + gap)} y={281} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        시간 →
+      </text>
+      <Tag x={470} y={190} w={236} h={64} lines={["과거로 학습하고 미래로 검증:", "운영 환경과 같은 조건", "(무작위로 섞으면 내일로 어제를 맞힌다)"]} color={colors.green} size={10.5} weight={600} />
+    </DiagramFrame>
+  );
+}
+
+export function PrVsRoc() {
+  // 이항 정규 모델: 음성 점수 ~ N(0, 1), 양성 점수 ~ N(1.6, 1). 같은 분류기를 양성 비율 50%·10%·1%에 적용.
+  const d = 1.6;
+  const ts = Array.from({ length: 401 }, (_, i) => 7 - i * 0.03);
+  const roc = ts.map((t) => [normCdf(-t), normCdf(d - t)]);
+  const auc = normCdf(d / Math.SQRT2);
+  const pis = [
+    { pi: 0.5, c: colors.blue, t: "양성 50%" },
+    { pi: 0.1, c: colors.orange, t: "양성 10%" },
+    { pi: 0.01, c: colors.red, t: "양성 1%" },
+  ].map((o) => {
+    const pr = roc.map(([fpr, tpr]) => [tpr, (o.pi * tpr) / (o.pi * tpr + (1 - o.pi) * fpr)]);
+    let ap = 0;
+    for (let i = 1; i < pr.length; i++) ap += (pr[i][0] - pr[i - 1][0]) * pr[i][1];
+    return { ...o, pr, ap };
+  });
+  const S = 186;
+  const L = { left: 52, top: 22, width: S, height: S };
+  const R = { left: 330, top: 22, width: S, height: S };
+  const lx = linear(0, 1, L.left, L.left + S);
+  const ly = linear(0, 1, L.top + S, L.top);
+  const rx = linear(0, 1, R.left, R.left + S);
+  const ry = linear(0, 1, R.top + S, R.top);
+  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  return (
+    <DiagramFrame
+      title="같은 분류기, 다른 양성 비율: ROC는 그대로, PR은 달라진다"
+      caption={`점수 분포가 같은 하나의 분류기(음성 ~ N(0, 1), 양성 ~ N(1.6, 1))를 양성 비율만 바꿔 평가했다. ROC 곡선은 TPR과 FPR만 쓰므로 세 경우가 완전히 같은 곡선이고 AUC도 ${auc.toFixed(2)}로 같다. PR 곡선은 Precision에 양성 비율이 들어가므로 양성이 드물수록 아래로 내려앉는다. 무작위 분류기의 기준선(점선)도 양성 비율과 같다. 양성 1%에서 AP ${pis[2].ap.toFixed(2)}는 낮아 보이지만 기준선 0.01의 약 ${Math.round(pis[2].ap / 0.01)}배다. 양성이 드문 문제에서는 ROC-AUC만 보지 말고 PR 곡선과 AP를 함께 본다.`}
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Axes {...L} sx={lx} sy={ly} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="FPR (위양성률)" yLabel="TPR (Recall)" />
+      <line x1={lx(0)} y1={ly(0)} x2={lx(1)} y2={ly(1)} stroke={inkMuted} strokeDasharray="4 3" />
+      <path d={linePath(roc.map(([x, y]) => [lx(x), ly(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <text x={lx(0.5)} y={ly(0.5) + 34} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`세 경우 모두 AUC ${auc.toFixed(2)}`}
+      </text>
+      <text x={L.left + S / 2} y={12} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        ROC 곡선
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="Recall" yLabel="Precision" />
+      <text x={R.left + S / 2} y={12} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        PR 곡선
+      </text>
+      {pis.map((o) => (
+        <g key={o.pi}>
+          <line x1={rx(0)} x2={rx(1)} y1={ry(o.pi)} y2={ry(o.pi)} stroke={o.c} strokeWidth={1} strokeDasharray="4 3" />
+          <path d={linePath(o.pr.filter(([r]) => r > 0.002).map(([r, p]) => [rx(r), ry(p)] as [number, number]))} fill="none" stroke={o.c} strokeWidth={2.2} />
+        </g>
+      ))}
+      {pis.map((o, i) => (
+        <g key={`l${o.pi}`}>
+          <line x1={548} x2={572} y1={60 + i * 44} y2={60 + i * 44} stroke={o.c} strokeWidth={2.4} />
+          <text x={580} y={58 + i * 44} fontSize={11.5} fontWeight={800} fill={o.c}>
+            {o.t}
+          </text>
+          <text x={580} y={74 + i * 44} fontSize={10.5} fill={inkSecondary}>
+            {`AP ${o.ap.toFixed(2)} · 기준선 ${pct(o.pi)}`}
+          </text>
+        </g>
+      ))}
+      <line x1={548} x2={572} y1={196} y2={196} stroke={inkMuted} strokeDasharray="4 3" />
+      <text x={580} y={200} fontSize={10.5} fill={inkSecondary}>
+        점선 = 무작위 분류기
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function CostThreshold() {
+  // 본문 코드: p ~ Beta(1, 8)이고 보정된 확률(실제로 확률 p로 양성), C_FP = 1, C_FN = 10, n = 100,000.
+  // 기대 비용 곡선은 해석적으로: E[FP] = n·(8/9)(1−t)^9, E[FN] = n·(1/9 − (1−t)^8 + (8/9)(1−t)^9). 점은 본문 코드의 실제 출력.
+  const n = 100000;
+  const fp = (t: number) => n * (8 / 9) * (1 - t) ** 9;
+  const fn = (t: number) => n * (1 / 9 - (1 - t) ** 8 + (8 / 9) * (1 - t) ** 9);
+  const cost = (t: number) => fp(t) + 10 * fn(t);
+  const runs = [
+    { t: 0.5, c: 107696 },
+    { t: 0.3, c: 91232 },
+    { t: 0.2, c: 73236 },
+    { t: 1 / 11, c: 58972 },
+    { t: 0.05, c: 64105 },
+  ];
+  const G = { left: 64, top: 16, width: 420, height: 180 };
+  const sx = linear(0, 0.55, G.left, G.left + G.width);
+  const sy = linear(0, 120000, G.top + G.height, G.top);
+  const curve = (h: (t: number) => number) => linePath(sample(h, 0.005, 0.55, 200).map(([x, y]) => [sx(x), sy(y)] as [number, number]));
+  return (
+    <DiagramFrame
+      title="비용으로 임계값 고르기: 놓치는 비용이 10배면 t* = 1/11"
+      caption="본문 코드의 상황(보정된 확률, 오경보 비용 1, 놓친 양성 비용 10, 샘플 10만 개)에서 임계값에 따른 총비용이다. 곡선은 기댓값, 점은 본문 코드의 실제 출력이다. 임계값을 낮추면 양성으로 처리하는 샘플이 늘어 오경보 비용(파랑)이 커지고, 높이면 놓친 양성의 비용(주황)이 커진다. 총비용(보라)은 t* = C_FP / (C_FP + C_FN) = 1/11 ≈ 0.091에서 가장 작고, 흔히 쓰는 0.5는 이 상황에서 가장 비싼 선택이다. 이 계산은 모델의 확률이 실제 빈도와 맞을 때(보정되어 있을 때)만 성립한다."
+      viewBox="0 0 720 262"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.1, 0.2, 0.3, 0.4, 0.5]} yTicks={[0, 40000, 80000, 120000]} fmtY={(v) => (v === 0 ? "0" : `${v / 10000}만`)} xLabel="임계값 t (이 이상이면 양성으로 처리)" />
+      <path d={curve((t) => fp(t))} fill="none" stroke={colors.blue} strokeWidth={1.6} strokeDasharray="5 3" />
+      <path d={curve((t) => 10 * fn(t))} fill="none" stroke={colors.orange} strokeWidth={1.6} strokeDasharray="5 3" />
+      <path d={curve(cost)} fill="none" stroke={colors.violet} strokeWidth={2.6} />
+      <line x1={sx(1 / 11)} x2={sx(1 / 11)} y1={G.top} y2={G.top + G.height} stroke={colors.green} strokeWidth={1.4} strokeDasharray="4 3" />
+      <text x={sx(1 / 11) + 6} y={G.top + 12} fontSize={10.5} fontWeight={800} fill={colors.green}>
+        t* = 1/11 ≈ 0.091
+      </text>
+      {runs.map((r) => (
+        <circle key={r.t} cx={sx(r.t)} cy={sy(r.c)} r={4.5} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1.5} />
+      ))}
+      <text x={sx(1 / 11) + 8} y={sy(58972) + 18} fontSize={10} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        최소
+      </text>
+      <text x={506} y={168} fontSize={10.5} fontWeight={800} fill={ink}>
+        본문 코드의 출력
+      </text>
+      {[...runs]
+        .sort((p, q) => p.t - q.t)
+        .map((r, i) => (
+          <g key={`row${r.t}`}>
+            <text x={506} y={186 + i * 14} fontSize={10} fill={r.t === 1 / 11 ? colors.green : inkSecondary} fontWeight={r.t === 1 / 11 ? 800 : 400} fontFamily={mono}>
+              {`t = ${r.t.toFixed(3)}`}
+            </text>
+            <text x={680} y={186 + i * 14} textAnchor="end" fontSize={10} fill={r.t === 1 / 11 ? colors.green : ink} fontWeight={r.t === 1 / 11 ? 800 : 400} fontFamily={mono}>
+              {r.c.toLocaleString("en-US")}
+            </text>
+          </g>
+        ))}
+      <Lines x={506} y={40} lines={["총비용 = FP × 1 + FN × 10"]} size={11} anchor="start" color={colors.violet} weight={800} />
+      <line x1={506} x2={530} y1={70} y2={70} stroke={colors.blue} strokeWidth={1.6} strokeDasharray="5 3" />
+      <text x={536} y={74} fontSize={10.5} fill={inkSecondary}>
+        오경보(FP) 비용
+      </text>
+      <line x1={506} x2={530} y1={92} y2={92} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="5 3" />
+      <text x={536} y={96} fontSize={10.5} fill={inkSecondary}>
+        놓친 양성(FN) 비용 × 10
+      </text>
+      <Lines x={506} y={118} lines={["양성으로 처리할 조건: (1 − p)·C_FP < p·C_FN", "⇔ p > C_FP / (C_FP + C_FN)"]} size={10} anchor="start" color={ink} weight={600} gap={1.5} />
+    </DiagramFrame>
+  );
+}
+
+export function ReliabilityDiagram() {
+  // class_weight="balanced"는 (잘 맞는 로지스틱 모델에서) 로짓을 ln((1−π)/π)만큼 올린다. 양성 비율 π = 8% → 예측 0.5가 실제 8%.
+  const P = "rld";
+  const shift = Math.log(0.92 / 0.08);
+  const logit = (p: number) => Math.log(p / (1 - p));
+  const sig = (z: number) => 1 / (1 + Math.exp(-z));
+  const G = { left: 56, top: 16, width: 200, height: 200 };
+  const sx = linear(0, 1, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="신뢰도 그림: 예측 확률이 실제 빈도와 맞는가"
+      caption="가로축은 모델이 준 예측 확률, 세로축은 그 확률을 받은 샘플들 중 실제 양성의 비율이다. 점이 대각선에 붙어 있을수록 잘 보정된 것이다(0.2~0.4라고 예측한 샘플 중 약 28%가 양성). 빨간 곡선은 양성이 8%인 데이터에서 class_weight='balanced'로 학습한 로지스틱 회귀의 전형적인 모습이다. 가중치가 로짓을 ln(0.92 / 0.08) ≈ 2.44만큼 끌어올려, 0.5라고 예측한 샘플이 실제로는 8%만 양성이다. 순위(AUC)는 그대로지만 확률을 비용 계산에 쓰면 틀린다. 이런 모델은 CalibratedClassifierCV로 다시 맞추거나 가중치 없이 학습하고 임계값을 옮긴다."
+      viewBox="0 0 720 252"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ green: colors.green }} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.2, 0.4, 0.6, 0.8, 1]} yTicks={[0, 0.2, 0.4, 0.6, 0.8, 1]} xLabel="예측 확률" yLabel="실제 양성 비율" />
+      <line x1={sx(0)} y1={sy(0)} x2={sx(1)} y2={sy(1)} stroke={colors.blue} strokeWidth={2} />
+      <text x={sx(0.62)} y={sy(0.74)} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        완벽한 보정
+      </text>
+      <line x1={sx(0.2)} x2={sx(0.4)} y1={sy(0.28)} y2={sy(0.28)} stroke={colors.blue} strokeWidth={5} strokeOpacity={0.35} strokeLinecap="round" />
+      <circle cx={sx(0.3)} cy={sy(0.28)} r={4.5} fill={colors.blue} />
+      <line x1={sx(0.17)} y1={sy(0.465)} x2={sx(0.28)} y2={sy(0.31)} stroke={colors.blue} strokeWidth={0.9} />
+      <text x={sx(0.03)} y={sy(0.5)} fontSize={9.5} fontWeight={700} fill={colors.blue}>
+        0.2~0.4 → 28%
+      </text>
+      <path d={linePath(sample((p) => sig(logit(p) - shift), 0.005, 0.995, 160).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.4} />
+      <circle cx={sx(0.5)} cy={sy(0.08)} r={4.5} fill={colors.red} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <line x1={sx(0.5)} x2={sx(0.5)} y1={sy(0.5)} y2={sy(0.08) - 6} stroke={colors.red} strokeDasharray="3 3" />
+      <text x={sx(0.5) + 8} y={sy(0.08) - 6} fontSize={10.5} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        예측 0.5 → 실제 8%
+      </text>
+      <ArrPath d={`M${sx(0.82)},${sy(0.36)} C${sx(0.8)},${sy(0.55)} ${sx(0.78)},${sy(0.66)} ${sx(0.76)},${sy(0.72)}`} color={colors.green} marker={`${P}-green`} width={1.6} />
+      <text x={sx(0.84)} y={sy(0.3)} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        보정
+      </text>
+      <Lines x={300} y={40} lines={["대각선과 일치: 예측한 만큼 실제로 일어난다", "대각선보다 아래: 확률을 부풀렸다 (과대평가)", "대각선보다 위: 확률을 낮춰 말했다 (과소평가)"]} size={11} anchor="start" color={ink} weight={600} gap={1.7} />
+      <rect x={300} y={118} width={404} height={100} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={314} y={140} fontSize={11.5} fontWeight={800} fill={ink}>
+        하나의 숫자로: 브라이어 점수
+      </text>
+      <text x={314} y={162} fontSize={11.5} fontWeight={700} fill={ink} fontFamily={mono}>
+        (1/n) Σ (pᵢ − yᵢ)²
+      </text>
+      <Lines x={314} y={186} lines={["확률 예측의 평균제곱오차, 작을수록 좋다.", "항상 0.5만 말하는 모델이 0.25다."]} size={10.5} anchor="start" color={inkSecondary} />
     </DiagramFrame>
   );
 }
