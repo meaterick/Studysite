@@ -1,5 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, gridline, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
+import { Axes, Markers, Arr, Lines, Tag, linear, log10Scale, pow10Label, linePath, sample, seeded, starPath, mono } from "./chart";
 
 export function LlmPipeline() {
   const stages = [
@@ -165,6 +166,1128 @@ export function LoraDiagram() {
       </text>
       <text x={259} y={198} textAnchor="middle" fontSize={10} fill={inkSecondary}>
         r차원
+      </text>
+    </DiagramFrame>
+  );
+}
+
+// ───────────────────────── 6주차 핵심 과정: 추가 그림 ─────────────────────────
+
+const chip6 = (x: number, y: number, text: string, color: string, w = 64, h = 24, tint = 0.14, size = 11, weight = 700) => (
+  <g key={`${x}-${y}-${text}`}>
+    <rect x={x} y={y} width={w} height={h} rx={6} fill={color} fillOpacity={tint} stroke={color} strokeWidth={1.2} />
+    <text x={x + w / 2} y={y + h / 2 + size * 0.36} textAnchor="middle" fontSize={size} fontWeight={weight} fill={ink}>
+      {text}
+    </text>
+  </g>
+);
+
+export function PerplexityWorked() {
+  // 본문 예제: "오늘 날씨가 정말 맑다", 정답 토큰에 준 확률 0.5, 0.25, 0.125 → L = 2 ln 2 ≈ 1.386, perplexity = 4.
+  const P = "ppw";
+  const toks = ["오늘", "날씨가", "정말", "맑다"];
+  const probs = [0.5, 0.25, 0.125];
+  const L = -probs.reduce((s, p) => s + Math.log(p), 0) / probs.length;
+  const G = { left: 438, top: 40, width: 250, height: 146 };
+  const gx = linear(0, 1, G.left, G.left + G.width);
+  const gy = linear(0, 3.2, G.top + G.height, G.top);
+  const curve = linePath(sample((p) => -Math.log(p), 0.04, 1, 120).map(([p, v]) => [gx(p), gy(v)] as [number, number]));
+  return (
+    <DiagramFrame
+      title="다음 토큰 예측의 손실과 perplexity: 한 문장을 손으로"
+      caption={`왼쪽: 토큰 4개짜리 문장 하나에서 '앞부분 → 바로 다음 토큰' 문제가 3개 저절로 생긴다. 모델이 정답 토큰에 준 확률이 0.5, 0.25, 0.125라면 오른쪽 곡선 −ln p 위의 세 점(0.69, 1.39, 2.08)이 각 문제의 손실이다. 정답에 낮은 확률을 줄수록 손실이 가파르게 커진다. 셋의 평균 L = ${L.toFixed(3)}이고, perplexity e^L = 4는 '매 스텝 후보 4개 사이에서 고르게 헷갈리는 정도'다. 학습 전 모델(어휘 5만 개에 균등)은 L ≈ 10.8, perplexity 50,000이다.`}
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, orange: colors.orange }} />
+      <text x={14} y={22} fontSize={12} fontWeight={700} fill={ink}>
+        ① 문장 하나 = 예측 문제 3개
+      </text>
+      {probs.map((p, i) => {
+        const y = 40 + i * 52;
+        const tx = 14 + (i + 1) * 62 + 30;
+        return (
+          <g key={i}>
+            {toks.slice(0, i + 1).map((t, k) => chip6(14 + k * 62, y, t, inkMuted, 58, 26, 0.08, 11, 600))}
+            <Arr x1={14 + (i + 1) * 62 - 1} y1={y + 13} x2={tx - 4} y2={y + 13} color={inkSecondary} marker={`${P}-ink`} />
+            {chip6(tx, y, toks[i + 1], colors.blue, 62, 26, 0.16, 11.5)}
+            <text x={tx + 70} y={y + 17} fontSize={11} fontWeight={700} fill={colors.blue} fontFamily={mono}>
+              {`p = ${p}`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={14} y={210} fontSize={10.5} fill={inkSecondary}>
+        입력(회색)을 보고 바로 다음 토큰(파랑)을 맞힌다
+      </text>
+      <text x={14} y={226} fontSize={10.5} fill={inkSecondary}>
+        토큰 T개 문서 = 문제 T−1개, causal mask로 한 번에 계산
+      </text>
+
+      <text x={G.left - 36} y={22} fontSize={12} fontWeight={700} fill={ink}>
+        ② 각 손실 = −ln p, 평균이 L
+      </text>
+      <Axes {...G} sx={gx} sy={gy} xTicks={[0, 0.25, 0.5, 0.75, 1]} yTicks={[0, 1, 2, 3]} xLabel="정답 토큰에 준 확률 p" yLabel="손실 −ln p" />
+      <path d={curve} fill="none" stroke={inkSecondary} strokeWidth={2} />
+      <line x1={G.left} x2={G.left + G.width} y1={gy(L)} y2={gy(L)} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="5 4" />
+      <text x={G.left + G.width} y={gy(L) - 6} textAnchor="end" fontSize={11} fontWeight={700} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`평균 L = ${L.toFixed(3)} → e^L = 4`}
+      </text>
+      {probs.map((p) => (
+        <g key={p}>
+          <circle cx={gx(p)} cy={gy(-Math.log(p))} r={5} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={1.5} />
+          <text x={gx(p) + 8} y={gy(-Math.log(p)) - 6} fontSize={10.5} fontWeight={700} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {(-Math.log(p)).toFixed(2)}
+          </text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function BertMasking() {
+  // BERT의 MLM: 입력 토큰의 15%를 맞힐 대상으로 고르고, 그중 80%는 [MASK], 10%는 무작위 토큰, 10%는 그대로 둔다.
+  const P = "bmk";
+  const rand = seeded(11);
+  const picked = new Set<number>();
+  while (picked.size < 15) picked.add(Math.floor(rand() * 100));
+  const s = 14;
+  const rows = [
+    { pct: "80%", n: "약 12개", from: "사과", to: "[MASK]", toColor: colors.violet, note: "가려진 자리를 앞뒤 문맥으로 맞힌다" },
+    { pct: "10%", n: "약 1.5개", from: "사과", to: "자동차", toColor: colors.red, note: "엉뚱한 단어가 와도 의심하게 만든다" },
+    { pct: "10%", n: "약 1.5개", from: "사과", to: "사과", toColor: colors.green, note: "멀쩡해 보이는 자리도 확인하게 만든다" },
+  ];
+  return (
+    <DiagramFrame
+      title="BERT의 빈칸 맞히기(MLM): 15%를 고르고, 80 · 10 · 10으로 바꾼다"
+      caption="왼쪽: 입력 토큰 100개 중 15개(주황)를 맞힐 대상으로 고른다. 오른쪽: 고른 자리의 80%만 [MASK]로 가리고, 10%는 무작위 다른 토큰으로, 10%는 원래 토큰 그대로 둔다. 어느 경우든 그 자리에서 원래 토큰('사과')을 맞혀야 한다. 실제 사용할 때는 입력에 [MASK]가 없으므로, 가려지지 않은 토큰도 맞는지 판단하도록 훈련하는 장치다. 고르지 않은 85개 자리에는 손실을 매기지 않는다."
+      viewBox="0 0 720 206"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={14} y={20} fontSize={11.5} fontWeight={700} fill={ink}>
+        입력 토큰 100개 중 15%
+      </text>
+      {Array.from({ length: 100 }, (_, i) => (
+        <rect key={i} x={14 + (i % 10) * s} y={32 + Math.floor(i / 10) * s} width={s - 2.5} height={s - 2.5} rx={2} fill={picked.has(i) ? colors.orange : inkMuted} fillOpacity={picked.has(i) ? 0.85 : 0.18} />
+      ))}
+      <text x={14} y={192} fontSize={10.5} fill={inkSecondary}>
+        주황 15개만 손실 계산
+      </text>
+      <Arr x1={168} y1={102} x2={206} y2={102} color={inkSecondary} marker={`${P}-ink`} width={1.8} />
+      {rows.map((r, i) => {
+        const y = 30 + i * 54;
+        return (
+          <g key={i}>
+            <text x={216} y={y + 17} fontSize={14} fontWeight={800} fill={colors.orange}>
+              {r.pct}
+            </text>
+            <text x={216} y={y + 33} fontSize={10} fill={inkSecondary}>
+              {r.n}
+            </text>
+            {chip6(278, y + 2, r.from, colors.orange, 58, 26, 0.16, 11.5)}
+            <Arr x1={340} y1={y + 15} x2={366} y2={y + 15} color={inkSecondary} marker={`${P}-ink`} />
+            {chip6(372, y + 2, r.to, r.toColor, 72, 26, 0.16, 11.5)}
+            <text x={456} y={y + 19} fontSize={11} fill={inkSecondary}>
+              {r.note}
+            </text>
+          </g>
+        );
+      })}
+      <text x={216} y={192} fontSize={11} fontWeight={700} fill={ink}>
+        {"세 경우 모두 정답은 원래 토큰 '사과'"}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function EmergenceMetric() {
+  // Schaeffer et al.(2023)의 논지를 단순화한 그림. 토큰 하나의 정답률 p가 log N에 따라 매끄럽게 오른다고 가정하면,
+  // 답의 토큰 5개를 모두 맞혀야 1점을 주는 지표(p⁵)는 어느 크기에서 갑자기 뛰는 것처럼 보인다. 수치는 설명용 가정이다.
+  const G = { left: 64, top: 22, width: 360, height: 168 };
+  const sx = linear(8, 12, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const p = (lg: number) => 0.3 + ((0.97 - 0.3) * (lg - 8)) / 4;
+  const path = (f: (lg: number) => number) => linePath(sample(f, 8, 12, 100).map(([x, y]) => [sx(x), sy(y)] as [number, number]));
+  return (
+    <DiagramFrame
+      title="창발은 채점 방식의 착시일 수 있다: 같은 실력, 다른 지표"
+      caption="토큰 하나를 맞히는 정답률 p(파랑)가 모델 크기의 로그에 따라 꾸준히 오른다고 하자. 그런데 답이 토큰 5개로 이루어져 있고 전부 맞혀야만 1점을 준다면, 점수는 p⁵(빨강)다. 작은 모델에서는 거의 0에 붙어 있다가 어느 크기를 넘으면 가파르게 올라, 능력이 '갑자기 생긴' 것처럼 보인다. 같은 모델을 부분 점수로 재면 매끄럽게 오른다는 것이 Schaeffer 등(2023)의 반론이다. 값은 설명을 위한 가정이다."
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[8, 9, 10, 11, 12]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtX={(v) => pow10Label(10 ** v)} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="모델 크기 N (파라미터 수, 로그 눈금)" yLabel="정답률" />
+      <path d={path(p)} fill="none" stroke={colors.blue} strokeWidth={2.6} />
+      <path d={path((lg) => p(lg) ** 5)} fill="none" stroke={colors.red} strokeWidth={2.6} />
+      <text x={sx(8.1)} y={sy(0.74)} fontSize={11.5} fontWeight={700} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        토큰 하나의 정답률 p
+      </text>
+      <text x={sx(11.85)} y={sy(0.06)} textAnchor="end" fontSize={11.5} fontWeight={700} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        5토큰 답 전체 정답률 = p⁵
+      </text>
+      <Lines
+        x={456}
+        y={44}
+        lines={["같은 모델, 같은 실력인데", "채점 방식만 다르다"]}
+        size={12}
+        anchor="start"
+        color={ink}
+        weight={700}
+      />
+      <Lines
+        x={456}
+        y={100}
+        lines={["• 부분 점수(토큰 단위)로 재면", "   크기에 따라 꾸준히 오른다", "• 전부 맞혀야 1점이면 p를 다섯 번", "   곱하므로, 작은 모델은 0 근처에", "   머물다가 갑자기 치솟는다"]}
+        size={11}
+        anchor="start"
+      />
+    </DiagramFrame>
+  );
+}
+
+export function ComputeAllocation() {
+  // C ≈ 6ND, D ≈ 20N. 본문 예제(10²¹·10²³·10²⁵ FLOPs의 최적점)와 Gopher·Chinchilla·Llama 3 8B의 실제 (N, D).
+  const P = "cal";
+  const G = { left: 74, top: 16, width: 350, height: 236 };
+  const sx = log10Scale(1e9, 1e12, G.left, G.left + G.width);
+  const sy = log10Scale(1e10, 1e14, G.top + G.height, G.top);
+  const iso = (C: number) => linePath([1e9, 1e12].map((n) => [sx(n), sy(C / (6 * n))] as [number, number]));
+  const nLabel: Record<number, string> = { 1e9: "1B", 1e10: "10B", 1e11: "100B", 1e12: "1T" };
+  const dLabel: Record<number, string> = { 1e10: "100억", 1e11: "1,000억", 1e12: "1조", 1e13: "10조", 1e14: "100조" };
+  const opt = [
+    { C: 1e21, label: "10²¹ FLOPs: 2.9B · 580억 토큰" },
+    { C: 1e23, label: "10²³: 29B · 5,800억" },
+    { C: 1e25, label: "10²⁵: 290B · 5.8조" },
+  ].map((o) => ({ ...o, N: Math.sqrt(o.C / 120) }));
+  const models = [
+    { name: "Gopher 280B · 3,000억 토큰", N: 280e9, D: 300e9, color: colors.red, dx: -8, dy: 22, anchor: "end" as const },
+    { name: "Chinchilla 70B · 1.4조 토큰", N: 70e9, D: 1.4e12, color: colors.blue, dx: 10, dy: 4, anchor: "start" as const },
+    { name: "Llama 3 8B · 15조 토큰", N: 8e9, D: 15e12, color: colors.violet, dx: 10, dy: 4, anchor: "start" as const },
+  ];
+  return (
+    <DiagramFrame
+      title="컴퓨트를 모델과 데이터에 나누기: C ≈ 6ND 위에서 D ≈ 20N을 고른다"
+      caption="회색 점선은 컴퓨트가 같은 (N, D) 조합이다(C = 6ND). 같은 점선 위에서는 모델을 키우면 데이터가 줄어든다. 초록 직선 D = 20N과 만나는 점이 Chinchilla가 찾은 최적 배분이고, 초록 점은 본문 예제의 세 예산이다. 컴퓨트가 100배가 되면 N과 D가 각각 10배씩 는다. 주황 점선은 Gopher와 Chinchilla가 쓴 비슷한 컴퓨트(약 5–6×10²³)다. 모델을 4배 키운 Gopher(예측 손실 1.99)보다 데이터를 늘린 Chinchilla(1.94)가 낮다. Llama 3 8B처럼 추론 비용을 아끼려고 일부러 작은 모델에 데이터를 훨씬 많이 먹이는 경우도 흔하다."
+      viewBox="0 0 720 296"
+      minWidth={560}
+    >
+      <defs>
+        <clipPath id={`${P}-clip`}>
+          <rect x={G.left} y={G.top} width={G.width} height={G.height} />
+        </clipPath>
+      </defs>
+      <Axes
+        {...G}
+        sx={sx}
+        sy={sy}
+        xTicks={[1e9, 1e10, 1e11, 1e12]}
+        yTicks={[1e10, 1e11, 1e12, 1e13, 1e14]}
+        fmtX={(v) => nLabel[v] ?? ""}
+        fmtY={(v) => dLabel[v] ?? ""}
+        xLabel="파라미터 수 N"
+        yLabel="학습 토큰 수 D"
+      />
+      <g clipPath={`url(#${P}-clip)`}>
+        {[1e21, 1e23, 1e25].map((C) => (
+          <path key={C} d={iso(C)} fill="none" stroke={inkMuted} strokeWidth={1.4} strokeDasharray="5 4" />
+        ))}
+        <path d={iso(5.5e23)} fill="none" stroke={colors.orange} strokeWidth={1.6} strokeDasharray="3 3" />
+        <path d={linePath([1e9, 1e12].map((n) => [sx(n), sy(20 * n)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.6} />
+      </g>
+      {[
+        { C: 1e21, n: 1.25e9, t: "C = 10²¹" },
+        { C: 1e23, n: 3.2e11, t: "C = 10²³" },
+        { C: 1e25, n: 3.6e11, t: "C = 10²⁵" },
+      ].map((l) => (
+        <text key={l.C} x={sx(l.n)} y={sy(l.C / (6 * l.n)) - 6} fontSize={10} fill={inkSecondary} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+          {l.t}
+        </text>
+      ))}
+      <text x={sx(1.6e9)} y={sy(20 * 1.6e9) - 10} fontSize={11} fontWeight={700} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke" transform={`rotate(-25 ${sx(1.6e9)} ${sy(20 * 1.6e9) - 10})`}>
+        D = 20N
+      </text>
+      {opt.map((o) => (
+        <g key={o.C}>
+          <circle cx={sx(o.N)} cy={sy(20 * o.N)} r={5} fill={colors.green} stroke="var(--surface-card)" strokeWidth={1.5} />
+          <text x={sx(o.N) + 9} y={sy(20 * o.N) + 14} fontSize={10} fontWeight={600} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {o.label}
+          </text>
+        </g>
+      ))}
+      {models.map((m) => (
+        <g key={m.name}>
+          <path d={starPath(sx(m.N), sy(m.D), 8)} fill={m.color} stroke="var(--surface-card)" strokeWidth={1.2} />
+          <text x={sx(m.N) + m.dx} y={sy(m.D) + m.dy} textAnchor={m.anchor} fontSize={10.5} fontWeight={700} fill={m.color} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {m.name}
+          </text>
+        </g>
+      ))}
+      <Lines x={482} y={30} lines={["점선 하나 = 같은 컴퓨트", "그 위의 어디에 서느냐가", "손실을 정한다"]} size={11.5} anchor="start" color={ink} weight={700} />
+      <Lines
+        x={482}
+        y={100}
+        lines={["• 오른쪽 아래: 모델만 크고 데이터 부족", "   (Gopher, 예측 손실 1.99)", "• 초록 선 근처: 컴퓨트 최적", "   (Chinchilla, 예측 손실 1.94)", "• 왼쪽 위: 일부러 과잉학습", "   작은 모델이라 추론이 싸다"]}
+        size={10.5}
+        anchor="start"
+      />
+    </DiagramFrame>
+  );
+}
+
+export function SftLossMask() {
+  // 본문 예제의 SFT 데이터 한 건. 손실은 응답(ASSISTANT) 토큰에만 계산한다.
+  const P = "slm";
+  const toks = [
+    { t: "[USER]", w: 58, ans: false },
+    { t: "파이썬에서", w: 66, ans: false },
+    { t: "리스트를", w: 58, ans: false },
+    { t: "뒤집는", w: 50, ans: false },
+    { t: "방법은?", w: 56, ans: false },
+    { t: "[ASSISTANT]", w: 88, ans: false },
+    { t: "두", w: 28, ans: true },
+    { t: "가지가", w: 50, ans: true },
+    { t: "있습니다.", w: 62, ans: true },
+    { t: "lst.reverse()는", w: 106, ans: true },
+    { t: "…", w: 26, ans: true },
+  ];
+  let acc = 14;
+  const pos = toks.map((k) => {
+    const x = acc;
+    acc += k.w + 3;
+    return x;
+  });
+  const userEnd = pos[4] + toks[4].w;
+  const ansStart = pos[6];
+  const ansEnd = pos[10] + toks[10].w;
+  return (
+    <DiagramFrame
+      title="SFT: 같은 다음 토큰 예측, 다만 응답 토큰에만 손실"
+      caption="위: 사전학습만 마친 base 모델은 질문을 받아도 웹의 질문 목록처럼 비슷한 질문을 이어 쓰기 쉽다. (지시, 응답) 쌍으로 SFT를 하면 같은 질문에 답을 쓴다. 아래: SFT 데이터 한 건을 토큰으로 펼친 것이다. 학습 방식은 사전학습과 똑같은 다음 토큰 예측이지만, 질문 쪽 토큰(회색, 0)은 손실에서 빼고 응답 쪽 토큰(초록, 1)의 예측만 손실에 넣는다. 질문을 따라 쓰는 법이 아니라 질문을 보고 답하는 법을 배우게 하려는 것이다. 역할 표시의 실제 모양(채팅 템플릿)은 모델마다 다르다."
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {[
+        { y: 12, who: "Base 모델", out: "파이썬에서 딕셔너리를 정렬하는 방법은? 파이썬에서 문자열을…", note: "질문 목록을 이어 쓴다", color: inkMuted },
+        { y: 54, who: "SFT 모델", out: "두 가지가 있습니다. lst.reverse()는 원본을 뒤집고…", note: "질문에 답한다", color: colors.green },
+      ].map((r) => (
+        <g key={r.who}>
+          <text x={14} y={r.y + 18} fontSize={11.5} fontWeight={700} fill={ink}>
+            {r.who}
+          </text>
+          {chip6(90, r.y + 2, "파이썬에서 리스트를 뒤집는 방법은?", colors.blue, 214, 26, 0.12, 11, 600)}
+          <Arr x1={308} y1={r.y + 15} x2={330} y2={r.y + 15} color={inkSecondary} marker={`${P}-ink`} />
+          <text x={336} y={r.y + 13} fontSize={11} fill={r.color === inkMuted ? inkSecondary : ink} fontStyle={r.color === inkMuted ? "italic" : undefined}>
+            {r.out}
+          </text>
+          <text x={336} y={r.y + 28} fontSize={10} fontWeight={700} fill={r.color}>
+            {r.note}
+          </text>
+        </g>
+      ))}
+      <line x1={14} y1={98} x2={706} y2={98} stroke="var(--border-hairline)" />
+      <text x={14} y={120} fontSize={11.5} fontWeight={700} fill={ink}>
+        SFT 데이터 한 건을 토큰으로 펼치면
+      </text>
+      {toks.map((k, i) => (
+        <g key={i}>
+          {chip6(pos[i], 132, k.t, k.ans ? colors.green : inkMuted, k.w, 26, k.ans ? 0.14 : 0.08, k.t.startsWith("[") || k.t.startsWith("lst") ? 10 : 11, 600)}
+          <rect x={pos[i]} y={166} width={k.w} height={20} rx={4} fill={k.ans ? colors.green : inkMuted} fillOpacity={k.ans ? 0.75 : 0.2} />
+          <text x={pos[i] + k.w / 2} y={180} textAnchor="middle" fontSize={11} fontWeight={700} fill={k.ans ? "#fff" : inkSecondary}>
+            {k.ans ? 1 : 0}
+          </text>
+        </g>
+      ))}
+      <path d={`M${pos[0]},196 v6 H${userEnd} v-6`} fill="none" stroke={inkMuted} />
+      <text x={(pos[0] + userEnd) / 2} y={218} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        질문: 문맥으로만 보고 손실은 0
+      </text>
+      <path d={`M${ansStart},196 v6 H${ansEnd} v-6`} fill="none" stroke={colors.green} />
+      <text x={(ansStart + ansEnd) / 2} y={218} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.green}>
+        응답: 이 토큰들을 맞히는 손실만 계산
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function FinetuneMemory() {
+  // 70B 모델, 활성값 제외. 풀 파인튜닝은 파라미터당 16바이트(bf16 가중치 2 + 기울기 2 + Adam의 fp32 사본·모멘텀·분산 12).
+  // LoRA는 고정 가중치(bf16 2바이트)에 LoRA 파라미터(전체의 약 0.3%, 약 2억 개)와 그 학습 상태 ≈ 3GB를 더한다. QLoRA는 고정 가중치를 4비트(0.5바이트)로 둔다.
+  const sx = linear(0, 1200, 150, 596);
+  const seg = {
+    w16: { c: colors.blue, t: 0.7, name: "가중치 (bf16, 2바이트)" },
+    grad: { c: colors.aqua, t: 0.75, name: "기울기 (2바이트)" },
+    adam: { c: colors.orange, t: 0.7, name: "Adam 상태: fp32 사본·모멘텀·분산 (12바이트)" },
+    w4: { c: colors.violet, t: 0.7, name: "4비트 가중치 (0.5바이트)" },
+    lora: { c: colors.red, t: 0.9, name: "LoRA 파라미터와 학습 상태 (≈3GB)" },
+  };
+  const rows = [
+    { name: "풀 파인튜닝", sub: "모든 파라미터 학습", parts: [{ k: "w16", v: 140 }, { k: "grad", v: 140 }, { k: "adam", v: 840 }], total: "1,120 GB", gpus: "80GB GPU 14장 이상" },
+    { name: "LoRA", sub: "원본은 고정", parts: [{ k: "w16", v: 140 }, { k: "lora", v: 3 }], total: "≈ 143 GB", gpus: "80GB GPU 2장" },
+    { name: "QLoRA", sub: "원본을 4비트로", parts: [{ k: "w4", v: 35 }, { k: "lora", v: 3 }], total: "≈ 38 GB", gpus: "GPU 1장" },
+  ] as const;
+  return (
+    <DiagramFrame
+      title="70B 모델을 파인튜닝할 때 GPU 메모리: 풀 파인튜닝 · LoRA · QLoRA"
+      caption="풀 파인튜닝은 파라미터 하나에 약 16바이트가 들어 70B 모델이면 활성값을 빼고도 1,120GB다. 그중 3/4이 Adam의 학습 상태다. LoRA는 원본 가중치를 고정하므로 기울기와 Adam 상태가 원본에는 필요 없고, 학습하는 작은 행렬 B, A(전체의 약 0.3%)의 몫만 남는다. QLoRA는 고정된 원본까지 4비트로 줄여 한 장의 GPU에 들어간다. 그림의 LoRA 크기(랭크 16, 모든 선형층)와 GPU 대수는 어림값이다."
+      viewBox="0 0 720 246"
+      minWidth={560}
+    >
+      <line x1={sx(80)} y1={14} x2={sx(80)} y2={190} stroke={inkSecondary} strokeDasharray="4 3" />
+      <text x={sx(80) + 4} y={22} fontSize={10} fill={inkSecondary}>
+        GPU 한 장 80GB
+      </text>
+      {rows.map((r, i) => {
+        const y = 34 + i * 54;
+        let acc = 0;
+        return (
+          <g key={r.name}>
+            <text x={14} y={y + 14} fontSize={12} fontWeight={700} fill={ink}>
+              {r.name}
+            </text>
+            <text x={14} y={y + 29} fontSize={10} fill={inkSecondary}>
+              {r.sub}
+            </text>
+            {r.parts.map((pt) => {
+              const sg = seg[pt.k];
+              const x0 = sx(acc);
+              acc += pt.v;
+              return <rect key={pt.k} x={x0} y={y} width={Math.max(2.5, sx(acc) - x0)} height={30} fill={sg.c} fillOpacity={sg.t} stroke="var(--surface-card)" strokeWidth={0.8} />;
+            })}
+            <text x={sx(acc) + 8} y={y + 13} fontSize={12} fontWeight={800} fill={ink}>
+              {r.total}
+            </text>
+            <text x={sx(acc) + 8} y={y + 27} fontSize={10} fill={inkSecondary}>
+              {r.gpus}
+            </text>
+          </g>
+        );
+      })}
+      <line x1={sx(0)} y1={190} x2={sx(1200)} y2={190} stroke={inkMuted} />
+      {[0, 200, 400, 600, 800, 1000, 1200].map((v) => (
+        <text key={v} x={sx(v)} y={203} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {v === 0 ? "0" : `${v.toLocaleString()}GB`}
+        </text>
+      ))}
+      {Object.values(seg).map((sg, i) => {
+        const x = 14 + (i % 3) * 236;
+        const y = 216 + Math.floor(i / 3) * 16;
+        return (
+          <g key={sg.name}>
+            <rect x={x} y={y - 9} width={11} height={11} rx={2} fill={sg.c} fillOpacity={sg.t} />
+            <text x={x + 16} y={y} fontSize={10} fill={inkSecondary}>
+              {sg.name}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function QuantizationGrid() {
+  // 본문 코드의 가중치 8개(default_rng(0))를 INT8과 INT4로 양자화한다. 눈금 간격 = max|w| / qmax.
+  const P = "qgr";
+  const w = [0.126, -0.132, 0.64, 0.105, -0.536, 0.362, 1.304, 0.947];
+  const maxAbs = Math.max(...w.map(Math.abs));
+  const s8 = maxAbs / 127;
+  const s4 = maxAbs / 7;
+  const q = (v: number, s: number) => Math.round(v / s) * s;
+  const err = (s: number) => w.reduce((a, v) => a + Math.abs(v - q(v, s)), 0) / w.length;
+  const sx = linear(-1.4, 1.4, 46, 694);
+  const order = [...w].sort((a, b) => a - b);
+  const rowY = { orig: 50, i8: 118, i4: 196 };
+  return (
+    <DiagramFrame
+      title="양자화는 가중치를 눈금에 맞춰 반올림하는 것: INT8과 INT4"
+      caption={`위: 본문 코드의 가중치 8개. 가운데: INT8은 절댓값이 가장 큰 1.304를 127에 맞춰 눈금 간격이 ${s8.toFixed(4)}로 촘촘해, 반올림해도 거의 제자리다(평균 오차 ${err(s8).toFixed(4)}). 아래: INT4는 정수가 −7~7의 15단계뿐이라 눈금 간격이 ${s4.toFixed(3)}로 넓다. 0.105와 0.126이 똑같이 0.186이 되는 등 값이 크게 옮겨져 평균 오차가 ${err(s4).toFixed(3)}, 약 20배다. 비트를 줄이면 메모리는 줄지만 이 반올림 오차를 감수해야 한다.`}
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ red: colors.red }} />
+      <text x={14} y={18} fontSize={11.5} fontWeight={700} fill={ink}>
+        원래 가중치 (FP16)
+      </text>
+      <line x1={sx(-1.4)} y1={rowY.orig} x2={sx(1.4)} y2={rowY.orig} stroke={inkMuted} />
+      {order.map((v, i) => (
+        <g key={v}>
+          <circle cx={sx(v)} cy={rowY.orig} r={4.5} fill={colors.blue} />
+          <text x={sx(v)} y={rowY.orig - (i % 2 === 0 ? 9 : 21)} textAnchor="middle" fontSize={9.5} fill={inkSecondary} fontFamily={mono}>
+            {v.toFixed(3).replace("-", "−")}
+          </text>
+        </g>
+      ))}
+
+      <text x={14} y={rowY.i8 - 30} fontSize={11.5} fontWeight={700} fill={ink}>
+        {`INT8: 눈금 255개, 간격 ${s8.toFixed(4)}`}
+      </text>
+      {Array.from({ length: 255 }, (_, k) => (
+        <line key={k} x1={sx((k - 127) * s8)} x2={sx((k - 127) * s8)} y1={rowY.i8 - 7} y2={rowY.i8 + 7} stroke={inkMuted} strokeWidth={0.5} opacity={0.6} />
+      ))}
+      {w.map((v) => (
+        <circle key={v} cx={sx(q(v, s8))} cy={rowY.i8} r={4.5} fill={colors.green} />
+      ))}
+      <text x={706} y={rowY.i8 - 30} textAnchor="end" fontSize={11} fontWeight={700} fill={colors.green}>
+        {`평균 오차 ${err(s8).toFixed(4)}`}
+      </text>
+
+      <text x={14} y={rowY.i4 - 34} fontSize={11.5} fontWeight={700} fill={ink}>
+        {`INT4: 눈금 15개, 간격 ${s4.toFixed(3)}`}
+      </text>
+      {Array.from({ length: 15 }, (_, k) => (
+        <g key={k}>
+          <line x1={sx((k - 7) * s4)} x2={sx((k - 7) * s4)} y1={rowY.i4 - 9} y2={rowY.i4 + 9} stroke={inkSecondary} strokeWidth={1.2} />
+          <text x={sx((k - 7) * s4)} y={rowY.i4 + 21} textAnchor="middle" fontSize={9} fill={inkMuted} fontFamily={mono}>
+            {String(k - 7).replace("-", "−")}
+          </text>
+        </g>
+      ))}
+      {w.map((v) => {
+        const t = q(v, s4);
+        return (
+          <g key={v}>
+            <circle cx={sx(v)} cy={rowY.i4 - 16} r={3.5} fill="none" stroke={colors.blue} strokeWidth={1.4} />
+            {Math.abs(sx(t) - sx(v)) > 3 && <Arr x1={sx(v)} y1={rowY.i4 - 14} x2={sx(t)} y2={rowY.i4 - 3} color={colors.red} marker={`${P}-red`} width={1.3} />}
+            <circle cx={sx(t)} cy={rowY.i4} r={4.5} fill={colors.red} />
+          </g>
+        );
+      })}
+      <text x={706} y={rowY.i4 - 34} textAnchor="end" fontSize={11} fontWeight={700} fill={colors.red}>
+        {`평균 오차 ${err(s4).toFixed(3)} (약 20배)`}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function SoftTargets() {
+  // 본문 예제: "나는 __를 먹었다", 정답 "사과". 일반 정답 [1, 0, 0] vs 교사 분포 [0.7, 0.25, 0.05].
+  const words = ["사과", "배", "자동차"];
+  const panels = [
+    { x0: 70, title: "일반 학습의 정답 (원-핫)", vals: [1, 0, 0], color: inkSecondary, note: "배와 자동차가 똑같이 0: 오답끼리의 차이가 없다" },
+    { x0: 420, title: "교사 모델의 출력 (부드러운 정답)", vals: [0.7, 0.25, 0.05], color: colors.violet, note: "배 0.25 = 그럴듯한 오답, 자동차 0.05 = 말이 안 됨" },
+  ];
+  const base = 160;
+  const hh = 110;
+  return (
+    <DiagramFrame
+      title="지식 증류: 학생은 정답 하나가 아니라 교사의 분포 전체를 배운다"
+      caption="'나는 __를 먹었다'의 정답이 '사과'일 때, 일반 학습의 정답은 사과에만 1을 준다. 교사 모델의 출력은 '배는 꽤 그럴듯하고 자동차는 말이 안 된다'는 정보까지 담고 있다. 학생 모델이 이 분포를 따라 배우면 한 예시에서 얻는 정보가 훨씬 많아져, 같은 크기를 처음부터 혼자 학습시킬 때보다 나은 경우가 많다."
+      viewBox="0 0 720 206"
+      minWidth={520}
+    >
+      {panels.map((p) => (
+        <g key={p.title}>
+          <text x={p.x0 + 110} y={20} textAnchor="middle" fontSize={12} fontWeight={700} fill={p.color}>
+            {p.title}
+          </text>
+          <line x1={p.x0} y1={base} x2={p.x0 + 220} y2={base} stroke={inkMuted} />
+          {p.vals.map((v, i) => (
+            <g key={i}>
+              <rect x={p.x0 + 14 + i * 70} y={base - v * hh} width={52} height={Math.max(1, v * hh)} rx={4} fill={p.color} fillOpacity={0.7} />
+              <text x={p.x0 + 40 + i * 70} y={base - v * hh - 6} textAnchor="middle" fontSize={11} fontWeight={700} fill={ink}>
+                {v}
+              </text>
+              <text x={p.x0 + 40 + i * 70} y={base + 16} textAnchor="middle" fontSize={11} fill={inkSecondary}>
+                {words[i]}
+              </text>
+            </g>
+          ))}
+          <text x={p.x0 + 110} y={base + 36} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+            {p.note}
+          </text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function BradleyTerryLoss() {
+  // 본문 코드의 세 쌍: (r_w, r_l) = (2.0, 0.5), (1.0, 1.0), (0.2, 1.5).
+  const pairs = [
+    { rw: 2.0, rl: 0.5 },
+    { rw: 1.0, rl: 1.0 },
+    { rw: 0.2, rl: 1.5 },
+  ];
+  const sig = (z: number) => 1 / (1 + Math.exp(-z));
+  const A = { left: 60, top: 34, width: 250, height: 150 };
+  const B = { left: 430, top: 34, width: 250, height: 150 };
+  const ax = linear(-4, 4, A.left, A.left + A.width);
+  const ay = linear(0, 1, A.top + A.height, A.top);
+  const bx = linear(-4, 4, B.left, B.left + B.width);
+  const by = linear(0, 4, B.top + B.height, B.top);
+  const curve = (f: (z: number) => number, sx: (v: number) => number, sy: (v: number) => number) =>
+    linePath(sample(f, -3.95, 4, 120).map(([x, y]) => [sx(x), sy(y)] as [number, number]));
+  return (
+    <DiagramFrame
+      title="보상모델의 학습 목표: 점수 차이 → 선호 확률 → 손실 (Bradley–Terry)"
+      caption="왼쪽: 같은 프롬프트의 두 응답에 매긴 점수 차이를 시그모이드에 넣으면 '사람이 y_w를 고를 확률'이 된다. 차이가 0이면 50%다. 오른쪽: 그 확률의 −ln이 보상모델의 손실이다. 점은 본문 코드의 세 쌍이다. 선호 응답의 점수가 1.5 높으면 손실 0.20, 같으면 ln 2 ≈ 0.69, 거꾸로 1.3 낮으면 1.54다. 점수의 절댓값은 의미가 없고 차이만 의미가 있다."
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      <text x={A.left + A.width / 2} y={18} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={ink}>
+        P(y_w 선호) = σ(r_w − r_l)
+      </text>
+      <Axes {...A} sx={ax} sy={ay} xTicks={[-4, -2, 0, 2, 4]} yTicks={[0, 0.5, 1]} fmtX={(v) => String(v).replace("-", "−")} xLabel="점수 차 r_w − r_l" yLabel="선호 확률" />
+      <path d={curve(sig, ax, ay)} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <text x={B.left + B.width / 2} y={18} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={ink}>
+        손실 = −ln σ(r_w − r_l)
+      </text>
+      <Axes {...B} sx={bx} sy={by} xTicks={[-4, -2, 0, 2, 4]} yTicks={[0, 1, 2, 3, 4]} fmtX={(v) => String(v).replace("-", "−")} xLabel="점수 차 r_w − r_l" yLabel="손실" />
+      <path d={curve((z) => Math.log(1 + Math.exp(-z)), bx, by)} fill="none" stroke={colors.orange} strokeWidth={2.4} />
+      {pairs.map((pr, i) => {
+        const d = pr.rw - pr.rl;
+        const p = sig(d);
+        const l = -Math.log(p);
+        const lbl = `(${pr.rw.toFixed(1)}, ${pr.rl.toFixed(1)})`;
+        return (
+          <g key={i}>
+            <circle cx={ax(d)} cy={ay(p)} r={5} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={1.5} />
+            <text x={ax(d) + (d < 0 ? -8 : 8)} y={ay(p) + (d < 0 ? -8 : 14)} textAnchor={d < 0 ? "end" : "start"} fontSize={10} fontWeight={700} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+              {`${lbl} → ${p.toFixed(3)}`}
+            </text>
+            <circle cx={bx(d)} cy={by(l)} r={5} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={1.5} />
+            <text x={bx(d) + 8} y={by(l) - 7} fontSize={10} fontWeight={700} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+              {l.toFixed(2)}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function DpoBetaLoss() {
+  // DPO 손실 = −log σ(β·Δ), Δ = 선호 응답과 비선호 응답의 (log π_θ − log π_ref) 차이. 본문 예제: β = 0.1, Δ = 1.5 → 0.62, Δ = 4 → 0.51.
+  const G = { left: 62, top: 22, width: 380, height: 176 };
+  const sx = linear(0, 30, G.left, G.left + G.width);
+  const sy = linear(0, 0.75, G.top + G.height, G.top);
+  const loss = (b: number, d: number) => Math.log(1 + Math.exp(-b * d));
+  const betas = [
+    { b: 0.01, color: colors.blue },
+    { b: 0.1, color: colors.violet },
+    { b: 0.5, color: colors.orange },
+    { b: 1.0, color: colors.red },
+  ];
+  return (
+    <DiagramFrame
+      title="DPO의 β: 얼마나 벗어나면 멈추는가"
+      caption="가로축은 학습 모델이 기준 모델보다 선호 응답의 로그확률을 비선호 응답보다 얼마나 더 끌어올렸는지(괄호 안의 차이)이고, 세로축은 DPO 손실이다. 차이가 0이면 β와 상관없이 ln 2 ≈ 0.69에서 출발한다. β가 크면(빨강) 조금만 벌어져도 손실이 0에 붙고, 평평해진 곳은 기울기도 0이라 기준 모델 근처에서 멈춘다(보수적). β가 작으면(파랑) 한참 더 벌려야 손실이 줄어 기준 모델에서 더 멀리 간다. 보라 곡선의 두 점이 본문 예제(β = 0.1, 차이 1.5 → 0.62, 차이 4.0 → 0.51)다."
+      viewBox="0 0 720 248"
+      minWidth={560}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 5, 10, 15, 20, 25, 30]} yTicks={[0, 0.25, 0.5, 0.693]} fmtY={(v) => (v === 0.693 ? "0.69" : String(v))} xLabel="로그확률 비율의 차이 (선호 − 비선호, 기준 모델 대비)" yLabel="DPO 손실" />
+      {betas.map((bt, i) => (
+        <g key={bt.b}>
+          <path d={linePath(sample((d) => loss(bt.b, d), 0, 30, 150).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={bt.color} strokeWidth={2.4} />
+          <line x1={sx(19)} x2={sx(21.5)} y1={sy(0.47) + i * 17} y2={sy(0.47) + i * 17} stroke={bt.color} strokeWidth={3} />
+          <text x={sx(22.2)} y={sy(0.47) + i * 17 + 4} fontSize={11} fontWeight={700} fill={bt.color}>
+            {`β = ${bt.b}`}
+          </text>
+        </g>
+      ))}
+      {[1.5, 4].map((d, i) => (
+        <g key={d}>
+          <circle cx={sx(d)} cy={sy(loss(0.1, d))} r={8} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1.5} />
+          <text x={sx(d)} y={sy(loss(0.1, d)) + 3.5} textAnchor="middle" fontSize={10} fontWeight={800} fill="#fff">
+            {i + 1}
+          </text>
+        </g>
+      ))}
+      <Lines x={470} y={40} lines={["β가 크다 (빨강)"]} size={12} anchor="start" color={colors.red} weight={700} />
+      <Lines x={470} y={60} lines={["조금만 벌어져도 손실 ≈ 0", "→ 기울기 ≈ 0, 더 밀 이유가 없다", "→ 기준 모델 근처에 묶인다"]} size={11} anchor="start" />
+      <Lines x={470} y={130} lines={["β가 작다 (파랑)"]} size={12} anchor="start" color={colors.blue} weight={700} />
+      <Lines x={470} y={150} lines={["한참 벌려야 손실이 준다", "→ 기준 모델에서 더 멀리 간다"]} size={11} anchor="start" />
+      <Lines x={470} y={200} lines={["본문 예제 (β = 0.1, 보라 점)", "① 차이 1.5 → 손실 0.62", "② 차이 4.0 → 손실 0.51"]} size={10.5} anchor="start" color={colors.violet} weight={700} />
+    </DiagramFrame>
+  );
+}
+
+export function KlPenaltyChoice() {
+  // 본문 예제: λ = 0.1. A: 보상 8, KL 1 → 7.9. B: 보상 9, KL 20 → 7.0.
+  const lambda = 0.1;
+  const sx = linear(0, 10, 170, 640);
+  const rows = [
+    { name: "응답 A", sub: "보상 8 · KL 1", r: 8, kl: 1, win: true },
+    { name: "응답 B", sub: "보상 9 · KL 20 (이상한 말투)", r: 9, kl: 20, win: false },
+  ];
+  return (
+    <DiagramFrame
+      title="KL 페널티가 고르는 응답: 보상 − λ·KL"
+      caption="초록 막대가 보상모델 점수, 빨간 빗금이 기준 모델에서 멀어진 만큼 깎이는 벌점(λ·KL, λ = 0.1)이다. 보상만 보면 B(9)가 낫지만, B는 기준 모델이 거의 쓰지 않는 말투라 KL이 20이고 벌점 2.0을 받아 7.0이 된다. A는 벌점 0.1만 받아 7.9로 이긴다. 보상모델의 빈틈을 노려 기준 모델에서 멀리 벗어나는 응답(보상 해킹)을 이렇게 억제한다."
+      viewBox="0 0 720 186"
+      minWidth={540}
+    >
+      <defs>
+        <pattern id="klp-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke={colors.red} strokeWidth="2.4" />
+        </pattern>
+      </defs>
+      {rows.map((r, i) => {
+        const y = 20 + i * 62;
+        const net = r.r - lambda * r.kl;
+        return (
+          <g key={r.name}>
+            <text x={14} y={y + 15} fontSize={12.5} fontWeight={700} fill={ink}>
+              {r.name}
+            </text>
+            <text x={14} y={y + 31} fontSize={10} fill={inkSecondary}>
+              {r.sub}
+            </text>
+            <rect x={sx(0)} y={y} width={sx(r.r) - sx(0)} height={32} rx={4} fill={colors.green} fillOpacity={0.55} />
+            <rect x={sx(net)} y={y} width={sx(r.r) - sx(net)} height={32} fill="url(#klp-hatch)" stroke={colors.red} strokeWidth={1} />
+            <line x1={sx(net)} y1={y - 5} x2={sx(net)} y2={y + 37} stroke={ink} strokeWidth={2} />
+            <text x={sx(r.r) + 8} y={y + 13} fontSize={10.5} fill={colors.red} fontWeight={700}>
+              {`−${lambda} × ${r.kl} = −${(lambda * r.kl).toFixed(1)}`}
+            </text>
+            <text x={sx(r.r) + 8} y={y + 28} fontSize={11.5} fontWeight={800} fill={r.win ? colors.green : inkSecondary}>
+              {`목적함수 ${net.toFixed(1)}${r.win ? "  ✓ 선택" : ""}`}
+            </text>
+          </g>
+        );
+      })}
+      <line x1={sx(0)} y1={146} x2={sx(10)} y2={146} stroke={inkMuted} />
+      {[0, 2, 4, 6, 8, 10].map((v) => (
+        <text key={v} x={sx(v)} y={160} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+          {v}
+        </text>
+      ))}
+      <text x={sx(5)} y={178} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        점수
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function BeamSearchTree() {
+  // 본문 코드의 두 스텝짜리 장난감 모델. 그리디는 "그의"(0.2), 빔 너비 2는 "한편"(0.36)을 찾는다.
+  const P = "bst";
+  const first = [
+    { t: "그", p: 0.5, y: 76, kept: true, kids: [{ t: "는", p: 0.3, y: 30 }, { t: "가", p: 0.3, y: 76 }, { t: "의", p: 0.4, y: 122 }] },
+    { t: "한", p: 0.4, y: 192, kept: true, kids: [{ t: "편", p: 0.9, y: 172 }, { t: "번", p: 0.1, y: 212 }] },
+    { t: "이", p: 0.1, y: 256, kept: false, kids: [{ t: "제", p: 1.0, y: 256 }] },
+  ];
+  const rx = 40;
+  const x1 = 230;
+  const x2 = 430;
+  return (
+    <DiagramFrame
+      title="그리디 vs 빔 서치: 첫 스텝의 1등이 끝까지 1등은 아니다"
+      caption="본문 코드의 두 스텝짜리 장난감 모델이다. 가지 옆 숫자는 그 스텝의 확률, 오른쪽 숫자는 두 확률을 곱한 문장 전체의 확률이다. 그리디(빨강)는 첫 스텝에서 0.5인 '그'를 고른 순간 '한편'으로 가는 길을 잃고 '그의'(0.20)를 낸다. 빔 너비 2인 빔 서치는 첫 스텝에서 상위 2개('그', '한')를 함께 살려 두었다가, 둘째 스텝에서 '한편'(0.36)이 더 좋다는 것을 발견한다. 3등 '이'는 첫 스텝에서 잘려 나간다."
+      viewBox="0 0 720 290"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ red: colors.red }} />
+      <circle cx={rx} cy={160} r={18} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={rx} y={164} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        시작
+      </text>
+      <text x={x1} y={14} textAnchor="middle" fontSize={11} fontWeight={700} fill={inkSecondary}>
+        스텝 1 (빔: 상위 2개 유지)
+      </text>
+      <text x={x2} y={14} textAnchor="middle" fontSize={11} fontWeight={700} fill={inkSecondary}>
+        스텝 2
+      </text>
+      <text x={600} y={14} textAnchor="middle" fontSize={11} fontWeight={700} fill={inkSecondary}>
+        문장 전체 확률
+      </text>
+      {first.map((f) => {
+        const greedy1 = f.t === "그";
+        const beam1 = f.kept;
+        return (
+          <g key={f.t} opacity={f.kept ? 1 : 0.45}>
+            <line x1={rx + 18} y1={160} x2={x1 - 22} y2={f.y} stroke={greedy1 ? colors.red : f.t === "한" ? colors.green : inkMuted} strokeWidth={greedy1 || f.t === "한" ? 2.4 : 1.4} />
+            <text x={(rx + x1) / 2 + 6} y={(160 + f.y) / 2 - 6} fontSize={10.5} fontWeight={700} fill={inkSecondary} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+              {f.p}
+            </text>
+            <rect x={x1 - 22} y={f.y - 16} width={44} height={32} rx={8} fill={beam1 ? colors.blue : inkMuted} fillOpacity={beam1 ? 0.14 : 0.08} stroke={beam1 ? colors.blue : inkMuted} strokeWidth={beam1 ? 2 : 1.2} />
+            <text x={x1} y={f.y + 5} textAnchor="middle" fontSize={13} fontWeight={700} fill={ink}>
+              {f.t}
+            </text>
+            {!f.kept && (
+              <text x={x1 + 30} y={f.y + 5} fontSize={10.5} fontWeight={700} fill={colors.red}>
+                ✗ 빔에서 탈락
+              </text>
+            )}
+            {f.kids.map((k) => {
+              const tot = f.p * k.p;
+              const greedy = greedy1 && k.t === "의";
+              const best = f.t === "한" && k.t === "편";
+              const col = greedy ? colors.red : best ? colors.green : inkMuted;
+              return (
+                <g key={k.t}>
+                  <line x1={x1 + 22} y1={f.y} x2={x2 - 22} y2={k.y} stroke={col} strokeWidth={greedy || best ? 2.4 : 1.2} />
+                  <text x={(x1 + x2) / 2 + 4} y={(f.y + k.y) / 2 - 5} fontSize={10} fill={inkSecondary} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+                    {k.p}
+                  </text>
+                  <rect x={x2 - 22} y={k.y - 15} width={44} height={30} rx={8} fill={col} fillOpacity={greedy || best ? 0.16 : 0.06} stroke={col} strokeWidth={greedy || best ? 2 : 1} />
+                  <text x={x2} y={k.y + 5} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={ink}>
+                    {k.t}
+                  </text>
+                  <text x={560} y={k.y + 5} fontSize={12} fontWeight={greedy || best ? 800 : 500} fill={greedy ? colors.red : best ? colors.green : inkSecondary} fontFamily={mono}>
+                    {`${f.t}${k.t} ${tot.toFixed(2)}`}
+                  </text>
+                  {greedy && (
+                    <text x={624} y={k.y + 5} fontSize={10.5} fontWeight={700} fill={colors.red}>
+                      ← 그리디
+                    </text>
+                  )}
+                  {best && (
+                    <text x={624} y={k.y + 5} fontSize={10.5} fontWeight={700} fill={colors.green}>
+                      ← 빔 서치
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function TopkTopP() {
+  // top-k = 3은 분포 모양과 상관없이 3개, top-p = 0.9는 누적확률이 0.9를 처음 넘는 지점까지. 가운데는 본문의 점심 예제(softmax([4, 3, 2.5, 1, 0.5, −1])).
+  const lunchLogits = [4.0, 3.0, 2.5, 1.0, 0.5, -1.0];
+  const e = lunchLogits.map((z) => Math.exp(z - 4));
+  const zs = e.reduce((a, b) => a + b, 0);
+  const lunch = e.map((v) => v / zs);
+  const dists = [
+    { title: "뾰족한 분포", sub: "1등이 거의 확실", p: [0.92, 0.04, 0.02, 0.01, 0.007, 0.003], labels: ["", "", "", "", "", ""] },
+    { title: "본문 점심 예제", sub: "김밥·라면·국밥…", p: lunch, labels: ["김밥", "라면", "국밥", "파스타", "초밥", "죽"] },
+    { title: "평평한 분포", sub: "후보들이 엇비슷", p: [0.22, 0.2, 0.18, 0.16, 0.13, 0.11], labels: ["", "", "", "", "", ""] },
+  ];
+  const keepP = (p: number[]) => {
+    let c = 0;
+    for (let i = 0; i < p.length; i++) {
+      c += p[i];
+      if (c >= 0.9) return i + 1;
+    }
+    return p.length;
+  };
+  const bw = 26;
+  const base = 168;
+  const hh = 120;
+  return (
+    <DiagramFrame
+      title="top-k는 개수를, top-p는 확률질량을 고정한다"
+      caption="세 분포 모두 확률이 큰 순서로 정렬했다. 점선은 top-k = 3의 경계로, 분포 모양과 상관없이 늘 3개를 남긴다. 진하게 칠한 막대는 top-p = 0.9가 남기는 후보, 즉 누적확률이 0.9를 처음 넘는 지점까지다. 1등이 거의 확실하면 1개로 줄고(왼쪽), 본문 점심 예제에서는 3개로 top-k = 3과 같으며(가운데), 후보가 엇비슷하면 6개 모두 남는다(오른쪽). top-p는 분포의 모양에 따라 후보 수를 스스로 조절한다."
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      {dists.map((d, j) => {
+        const x0 = 22 + j * 236;
+        const kp = keepP(d.p);
+        return (
+          <g key={d.title}>
+            <text x={x0 + 96} y={18} textAnchor="middle" fontSize={12} fontWeight={700} fill={ink}>
+              {d.title}
+            </text>
+            <text x={x0 + 96} y={33} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+              {d.sub}
+            </text>
+            <line x1={x0} y1={base} x2={x0 + 6 * (bw + 6)} y2={base} stroke={inkMuted} />
+            {d.p.map((v, i) => (
+              <g key={i}>
+                <rect x={x0 + 4 + i * (bw + 6)} y={base - v * hh} width={bw} height={Math.max(1, v * hh)} rx={3} fill={colors.violet} fillOpacity={i < kp ? 0.8 : 0.15} stroke={colors.violet} strokeWidth={i < kp ? 0 : 1} />
+                <text x={x0 + 4 + i * (bw + 6) + bw / 2} y={base - v * hh - 4} textAnchor="middle" fontSize={8.5} fill={inkSecondary}>
+                  {v >= 0.1 ? v.toFixed(2) : v.toFixed(3).replace(/^0/, "")}
+                </text>
+                {d.labels[i] && (
+                  <text x={x0 + 4 + i * (bw + 6) + bw / 2} y={base + 13} textAnchor="middle" fontSize={8.5} fill={inkSecondary}>
+                    {d.labels[i]}
+                  </text>
+                )}
+              </g>
+            ))}
+            <line x1={x0 + 3 * (bw + 6) + 1} y1={44} x2={x0 + 3 * (bw + 6) + 1} y2={base + 4} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="4 3" />
+            <text x={x0 + 3 * (bw + 6) + 5} y={54} fontSize={9.5} fontWeight={700} fill={colors.orange}>
+              k = 3
+            </text>
+            <text x={x0 + 96} y={base + 34} textAnchor="middle" fontSize={11} fill={colors.orange} fontWeight={700}>
+              top-k = 3 → 3개
+            </text>
+            <text x={x0 + 96} y={base + 52} textAnchor="middle" fontSize={11} fill={colors.violet} fontWeight={700}>
+              {`top-p = 0.9 → ${kp}개`}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function LatencyTimeline() {
+  // 본문 예제: TTFT 0.5초, 초당 40토큰, 400토큰 → 10.5초. 아래 배치 크기 표는 경향을 보이기 위한 예시 값.
+  const sx = linear(0, 10.5, 40, 690);
+  const batches = [
+    { b: 1, per: 40, total: 40 },
+    { b: 8, per: 34, total: 272 },
+    { b: 32, per: 22, total: 704 },
+  ];
+  const px = linear(0, 45, 0, 150);
+  const tx = linear(0, 750, 0, 150);
+  return (
+    <DiagramFrame
+      title="사용자가 느끼는 응답 시간과 서버의 처리량"
+      caption="위: 프롬프트를 읽고 첫 토큰이 나오기까지(TTFT, 프리필)가 0.5초, 그 뒤 초당 40토큰씩 흘러나오면 400토큰짜리 답은 0.5 + 400/40 = 10.5초가 걸린다. 아래: 여러 요청을 배치로 묶으면 GPU 한 대가 초당 만드는 전체 토큰(처리량)은 크게 늘지만, 사용자 한 명이 보는 속도는 조금씩 느려진다. 아래 숫자는 경향을 보이기 위한 예시다."
+      viewBox="0 0 720 236"
+      minWidth={560}
+    >
+      <rect x={sx(0)} y={30} width={sx(0.5) - sx(0)} height={28} fill={colors.orange} fillOpacity={0.8} />
+      <rect x={sx(0.5)} y={30} width={sx(10.5) - sx(0.5)} height={28} fill={colors.blue} fillOpacity={0.18} stroke={colors.blue} />
+      {Array.from({ length: 11 }, (_, i) => (
+        <line key={i} x1={sx(0.5 + i)} x2={sx(0.5 + i)} y1={30} y2={58} stroke={colors.blue} strokeWidth={1} opacity={0.6} />
+      ))}
+      <text x={sx(0)} y={22} fontSize={10.5} fontWeight={700} fill={colors.orange}>
+        TTFT 0.5초 (프롬프트 읽기)
+      </text>
+      <text x={sx(5.5)} y={49} textAnchor="middle" fontSize={11} fontWeight={700} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={4} paintOrder="stroke">
+        토큰 생성: 초당 40토큰 × 10초 = 400토큰 (눈금 1칸 = 1초 = 40토큰)
+      </text>
+      <line x1={sx(0)} y1={66} x2={sx(10.5)} y2={66} stroke={inkMuted} />
+      {[0, 2, 4, 6, 8].map((v) => (
+        <text key={v} x={sx(v)} y={79} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {`${v}초`}
+        </text>
+      ))}
+      <text x={sx(10.5)} y={79} textAnchor="end" fontSize={10.5} fontWeight={800} fill={ink}>
+        끝: 10.5초
+      </text>
+      <line x1={14} y1={94} x2={706} y2={94} stroke="var(--border-hairline)" />
+      <text x={14} y={114} fontSize={11.5} fontWeight={700} fill={ink}>
+        배치 크기를 키우면 (예시)
+      </text>
+      <text x={150} y={134} fontSize={10.5} fontWeight={700} fill={colors.violet}>
+        사용자 한 명의 속도 (토큰/초)
+      </text>
+      <text x={440} y={134} fontSize={10.5} fontWeight={700} fill={colors.green}>
+        서버 전체 처리량 (토큰/초)
+      </text>
+      {batches.map((bt, i) => {
+        const y = 144 + i * 28;
+        return (
+          <g key={bt.b}>
+            <text x={14} y={y + 15} fontSize={11} fill={inkSecondary}>
+              {`배치 ${bt.b}`}
+            </text>
+            <rect x={150} y={y} width={px(bt.per)} height={20} rx={3} fill={colors.violet} fillOpacity={0.7} />
+            <text x={150 + px(bt.per) + 6} y={y + 14} fontSize={10.5} fontWeight={700} fill={colors.violet}>
+              {bt.per}
+            </text>
+            <rect x={440} y={y} width={tx(bt.total)} height={20} rx={3} fill={colors.green} fillOpacity={0.7} />
+            <text x={440 + tx(bt.total) + 6} y={y + 14} fontSize={10.5} fontWeight={700} fill={colors.green}>
+              {bt.total}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function BigramHallucination() {
+  // 본문 코드의 bigram 모델: 사실 문장 3개만 학습. '는' 다음에는 세 나라가 각각 1/3, 앞의 도시 정보는 이미 사라졌다.
+  const cities = ["파리", "도쿄", "로마"];
+  const countries = ["프랑스", "일본", "이탈리아"];
+  const ys = [44, 104, 164];
+  const cx = { s: 34, city: 120, neun: 236, country: 352, rest: 470 };
+  return (
+    <DiagramFrame
+      title="사실만 배운 bigram 모델이 거짓 문장을 만드는 이유"
+      caption="학습 문장은 '파리는 프랑스의 수도이다' 등 세 개뿐이고 모두 사실이다. 그런데 bigram 모델은 바로 앞 토큰 하나만 보므로, '는' 자리에서 앞의 도시가 무엇이었는지 정보가 끊긴다. '는' 다음에 세 나라가 각각 한 번씩 나왔으니 확률도 1/3씩이다. 그래서 '파리는 일본의 수도이다'(빨강)도 학습 데이터와 똑같이 그럴듯한 문장이 되고, 만들 수 있는 9개 문장 중 사실은 3개뿐이다. 모델은 토큰이 이어지는 확률을 배웠을 뿐 어떤 조합이 사실인지는 배운 적이 없다."
+      viewBox="0 0 720 196"
+      minWidth={560}
+    >
+      {chip6(cx.s - 22, ys[1] - 13, "<s>", inkMuted, 44, 26, 0.1, 11)}
+      {cities.map((c, i) => (
+        <g key={c}>
+          <line x1={cx.s + 22} y1={ys[1]} x2={cx.city - 32} y2={ys[i]} stroke={inkMuted} strokeWidth={1.2} />
+          {chip6(cx.city - 30, ys[i] - 13, c, colors.blue, 60, 26, 0.14, 12)}
+          <line x1={cx.city + 30} y1={ys[i]} x2={cx.neun - 26} y2={ys[1]} stroke={i === 0 ? colors.red : inkMuted} strokeWidth={i === 0 ? 2.2 : 1.2} />
+        </g>
+      ))}
+      <circle cx={cx.neun} cy={ys[1]} r={24} fill={colors.orange} fillOpacity={0.15} stroke={colors.orange} strokeWidth={2} />
+      <text x={cx.neun} y={ys[1] + 5} textAnchor="middle" fontSize={14} fontWeight={800} fill={ink}>
+        는
+      </text>
+      {countries.map((c, i) => (
+        <g key={c}>
+          <line x1={cx.neun + 24} y1={ys[1]} x2={cx.country - 38} y2={ys[i]} stroke={i === 0 ? colors.green : i === 1 ? colors.red : inkMuted} strokeWidth={i < 2 ? 2.2 : 1.2} strokeDasharray={i === 1 ? "6 4" : undefined} />
+          <text x={(cx.neun + cx.country) / 2 - 4} y={(ys[1] + ys[i]) / 2 + (i === 1 ? -6 : 4)} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            1/3
+          </text>
+          {chip6(cx.country - 36, ys[i] - 13, c, colors.violet, 72, 26, 0.14, 12)}
+          <line x1={cx.country + 36} y1={ys[i]} x2={cx.rest - 6} y2={ys[1]} stroke={inkMuted} strokeWidth={1.2} />
+        </g>
+      ))}
+      {chip6(cx.rest - 4, ys[1] - 13, "의 수도 이다", inkMuted, 96, 26, 0.1, 11.5)}
+      <text x={cx.neun} y={ys[2] + 10} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.orange}>
+        여기서 앞 정보가 끊긴다
+      </text>
+      <Lines
+        x={586}
+        y={40}
+        lines={["파리는 프랑스의 수도이다", "학습 문장 (사실)"]}
+        size={11}
+        anchor="start"
+        color={colors.green}
+        weight={700}
+      />
+      <Lines x={586} y={96} lines={["파리는 일본의 수도이다", "지어낸 문장!"]} size={11} anchor="start" color={colors.red} weight={700} />
+      <Lines x={586} y={152} lines={["9개 조합 중", "사실은 3개뿐"]} size={11} anchor="start" color={inkSecondary} />
+    </DiagramFrame>
+  );
+}
+
+export function GuessVsAbstain() {
+  // 본문 예제: 4지선다를 정말 모를 때. 채점 ①: 정답 1, 오답·모르겠다 0. 채점 ②: 오답 −1/3.
+  const sy = linear(-0.1, 0.3, 160, 40);
+  const panels = [
+    { x0: 70, title: "채점 ①: 정답 1점, 오답 0점, '모르겠다' 0점", guess: 0.25, verdict: "찍는 쪽이 이득 → 모델이 찍도록 길들여진다", vColor: colors.red },
+    { x0: 420, title: "채점 ②: 오답에 −1/3점", guess: 0.25 * 1 + 0.75 * (-1 / 3), verdict: "찍어도 기대 점수 0 → 모르면 보류해도 손해 없음", vColor: colors.green },
+  ];
+  return (
+    <DiagramFrame
+      title="평가 방식이 행동을 만든다: 모를 때 찍기 vs '모르겠다'"
+      caption="4지선다 문제를 정말 모를 때, 찍으면 1/4 확률로 맞는다. 채점 ①처럼 오답과 '모르겠다'가 똑같이 0점이면 찍기의 기대 점수(0.25)가 '모르겠다'(0)보다 높아, 점수를 최대화하도록 학습·평가된 모델은 모를 때도 그럴듯하게 지어내는 쪽을 배운다. 채점 ②처럼 오답에 −1/3점을 주면 찍기의 기대 점수가 0.25 × 1 + 0.75 × (−1/3) = 0이 되어 보류해도 손해가 없다."
+      viewBox="0 0 720 220"
+      minWidth={560}
+    >
+      {panels.map((p) => (
+        <g key={p.title}>
+          <text x={p.x0 + 110} y={20} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={ink}>
+            {p.title}
+          </text>
+          <line x1={p.x0} y1={sy(0)} x2={p.x0 + 220} y2={sy(0)} stroke={inkMuted} />
+          {[
+            { name: "찍기 (기대 점수)", v: p.guess, c: colors.orange },
+            { name: "모르겠다", v: 0, c: colors.blue },
+          ].map((b, i) => (
+            <g key={b.name}>
+              <rect x={p.x0 + 30 + i * 100} y={Math.min(sy(b.v), sy(0))} width={60} height={Math.max(2, Math.abs(sy(b.v) - sy(0)))} rx={3} fill={b.c} fillOpacity={0.75} />
+              <text x={p.x0 + 60 + i * 100} y={Math.min(sy(b.v), sy(0)) - 6} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+                {Math.abs(b.v) < 1e-9 ? "0" : b.v.toFixed(2)}
+              </text>
+              <text x={p.x0 + 60 + i * 100} y={sy(0) + 18} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+                {b.name}
+              </text>
+            </g>
+          ))}
+          <text x={p.x0 + 110} y={sy(0) + 44} textAnchor="middle" fontSize={11} fontWeight={700} fill={p.vColor}>
+            {p.verdict}
+          </text>
+        </g>
+      ))}
+      <line x1={360} y1={10} x2={360} y2={206} stroke="var(--border-hairline)" />
+    </DiagramFrame>
+  );
+}
+
+export function CalibrationDiagram() {
+  // 본문 코드의 12개 답: 확신도 구간별 평균 확신 vs 실제 정답률. 전체 평균 확신 0.80, 실제 0.58.
+  const conf = [0.95, 0.9, 0.9, 0.85, 0.8, 0.8, 0.75, 0.7, 0.6, 0.55, 0.95, 0.9];
+  const correct = [1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0];
+  const bins = [
+    [0.5, 0.7],
+    [0.7, 0.85],
+    [0.85, 1.01],
+  ].map(([lo, hi]) => {
+    const idx = conf.map((c, i) => (c >= lo && c < hi ? i : -1)).filter((i) => i >= 0);
+    return {
+      c: idx.reduce((a, i) => a + conf[i], 0) / idx.length,
+      a: idx.reduce((a, i) => a + correct[i], 0) / idx.length,
+      n: idx.length,
+    };
+  });
+  const allC = conf.reduce((a, b) => a + b, 0) / conf.length;
+  const allA = correct.reduce((a, b) => a + b, 0) / correct.length;
+  const G = { left: 64, top: 18, width: 250, height: 190 };
+  const sx = linear(0.4, 1, G.left, G.left + G.width);
+  const sy = linear(0.4, 1, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="보정(calibration) 확인: 말한 확신 vs 실제 정답률"
+      caption={`본문 코드의 답 12개를 확신도 구간으로 묶어, 구간마다 '모델이 말한 평균 확신'(가로)과 '실제 정답률'(세로)을 찍었다. 대각선 위에 있으면 보정이 잘 된 것이다. 세 점이 모두 대각선 아래에 있다. 말한 것보다 덜 맞히는 과신(overconfidence) 상태로, 전체로는 평균 ${allC.toFixed(2)}를 확신했지만 실제로는 ${allA.toFixed(2)}만 맞혔다. 점의 크기는 구간에 든 답의 개수다.`}
+      viewBox="0 0 720 248"
+      minWidth={540}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0.4, 0.6, 0.8, 1]} yTicks={[0.4, 0.6, 0.8, 1]} xLabel="모델이 말한 확신도" yLabel="실제 정답률" />
+      <line x1={sx(0.4)} y1={sy(0.4)} x2={sx(1)} y2={sy(1)} stroke={colors.green} strokeWidth={1.6} strokeDasharray="5 4" />
+      <text x={sx(0.42)} y={sy(0.42) - 16} fontSize={10.5} fontWeight={700} fill={colors.green} transform={`rotate(-37 ${sx(0.42)} ${sy(0.42) - 16})`}>
+        완벽한 보정 (말한 만큼 맞힘)
+      </text>
+      {bins.map((b, i) => (
+        <g key={i}>
+          <line x1={sx(b.c)} y1={sy(b.c)} x2={sx(b.c)} y2={sy(b.a)} stroke={colors.red} strokeWidth={1.4} strokeDasharray="3 3" />
+          <circle cx={sx(b.c)} cy={sy(b.a)} r={4 + b.n * 1.3} fill={colors.red} fillOpacity={0.75} stroke="var(--surface-card)" strokeWidth={1.5} />
+          <text x={sx(b.c)} y={sy(b.a) + 3.5} textAnchor="middle" fontSize={9.5} fontWeight={800} fill="#fff">
+            {b.n}
+          </text>
+        </g>
+      ))}
+      <path d={starPath(sx(allC), sy(allA), 8)} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={1.2} />
+      <Lines x={360} y={36} lines={["대각선 아래 = 과신"]} size={12} anchor="start" color={colors.red} weight={700} />
+      <Lines x={360} y={58} lines={["말한 확신보다 실제 정답률이 낮다.", "빨간 점선의 길이가 그 차이다."]} size={10.5} anchor="start" />
+      {bins.map((b, i) => (
+        <text key={i} x={360} y={104 + i * 17} fontSize={10.5} fill={ink} fontFamily={mono}>
+          {`확신 ${b.c.toFixed(2)} → 정답 ${b.a.toFixed(2)}  (${b.n}개)`}
+        </text>
+      ))}
+      <text x={360} y={155} fontSize={10.5} fontWeight={700} fill={colors.orange} fontFamily={mono}>
+        {`★ 전체 ${allC.toFixed(2)} → ${allA.toFixed(2)}  (12개)`}
+      </text>
+      <Lines x={360} y={184} lines={["사전학습만 한 모델은 객관식에서 꽤 잘 보정되어", "있다는 보고가 있지만, 사후학습을 거치거나 긴", "자유 서술에서는 어긋나기 쉽다."]} size={10} anchor="start" />
+    </DiagramFrame>
+  );
+}
+
+export function HallucinationMap() {
+  // 본문의 환각 요인 ①~⑤와 완화책을 단계별로 정리한 지도.
+  const stages = [
+    { name: "사전학습", cause: ["손실은 '그럴듯함'만 잰다", "드물게 나온 사실은", "구별하기 어렵다"], color: colors.blue },
+    { name: "사후학습", cause: ["모르는 사실을 억지로", "학습시키면 지어내기↑", "보정이 나빠지기도"], color: colors.violet },
+    { name: "평가", cause: ["'모르겠다' = 0점이면", "찍기가 이득", "→ 추측하도록 길들여짐"], color: colors.orange },
+    { name: "디코딩", cause: ["확률 낮은 오답도", "샘플링될 수 있고", "틀린 토큰이 뒤로 이어짐"], color: colors.aqua },
+    { name: "사용", cause: ["컨텍스트 창 밖 정보,", "컷오프 이후의 일은", "볼 수 없다"], color: colors.red },
+  ];
+  const w = 128;
+  const gap = 10;
+  return (
+    <DiagramFrame
+      title="환각은 한 군데서 생기지 않는다: 단계별 원인과 완화책"
+      caption="환각의 원인은 학습·사후학습·평가·생성·사용의 여러 단계에 흩어져 있다. 그래서 완화책도 여러 겹으로 쓴다. 검색 증강(RAG)과 도구는 모델이 모르거나 볼 수 없는 정보를 채우고, 인용 검증은 근거를 확인하며, 보류를 허용하는 학습·평가는 찍는 습관을 줄인다. 그러나 어느 것도 환각을 없애지는 못하고 줄일 뿐이라, 중요한 용도에서는 사람이 근거를 대조해야 한다."
+      viewBox="0 0 720 266"
+      minWidth={560}
+    >
+      {stages.map((s, i) => {
+        const x = 14 + i * (w + gap);
+        return (
+          <g key={s.name}>
+            <rect x={x} y={12} width={w} height={30} rx={8} fill={s.color} fillOpacity={0.85} />
+            <text x={x + w / 2} y={32} textAnchor="middle" fontSize={12.5} fontWeight={800} fill="#fff">
+              {s.name}
+            </text>
+            {i < stages.length - 1 && <path d={`M${x + w + 1},27 l${gap - 2},0`} stroke={inkMuted} strokeWidth={2} />}
+            <rect x={x} y={50} width={w} height={70} rx={8} fill={s.color} fillOpacity={0.08} stroke={s.color} strokeWidth={1.2} />
+            <Lines x={x + w / 2} y={70} lines={s.cause} size={10.5} color={ink} />
+          </g>
+        );
+      })}
+      <text x={14} y={146} fontSize={11.5} fontWeight={700} fill={ink}>
+        완화책: 줄일 수는 있지만 없애지는 못한다
+      </text>
+      {[
+        { t: "검색 증강 (RAG)", s: "모르는·최신 정보를 근거로 채움", x: 14, w: 168 },
+        { t: "근거 인용 + 검증", s: "인용이 주장을 뒷받침하는지 확인", x: 190, w: 168 },
+        { t: "외부 도구", s: "계산기·검색으로 직접 확인", x: 366, w: 160 },
+        { t: "보류 학습·평가", s: "모르면 '모르겠다'를 허용", x: 534, w: 172 },
+      ].map((m) => (
+        <Tag key={m.t} x={m.x} y={156} w={m.w} h={46} lines={[m.t, m.s]} color={colors.green} tint={0.1} size={11.5} />
+      ))}
+      <rect x={14} y={214} width={692} height={40} rx={8} fill={colors.red} fillOpacity={0.08} stroke={colors.red} strokeDasharray="5 4" />
+      <text x={360} y={238} textAnchor="middle" fontSize={11} fontWeight={700} fill={colors.red}>
+        남는 위험: 검색이 틀리거나 근거를 오독 · 가짜 인용 · 주장과 무관한 인용 → 중요한 용도는 사람이 근거를 대조
       </text>
     </DiagramFrame>
   );
