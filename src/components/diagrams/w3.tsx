@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Tag, linear, log10Scale, linePath, sample, mono, normCdf, pow10Label } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, mono, normCdf, pow10Label } from "./chart";
 
 export function ComputationalGraph() {
   const y = 110;
@@ -975,6 +975,634 @@ export function BroadcastBug() {
       </text>
       <Tag x={480} y={96} w={226} h={64} lines={["원하는 것: 대각선 4칸", "pred.squeeze(1) − y → (4,)"]} color={colors.green} tint={0.12} size={12} />
       <Tag x={480} y={176} w={226} h={64} lines={["실제로 계산된 것: 16칸", "빨강 12칸은 엉뚱한 쌍의 차이"]} color={colors.red} tint={0.1} size={12} />
+    </DiagramFrame>
+  );
+}
+
+/** make_moons(1000, noise=0.2, random_state=0)에 본문 구조(2 → h → h → 2, ReLU)·설정(Adam, lr 0.01, 전체 배치 300 epoch)으로
+ *  NumPy에서 다시 학습한 결정 영역. 84 × 54 격자의 행마다 "클래스 0부터 번갈아 이어지는 칸 수"(run-length)를 적었다. */
+const MOONS_GRID: { h: number; acc: number; rle: string }[] = [
+  {
+    h: 1,
+    acc: 86.5,
+    rle:
+      "84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;81.3;77.7;74.10;70.14;66.18;63.21;59.25;55.29;52.32;48.36;" +
+      "44.40;41.43;37.47;33.51;30.54;26.58;22.62;19.65;15.69;11.73;8.76;4.80;0.84;0.84;0.84;0.84;0.84;0.84;0.84;0.84;" +
+      "0.84;0.84;0.84;0.84;0.84;0.84;0.84;0.84",
+  },
+  {
+    h: 2,
+    acc: 88.5,
+    rle:
+      "84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;84;77.7;67.17;58.26;49.35;40.44;31.53;28.56;27.57;" +
+      "26.58;25.59;24.60;24.60;23.61;22.62;21.63;20.64;19.65;18.66;18.66;17.67;16.68;15.69;14.70;13.71;13.71;12.72;" +
+      "11.73;10.74;9.75;8.76;8.76;7.77;6.78",
+  },
+  {
+    h: 4,
+    acc: 95.7,
+    rle:
+      "79.5;78.6;77.7;77.7;76.8;75.9;74.10;73.11;73.11;72.12;71.13;70.14;70.14;69.15;68.16;67.17;66.18;66.18;" +
+      "31.1.33.19;30.3.31.20;30.5.28.21;29.7.27.21;28.9.25.22;28.10.23.23;27.12.21.24;27.13.19.25;26.15.18.25;" +
+      "25.17.16.26;25.18.14.27;24.20.12.28;24.21.11.28;23.23.9.29;22.25.7.30;22.26.5.31;21.28.3.32;21.30.1.32;20.64;" +
+      "19.65;19.65;18.66;18.66;17.67;16.68;16.68;15.69;15.69;14.70;13.71;13.71;12.72;12.72;11.73;10.74;10.74",
+  },
+  {
+    h: 64,
+    acc: 97.0,
+    rle:
+      "52.32;53.31;54.30;55.29;56.28;56.28;57.27;57.27;57.27;58.26;58.26;58.26;59.25;59.25;59.25;60.24;60.24;60.24;" +
+      "60.24;30.3.28.23;28.8.26.22;27.12.23.22;27.12.24.21;26.14.23.21;26.14.24.20;25.16.24.19;25.16.23.20;" +
+      "24.18.21.21;24.18.20.22;23.20.18.23;22.22.16.24;22.22.15.25;22.23.12.27;22.24.10.28;22.25.7.30;21.28.3.32;" +
+      "21.63;21.63;21.63;21.63;21.63;21.63;21.63;21.63;21.63;22.62;22.62;22.62;22.62;22.62;22.62;22.62;22.62;23.61",
+  },
+];
+/** 같은 데이터에서 무작위로 고른 160개 점 (x, y, 클래스) */
+const MOONS_PTS =
+  "0.04,0.88,0 -0.72,0.46,0 1.73,-0.26,1 0.8,-0.16,0 1.81,0.16,1 0.42,-0.71,1 0.98,-0.04,0 1.71,-0.16,1" +
+  "1.09,-0.28,0 1.29,-0.78,1 1.09,-0.21,1 0.35,0.12,1 0.1,0.27,1 1.7,-0.45,1 -1.0,0.54,0 2.08,0.78,1 0.17,0.8,0" +
+  "0.63,0.97,0 -0.18,0.99,0 2.05,0.48,1 0.89,0.35,0 0.81,-0.68,1 0.98,-0.71,1 -0.03,1.15,0 0.66,-0.39,1" +
+  "-1.1,-0.17,0 0.93,-0.32,1 1.75,-0.16,1 -0.13,0.19,1 -0.8,0.67,0 -0.36,1.09,0 0.19,-0.17,1 0.6,0.61,0" +
+  "0.73,0.32,0 1.24,-0.78,1 0.31,-0.39,1 -0.71,0.88,0 0.1,-0.11,1 0.61,-0.3,1 -0.12,1.34,0 1.93,0.13,1" +
+  "0.77,-0.67,1 0.04,-0.47,1 0.94,0.09,0 0.92,-0.39,1 -0.07,0.4,1 1.36,-0.18,1 1.04,-0.54,1 0.48,-0.89,1" +
+  "1.82,0.28,1 -0.87,0.69,0 0.16,-0.48,1 0.27,0.1,1 1.13,-0.36,1 -0.44,0.75,0 1.58,0.75,1 -0.18,0.97,0" +
+  "-0.65,0.63,0 0.88,0.72,0 1.82,0.4,1 -0.35,0.98,0 0.12,-0.09,1 0.19,1.27,0 -0.38,1.1,0 2.09,0.33,1 -1.19,0.13,0" +
+  "0.31,-0.4,1 1.33,-0.44,1 0.07,1.11,0 0.58,1.0,0 0.94,0.55,0 -0.8,0.4,0 0.04,0.8,0 0.36,-0.64,1 0.54,-0.14,1" +
+  "-0.84,0.58,0 0.57,0.15,1 0.64,-0.2,1 -0.44,0.61,0 0.43,-0.62,1 0.38,-0.09,1 0.53,0.64,0 -0.62,-0.05,0" +
+  "0.54,0.6,0 1.78,0.07,1 1.43,-0.36,1 -0.74,0.07,0 0.43,0.72,0 0.49,-0.53,1 -0.14,0.07,1 -0.62,1.14,0" +
+  "0.42,0.83,0 1.34,-0.68,1 0.87,0.51,0 -0.81,0.5,0 -0.89,0.78,0 -0.66,-0.35,0 1.76,0.24,1 0.96,0.38,0" +
+  "-0.02,-0.16,1 1.07,-0.03,1 -0.95,0.25,0 1.26,-0.35,1 -0.87,0.91,0 0.06,-0.33,1 0.63,-0.33,1 0.03,1.22,0" +
+  "0.12,1.1,0 1.56,-0.26,1 0.97,0.87,0 0.12,-0.02,1 1.08,-0.43,1 1.98,0.19,1 0.64,-0.74,1 0.01,1.01,0 1.06,0.51,0" +
+  "-0.69,0.79,0 -0.09,1.11,0 1.65,-0.6,1 1.0,0.52,0 -0.98,-0.02,0 0.22,0.14,1 2.08,-0.17,1 1.91,-0.25,1" +
+  "-0.21,1.0,0 0.29,-0.08,1 0.26,0.86,0 -0.92,0.54,0 0.23,-0.54,1 1.06,-0.61,1 -1.24,0.31,0 -0.35,0.8,0" +
+  "-0.61,1.05,0 0.87,0.64,0 1.78,0.62,1 0.41,0.6,0 0.15,1.1,0 -0.8,0.39,0 -0.21,0.71,0 0.79,0.15,0 0.56,-0.58,1" +
+  "1.03,-0.51,1 1.28,0.35,0 0.43,-0.78,1 1.92,0.11,1 2.16,0.33,1 1.68,-0.41,1 1.06,-0.26,1 0.32,-0.02,1" +
+  "0.61,0.71,0 0.3,1.01,0 -0.95,0.14,0 -0.15,0.12,1 0.46,0.88,0 1.88,0.33,1 1.87,0.75,1 0.39,1.13,0 1.49,-0.16,1" +
+  "-0.47,1.15,0 -0.69,0.52,0";
+
+export function BnLnExample() {
+  // 본문 예제: z = [[2, 4], [6, 8]] (행 = 샘플, 열 = 특징). BN은 열마다, LN은 행마다 평균·분산을 낸다.
+  const P = "bnl";
+  const z = [
+    [2, 4],
+    [6, 8],
+  ];
+  const cw = 44;
+  const ch = 30;
+  const mat = (x0: number, y0: number, vals: number[][], small = false) =>
+    vals.map((row, i) =>
+      row.map((v, j) => (
+        <g key={`${x0}-${i}-${j}`}>
+          <rect x={x0 + j * cw} y={y0 + i * (small ? 26 : ch)} width={cw} height={small ? 26 : ch} fill={card2Bg} stroke="var(--border-strong)" />
+          <text x={x0 + j * cw + cw / 2} y={y0 + i * (small ? 26 : ch) + (small ? 17 : 19)} textAnchor="middle" fontSize={small ? 11.5 : 13} fontWeight={700} fill={ink} fontFamily={mono}>
+            {String(v).replace("-", "−")}
+          </text>
+        </g>
+      )),
+    );
+  const heads = (x0: number, y0: number) => (
+    <g>
+      {["특징1", "특징2"].map((h, j) => (
+        <text key={h} x={x0 + j * cw + cw / 2} y={y0 - 7} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+          {h}
+        </text>
+      ))}
+      {["샘플1", "샘플2"].map((h, i) => (
+        <text key={h} x={x0 - 6} y={y0 + i * ch + 19} textAnchor="end" fontSize={10} fill={inkSecondary}>
+          {h}
+        </text>
+      ))}
+    </g>
+  );
+  const tokens = ["나는", "오늘", "학교에", "간다"];
+  return (
+    <DiagramFrame
+      title="같은 숫자, 다른 축: BatchNorm은 열(특징)마다, LayerNorm은 행(샘플)마다"
+      caption="본문의 2 × 2 예제다(행 = 샘플, 열 = 특징). BatchNorm은 같은 특징을 여러 샘플에 걸쳐 모아(axis=0) 평균·분산을 내므로 특징1은 평균 4·분산 4, 특징2는 평균 6·분산 4가 되고, 결과는 '각 특징 안에서 샘플1이 작고 샘플2가 크다'로 정규화된다. LayerNorm은 한 샘플의 특징들을 모아(axis=1) 샘플1은 평균 3·분산 1, 샘플2는 평균 7·분산 1이 되고, 결과는 '각 샘플 안에서 특징1이 작고 특징2가 크다'가 된다. Transformer에서는 토큰 하나가 샘플 하나라서, 토큰마다 자기 d_model개 값만으로 정규화하고 다른 토큰이나 다른 문장은 보지 않는다."
+      viewBox="0 0 720 262"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={114} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.blue}>
+        BatchNorm: axis=0
+      </text>
+      {heads(70, 44)}
+      {mat(70, 44, z)}
+      <rect x={72} y={41} width={cw - 4} height={2 * ch + 6} rx={6} fill="none" stroke={colors.blue} strokeWidth={2.2} />
+      <rect x={72 + cw} y={41} width={cw - 4} height={2 * ch + 6} rx={6} fill="none" stroke={colors.orange} strokeWidth={2.2} />
+      <Lines x={92} y={122} lines={["μ = 4", "σ² = 4"]} size={10.5} color={colors.blue} weight={700} />
+      <Lines x={136} y={122} lines={["μ = 6", "σ² = 4"]} size={10.5} color={colors.orange} weight={700} />
+      <Arr x1={114} y1={148} x2={114} y2={166} color={inkSecondary} marker={`${P}-ink`} />
+      {mat(70, 172, [
+        [-1, -1],
+        [1, 1],
+      ], true)}
+      <text x={64} y={204} textAnchor="end" fontSize={10} fill={inkSecondary}>
+        결과
+      </text>
+      <line x1={238} y1={10} x2={238} y2={250} stroke="var(--border-hairline)" />
+      <text x={354} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.violet}>
+        LayerNorm: axis=1
+      </text>
+      {heads(296, 44)}
+      {mat(296, 44, z)}
+      <rect x={293} y={46} width={2 * cw + 6} height={ch - 4} rx={6} fill="none" stroke={colors.violet} strokeWidth={2.2} />
+      <rect x={293} y={46 + ch} width={2 * cw + 6} height={ch - 4} rx={6} fill="none" stroke={colors.green} strokeWidth={2.2} />
+      <text x={392} y={63} fontSize={10.5} fontWeight={700} fill={colors.violet}>
+        μ = 3, σ² = 1
+      </text>
+      <text x={392} y={93} fontSize={10.5} fontWeight={700} fill={colors.green}>
+        μ = 7, σ² = 1
+      </text>
+      <Arr x1={340} y1={112} x2={340} y2={166} color={inkSecondary} marker={`${P}-ink`} />
+      {mat(296, 172, [
+        [-1, 1],
+        [-1, 1],
+      ], true)}
+      <text x={290} y={204} textAnchor="end" fontSize={10} fill={inkSecondary}>
+        결과
+      </text>
+      <line x1={478} y1={10} x2={478} y2={250} stroke="var(--border-hairline)" />
+      <text x={598} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        Transformer: 토큰마다
+      </text>
+      {[1, 0].map((layer) => (
+        <g key={layer} opacity={layer === 1 ? 0.35 : 1}>
+          {tokens.map((tk, i) =>
+            Array.from({ length: 8 }, (_, j) => (
+              <rect key={`${layer}-${i}-${j}`} x={548 + j * 16 + layer * 12} y={46 + i * 22 - layer * 12} width={16} height={22} fill={layer === 0 && i === 2 ? colors.violet : card2Bg} fillOpacity={layer === 0 && i === 2 ? 0.3 : 1} stroke="var(--border-strong)" strokeWidth={0.8} />
+            )),
+          )}
+        </g>
+      ))}
+      <rect x={546} y={44 + 2 * 22} width={8 * 16 + 4} height={26} rx={5} fill="none" stroke={colors.violet} strokeWidth={2.2} />
+      {tokens.map((tk, i) => (
+        <text key={tk} x={542} y={46 + i * 22 + 15} textAnchor="end" fontSize={10} fill={i === 2 ? colors.violet : inkSecondary} fontWeight={i === 2 ? 800 : 400}>
+          {tk}
+        </text>
+      ))}
+      <text x={612} y={150} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        ← d_model개 값 →
+      </text>
+      <text x={694} y={36} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+        뒤: 배치의 다른 문장
+      </text>
+      <Lines x={598} y={176} lines={["'학교에' 토큰 하나의 값으로만", "평균·분산을 낸다", "→ 길이·패딩·배치 크기와 무관"]} size={10.5} color={ink} weight={600} />
+    </DiagramFrame>
+  );
+}
+
+export function FloatFormats() {
+  // IEEE 754 FP32(1·8·23), FP16(1·5·10), bfloat16(1·8·7). BF16은 FP32의 앞 16비트를 잘라 낸 모양이다.
+  const cw = 10.5;
+  const x0 = 64;
+  const rows = [
+    { t: "FP32", seg: [1, 8, 23], max: "3.4 × 10³⁸", min: "1.2 × 10⁻³⁸", y: 34 },
+    { t: "BF16", seg: [1, 8, 7], max: "3.4 × 10³⁸", min: "1.2 × 10⁻³⁸", y: 104 },
+    { t: "FP16", seg: [1, 5, 10], max: "65,504", min: "6.1 × 10⁻⁵", y: 164 },
+  ];
+  const segCol = [colors.red, colors.blue, colors.orange];
+  const segName = ["부호", "지수", "가수"];
+  return (
+    <DiagramFrame
+      title="숫자 형식의 비트 구성: 지수는 범위를, 가수는 정밀도를 정한다"
+      caption="부호 1비트(빨강) 뒤에 지수(파랑)와 가수(주황)가 온다. 지수 비트 수가 표현할 수 있는 크기의 범위를, 가수 비트 수가 유효숫자(정밀도)를 정한다. BF16은 FP32의 앞 16비트를 그대로 잘라 낸 형식이라 지수가 8비트로 같고 범위도 FP32와 같지만, 가수가 7비트뿐이라 유효숫자가 약 2~3자리로 줄어든다. FP16은 가수 10비트로 BF16보다 정밀하지만 지수가 5비트라 범위가 65,504까지로 좁고, 아주 작은 기울기는 0이 되기 쉽다."
+      viewBox="0 0 720 230"
+      minWidth={600}
+    >
+      {rows.map((r) => {
+        let off = 0;
+        return (
+          <g key={r.t}>
+            <text x={x0 - 10} y={r.y + 16} textAnchor="end" fontSize={12.5} fontWeight={800} fill={ink}>
+              {r.t}
+            </text>
+            {r.seg.map((n, k) => {
+              const sx = x0 + off * cw;
+              off += n;
+              return (
+                <g key={k}>
+                  {Array.from({ length: n }, (_, b) => (
+                    <rect key={b} x={sx + b * cw} y={r.y} width={cw} height={22} fill={segCol[k]} fillOpacity={0.35} stroke={segCol[k]} strokeWidth={0.8} />
+                  ))}
+                  <text x={sx + (n * cw) / 2} y={r.y + 36} textAnchor="middle" fontSize={10} fontWeight={700} fill={segCol[k]}>
+                    {k === 0 ? "1" : `${segName[k]} ${n}`}
+                  </text>
+                </g>
+              );
+            })}
+            <text x={430} y={r.y + 10} fontSize={10.5} fill={inkSecondary}>
+              최댓값
+            </text>
+            <text x={490} y={r.y + 10} fontSize={11} fontWeight={800} fill={ink}>
+              {r.max}
+            </text>
+            <text x={430} y={r.y + 28} fontSize={10.5} fill={inkSecondary}>
+              가장 작은 정규수
+            </text>
+            <text x={540} y={r.y + 28} fontSize={11} fontWeight={800} fill={ink}>
+              {r.min}
+            </text>
+          </g>
+        );
+      })}
+      <path d={`M${x0},${34 + 24} L${x0},${104 - 4} M${x0 + 16 * cw},${34 + 24} L${x0 + 16 * cw},${104 - 4}`} stroke={inkMuted} strokeDasharray="3 3" />
+      <text x={x0 + 16 * cw + 8} y={88} fontSize={10} fill={inkSecondary}>
+        FP32의 앞 16비트 = BF16
+      </text>
+      <text x={14} y={222} fontSize={10} fill={inkSecondary}>
+        <tspan fill={colors.red} fontWeight={700}>■</tspan> 부호 <tspan dx={10} fill={colors.blue} fontWeight={700}>■</tspan> 지수: 범위를 정한다 <tspan dx={10} fill={colors.orange} fontWeight={700}>■</tspan> 가수: 유효숫자(정밀도)를 정한다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function Fp16Range() {
+  // 본문 코드: FP16에서 1e-8은 0이 되고, 1024배 하면 1.025e-5(비정규수)로 살아남아 ÷1024로 1.0012e-8이 복원된다. 70000은 inf.
+  const P = "f16";
+  const sx = log10Scale(1e-10, 1e6, 40, 690);
+  const y = 112;
+  const regions = [
+    { a: 1e-10, b: 6e-8, c: colors.red, o: 0.12, t: "0이 된다", sub: "(underflow)" },
+    { a: 6e-8, b: 6.1e-5, c: colors.yellow, o: 0.28, t: "비정규수", sub: "(정밀도 낮음)" },
+    { a: 6.1e-5, b: 65504, c: colors.blue, o: 0.2, t: "정규수", sub: "(정상 범위)" },
+    { a: 65504, b: 1e6, c: colors.red, o: 0.12, t: "inf", sub: "(overflow)" },
+  ];
+  return (
+    <DiagramFrame
+      title="FP16이 담을 수 있는 크기와 loss scaling"
+      caption="가로축은 수의 크기(로그 눈금)다. FP16은 약 6 × 10⁻⁸보다 작은 수를 0으로, 65,504보다 큰 수를 inf로 만든다. 6 × 10⁻⁸ ~ 6.1 × 10⁻⁵ 구간은 비정규수로, 표현은 되지만 유효숫자가 줄어든다. 본문 코드처럼 10⁻⁸ 크기의 기울기는 FP16에서 0이 되지만, 손실을 1024배 키우면 기울기도 1024배인 약 1.0 × 10⁻⁵가 되어 살아남고, 갱신 직전에 1024로 나누면 1.0012 × 10⁻⁸로 거의 복원된다. 너무 크게 키우면 오른쪽 끝을 넘어 inf가 되므로 GradScaler가 배율을 자동으로 조절한다. BF16과 FP32는 10⁻³⁸ ~ 10³⁸까지 담아 이 그림 전체가 정상 범위다."
+      viewBox="0 0 720 238"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ green: colors.green, red: colors.red }} />
+      {regions.map((r) => (
+        <g key={r.t}>
+          <rect x={sx(r.a)} y={y - 34} width={sx(r.b) - sx(r.a)} height={34} fill={r.c} fillOpacity={r.o} />
+          <text x={(sx(r.a) + sx(r.b)) / 2} y={y - 19} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+            {r.t}
+          </text>
+          <text x={(sx(r.a) + sx(r.b)) / 2} y={y - 6} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+            {r.sub}
+          </text>
+        </g>
+      ))}
+      <line x1={sx(1e-10)} x2={sx(1e6)} y1={y} y2={y} stroke={inkMuted} strokeWidth={1.2} />
+      {[-10, -8, -6, -4, -2, 0, 2, 4, 6].map((e) => (
+        <g key={e}>
+          <line x1={sx(10 ** e)} x2={sx(10 ** e)} y1={y} y2={y + 5} stroke={inkMuted} />
+          <text x={sx(10 ** e)} y={y + 18} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+            {pow10Label(10 ** e)}
+          </text>
+        </g>
+      ))}
+      <text x={sx(6.1e-5)} y={y - 40} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        6.1×10⁻⁵
+      </text>
+      <text x={sx(65504)} y={y - 40} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        65,504
+      </text>
+      <text x={sx(6e-8)} y={y - 40} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        6×10⁻⁸
+      </text>
+      <circle cx={sx(1e-8)} cy={y} r={5.5} fill={colors.red} />
+      <text x={sx(1e-8)} y={y + 36} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.red}>
+        기울기 10⁻⁸ → 0 ✗
+      </text>
+      <circle cx={sx(1.025e-5)} cy={y} r={5.5} fill={colors.green} />
+      <ArrPath d={`M${sx(1e-8) + 4},${y + 44} C${sx(1e-8) + 60},${y + 74} ${sx(1.025e-5) - 60},${y + 74} ${sx(1.025e-5) - 2},${y + 10}`} color={colors.green} marker={`${P}-green`} width={1.6} />
+      <text x={(sx(1e-8) + sx(1.025e-5)) / 2} y={y + 80} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.green}>
+        × 1024 (loss scaling)
+      </text>
+      <Lines x={sx(1.025e-5) + 10} y={y + 34} lines={["1.025×10⁻⁵로 살아남음 ✓", "갱신 직전 ÷ 1024 → 1.0012×10⁻⁸"]} size={10.5} anchor="start" color={colors.green} weight={700} />
+      <circle cx={sx(70000)} cy={y} r={5.5} fill={colors.red} />
+      <text x={sx(70000)} y={y + 36} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.red}>
+        70,000 → inf ✗
+      </text>
+      <rect x={sx(1e-10)} y={196} width={sx(1e6) - sx(1e-10)} height={14} rx={3} fill={colors.violet} fillOpacity={0.25} />
+      <text x={(sx(1e-10) + sx(1e6)) / 2} y={207} textAnchor="middle" fontSize={10} fontWeight={700} fill={ink}>
+        BF16 · FP32: 이 구간 전체가 정상 범위 (10⁻³⁸ ~ 3.4×10³⁸)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function MoonsCapacity() {
+  // MOONS_GRID 참조. 유닛 1개는 같은 설정으로 시드 6개 중 5개가 모든 ReLU가 꺼져 한 클래스만 답했다(그림은 살아남은 시드).
+  const NX = 84;
+  const NY = 54;
+  const pts = MOONS_PTS.split(" ").map((t) => t.split(",").map(Number));
+  const pw = 160;
+  const ph = (pw * 2.7) / 4.2;
+  return (
+    <DiagramFrame
+      title="은닉 유닛 수에 따른 결정 경계 (make_moons)"
+      caption="본문 코드와 같은 구조(2 → h → h → 2, ReLU)와 설정(Adam, 학습률 0.01, 300 epoch)으로 은닉 유닛 수 h만 바꿔 학습한 결정 영역이다(NumPy로 다시 학습한 결과). 유닛이 1개면 경계가 직선 하나뿐이고, 2개·4개면 꺾인 직선 몇 조각으로 초승달을 흉내 낸다. 64개면 경계가 두 초승달 사이의 곡선을 따라간다. 숫자는 훈련 데이터 1,000개의 정확도다. 같은 설정이라도 초기값에 따라 결과가 달라지며, 유닛이 1개일 때는 시드 6개 중 5개에서 ReLU가 모두 꺼져 한 클래스만 답했다."
+      viewBox="0 0 720 176"
+      minWidth={600}
+    >
+      {MOONS_GRID.map((m, j) => {
+        const x0 = 16 + j * (pw + 16);
+        const y0 = 26;
+        const sx = linear(-1.6, 2.6, x0, x0 + pw);
+        const sy = linear(-1.1, 1.6, y0 + ph, y0);
+        const cw = pw / NX;
+        const chh = ph / NY;
+        const cells: React.ReactNode[] = [];
+        m.rle.split(";").forEach((row, r) => {
+          let col = 0;
+          row.split(".").forEach((nStr, k) => {
+            const n = Number(nStr);
+            if (n > 0) cells.push(<rect key={`${r}-${k}`} x={x0 + col * cw} y={y0 + r * chh} width={n * cw + 0.4} height={chh + 0.4} fill={k % 2 === 0 ? colors.blue : colors.orange} />);
+            col += n;
+          });
+        });
+        return (
+          <g key={m.h}>
+            <text x={x0 + pw / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+              {`은닉 유닛 ${m.h}개`}
+            </text>
+            <g opacity={0.18}>{cells}</g>
+            {pts.map((p, i) =>
+              p[2] === 0 ? (
+                <circle key={i} cx={sx(p[0])} cy={sy(p[1])} r={2.2} fill={colors.blue} />
+              ) : (
+                <rect key={i} x={sx(p[0]) - 2} y={sy(p[1]) - 2} width={4} height={4} fill={colors.orange} />
+              ),
+            )}
+            <rect x={x0} y={y0} width={pw} height={ph} fill="none" stroke="var(--border-strong)" />
+            <text x={x0 + pw / 2} y={y0 + ph + 18} textAnchor="middle" fontSize={11} fontWeight={700} fill={m.h === 64 ? colors.green : inkSecondary}>
+              {`훈련 정확도 ${m.acc.toFixed(1)}%`}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function NumpyVsTorchLoop() {
+  // 본문의 두 학습 루프를 한 줄씩 짝지었다.
+  const L = [
+    { t: "y_pred = w * X + b", g: 0 },
+    { t: "error = y_pred - y_true", g: 1 },
+    { t: "loss = (error ** 2).mean()", g: 1 },
+    { t: "grad_w = (2 * error * X).mean()", g: 2 },
+    { t: "grad_b = (2 * error).mean()", g: 2 },
+    { t: "w -= lr * grad_w", g: 3 },
+    { t: "b -= lr * grad_b", g: 3 },
+  ];
+  const R = [
+    { t: "pred = model(Xt)", g: 0 },
+    { t: "loss = mse_loss(pred, yt)", g: 1 },
+    { t: "opt.zero_grad()", g: 2 },
+    { t: "loss.backward()", g: 2 },
+    { t: "opt.step()", g: 3 },
+  ];
+  const gc = [colors.blue, colors.violet, colors.red, colors.orange];
+  const gname = ["순전파", "손실", "기울기", "갱신"];
+  const lh = 24;
+  const ly0 = 52;
+  const ry0 = 52;
+  const span = (rows: { g: number }[], g: number, y0: number) => {
+    const idx = rows.map((r, i) => (r.g === g ? i : -1)).filter((i) => i >= 0);
+    return { top: y0 + idx[0] * lh, bot: y0 + (idx[idx.length - 1] + 1) * lh };
+  };
+  return (
+    <DiagramFrame
+      title="같은 학습 루프, 다른 분업: 미분과 갱신이 어디로 갔나"
+      caption="왼쪽은 본문의 NumPy 루프, 오른쪽은 PyTorch 루프다. 같은 색끼리 같은 일을 한다. NumPy에서 빨간 두 줄(grad_w, grad_b)은 '선형회귀 + MSE'에만 맞는, 손으로 유도한 미분 공식이라 모델을 바꾸면 다시 유도해야 한다. PyTorch에서는 그 자리를 loss.backward()가, 갱신 두 줄을 opt.step()이 맡고, 루프 안에 w나 b가 한 번도 등장하지 않는다. 그래서 model을 더 복잡한 신경망으로 바꿔도 루프는 한 글자도 고치지 않는다."
+      viewBox="0 0 720 262"
+      minWidth={620}
+    >
+      <text x={150} y={30} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        NumPy 수동 구현
+      </text>
+      <text x={570} y={30} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        PyTorch
+      </text>
+      {[0, 1, 2, 3].map((g) => {
+        const a = span(L, g, ly0);
+        const b = span(R, g, ry0 + (g >= 2 ? 0 : 0));
+        return (
+          <g key={g}>
+            <path d={`M296,${a.top + 2} C350,${a.top + 2} 370,${b.top + 2} 424,${b.top + 2} L424,${b.bot - 2} C370,${b.bot - 2} 350,${a.bot - 2} 296,${a.bot - 2} Z`} fill={gc[g]} fillOpacity={0.12} />
+            <text x={360} y={(a.top + a.bot + b.top + b.bot) / 4 + 4} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={gc[g]}>
+              {gname[g]}
+            </text>
+          </g>
+        );
+      })}
+      {L.map((l, i) => (
+        <g key={l.t}>
+          <rect x={14} y={ly0 + i * lh + 2} width={282} height={lh - 4} rx={4} fill={gc[l.g]} fillOpacity={l.g === 2 ? 0.22 : 0.08} stroke={gc[l.g]} strokeOpacity={0.6} />
+          <text x={24} y={ly0 + i * lh + 16} fontSize={10.5} fill={ink} fontFamily={mono} fontWeight={l.g === 2 ? 700 : 400}>
+            {l.t}
+          </text>
+        </g>
+      ))}
+      {R.map((r, i) => (
+        <g key={r.t}>
+          <rect x={424} y={ry0 + i * lh + 2} width={282} height={lh - 4} rx={4} fill={gc[r.g]} fillOpacity={0.08} stroke={gc[r.g]} strokeOpacity={0.6} />
+          <text x={434} y={ry0 + i * lh + 16} fontSize={10.5} fill={ink} fontFamily={mono}>
+            {r.t}
+          </text>
+        </g>
+      ))}
+      <Tag x={14} y={230} w={282} h={26} lines={["빨간 줄: 모델이 바뀌면 다시 유도해야 한다"]} color={colors.red} size={10.5} />
+      <Tag x={424} y={176} w={282} h={42} lines={["w, b를 직접 부르는 줄이 하나도 없다", "model만 바꾸면 루프는 그대로"]} color={colors.green} size={10.5} />
+    </DiagramFrame>
+  );
+}
+
+export function DropoutSubnets() {
+  // 학습 중 매 스텝 다른 뉴런을 끈다(그림은 설명용 마스크). 평가 때는 전부 켜고 아무것도 하지 않는다(역드롭아웃).
+  const P = "dsn";
+  const layers = [3, 5, 5, 2];
+  const masks: number[][][] = [
+    [[], [1, 3], [0], []],
+    [[], [0, 4], [2, 3], []],
+    [[], [2], [1, 4], []],
+    [[], [], [], []],
+  ];
+  const titles = ["스텝 1", "스텝 2", "스텝 3", "평가 (model.eval())"];
+  const pw = 118;
+  const net = (x0: number, mask: number[][], evalMode: boolean) => {
+    const pos = layers.map((n, l) => Array.from({ length: n }, (_, i) => ({ x: x0 + 10 + l * ((pw - 20) / 3), y: 58 + (i - (n - 1) / 2) * 24 + 52 })));
+    const off = (l: number, i: number) => mask[l].includes(i);
+    return (
+      <g>
+        {pos.slice(0, -1).map((col, l) =>
+          col.map((a, i) =>
+            pos[l + 1].map((b, k) => (off(l, i) || off(l + 1, k) ? null : <line key={`${l}-${i}-${k}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={evalMode ? colors.green : colors.blue} strokeOpacity={0.35} strokeWidth={0.9} />)),
+          ),
+        )}
+        {pos.map((col, l) =>
+          col.map((p, i) =>
+            off(l, i) ? (
+              <g key={`${l}-${i}`}>
+                <circle cx={p.x} cy={p.y} r={7} fill="var(--surface-card)" stroke={inkMuted} strokeDasharray="2 2" />
+                <path d={`M${p.x - 4},${p.y - 4} L${p.x + 4},${p.y + 4} M${p.x - 4},${p.y + 4} L${p.x + 4},${p.y - 4}`} stroke={colors.red} strokeWidth={1.6} />
+              </g>
+            ) : (
+              <circle key={`${l}-${i}`} cx={p.x} cy={p.y} r={7} fill={l === 0 || l === 3 ? card2Bg : evalMode ? colors.green : colors.blue} fillOpacity={l === 0 || l === 3 ? 1 : 0.7} stroke={l === 0 || l === 3 ? inkMuted : "none"} />
+            ),
+          ),
+        )}
+      </g>
+    );
+  };
+  const bx = linear(0, 1.1, 0, 120);
+  return (
+    <DiagramFrame
+      title="드롭아웃: 매 스텝 다른 부분망을 학습하고, 평가 때는 전체를 쓴다"
+      caption="학습 중에는 스텝마다 은닉 뉴런 일부를 확률 p로 끈다(✗, 그림은 설명용 예시). 어떤 뉴런도 특정 동료가 항상 있다고 기대할 수 없어 각자 쓸모 있는 특징을 배우게 되고, 스텝마다 다른 부분망을 학습하는 셈이 된다. 평가 때는 전부 켠다. 그때 다음 층에 들어가는 평균이 학습 때와 같도록, 학습 중 살아남은 값을 1/(1 − p)배 해 두는 것이 역드롭아웃이다. 오른쪽은 본문 코드(p = 0.2)의 결과로, 끄기만 하면 평균이 0.8로 줄지만 역드롭아웃은 1을 지킨다."
+      viewBox="0 0 720 236"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted }} />
+      {titles.map((t, j) => {
+        const x0 = 10 + j * (pw + 8);
+        return (
+          <g key={t}>
+            <text x={x0 + pw / 2} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={j === 3 ? colors.green : ink}>
+              {t}
+            </text>
+            <rect x={x0} y={28} width={pw} height={164} rx={8} fill="none" stroke="var(--border-hairline)" />
+            {net(x0, masks[j], j === 3)}
+            <text x={x0 + pw / 2} y={210} textAnchor="middle" fontSize={10} fill={j === 3 ? colors.green : inkSecondary} fontWeight={700}>
+              {j === 3 ? "전부 켜고 그대로" : "살아남은 값 × 1/(1 − p)"}
+            </text>
+          </g>
+        );
+      })}
+      <text x={600} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        평균 (p = 0.2, 값이 모두 1)
+      </text>
+      {[
+        { t: "끄기만", v: 0.8, c: colors.red },
+        { t: "역드롭아웃", v: 1.0, c: colors.blue },
+        { t: "평가 (전부 켬)", v: 1.0, c: colors.green },
+      ].map((b, i) => {
+        const y = 48 + i * 48;
+        return (
+          <g key={b.t}>
+            <text x={538} y={y} fontSize={10.5} fontWeight={700} fill={ink}>
+              {b.t}
+            </text>
+            <rect x={538} y={y + 6} width={bx(b.v)} height={16} rx={3} fill={b.c} fillOpacity={0.6} />
+            <text x={538 + bx(b.v) - 6} y={y + 18} textAnchor="end" fontSize={10.5} fontWeight={800} fill={ink}>
+              {b.v.toFixed(1)}
+            </text>
+          </g>
+        );
+      })}
+      <line x1={538 + bx(1)} x2={538 + bx(1)} y1={46} y2={190} stroke={inkMuted} strokeDasharray="3 3" />
+    </DiagramFrame>
+  );
+}
+
+export function EarlyStopping() {
+  // 개념도: 훈련 손실은 계속 줄고 검증 손실은 U자. patience = 10 epoch 동안 개선이 없으면 멈추고 최저점 체크포인트로 돌아간다.
+  const P = "ers";
+  const train = (t: number) => 0.12 + 0.9 * Math.exp(-t / 9);
+  const val = (t: number) => 0.3 + 0.75 * Math.exp(-t / 7) + 0.00055 * t * t;
+  const acc = (t: number) => 0.87 - 0.37 * Math.exp(-t / 5);
+  const ts = Array.from({ length: 601 }, (_, i) => i / 10);
+  const tBest = ts.reduce((b, t) => (val(t) < val(b) ? t : b), 0);
+  const best = Math.round(tBest);
+  const stop = best + 10;
+  const G = { left: 50, top: 18, width: 330, height: 170 };
+  const sx = linear(0, 60, G.left, G.left + G.width);
+  const sy = linear(0, 1.1, G.top + G.height, G.top);
+  const G2 = { left: 450, top: 18, width: 250, height: 170 };
+  const sx2 = linear(0, 60, G2.left, G2.left + G2.width);
+  const sy2 = linear(0.4, 1, G2.top + G2.height, G2.top);
+  return (
+    <DiagramFrame
+      title="조기 종료: 검증 손실이 가장 낮았던 시점으로 돌아간다"
+      caption={`개념도다. 왼쪽: 훈련 손실(파랑)은 학습할수록 계속 줄지만 검증 손실(주황)은 ${best} epoch 부근에서 바닥을 찍고 다시 오른다. 조기 종료는 검증 손실을 기록하다가 patience(여기서는 10 epoch) 동안 최저 기록을 깨지 못하면 ${stop} epoch에서 멈추고, 최저였던 ${best} epoch의 체크포인트를 최종 모델로 쓴다. 오른쪽: 같은 구간에서 검증 정확도는 거의 그대로다. 모델이 틀리는 샘플을 점점 더 확신하며 틀리기 시작하면 교차 엔트로피가 먼저 오르므로, 과적합은 정확도보다 손실에서 먼저 보인다.`}
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ green: colors.green }} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 20, 40, 60]} yTicks={[0, 0.5, 1]} xLabel="epoch" yLabel="손실" />
+      <rect x={sx(best)} y={G.top} width={sx(stop) - sx(best)} height={G.height} fill={colors.yellow} fillOpacity={0.18} />
+      <text x={(sx(best) + sx(stop)) / 2} y={G.top + 12} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={inkSecondary}>
+        patience 10
+      </text>
+      <clipPath id={`${P}-clip`}>
+        <rect x={G.left} y={G.top} width={G.width} height={G.height} />
+      </clipPath>
+      <g clipPath={`url(#${P}-clip)`}>
+        <path d={linePath(sample(train, 0, 60, 160).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.2} />
+        <path d={linePath(sample(val, 0, stop, 160).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.orange} strokeWidth={2.4} />
+        <path d={linePath(sample(val, stop, 60, 60).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.orange} strokeWidth={1.4} strokeDasharray="4 3" opacity={0.6} />
+      </g>
+      <circle cx={sx(best)} cy={sy(val(best))} r={5} fill={colors.green} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <line x1={sx(stop)} x2={sx(stop)} y1={G.top} y2={G.top + G.height} stroke={colors.red} strokeWidth={1.4} strokeDasharray="4 3" />
+      <text x={sx(stop) + 4} y={G.top + G.height - 6} fontSize={10} fontWeight={800} fill={colors.red}>
+        {`${stop}에서 멈춤`}
+      </text>
+      <ArrPath d={`M${sx(stop) - 2},${sy(val(stop)) - 8} C${sx(stop) - 10},${sy(val(stop)) - 40} ${sx(best) + 10},${sy(val(best)) - 44} ${sx(best) + 2},${sy(val(best)) - 9}`} color={colors.green} marker={`${P}-green`} width={1.6} />
+      <text x={(sx(best) + sx(stop)) / 2} y={sy(val(best)) - 46} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`${best} epoch 체크포인트로`}
+      </text>
+      <text x={sx(52)} y={sy(train(52)) - 8} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        훈련
+      </text>
+      <text x={sx(33)} y={sy(val(33)) + 4} fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        검증
+      </text>
+      <Axes {...G2} sx={sx2} sy={sy2} xTicks={[0, 20, 40, 60]} yTicks={[0.4, 0.6, 0.8, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="epoch" />
+      <rect x={sx2(best)} y={G2.top} width={sx2(60) - sx2(best)} height={G2.height} fill={colors.orange} fillOpacity={0.08} />
+      <path d={linePath(sample(acc, 0, 60, 160).map(([x, y]) => [sx2(x), sy2(y)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.2} />
+      <text x={G2.left + G2.width / 2} y={12} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        검증 정확도
+      </text>
+      <Lines x={sx2(best) + 8} y={sy2(0.62)} lines={["이 구간에서 정확도는 그대로,", "손실만 오른다 = 과신"]} size={10} anchor="start" color={colors.orange} weight={700} />
+    </DiagramFrame>
+  );
+}
+
+export function WarmupCosine() {
+  // 예시 설정: 전체 T = 10,000 스텝, 워밍업 500 스텝, η_max = 3×10⁻⁴, η_min = 3×10⁻⁵. 본문의 코사인 식 그대로.
+  const T = 10000;
+  const W = 500;
+  const eMax = 3e-4;
+  const eMin = 3e-5;
+  const lr = (t: number) => (t < W ? (eMax * t) / W : eMin + 0.5 * (eMax - eMin) * (1 + Math.cos((Math.PI * (t - W)) / (T - W))));
+  const G = { left: 64, top: 18, width: 470, height: 170 };
+  const sx = linear(0, T, G.left, G.left + G.width);
+  const sy = linear(0, 3.4e-4, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="선형 워밍업 + 코사인 감쇠 학습률 스케줄"
+      caption="예시 설정(전체 10,000 스텝, 워밍업 500 스텝, 최대 3 × 10⁻⁴, 최소 3 × 10⁻⁵)으로 본문의 식을 그대로 그렸다. 처음 500 스텝은 0 근처에서 최댓값까지 선형으로 올려, 파라미터와 Adam의 통계가 아직 불안정할 때 큰 걸음을 피한다. 그 뒤에는 코사인 곡선을 따라 처음에는 천천히, 중간에는 빠르게, 끝에서는 다시 천천히 줄여 최솟값에 닿는다. 앞부분의 큰 학습률은 넓게 탐색하고, 끝부분의 작은 학습률은 최솟값 근처에서 진동하지 않고 정착하게 한다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 2500, 5000, 7500, 10000]} yTicks={[0, 1e-4, 2e-4, 3e-4]} fmtX={(v) => v.toLocaleString("en-US")} fmtY={(v) => (v === 0 ? "0" : `${Math.round(v * 1e4)}×10⁻⁴`)} xLabel="스텝" />
+      <rect x={sx(0)} y={G.top} width={sx(W) - sx(0)} height={G.height} fill={colors.yellow} fillOpacity={0.2} />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(eMax)} y2={sy(eMax)} stroke={inkMuted} strokeDasharray="4 3" />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(eMin)} y2={sy(eMin)} stroke={inkMuted} strokeDasharray="4 3" />
+      <path d={linePath(sample(lr, 0, T, 400).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.6} />
+      <text x={sx(W) + 6} y={sy(1.2e-4)} fontSize={10} fontWeight={700} fill={inkSecondary}>
+        ← 워밍업 500 스텝
+      </text>
+      <text x={sx(1000)} y={sy(2.2e-4)} fontSize={10.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        큰 학습률: 넓게 탐색
+      </text>
+      <text x={sx(9900)} y={sy(eMin) - 10} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        작은 학습률: 최솟값 근처에 정착
+      </text>
+      <text x={G.left + G.width + 8} y={sy(eMax) + 4} fontSize={10} fill={inkSecondary}>
+        η_max
+      </text>
+      <text x={G.left + G.width + 8} y={sy(eMin) + 4} fontSize={10} fill={inkSecondary}>
+        η_min
+      </text>
+      <Lines x={598} y={60} lines={["워밍업: 0 → η_max", "(선형)", "", "이후: 코사인으로", "η_max → η_min"]} size={10.5} anchor="start" color={ink} weight={600} />
     </DiagramFrame>
   );
 }
