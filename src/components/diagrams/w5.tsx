@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkMuted, inkSecondary, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Markers, Arr, ArrPath, Lines, Tag, linear, mono } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, mono, pow10Label } from "./chart";
 
 export function TransformerDecoderBlock() {
   const x = 210;
@@ -1224,6 +1224,653 @@ export function BpeSegmentation() {
       </text>
       <text x={482} y={232} fontSize={10.5} fill={inkSecondary}>
         기본 어휘 256개로 어떤 글자든 표현
+      </text>
+    </DiagramFrame>
+  );
+}
+
+/** 아래 첨자: base + 작은 글씨 sub(아래로) + rest(원래 줄로) */
+const withSub = (base: string, sub: string, rest: string, size: number) => (
+  <>
+    {base}
+    <tspan dy={size * 0.3} fontSize={size * 0.72}>
+      {sub}
+    </tspan>
+    <tspan dy={-size * 0.3}>{rest}</tspan>
+  </>
+);
+
+export function LstmCellStep() {
+  // 본문 예제: c_{t−1} = 2.0, f = 0.9, i = 0.5, c̃ = 0.4 → c_t = 0.9 × 2.0 + 0.5 × 0.4 = 2.0.
+  const P = "lcs";
+  const y = 70;
+  const box = (x: number, w: number, color: string, content: React.ReactNode, size = 11.5) => (
+    <g>
+      <rect x={x} y={y - 13} width={w} height={26} rx={6} fill={color} fillOpacity={0.18} stroke={color} strokeWidth={1.2} />
+      <text x={x + w / 2} y={y + 4} textAnchor="middle" fontSize={size} fontWeight={700} fill={ink}>
+        {content}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="셀 상태 한 스텝: 옛 기억 × f + 새 후보 × i"
+      caption="본문 예제의 숫자다. 셀 상태(컨베이어 벨트)를 따라 들어온 옛 기억 2.0은 forget gate 0.9를 곱해 1.8만 남고, 새 후보 0.4는 input gate 0.5를 곱해 0.2만 더해져 새 셀 상태는 2.0이 된다. 벨트 위에서는 행렬 곱이나 비선형 함수 없이 성분별 곱셈과 덧셈만 일어난다. 아래는 극단적인 두 경우다. f = 1, i = 0이면 기억이 그대로 보존되고, f = 0, i = 1이면 과거를 지우고 새 후보로 덮어쓴다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, violet: colors.violet, orange: colors.orange, green: colors.green }} />
+      <rect x={20} y={y - 16} width={560} height={32} rx={16} fill={colors.violet} fillOpacity={0.08} stroke={colors.violet} strokeOpacity={0.4} />
+      <text x={30} y={y - 22} fontSize={10} fontWeight={700} fill={colors.violet}>
+        셀 상태 (장기 기억의 컨베이어 벨트)
+      </text>
+      {box(36, 104, colors.violet, withSub("c", "t−1", " = 2.0", 11.5))}
+      <Arr x1={142} y1={y} x2={206} y2={y} color={colors.violet} marker={`${P}-violet`} width={2.2} />
+      <circle cx={222} cy={y} r={15} fill="var(--surface-card)" stroke={colors.orange} strokeWidth={2} />
+      <text x={222} y={y + 6} textAnchor="middle" fontSize={16} fontWeight={800} fill={colors.orange}>
+        ×
+      </text>
+      <Arr x1={238} y1={y} x2={374} y2={y} color={colors.violet} marker={`${P}-violet`} width={2.2} />
+      <text x={306} y={y - 22} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        1.8
+      </text>
+      <circle cx={390} cy={y} r={15} fill="var(--surface-card)" stroke={colors.green} strokeWidth={2} />
+      <text x={390} y={y + 6} textAnchor="middle" fontSize={16} fontWeight={800} fill={colors.green}>
+        +
+      </text>
+      <Arr x1={406} y1={y} x2={468} y2={y} color={colors.violet} marker={`${P}-violet`} width={2.2} />
+      <text x={437} y={y - 22} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        1.8 + 0.2
+      </text>
+      {box(472, 96, colors.violet, withSub("c", "t", " = 2.0", 11.5))}
+      <Arr x1={222} y1={136} x2={222} y2={y + 17} color={colors.orange} marker={`${P}-orange`} width={1.8} />
+      {chip(170, 138, "f = 0.9", colors.orange, 104, 26, 0.14, 11.5)}
+      <text x={222} y={180} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        forget gate: 옛 기억의 90% 유지
+      </text>
+      <Arr x1={390} y1={136} x2={390} y2={y + 17} color={colors.green} marker={`${P}-green`} width={1.8} />
+      {chip(325, 138, "i ⊙ c̃ = 0.5 × 0.4", colors.green, 130, 26, 0.14, 11)}
+      <text x={390} y={180} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        input gate: 새 후보의 50%만 쓰기
+      </text>
+      <Arr x1={568} y1={y} x2={600} y2={y} color={colors.violet} marker={`${P}-violet`} width={2.2} />
+      <Lines x={606} y={y - 4} lines={["다음 스텝으로"]} size={10} anchor="start" color={inkSecondary} />
+      <text x={520} y={y + 40} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        {withSub("h", "t", " = o ⊙ tanh(c", 10)}
+        <tspan dy={3} fontSize={7.2}>
+          t
+        </tspan>
+        <tspan dy={-3}>)</tspan>
+      </text>
+      <line x1={20} x2={700} y1={196} y2={196} stroke="var(--border-hairline)" />
+      <text x={30} y={220} fontSize={11} fontWeight={700} fill={colors.green}>
+        f = 1, i = 0 → 새 c = 옛 c: 기억 보존
+      </text>
+      <text x={380} y={220} fontSize={11} fontWeight={700} fill={colors.red}>
+        f = 0, i = 1 → 새 c = c̃: 과거를 지우고 덮어쓰기
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function LstmRetention() {
+  // 본문: 셀 상태 경로에서 한 스텝마다 대략 f가 곱해진다. 0.99⁵⁰ ≈ 0.61, RNN 쪽 0.9⁵⁰ ≈ 0.005.
+  // 오른쪽은 본문 LSTM 코드(시드 0)의 실제 출력: c = [1, −1]에서 시작해 다섯 스텝.
+  const G = { left: 58, top: 18, width: 300, height: 170 };
+  const sx = linear(0, 50, G.left, G.left + G.width);
+  const sy = log10Scale(1e-3, 1, G.top + G.height, G.top);
+  const cs = [
+    [1, -1],
+    [1.1, -1.38],
+    [1.16, -1.34],
+    [1.18, -1.51],
+    [1.44, -1.29],
+    [1.88, -1.12],
+  ];
+  const G2 = { left: 446, top: 18, width: 230, height: 170 };
+  const sx2 = linear(0, 5, G2.left, G2.left + G2.width);
+  const sy2 = linear(-2, 2, G2.top + G2.height, G2.top);
+  return (
+    <DiagramFrame
+      title="셀 상태 경로는 기억을 오래 남긴다"
+      caption="왼쪽: 셀 상태를 따라 한 스텝 거슬러 갈 때마다 대략 forget gate 값이 곱해진다. f = 0.99를 유지하면 50스텝 뒤에도 0.99⁵⁰ ≈ 0.61이 남지만, 단순 RNN에서 매 스텝 0.9씩 줄어드는 경우는 0.9⁵⁰ ≈ 0.005로 사실상 사라진다(세로축은 로그 눈금). 오른쪽: 본문 LSTM 코드의 실제 출력이다. forget gate 편향을 3으로 잡아 f가 0.94~1.00으로 1에 가깝고, 셀에 넣어 둔 기억 [1, −1]의 부호가 다섯 스텝 내내 유지된다."
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-3, 1e-2, 1e-1, 1]} fmtY={pow10Label} xLabel="거슬러 올라간 스텝 수" yLabel="남는 비율" />
+      <path d={linePath(sample((t) => 0.99 ** t, 0, 50, 100).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.4} />
+      <path d={linePath(sample((t) => 0.9 ** t, 0, 50, 100).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.4} />
+      <circle cx={sx(50)} cy={sy(0.99 ** 50)} r={4.5} fill={colors.green} />
+      <circle cx={sx(50)} cy={sy(0.9 ** 50)} r={4.5} fill={colors.red} />
+      <text x={sx(50) - 6} y={sy(0.99 ** 50) - 9} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.green}>
+        LSTM f = 0.99: 0.99⁵⁰ ≈ 0.61
+      </text>
+      <text x={sx(50) - 6} y={sy(0.9 ** 50) + 16} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.red}>
+        RNN 0.9: 0.9⁵⁰ ≈ 0.005
+      </text>
+      <Axes {...G2} sx={sx2} sy={sy2} xTicks={[0, 1, 2, 3, 4, 5]} yTicks={[-2, -1, 0, 1, 2]} fmtY={(v) => String(v).replace("-", "−")} xLabel="스텝 t" />
+      <line x1={G2.left} x2={G2.left + G2.width} y1={sy2(0)} y2={sy2(0)} stroke={inkMuted} strokeOpacity={0.6} />
+      {[0, 1].map((k) => (
+        <g key={k}>
+          <path d={linePath(cs.map((c, t) => [sx2(t), sy2(c[k])] as [number, number]))} fill="none" stroke={k === 0 ? colors.blue : colors.orange} strokeWidth={2.2} />
+          {cs.map((c, t) => (
+            <circle key={t} cx={sx2(t)} cy={sy2(c[k])} r={3.4} fill={k === 0 ? colors.blue : colors.orange} />
+          ))}
+        </g>
+      ))}
+      <text x={G2.left + G2.width / 2} y={10} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        본문 코드의 셀 상태 c (두 성분)
+      </text>
+      <text x={sx2(0) + 6} y={sy2(1) - 10} fontSize={10} fontWeight={700} fill={colors.blue}>
+        c[0]: 1 → 1.88
+      </text>
+      <text x={sx2(0) + 6} y={sy2(-1) - 10} fontSize={10} fontWeight={700} fill={colors.orange}>
+        c[1]: −1 → −1.12
+      </text>
+      <text x={G2.left + G2.width / 2} y={sy2(-1.88)} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        f = 0.94 ~ 1.00 (편향 3 → 시그모이드 ≈ 0.95)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function GruVsLstm() {
+  // LSTM: 게이트 f, i, o + 후보 c̃(4묶음), 상태 c, h. GRU: 게이트 z, r + 후보 h̃(3묶음), 상태 h. 단순 RNN은 1묶음.
+  const P = "gvl";
+  const unit = 42;
+  return (
+    <DiagramFrame
+      title="LSTM과 GRU: 게이트와 상태의 수"
+      caption="LSTM은 forget·input·output 게이트와 새 후보, 네 묶음의 가중치를 갖고 셀 상태 c와 은닉 상태 h를 따로 유지한다. GRU는 forget과 input을 업데이트 게이트 z 하나로 합쳐 '옛 상태를 1 − z만큼, 새 후보를 z만큼' 섞고, 리셋 게이트 r로 새 후보를 만들 때 이전 상태를 얼마나 볼지 정한다. 상태도 h 하나뿐이다. 묶음 하나가 d_h(d_x + d_h) + d_h개 파라미터라면 단순 RNN은 1묶음, GRU는 3묶음, LSTM은 4묶음이다(본문 코드의 d_x = 3, d_h = 2에서 LSTM은 48개)."
+      viewBox="0 0 720 262"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {[
+        { x: 16, t: "LSTM", c: colors.violet, gates: ["f: forget", "i: input", "o: output"], cand: "후보 c̃", states: ["c_t: 장기 기억", "h_t: 출력"], n: 4 },
+        { x: 250, t: "GRU", c: colors.green, gates: ["z: update", "r: reset"], cand: "후보 h̃", states: ["h_t 하나"], n: 3 },
+      ].map((m) => (
+        <g key={m.t}>
+          <rect x={m.x} y={10} width={214} height={150} rx={10} fill={m.c} fillOpacity={0.06} stroke={m.c} strokeOpacity={0.6} />
+          <text x={m.x + 107} y={30} textAnchor="middle" fontSize={13} fontWeight={800} fill={m.c}>
+            {m.t}
+          </text>
+          <text x={m.x + 12} y={52} fontSize={10} fontWeight={700} fill={inkSecondary}>
+            게이트 (σ)
+          </text>
+          {m.gates.map((g, i) => chip(m.x + 12 + i * 66, 58, g, m.c, 62, 22, 0.14, 9.5))}
+          <text x={m.x + 12} y={100} fontSize={10} fontWeight={700} fill={inkSecondary}>
+            새 후보 (tanh)
+          </text>
+          {chip(m.x + 100, 88, m.cand, colors.orange, 62, 22, 0.14, 9.5)}
+          <text x={m.x + 12} y={132} fontSize={10} fontWeight={700} fill={inkSecondary}>
+            상태
+          </text>
+          {m.states.map((s, i) => chip(m.x + 50 + i * 82, 120, s, colors.blue, 78, 22, 0.14, 9.5))}
+        </g>
+      ))}
+      <text x={600} y={30} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+        GRU의 섞기
+      </text>
+      <text x={600} y={50} textAnchor="middle" fontSize={11} fill={ink}>
+        {withSub("h", "t", " = (1 − z)·h", 11)}
+        <tspan dy={3.3} fontSize={7.9}>
+          t−1
+        </tspan>
+        <tspan dy={-3.3}> + z·h̃</tspan>
+      </text>
+      <line x1={500} x2={700} y1={92} y2={92} stroke={inkMuted} strokeWidth={6} strokeLinecap="round" opacity={0.3} />
+      <circle cx={500} cy={92} r={7} fill={colors.blue} />
+      <circle cx={700} cy={92} r={7} fill={colors.orange} />
+      <circle cx={500 + 0.3 * 200} cy={92} r={8} fill={colors.green} stroke="var(--surface-card)" strokeWidth={2} />
+      <text x={500} y={118} textAnchor="middle" fontSize={10} fill={colors.blue}>
+        {withSub("h", "t−1", " (옛 상태)", 10)}
+      </text>
+      <text x={700} y={118} textAnchor="end" fontSize={10} fill={colors.orange}>
+        h̃ (새 후보)
+      </text>
+      <text x={560} y={80} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.green}>
+        z = 0.3
+      </text>
+      <Lines x={600} y={140} lines={["z가 작으면 옛 상태 유지", "(LSTM의 f ≈ 1, i ≈ 0)"]} size={9.5} color={inkSecondary} />
+      <text x={16} y={186} fontSize={11} fontWeight={800} fill={ink}>
+        파라미터 묶음 수 (묶음 하나 = d_h(d_x + d_h) + d_h)
+      </text>
+      {[
+        { t: "단순 RNN", n: 1, c: inkMuted },
+        { t: "GRU", n: 3, c: colors.green },
+        { t: "LSTM", n: 4, c: colors.violet },
+      ].map((r, i) => (
+        <g key={r.t}>
+          <text x={16} y={208 + i * 20} fontSize={10.5} fontWeight={700} fill={ink}>
+            {r.t}
+          </text>
+          {Array.from({ length: r.n }, (_, k) => (
+            <rect key={k} x={86 + k * (unit + 4)} y={197 + i * 20} width={unit} height={14} rx={3} fill={r.c} fillOpacity={0.55} />
+          ))}
+          <text x={86 + r.n * (unit + 4) + 2} y={208 + i * 20} fontSize={10.5} fontWeight={800} fill={ink}>
+            {`× ${r.n}`}
+          </text>
+        </g>
+      ))}
+      <Lines x={330} y={212} lines={["본문 코드(d_x = 3, d_h = 2)에서 묶음 하나는", "2 × (3 + 2) + 2 = 12개 → LSTM은 4 × 12 = 48개"]} size={10} anchor="start" color={inkSecondary} />
+    </DiagramFrame>
+  );
+}
+
+export function KvCacheSteps() {
+  // 토큰 6개를 한 개씩 생성할 때 스텝마다 계산하는 K, V. 캐시 없이: 1 + 2 + … + 6 = 21번, 캐시: 6번.
+  const n = 6;
+  const cs = 26;
+  const grid = (x0: number, cached: boolean) => (
+    <g>
+      {Array.from({ length: n }, (_, t) =>
+        Array.from({ length: n }, (_, j) => {
+          const need = j <= t;
+          const fresh = need && (!cached || j === t);
+          return <rect key={`${t}-${j}`} x={x0 + j * cs} y={44 + t * cs} width={cs - 3} height={cs - 3} rx={4} fill={!need ? "none" : fresh ? colors.orange : colors.blue} fillOpacity={!need ? 0 : fresh ? 0.6 : 0.3} stroke={need ? (fresh ? colors.orange : colors.blue) : "var(--border-hairline)"} strokeDasharray={need ? undefined : "2 2"} />;
+        }),
+      )}
+      {Array.from({ length: n }, (_, j) => (
+        <text key={j} x={x0 + j * cs + (cs - 3) / 2} y={38} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {j + 1}
+        </text>
+      ))}
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="KV 캐시: 과거 토큰의 K, V를 다시 계산하지 않는다"
+      caption="행은 생성 스텝(t번째 토큰을 만드는 중), 열은 그때 attention에 필요한 토큰 1~t의 Key·Value다. 주황은 그 스텝에서 새로 계산하는 것, 파랑은 캐시에서 읽기만 하는 것이다. 캐시가 없으면 스텝마다 지금까지의 모든 토큰의 K, V를 다시 만들어 여섯 스텝에 1 + 2 + … + 6 = 21번 계산하지만, 과거 토큰의 K, V는 뒤에 무엇이 오든 바뀌지 않으므로 캐시에 저장해 두면 스텝마다 새 토큰 하나만 계산해 6번이면 된다. n개를 생성하면 n(n + 1)/2번이 n번으로 준다."
+      viewBox="0 0 720 230"
+      minWidth={580}
+    >
+      <text x={40 + (n * cs) / 2} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.red}>
+        캐시 없이
+      </text>
+      {grid(40, false)}
+      <text x={400 + (n * cs) / 2} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.green}>
+        KV 캐시
+      </text>
+      {grid(400, true)}
+      {Array.from({ length: n }, (_, t) => (
+        <g key={t}>
+          <text x={34} y={44 + t * cs + 16} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+            {`스텝 ${t + 1}`}
+          </text>
+          <text x={394} y={44 + t * cs + 16} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+            {`스텝 ${t + 1}`}
+          </text>
+          <text x={40 + n * cs + 6} y={44 + t * cs + 16} fontSize={10} fontWeight={700} fill={colors.orange}>
+            {`${t + 1}번 계산`}
+          </text>
+          <text x={400 + n * cs + 6} y={44 + t * cs + 16} fontSize={10} fontWeight={700} fill={colors.orange}>
+            1번 계산
+          </text>
+        </g>
+      ))}
+      <text x={40} y={222} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        합계 21번 · n개면 n(n + 1)/2
+      </text>
+      <text x={400} y={222} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        합계 6번 · n개면 n
+      </text>
+      <text x={640} y={60} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        열 = 토큰 위치
+      </text>
+      <rect x={604} y={74} width={14} height={14} rx={3} fill={colors.orange} fillOpacity={0.6} />
+      <text x={624} y={85} fontSize={10} fill={ink}>
+        새로 계산
+      </text>
+      <rect x={604} y={96} width={14} height={14} rx={3} fill={colors.blue} fillOpacity={0.3} stroke={colors.blue} />
+      <text x={624} y={107} fontSize={10} fill={ink}>
+        캐시에서 읽음
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function PrefillDecode() {
+  // 개념도: 프리필은 프롬프트 전체를 한 번에(병렬, 연산 위주), 디코드는 토큰 하나씩(매번 캐시 전체를 읽음, 메모리 위주).
+  const P = "pfd";
+  const x0 = 30;
+  const pre = 150;
+  const step = 34;
+  const nDec = 12;
+  return (
+    <DiagramFrame
+      title="생성의 두 단계: 프리필과 디코드"
+      caption="개념도다. 프리필에서는 프롬프트 전체를 학습 때처럼 한 번에 병렬로 처리해 KV 캐시를 채운다. 계산은 많지만 GPU가 한꺼번에 처리하므로 빠르고, 이 시간이 첫 글자가 나오기까지의 대기 시간이 된다. 디코드에서는 토큰을 하나씩 만들며 캐시에 덧붙이는데, 토큰마다 계산은 적지만 매번 캐시 전체(와 가중치)를 메모리에서 읽어야 해서 메모리 속도에 묶인다. 그래서 한동안 기다린 뒤 일정한 속도로 글자가 나온다. 아래 막대는 KV 캐시가 차는 모습이다."
+      viewBox="0 0 720 210"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <Arr x1={x0} y1={30} x2={700} y2={30} color={inkMuted} marker={`${P}-ink`} width={1.2} />
+      <text x={700} y={22} textAnchor="end" fontSize={10} fill={inkSecondary}>
+        시간 →
+      </text>
+      <rect x={x0} y={42} width={pre} height={40} rx={6} fill={colors.violet} fillOpacity={0.25} stroke={colors.violet} />
+      <text x={x0 + pre / 2} y={60} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
+        프리필
+      </text>
+      <text x={x0 + pre / 2} y={75} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        프롬프트 전체를 한 번에
+      </text>
+      {Array.from({ length: nDec }, (_, k) => (
+        <rect key={k} x={x0 + pre + 8 + k * step} y={46} width={step - 6} height={32} rx={5} fill={colors.orange} fillOpacity={0.25} stroke={colors.orange} />
+      ))}
+      <text x={x0 + pre + 8 + (nDec * step) / 2} y={98} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.orange}>
+        디코드: 토큰 하나씩 (매번 캐시 전체를 읽는다)
+      </text>
+      <line x1={x0} x2={x0 + pre} y1={112} y2={112} stroke={colors.violet} strokeWidth={1.4} />
+      <line x1={x0} x2={x0} y1={106} y2={118} stroke={colors.violet} strokeWidth={1.4} />
+      <line x1={x0 + pre} x2={x0 + pre} y1={106} y2={118} stroke={colors.violet} strokeWidth={1.4} />
+      <text x={x0 + pre / 2} y={128} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={colors.violet}>
+        첫 토큰까지 대기 (연산 위주)
+      </text>
+      <text x={x0 + pre + 8 + step * 1.5} y={128} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={colors.orange}>
+        토큰당 일정한 간격 (메모리 위주)
+      </text>
+      <text x={14} y={160} fontSize={10} fontWeight={700} fill={inkSecondary}>
+        KV 캐시
+      </text>
+      <rect x={x0 + 40} y={150} width={630} height={16} rx={3} fill="none" stroke="var(--border-strong)" />
+      <rect x={x0 + 40} y={150} width={pre} height={16} rx={3} fill={colors.violet} fillOpacity={0.45} />
+      {Array.from({ length: nDec }, (_, k) => (
+        <rect key={k} x={x0 + 40 + pre + k * 10} y={150} width={9} height={16} fill={colors.orange} fillOpacity={0.55} />
+      ))}
+      <text x={x0 + 40 + pre / 2} y={184} textAnchor="middle" fontSize={9.5} fill={colors.violet}>
+        프롬프트 토큰의 K, V
+      </text>
+      <text x={x0 + 40 + pre + 60} y={184} textAnchor="middle" fontSize={9.5} fill={colors.orange}>
+        생성한 토큰마다 1칸씩
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function GqaSharing() {
+  // 본문 예: 32층, 헤드당 128차원, 2048토큰, fp16, 배치 1. KV 헤드 32(MHA) 1.07GB, 8(GQA) 0.27GB, 1(MQA) 0.034GB.
+  const schemes = [
+    { t: "MHA", sub: "Query 헤드마다 K·V 헤드", kv: 8, c: colors.red },
+    { t: "GQA", sub: "Query 4개가 K·V 하나를 공유", kv: 2, c: colors.green },
+    { t: "MQA", sub: "모든 Query가 K·V 하나를 공유", kv: 1, c: colors.violet },
+  ];
+  const mem = [
+    { t: "MHA (K·V 헤드 32)", v: 1.073741824, c: colors.red },
+    { t: "GQA (K·V 헤드 8)", v: 0.268435456, c: colors.green },
+    { t: "MQA (K·V 헤드 1)", v: 0.033554432, c: colors.violet },
+  ];
+  const bx = linear(0, 1.1, 0, 230);
+  return (
+    <DiagramFrame
+      title="K·V 헤드를 나눠 쓰면 KV 캐시가 준다: MHA · GQA · MQA"
+      caption="위: Query 헤드(파랑) 여덟 개가 Key·Value 헤드(주황)를 어떻게 쓰는지다. MHA는 Query마다 자기 K·V가 있고, GQA는 Query 몇 개가 K·V 하나를 함께 쓰며, MQA는 모든 Query가 K·V 하나만 쓴다. 캐시에 저장하는 것은 K·V이므로 캐시 크기는 K·V 헤드 수에 비례한다. 아래: 본문 예(32층, 헤드당 128차원, 2,048토큰, fp16, 배치 1)에서 Query 헤드 32개에 K·V 헤드가 32개면 약 1.07GB, 8개(GQA, 4 : 1)면 약 0.27GB, 1개(MQA)면 약 0.03GB다. 배치가 8이면 MHA는 8.6GB로 불어난다."
+      viewBox="0 0 720 262"
+      minWidth={600}
+    >
+      {schemes.map((s, j) => {
+        const x0 = 18 + j * 236;
+        const qx = (i: number) => x0 + 14 + i * 24;
+        const kvW = 192 / s.kv;
+        const kx = (g: number) => x0 + 14 + g * kvW + kvW / 2 - 10;
+        return (
+          <g key={s.t}>
+            <text x={x0 + 100} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={s.c}>
+              {s.t}
+            </text>
+            <text x={x0 + 100} y={30} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+              {s.sub}
+            </text>
+            {Array.from({ length: 8 }, (_, i) => {
+              const g = Math.floor(i / (8 / s.kv));
+              return <line key={`l${i}`} x1={qx(i) + 9} y1={64} x2={kx(g) + 10} y2={98} stroke={s.c} strokeOpacity={0.6} />;
+            })}
+            {Array.from({ length: 8 }, (_, i) => (
+              <rect key={`q${i}`} x={qx(i)} y={44} width={18} height={20} rx={3} fill={colors.blue} fillOpacity={0.45} stroke={colors.blue} />
+            ))}
+            {Array.from({ length: s.kv }, (_, g) => (
+              <rect key={`k${g}`} x={kx(g)} y={98} width={20} height={20} rx={3} fill={colors.orange} fillOpacity={0.55} stroke={colors.orange} />
+            ))}
+            <text x={x0 + 4} y={58} textAnchor="end" fontSize={9} fill={colors.blue}>
+              Q
+            </text>
+            <text x={x0 + 4} y={112} textAnchor="end" fontSize={9} fill={colors.orange}>
+              K·V
+            </text>
+          </g>
+        );
+      })}
+      <line x1={14} x2={706} y1={136} y2={136} stroke="var(--border-hairline)" />
+      <text x={20} y={156} fontSize={11.5} fontWeight={800} fill={ink}>
+        KV 캐시 크기 (본문 예, Query 헤드 32개)
+      </text>
+      {mem.map((m, i) => {
+        const y = 168 + i * 28;
+        return (
+          <g key={m.t}>
+            <text x={20} y={y + 14} fontSize={10.5} fontWeight={700} fill={ink}>
+              {m.t}
+            </text>
+            <rect x={160} y={y + 2} width={Math.max(2, bx(m.v))} height={16} rx={3} fill={m.c} fillOpacity={0.6} />
+            <text x={160 + Math.max(2, bx(m.v)) + 6} y={y + 14} fontSize={10.5} fontWeight={800} fill={ink}>
+              {m.v < 0.1 ? `${m.v.toFixed(3)} GB` : `${m.v.toFixed(2)} GB`}
+            </text>
+          </g>
+        );
+      })}
+      <Lines x={470} y={176} lines={["32층 × K·V 헤드 수 × 128차원", "× 2,048토큰 × 2(K, V) × 2바이트", "", "배치 8이면 MHA는 약 8.6GB"]} size={10.5} anchor="start" color={inkSecondary} />
+    </DiagramFrame>
+  );
+}
+
+export function RopeRotation() {
+  // 본문 코드: θ = 0.3, q = [1, 0.5], k = [0.8, −0.2]. 위치 m의 q를 mθ, 위치 n의 k를 nθ만큼 돌려 내적한다.
+  const theta = 0.3;
+  const q = [1, 0.5];
+  const k = [0.8, -0.2];
+  const rot = (v: number[], a: number) => [Math.cos(a) * v[0] - Math.sin(a) * v[1], Math.sin(a) * v[0] + Math.cos(a) * v[1]];
+  const cases = [
+    [3, 1],
+    [10, 8],
+    [52, 50],
+    [5, 1],
+  ];
+  const R = 58;
+  return (
+    <DiagramFrame
+      title="RoPE: 돌린 각도의 차이, 즉 상대 거리만 점수에 남는다"
+      caption="본문 코드의 q, k(θ = 0.3)다. 위치 m의 Query를 mθ만큼, 위치 n의 Key를 nθ만큼 돌린다(파랑 = q, 주황 = k). 위치가 (3, 1), (10, 8), (52, 50)으로 전혀 달라도 거리 m − n이 2로 같으면 두 화살표 사이의 각도가 같아 내적(점수)이 0.2389로 똑같다. 둘 다 같은 만큼 더 돌린 것뿐이기 때문이다. 거리가 4인 (5, 1)에서는 사이 각도가 θ × 2만큼 더 벌어져 점수가 달라진다. 실제 RoPE는 d차원 벡터를 두 성분씩 짝지어 쌍마다 다른 θ로 이 회전을 적용한다."
+      viewBox="0 0 720 232"
+      minWidth={600}
+    >
+      {cases.map(([m, n], j) => {
+        const cx = 90 + j * 178;
+        const cy = 108;
+        const qr = rot(q, m * theta);
+        const kr = rot(k, n * theta);
+        const score = qr[0] * kr[0] + qr[1] * kr[1];
+        const aq = Math.atan2(qr[1], qr[0]);
+        const ak = Math.atan2(kr[1], kr[0]);
+        const sc = R / 1.15;
+        let d = aq - ak;
+        while (d > Math.PI) d -= 2 * Math.PI;
+        while (d < -Math.PI) d += 2 * Math.PI;
+        const r0 = 24;
+        const arc = `M${cx + r0 * Math.cos(ak)},${cy - r0 * Math.sin(ak)} A${r0},${r0} 0 0 ${d > 0 ? 0 : 1} ${cx + r0 * Math.cos(aq)},${cy - r0 * Math.sin(aq)}`;
+        const same = m - n === 2;
+        return (
+          <g key={j}>
+            <text x={cx} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+              {`m = ${m}, n = ${n}`}
+            </text>
+            <text x={cx} y={35} textAnchor="middle" fontSize={10} fill={same ? colors.green : colors.red} fontWeight={700}>
+              {`거리 ${m - n}`}
+            </text>
+            <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--border-hairline)" />
+            <line x1={cx - R - 6} x2={cx + R + 6} y1={cy} y2={cy} stroke="var(--border-hairline)" />
+            <line x1={cx} x2={cx} y1={cy - R - 6} y2={cy + R + 6} stroke="var(--border-hairline)" />
+            <path d={arc} fill="none" stroke={same ? colors.green : colors.red} strokeWidth={2} />
+            <line x1={cx} y1={cy} x2={cx + qr[0] * sc} y2={cy - qr[1] * sc} stroke={colors.blue} strokeWidth={2.6} strokeLinecap="round" />
+            <circle cx={cx + qr[0] * sc} cy={cy - qr[1] * sc} r={3.5} fill={colors.blue} />
+            <line x1={cx} y1={cy} x2={cx + kr[0] * sc} y2={cy - kr[1] * sc} stroke={colors.orange} strokeWidth={2.6} strokeLinecap="round" />
+            <circle cx={cx + kr[0] * sc} cy={cy - kr[1] * sc} r={3.5} fill={colors.orange} />
+            <text x={cx} y={cy + R + 26} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={same ? colors.green : colors.red}>
+              {`점수 ${score.toFixed(4)}`}
+            </text>
+            <text x={cx} y={cy + R + 42} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+              {`사이 각도 ${Math.round((Math.abs(d) * 180) / Math.PI)}°`}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function ParamBreakdown() {
+  // 본문 count_params: GPT-2 small(d = 768, L = 12, V = 50,257, ctx = 1,024) = 124,439,808.
+  // 같은 구조를 d = 4096, L = 32로 키운 경우와 비교(편향 포함, weight tying).
+  const parts = (d: number, L: number, V: number, ctx: number) => {
+    const attn = L * (4 * d * d + 4 * d);
+    const mlp = L * (8 * d * d + 5 * d);
+    const ln = L * 4 * d + 2 * d;
+    const emb = V * d + ctx * d;
+    return { attn, mlp, ln, emb, total: attn + mlp + ln + emb };
+  };
+  const rows = [
+    { t: "GPT-2 small", sub: "d = 768, L = 12", p: parts(768, 12, 50257, 1024) },
+    { t: "같은 구조, d = 4096 · L = 32", sub: "", p: parts(4096, 32, 50257, 1024) },
+  ];
+  const W = 470;
+  const segs = (p: ReturnType<typeof parts>) => [
+    { k: "Attention", v: p.attn, c: colors.blue },
+    { k: "MLP", v: p.mlp, c: colors.orange },
+    { k: "임베딩", v: p.emb, c: colors.green },
+    { k: "LN", v: p.ln, c: inkMuted },
+  ];
+  const fmt = (v: number) => (v >= 1e9 ? `${(v / 1e9).toFixed(2)}B` : `${(v / 1e6).toFixed(1)}M`);
+  return (
+    <DiagramFrame
+      title="파라미터는 어디에 있나: 블록당 12d², 그중 3분의 2가 MLP"
+      caption="왼쪽: 디코더 블록 하나는 Q·K·V·출력 투영 4d²(파랑)와 MLP d → 4d → d의 8d²(주황), 합해서 약 12d²다. 오른쪽: 본문 count_params로 센 GPT-2 small은 Attention 28.3M, MLP 56.7M, 임베딩(토큰 + 위치) 39.4M으로 합계 124,439,808개다. 작은 모델에서는 임베딩이 3분의 1을 차지하지만, 같은 구조를 d = 4096, L = 32로 키우면 본체 12Ld²가 압도해 임베딩은 3% 남짓으로 줄어든다."
+      viewBox="0 0 720 214"
+      minWidth={600}
+    >
+      <text x={80} y={20} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        블록 하나 = 12 × d²
+      </text>
+      {Array.from({ length: 12 }, (_, i) => {
+        const c = i < 4 ? colors.blue : colors.orange;
+        return <rect key={i} x={16 + (i % 4) * 24} y={32 + Math.floor(i / 4) * 30} width={21} height={26} rx={3} fill={c} fillOpacity={0.5} stroke={c} />;
+      })}
+      {["Q", "K", "V", "O"].map((t, i) => (
+        <text key={t} x={16 + i * 24 + 10.5} y={50} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+          {t}
+        </text>
+      ))}
+      <Lines x={114} y={43} lines={["Attention", "투영 4d²"]} size={9.5} anchor="start" color={colors.blue} weight={700} gap={1.2} />
+      <Lines x={114} y={73} lines={["MLP d→4d", "4d²"]} size={9.5} anchor="start" color={colors.orange} weight={700} gap={1.2} />
+      <Lines x={114} y={103} lines={["MLP 4d→d", "4d²"]} size={9.5} anchor="start" color={colors.orange} weight={700} gap={1.2} />
+      <line x1={186} y1={14} x2={186} y2={200} stroke="var(--border-hairline)" />
+      {rows.map((r, j) => {
+        const y = 30 + j * 86;
+        let acc = 0;
+        return (
+          <g key={r.t}>
+            <text x={206} y={y} fontSize={11.5} fontWeight={800} fill={ink}>
+              {r.t}
+              {r.sub && <tspan dx={8} fontSize={10} fontWeight={400} fill={inkSecondary}>{r.sub}</tspan>}
+            </text>
+            <text x={696} y={y} textAnchor="end" fontSize={11} fontWeight={800} fill={ink}>
+              {`합계 ${j === 0 ? r.p.total.toLocaleString("en-US") : fmt(r.p.total)}`}
+            </text>
+            {segs(r.p).map((sgm) => {
+              const w = (sgm.v / r.p.total) * W;
+              const x = 206 + acc;
+              acc += w;
+              return (
+                <g key={sgm.k}>
+                  <rect x={x} y={y + 8} width={w} height={24} fill={sgm.c} fillOpacity={0.6} />
+                  {w > 60 && (
+                    <text x={x + w / 2} y={y + 24} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+                      {`${sgm.k} ${Math.round((sgm.v / r.p.total) * 100)}%`}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+            <text x={206} y={y + 48} fontSize={9.5} fill={inkSecondary}>
+              {`Attention ${fmt(r.p.attn)} · MLP ${fmt(r.p.mlp)} · 임베딩 ${fmt(r.p.emb)}`}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function TrainingMemory() {
+  // 본문: 7B 모델. 추론 fp16 가중치 2N = 14GB. 학습(혼합 정밀도 + Adam) 16N = 112GB = 가중치 2 + 기울기 2 + fp32 원본 4 + Adam m·v 8.
+  const N = 7;
+  const sx = linear(0, 170, 220, 680);
+  const train = [
+    { t: ["fp16", "가중치"], b: 2, c: colors.blue },
+    { t: ["fp16", "기울기"], b: 2, c: colors.orange },
+    { t: ["fp32 원본", "가중치"], b: 4, c: colors.violet },
+    { t: ["Adam m, v", "(fp32)"], b: 8, c: colors.green },
+  ];
+  let acc = 0;
+  return (
+    <DiagramFrame
+      title="7B 모델의 메모리: 추론 14GB, 학습 112GB"
+      caption="파라미터 70억 개(7B) 모델이다. 추론은 fp16 가중치(파라미터당 2바이트)만 있으면 되므로 약 14GB로 24GB GPU 한 장에 들어간다. 혼합 정밀도 + Adam으로 학습하려면 파라미터마다 fp16 가중치 2, fp16 기울기 2, fp32 원본 가중치 4, Adam의 m과 v 8바이트, 합해서 16바이트가 필요해 약 112GB가 된다. 활성화 메모리를 빼고도 80GB GPU 한 장을 넘는다. '추론은 되는데 파인튜닝은 안 된다'는 말이 나오는 이유이고, LoRA와 양자화가 이 격차를 줄인다."
+      viewBox="0 0 720 196"
+      minWidth={600}
+    >
+      {[24, 80, 160].map((g) => (
+        <g key={g}>
+          <line x1={sx(g)} x2={sx(g)} y1={22} y2={128} stroke={inkMuted} strokeDasharray="4 3" />
+          <text x={sx(g)} y={16} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+            {g === 160 ? "80GB × 2" : `GPU ${g}GB`}
+          </text>
+        </g>
+      ))}
+      <text x={20} y={52} fontSize={11.5} fontWeight={800} fill={ink}>
+        추론
+      </text>
+      <text x={20} y={67} fontSize={9.5} fill={inkSecondary}>
+        fp16 가중치 2바이트
+      </text>
+      <rect x={sx(0)} y={38} width={sx(2 * N) - sx(0)} height={28} rx={3} fill={colors.blue} fillOpacity={0.6} />
+      <text x={(sx(0) + sx(2 * N)) / 2} y={57} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+        14GB
+      </text>
+      <text x={20} y={112} fontSize={11.5} fontWeight={800} fill={ink}>
+        학습
+      </text>
+      <text x={20} y={127} fontSize={9.5} fill={inkSecondary}>
+        혼합 정밀도 + Adam 16바이트
+      </text>
+      {train.map((t) => {
+        const x = sx(acc);
+        acc += t.b * N;
+        const w = sx(acc) - x;
+        return (
+          <g key={t.t.join("")}>
+            <rect x={x} y={98} width={w} height={28} fill={t.c} fillOpacity={0.6} stroke="var(--surface-card)" />
+            <text x={x + w / 2} y={116} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={ink}>
+              {`${t.b * N}GB`}
+            </text>
+            <Lines x={x + w / 2} y={140} lines={t.t} size={9} color={inkSecondary} gap={1.2} />
+          </g>
+        );
+      })}
+      <text x={sx(16 * N) + 6} y={117} fontSize={11} fontWeight={800} fill={ink}>
+        112GB
+      </text>
+      <text x={20} y={186} fontSize={10} fill={inkSecondary}>
+        활성화(중간 계산값) 메모리는 별도로 더 든다.
       </text>
     </DiagramFrame>
   );
