@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkMuted, inkSecondary, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Markers, Arr, ArrPath, Lines, Tag, linear, linePath, sample, starPath, mono } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, starPath, mono } from "./chart";
 
 export function RagPipeline() {
   const w = 108;
@@ -1429,6 +1429,651 @@ export function EvalCycle() {
         <Tag key={n.t} x={n.x} y={n.y} w={w} h={h} lines={[n.t, n.s]} color={n.c} tint={0.12} size={11.5} />
       ))}
       <Tag x={290} y={110} w={150} h={52} lines={["채점관 검증", "사람 채점과 κ로 비교", "위치·길이 편향 점검"]} color={inkMuted} tint={0.06} size={11} dashed />
+    </DiagramFrame>
+  );
+}
+
+export function IvfCells() {
+  // 개념도: 2차원 점들을 칸 9개로 나눈 IVF. 질의가 칸 경계 근처에 있으면 진짜 최근접 이웃(p*)이 옆 칸에 있을 수 있다.
+  const centers = [
+    [0.2, 0.2],
+    [0.68, 0.17],
+    [1.15, 0.22],
+    [0.24, 0.53],
+    [0.72, 0.5],
+    [1.14, 0.55],
+    [0.18, 0.83],
+    [0.66, 0.85],
+    [1.16, 0.8],
+  ];
+  const q = [0.455, 0.5];
+  const pStar = [0.5, 0.53];
+  const rand = seeded(21);
+  const pts: number[][] = [];
+  centers.forEach((c) => {
+    for (let i = 0; i < 22; i++) {
+      const p = [c[0] + 0.075 * gaussian(rand), c[1] + 0.075 * gaussian(rand)];
+      if (p[0] < 0.02 || p[0] > 1.34 || p[1] < 0.02 || p[1] > 0.98) continue;
+      if (Math.hypot(p[0] - q[0], p[1] - q[1]) < 0.085) continue;
+      pts.push(p);
+    }
+  });
+  pts.push(pStar);
+  const cellOf = (p: number[]) => centers.reduce((bi, c, i) => (Math.hypot(p[0] - c[0], p[1] - c[1]) < Math.hypot(p[0] - centers[bi][0], p[1] - centers[bi][1]) ? i : bi), 0);
+  const order = centers.map((c, i) => ({ i, d: Math.hypot(q[0] - c[0], q[1] - c[1]) })).sort((a, b) => a.d - b.d);
+  const S = 196;
+  const panel = (x0: number, nProbe: number) => {
+    const open = new Set(order.slice(0, nProbe).map((o) => o.i));
+    const sx = (v: number) => x0 + v * S;
+    const sy = (v: number) => 36 + (1 - v) * S;
+    const openCells: React.ReactNode[] = [];
+    const evenCells: React.ReactNode[] = [];
+    const step = 0.03;
+    for (let gx = 0; gx < 1.36; gx += step)
+      for (let gy = 0; gy < 1; gy += step) {
+        const c = cellOf([gx + step / 2, gy + step / 2]);
+        const r = <rect key={`${gx.toFixed(2)}-${gy.toFixed(2)}`} x={sx(gx)} y={sy(Math.min(gy + step, 1))} width={Math.min(step, 1.36 - gx) * S + 0.5} height={Math.min(step, 1 - gy) * S + 0.5} fill={open.has(c) ? colors.blue : inkMuted} />;
+        if (open.has(c)) openCells.push(r);
+        else if (c % 2 === 0) evenCells.push(r);
+      }
+    const found = open.has(cellOf(pStar));
+    const compared = pts.filter((p) => open.has(cellOf(p))).length;
+    return (
+      <g>
+        <text x={x0 + (1.36 * S) / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+          {`n_probe = ${nProbe}: 가까운 칸 ${nProbe}개만 연다`}
+        </text>
+        <g opacity={0.16}>{openCells}</g>
+        <g opacity={0.08}>{evenCells}</g>
+        <rect x={x0} y={36} width={1.36 * S} height={S} fill="none" stroke="var(--border-strong)" />
+        {pts.map((p, i) => {
+          const on = open.has(cellOf(p));
+          return <circle key={i} cx={sx(p[0])} cy={sy(p[1])} r={p === pStar ? 4.2 : 2.6} fill={on ? colors.blue : inkMuted} fillOpacity={on ? 0.9 : 0.5} />;
+        })}
+        {centers.map((c, i) => (
+          <path key={i} d={`M${sx(c[0]) - 4},${sy(c[1]) - 4} L${sx(c[0]) + 4},${sy(c[1]) + 4} M${sx(c[0]) - 4},${sy(c[1]) + 4} L${sx(c[0]) + 4},${sy(c[1]) - 4}`} stroke={ink} strokeWidth={1.6} opacity={0.7} />
+        ))}
+        <circle cx={sx(pStar[0])} cy={sy(pStar[1])} r={9} fill="none" stroke={found ? colors.green : colors.red} strokeWidth={2} />
+        <path d={starPath(sx(q[0]), sy(q[1]), 7)} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={1} />
+        <text x={sx(pStar[0]) + 12} y={sy(pStar[1]) - 10} fontSize={10.5} fontWeight={800} fill={found ? colors.green : colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+          {found ? "진짜 최근접 이웃 찾음 ✓" : "진짜 최근접 이웃은 옆 칸 ✗"}
+        </text>
+        <text x={x0 + (1.36 * S) / 2} y={36 + S + 18} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+          {`비교한 점 ${compared}개 / 전체 ${pts.length}개 (+ 칸 중심 ${centers.length}개)`}
+        </text>
+      </g>
+    );
+  };
+  return (
+    <DiagramFrame
+      title="IVF: 칸으로 나누고 가까운 칸 몇 개만 연다"
+      caption="개념도다. 점들을 k-means로 칸 9개(×는 칸의 중심)로 나눠 두고, 질의(★)가 오면 중심이 가까운 칸부터 n_probe개만 열어 그 안의 점(파랑)과만 비교한다. 왼쪽처럼 질의가 칸 경계 근처에 있으면 진짜 최근접 이웃이 옆 칸에 들어 있을 수 있고, 그 칸을 열지 않으면 영영 찾지 못한다. 오른쪽처럼 n_probe를 3으로 늘리면 찾지만 비교할 점도 그만큼 늘어난다. 칸 수를 정한 뒤에는 이 손잡이 하나로 속도와 정확도를 맞바꾼다."
+      viewBox="0 0 720 270"
+      minWidth={600}
+    >
+      {panel(14, 1)}
+      {panel(372, 3)}
+    </DiagramFrame>
+  );
+}
+
+export function IvfRecallCost() {
+  // 본문 IVF 코드(n = 20,000, n_list = 64)를 n_probe 1~64로 돌린 결과: (비교 횟수, Recall@10).
+  const runs = [
+    { p: 1, cost: 384, rec: 0.613 },
+    { p: 2, cost: 699, rec: 0.723 },
+    { p: 4, cost: 1323, rec: 0.842 },
+    { p: 8, cost: 2568, rec: 0.925 },
+    { p: 16, cost: 5059, rec: 0.972 },
+    { p: 32, cost: 10057, rec: 0.996 },
+    { p: 64, cost: 20064, rec: 1.0 },
+  ];
+  const G = { left: 60, top: 18, width: 470, height: 180 };
+  const sx = log10Scale(200, 30000, G.left, G.left + G.width);
+  const sy = linear(0.5, 1, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="IVF의 손잡이 n_probe: 비교 횟수와 재현율의 맞교환"
+      caption="본문 IVF 코드(벡터 2만 개, 칸 64개, 질의 200개)에 n_probe 값을 더 넣어 돌린 결과다. 칸 하나만 열면 전수 비교의 약 2%(평균 384번)만 비교하지만 진짜 상위 10개 중 61%만 찾는다. 4칸이면 84%, 16칸이면 97%이고, 비교 횟수를 두 배로 늘릴 때마다 오르는 폭이 점점 줄어든다. 목표 재현율 0.95(점선)를 넘는 가장 작은 값은 n_probe = 16으로, 전수 비교의 약 25%만 비교한다. 64칸을 모두 열면 전수 비교와 같다."
+      viewBox="0 0 720 240"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[300, 1000, 3000, 10000, 20000]} yTicks={[0.5, 0.6, 0.7, 0.8, 0.9, 1]} fmtX={(v) => v.toLocaleString("en-US")} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="질의당 비교 횟수 (로그 눈금)" yLabel="Recall@10" />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(0.95)} y2={sy(0.95)} stroke={colors.red} strokeDasharray="5 3" />
+      <text x={G.left + 6} y={sy(0.95) - 5} fontSize={10} fontWeight={700} fill={colors.red}>
+        목표 재현율 0.95
+      </text>
+      <line x1={sx(20000)} x2={sx(20000)} y1={G.top} y2={G.top + G.height} stroke={inkMuted} strokeDasharray="3 3" />
+      <text x={sx(20000) - 4} y={G.top + G.height - 8} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+        전수 비교 2만
+      </text>
+      <path d={linePath(runs.map((r) => [sx(r.cost), sy(r.rec)] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      {runs.map((r) => (
+        <g key={r.p}>
+          <circle cx={sx(r.cost)} cy={sy(r.rec)} r={r.p === 16 ? 6 : 4} fill={r.p === 16 ? colors.green : colors.blue} stroke="var(--surface-card)" strokeWidth={1.5} />
+          <text x={sx(r.cost) + 7} y={sy(r.rec) + 14} fontSize={9.5} fontWeight={700} fill={r.p === 16 ? colors.green : inkSecondary}>
+            {`n_probe ${r.p}`}
+          </text>
+        </g>
+      ))}
+      <Lines x={548} y={60} lines={["n_probe 1: 61% · 384번", "n_probe 4: 84% · 1,323번", "n_probe 16: 97% · 5,059번", "n_probe 64: 100% · 2만 번"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.7} />
+    </DiagramFrame>
+  );
+}
+
+export function PqCompression() {
+  // 본문: 768차원 float32(3,072바이트)를 8차원 조각 96개로 나누고, 조각마다 대표 벡터 256개 중 가장 가까운 번호(1바이트)만 저장 → 96바이트.
+  const P = "pqc";
+  const segs = 12;
+  const sw = 40;
+  const codes = [17, 203, 88, 5, 141, 66, 230, 12, 97, 180, 43, 250];
+  return (
+    <DiagramFrame
+      title="PQ: 벡터를 조각내 조각마다 대표 번호 하나로"
+      caption="768차원 벡터(float32, 3,072바이트)를 8차원짜리 조각 96개로 나눈다(그림에는 앞의 12개만). 조각마다 미리 학습해 둔 대표 벡터 256개(코드북) 중 가장 가까운 것을 찾아 그 번호(0~255, 1바이트)만 저장하면 벡터 하나가 96바이트, 원래의 32분의 1이 된다. 1억 개면 약 307GB가 약 9.6GB로 준다. 질의와의 거리는 조각마다 '질의 조각 ↔ 대표 벡터 256개'의 거리 표를 한 번 만들어 두고 번호로 찾아 더해 근사한다. 압축한 만큼 거리가 부정확하므로, 넉넉히 뽑은 후보를 원래 벡터로 다시 정렬하는 경우가 많다."
+      viewBox="0 0 720 248"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={20} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        원래 벡터: 768차원 × 4바이트 = 3,072바이트
+      </text>
+      {Array.from({ length: segs }, (_, i) => (
+        <g key={i}>
+          <rect x={20 + i * sw} y={34} width={sw - 4} height={26} rx={3} fill={colors.blue} fillOpacity={0.18 + 0.04 * (i % 3)} stroke={colors.blue} />
+          <text x={20 + i * sw + (sw - 4) / 2} y={51} textAnchor="middle" fontSize={8.5} fill={inkSecondary}>
+            8차원
+          </text>
+        </g>
+      ))}
+      <text x={20 + segs * sw + 6} y={52} fontSize={13} fontWeight={800} fill={inkSecondary}>
+        … × 96조각
+      </text>
+      {Array.from({ length: 3 }, (_, i) => (
+        <Arr key={i} x1={38 + i * sw} y1={62} x2={38 + i * sw} y2={92} color={inkSecondary} marker={`${P}-ink`} />
+      ))}
+      <rect x={14} y={94} width={210} height={56} rx={8} fill={colors.violet} fillOpacity={0.08} stroke={colors.violet} />
+      <text x={119} y={112} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        조각별 코드북: 대표 벡터 256개
+      </text>
+      <text x={119} y={130} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        가장 가까운 대표의 번호(0~255)를 고른다
+      </text>
+      <text x={119} y={143} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        → 1바이트로 저장
+      </text>
+      <Arr x1={226} y1={122} x2={262} y2={122} color={inkSecondary} marker={`${P}-ink`} />
+      <text x={270} y={104} fontSize={11.5} fontWeight={800} fill={ink}>
+        저장하는 것: 번호 96개 = 96바이트
+      </text>
+      {codes.map((c, i) => (
+        <g key={i}>
+          <rect x={270 + i * 30} y={112} width={27} height={22} rx={3} fill={colors.green} fillOpacity={0.2} stroke={colors.green} />
+          <text x={270 + i * 30 + 13.5} y={127} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={ink} fontFamily={mono}>
+            {c}
+          </text>
+        </g>
+      ))}
+      <text x={270 + codes.length * 30 + 4} y={128} fontSize={12} fontWeight={800} fill={inkSecondary}>
+        …
+      </text>
+      <line x1={14} x2={706} y1={166} y2={166} stroke="var(--border-hairline)" />
+      {[
+        { t: "float32 원본", v: 307, c: colors.blue, l: "1억 개: 약 307GB" },
+        { t: "PQ (96바이트)", v: 9.6, c: colors.green, l: "1억 개: 약 9.6GB (1/32)" },
+      ].map((b, i) => (
+        <g key={b.t}>
+          <text x={20} y={190 + i * 26} fontSize={10.5} fontWeight={700} fill={ink}>
+            {b.t}
+          </text>
+          <rect x={130} y={179 + i * 26} width={(b.v / 307) * 440} height={16} rx={3} fill={b.c} fillOpacity={0.6} />
+          <text x={130 + (b.v / 307) * 440 + 6} y={191 + i * 26} fontSize={10.5} fontWeight={800} fill={ink}>
+            {b.l}
+          </text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function FilterOrder() {
+  // 본문: 사후 필터는 상위 k' = 100개 중 선택도 s = 0.02인 조건을 통과한 것만 남긴다 → 남는 개수 ~ 이항분포(100, 0.02), 평균 2, P(0) ≈ 13%.
+  const P = "flo";
+  const probs = Array.from({ length: 8 }, (_, k) => {
+    let c = 1;
+    for (let i = 0; i < k; i++) c = (c * (100 - i)) / (i + 1);
+    return c * 0.02 ** k * 0.98 ** (100 - k);
+  });
+  const G = { left: 50, top: 92, width: 260, height: 110 };
+  const sx = linear(-0.5, 7.5, G.left, G.left + G.width);
+  const sy = linear(0, 0.3, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="메타데이터 필터: 거르는 순서가 결과 개수를 바꾼다"
+      caption="왼쪽은 사후 필터다. ANN으로 상위 100개를 먼저 뽑은 뒤 조건(통과 비율 2%)으로 거르면 평균 2개만 남고, 남는 개수는 이항분포를 따른다. 약 13%의 질의는 하나도 남지 않는다(빨강). 오른쪽은 사전 필터다. 조건을 통과한 문서 안에서만 검색하므로 결과 개수는 보장되지만, 통과한 문서만 남긴 그래프는 연결이 끊겨 HNSW 탐색이 길을 잃을 수 있다. 그래서 벡터 DB는 탐색 중에 필터를 함께 적용하거나, 통과 문서가 적으면 그 안에서 전수 비교로 바꾼다. 권한 필터는 반드시 검색 단계에서 걸어, 볼 수 없는 문서가 프롬프트에 아예 들어가지 않게 한다."
+      viewBox="0 0 720 250"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={180} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.red}>
+        사후 필터: 뽑고 나서 거른다
+      </text>
+      {chip7(30, 30, "ANN 상위 100개", colors.blue, 110, 26, 0.14, 10.5)}
+      <Arr x1={142} y1={43} x2={172} y2={43} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(176, 30, "조건 통과 2%", colors.orange, 98, 26, 0.14, 10.5)}
+      <Arr x1={276} y1={43} x2={300} y2={43} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(304, 30, "평균 2개", colors.red, 60, 26, 0.14, 10.5)}
+      <text x={180} y={78} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        남는 결과 개수의 확률 (n = 100, s = 0.02) · 빨강 = 하나도 안 남음
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 1, 2, 3, 4, 5, 6, 7]} yTicks={[0, 0.1, 0.2, 0.3]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="남는 개수" />
+      {probs.map((p, k) => (
+        <g key={k}>
+          <rect x={sx(k) - 11} y={sy(p)} width={22} height={sy(0) - sy(p)} rx={2} fill={k === 0 ? colors.red : colors.blue} fillOpacity={k === 0 ? 0.75 : 0.5} />
+          {p > 0.02 && (
+            <text x={sx(k)} y={sy(p) - 4} textAnchor="middle" fontSize={9.5} fontWeight={k === 0 ? 800 : 400} fill={k === 0 ? colors.red : ink}>
+              {`${(p * 100).toFixed(0)}%`}
+            </text>
+          )}
+        </g>
+      ))}
+      <line x1={368} y1={10} x2={368} y2={236} stroke="var(--border-hairline)" />
+      <text x={540} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.green}>
+        사전 필터: 거르고 나서 찾는다
+      </text>
+      {chip7(388, 30, "조건 통과 문서만", colors.orange, 118, 26, 0.14, 10.5)}
+      <Arr x1={508} y1={43} x2={532} y2={43} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(536, 30, "그 안에서 상위 k", colors.green, 118, 26, 0.14, 10.5)}
+      <text x={540} y={80} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.green}>
+        결과 개수 보장 ✓
+      </text>
+      {[
+        [420, 120],
+        [470, 104],
+        [520, 128],
+        [575, 110],
+        [630, 124],
+        [450, 168],
+        [505, 176],
+        [560, 160],
+        [615, 172],
+        [665, 150],
+      ].map(([x, y], i, arr) => (
+        <g key={i}>
+          {i < arr.length - 1 && i !== 4 && <line x1={x} y1={y} x2={arr[i + 1][0]} y2={arr[i + 1][1]} stroke={inkMuted} strokeDasharray={[1, 6].includes(i) ? "3 3" : undefined} opacity={[1, 6].includes(i) ? 0.5 : 1} />}
+          <circle cx={x} cy={y} r={6} fill={[0, 2, 3, 7, 9].includes(i) ? colors.orange : "var(--surface-card)"} fillOpacity={[0, 2, 3, 7, 9].includes(i) ? 0.7 : 1} stroke={inkMuted} />
+        </g>
+      ))}
+      <Lines x={540} y={204} lines={["통과 못 한 노드(흰 점)를 빼면 그래프가 끊겨", "HNSW 탐색이 길을 잃을 수 있다"]} size={10} color={inkSecondary} />
+    </DiagramFrame>
+  );
+}
+
+export function RerankTwoStage() {
+  // 본문: 1차 bi-encoder ANN(재현율, 후보 50~200개) → 2차 cross-encoder 재순위화(정밀도, 상위 3~5개).
+  const P = "rrk";
+  return (
+    <DiagramFrame
+      title="재순위화: 빠른 1차 검색이 재현율을, 정확한 2차 정렬이 정밀도를"
+      caption="위: 수백만 개 문서에서 bi-encoder(임베딩) ANN으로 후보 100개를 빠르게 뽑고(1차, Recall@k′로 평가), cross-encoder로 그 후보만 다시 정렬해 상위 몇 개를 프롬프트에 넣는다(2차, MRR·nDCG로 평가). 1차에서 놓친 정답은 2차가 되살릴 수 없다. 아래: bi-encoder는 질문과 문서를 따로 벡터로 만들어 내적 한 번으로 비교하므로 문서 벡터를 미리 계산해 둘 수 있다. cross-encoder는 질문과 문서를 이어 붙여 함께 Transformer에 넣어 두 문장의 토큰이 어텐션으로 서로를 직접 보므로 더 정확하지만, 후보마다 순전파를 한 번씩 해야 한다."
+      viewBox="0 0 720 262"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      {chip7(14, 30, "문서 수백만 개", inkMuted, 106, 30, 0.16, 11)}
+      <Arr x1={122} y1={45} x2={146} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={150} y={20} w={150} h={50} lines={["1차: bi-encoder ANN", "빠름 · 재현율 담당"]} color={colors.blue} size={11} />
+      <Arr x1={302} y1={45} x2={326} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(330, 30, "후보 100개", colors.blue, 84, 30, 0.14, 11)}
+      <Arr x1={416} y1={45} x2={440} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={444} y={20} w={150} h={50} lines={["2차: cross-encoder", "정확 · 정밀도 담당"]} color={colors.violet} size={11} />
+      <Arr x1={596} y1={45} x2={620} y2={45} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(624, 30, "상위 3~5개", colors.green, 84, 30, 0.14, 11)}
+      <text x={225} y={86} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        평가: Recall@k′ (정답이 후보에 들었나)
+      </text>
+      <text x={519} y={86} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        평가: MRR · nDCG (순서가 맞나)
+      </text>
+      <line x1={14} x2={706} y1={100} y2={100} stroke="var(--border-hairline)" />
+      <text x={180} y={120} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.blue}>
+        bi-encoder: 따로 인코딩
+      </text>
+      {chip7(30, 134, "질문", colors.orange, 60, 24, 0.14, 10.5)}
+      {chip7(30, 190, "문서", colors.green, 60, 24, 0.14, 10.5)}
+      <Arr x1={92} y1={146} x2={118} y2={146} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={92} y1={202} x2={118} y2={202} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(122, 134, "인코더", colors.blue, 70, 24, 0.12, 10.5)}
+      {chip7(122, 190, "인코더", colors.blue, 70, 24, 0.12, 10.5)}
+      <Arr x1={194} y1={146} x2={222} y2={164} color={inkSecondary} marker={`${P}-ink`} />
+      <Arr x1={194} y1={202} x2={222} y2={184} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(226, 162, "내적 1번", colors.blue, 80, 24, 0.2, 10.5)}
+      <text x={157} y={234} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        문서 벡터는 미리 계산해 둔다
+      </text>
+      <line x1={360} y1={110} x2={360} y2={250} stroke="var(--border-hairline)" />
+      <text x={540} y={120} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
+        cross-encoder: 함께 인코딩
+      </text>
+      <rect x={384} y={150} width={130} height={30} rx={6} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={449} y={169} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={ink}>
+        [질문 ; 문서]
+      </text>
+      <Arr x1={516} y1={165} x2={540} y2={165} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={544} y={142} w={94} h={46} lines={["Transformer", "토큰끼리 어텐션"]} color={colors.violet} size={10.5} />
+      <Arr x1={640} y1={165} x2={660} y2={165} color={inkSecondary} marker={`${P}-ink`} />
+      {chip7(662, 153, "점수", colors.violet, 44, 24, 0.2, 10.5)}
+      <text x={540} y={214} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        후보마다 순전파 1번 (후보 100개면 100번)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function ToolCallFlow() {
+  // 실제 API의 도구 호출 왕복: 도구 정의 → tool_use(이름·인자·호출 번호) → 앱이 인자 검증 후 실행 → tool_result(같은 번호) → 다음 행동.
+  const P = "tcf";
+  const lanes = [
+    { x: 110, t: "앱 (개발자 코드)", c: colors.blue },
+    { x: 380, t: "모델", c: colors.violet },
+    { x: 620, t: "도구", c: colors.green },
+  ];
+  const msg = (y: number, from: number, to: number, label: string, color: string, sub?: string) => (
+    <g>
+      <Arr x1={from + (to > from ? 6 : -6)} y1={y} x2={to + (to > from ? -6 : 6)} y2={y} color={color} marker={`${P}-${color === colors.violet ? "violet" : color === colors.green ? "green" : color === colors.red ? "red" : "blue"}`} width={1.6} />
+      <text x={(from + to) / 2} y={y - 6} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={ink} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {label}
+      </text>
+      {sub && (
+        <text x={(from + to) / 2} y={y + 13} textAnchor="middle" fontSize={9.5} fill={inkSecondary} fontFamily={mono}>
+          {sub}
+        </text>
+      )}
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="도구 호출 한 바퀴: 정의 → 호출 블록 → 검증·실행 → 결과"
+      caption="앱은 질문과 함께 쓸 수 있는 도구 목록(이름, 설명, 입력 스키마)을 보낸다. 모델은 도구를 쓰기로 하면 텍스트 대신 '도구 이름 + 인자 JSON + 호출 번호' 블록을 돌려준다. 앱은 인자를 믿지 않고 스키마로 먼저 검사해, 틀리면 실행하지 않고 무엇이 틀렸는지를 결과로 돌려주어 모델이 고치게 한다. 통과하면 도구를 실행하고 결과를 같은 호출 번호를 붙여 보낸다. 모델은 그 결과를 읽고 답하거나 다음 도구를 부른다. 「에이전트 루프」의 관찰 → 추론 → 행동과 같은 구조다."
+      viewBox="0 0 720 300"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue, violet: colors.violet, green: colors.green, red: colors.red }} />
+      {lanes.map((l) => (
+        <g key={l.t}>
+          {chip7(l.x - 70, 8, l.t, l.c, 140, 26, 0.16, 11)}
+          <line x1={l.x} x2={l.x} y1={36} y2={290} stroke={l.c} strokeOpacity={0.4} strokeDasharray="4 3" />
+        </g>
+      ))}
+      {msg(60, 110, 380, "① 질문 + 도구 정의", colors.blue, "{name, description, input_schema}")}
+      {msg(100, 380, 110, "② 도구 호출 블록", colors.violet, "{name: search, args: {...}, id: call_1}")}
+      <rect x={30} y={122} width={160} height={40} rx={6} fill={colors.orange} fillOpacity={0.12} stroke={colors.orange} />
+      <text x={110} y={139} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+        ③ 인자 검증 (스키마)
+      </text>
+      <text x={110} y={154} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+        필수 · 타입 · 범위 · 모르는 인자
+      </text>
+      {msg(180, 110, 380, "✗ 틀리면: 오류 목록을 결과로", colors.red, "{id: call_1, error: [...]}")}
+      {msg(218, 110, 620, "④ 통과하면 실행", colors.green)}
+      {msg(244, 620, 110, "결과", colors.green)}
+      {msg(276, 110, 380, "⑤ 결과 전달 (같은 호출 번호)", colors.blue, "{id: call_1, content: ...}")}
+      <Lines x={470} y={140} lines={["모델은 결과를 읽고", "최종 답을 하거나", "다음 도구를 부른다"]} size={10} anchor="start" color={colors.violet} weight={700} />
+    </DiagramFrame>
+  );
+}
+
+export function ConstrainedDecoding() {
+  // 본문 예제: {긍정 0.3, 부정 0.2, 중립 0.1, "글쎄요" 0.4}를 [긍정, 부정, 중립]으로 제한 → {0.5, 0.33, 0.17}.
+  const before = [
+    { t: "긍정", p: 0.3 },
+    { t: "부정", p: 0.2 },
+    { t: "중립", p: 0.1 },
+    { t: "글쎄요", p: 0.4 },
+  ];
+  const allowed = before.slice(0, 3);
+  const z = allowed.reduce((s, b) => s + b.p, 0);
+  const after = allowed.map((b) => ({ t: b.t, p: b.p / z }));
+  const withUnknown = [...allowed, { t: "모름", p: 0.4 }];
+  const panels = [
+    { t: "모델의 원래 분포", rows: before, note: "가장 큰 확률은 '글쎄요'", c: colors.blue },
+    { t: "[긍정, 부정, 중립]만 허용", rows: after, note: "0.4를 버리고 0.6으로 나눔", c: colors.red },
+    { t: "열거형에 '모름'을 넣으면", rows: withUnknown, note: "망설임이 갈 곳이 생긴다", c: colors.green },
+  ];
+  const bx = linear(0, 0.6, 0, 110);
+  return (
+    <DiagramFrame
+      title="제약 디코딩의 재정규화가 망설임을 가리는 방식"
+      caption="본문 예제다. 감정 라벨 자리에서 모델의 확률이 긍정 0.3, 부정 0.2, 중립 0.1, '글쎄요' 0.4였다. 출력을 세 라벨로 제한하면 허용되지 않은 '글쎄요'의 0.4가 버려지고, 남은 셋을 합 0.6으로 나눠 긍정 0.5, 부정 0.33, 중립 0.17이 된다. 원래는 '잘 모르겠다'가 가장 컸는데 출력은 50% 확신의 '긍정'처럼 보인다. 열거형에 '모름'을 넣어 두면(망설임이 그리로 간다고 할 때) 이 0.4가 갈 곳이 생긴다. 제약 디코딩은 형식을 보장할 뿐 내용과 확신을 보장하지 않는다."
+      viewBox="0 0 720 220"
+      minWidth={600}
+    >
+      {panels.map((pn, j) => {
+        const x0 = 16 + j * 236;
+        return (
+          <g key={pn.t}>
+            <text x={x0 + 100} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={pn.c}>
+              {pn.t}
+            </text>
+            {pn.rows.map((r, i) => {
+              const y = 36 + i * 34;
+              const muted = j === 0 && r.t === "글쎄요";
+              return (
+                <g key={r.t}>
+                  <text x={x0 + 50} y={y + 15} textAnchor="end" fontSize={10.5} fontWeight={700} fill={ink}>
+                    {r.t}
+                  </text>
+                  <rect x={x0 + 58} y={y + 3} width={bx(r.p)} height={18} rx={3} fill={muted ? colors.orange : r.t === "모름" ? colors.green : pn.c} fillOpacity={0.6} />
+                  <text x={x0 + 58 + bx(r.p) + 6} y={y + 16} fontSize={10.5} fontWeight={800} fill={ink}>
+                    {r.p.toFixed(2).replace(/0$/, "")}
+                  </text>
+                </g>
+              );
+            })}
+            <text x={x0 + 100} y={186} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+              {pn.note}
+            </text>
+          </g>
+        );
+      })}
+      <text x={360} y={210} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.red}>
+        {"출력: '긍정'(0.5) — 원래의 망설임은 보이지 않는다"}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function AstSafeCalc() {
+  // 본문 safe_calc: 식을 ast로 읽고 Constant(숫자), BinOp(+ − × ÷), UnaryOp(−)만 계산한다. Pow·Call 등은 실행 전에 거부.
+  const node = (x: number, y: number, label: string, ok: boolean, w = 96) => (
+    <g>
+      <rect x={x - w / 2} y={y - 13} width={w} height={26} rx={6} fill={ok ? colors.green : colors.red} fillOpacity={0.14} stroke={ok ? colors.green : colors.red} strokeWidth={1.4} />
+      <text x={x} y={y + 4} textAnchor="middle" fontSize={10} fontWeight={700} fill={ink} fontFamily={mono}>
+        {label}
+      </text>
+    </g>
+  );
+  const edge = (x1: number, y1: number, x2: number, y2: number) => <line x1={x1} y1={y1 + 13} x2={x2} y2={y2 - 13} stroke={inkMuted} strokeWidth={1.2} />;
+  return (
+    <DiagramFrame
+      title="eval 없는 계산기: 구문 트리에서 허용한 노드만 계산한다"
+      caption={`본문 safe_calc의 동작이다. 식을 ast로 구문 트리로 바꾼 뒤 노드를 하나씩 확인한다. '12 * 7 + 3'은 숫자(Constant)와 덧셈·곱셈(BinOp)뿐이라 모두 허용 목록에 있어 87이 된다. '9 ** 9 ** 9'는 거듭제곱(Pow)이, "__import__('os')"는 함수 호출(Call)이 허용 목록에 없어 계산을 시작하기도 전에 거부된다. 막을 것을 나열하는 대신 허용할 것만 정하므로, 생각하지 못한 공격도 기본적으로 막힌다.`}
+      viewBox="0 0 720 236"
+      minWidth={600}
+    >
+      <text x={164} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.green}>
+        {"'12 * 7 + 3' → 87 ✓"}
+      </text>
+      {node(164, 46, "BinOp(+)", true)}
+      {node(94, 106, "BinOp(×)", true)}
+      {node(236, 106, "Constant 3", true)}
+      {node(54, 166, "Constant 12", true, 84)}
+      {node(146, 166, "Constant 7", true, 84)}
+      {edge(164, 46, 94, 106)}
+      {edge(164, 46, 236, 106)}
+      {edge(94, 106, 54, 166)}
+      {edge(94, 106, 146, 166)}
+      <text x={164} y={206} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        12 × 7 = 84, 84 + 3 = 87
+      </text>
+      <line x1={300} y1={10} x2={300} y2={226} stroke="var(--border-hairline)" />
+      <text x={410} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.red}>
+        {"'9 ** 9 ** 9' → 거부"}
+      </text>
+      {node(410, 46, "BinOp(Pow) ✗", false, 110)}
+      {node(360, 106, "Constant 9", true, 84)}
+      {node(462, 106, "BinOp(Pow)", false, 92)}
+      {edge(410, 46, 360, 106)}
+      {edge(410, 46, 462, 106)}
+      <text x={410} y={146} textAnchor="middle" fontSize={9.5} fill={colors.red}>
+        거듭제곱은 허용 목록에 없다
+      </text>
+      <text x={600} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.red}>
+        {"\"__import__('os')\" → 거부"}
+      </text>
+      {node(600, 46, "Call ✗", false, 90)}
+      {node(600, 106, "Name __import__", false, 130)}
+      {edge(600, 46, 600, 106)}
+      <text x={600} y={146} textAnchor="middle" fontSize={9.5} fill={colors.red}>
+        함수 호출은 허용 목록에 없다
+      </text>
+      <rect x={330} y={168} width={370} height={52} rx={8} fill={colors.green} fillOpacity={0.08} stroke={colors.green} />
+      <text x={515} y={188} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.green}>
+        허용 목록: Constant(숫자) · BinOp(+ − × ÷) · UnaryOp(−)
+      </text>
+      <text x={515} y={207} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        그 밖의 노드는 무엇이든 실행 전에 ValueError
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function ZeroShotEnsemble() {
+  // 본문 장난감 코드(시드 0, d = 16, τ = 0.07)의 실제 출력. 템플릿 1개: 유사도 [0.315, 0.279, 0.124] → 확률 [0.601, 0.36, 0.039].
+  // 템플릿 4개 평균: [0.647, 0.208, 0.006] → [0.998, 0.002, 0.000].
+  const cls = ["고양이", "강아지", "자동차"];
+  const runs = [
+    { t: "템플릿 1개 ('{} 사진')", sims: [0.315, 0.279, 0.124], probs: [0.601, 0.36, 0.039] },
+    { t: "템플릿 4개 평균", sims: [0.647, 0.208, 0.006], probs: [0.998, 0.002, 0.0] },
+  ];
+  const cc = [colors.green, colors.orange, colors.blue];
+  const sxS = linear(0, 0.7, 0, 150);
+  const sxP = linear(0, 1, 0, 150);
+  return (
+    <DiagramFrame
+      title="zero-shot 분류와 프롬프트 앙상블"
+      caption="본문 장난감 코드의 실제 출력이다. 클래스마다 문장을 만들어 텍스트 벡터로 바꾸고, 고양이 사진의 이미지 벡터와 코사인 유사도를 잰 뒤 온도 τ = 0.07로 나눠 softmax를 취한다. 템플릿 하나만 쓰면 그 문장의 우연한 어긋남 때문에 고양이(0.315)와 강아지(0.279)의 유사도 차이가 작아 고양이 확률이 60%에 그친다. 템플릿 네 개의 벡터를 평균 내면 어긋남이 상쇄되어 고양이 유사도가 0.647로 커지고 확률은 거의 1이 된다. τ로 나누면 유사도 차이 0.1이 로짓 차이 약 1.4가 된다."
+      viewBox="0 0 720 222"
+      minWidth={600}
+    >
+      <text x={210} y={18} textAnchor="middle" fontSize={11} fontWeight={800} fill={inkSecondary}>
+        코사인 유사도 (이미지 ↔ 클래스 문장)
+      </text>
+      <text x={530} y={18} textAnchor="middle" fontSize={11} fontWeight={800} fill={inkSecondary}>
+        softmax(유사도 / 0.07)
+      </text>
+      {runs.map((r, j) => {
+        const y0 = 34 + j * 96;
+        return (
+          <g key={r.t}>
+            <text x={14} y={y0 + 10} fontSize={11.5} fontWeight={800} fill={ink}>
+              {r.t}
+            </text>
+            {cls.map((c, i) => {
+              const y = y0 + 20 + i * 22;
+              return (
+                <g key={c}>
+                  <text x={124} y={y + 12} textAnchor="end" fontSize={10.5} fill={ink}>
+                    {c}
+                  </text>
+                  <rect x={132} y={y + 2} width={sxS(r.sims[i])} height={14} rx={2} fill={cc[i]} fillOpacity={0.55} />
+                  <text x={132 + sxS(r.sims[i]) + 5} y={y + 13} fontSize={10} fontWeight={700} fill={ink} fontFamily={mono}>
+                    {r.sims[i].toFixed(3)}
+                  </text>
+                  <rect x={452} y={y + 2} width={Math.max(1, sxP(r.probs[i]))} height={14} rx={2} fill={cc[i]} fillOpacity={0.7} />
+                  <text x={452 + Math.max(1, sxP(r.probs[i])) + 5} y={y + 13} fontSize={10} fontWeight={800} fill={ink} fontFamily={mono}>
+                    {r.probs[i].toFixed(3)}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+      <line x1={340} y1={30} x2={340} y2={214} stroke="var(--border-hairline)" />
+      <text x={360} y={120} fontSize={20} fontWeight={800} fill={inkMuted}>
+        →
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function VlmArchitecture() {
+  // LLaVA-1.5식 구조와 본문 예제: 336 × 336 이미지를 14 × 14 패치로 → 24 × 24 = 576 이미지 토큰. 질문 20토큰.
+  const P = "vlm";
+  const tx = linear(0, 700, 150, 690);
+  return (
+    <DiagramFrame
+      title="VLM: 이미지를 토큰으로 바꿔 LLM 앞에 붙인다"
+      caption="LLaVA 같은 VLM의 구조다. CLIP류의 비전 인코더가 이미지를 패치 단위 벡터로 바꾸고, 작은 투영층이 이 벡터들을 LLM의 토큰 임베딩 공간으로 옮겨 '이미지 토큰'으로 만든 뒤 텍스트 토큰과 나란히 LLM에 넣는다. 본문 예제처럼 336 × 336 이미지를 14 × 14 패치로 자르면 24 × 24 = 576개 토큰이 되어, 20토큰짜리 질문보다 훨씬 길다. 해상도를 두 배로 올리면 패치는 네 배(2,304개)가 된다. 이미지 안의 글자도 프롬프트처럼 읽히므로 이미지에 숨긴 지시도 인젝션 통로가 될 수 있다."
+      viewBox="0 0 720 226"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <rect x={16} y={26} width={72} height={72} rx={4} fill={colors.blue} fillOpacity={0.12} stroke={colors.blue} />
+      {Array.from({ length: 5 }, (_, k) => (
+        <g key={k}>
+          <line x1={16 + (k + 1) * 12} x2={16 + (k + 1) * 12} y1={26} y2={98} stroke={colors.blue} strokeOpacity={0.4} />
+          <line x1={16} x2={88} y1={26 + (k + 1) * 12} y2={26 + (k + 1) * 12} stroke={colors.blue} strokeOpacity={0.4} />
+        </g>
+      ))}
+      <text x={52} y={114} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        336 × 336 이미지
+      </text>
+      <Arr x1={92} y1={62} x2={114} y2={62} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={118} y={38} w={110} h={48} lines={["비전 인코더", "CLIP ViT, 14 × 14 패치"]} color={colors.blue} size={11} />
+      <Arr x1={230} y1={62} x2={252} y2={62} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={256} y={38} w={96} h={48} lines={["투영층", "작은 MLP"]} color={colors.orange} size={11} />
+      <Arr x1={354} y1={62} x2={376} y2={62} color={inkSecondary} marker={`${P}-ink`} />
+      {Array.from({ length: 9 }, (_, i) => (
+        <rect key={i} x={380 + i * 12} y={50} width={10} height={24} rx={2} fill={colors.orange} fillOpacity={0.55} />
+      ))}
+      {Array.from({ length: 4 }, (_, i) => (
+        <rect key={`t${i}`} x={494 + i * 12} y={50} width={10} height={24} rx={2} fill={colors.violet} fillOpacity={0.55} />
+      ))}
+      <text x={434} y={90} textAnchor="middle" fontSize={9.5} fill={colors.orange} fontWeight={700}>
+        이미지 토큰
+      </text>
+      <text x={516} y={90} textAnchor="middle" fontSize={9.5} fill={colors.violet} fontWeight={700}>
+        질문 토큰
+      </text>
+      <Arr x1={546} y1={62} x2={568} y2={62} color={inkSecondary} marker={`${P}-ink`} />
+      <Tag x={572} y={38} w={70} h={48} lines={["LLM", "디코더"]} color={colors.violet} size={11} />
+      <Arr x1={644} y1={62} x2={664} y2={62} color={inkSecondary} marker={`${P}-ink`} />
+      <text x={668} y={66} fontSize={10.5} fontWeight={800} fill={ink}>
+        답
+      </text>
+      <line x1={14} x2={706} y1={128} y2={128} stroke="var(--border-hairline)" />
+      <text x={16} y={150} fontSize={11.5} fontWeight={800} fill={ink}>
+        입력 토큰 수
+      </text>
+      {[
+        { t: "이미지 (336 × 336)", v: 576, c: colors.orange, l: "24 × 24 = 576" },
+        { t: "질문 한 줄", v: 20, c: colors.violet, l: "약 20" },
+      ].map((b, i) => (
+        <g key={b.t}>
+          <text x={16} y={176 + i * 24} fontSize={10.5} fill={ink}>
+            {b.t}
+          </text>
+          <rect x={tx(0)} y={165 + i * 24} width={tx(b.v) - tx(0)} height={15} rx={3} fill={b.c} fillOpacity={0.6} />
+          <text x={tx(b.v) + 6} y={176 + i * 24} fontSize={10.5} fontWeight={800} fill={ink}>
+            {b.l}
+          </text>
+        </g>
+      ))}
+      <text x={16} y={220} fontSize={10} fill={inkSecondary}>
+        해상도 2배(672 × 672) → 48 × 48 = 2,304개: 비용과 지연이 크게 는다
+      </text>
     </DiagramFrame>
   );
 }
