@@ -62,7 +62,20 @@ import {
   TrainingLoop,
   BroadcastBug,
 } from "./w3";
-import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
+import {
+  ResNetSkip,
+  TransferLearning,
+  ConvChannels,
+  ConvPaddingStride,
+  FcVsConv,
+  PoolMaxVsAvg,
+  ReceptiveField1d,
+  ResidualGradientProduct,
+  ProjectionShortcut,
+  BatchnormDropout,
+  AugmentationLabel,
+  SanityChecks,
+} from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
 import { LlmPipeline, ScalingLawPlot, AttentionPatterns, LoraDiagram } from "./w6";
 import { RagPipeline, AgentLoop, ChunkOverlap, LethalTrifecta } from "./w7";
@@ -140,6 +153,15 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "conv-channels": ConvChannels,
   "resnet-skip": ResNetSkip,
   "transfer-learning": TransferLearning,
+  "conv-padding-stride": ConvPaddingStride,
+  "fc-vs-conv": FcVsConv,
+  "pool-max-vs-avg": PoolMaxVsAvg,
+  "receptive-field-1d": ReceptiveField1d,
+  "residual-gradient-product": ResidualGradientProduct,
+  "projection-shortcut": ProjectionShortcut,
+  "batchnorm-dropout": BatchnormDropout,
+  "augmentation-label": AugmentationLabel,
+  "sanity-checks": SanityChecks,
   "rnn-gradient-decay": GradientDecay,
   "attention-qkv": InteractiveAttention,
   "causal-mask": CausalMask,
