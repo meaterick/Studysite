@@ -21,7 +21,29 @@ import {
   ChainRuleChain,
   CriticalPoints,
 } from "./w1";
-import { ConfusionMatrix, DataSplitDiagram, SigmoidCurve, LearningCurves } from "./w2";
+import {
+  ConfusionMatrix,
+  DataSplitDiagram,
+  SigmoidCurve,
+  LearningCurves,
+  DataPrepPipeline,
+  OutlierIqrVsZ,
+  EncodingGeometry,
+  ScalingCompare,
+  ScalingContours,
+  CrossEntropyPenalty,
+  LogisticStep,
+  GiniSplit,
+  BootstrapBagging,
+  BoostingResiduals,
+  BiasVarianceStrips,
+  PolyFitTriptych,
+  L1L2Geometry,
+  LeakageScaler,
+  SpamWaffle,
+  RocFiveSamples,
+  R2Squares,
+} from "./w2";
 import { ComputationalGraph, MlpDiagram, XorHidden } from "./w3";
 import { ResNetSkip, TransferLearning, ConvChannels } from "./w4";
 import { TransformerDecoderBlock, TokenizerBpe, CausalMask, GradientDecay, PositionalWaves } from "./w5";
@@ -34,6 +56,7 @@ import InteractiveBiasVariance from "./InteractiveBiasVariance";
 import InteractiveConv from "./InteractiveConv";
 import InteractiveAttention from "./InteractiveAttention";
 import InteractiveDecodingTemperature from "./InteractiveDecodingTemperature";
+import InteractiveThreshold from "./InteractiveThreshold";
 
 export const DIAGRAMS: Record<string, ComponentType> = {
   "ai-hierarchy": AiHierarchy,
@@ -62,6 +85,24 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "data-split": DataSplitDiagram,
   "sigmoid-curve": SigmoidCurve,
   "learning-curves": LearningCurves,
+  "data-prep-pipeline": DataPrepPipeline,
+  "outlier-iqr-vs-z": OutlierIqrVsZ,
+  "encoding-geometry": EncodingGeometry,
+  "scaling-compare": ScalingCompare,
+  "scaling-contours": ScalingContours,
+  "cross-entropy-penalty": CrossEntropyPenalty,
+  "logistic-step": LogisticStep,
+  "gini-split": GiniSplit,
+  "bootstrap-bagging": BootstrapBagging,
+  "boosting-residuals": BoostingResiduals,
+  "bias-variance-strips": BiasVarianceStrips,
+  "poly-fit-triptych": PolyFitTriptych,
+  "l1-l2-geometry": L1L2Geometry,
+  "leakage-scaler": LeakageScaler,
+  "spam-waffle": SpamWaffle,
+  "threshold-roc": InteractiveThreshold,
+  "roc-five-samples": RocFiveSamples,
+  "r2-squares": R2Squares,
   "computational-graph": ComputationalGraph,
   "mlp-diagram": MlpDiagram,
   "xor-hidden": XorHidden,

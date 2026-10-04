@@ -6,6 +6,50 @@ import { gridline, inkMuted, inkSecondary } from "./DiagramFrame";
 
 export type Scale = (v: number) => number;
 
+/** 코드·숫자 표기용 고정폭 글꼴 */
+export const mono = "var(--font-mono-code)";
+
+/** 다섯 꼭짓점 별(생성된 표본·강조 표시) */
+export function starPath(cx: number, cy: number, r: number) {
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const rad = (Math.PI / 5) * i - Math.PI / 2;
+    const rr = i % 2 === 0 ? r : r * 0.45;
+    pts.push(`${(cx + rr * Math.cos(rad)).toFixed(1)},${(cy + rr * Math.sin(rad)).toFixed(1)}`);
+  }
+  return `M${pts.join(" L")} Z`;
+}
+
+/** 표준정규분포의 누적분포함수 Φ(z) (Abramowitz–Stegun 근사, 오차 < 1e-7) */
+export function normCdf(z: number) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
+  const p = d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return z > 0 ? 1 - p : p;
+}
+
+/** 작은 연립방정식 Ax = b (부분 피벗 가우스 소거) */
+export function solveLinear(A: number[][], b: number[]): number[] {
+  const n = b.length;
+  const M = A.map((row, i) => [...row, b[i]]);
+  for (let c = 0; c < n; c++) {
+    let piv = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+    [M[c], M[piv]] = [M[piv], M[c]];
+    for (let r = c + 1; r < n; r++) {
+      const f = M[r][c] / M[c][c];
+      for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+    }
+  }
+  const x = new Array(n).fill(0);
+  for (let r = n - 1; r >= 0; r--) {
+    let acc = M[r][n];
+    for (let k = r + 1; k < n; k++) acc -= M[r][k] * x[k];
+    x[r] = acc / M[r][r];
+  }
+  return x;
+}
+
 /** 데이터 구간 [d0, d1]을 화면 구간 [r0, r1]로 옮기는 선형 눈금 */
 export function linear(d0: number, d1: number, r0: number, r1: number): Scale {
   return (v) => r0 + ((v - d0) / (d1 - d0)) * (r1 - r0);

@@ -140,7 +140,8 @@
     --series-aqua: #199e70;
     --series-yellow: #c98500;
     --series-magenta: #d55181;
-    --series-green: #008300;
+    /* 어두운 바탕에서 글자·선이 읽히도록 밝힌 초록(#008300은 #111 위 대비 약 3.4:1) */
+    --series-green: #34a853;
     --series-violet: #9085e9;
     --series-red: #e66767;
   }
@@ -198,7 +199,7 @@
   --series-aqua: #199e70;
   --series-yellow: #c98500;
   --series-magenta: #d55181;
-  --series-green: #008300;
+  --series-green: #34a853;
   --series-violet: #9085e9;
   --series-red: #e66767;
 }

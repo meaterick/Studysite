@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, starPath, mono } from "./chart";
 
 export function AiHierarchy() {
   // AI ⊃ ML ⊃ DL ⊃ LLM은 "방법" 기준의 포함관계다. 생성형 AI는 "기능" 기준이라 ML·DL 경계를 가로질러 겹쳐 그린다.
@@ -313,19 +313,6 @@ export function DotProductAngle() {
 }
 
 // ───────────────────────── 1주차 핵심 과정: 추가 그림 ─────────────────────────
-
-const mono = "var(--font-mono-code)";
-
-/** 다섯 꼭짓점 별(생성된 표본 표시) */
-function starPath(cx: number, cy: number, r: number) {
-  const pts: string[] = [];
-  for (let i = 0; i < 10; i++) {
-    const rad = (Math.PI / 5) * i - Math.PI / 2;
-    const rr = i % 2 === 0 ? r : r * 0.45;
-    pts.push(`${(cx + rr * Math.cos(rad)).toFixed(1)},${(cy + rr * Math.sin(rad)).toFixed(1)}`);
-  }
-  return `M${pts.join(" L")} Z`;
-}
 
 export function RulesVsMl() {
   // 같은 재료(입력·규칙·출력)의 자리가 바뀐다는 것을 색으로 보여 준다: 규칙은 주황, 정답(출력)은 파랑.
