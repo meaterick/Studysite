@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, Lines, Tag, linear, log10Scale, linePath, mono, pow10Label } from "./chart";
+import { Axes, Markers, Arr, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono, pow10Label } from "./chart";
 
 export function ResNetSkip() {
   const x = 260;
@@ -705,6 +705,694 @@ export function SanityChecks() {
           </g>
         );
       })}
+    </DiagramFrame>
+  );
+}
+
+export function CnnDepthTimeline() {
+  // ILSVRC 분류 top-5 오류율(%). 2012 AlexNet 15.3(2위 26.2), 2013 ZFNet 11.7, 2014 GoogLeNet 6.7·VGG 7.3, 2015 ResNet 3.57.
+  // 사람(훈련된 주석자) 약 5.1%는 Russakovsky et al.(2015)의 보고.
+  const bars = [
+    { yr: "2010", name: "", err: 28.2, depth: "얕은 모델", c: inkMuted },
+    { yr: "2011", name: "", err: 25.8, depth: "얕은 모델", c: inkMuted },
+    { yr: "2012", name: "AlexNet", err: 15.3, depth: "8층", c: colors.orange },
+    { yr: "2013", name: "ZFNet", err: 11.7, depth: "8층", c: inkMuted },
+    { yr: "2014", name: "VGG", err: 7.3, depth: "19층", c: colors.green },
+    { yr: "2014", name: "GoogLeNet", err: 6.7, depth: "22층", c: inkMuted },
+    { yr: "2015", name: "ResNet", err: 3.57, depth: "152층", c: colors.violet },
+  ];
+  const G = { left: 56, top: 20, width: 470, height: 170 };
+  const bw = 46;
+  const step = G.width / bars.length;
+  const sy = linear(0, 30, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="깊이의 혁명: ImageNet(ILSVRC) top-5 오류율과 층 수"
+      caption="해마다 ILSVRC 분류 부문의 대표 결과다. CNN이 아닌 얕은 모델이 25~28%에 머물던 2012년, 8층의 AlexNet이 15.3%로 2위(26.2%)를 크게 앞섰다. 이후 3 × 3 커널을 19층까지 쌓은 VGG(7.3%, 2014년 2위), 22층의 GoogLeNet(6.7%, 2014년 우승)을 거쳐, 잔차 연결로 152층을 학습시킨 ResNet이 3.57%로 2015년에 우승했다. 점선은 훈련된 사람 주석자의 오류율(약 5.1%)이다. 층이 깊어질수록 오류가 줄었고, 그 깊이를 가능하게 한 것이 ReLU·GPU·작은 커널·잔차 연결이었다. 1998년의 LeNet은 32 × 32 흑백 손글씨용이라 이 대회에는 없다."
+      viewBox="0 0 720 240"
+      minWidth={600}
+    >
+      <Axes {...G} sx={(v) => v} sy={sy} yTicks={[0, 10, 20, 30]} fmtY={(v) => `${v}%`} />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(5.1)} y2={sy(5.1)} stroke={colors.red} strokeWidth={1.2} strokeDasharray="5 3" />
+      <text x={G.left + G.width + 6} y={sy(5.1) + 4} fontSize={9.5} fontWeight={700} fill={colors.red}>
+        ← 사람 약 5.1%
+      </text>
+      {bars.map((b, i) => {
+        const cx = G.left + step * (i + 0.5);
+        return (
+          <g key={`${b.yr}-${b.name}`}>
+            {b.yr === "2012" && <rect x={cx - bw / 2 - 10} y={sy(26.2)} width={8} height={sy(0) - sy(26.2)} fill={inkMuted} fillOpacity={0.35} />}
+            {b.yr === "2012" && (
+              <text x={cx - bw / 2 - 6} y={sy(26.2) - 4} textAnchor="middle" fontSize={8.5} fill={inkSecondary}>
+                2위
+              </text>
+            )}
+            <rect x={cx - bw / 2} y={sy(b.err)} width={bw} height={sy(0) - sy(b.err)} rx={3} fill={b.c} fillOpacity={b.c === inkMuted ? 0.35 : 0.75} />
+            <text x={cx} y={sy(b.err) - 5} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+              {b.err}
+            </text>
+            <text x={cx} y={G.top + G.height + 14} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+              {b.yr}
+            </text>
+            <text x={cx} y={G.top + G.height + 28} textAnchor="middle" fontSize={10.5} fontWeight={b.c === inkMuted ? 400 : 800} fill={b.c === inkMuted ? inkSecondary : b.c}>
+              {b.name || "—"}
+            </text>
+            <text x={cx} y={G.top + G.height + 42} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+              {b.depth}
+            </text>
+          </g>
+        );
+      })}
+      <Tag x={548} y={30} w={160} h={66} lines={["LeNet (1998)", "MNIST 손글씨, 32 × 32 흑백", "conv + pool + FC 골격"]} color={colors.blue} size={11} />
+      <Lines x={548} y={114} lines={["AlexNet: ReLU · Dropout · GPU", "VGG: 3 × 3 커널을 깊게", "ResNet: 잔차 연결로 152층"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.6} />
+    </DiagramFrame>
+  );
+}
+
+export function VggStack() {
+  // 3 × 3 conv 세 번(stride 1)의 수용영역 3 → 5 → 7 = 7 × 7 conv 한 번. 파라미터는 C = 64에서 110,592 vs 200,704.
+  const S = 22;
+  const x0 = 40;
+  const y0 = 34;
+  const rings = [
+    { k: 7, c: colors.violet, t: "3번째 층: 7 × 7" },
+    { k: 5, c: colors.green, t: "2번째 층: 5 × 5" },
+    { k: 3, c: colors.blue, t: "1번째 층: 3 × 3" },
+  ];
+  const bx = linear(0, 210000, 0, 250);
+  return (
+    <DiagramFrame
+      title="작은 커널을 깊게: 3 × 3 세 번 = 7 × 7 한 번의 시야, 더 적은 파라미터"
+      caption="왼쪽: 입력의 7 × 7 격자에서 가운데 출력 하나가 보는 범위다. 3 × 3 합성곱(stride 1)을 한 번 거치면 3 × 3, 두 번이면 5 × 5, 세 번이면 7 × 7을 본다. 7 × 7 합성곱 한 층과 같은 범위다. 오른쪽: 입력·출력 채널이 64일 때 파라미터 수다. 7 × 7 한 층은 49 × 64 × 64 = 200,704개, 3 × 3 세 층은 3 × 9 × 64 × 64 = 110,592개로 약 45% 적다. 게다가 세 층 사이마다 ReLU를 거쳐 비선형을 세 번 쓸 수 있다."
+      viewBox="0 0 720 220"
+      minWidth={580}
+    >
+      {Array.from({ length: 7 }, (_, i) =>
+        Array.from({ length: 7 }, (_, j) => <rect key={`${i}-${j}`} x={x0 + j * S} y={y0 + i * S} width={S} height={S} fill={card2Bg} stroke="var(--border-strong)" strokeWidth={0.8} />),
+      )}
+      {rings.map((r) => {
+        const off = (7 - r.k) / 2;
+        return <rect key={r.k} x={x0 + off * S + 1.5} y={y0 + off * S + 1.5} width={r.k * S - 3} height={r.k * S - 3} rx={4} fill={r.c} fillOpacity={0.12} stroke={r.c} strokeWidth={2.2} />;
+      })}
+      <rect x={x0 + 3 * S + 5} y={y0 + 3 * S + 5} width={S - 10} height={S - 10} fill={ink} />
+      <text x={x0 + 3.5 * S} y={y0 - 10} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        입력 7 × 7 위의 수용영역
+      </text>
+      {rings.map((r, i) => (
+        <g key={`l${r.k}`}>
+          <rect x={210} y={58 + i * 30} width={12} height={12} rx={2} fill={r.c} fillOpacity={0.4} stroke={r.c} />
+          <text x={228} y={68 + i * 30} fontSize={10.5} fontWeight={700} fill={r.c}>
+            {r.t}
+          </text>
+        </g>
+      )).reverse()}
+      <text x={210} y={164} fontSize={10} fill={inkSecondary}>
+        ■ 가운데 출력 한 칸
+      </text>
+      <line x1={356} y1={14} x2={356} y2={206} stroke="var(--border-hairline)" />
+      <text x={380} y={34} fontSize={12} fontWeight={800} fill={ink}>
+        파라미터 수 (채널 C = 64)
+      </text>
+      {[
+        { t: "7 × 7 한 층", v: 200704, f: "49 × 64 × 64", relu: "ReLU 1번", c: colors.red },
+        { t: "3 × 3 세 층", v: 110592, f: "3 × 9 × 64 × 64", relu: "ReLU 3번", c: colors.green },
+      ].map((b, i) => {
+        const y = 56 + i * 64;
+        return (
+          <g key={b.t}>
+            <text x={380} y={y + 12} fontSize={11} fontWeight={800} fill={ink}>
+              {b.t}
+            </text>
+            <text x={470} y={y + 12} fontSize={10} fill={inkSecondary} fontFamily={mono}>
+              {b.f}
+            </text>
+            <rect x={380} y={y + 20} width={bx(b.v)} height={20} rx={3} fill={b.c} fillOpacity={0.65} />
+            <text x={380 + bx(b.v) + 6} y={y + 34} fontSize={11} fontWeight={800} fill={ink}>
+              {b.v.toLocaleString("en-US")}
+            </text>
+            <text x={380} y={y + 54} fontSize={10} fill={inkSecondary}>
+              {b.relu}
+            </text>
+          </g>
+        );
+      })}
+      <text x={380} y={196} fontSize={11} fontWeight={800} fill={colors.green}>
+        같은 7 × 7 시야, 파라미터 약 45% ↓, 비선형 3배
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function CvTasks() {
+  // 같은 장면(사람 둘, 자동차 하나)에 대한 네 과제의 출력.
+  const pw = 160;
+  const ph = 110;
+  const person = (ox: number, oy: number, cx: number, cy: number, s: number, fill: string, op: number, stroke?: string) => (
+    <g>
+      <circle cx={ox + cx} cy={oy + cy} r={7 * s} fill={fill} fillOpacity={op} stroke={stroke} strokeWidth={stroke ? 1.2 : 0} />
+      <rect x={ox + cx - 10 * s} y={oy + cy + 9 * s} width={20 * s} height={34 * s} rx={7 * s} fill={fill} fillOpacity={op} stroke={stroke} strokeWidth={stroke ? 1.2 : 0} />
+    </g>
+  );
+  const car = (ox: number, oy: number, fill: string, op: number, stroke?: string) => (
+    <g>
+      <rect x={ox + 98} y={oy + 46} width={30} height={16} rx={5} fill={fill} fillOpacity={op} stroke={stroke} strokeWidth={stroke ? 1.2 : 0} />
+      <rect x={ox + 88} y={oy + 58} width={54} height={22} rx={6} fill={fill} fillOpacity={op} stroke={stroke} strokeWidth={stroke ? 1.2 : 0} />
+      <circle cx={ox + 100} cy={oy + 82} r={6.5} fill={fill} fillOpacity={Math.min(1, op + 0.15)} stroke={stroke} strokeWidth={stroke ? 1.2 : 0} />
+      <circle cx={ox + 130} cy={oy + 82} r={6.5} fill={fill} fillOpacity={Math.min(1, op + 0.15)} stroke={stroke} strokeWidth={stroke ? 1.2 : 0} />
+    </g>
+  );
+  const panels = [
+    { t: "분류", sub: "사진 전체에 라벨 하나" },
+    { t: "객체 탐지", sub: "물체마다 상자 + 클래스" },
+    { t: "의미론적 분할", sub: "픽셀마다 클래스 (개체 구분 X)" },
+    { t: "인스턴스 분할", sub: "픽셀마다 클래스 + 개체 번호" },
+  ];
+  return (
+    <DiagramFrame
+      title="같은 장면, 네 가지 질문: 분류 · 탐지 · 의미론적 분할 · 인스턴스 분할"
+      caption="사람 둘과 자동차 하나가 있는 같은 장면이다. 분류는 사진 전체에 클래스 하나('사람')만 붙인다. 객체 탐지는 물체마다 위치(상자)와 클래스, 점수를 함께 낸다. 의미론적 분할은 픽셀 하나하나에 클래스를 칠하지만, 같은 클래스의 두 사람을 같은 색으로 칠해 서로 구분하지 않는다. 두 사람을 서로 다른 개체로 나눠 칠하는 것이 인스턴스 분할이다."
+      viewBox="0 0 720 196"
+      minWidth={620}
+    >
+      {panels.map((p, j) => {
+        const ox = 14 + j * (pw + 16);
+        const oy = 40;
+        const base = inkMuted;
+        return (
+          <g key={p.t}>
+            <text x={ox + pw / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+              {p.t}
+            </text>
+            <text x={ox + pw / 2} y={31} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+              {p.sub}
+            </text>
+            <rect x={ox} y={oy} width={pw} height={ph} rx={6} fill={j >= 2 ? colors.yellow : card2Bg} fillOpacity={j >= 2 ? 0.12 : 1} stroke="var(--border-strong)" />
+            {j === 0 && (
+              <g>
+                {person(ox, oy, 34, 22, 1, base, 0.55)}
+                {person(ox, oy, 64, 26, 0.9, base, 0.55)}
+                {car(ox, oy, base, 0.5)}
+              </g>
+            )}
+            {j === 1 && (
+              <g>
+                {person(ox, oy, 34, 22, 1, base, 0.45)}
+                {person(ox, oy, 64, 26, 0.9, base, 0.45)}
+                {car(ox, oy, base, 0.4)}
+                <rect x={ox + 22} y={oy + 13} width={24} height={64} fill="none" stroke={colors.blue} strokeWidth={2} />
+                <rect x={ox + 53} y={oy + 18} width={22} height={58} fill="none" stroke={colors.blue} strokeWidth={2} />
+                <rect x={ox + 85} y={oy + 43} width={60} height={47} fill="none" stroke={colors.orange} strokeWidth={2} />
+                <text x={ox + 22} y={oy + 10} fontSize={8.5} fontWeight={800} fill={colors.blue}>
+                  사람 0.97
+                </text>
+                <text x={ox + 55} y={oy + 104} fontSize={8.5} fontWeight={800} fill={colors.blue}>
+                  사람 0.91
+                </text>
+                <text x={ox + 98} y={oy + 39} fontSize={8.5} fontWeight={800} fill={colors.orange}>
+                  자동차 0.95
+                </text>
+              </g>
+            )}
+            {j === 2 && (
+              <g>
+                {person(ox, oy, 34, 22, 1, colors.blue, 0.75)}
+                {person(ox, oy, 64, 26, 0.9, colors.blue, 0.75)}
+                {car(ox, oy, colors.orange, 0.7)}
+              </g>
+            )}
+            {j === 3 && (
+              <g>
+                {person(ox, oy, 34, 22, 1, colors.blue, 0.75)}
+                {person(ox, oy, 64, 26, 0.9, colors.violet, 0.75)}
+                {car(ox, oy, colors.orange, 0.7)}
+              </g>
+            )}
+            <text x={ox + pw / 2} y={oy + ph + 20} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={j === 0 ? ink : inkSecondary}>
+              {["→ '사람'", "상자 3개", "사람 = 파랑 (둘 다)", "사람1 · 사람2 · 자동차"][j]}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function VitPatchCount() {
+  // 224 × 224 이미지를 패치 32·16·8로 자르면 토큰 49·196·784개. Self-Attention 쌍의 수는 토큰 수의 제곱.
+  const S = 120;
+  const cfg = [
+    { p: 32, c: colors.green },
+    { p: 16, c: colors.blue },
+    { p: 8, c: colors.red },
+  ];
+  return (
+    <DiagramFrame
+      title="패치 크기와 토큰 수: 패치를 반으로 줄이면 토큰은 4배, 어텐션은 16배"
+      caption="224 × 224 컬러 이미지를 정사각형 패치로 자른 모습이다. 16 × 16 패치면 가로세로 14개씩 196개의 토큰이 되고, 패치 하나는 16 × 16 × 3 = 768개의 숫자를 편 벡터가 된다. 패치를 32로 키우면 토큰이 49개로 줄고, 8로 줄이면 784개로 늘어난다. Self-Attention은 모든 토큰 쌍을 비교하므로 계산량이 토큰 수의 제곱에 비례해, 16 → 8로 패치를 반으로 줄이면 토큰은 4배, 어텐션 계산은 16배가 된다."
+      viewBox="0 0 720 230"
+      minWidth={600}
+    >
+      {cfg.map((c, j) => {
+        const x0 = 30 + j * 230;
+        const n = 224 / c.p;
+        const cell = S / n;
+        const tokens = n * n;
+        return (
+          <g key={c.p}>
+            <text x={x0 + S / 2} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={c.c}>
+              {`패치 ${c.p} × ${c.p}`}
+            </text>
+            <rect x={x0} y={28} width={S} height={S} fill={c.c} fillOpacity={0.08} stroke={c.c} strokeWidth={1.4} />
+            {Array.from({ length: n - 1 }, (_, k) => (
+              <g key={k}>
+                <line x1={x0 + (k + 1) * cell} x2={x0 + (k + 1) * cell} y1={28} y2={28 + S} stroke={c.c} strokeOpacity={0.55} strokeWidth={0.7} />
+                <line x1={x0} x2={x0 + S} y1={28 + (k + 1) * cell} y2={28 + (k + 1) * cell} stroke={c.c} strokeOpacity={0.55} strokeWidth={0.7} />
+              </g>
+            ))}
+            <rect x={x0} y={28} width={cell} height={cell} fill={c.c} fillOpacity={0.55} />
+            <Lines x={x0 + S + 12} y={52} lines={[`${n} × ${n}`, `= ${tokens}토큰`]} size={11.5} anchor="start" color={ink} weight={800} />
+            <Lines x={x0 + S + 12} y={98} lines={["패치 하나", `${c.p}·${c.p}·3`, `= ${(c.p * c.p * 3).toLocaleString("en-US")}차원`]} size={10} anchor="start" color={inkSecondary} />
+            <text x={x0 + S / 2} y={176} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+              어텐션 쌍 = 토큰 수²
+            </text>
+            <text x={x0 + S / 2} y={196} textAnchor="middle" fontSize={12} fontWeight={800} fill={c.c}>
+              {`${(tokens * tokens).toLocaleString("en-US")} (${(tokens * tokens) / 2401}배)`}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function AeVsVaeLatent() {
+  // 개념도: 일반 오토인코더의 잠재 점들은 불규칙하게 흩어져 빈 틈이 많고, VAE는 입력마다 분포를 두고 N(0, I) 근처로 모아 공간을 메운다.
+  const P = "avl";
+  const rand = seeded(5);
+  const cols = [colors.blue, colors.orange, colors.green, colors.violet];
+  const aeCenters = [
+    [-2.4, 1.6],
+    [2.1, 2.2],
+    [1.6, -2.3],
+    [-1.9, -1.6],
+  ];
+  const ae = aeCenters.flatMap((c, k) => Array.from({ length: 9 }, () => ({ x: c[0] + 0.35 * gaussian(rand), y: c[1] + 0.35 * gaussian(rand), k })));
+  const vaeCenters = [
+    [-0.7, 0.5],
+    [0.6, 0.6],
+    [0.5, -0.6],
+    [-0.6, -0.5],
+  ];
+  const vae = vaeCenters.flatMap((c, k) => Array.from({ length: 7 }, () => ({ x: c[0] + 0.4 * gaussian(rand), y: c[1] + 0.4 * gaussian(rand), k, sx: 0.55 + 0.2 * rand(), sy: 0.55 + 0.2 * rand() })));
+  const S = 190;
+  const panel = (x0: number, title: string, sub: string) => {
+    const sx = linear(-3.4, 3.4, x0, x0 + S);
+    const sy = linear(-3.4, 3.4, 36 + S, 36);
+    return { sx, sy, head: (
+      <g>
+        <text x={x0 + S / 2} y={14} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+          {title}
+        </text>
+        <text x={x0 + S / 2} y={29} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {sub}
+        </text>
+        <rect x={x0} y={36} width={S} height={S} fill="none" stroke="var(--border-strong)" />
+        <line x1={sx(0)} x2={sx(0)} y1={36} y2={36 + S} stroke={inkMuted} strokeOpacity={0.4} />
+        <line x1={x0} x2={x0 + S} y1={sy(0)} y2={sy(0)} stroke={inkMuted} strokeOpacity={0.4} />
+      </g>
+    ) };
+  };
+  const L = panel(40, "오토인코더의 잠재공간", "입력 하나 → 점 하나");
+  const R = panel(330, "VAE의 잠재공간", "입력 하나 → 분포 N(μ, σ²) 하나");
+  return (
+    <DiagramFrame
+      title="잠재공간의 차이: 점으로 흩어진 오토인코더, 분포로 메운 VAE"
+      caption="개념도다. 색은 서로 다른 종류의 입력(예: 숫자 0~3)이다. 왼쪽: 일반 오토인코더는 입력을 잠재공간의 점 하나로 보내고 복원만 배우므로, 점들이 덩어리째 흩어지고 사이에 빈 틈이 크다. 빈 틈에서 z를 고르면(✗) 디코더가 무엇을 낼지 보장이 없다. 오른쪽: VAE는 입력마다 평균 μ와 표준편차 σ를 가진 분포(타원)를 내고, KL 항이 이 분포들을 표준정규분포(점선 원) 쪽으로 끌어당겨 서로 겹치게 한다. 그래서 N(0, I)에서 아무 z나 뽑아도(✓) 학습된 분포들이 덮은 자리에 떨어져 그럴듯한 데이터가 나온다."
+      viewBox="0 0 720 262"
+      minWidth={580}
+    >
+      <Markers prefix={P} colors={{ red: colors.red, green: colors.green }} />
+      {L.head}
+      {ae.map((p, i) => (
+        <circle key={i} cx={L.sx(p.x)} cy={L.sy(p.y)} r={3.4} fill={cols[p.k]} />
+      ))}
+      <text x={L.sx(0.2)} y={L.sy(0.1) + 5} textAnchor="middle" fontSize={16} fontWeight={800} fill={colors.red}>
+        ✗
+      </text>
+      <Lines x={L.sx(0.2)} y={L.sy(-0.5) + 6} lines={["빈 틈에서 뽑은 z:", "무엇이 나올지 모름"]} size={9.5} color={colors.red} weight={700} />
+      {R.head}
+      <circle cx={R.sx(0)} cy={R.sy(0)} r={R.sx(2) - R.sx(0)} fill="none" stroke={inkSecondary} strokeWidth={1.4} strokeDasharray="5 3" />
+      <text x={R.sx(1.45)} y={R.sy(-1.75)} fontSize={9.5} fill={inkSecondary}>
+        N(0, I)
+      </text>
+      {vae.map((p, i) => (
+        <ellipse key={i} cx={R.sx(p.x)} cy={R.sy(p.y)} rx={(R.sx(p.sx) - R.sx(0)) * 1} ry={(R.sx(p.sy) - R.sx(0)) * 1} fill={cols[p.k]} fillOpacity={0.12} stroke={cols[p.k]} strokeOpacity={0.5} strokeWidth={0.8} />
+      ))}
+      {vae.map((p, i) => (
+        <circle key={`c${i}`} cx={R.sx(p.x)} cy={R.sy(p.y)} r={2.2} fill={cols[p.k]} />
+      ))}
+      <text x={R.sx(0.95)} y={R.sy(1.25) + 5} textAnchor="middle" fontSize={16} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        ✓
+      </text>
+      <Lines x={605} y={92} lines={["KL 항이", "분포들을 원점 쪽으로", "모아 겹치게 한다", "", "N(0, I)에서 뽑은 z도", "덮인 자리에 떨어진다"]} size={10} anchor="start" color={ink} weight={600} />
+    </DiagramFrame>
+  );
+}
+
+export function DiffusionChain() {
+  // DDPM의 선형 β 스케줄(1e-4 → 0.02, T = 1000)로 ᾱ_t를 계산해 x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε를 그린다(20 × 20 웃는 얼굴, 시드 고정 노이즈).
+  const P = "dfc";
+  const N = 20;
+  const T = 1000;
+  const alphaBar: number[] = [1];
+  for (let t = 1; t <= T; t++) alphaBar.push(alphaBar[t - 1] * (1 - (1e-4 + ((0.02 - 1e-4) * (t - 1)) / (T - 1))));
+  const x0 = Array.from({ length: N }, (_, i) =>
+    Array.from({ length: N }, (_, j) => {
+      const dx = j - 9.5;
+      const dy = i - 9.5;
+      const r = Math.hypot(dx, dy);
+      const eye = Math.hypot(j - 6.5, i - 7) < 1.5 || Math.hypot(j - 12.5, i - 7) < 1.5;
+      const smile = r > 4.6 && r < 6.2 && dy > 1.5;
+      const face = r < 8.6;
+      return eye || smile ? -1 : face ? 0.85 : -0.6;
+    }),
+  );
+  const rand = seeded(11);
+  const eps = x0.map((row) => row.map(() => gaussian(rand)));
+  const steps = [0, 100, 250, 500, 1000];
+  const S = 5.4;
+  const gap = 140;
+  const left = 22;
+  return (
+    <DiagramFrame
+      title="확산 모델: 노이즈를 조금씩 더하고(고정), 조금씩 걷어 낸다(학습)"
+      caption={`위쪽 화살표가 순확산이다. DDPM의 노이즈 스케줄(T = 1000 단계)로 원본 x₀에 노이즈를 섞으면 x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε가 되고, 원본이 남는 비율 √ᾱ_t는 t = 250에서 ${Math.sqrt(alphaBar[250]).toFixed(2)}, t = 500에서 ${Math.sqrt(alphaBar[500]).toFixed(2)}, t = 1000에서 ${Math.sqrt(alphaBar[1000]).toFixed(3)}로 줄어 결국 순수한 노이즈가 된다. 이 과정에는 학습할 것이 없다. 아래쪽 화살표가 학습하는 역확산이다. 신경망(보통 U-Net)이 x_t에 섞인 노이즈 ε를 예측하고, 그만큼 걷어 내 한 단계 덜 흐린 이미지로 한 걸음씩 되돌린다. 생성할 때는 순수한 노이즈에서 출발해 이 걸음을 반복한다.`}
+      viewBox="0 0 720 244"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, violet: colors.violet }} />
+      {steps.map((t, k) => {
+        const ox = left + k * gap;
+        const oy = 58;
+        const a = Math.sqrt(alphaBar[t]);
+        const b = Math.sqrt(1 - alphaBar[t]);
+        return (
+          <g key={t}>
+            <rect x={ox - 1} y={oy - 1} width={N * S + 2} height={N * S + 2} fill="var(--surface-card)" stroke="var(--border-strong)" />
+            {x0.map((row, i) =>
+              row.map((v, j) => {
+                const xt = a * v + b * eps[i][j];
+                const g = Math.max(0, Math.min(1, (xt + 1) / 2));
+                return <rect key={`${i}-${j}`} x={ox + j * S} y={oy + i * S} width={S + 0.2} height={S + 0.2} fill={ink} fillOpacity={1 - g} />;
+              }),
+            )}
+            <text x={ox + (N * S) / 2} y={oy + N * S + 16} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+              {t === 0 ? "x₀ (원본)" : `x${String(t).replace(/\d/g, (d) => "₀₁₂₃₄₅₆₇₈₉"[Number(d)])}${t === T ? " (노이즈)" : ""}`}
+            </text>
+            <text x={ox + (N * S) / 2} y={oy + N * S + 30} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+              {`√ᾱ = ${a < 0.01 ? a.toFixed(3) : a.toFixed(2)}`}
+            </text>
+          </g>
+        );
+      })}
+      {steps.slice(0, -1).map((t, k) => {
+        const xa = left + k * gap + N * S + 6;
+        const xb = left + (k + 1) * gap - 6;
+        return (
+          <g key={`a${t}`}>
+            <Arr x1={xa} y1={44} x2={xb} y2={44} color={inkSecondary} marker={`${P}-ink`} width={1.4} />
+            <Arr x1={xb} y1={208} x2={xa} y2={208} color={colors.violet} marker={`${P}-violet`} width={1.8} />
+          </g>
+        );
+      })}
+      <text x={360} y={22} textAnchor="middle" fontSize={11} fontWeight={800} fill={inkSecondary}>
+        순확산 q: 가우시안 노이즈를 조금씩 더한다 (고정된 절차, 학습 없음) →
+      </text>
+      <text x={360} y={232} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet}>
+        ← 역확산 p_θ: 신경망이 섞인 노이즈 ε를 예측해 한 단계씩 걷어 낸다 (학습)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function IouExamples() {
+  // 본문 예제: (0, 0, 4, 4)와 (2, 2, 6, 6) → 4 / 28 ≈ 0.143. 오른쪽은 같은 크기 상자를 가로로 밀어 IoU 0.5·0.8을 만든 비교.
+  const S = 20;
+  const ox = 40;
+  const oy = 176;
+  const px = (x: number) => ox + x * S;
+  const py = (y: number) => oy - y * S;
+  const iou = (a: number[], b: number[]) => {
+    const ix = Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0]));
+    const iy = Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+    const I = ix * iy;
+    return I / ((a[2] - a[0]) * (a[3] - a[1]) + (b[2] - b[0]) * (b[3] - b[1]) - I);
+  };
+  const pairs = [
+    { d: 4 - 8 / 3, label: "IoU 0.50" },
+    { d: 4 - 32 / 9, label: "IoU 0.80" },
+  ];
+  return (
+    <DiagramFrame
+      title="IoU: 겹친 넓이 ÷ 합친 넓이"
+      caption="왼쪽은 본문 예제다. 넓이 16인 두 상자 (0, 0, 4, 4)와 (2, 2, 6, 6)은 2 × 2 = 4만큼 겹치고, 합친 넓이는 16 + 16 − 4 = 28이라 IoU는 4 / 28 ≈ 0.143이다. 한 변의 절반씩만 어긋났는데도 꽤 낮다. 오른쪽은 같은 크기의 상자를 가로로만 밀었을 때다. 한 변의 1/3쯤 어긋나면 IoU 0.5, 1/9쯤이면 0.8이 된다. 탐지에서는 보통 IoU 0.5 이상을 '맞혔다'로 본다."
+      viewBox="0 0 720 222"
+      minWidth={560}
+    >
+      {Array.from({ length: 7 }, (_, k) => (
+        <g key={k}>
+          <line x1={px(k)} x2={px(k)} y1={py(0)} y2={py(6.5)} stroke="var(--border-hairline)" />
+          <line x1={px(0)} x2={px(6.5)} y1={py(k)} y2={py(k)} stroke="var(--border-hairline)" />
+          <text x={px(k)} y={py(0) + 14} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+            {k}
+          </text>
+          <text x={px(0) - 6} y={py(k) + 3} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+            {k}
+          </text>
+        </g>
+      ))}
+      <rect x={px(0)} y={py(4)} width={4 * S} height={4 * S} fill={colors.blue} fillOpacity={0.15} stroke={colors.blue} strokeWidth={2} />
+      <rect x={px(2)} y={py(6)} width={4 * S} height={4 * S} fill={colors.orange} fillOpacity={0.15} stroke={colors.orange} strokeWidth={2} />
+      <rect x={px(2)} y={py(4)} width={2 * S} height={2 * S} fill={colors.violet} fillOpacity={0.55} />
+      <text x={px(1)} y={py(0.5)} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        A
+      </text>
+      <text x={px(5)} y={py(5.3)} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        B
+      </text>
+      <Lines x={200} y={58} lines={["|A ∩ B| = 2 × 2 = 4", "|A ∪ B| = 16 + 16 − 4 = 28", "IoU = 4 / 28 ≈ 0.143"]} size={11} anchor="start" color={ink} weight={700} gap={1.7} />
+      <text x={200} y={140} fontSize={10.5} fontWeight={800} fill={colors.red}>
+        {"✗ 0.5에 못 미쳐 '틀림'으로 본다"}
+      </text>
+      <line x1={392} y1={14} x2={392} y2={210} stroke="var(--border-hairline)" />
+      {pairs.map((p, i) => {
+        const x0 = 420 + i * 150;
+        const s = 22;
+        const a = [0, 0, 4, 4];
+        const b = [p.d, 0, p.d + 4, 4];
+        return (
+          <g key={p.label}>
+            <rect x={x0} y={60} width={4 * s} height={4 * s} fill={colors.blue} fillOpacity={0.15} stroke={colors.blue} strokeWidth={2} />
+            <rect x={x0 + p.d * s} y={60} width={4 * s} height={4 * s} fill={colors.orange} fillOpacity={0.15} stroke={colors.orange} strokeWidth={2} />
+            <rect x={x0 + p.d * s} y={60} width={(4 - p.d) * s} height={4 * s} fill={colors.violet} fillOpacity={0.35} />
+            <text x={x0 + ((4 + p.d) * s) / 2} y={172} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.green}>
+              {`IoU ${iou(a, b).toFixed(2)} ✓`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={555} y={34} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        같은 크기 상자를 옆으로 밀면
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function NmsSteps() {
+  // 본문 예제의 상자 셋: A(0.9), B(0.8, IoU(A, B) = 0.70), C(0.6, IoU(A, C) = 0.10, IoU(B, C) = 0.20). 좌표는 그 값이 나오도록 잡았다.
+  const boxes = [
+    { n: "A", s: 0.9, b: [0, 0, 10, 10], c: colors.blue },
+    { n: "B", s: 0.8, b: [0.9, -1, 11.9, 10], c: colors.orange },
+    { n: "C", s: 0.6, b: [8.2, 1.3, 16.2, 10.3], c: colors.violet },
+  ];
+  const states = [
+    { t: "① 후보 세 개", keep: ["A", "B", "C"], gone: [] as string[], fixed: [] as string[], note: "점수순: A 0.9 > B 0.8 > C 0.6" },
+    { t: "② A 확정, B 제거", keep: ["A", "C"], gone: ["B"], fixed: ["A"], note: "IoU(A, B) = 0.70 > 0.5 → 중복" },
+    { t: "③ C는 남겨 확정", keep: ["A", "C"], gone: ["B"], fixed: ["A", "C"], note: "IoU(A, C) = 0.10 < 0.5 → 다른 물체" },
+  ];
+  const s = 8.4;
+  return (
+    <DiagramFrame
+      title="NMS 한 바퀴: 가장 높은 상자를 확정하고 많이 겹치는 상자를 지운다"
+      caption="본문 예제의 세 상자다(겹침이 본문의 IoU 값과 같도록 그렸다). ① 점수가 가장 높은 A를 먼저 확정한다. ② A와 IoU 0.7로 많이 겹치는 B는 임계값 0.5를 넘으므로 같은 물체의 중복으로 보고 지운다. ③ A와 IoU 0.1뿐인 C는 남고, 남은 후보 중 가장 높으므로 확정한다. 결과는 A와 C 두 상자다. 임계값을 너무 낮추면 붙어 있는 다른 물체까지 지우고, 너무 높이면 중복이 남는다."
+      viewBox="0 0 720 210"
+      minWidth={600}
+    >
+      {states.map((st, j) => {
+        const x0 = 22 + j * 236;
+        const y0 = 46;
+        const tx = (v: number) => x0 + 10 + v * s;
+        const ty = (v: number) => y0 + 10 + (10.3 - v) * s;
+        return (
+          <g key={st.t}>
+            <text x={x0 + 100} y={18} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
+              {st.t}
+            </text>
+            <rect x={x0} y={y0 - 6} width={200} height={124} rx={8} fill={card2Bg} stroke="var(--border-hairline)" />
+            {boxes.map((bx) => {
+              const gone = st.gone.includes(bx.n);
+              const fixed = st.fixed.includes(bx.n);
+              return (
+                <g key={bx.n} opacity={gone ? 0.35 : 1}>
+                  <rect x={tx(bx.b[0])} y={ty(bx.b[3])} width={(bx.b[2] - bx.b[0]) * s} height={(bx.b[3] - bx.b[1]) * s} fill={fixed ? bx.c : "none"} fillOpacity={fixed ? 0.12 : 0} stroke={bx.c} strokeWidth={fixed ? 2.6 : 1.6} strokeDasharray={gone ? "4 3" : undefined} />
+                  <text x={tx(bx.b[0]) + (bx.n === "B" ? (bx.b[2] - bx.b[0]) * s - 4 : 4)} y={ty(bx.b[3]) + (bx.n === "B" ? (bx.b[3] - bx.b[1]) * s + 12 : -4)} textAnchor={bx.n === "B" ? "end" : "start"} fontSize={10} fontWeight={800} fill={bx.c}>
+                    {`${bx.n} ${bx.s}${gone ? " ✗" : fixed ? " ✓" : ""}`}
+                  </text>
+                </g>
+              );
+            })}
+            <text x={x0 + 100} y={y0 + 136} textAnchor="middle" fontSize={10} fontWeight={700} fill={j === 0 ? inkSecondary : j === 1 ? colors.red : colors.green}>
+              {st.note}
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function ApSteps() {
+  // 본문 예제: 정답 2개, 점수순 판정 TP, FP, TP → Precision 1, 1/2, 2/3, Recall 0.5, 0.5, 1 → AP = (1 + 0.667) / 2 ≈ 0.833.
+  const runs = [
+    { t: "TP, FP, TP", seq: [true, false, true], c: colors.blue },
+    { t: "TP, TP, FP", seq: [true, true, false], c: colors.green },
+  ];
+  const stats = (seq: boolean[]) => {
+    let tp = 0;
+    return seq.map((ok, i) => {
+      if (ok) tp++;
+      return { ok, p: tp / (i + 1), r: tp / 2 };
+    });
+  };
+  const S = 118;
+  return (
+    <DiagramFrame
+      title="AP: 점수 높은 상자부터 내려가며 Precision을 모은다"
+      caption="본문 예제다. 정답 물체가 2개이고 탐지기가 점수순으로 상자 셋을 냈다. 위에서부터 TP, FP, TP라면 Precision은 1 → 1/2 → 2/3, Recall은 0.5 → 0.5 → 1이다. TP가 나온 지점의 Precision(1과 2/3)을 더해 정답 수 2로 나누면 AP ≈ 0.833이고, 이는 오른쪽 PR 그래프에서 칠한 넓이(0.5 × 1 + 0.5 × 0.667)와 같다. 점수가 높은 상자가 더 정확해 TP, TP, FP 순서라면 AP는 1이 된다. AP는 '맞힌 상자에 더 높은 점수를 주는가'까지 평가한다."
+      viewBox="0 0 720 220"
+      minWidth={600}
+    >
+      {runs.map((run, k) => {
+        const x0 = 16 + k * 356;
+        const st = stats(run.seq);
+        const G = { left: x0 + 220, top: 30, width: S, height: S };
+        const sx = linear(0, 1, G.left, G.left + S);
+        const sy = linear(0, 1.05, G.top + S, G.top);
+        const tpPts = st.filter((q) => q.ok);
+        const ap = tpPts.reduce((sum, q) => sum + q.p, 0) / 2;
+        return (
+          <g key={run.t}>
+            <text x={x0 + 4} y={18} fontSize={12} fontWeight={800} fill={run.c}>
+              {`판정 순서: ${run.t}`}
+            </text>
+            <text x={x0 + 4} y={42} fontSize={9.5} fill={inkSecondary}>
+              순위
+            </text>
+            <text x={x0 + 44} y={42} fontSize={9.5} fill={inkSecondary}>
+              판정
+            </text>
+            <text x={x0 + 90} y={42} fontSize={9.5} fill={inkSecondary}>
+              Precision
+            </text>
+            <text x={x0 + 150} y={42} fontSize={9.5} fill={inkSecondary}>
+              Recall
+            </text>
+            {st.map((q, i) => (
+              <g key={i}>
+                <text x={x0 + 12} y={64 + i * 24} fontSize={11} fontWeight={700} fill={ink}>
+                  {i + 1}
+                </text>
+                <text x={x0 + 44} y={64 + i * 24} fontSize={11} fontWeight={800} fill={q.ok ? colors.green : colors.red}>
+                  {q.ok ? "TP ✓" : "FP ✗"}
+                </text>
+                <text x={x0 + 90} y={64 + i * 24} fontSize={11} fontWeight={q.ok ? 800 : 400} fill={q.ok ? run.c : inkSecondary} fontFamily={mono}>
+                  {q.p === 1 ? "1" : q.p === 0.5 ? "1/2" : "2/3"}
+                </text>
+                <text x={x0 + 150} y={64 + i * 24} fontSize={11} fill={ink} fontFamily={mono}>
+                  {q.r}
+                </text>
+              </g>
+            ))}
+            <text x={x0 + 4} y={150} fontSize={10.5} fontWeight={700} fill={ink}>
+              {`AP = (${tpPts.map((q) => (q.p === 1 ? "1" : "0.667")).join(" + ")}) / 2`}
+            </text>
+            <text x={x0 + 4} y={170} fontSize={13} fontWeight={800} fill={run.c}>
+              {`= ${ap.toFixed(3)}`}
+            </text>
+            <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="Recall" />
+            {tpPts.map((q, i) => {
+              const r0 = i === 0 ? 0 : tpPts[i - 1].r;
+              return <rect key={i} x={sx(r0)} y={sy(q.p)} width={sx(q.r) - sx(r0)} height={sy(0) - sy(q.p)} fill={run.c} fillOpacity={0.25} stroke={run.c} strokeWidth={1} />;
+            })}
+            {st.map((q, i) => (
+              <circle key={i} cx={sx(q.r)} cy={sy(q.p)} r={4} fill={q.ok ? run.c : "var(--surface-card)"} stroke={run.c} strokeWidth={1.5} />
+            ))}
+            <text transform={`translate(${G.left - 30}, ${G.top + S / 2}) rotate(-90)`} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+              Precision
+            </text>
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function DiceIou() {
+  // 12 × 8 격자의 두 마스크: 정답 A(5 × 6 = 30칸), 예측 B(30칸), 겹침 20칸 → IoU 0.5, Dice 0.667. Dice = 2·IoU / (1 + IoU).
+  const C = 12;
+  const R = 8;
+  const cell = 17;
+  const inA = (r: number, c: number) => r >= 1 && r <= 5 && c >= 1 && c <= 6;
+  const inB = (r: number, c: number) => r >= 2 && r <= 6 && c >= 2 && c <= 7;
+  let a = 0;
+  let b = 0;
+  let both = 0;
+  for (let r = 0; r < R; r++)
+    for (let c = 0; c < C; c++) {
+      if (inA(r, c)) a++;
+      if (inB(r, c)) b++;
+      if (inA(r, c) && inB(r, c)) both++;
+    }
+  const iou = both / (a + b - both);
+  const dice = (2 * both) / (a + b);
+  const G = { left: 440, top: 18, width: 170, height: 170 };
+  const sx = linear(0, 1, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="분할의 평가: 픽셀 IoU와 Dice"
+      caption={`왼쪽: 정답 마스크 A(파란 테두리, ${a}픽셀)와 예측 마스크 B(주황, ${b}픽셀)가 ${both}픽셀 겹친다. IoU = ${both} / (${a} + ${b} − ${both}) = ${iou.toFixed(2)}, Dice = 2 × ${both} / (${a} + ${b}) = ${dice.toFixed(3)}이다. 오른쪽: Dice = 2·IoU / (1 + IoU)라서 두 지표는 같은 순서로 움직이고 Dice가 항상 IoU 이상이다(대각선 위). 둘 다 겹친 부분만으로 계산하므로, 배경이 99%인 영상에서 '전부 배경'만 답하면 픽셀 정확도는 99%여도 Dice는 0이다.`}
+      viewBox="0 0 720 230"
+      minWidth={580}
+    >
+      {Array.from({ length: R }, (_, r) =>
+        Array.from({ length: C }, (_, c) => {
+          const A_ = inA(r, c);
+          const B_ = inB(r, c);
+          return <rect key={`${r}-${c}`} x={30 + c * cell} y={24 + r * cell} width={cell} height={cell} fill={A_ && B_ ? colors.violet : B_ ? colors.orange : A_ ? colors.blue : card2Bg} fillOpacity={A_ && B_ ? 0.55 : A_ || B_ ? 0.25 : 1} stroke="var(--border-hairline)" strokeWidth={0.6} />;
+        }),
+      )}
+      <rect x={30 + 1 * cell} y={24 + 1 * cell} width={6 * cell} height={5 * cell} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <rect x={30 + 2 * cell} y={24 + 2 * cell} width={6 * cell} height={5 * cell} fill="none" stroke={colors.orange} strokeWidth={2.4} strokeDasharray="5 3" />
+      <Lines x={30} y={180} lines={[`|A| = ${a}, |B| = ${b}, |A ∩ B| = ${both}`, `IoU = ${iou.toFixed(2)}   Dice = ${dice.toFixed(3)}`]} size={11} anchor="start" color={ink} weight={700} gap={1.6} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="IoU" yLabel="Dice" />
+      <line x1={sx(0)} y1={sy(0)} x2={sx(1)} y2={sy(1)} stroke={inkMuted} strokeDasharray="4 3" />
+      <path d={linePath(sample((u) => (2 * u) / (1 + u), 0, 1, 80).map(([x, y]) => [sx(x), sy(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <circle cx={sx(iou)} cy={sy(dice)} r={5} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <text x={sx(iou) + 8} y={sy(dice) + 14} fontSize={10} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`(${iou.toFixed(2)}, ${dice.toFixed(3)})`}
+      </text>
+      <Lines x={628} y={60} lines={["Dice =", "2·IoU / (1 + IoU)", "", "순위는 같고", "Dice ≥ IoU"]} size={10.5} anchor="start" color={ink} weight={600} />
     </DiagramFrame>
   );
 }
