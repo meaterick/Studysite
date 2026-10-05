@@ -1707,3 +1707,489 @@ export function BestOfN() {
     </DiagramFrame>
   );
 }
+
+export function KlOptimalPolicy() {
+  // 본문 코드: π_ref = (0.5, 0.3, 0.2), r = (1, 2, 0). π* ∝ π_ref·e^(r/β)를 β = 0.1, 1, 10에서. 오른쪽: 응답 두 개짜리 예(π_ref = (0.5, 0.5), r = (1, 0))의 π*(y₁) = σ(1/β).
+  const piRef = [0.5, 0.3, 0.2];
+  const r = [1, 2, 0];
+  const pis = (b: number) => {
+    const w = piRef.map((p, i) => p * Math.exp(r[i] / b));
+    const z = w.reduce((s, v) => s + v, 0);
+    return w.map((v) => v / z);
+  };
+  const groups = [
+    { t: "π_ref", v: piRef, c: inkMuted },
+    { t: "β = 10", v: pis(10), c: colors.blue },
+    { t: "β = 1", v: pis(1), c: colors.violet },
+    { t: "β = 0.1", v: pis(0.1), c: colors.red },
+  ];
+  const L = { left: 52, top: 30, width: 330, height: 160 };
+  const ly = linear(0, 1, L.top + L.height, L.top);
+  const R = { left: 470, top: 30, width: 230, height: 160 };
+  const rx = log10Scale(0.01, 100, R.left, R.left + R.width);
+  const ry = linear(0.4, 1, R.top + R.height, R.top);
+  const sig = (z: number) => 1 / (1 + Math.exp(-z));
+  return (
+    <DiagramFrame
+      title="KL 규제 보상 최대화의 답: π* ∝ π_ref · e^(r/β)"
+      caption="왼쪽: 본문 코드의 응답 3개짜리 세계(기준 모델 π_ref = (0.5, 0.3, 0.2), 보상 r = (1, 2, 0))에서 최적 정책 π*를 β별로 계산했다. 막대 위 숫자는 확률이다. β = 10이면 e^(r/β)가 1에 가까워 기준 모델을 거의 그대로 따르고, β = 1이면 보상이 높은 응답 2 쪽으로 기울며, β = 0.1이면 보상 최댓값인 응답 2에 확률이 거의 전부 몰린다. 오른쪽: 응답 두 개짜리 예(π_ref = (0.5, 0.5), r = (1, 0))에서 보상이 높은 응답의 확률 π*(y₁) = σ(1/β)다. β가 보상을 쫓는 쪽(작은 β)과 기준 모델에 머무는 쪽(큰 β) 사이를 잇는 온도 손잡이라는 것이 보인다."
+      viewBox="0 0 720 248"
+      minWidth={600}
+    >
+      <text x={L.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        응답 3개, r = (1, 2, 0)
+      </text>
+      <Axes {...L} sx={linear(0, 1, L.left, L.left + L.width)} sy={ly} yTicks={[0, 0.5, 1]} yLabel="확률" />
+      {groups.map((g, gi) => (
+        <g key={g.t}>
+          {g.v.map((v, i) => {
+            const x = L.left + 14 + gi * 80 + i * 21;
+            return (
+              <g key={i}>
+                <rect x={x} y={ly(v)} width={18} height={Math.max(0.6, ly(0) - ly(v))} rx={2} fill={g.c} fillOpacity={0.35 + 0.2 * i} />
+                <text x={x + 9} y={ly(v) - 4} textAnchor="middle" fontSize={8.5} fontWeight={700} fill={ink}>
+                  {v < 0.005 ? "0" : v.toFixed(2).replace(/^0/, "")}
+                </text>
+              </g>
+            );
+          })}
+          <text x={L.left + 14 + gi * 80 + 31} y={L.top + L.height + 16} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={g.c}>
+            {g.t}
+          </text>
+        </g>
+      ))}
+      <text x={L.left + 4} y={L.top + L.height + 34} fontSize={9.5} fill={inkSecondary}>
+        각 묶음의 막대: 응답 1 · 2 · 3 (보상 1 · 2 · 0)
+      </text>
+      <line x1={420} y1={14} x2={420} y2={236} stroke="var(--border-hairline)" />
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        응답 2개, r = (1, 0): π*(y₁) = σ(1/β)
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0.01, 0.1, 1, 10, 100]} yTicks={[0.5, 0.75, 1]} fmtX={(v) => String(v)} xLabel="β (로그 눈금)" />
+      <path d={linePath(sample((u) => sig(1 / 10 ** u), -2, 2, 200).map(([u, y]) => [rx(10 ** u), ry(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      {[0.1, 1, 10].map((b) => (
+        <g key={b}>
+          <circle cx={rx(b)} cy={ry(sig(1 / b))} r={4.5} fill={colors.violet} />
+          <text x={rx(b) + 7} y={ry(sig(1 / b)) + (b === 1 ? -7 : b === 0.1 ? 16 : -9)} fontSize={10} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {`β = ${b}: ${sig(1 / b).toFixed(3)}`}
+          </text>
+        </g>
+      ))}
+      <text x={rx(0.012)} y={ry(0.86)} fontSize={9.5} fontWeight={700} fill={colors.red}>
+        보상만 쫓기
+      </text>
+      <text x={rx(90)} y={ry(0.44)} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.blue}>
+        기준 모델에 머물기
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function DpoZCancel() {
+  // 2단계: r(y) = β log(π*/π_ref) + β log Z. 상수 β log Z는 같은 프롬프트의 모든 응답에서 같아 Bradley–Terry의 차이에서 사라진다.
+  // 오른쪽: DPO 기울기의 가중치 σ(r̂(y_l) − r̂(y_w)) = σ(−마진).
+  const by = linear(0, 5, 196, 42);
+  const logZ = 2.4;
+  const ys = [
+    { t: "y_w (선호)", ratio: 1.9, c: colors.green },
+    { t: "y_l (비선호)", ratio: 0.7, c: colors.red },
+  ];
+  const G = { left: 450, top: 34, width: 250, height: 160 };
+  const sx = linear(-6, 6, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="DPO 손실: 계산할 수 없는 β log Z는 빼기에서 사라진다"
+      caption="왼쪽: 2단계의 식대로 보상을 두 조각으로 나눠 쌓았다. 회색은 응답과 무관한 상수 β log Z(가능한 모든 응답에 대한 합이라 계산할 수 없다)이고, 색 막대는 정책과 기준 모델의 로그확률 비율 β log(π/π_ref)다. 사람의 선호(Bradley–Terry)는 두 보상의 차이만 보므로 회색 부분은 정확히 지워지고, 남는 것은 로그확률 비율의 차이뿐이다. 그래서 보상모델 없이 정책의 로그확률만으로 손실을 계산할 수 있다. 오른쪽: DPO 기울기에 곱해지는 가중치 σ(r̂(y_l) − r̂(y_w))다. 모델이 이미 선호 응답의 암묵적 보상을 높게 매긴 쌍(마진이 큰 양수)은 가중치가 0에 가깝고, 거꾸로 매긴 쌍일수록 1에 가깝게 크게 고친다."
+      viewBox="0 0 720 248"
+      minWidth={600}
+    >
+      <text x={20} y={20} fontSize={11.5} fontWeight={800} fill={ink}>
+        보상 = β log(π/π_ref) + β log Z
+      </text>
+      {ys.map((y, i) => {
+        const x = 70 + i * 120;
+        return (
+          <g key={y.t}>
+            <rect x={x} y={by(logZ)} width={56} height={by(0) - by(logZ)} fill={inkMuted} fillOpacity={0.3} />
+            <rect x={x} y={by(logZ + y.ratio)} width={56} height={by(logZ) - by(logZ + y.ratio)} fill={y.c} fillOpacity={0.55} />
+            <text x={x + 28} y={by(logZ / 2) + 4} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={ink}>
+              β log Z
+            </text>
+            <text x={x + 28} y={by(0) + 16} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={y.c}>
+              {y.t}
+            </text>
+          </g>
+        );
+      })}
+      <line x1={60} x2={320} y1={by(logZ)} y2={by(logZ)} stroke={ink} strokeDasharray="4 3" />
+      <text x={322} y={by(logZ) + 4} fontSize={9.5} fill={inkSecondary}>
+        같은 높이
+      </text>
+      <line x1={136} x2={300} y1={by(logZ + 1.9)} y2={by(logZ + 1.9)} stroke={colors.green} strokeDasharray="3 3" />
+      <line x1={250} x2={300} y1={by(logZ + 0.7)} y2={by(logZ + 0.7)} stroke={colors.red} strokeDasharray="3 3" />
+      <line x1={296} x2={296} y1={by(logZ + 1.9)} y2={by(logZ + 0.7)} stroke={ink} strokeWidth={1.6} />
+      <Lines x={304} y={by(logZ + 1.4)} lines={["차이에는", "비율만 남는다"]} size={10} anchor="start" color={ink} weight={800} gap={1.35} />
+      <text x={20} y={232} fontSize={10} fill={inkSecondary}>
+        P(y_w ≻ y_l) = σ(보상 차이) → 회색 β log Z가 빼기에서 소거
+      </text>
+      <line x1={420} y1={14} x2={420} y2={240} stroke="var(--border-hairline)" />
+      <text x={G.left} y={20} fontSize={11.5} fontWeight={800} fill={ink}>
+        기울기의 가중치 σ(r̂_l − r̂_w)
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-6, -3, 0, 3, 6]} yTicks={[0, 0.5, 1]} fmtX={(v) => String(v).replace("-", "−")} xLabel="마진 r̂(y_w) − r̂(y_l)" />
+      <rect x={sx(-6)} y={G.top} width={sx(0) - sx(-6)} height={G.height} fill={colors.red} fillOpacity={0.06} />
+      <path d={linePath(sample((m) => 1 / (1 + Math.exp(m)), -6, 6, 160).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <Lines x={sx(-5.7)} y={sy(0.62)} lines={["거꾸로 매긴 쌍:", "크게 고친다"]} size={10} anchor="start" color={colors.red} weight={800} gap={1.35} />
+      <Lines x={sx(5.8)} y={sy(0.42)} lines={["이미 맞게 매긴 쌍:", "거의 안 고친다"]} size={10} anchor="end" color={colors.green} weight={800} gap={1.35} />
+    </DiagramFrame>
+  );
+}
+
+export function BaselineVariance() {
+  // 본문 코드: 행동 3개, θ = 0(균등 정책), 보상 (10, 11, 12). 추정치 (R_a − b)(e_a − p)는 행동마다 하나씩 3가지 값만 가진다.
+  // b = 0: 분산 합 ≈ 80.9, b = 11: ≈ 0.22. 두 경우 모두 평균 (−1/3, 0, 1/3). 그림은 성분 0과 성분 2만 그린다.
+  const P = "blv";
+  const R = [10, 11, 12];
+  const p = [1 / 3, 1 / 3, 1 / 3];
+  const g = (b: number, a: number) => [0, 1, 2].map((k) => (R[a] - b) * ((k === a ? 1 : 0) - p[k]));
+  const vecs = (b: number, cx: number, cy: number, S: number, color: string, mk: string, labels: boolean) => (
+    <g>
+      {[0, 1, 2].map((a) => {
+        const v = g(b, a);
+        const len = Math.hypot(v[0], v[2]);
+        if (len < 0.05) return <circle key={a} cx={cx} cy={cy} r={3} fill={color} />;
+        const ex = cx + v[0] * S;
+        const ey = cy - v[2] * S;
+        return (
+          <g key={a}>
+            <Arr x1={cx} y1={cy} x2={ex} y2={ey} color={color} marker={mk} width={1.6} />
+            {labels && (
+              <text x={ex + (v[0] > 0 ? 6 : -6)} y={ey + (v[2] > 0 ? 4 : 14)} textAnchor={v[0] > 0 ? "start" : "end"} fontSize={9.5} fontWeight={700} fill={color}>
+                {`행동 ${a}${a === 2 ? "를" : "을"} 뽑으면`}
+              </text>
+            )}
+          </g>
+        );
+      })}
+      <Arr x1={cx} y1={cy} x2={cx - S / 3} y2={cy - S / 3} color={colors.violet} marker={`${P}-violet`} width={2.6} />
+    </g>
+  );
+  const axes = (cx: number, cy: number, S: number, xr: number, yr: number) => (
+    <g>
+      <line x1={cx - xr * S} x2={cx + xr * S} y1={cy} y2={cy} stroke={inkMuted} strokeOpacity={0.6} />
+      <line x1={cx} x2={cx} y1={cy - yr * S} y2={cy + yr * 0.9 * S} stroke={inkMuted} strokeOpacity={0.6} />
+    </g>
+  );
+  const S = 10;
+  return (
+    <DiagramFrame
+      title="기준선은 평균을 그대로 두고 분산만 줄인다"
+      caption="본문 코드의 상황(균등한 정책, 행동 3개의 보상 10 · 11 · 12)에서 표본 하나로 낸 정책 경사 추정치를 화살표로 그렸다(3차원 기울기 중 가로 성분 0과 세로 성분 2만). 뽑힌 행동에 따라 추정치는 세 가지 중 하나다. 왼쪽: 기준선이 없으면 보상이 모두 양수라 뽑힌 행동이 무엇이든 그 확률을 크게 올리는 긴 화살표가 나오고, 진짜 기울기(보라, 세 화살표의 평균)는 그 사이에 파묻힌 짧은 화살표다. 가운데: 평균 보상 11을 빼면 같은 축척에서 거의 점으로 줄어든다. 오른쪽은 가운데를 10배 확대한 것으로, 행동 1의 추정치는 0이 되고 나머지 둘도 평균 가까이에 모인다. 분산 합이 약 80.9에서 0.22로 수백 배 줄어 같은 정확도의 기울기를 훨씬 적은 표본으로 얻는다."
+      viewBox="0 0 720 252"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ red: colors.red, green: colors.green, violet: colors.violet }} />
+      <text x={14} y={20} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        기준선 없음: R·∇log π
+      </text>
+      {axes(150, 130, S, 9, 9.4)}
+      {vecs(0, 150, 130, S, colors.red, `${P}-red`, true)}
+      <text x={14} y={238} fontSize={10.5} fontWeight={800} fill={ink}>
+        분산 합 ≈ 80.9
+      </text>
+      <line x1={318} y1={14} x2={318} y2={242} stroke="var(--border-hairline)" />
+      <text x={330} y={20} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        b = 11: (R − 11)·∇log π
+      </text>
+      {axes(420, 130, S, 8, 9.4)}
+      {vecs(11, 420, 130, S, colors.green, `${P}-green`, false)}
+      <text x={330} y={238} fontSize={10.5} fontWeight={800} fill={ink}>
+        분산 합 ≈ 0.22 (같은 축척)
+      </text>
+      <rect x={530} y={40} width={176} height={176} rx={8} fill="none" stroke={inkMuted} strokeDasharray="4 3" />
+      <text x={540} y={58} fontSize={10} fontWeight={800} fill={inkSecondary}>
+        가운데를 10배 확대
+      </text>
+      {axes(626, 128, 100, 0.85, 0.75)}
+      {vecs(11, 626, 128, 100, colors.green, `${P}-green`, false)}
+      <text x={548} y={110} fontSize={9.5} fontWeight={700} fill={colors.green}>
+        행동 0
+      </text>
+      <text x={596} y={78} fontSize={9.5} fontWeight={700} fill={colors.green}>
+        행동 2
+      </text>
+      <text x={632} y={146} fontSize={9.5} fontWeight={700} fill={colors.green}>
+        행동 1 = 0
+      </text>
+      <text x={540} y={206} fontSize={9.5} fontWeight={800} fill={colors.violet}>
+        보라: 평균(진짜 기울기)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function PpoClipObjective() {
+  // L = min(ρA, clip(ρ, 1 − ε, 1 + ε)A), ε = 0.2. 점은 본문 코드의 표(ρ = 0.5, 0.8, 1.0, 1.2, 1.5).
+  const eps = 0.2;
+  const term = (rho: number, A: number) => Math.min(rho * A, Math.min(Math.max(rho, 1 - eps), 1 + eps) * A);
+  const pts = [0.5, 0.8, 1.0, 1.2, 1.5];
+  const panel = (ox: number, A: number, color: string) => {
+    const G = { left: ox + 50, top: 34, width: 260, height: 170 };
+    const sx = linear(0, 2, G.left, G.left + G.width);
+    const sy = A > 0 ? linear(0, 2, G.top + G.height, G.top) : linear(-2, 0, G.top + G.height, G.top);
+    const yt = A > 0 ? [0, 0.5, 1, 1.5, 2] : [-2, -1.5, -1, -0.5, 0];
+    return (
+      <g>
+        <text x={G.left} y={20} fontSize={11.5} fontWeight={800} fill={color}>
+          {A > 0 ? "좋은 행동 (A = +1)" : "나쁜 행동 (A = −1)"}
+        </text>
+        <rect x={sx(1 - eps)} y={G.top} width={sx(1 + eps) - sx(1 - eps)} height={G.height} fill={inkMuted} fillOpacity={0.1} />
+        <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.5, 0.8, 1, 1.2, 1.5, 2]} yTicks={yt} fmtX={(v) => String(v)} fmtY={(v) => String(v).replace("-", "−")} xLabel="확률비 ρ = π_θ / π_old" />
+        <path d={linePath(sample((r) => r * A, 0, 2, 40).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={inkMuted} strokeWidth={1.4} strokeDasharray="4 3" />
+        <path d={linePath(sample((r) => term(r, A), 0, 2, 400).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={color} strokeWidth={2.8} />
+        {pts.map((r) => (
+          <g key={r}>
+            <circle cx={sx(r)} cy={sy(term(r, A))} r={4} fill={color} stroke="var(--surface-card)" strokeWidth={1.4} />
+            <text x={sx(r) + (A > 0 ? -4 : -6)} y={sy(term(r, A)) + (A > 0 ? -8 : 15)} textAnchor="end" fontSize={9} fontWeight={800} fill={color} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+              {term(r, A).toFixed(1).replace("-", "−")}
+            </text>
+          </g>
+        ))}
+        <text x={sx(1)} y={G.top + 12} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+          [0.8, 1.2]
+        </text>
+        {A > 0 ? (
+          <Lines x={sx(1.95)} y={sy(0.85)} lines={["1.2 넘게 올려도", "이득 없음 (기울기 0)"]} size={9.5} anchor="end" color={color} weight={800} gap={1.35} />
+        ) : (
+          <Lines x={sx(1.95)} y={sy(-0.35)} lines={["확률이 올라간 잘못은", "끝까지 벌한다 (−ρ)"]} size={9.5} anchor="end" color={color} weight={800} gap={1.35} />
+        )}
+        {A > 0 ? (
+          <Lines x={sx(0.05)} y={sy(1.8)} lines={["회색 점선: 자르지 않은 ρA"]} size={9} anchor="start" color={inkSecondary} />
+        ) : (
+          <Lines x={sx(0.05)} y={sy(-1.1)} lines={["0.8 아래로 내린 공은", "인정하지 않음 (−0.8)"]} size={9.5} anchor="start" color={color} weight={800} gap={1.35} />
+        )}
+      </g>
+    );
+  };
+  return (
+    <DiagramFrame
+      title="PPO의 클리핑: 좋은 쪽 이득은 잘라 내고, 나쁜 쪽 손해는 그대로 둔다"
+      caption="ε = 0.2일 때 PPO 목적함수 항 min(ρA, clip(ρ, 0.8, 1.2)·A)를 확률비 ρ에 따라 그렸다. 점과 숫자는 본문 코드가 출력하는 표의 값이고, 회색 점선은 자르지 않은 ρA, 회색 띠는 클리핑 구간이다. 왼쪽: 이점이 양수인 행동은 확률을 1.2배까지만 올리면 이득이 끝나 그 위로는 평평하다(기울기 0). 오른쪽: 이점이 음수인 행동은 확률을 0.8배 아래로 더 내린 공은 −0.8에서 잘라 인정하지 않지만, 확률이 올라가 버린 잘못(ρ > 1)은 −ρ 그대로 끝까지 반영한다. 항상 비관적인 쪽을 골라, 한 번 모은 데이터로 여러 번 갱신해도 정책이 이전 정책에서 멀리 달아나지 않는다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      {panel(0, 1, colors.green)}
+      <line x1={360} y1={14} x2={360} y2={244} stroke="var(--border-hairline)" />
+      {panel(360, -1, colors.red)}
+    </DiagramFrame>
+  );
+}
+
+export function SpecAcceptReject() {
+  // 본문 코드: p = (0.5, 0.2, 0.15, 0.1, 0.05), q = (0.3, 0.3, 0.2, 0.1, 0.1). 수락 질량 min(p, q), 잔여 (p − q)₊ = (0.2, 0, 0, 0, 0).
+  // 실제 시뮬레이션 출력 빈도(2만 번): (0.496, 0.203, 0.152, 0.100, 0.049), 수락률 0.798(이론 0.8).
+  const p = [0.5, 0.2, 0.15, 0.1, 0.05];
+  const q = [0.3, 0.3, 0.2, 0.1, 0.1];
+  const freq = [0.4961, 0.2026, 0.1519, 0.1, 0.0494];
+  const G = { left: 60, top: 30, width: 420, height: 180 };
+  const sy = linear(0, 0.55, G.top + G.height, G.top);
+  const gx = (i: number) => G.left + 20 + i * 82;
+  const alpha = p.reduce((s, v, i) => s + Math.min(v, q[i]), 0);
+  return (
+    <DiagramFrame
+      title="투기적 디코딩의 수락-거절: 초안이 엉터리여도 출력 분포는 정확히 p"
+      caption="본문 코드의 목표 분포 p(큰 모델)와 초안 분포 q다. 토큰마다 왼쪽 막대가 초안 q, 오른쪽 막대가 최종 출력의 확률이다. 초안이 x를 제안하면 확률 min(1, p/q)로 수락하므로, 수락되어 나오는 확률은 min(p, q)(초록)이다. 초안이 p보다 많이 제안한 몫(q − p, 빨간 빗금)은 거절되고, 거절되면 잔여 분포 (p − q)₊에서 다시 뽑는다. 여기서는 토큰 0만 p가 q보다 커서, 거절된 확률 0.2가 모두 토큰 0으로 간다(주황). 초록 + 주황을 쌓으면 모든 토큰에서 정확히 p(검은 테두리)가 되고, 2만 번 시뮬레이션한 빈도(점)도 p와 일치한다. 수락률은 Σ min(p, q) = 0.8이다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <defs>
+        <pattern id="sar-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="5" stroke={colors.red} strokeWidth="1.6" />
+        </pattern>
+      </defs>
+      <Axes {...G} sx={linear(0, 1, G.left, G.left + G.width)} sy={sy} yTicks={[0, 0.1, 0.2, 0.3, 0.4, 0.5]} yLabel="확률" />
+      {p.map((pv, i) => {
+        const x = gx(i);
+        const acc = Math.min(pv, q[i]);
+        const res = Math.max(pv - q[i], 0);
+        const rej = Math.max(q[i] - pv, 0);
+        return (
+          <g key={i}>
+            <rect x={x} y={sy(q[i])} width={24} height={sy(0) - sy(q[i])} fill={colors.blue} fillOpacity={0.3} stroke={colors.blue} strokeWidth={1} />
+            {rej > 0 && <rect x={x} y={sy(q[i])} width={24} height={sy(acc) - sy(q[i])} fill="url(#sar-hatch)" />}
+            <rect x={x + 28} y={sy(acc)} width={24} height={sy(0) - sy(acc)} fill={colors.green} fillOpacity={0.55} />
+            {res > 0 && <rect x={x + 28} y={sy(acc + res)} width={24} height={sy(acc) - sy(acc + res)} fill={colors.orange} fillOpacity={0.65} />}
+            <rect x={x + 28} y={sy(pv)} width={24} height={sy(0) - sy(pv)} fill="none" stroke={ink} strokeWidth={1.6} />
+            <circle cx={x + 40} cy={sy(freq[i])} r={3.2} fill={ink} />
+            <text x={x + 26} y={G.top + G.height + 15} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={ink}>
+              {`토큰 ${i}`}
+            </text>
+            <text x={x + 40} y={sy(pv) - 6} textAnchor="middle" fontSize={9} fontWeight={800} fill={ink}>
+              {`p ${pv}`}
+            </text>
+            <text x={x + 12} y={sy(q[i]) - 6} textAnchor="middle" fontSize={9} fill={colors.blue}>
+              {`q ${q[i]}`}
+            </text>
+          </g>
+        );
+      })}
+      <rect x={510} y={34} width={196} height={180} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      {[
+        { c: colors.blue, t: "초안 q가 제안", fill: 0.3 },
+        { c: colors.green, t: "수락: min(p, q)", fill: 0.55 },
+        { c: colors.red, t: "거절: q − p (빗금)", fill: 0 },
+        { c: colors.orange, t: "다시 뽑기: (p − q)₊", fill: 0.65 },
+      ].map((l, i) => (
+        <g key={l.t}>
+          <rect x={524} y={50 + i * 24} width={14} height={12} fill={l.fill ? l.c : "url(#sar-hatch)"} fillOpacity={l.fill || 1} stroke={l.c} />
+          <text x={544} y={60 + i * 24} fontSize={10.5} fontWeight={700} fill={ink}>
+            {l.t}
+          </text>
+        </g>
+      ))}
+      <rect x={524} y={146} width={14} height={12} fill="none" stroke={ink} strokeWidth={1.6} />
+      <text x={544} y={156} fontSize={10.5} fontWeight={700} fill={ink}>
+        목표 p (초록 + 주황)
+      </text>
+      <circle cx={531} cy={176} r={3.2} fill={ink} />
+      <text x={544} y={180} fontSize={10.5} fontWeight={700} fill={ink}>
+        실제 출력 빈도
+      </text>
+      <text x={524} y={204} fontSize={10.5} fontWeight={800} fill={colors.green}>
+        {`수락률 = Σ min(p, q) = ${alpha.toFixed(1)}`}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function SpecTimeline() {
+  // 초안 k = 4개를 쓰고 큰 모델이 한 번에 5개 위치를 검증. 예: 앞의 2개 수락, 3번째 거절 → 잔여 분포에서 1개 뽑아 이번 호출로 3토큰.
+  const P = "spt";
+  const big = (x: number, y: number, w: number, label: string) => <Tag x={x} y={y} w={w} h={34} lines={[label]} color={colors.violet} size={10.5} />;
+  const tok = (x: number, y: number, t: string, color: string, op = 0.2) => (
+    <g>
+      <rect x={x} y={y} width={34} height={24} rx={4} fill={color} fillOpacity={op} stroke={color} strokeWidth={1.4} />
+      <text x={x + 17} y={y + 16} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+        {t}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="초안-검증 한 바퀴: 큰 모델 한 번 호출로 여러 토큰"
+      caption="위: 보통의 디코딩은 토큰 하나마다 큰 모델 전체를 한 번씩 호출한다. 호출마다 수십 GB의 가중치를 메모리에서 읽어야 해서 느리다. 아래: 투기적 디코딩은 작은 초안 모델이 토큰 4개를 빠르게 연달아 쓰고, 큰 모델은 그 5개 위치의 분포를 한 번의 순전파로 계산해 앞에서부터 수락-거절을 한다. 이 예에서는 앞의 두 토큰이 수락되고 셋째가 거절되어, 그 자리에서 잔여 분포로 한 토큰을 다시 뽑고 멈춘다. 큰 모델 한 번 호출로 3토큰을 얻었다. 넷이 모두 수락되면 마지막 위치에서 보너스 토큰까지 5토큰이다. 어떤 경우에도 최소 한 토큰은 생긴다."
+      viewBox="0 0 720 248"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted }} />
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        보통의 디코딩: 큰 모델 3번 호출 → 3토큰
+      </text>
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          {big(20 + i * 150, 36, 104, "큰 모델 호출")}
+          {tok(132 + i * 150, 41, `t${i + 1}`, colors.violet)}
+        </g>
+      ))}
+      <line x1={14} x2={706} y1={92} y2={92} stroke="var(--border-hairline)" />
+      <text x={20} y={114} fontSize={11.5} fontWeight={800} fill={ink}>
+        투기적 디코딩: 초안 4개 → 큰 모델 1번 검증
+      </text>
+      {[0, 1, 2, 3].map((i) => (
+        <g key={i}>
+          <Tag x={20 + i * 62} y={128} w={52} h={24} lines={["초안"]} color={colors.blue} size={9.5} />
+          {tok(26 + i * 62, 160, `d${i + 1}`, colors.blue)}
+        </g>
+      ))}
+      <Arr x1={268} y1={172} x2={296} y2={172} color={inkMuted} marker={`${P}-ink`} />
+      {big(300, 155, 132, "큰 모델 1번 (5개 위치)")}
+      <Arr x1={436} y1={172} x2={458} y2={172} color={inkMuted} marker={`${P}-ink`} />
+      {tok(462, 160, "d1 ✓", colors.green, 0.3)}
+      {tok(500, 160, "d2 ✓", colors.green, 0.3)}
+      {tok(538, 160, "d3 ✗", colors.red, 0.25)}
+      {tok(576, 160, "새 t", colors.orange, 0.35)}
+      <text x={680} y={177} textAnchor="end" fontSize={11} fontWeight={800} fill={colors.green}>
+        = 3토큰
+      </text>
+      <Lines x={462} y={204} lines={["d3에서 처음 거절 → 잔여 분포 (p − q)₊에서", "한 토큰을 다시 뽑고 d4는 버린다"]} size={10} anchor="start" color={inkSecondary} weight={600} gap={1.45} />
+      <Lines x={20} y={210} lines={["초안 모델 한 스텝은 큰 모델의 수십 분의 1 비용", "넷 다 수락되면 보너스 1개까지 5토큰"]} size={10} anchor="start" color={inkSecondary} weight={600} gap={1.45} />
+    </DiagramFrame>
+  );
+}
+
+export function SpecSpeedup() {
+  // 호출당 기대 토큰 (1 − α^(k+1))/(1 − α), 속도 향상 = 그 값 / (kc + 1). 본문 예: α = 0.8, k = 4 → 3.36토큰, c = 0.05 → 2.8배, c = 0.2 → 1.87배.
+  const tok = (a: number, k: number) => (1 - a ** (k + 1)) / (1 - a);
+  const sp = (a: number, k: number, c: number) => tok(a, k) / (k * c + 1);
+  const ks = Array.from({ length: 13 }, (_, i) => i);
+  const L = { left: 52, top: 30, width: 280, height: 170 };
+  const lx = linear(0, 12, L.left, L.left + L.width);
+  const ly = linear(0, 10, L.top + L.height, L.top);
+  const R = { left: 420, top: 30, width: 280, height: 170 };
+  const rx = linear(0, 12, R.left, R.left + R.width);
+  const ry = linear(0, 5, R.top + R.height, R.top);
+  const alphas = [
+    { a: 0.9, c: colors.green },
+    { a: 0.8, c: colors.violet },
+    { a: 0.6, c: colors.orange },
+  ];
+  const best = (c: number) => ks.reduce((b, k) => (sp(0.8, k, c) > sp(0.8, b, c) ? k : b), 0);
+  return (
+    <DiagramFrame
+      title="초안 길이 k: 기대 토큰은 포화하고, 속도 향상에는 최적점이 있다"
+      caption="왼쪽: 큰 모델 한 번 호출로 얻는 기대 토큰 수 (1 − α^(k+1))/(1 − α)다(각 위치의 수락이 확률 α로 독립이라고 단순화). k를 늘려도 1/(1 − α)에 포화한다. 수락률 0.8에서 초안 4개면 3.36, 8개면 4.33이다(본문 코드의 출력). 오른쪽: 초안 모델 한 스텝의 비용이 큰 모델의 c배일 때 실제 속도 향상(α = 0.8)이다. 초안 비용 kc는 k에 비례해 계속 늘므로 최적의 k가 생긴다. c = 0.05이면 k = 4에서 2.8배(본문 예제), k = 8 근처에서 최대 약 3.1배이고, 초안이 비싼 c = 0.2이면 k = 4에서 최대 약 1.87배에 그친다. 초안은 충분히 비슷하면서 아주 싸야 한다."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <text x={L.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        호출당 기대 토큰 수
+      </text>
+      <Axes {...L} sx={lx} sy={ly} xTicks={[0, 2, 4, 6, 8, 10, 12]} yTicks={[0, 2, 4, 6, 8, 10]} xLabel="초안 길이 k" />
+      {alphas.map((o) => (
+        <g key={o.a}>
+          <line x1={L.left} x2={L.left + L.width} y1={ly(1 / (1 - o.a))} y2={ly(1 / (1 - o.a))} stroke={o.c} strokeDasharray="3 3" strokeOpacity={0.6} />
+          <path d={linePath(ks.map((k) => [lx(k), ly(tok(o.a, k))] as [number, number]))} fill="none" stroke={o.c} strokeWidth={2.2} />
+          {ks.map((k) => (
+            <circle key={k} cx={lx(k)} cy={ly(tok(o.a, k))} r={2.6} fill={o.c} />
+          ))}
+          <text x={L.left + L.width - 4} y={ly(1 / (1 - o.a)) - 5} textAnchor="end" fontSize={9.5} fontWeight={800} fill={o.c}>
+            {`α = ${o.a} (상한 ${(1 / (1 - o.a)).toFixed(1)})`}
+          </text>
+        </g>
+      ))}
+      <text x={lx(4) + 4} y={ly(2.85)} fontSize={9.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        k = 4: 3.36
+      </text>
+      <text x={lx(8) + 4} y={ly(4.33) + 16} fontSize={9.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        k = 8: 4.33
+      </text>
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        실제 속도 향상 (α = 0.8)
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 2, 4, 6, 8, 10, 12]} yTicks={[0, 1, 2, 3, 4, 5]} xLabel="초안 길이 k" />
+      <line x1={R.left} x2={R.left + R.width} y1={ry(1)} y2={ry(1)} stroke={inkMuted} strokeDasharray="2 3" />
+      {[
+        { c: 0.05, col: colors.green },
+        { c: 0.2, col: colors.red },
+      ].map((o) => {
+        const k = best(o.c);
+        return (
+          <g key={o.c}>
+            <path d={linePath(ks.map((kk) => [rx(kk), ry(sp(0.8, kk, o.c))] as [number, number]))} fill="none" stroke={o.col} strokeWidth={2.2} />
+            {ks.map((kk) => (
+              <circle key={kk} cx={rx(kk)} cy={ry(sp(0.8, kk, o.c))} r={2.6} fill={o.col} />
+            ))}
+            <circle cx={rx(k)} cy={ry(sp(0.8, k, o.c))} r={5.5} fill="none" stroke={o.col} strokeWidth={1.8} />
+            <text x={o.c === 0.05 ? rx(12) : rx(k) + 8} y={ry(sp(0.8, k, o.c)) - (o.c === 0.05 ? 12 : 8)} textAnchor={o.c === 0.05 ? "end" : "start"} fontSize={9.5} fontWeight={800} fill={o.col} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+              {`c = ${o.c}: 최대 ${sp(0.8, k, o.c).toFixed(2)}배 (k = ${k})`}
+            </text>
+          </g>
+        );
+      })}
+      <text x={rx(4) - 6} y={ry(2.8) - 10} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        k = 4: 2.8배
+      </text>
+    </DiagramFrame>
+  );
+}
