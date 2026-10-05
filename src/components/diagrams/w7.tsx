@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkMuted, inkSecondary, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, starPath, mono } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, starPath, mono, GridCells } from "./chart";
 
 export function RagPipeline() {
   const w = 108;
@@ -1466,16 +1466,18 @@ export function IvfCells() {
     const open = new Set(order.slice(0, nProbe).map((o) => o.i));
     const sx = (v: number) => x0 + v * S;
     const sy = (v: number) => 36 + (1 - v) * S;
-    const openCells: React.ReactNode[] = [];
-    const evenCells: React.ReactNode[] = [];
+    // 0.03 간격 격자 칸의 중심이 속한 칸: 연 칸은 1(파랑), 열지 않은 짝수 번 칸은 2(회색), 나머지는 비운다.
+    // 격자는 아래 변(y = 0)에서 쌓아 올리므로 맨 위 행과 맨 오른쪽 열은 판 밖으로 넘치고, clipPath가 잘라 낸다.
     const step = 0.03;
-    for (let gx = 0; gx < 1.36; gx += step)
-      for (let gy = 0; gy < 1; gy += step) {
-        const c = cellOf([gx + step / 2, gy + step / 2]);
-        const r = <rect key={`${gx.toFixed(2)}-${gy.toFixed(2)}`} x={sx(gx)} y={sy(Math.min(gy + step, 1))} width={Math.min(step, 1.36 - gx) * S + 0.5} height={Math.min(step, 1 - gy) * S + 0.5} fill={open.has(c) ? colors.blue : inkMuted} />;
-        if (open.has(c)) openCells.push(r);
-        else if (c % 2 === 0) evenCells.push(r);
-      }
+    const nx = Math.ceil(1.36 / step);
+    const ny = Math.ceil(1 / step);
+    const keys = Array.from({ length: ny }, (_, r) =>
+      Array.from({ length: nx }, (_, q) => {
+        const c = cellOf([(q + 0.5) * step, (ny - 1 - r + 0.5) * step]);
+        return open.has(c) ? 1 : c % 2 === 0 ? 2 : null;
+      }),
+    );
+    const grid = (k: number) => <GridCells keys={keys.map((row) => row.map((v) => (v === k ? v : null)))} x={x0} y={sy(ny * step)} cw={step * S} pad={0.5 / (step * S)} fill={() => (k === 1 ? colors.blue : inkMuted)} />;
     const found = open.has(cellOf(pStar));
     const compared = pts.filter((p) => open.has(cellOf(p))).length;
     return (
@@ -1483,12 +1485,17 @@ export function IvfCells() {
         <text x={x0 + (1.36 * S) / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
           {`n_probe = ${nProbe}: 가까운 칸 ${nProbe}개만 연다`}
         </text>
-        <g opacity={0.16}>{openCells}</g>
-        <g opacity={0.08}>{evenCells}</g>
+        <clipPath id={`ivf-c${x0}`}>
+          <rect x={x0} y={36} width={1.36 * S} height={S} />
+        </clipPath>
+        <g clipPath={`url(#ivf-c${x0})`}>
+          <g opacity={0.16}>{grid(1)}</g>
+          <g opacity={0.08}>{grid(2)}</g>
+        </g>
         <rect x={x0} y={36} width={1.36 * S} height={S} fill="none" stroke="var(--border-strong)" />
         {pts.map((p, i) => {
           const on = open.has(cellOf(p));
-          return <circle key={i} cx={sx(p[0])} cy={sy(p[1])} r={p === pStar ? 4.2 : 2.6} fill={on ? colors.blue : inkMuted} fillOpacity={on ? 0.9 : 0.5} />;
+          return <circle key={i} cx={Math.round(sx(p[0]) * 10) / 10} cy={Math.round(sy(p[1]) * 10) / 10} r={p === pStar ? 4.2 : 2.6} fill={on ? colors.blue : inkMuted} fillOpacity={on ? 0.9 : 0.5} />;
         })}
         {centers.map((c, i) => (
           <path key={i} d={`M${sx(c[0]) - 4},${sy(c[1]) - 4} L${sx(c[0]) + 4},${sy(c[1]) + 4} M${sx(c[0]) - 4},${sy(c[1]) + 4} L${sx(c[0]) + 4},${sy(c[1]) - 4}`} stroke={ink} strokeWidth={1.6} opacity={0.7} />

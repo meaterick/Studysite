@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box } from "./primitives";
 import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono } from "./chart";
@@ -283,10 +284,10 @@ export function SubgroupBoundary() {
           const y = rule(a, b);
           const wrong = y !== w[0] * a + w[1] * b > 0;
           return (
-            <g key={i}>
+            <Fragment key={i}>
               <circle cx={sx(a)} cy={sy(b)} r={3.2} fill={y ? color : "var(--surface-card)"} fillOpacity={y ? 0.8 : 1} stroke={color} strokeWidth={1.2} />
               {wrong && <circle cx={sx(a)} cy={sy(b)} r={6} fill="none" stroke={colors.red} strokeWidth={1.4} />}
-            </g>
+            </Fragment>
           );
         })}
         <text x={x0 + S / 2} y={30 + S + 20} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
@@ -941,10 +942,10 @@ export function DriftTypes() {
         const yNew = newRule(a, b);
         const flipped = yNew !== oldRule(a, b);
         return (
-          <g key={`s${i}`}>
+          <Fragment key={`s${i}`}>
             <circle cx={right.sx(a)} cy={right.sy(b)} r={3} fill={colors.violet} fillOpacity={yNew ? 0.75 : 0.12} stroke={colors.violet} strokeWidth={1} />
             {flipped && <circle cx={right.sx(a)} cy={right.sy(b)} r={6} fill="none" stroke={colors.red} strokeWidth={1.3} />}
-          </g>
+          </Fragment>
         );
       })}
       </g>

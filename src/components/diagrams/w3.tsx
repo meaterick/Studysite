@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, mono, normCdf, pow10Label } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, mono, normCdf, pow10Label, GridCells } from "./chart";
 
 export function ComputationalGraph() {
   const y = 110;
@@ -1308,28 +1308,21 @@ export function MoonsCapacity() {
         const sy = linear(-1.1, 1.6, y0 + ph, y0);
         const cw = pw / NX;
         const chh = ph / NY;
-        const cells: React.ReactNode[] = [];
-        m.rle.split(";").forEach((row, r) => {
-          let col = 0;
-          row.split(".").forEach((nStr, k) => {
-            const n = Number(nStr);
-            if (n > 0) cells.push(<rect key={`${r}-${k}`} x={x0 + col * cw} y={y0 + r * chh} width={n * cw + 0.4} height={chh + 0.4} fill={k % 2 === 0 ? colors.blue : colors.orange} />);
-            col += n;
-          });
-        });
+        // 행마다 "파랑 칸 수.주황 칸 수.파랑 칸 수…"로 줄여 둔 결정 영역을 칸 단위 값(0 파랑, 1 주황)으로 펼친다.
+        const keys = m.rle.split(";").map((row) => row.split(".").flatMap((nStr, k) => Array<number>(Number(nStr)).fill(k % 2)));
         return (
           <g key={m.h}>
             <text x={x0 + pw / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
               {`은닉 유닛 ${m.h}개`}
             </text>
-            <g opacity={0.18}>{cells}</g>
-            {pts.map((p, i) =>
-              p[2] === 0 ? (
-                <circle key={i} cx={sx(p[0])} cy={sy(p[1])} r={2.2} fill={colors.blue} />
-              ) : (
-                <rect key={i} x={sx(p[0]) - 2} y={sy(p[1]) - 2} width={4} height={4} fill={colors.orange} />
-              ),
-            )}
+            <g opacity={0.18}>
+              <GridCells keys={keys} x={x0} y={y0} cw={cw} ch={chh} pad={0.4 / cw} fill={(k) => (k === 0 ? colors.blue : colors.orange)} />
+            </g>
+            {pts.map((p, i) => {
+              const x = Math.round(sx(p[0]) * 10) / 10;
+              const y = Math.round(sy(p[1]) * 10) / 10;
+              return p[2] === 0 ? <circle key={i} cx={x} cy={y} r={2.2} fill={colors.blue} /> : <rect key={i} x={x - 2} y={y - 2} width={4} height={4} fill={colors.orange} />;
+            })}
             <rect x={x0} y={y0} width={pw} height={ph} fill="none" stroke="var(--border-strong)" />
             <text x={x0 + pw / 2} y={y0 + ph + 18} textAnchor="middle" fontSize={11} fontWeight={700} fill={m.h === 64 ? colors.green : inkSecondary}>
               {`훈련 정확도 ${m.acc.toFixed(1)}%`}

@@ -345,3 +345,57 @@ export function Tag({
     </g>
   );
 }
+
+/**
+ * 격자 칸 그림(결정 영역·픽셀 이미지)을 값마다 path 하나로 그린다. 칸마다 rect를 두면 칸 수천 개가
+ * HTML과 RSC 데이터에 두 번씩 실려 페이지가 수백 KB 무거워지고 DOM 노드도 그만큼 는다.
+ * keys[i][j]는 i행 j열 칸의 값(색 번호·농도 단계 등), null이면 비운다. 같은 값이 가로로 이어지면 직사각형 하나로 합친다.
+ * 좌표는 칸 단위로 쓰고 translate·scale로 (x, y)에 cw × ch 크기 칸으로 놓는다.
+ * pad: 칸을 오른쪽·아래로 늘리는 폭(칸 단위). 서로 다른 값의 칸이 맞닿는 곳의 안티에일리어싱 틈을 가린다.
+ * crisp: 안티에일리어싱을 끄고 칸 경계를 화면 픽셀에 맞춘다(픽셀 이미지처럼 칸마다 값이 다른 그림에 쓴다. pad가 필요 없다).
+ */
+export function GridCells({
+  keys,
+  x,
+  y,
+  cw,
+  ch = cw,
+  fill,
+  opacity,
+  pad = 0,
+  crisp = false,
+}: {
+  keys: (number | null)[][];
+  x: number;
+  y: number;
+  cw: number;
+  ch?: number;
+  fill: (key: number) => string;
+  opacity?: (key: number) => number;
+  pad?: number;
+  crisp?: boolean;
+}) {
+  const r = (v: number) => Math.round(v * 1000) / 1000;
+  const runs = new Map<number, string[]>();
+  keys.forEach((row, i) => {
+    for (let j = 0; j < row.length; ) {
+      const k = row[j];
+      let e = j + 1;
+      while (e < row.length && row[e] === k) e++;
+      if (k !== null) {
+        const w = r(e - j + pad);
+        let list = runs.get(k);
+        if (!list) runs.set(k, (list = []));
+        list.push(`M${j} ${i}h${w}v${r(1 + pad)}h-${w}z`);
+      }
+      j = e;
+    }
+  });
+  return (
+    <g transform={`translate(${r(x)} ${r(y)}) scale(${r(cw)} ${r(ch)})`} shapeRendering={crisp ? "crispEdges" : undefined}>
+      {[...runs].map(([k, d]) => (
+        <path key={k} d={d.join("")} fill={fill(k)} fillOpacity={opacity?.(k)} />
+      ))}
+    </g>
+  );
+}

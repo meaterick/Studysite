@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono, pow10Label } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono, pow10Label, GridCells } from "./chart";
 
 export function ResNetSkip() {
   const x = 260;
@@ -1099,13 +1099,21 @@ export function DiffusionChain() {
         return (
           <g key={t}>
             <rect x={ox - 1} y={oy - 1} width={N * S + 2} height={N * S + 2} fill="var(--surface-card)" stroke="var(--border-strong)" />
-            {x0.map((row, i) =>
-              row.map((v, j) => {
-                const xt = a * v + b * eps[i][j];
-                const g = Math.max(0, Math.min(1, (xt + 1) / 2));
-                return <rect key={`${i}-${j}`} x={ox + j * S} y={oy + i * S} width={S + 0.2} height={S + 0.2} fill={ink} fillOpacity={1 - g} />;
-              }),
-            )}
+            <GridCells
+              keys={x0.map((row, i) =>
+                row.map((v, j) => {
+                  // 밝기 g ∈ [0, 1]을 진하기 1 − g로 바꿔 40단계로 나눈다(단계 0은 칸을 비운다).
+                  const g = Math.max(0, Math.min(1, (a * v + b * eps[i][j] + 1) / 2));
+                  return Math.round((1 - g) * 40) || null;
+                }),
+              )}
+              x={ox}
+              y={oy}
+              cw={S}
+              crisp
+              fill={() => ink}
+              opacity={(k) => k / 40}
+            />
             <text x={ox + (N * S) / 2} y={oy + N * S + 16} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
               {t === 0 ? "x₀ (원본)" : `x${String(t).replace(/\d/g, (d) => "₀₁₂₃₄₅₆₇₈₉"[Number(d)])}${t === T ? " (노이즈)" : ""}`}
             </text>
@@ -2022,12 +2030,20 @@ export function DdpmTrainingStep() {
   const eps = x0.map(() => gaussian(rand));
   const xt = x0.map((v, i) => a * v + b * eps[i]);
   const c = 7;
+  // 값을 [−range, range]에서 회색 33단계(0 검정 ~ 32 흰색)로 나눠 12 × 12 칸으로 그린다.
   const img = (x: number, y: number, vals: number[], range: number) => (
     <g>
-      {vals.map((v, i) => {
-        const g = Math.round(((Math.max(-range, Math.min(range, v)) + range) / (2 * range)) * 255);
-        return <rect key={i} x={x + (i % 12) * c} y={y + Math.floor(i / 12) * c} width={c} height={c} fill={`rgb(${g},${g},${g})`} />;
-      })}
+      <GridCells
+        keys={Array.from({ length: 12 }, (_, r) => vals.slice(r * 12, r * 12 + 12).map((v) => Math.round(((Math.max(-range, Math.min(range, v)) + range) / (2 * range)) * 32)))}
+        x={x}
+        y={y}
+        cw={c}
+        crisp
+        fill={(k) => {
+          const g = Math.round((k / 32) * 255);
+          return `rgb(${g},${g},${g})`;
+        }}
+      />
       <rect x={x} y={y} width={12 * c} height={12 * c} fill="none" stroke={inkMuted} />
     </g>
   );

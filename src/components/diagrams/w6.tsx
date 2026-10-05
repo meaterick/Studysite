@@ -621,9 +621,12 @@ export function QuantizationGrid() {
       <text x={14} y={rowY.i8 - 30} fontSize={11.5} fontWeight={700} fill={ink}>
         {`INT8: 눈금 255개, 간격 ${s8.toFixed(4)}`}
       </text>
-      {Array.from({ length: 255 }, (_, k) => (
-        <line key={k} x1={sx((k - 127) * s8)} x2={sx((k - 127) * s8)} y1={rowY.i8 - 7} y2={rowY.i8 + 7} stroke={inkMuted} strokeWidth={0.5} opacity={0.6} />
-      ))}
+      <path
+        d={Array.from({ length: 255 }, (_, k) => `M${sx((k - 127) * s8).toFixed(2)} ${rowY.i8 - 7}v14`).join("")}
+        stroke={inkMuted}
+        strokeWidth={0.5}
+        opacity={0.6}
+      />
       {w.map((v) => (
         <circle key={v} cx={sx(q(v, s8))} cy={rowY.i8} r={4.5} fill={colors.green} />
       ))}

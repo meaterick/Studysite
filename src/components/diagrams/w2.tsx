@@ -1,6 +1,7 @@
+import { Fragment } from "react";
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, gridline, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Label } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, pow10Label, linePath, sample, seeded, gaussian, mono, solveLinear, starPath, normCdf } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, pow10Label, linePath, sample, seeded, gaussian, mono, solveLinear, starPath, normCdf, GridCells } from "./chart";
 
 export function ConfusionMatrix() {
   const cell = 110;
@@ -1608,13 +1609,10 @@ export function KnnKEffect() {
         const y0 = 34;
         const sx = linear(-3.5, 3.5, x0, x0 + pw);
         const sy = linear(-2.45, 2.45, y0 + ph, y0);
-        const cells = [];
-        for (let gx = x0; gx < x0 + pw; gx += cell) {
-          for (let gy = y0; gy < y0 + ph; gy += cell) {
-            const c = predict(-3.5 + ((gx + cell / 2 - x0) / pw) * 7, 2.45 - ((gy + cell / 2 - y0) / ph) * 4.9, pn.k);
-            cells.push(<rect key={`${gx}-${gy}`} x={gx} y={gy} width={Math.min(cell, x0 + pw - gx)} height={Math.min(cell, y0 + ph - gy)} fill={c === 0 ? colors.blue : colors.orange} fillOpacity={0.16} />);
-          }
-        }
+        // 칸 중심에서 예측한 클래스. 오른쪽·아래 끝의 칸은 판 밖으로 넘치지만 clipPath가 잘라 낸다.
+        const keys = Array.from({ length: Math.ceil(ph / cell) }, (_, r) =>
+          Array.from({ length: Math.ceil(pw / cell) }, (_, q) => predict(-3.5 + ((q * cell + cell / 2) / pw) * 7, 2.45 - ((r * cell + cell / 2) / ph) * 4.9, pn.k)),
+        );
         return (
           <g key={pn.k}>
             <text x={x0 + pw / 2} y={16} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
@@ -1627,9 +1625,11 @@ export function KnnKEffect() {
               <rect x={x0} y={y0} width={pw} height={ph} />
             </clipPath>
             <g clipPath={`url(#kke-c${j})`}>
-              {cells}
+              <g opacity={0.16}>
+                <GridCells keys={keys} x={x0} y={y0} cw={cell} pad={0.05} fill={(c) => (c === 0 ? colors.blue : colors.orange)} />
+              </g>
               {train.map((p, i) => (
-                <g key={i}>{classMark(sx(p.x), sy(p.y), p.c, 3.6)}</g>
+                <Fragment key={i}>{classMark(sx(p.x), sy(p.y), p.c, 3.6)}</Fragment>
               ))}
             </g>
             <rect x={x0} y={y0} width={pw} height={ph} fill="none" stroke="var(--border-strong)" />
