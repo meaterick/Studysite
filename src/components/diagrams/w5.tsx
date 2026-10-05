@@ -1875,3 +1875,436 @@ export function TrainingMemory() {
     </DiagramFrame>
   );
 }
+
+export function OnlineSoftmaxSteps() {
+  // 본문 예제: 첫 블록 점수 [1, 2] → m = 2, ℓ = e⁻¹ + e⁰ ≈ 1.368. 둘째 블록 [4] → m′ = 4, 이전 ℓ에 e^(2−4) ≈ 0.135를 곱해 ℓ′ ≈ 1.185(= 전체를 보고 계산한 값).
+  const P = "osm";
+  const by = linear(0, 1.1, 206, 100);
+  const bar = (x: number, h: number, color: string, label: string, sub: string, op = 0.6) => (
+    <g>
+      <rect x={x} y={by(h)} width={30} height={by(0) - by(h)} rx={3} fill={color} fillOpacity={op} />
+      <text x={x + 15} y={by(h) - 5} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+        {label}
+      </text>
+      <text x={x + 15} y={by(0) + 14} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        {sub}
+      </text>
+    </g>
+  );
+  const e = Math.exp;
+  return (
+    <DiagramFrame
+      title="온라인 softmax: 최댓값이 바뀌면 과거 합계에 e^(m − m′) 한 번만 곱한다"
+      caption="본문 예제의 점수 [1, 2]와 [4]를 두 블록으로 나눠 본다. 막대 높이는 지금까지의 최댓값 m을 기준으로 한 e^(s − m)이고, 그 합이 ℓ이다. 왼쪽: 첫 블록만 보면 m = 2, ℓ = e⁻¹ + e⁰ ≈ 1.368이다. 가운데: 둘째 블록에서 더 큰 점수 4가 나와 기준이 m′ = 4로 바뀐다. 이전 막대를 다시 계산할 필요 없이 이전 합계 ℓ에 e^(2 − 4) ≈ 0.135를 한 번 곱해 새 기준으로 옮기고(옅은 막대), 새 항 e⁰ = 1을 더하면 ℓ′ ≈ 1.185다. 오른쪽: 세 점수를 처음부터 다 보고 계산한 값과 정확히 같다. 가중합 a도 같은 배율로 보정하므로, 점수 행렬 전체를 한 번도 들고 있지 않아도 attention 출력이 근사 없이 정확하다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted }} />
+      <text x={20} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        ① 블록 1: 점수 [1, 2]
+      </text>
+      <Lines x={20} y={46} lines={["m = 2", `ℓ = e⁻¹ + e⁰ ≈ ${(e(-1) + 1).toFixed(3)}`]} size={10.5} anchor="start" color={colors.blue} weight={800} gap={1.45} />
+      {bar(40, e(-1), colors.blue, "0.368", "s = 1")}
+      {bar(84, 1, colors.blue, "1", "s = 2")}
+      <line x1={20} x2={140} y1={by(0)} y2={by(0)} stroke={inkMuted} />
+      <Arr x1={150} y1={150} x2={196} y2={150} color={inkMuted} marker={`${P}-ink`} width={1.8} />
+      <text x={173} y={142} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={inkSecondary}>
+        새 블록
+      </text>
+      <text x={210} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        ② 블록 2: 점수 [4] → 기준이 m′ = 4로
+      </text>
+      <Lines x={210} y={46} lines={[`이전 합계 × e^(2 − 4)`, `= ${(e(-1) + 1).toFixed(3)} × ${e(-2).toFixed(3)} ≈ ${((e(-1) + 1) * e(-2)).toFixed(3)}`, `ℓ′ ≈ ${((e(-1) + 1) * e(-2)).toFixed(3)} + e⁰ = ${((e(-1) + 1) * e(-2) + 1).toFixed(3)}`]} size={10.5} anchor="start" color={colors.orange} weight={800} gap={1.45} />
+      {bar(230, e(-1), colors.blue, "", "s = 1", 0.15)}
+      {bar(274, 1, colors.blue, "", "s = 2", 0.15)}
+      {bar(230, e(-3), colors.orange, "0.050", "", 0.6)}
+      {bar(274, e(-2), colors.orange, "0.135", "", 0.6)}
+      {bar(318, 1, colors.orange, "1", "s = 4", 0.8)}
+      <text x={252} y={by(0.62)} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={colors.orange}>
+        × 0.135
+      </text>
+      <line x1={210} x2={360} y1={by(0)} y2={by(0)} stroke={inkMuted} />
+      <line x1={392} y1={14} x2={392} y2={240} stroke="var(--border-hairline)" />
+      <text x={408} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        ③ 처음부터 다 보고 계산하면
+      </text>
+      <Lines x={408} y={46} lines={[`e⁻³ + e⁻² + e⁰ ≈ ${(e(-3) + e(-2) + 1).toFixed(3)}  ✓ 같다`]} size={10.5} anchor="start" color={colors.green} weight={800} />
+      <rect x={408} y={78} width={296} height={150} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={420} y={100} fontSize={11} fontWeight={800} fill={ink}>
+        들고 다니는 것은 세 개뿐
+      </text>
+      <Lines
+        x={420}
+        y={124}
+        lines={["m′ = max(m, 블록의 최댓값)", "ℓ′ = ℓ·e^(m − m′) + Σ e^(s − m′)", "a′ = a·e^(m − m′) + Σ e^(s − m′)·v", "끝나면 출력 = a / ℓ (근사 없음)"]}
+        size={10.5}
+        anchor="start"
+        color={ink}
+        weight={600}
+        gap={1.75}
+      />
+    </DiagramFrame>
+  );
+}
+
+export function AttentionMemoryScaling() {
+  // 헤드 하나의 점수 행렬 n × n을 fp16(2바이트)으로 저장할 때의 크기와, FlashAttention처럼 출력 n × d(d = 128)만 남길 때의 크기.
+  const G = { left: 70, top: 26, width: 430, height: 190 };
+  const sx = log10Scale(1e3, 1.05e6, G.left, G.left + G.width);
+  const sy = log10Scale(1e5, 1e13, G.top + G.height, G.top);
+  const GiB = 2 ** 30;
+  const fmtB = (v: number) => (v >= 2 ** 40 ? `${(v / 2 ** 40).toFixed(0)} TiB` : v >= GiB ? `${(v / GiB).toFixed(0)} GiB` : `${(v / 2 ** 20).toFixed(0)} MiB`);
+  const quad = (n: number) => n * n * 2;
+  const lin = (n: number) => n * 128 * 2;
+  const marks = [1024, 8192, 32768, 131072, 1048576];
+  return (
+    <DiagramFrame
+      title="점수 행렬의 메모리는 문맥 길이의 제곱으로 자란다"
+      caption="헤드 하나의 n × n 점수 행렬을 fp16(숫자당 2바이트)으로 메모리에 만들 때의 크기다(두 축 모두 로그 눈금). 문맥이 두 배가 되면 네 배가 되어, 1,024토큰에서 2MiB이던 것이 13만 토큰에서는 32GiB, 100만 토큰에서는 2TiB가 된다. GPU 메모리(HBM) 80GB를 헤드 하나가 넘어선다. FlashAttention은 점수를 작은 타일로만 만들고 버리므로, 남기는 것은 출력 n × d(d = 128)뿐이라 메모리가 n에 비례한다(초록). 연산량 O(n²)은 그대로라는 점은 다르지 않다."
+      viewBox="0 0 720 256"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1e3, 1e4, 1e5, 1e6]} yTicks={[1e6, 1e8, 1e10, 1e12]} fmtX={pow10Label} fmtY={(v) => (v === 1e6 ? "1MB" : v === 1e8 ? "100MB" : v === 1e10 ? "10GB" : "1TB")} xLabel="문맥 길이 n (토큰, 로그 눈금)" yLabel="메모리" />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(80e9)} y2={sy(80e9)} stroke={colors.violet} strokeDasharray="5 3" />
+      <text x={G.left + 6} y={sy(80e9) - 6} fontSize={10} fontWeight={800} fill={colors.violet}>
+        GPU HBM 80GB
+      </text>
+      <path d={linePath([1e3, 1.05e6].map((n) => [sx(n), sy(quad(n))] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.6} />
+      <path d={linePath([1e3, 1.05e6].map((n) => [sx(n), sy(lin(n))] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.6} />
+      {marks.map((n) => (
+        <g key={n}>
+          <circle cx={sx(n)} cy={sy(quad(n))} r={4} fill={colors.red} />
+          <text x={sx(n) + (n === 1048576 ? -6 : 6)} y={sy(quad(n)) + (n === 1048576 ? -8 : n === 131072 ? 16 : -6)} textAnchor={n === 1048576 ? "end" : "start"} fontSize={9.5} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {fmtB(quad(n))}
+          </text>
+        </g>
+      ))}
+      <text x={sx(3e4)} y={sy(lin(3e4)) + 18} fontSize={10} fontWeight={800} fill={colors.green}>
+        n × d만 남기면 ∝ n
+      </text>
+      <text x={sx(1.6e4)} y={sy(quad(1.6e4)) + 30} fontSize={10} fontWeight={800} fill={colors.red}>
+        n × n 점수 행렬 ∝ n²
+      </text>
+      <rect x={530} y={40} width={176} height={150} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={544} y={62} fontSize={11.5} fontWeight={800} fill={ink}>
+        헤드 하나, fp16
+      </text>
+      {[
+        ["1,024", "2 MiB"],
+        ["8,192", "128 MiB"],
+        ["32,768", "2 GiB"],
+        ["131,072", "32 GiB"],
+        ["1,048,576", "2 TiB"],
+      ].map(([n, m], i) => (
+        <g key={n}>
+          <text x={544} y={86 + i * 20} fontSize={10.5} fill={inkSecondary} fontFamily={mono}>
+            {n}
+          </text>
+          <text x={694} y={86 + i * 20} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.red} fontFamily={mono}>
+            {m}
+          </text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function LinearAttentionAssoc() {
+  // (φ(Q)φ(K)ᵀ)V는 n × n 중간 결과, φ(Q)(φ(K)ᵀV)는 d × d 중간 결과. 연산량 n²d 대 nd². 본문 예: n = 100,000, d = 128 → 약 780배.
+  const c = 8;
+  const n = 10;
+  const d = 3;
+  const mat = (x: number, y: number, r: number, k: number, color: string, label: string, op = 0.2) => (
+    <g>
+      <rect x={x} y={y} width={k * c} height={r * c} fill={color} fillOpacity={op} stroke={color} strokeWidth={1.4} />
+      <text x={x + (k * c) / 2} y={y + r * c + 13} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        {label}
+      </text>
+    </g>
+  );
+  const G = { left: 470, top: 34, width: 230, height: 160 };
+  const sx = log10Scale(10, 1e6, G.left, G.left + G.width);
+  const sy = log10Scale(1e4, 1e16, G.top + G.height, G.top);
+  const D = 128;
+  return (
+    <DiagramFrame
+      title="선형 어텐션: 곱하는 순서만 바꿔 n × n 행렬을 없앤다"
+      caption="행렬 곱의 결합법칙 (φ(Q)φ(K)ᵀ)V = φ(Q)(φ(K)ᵀV)를 그림으로 본 것이다(n = 10, d = 3인 모양). 위: 보통의 순서는 먼저 n × n 가중치(빨강)를 만든다. 연산은 n²d에 비례하고 메모리도 n²이다. 아래: φ(K)ᵀV를 먼저 계산하면 중간 결과가 d × d(초록) 하나뿐이고, 모든 query가 이것을 공유한다. 연산은 nd²에 비례한다. 오른쪽: d = 128일 때 두 연산량이다. 문맥이 d보다 짧으면 오히려 손해지만, n = 100,000이면 약 780배 싸다. 단, exp 커널은 이렇게 쪼개지지 않아 φ(x) = elu(x) + 1 같은 사상을 쓰므로 softmax attention과 같지 않은 근사가 된다."
+      viewBox="0 0 720 272"
+      minWidth={620}
+    >
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        (φ(Q) φ(K)ᵀ) V: n × n을 먼저
+      </text>
+      {mat(20, 36, n, d, colors.blue, "φ(Q) n×d")}
+      {mat(56, 36, d, n, colors.blue, "φ(K)ᵀ d×n")}
+      <text x={148} y={60} fontSize={14} fontWeight={800} fill={ink}>
+        =
+      </text>
+      {mat(166, 36, n, n, colors.red, "n × n !", 0.3)}
+      {mat(256, 36, n, d, colors.violet, "V n×d")}
+      <text x={292} y={80} fontSize={10} fontWeight={700} fill={colors.red}>
+        연산 ∝ n²d
+      </text>
+      <line x1={14} x2={440} y1={140} y2={140} stroke="var(--border-hairline)" />
+      <text x={20} y={158} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        φ(Q) (φ(K)ᵀ V): d × d를 먼저
+      </text>
+      {mat(20, 168, d, n, colors.blue, "φ(K)ᵀ d×n")}
+      {mat(110, 168, n, d, colors.violet, "V n×d")}
+      <text x={146} y={192} fontSize={14} fontWeight={800} fill={ink}>
+        =
+      </text>
+      {mat(164, 168, d, d, colors.green, "d × d", 0.4)}
+      <text x={200} y={192} fontSize={12} fontWeight={800} fill={inkSecondary}>
+        →
+      </text>
+      {mat(216, 168, n, d, colors.blue, "φ(Q) n×d")}
+      <text x={250} y={192} fontSize={12} fontWeight={800} fill={ink}>
+        ×
+      </text>
+      {mat(262, 168, d, d, colors.green, "d × d", 0.4)}
+      <text x={300} y={192} fontSize={10} fontWeight={700} fill={colors.green}>
+        연산 ∝ nd²
+      </text>
+      <line x1={448} y1={14} x2={448} y2={258} stroke="var(--border-hairline)" />
+      <text x={G.left} y={22} fontSize={11} fontWeight={800} fill={ink}>
+        곱셈 횟수 (d = 128)
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[10, 1e2, 1e3, 1e4, 1e5, 1e6]} yTicks={[1e4, 1e8, 1e12, 1e16]} fmtX={pow10Label} fmtY={pow10Label} xLabel="문맥 길이 n" />
+      <path d={linePath([10, 1e6].map((v) => [sx(v), sy(v * v * D)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.4} />
+      <path d={linePath([10, 1e6].map((v) => [sx(v), sy(v * D * D)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.4} />
+      <line x1={sx(D)} x2={sx(D)} y1={G.top} y2={G.top + G.height} stroke={inkMuted} strokeDasharray="3 3" />
+      <text x={sx(D) + 4} y={G.top + G.height - 6} fontSize={9.5} fill={inkSecondary}>
+        n = d
+      </text>
+      <line x1={sx(1e5)} x2={sx(1e5)} y1={sy(1e5 * D * D)} y2={sy(1e10 * D)} stroke={ink} strokeWidth={1.4} />
+      <text x={sx(1e5) - 5} y={sy(1.3e11)} textAnchor="end" fontSize={10} fontWeight={800} fill={ink} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        약 780배
+      </text>
+      <text x={sx(2e3) - 4} y={sy(2e3 * 2e3 * D) - 6} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.red}>
+        n²d
+      </text>
+      <text x={sx(2e4)} y={sy(2e4 * D * D) + 16} fontSize={10} fontWeight={800} fill={colors.green}>
+        nd²
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function LinearAttentionRnn() {
+  // 인과적 선형 어텐션: S_t = S_{t−1} + φ(k_t)v_tᵀ, z_t = z_{t−1} + φ(k_t), o_t = φ(q_t)ᵀS_t / φ(q_t)ᵀz_t.
+  // 오른쪽: head 차원 d = 128에서 KV 캐시(2·n·d개)와 선형 어텐션 상태(d² + d = 16,512개)의 숫자 개수.
+  const P = "lar";
+  const steps = [1, 2, 3, 4];
+  const xs = (t: number) => 34 + (t - 1) * 92;
+  const G = { left: 476, top: 34, width: 224, height: 160 };
+  const sx = log10Scale(1, 1e5, G.left, G.left + G.width);
+  const sy = log10Scale(100, 1e8, G.top + G.height, G.top);
+  return (
+    <DiagramFrame
+      title="인과적 선형 어텐션은 고정 크기 상태를 가진 RNN이다"
+      caption="왼쪽: GPT처럼 앞쪽 토큰만 보는 선형 어텐션을 토큰 순서대로 계산하면, 상태 S(d × d 행렬)와 z(길이 d 벡터)에 φ(k_t)v_tᵀ와 φ(k_t)를 더해 나가기만 하면 된다. 출력 o_t는 현재 query로 상태를 읽은 것이다. 학습할 때는 행렬 형태로 한꺼번에, 생성할 때는 이렇게 토큰 하나당 상태 하나만 갱신한다(본문 코드의 두 형태가 같은 값을 낸다). 오른쪽: head 차원 128에서 들고 있어야 하는 숫자의 개수다. softmax attention의 KV 캐시는 지나온 토큰 수에 비례해 커지지만, 선형 어텐션의 상태는 128 × 128 + 128 = 16,512개로 고정이다. 대신 과거 전체를 고정 크기에 압축하므로 정확한 복사·검색에 약하다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted, green: colors.green, blue: colors.blue }} />
+      {steps.map((t) => {
+        const x = xs(t);
+        return (
+          <g key={t}>
+            <Tag x={x} y={176} w={64} h={26} lines={[`토큰 ${t}`]} color={inkMuted} size={10.5} />
+            <Arr x1={x + 32} y1={175} x2={x + 32} y2={140} color={inkMuted} marker={`${P}-ink`} width={1.3} />
+            <text x={x + 36} y={162} fontSize={8.5} fill={inkSecondary}>
+              {`φ(k${"₁₂₃₄"[t - 1]})v${"₁₂₃₄"[t - 1]}ᵀ`}
+            </text>
+            <rect x={x + 8} y={86} width={48} height={52} rx={5} fill={colors.green} fillOpacity={0.15} stroke={colors.green} strokeWidth={1.6} />
+            <text x={x + 32} y={110} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+              {`S${"₁₂₃₄"[t - 1]}`}
+            </text>
+            <text x={x + 32} y={126} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+              d × d
+            </text>
+            <Arr x1={x + 32} y1={85} x2={x + 32} y2={52} color={colors.blue} marker={`${P}-blue`} width={1.3} />
+            <text x={x + 32} y={44} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.blue}>
+              {`o${"₁₂₃₄"[t - 1]}`}
+            </text>
+            {t < 4 && <Arr x1={x + 57} y1={112} x2={x + 98} y2={112} color={colors.green} marker={`${P}-green`} width={2} />}
+          </g>
+        );
+      })}
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        S_t = S_(t−1) + φ(k_t)v_tᵀ, o_t = φ(q_t)ᵀS_t / φ(q_t)ᵀz_t
+      </text>
+      <text x={xs(4) + 72} y={116} fontSize={11} fontWeight={800} fill={colors.green}>
+        …
+      </text>
+      <text x={20} y={232} fontSize={10.5} fill={inkSecondary}>
+        상태 크기는 토큰이 몇 개든 그대로 (KV 캐시처럼 자라지 않는다)
+      </text>
+      <line x1={448} y1={14} x2={448} y2={244} stroke="var(--border-hairline)" />
+      <text x={G.left} y={22} fontSize={11} fontWeight={800} fill={ink}>
+        들고 있는 숫자 개수 (d = 128)
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 100, 1e3, 1e4, 1e5]} yTicks={[100, 1e4, 1e6, 1e8]} fmtX={pow10Label} fmtY={pow10Label} xLabel="지나온 토큰 수" />
+      <path d={linePath([1, 1e5].map((n) => [sx(n), sy(2 * n * 128)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.4} />
+      <path d={linePath([1, 1e5].map((n) => [sx(n), sy(128 * 128 + 128)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.4} />
+      <text x={sx(1e5) - 4} y={sy(2.56e7) + 16} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.red}>
+        KV 캐시 2nd
+      </text>
+      <text x={sx(1.5)} y={sy(16512) - 8} fontSize={10} fontWeight={800} fill={colors.green}>
+        선형 어텐션 상태 d² + d
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function RopeWavelengths() {
+  // 본문 코드: head 차원 128(성분 쌍 64개), θ_i = 10000^(−2i/128), 파장 2π/θ_i, 학습 길이 L = 2048. 파장 > L인 쌍이 23개.
+  const d = 128;
+  const L = 2048;
+  const wl = Array.from({ length: d / 2 }, (_, i) => (2 * Math.PI) / 10000 ** ((-2 * i) / d));
+  const G = { left: 70, top: 26, width: 470, height: 186 };
+  const sx = linear(-0.5, 63.5, G.left, G.left + G.width);
+  const sy = log10Scale(3, 1e5, G.top + G.height, G.top);
+  const over = wl.filter((w) => w > L).length;
+  const bw = G.width / 64;
+  return (
+    <DiagramFrame
+      title="RoPE의 느린 성분은 학습 길이 안에서 한 바퀴도 돌지 못한다"
+      caption={`본문 코드의 설정(head 차원 128, 성분 쌍 64개, 학습 길이 2048)에서 성분 쌍마다 한 바퀴 도는 데 필요한 위치 수(파장)다. 세로축은 로그 눈금이다. 성분 쌍 0은 약 6위치마다 한 바퀴씩 돌아 학습 중 300바퀴 넘게 모든 각도를 보지만, 뒤쪽 성분일수록 파장이 길어져 점선(학습 길이 2048)을 넘는다. 64쌍 중 ${over}쌍(빨강)은 학습 중 한 바퀴도 돌지 못해, 2048을 넘는 위치에서 처음 보는 각도를 내놓는다. 길이 외삽이 깨지는 곳이 바로 이 느린 성분들이다.`}
+      viewBox="0 0 720 256"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 16, 32, 48, 63]} yTicks={[10, 100, 1e3, 1e4, 1e5]} fmtY={(v) => (v >= 1e3 ? `${v / 1e3}k` : String(v))} xLabel="성분 쌍 번호 i (앞쪽일수록 빠르게 회전)" yLabel="파장 (위치 수)" />
+      {wl.map((w, i) => (
+        <rect key={i} x={sx(i) - bw / 2 + 0.6} y={sy(w)} width={bw - 1.2} height={sy(3) - sy(w)} fill={w > L ? colors.red : colors.blue} fillOpacity={w > L ? 0.65 : 0.45} />
+      ))}
+      <line x1={G.left} x2={G.left + G.width} y1={sy(L)} y2={sy(L)} stroke={ink} strokeWidth={1.4} strokeDasharray="5 3" />
+      <text x={G.left + 6} y={sy(L) - 6} fontSize={10} fontWeight={800} fill={ink}>
+        학습 길이 L = 2048
+      </text>
+      <rect x={560} y={36} width={146} height={176} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={572} y={58} fontSize={11} fontWeight={800} fill={ink}>
+        학습 중 회전 바퀴 수
+      </text>
+      {[0, 16, 32, 48, 63].map((i, k) => (
+        <g key={i}>
+          <text x={572} y={82 + k * 22} fontSize={10.5} fill={inkSecondary} fontFamily={mono}>
+            {`i = ${i}`}
+          </text>
+          <text x={694} y={82 + k * 22} textAnchor="end" fontSize={10.5} fontWeight={800} fill={wl[i] > L ? colors.red : colors.blue} fontFamily={mono}>
+            {(L / wl[i]).toFixed(2)}
+          </text>
+        </g>
+      ))}
+      <text x={572} y={200} fontSize={10} fontWeight={800} fill={colors.red}>
+        {`1바퀴 미만: ${over} / 64쌍`}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function PositionInterpolation() {
+  // 느린 성분 i = 48: θ = 10000^(−0.75) = 0.001 → 학습 길이 2048에서 각도 2.05rad(117°), 8192이면 8.19rad(한 바퀴 넘음).
+  // 위치 보간(L/L′ = 1/4): 8192 → 2048로 눌러 학습 범위 안. 빠른 성분 i = 0(θ = 1): 이웃 위치의 각도 차 1rad(57°) → 0.25rad(14°).
+  const R = 64;
+  const circ = (cx: number, cy: number) => <circle cx={cx} cy={cy} r={R} fill="none" stroke={inkMuted} strokeOpacity={0.5} />;
+  const arc = (cx: number, cy: number, a0: number, a1: number, color: string, w: number, dash?: string) => {
+    const pts: string[] = [];
+    const steps = 80;
+    for (let k = 0; k <= steps; k++) {
+      const a = a0 + ((a1 - a0) * k) / steps;
+      pts.push(`${k === 0 ? "M" : "L"}${(cx + R * Math.cos(a)).toFixed(1)},${(cy - R * Math.sin(a)).toFixed(1)}`);
+    }
+    return <path d={pts.join(" ")} fill="none" stroke={color} strokeWidth={w} strokeDasharray={dash} strokeLinecap="round" />;
+  };
+  const ray = (cx: number, cy: number, a: number, color: string, label: string, dx = 6, dy = 0) => (
+    <g>
+      <line x1={cx} y1={cy} x2={cx + R * Math.cos(a)} y2={cy - R * Math.sin(a)} stroke={color} strokeWidth={1.8} />
+      <circle cx={cx + R * Math.cos(a)} cy={cy - R * Math.sin(a)} r={3.5} fill={color} />
+      <text x={cx + (R + 8) * Math.cos(a) + dx} y={cy - (R + 8) * Math.sin(a) + 4 + dy} textAnchor={Math.cos(a) < -0.2 ? "end" : "start"} fontSize={9.5} fontWeight={800} fill={color} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {label}
+      </text>
+    </g>
+  );
+  const th = 10000 ** -0.75;
+  return (
+    <DiagramFrame
+      title="위치 보간: 새 위치를 학습 범위 안으로 눌러 넣고, 해상도를 내준다"
+      caption="학습 길이 2048인 RoPE 모델을 8192 길이에 쓰는 경우다. 왼쪽: 느린 성분(i = 48, 위치당 약 0.001rad)은 학습 중 0~2048 위치에서 원의 약 3분의 1(117°, 파랑)만 봤다. 그대로 8192까지 늘리면 각도가 8.2rad로 한 바퀴를 넘어 처음 보는 각도(빨간 점선)가 나온다. 가운데: 위치 보간은 모든 위치에 2048/8192 = 1/4을 곱해 8192를 2048로 옮기므로, 각도가 다시 학습 때 본 범위 안에 머문다. 오른쪽: 대가는 해상도다. 빠른 성분(i = 0, 위치당 1rad)에서 이웃한 위치 100과 101의 각도 차이가 57°에서 14°로 4분의 1이 되어, 바로 옆 토큰을 구별하는 정보가 흐려진다."
+      viewBox="0 0 720 248"
+      minWidth={620}
+    >
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        느린 성분, 그대로 늘리면
+      </text>
+      {circ(120, 120)}
+      {arc(120, 120, 0, 2048 * th, colors.blue, 5)}
+      {arc(120, 120, 2048 * th, 2 * Math.PI, colors.red, 2.2, "4 3")}
+      {ray(120, 120, 0, inkSecondary, "위치 0", 0, 10)}
+      {ray(120, 120, 2048 * th, colors.blue, "2048", 0, -2)}
+      <text x={120} y={210} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.red}>
+        8192 → 8.2rad: 한 바퀴를 넘는다
+      </text>
+      <text x={120} y={226} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        (빨간 점선: 학습 때 못 본 각도)
+      </text>
+      <line x1={244} y1={14} x2={244} y2={236} stroke="var(--border-hairline)" />
+      <text x={262} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        위치 보간: 위치 × 1/4
+      </text>
+      {circ(360, 120)}
+      {arc(360, 120, 0, 2048 * th, colors.blue, 5)}
+      {ray(360, 120, 0, inkSecondary, "위치 0", 0, 10)}
+      {ray(360, 120, 2048 * th, colors.green, "8192 × 1/4 = 2048", 0, -2)}
+      <text x={360} y={210} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.green}>
+        모든 각도가 학습 범위 안
+      </text>
+      <line x1={484} y1={14} x2={484} y2={236} stroke="var(--border-hairline)" />
+      <text x={500} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        대가: 빠른 성분의 해상도
+      </text>
+      {circ(578, 120)}
+      {ray(578, 120, 0.3, inkSecondary, "위치 100", 0, 12)}
+      {ray(578, 120, 1.3, colors.red, "101: +57°", 0, 0)}
+      {ray(578, 120, 0.55, colors.violet, "보간 후: +14°", 0, -2)}
+      <text x={590} y={210} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.violet}>
+        이웃 간격이 4분의 1로 좁아진다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function RopeLongDecay() {
+  // q와 k가 모든 성분 쌍에서 같은 방향일 때, 상대 거리 Δ에서의 RoPE 점수는 성분 쌍마다 cos(Δθ_i)의 평균(head 차원 128, θ_i = 10000^(−2i/128)).
+  const d = 128;
+  const th = Array.from({ length: d / 2 }, (_, i) => 10000 ** ((-2 * i) / d));
+  const f = (D: number) => th.reduce((s, t) => s + Math.cos(D * t), 0) / th.length;
+  const G = { left: 64, top: 22, width: 620, height: 170 };
+  const sx = log10Scale(1, 1e4, G.left, G.left + G.width);
+  const sy = linear(-0.2, 1, G.top + G.height, G.top);
+  const pts: [number, number][] = [];
+  for (let k = 0; k <= 800; k++) {
+    const D = 10 ** ((4 * k) / 800);
+    pts.push([sx(D), sy(f(D))]);
+  }
+  return (
+    <DiagramFrame
+      title="RoPE의 장거리 감쇠: 멀수록 성분들의 cos가 서로 상쇄된다"
+      caption="q와 k가 모든 성분 쌍에서 같은 방향을 가리킨다고 할 때, 상대 거리에 따른 RoPE 점수(64개 성분 쌍의 cos(거리 × θ_i) 평균, head 차원 128)다. 가로축은 로그 눈금이다. 거리가 0이면 모든 성분이 같은 각도라 1이지만, 멀어질수록 성분마다 돌아간 각도가 달라져 cos들이 서로 상쇄되고 평균이 0 근처로 줄어든다. 학습으로 정한 것이 아니라 구조에서 나오는 성질로, 가까운 토큰에 조금 더 주의를 주는 약한 사전 경향이다."
+      viewBox="0 0 720 236"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 100, 1e3, 1e4]} yTicks={[0, 0.5, 1]} fmtX={(v) => (v >= 1e3 ? `${v / 1e3}k` : String(v))} xLabel="상대 거리 (토큰, 로그 눈금)" yLabel="점수 (평균 cos)" />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(0)} y2={sy(0)} stroke={inkMuted} />
+      <path d={linePath(pts)} fill="none" stroke={colors.violet} strokeWidth={2.2} />
+      <text x={sx(1.2)} y={sy(0.74)} fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        가까우면 거의 1
+      </text>
+      <text x={sx(800)} y={sy(0.3)} fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        멀면 0 근처에서 출렁인다
+      </text>
+    </DiagramFrame>
+  );
+}
