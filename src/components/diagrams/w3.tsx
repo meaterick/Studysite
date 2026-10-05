@@ -1606,3 +1606,586 @@ export function WarmupCosine() {
     </DiagramFrame>
   );
 }
+
+const ADAMW_CURVES = {
+  l2zero: [1, 0.9405, 0.8827, 0.8267, 0.7726, 0.7205, 0.6702, 0.6219, 0.5755, 0.5311, 0.4888, 0.4484, 0.41, 0.3737, 0.3394, 0.3071, 0.2768, 0.2484, 0.2221, 0.1977, 0.1751, 0.1544, 0.1355, 0.1183, 0.1028, 0.0888, 0.0762, 0.0651, 0.0552, 0.0466, 0.0391, 0.0325, 0.0269, 0.0221, 0.018, 0.0146, 0.0117, 0.0093, 0.0074, 0.0058, 0.0045, 0.0035, 0.0026, 0.002, 0.0015, 0.0011, 0.0008, 0.0006, 0.0004, 0.0003, 0.0002],
+  wzero0_0001: [1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9998, 0.9997, 0.9997, 0.9997, 0.9997, 0.9997, 0.9997, 0.9997, 0.9997, 0.9997],
+  wzero0_01: [1, 0.9994, 0.9988, 0.9982, 0.9976, 0.997, 0.9964, 0.9958, 0.9952, 0.9946, 0.994, 0.9934, 0.9928, 0.9922, 0.9916, 0.991, 0.9904, 0.9899, 0.9893, 0.9887, 0.9881, 0.9875, 0.9869, 0.9863, 0.9857, 0.9851, 0.9845, 0.9839, 0.9833, 0.9828, 0.9822, 0.9816, 0.981, 0.9804, 0.9798, 0.9792, 0.9786, 0.978, 0.9775, 0.9769, 0.9763, 0.9757, 0.9751, 0.9745, 0.9739, 0.9734, 0.9728, 0.9722, 0.9716, 0.971, 0.9704],
+  wzero1_0: [1, 0.9417, 0.8869, 0.8352, 0.7865, 0.7407, 0.6976, 0.6569, 0.6186, 0.5826, 0.5486, 0.5167, 0.4866, 0.4582, 0.4315, 0.4064, 0.3827, 0.3604, 0.3394, 0.3196, 0.301, 0.2835, 0.267, 0.2514, 0.2368, 0.223, 0.21, 0.1977, 0.1862, 0.1754, 0.1652, 0.1555, 0.1465, 0.1379, 0.1299, 0.1223, 0.1152, 0.1085, 0.1022, 0.0962, 0.0906, 0.0853, 0.0804, 0.0757, 0.0713, 0.0671, 0.0632, 0.0595, 0.0561, 0.0528, 0.0497],
+  l2n0_1: [1, 0.9575, 0.9169, 0.8771, 0.839, 0.8022, 0.767, 0.732, 0.6987, 0.6665, 0.6364, 0.607, 0.579, 0.552, 0.5257, 0.501, 0.4765, 0.4529, 0.4306, 0.4093, 0.3886, 0.3688, 0.3494, 0.3312, 0.314, 0.2979, 0.2824, 0.2671, 0.2528, 0.24, 0.2272, 0.2152, 0.2035, 0.1924, 0.1818, 0.1719, 0.1629, 0.1543, 0.1457, 0.138, 0.1313, 0.1243, 0.1172, 0.1105, 0.1036, 0.0979, 0.0933, 0.0885, 0.083, 0.0782, 0.0736],
+  l2n1_0: [1, 0.9937, 0.9881, 0.9818, 0.9758, 0.9699, 0.9645, 0.9579, 0.9518, 0.9456, 0.9406, 0.9352, 0.9301, 0.9251, 0.9196, 0.9149, 0.9092, 0.9033, 0.898, 0.8926, 0.887, 0.8814, 0.8754, 0.8697, 0.8643, 0.8593, 0.8541, 0.8484, 0.843, 0.8386, 0.8336, 0.8287, 0.8235, 0.8185, 0.8134, 0.8085, 0.8041, 0.7997, 0.7947, 0.7904, 0.7866, 0.7823, 0.7774, 0.7726, 0.7673, 0.7628, 0.7592, 0.7551, 0.7501, 0.7455, 0.7409],
+  l2n10_0: [1, 0.999, 0.9988, 0.9978, 0.997, 0.9963, 0.9962, 0.9947, 0.9937, 0.9926, 0.9926, 0.9923, 0.9922, 0.9921, 0.9915, 0.9917, 0.9909, 0.9899, 0.9893, 0.9887, 0.9879, 0.987, 0.9856, 0.9845, 0.9837, 0.9833, 0.9826, 0.9814, 0.9805, 0.9805, 0.9799, 0.9794, 0.9786, 0.9779, 0.9771, 0.9765, 0.9763, 0.9761, 0.9753, 0.9751, 0.9755, 0.9753, 0.9745, 0.9738, 0.9725, 0.972, 0.9723, 0.9722, 0.9712, 0.9704, 0.9697],
+  wn: [1, 0.9936, 0.9881, 0.9817, 0.9757, 0.9698, 0.9644, 0.9578, 0.9516, 0.9454, 0.9404, 0.9351, 0.9299, 0.9249, 0.9194, 0.9147, 0.909, 0.9031, 0.8978, 0.8924, 0.8868, 0.8812, 0.8751, 0.8694, 0.864, 0.859, 0.8538, 0.848, 0.8426, 0.8382, 0.8332, 0.8283, 0.8231, 0.8181, 0.813, 0.8081, 0.8037, 0.7992, 0.7942, 0.7899, 0.7861, 0.7818, 0.7769, 0.7721, 0.7667, 0.7623, 0.7586, 0.7546, 0.7496, 0.745, 0.7404],
+};
+const WARMUP_Q = [[1, 0.3872, 1.4794, 78.0207, 815.02], [2, 0.4641, 1.1996, 9.9957, 32.1351], [3, 0.5129, 1.126, 5.0828, 11.3677], [4, 0.5468, 1.0914, 3.6405, 6.4858], [6, 0.5971, 1.0601, 2.6122, 3.9735], [10, 0.6561, 1.0354, 1.9757, 2.5768], [16, 0.7057, 1.0217, 1.665, 2.0332], [25, 0.7508, 1.0137, 1.4717, 1.6934], [40, 0.7938, 1.0089, 1.3445, 1.4979], [63, 0.8278, 1.0054, 1.2569, 1.3654], [100, 0.8592, 1.0034, 1.195, 1.2737], [160, 0.8848, 1.0021, 1.1491, 1.2049], [250, 0.9057, 1.0013, 1.1156, 1.1579], [400, 0.9233, 1.0009, 1.0896, 1.1216], [630, 0.9372, 1.0004, 1.0707, 1.0962], [1000, 0.9485, 1.0003, 1.0566, 1.0758]];
+const GRAD_NORMS = {
+  g0_8: [1, 0.7897, 0.6452, 0.5192, 0.418, 0.3363, 0.265, 0.2192, 0.177, 0.1381, 0.1116, 0.08743, 0.06865, 0.0529, 0.0422, 0.03384, 0.02746, 0.02182, 0.01735, 0.01375, 0.01076, 0.00854, 0.006842, 0.005538, 0.004436, 0.003534, 0.002794, 0.002197, 0.00176, 0.001425, 0.001116, 0.000878, 0.000705, 0.000568, 0.00045, 0.000356, 0.000284, 0.000226, 0.000177, 0.000138, 0.00011, 8.8e-05, 7.2e-05, 5.7e-05, 4.5e-05, 3.7e-05, 3e-05, 2.4e-05, 1.9e-05, 1.5e-05, 1.2e-05],
+  g1_0: [1, 0.9873, 0.988, 0.9882, 0.9611, 0.9878, 0.9843, 0.985, 0.9643, 0.9732, 0.9792, 0.9745, 0.9799, 0.9616, 0.952, 0.9567, 0.9523, 0.936, 0.9194, 0.9237, 0.9212, 0.9081, 0.9207, 0.923, 0.9274, 0.952, 0.9255, 0.9226, 0.9423, 0.9467, 0.9784, 0.9781, 0.9674, 0.9859, 0.9752, 1.007, 1.013, 1.034, 1.032, 1.012, 0.999, 1.012, 1.008, 1.023, 0.9997, 0.9926, 0.9904, 0.9745, 0.9796, 0.9747, 0.979],
+  g1_2: [1, 1.193, 1.442, 1.767, 2.136, 2.584, 3.069, 3.791, 4.632, 5.447, 6.598, 7.954, 9.395, 11.35, 13.47, 16.28, 19.45, 23.26, 28.21, 34.02, 39.63, 47.35, 57.55, 69.13, 82.18, 96.91, 118, 140.4, 170.6, 207.4, 251.3, 302.4, 360, 427.1, 490.1, 596.7, 708, 870.3, 1041, 1221, 1425, 1730, 2072, 2484, 2953, 3572, 4307, 5145, 6277, 7721, 9166],
+  res: [1, 1.007, 1.013, 1.023, 1.029, 1.038, 1.047, 1.058, 1.067, 1.077, 1.09, 1.102, 1.112, 1.125, 1.136, 1.148, 1.156, 1.162, 1.173, 1.185, 1.195, 1.209, 1.222, 1.233, 1.244, 1.261, 1.275, 1.289, 1.305, 1.315, 1.328, 1.337, 1.351, 1.359, 1.376, 1.389, 1.409, 1.424, 1.432, 1.45, 1.459, 1.478, 1.49, 1.512, 1.52, 1.54, 1.555, 1.564, 1.575, 1.591, 1.611],
+};
+
+export function ForwardReverseMode() {
+  // 입력(파라미터) n = 6개, 은닉 4, 출력(손실) m = 1인 합성 함수 f = f₃ ∘ f₂ ∘ f₁의 야코비안 J = J₃J₂J₁(1 × 6).
+  const P = "frm";
+  const c = 12;
+  const col = (x: number, yc: number, n: number, color: string, op = 0.35) => (
+    <g>
+      {Array.from({ length: n }, (_, i) => (
+        <rect key={i} x={x} y={yc - (n * c) / 2 + i * c} width={c} height={c} fill={color} fillOpacity={op} stroke={color} strokeWidth={1} />
+      ))}
+    </g>
+  );
+  const row = (x: number, yc: number, n: number, color: string, op = 0.35) => (
+    <g>
+      {Array.from({ length: n }, (_, i) => (
+        <rect key={i} x={x + i * c} y={yc - c / 2} width={c} height={c} fill={color} fillOpacity={op} stroke={color} strokeWidth={1} />
+      ))}
+    </g>
+  );
+  const ya = 84;
+  const yb = 196;
+  const step = (x1: number, x2: number, y: number, t: string, color: string) => (
+    <g>
+      <Arr x1={x1} y1={y} x2={x2} y2={y} color={color} marker={`${P}-${color === colors.blue ? "blue" : "orange"}`} />
+      <text x={(x1 + x2) / 2} y={y - 8} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={color}>
+        {t}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="자동미분의 두 모드: 야코비안 사슬을 어느 쪽부터 곱하는가"
+      caption="입력(파라미터) 6개, 출력(손실) 1개인 함수의 야코비안 J = J₃J₂J₁을 벡터와 곱하는 두 방법이다. 칸 하나가 숫자 하나다. 순방향 모드(위)는 입력 쪽 방향 벡터 v(6개)에서 출발해 순전파와 같은 방향으로 J₁, J₂, J₃을 차례로 곱한다. 한 번 지나가면 '입력을 v 방향으로 움직였을 때 출력의 변화' 하나를 얻으므로, 기울기 6개를 다 얻으려면 v를 바꿔 가며 6번 지나가야 한다. 역방향 모드(아래)는 출력 쪽 uᵀ(손실이면 숫자 1)에서 출발해 거꾸로 J₃, J₂, J₁을 곱하고, 한 번에 기울기 6개를 모두 얻는다. 파라미터가 수억 개이고 손실이 하나인 신경망에서 역전파(역방향 모드)가 표준인 이유다."
+      viewBox="0 0 720 262"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue, orange: colors.orange }} />
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={colors.blue}>
+        순방향 모드 (JVP): J v를 오른쪽부터 = 순전파 방향
+      </text>
+      {col(40, ya, 6, colors.blue, 0.6)}
+      <text x={32} y={ya + 4} textAnchor="end" fontSize={11} fontWeight={800} fill={ink}>
+        v
+      </text>
+      {step(60, 112, ya, "× J₁", colors.blue)}
+      {col(120, ya, 4, colors.blue)}
+      {step(140, 192, ya, "× J₂", colors.blue)}
+      {col(200, ya, 4, colors.blue)}
+      {step(220, 272, ya, "× J₃", colors.blue)}
+      {col(280, ya, 1, colors.blue, 0.8)}
+      <Lines x={302} y={ya - 4} lines={["= J v", "출력 변화 1개"]} size={10.5} anchor="start" color={ink} weight={700} gap={1.4} />
+      <text x={20} y={136} fontSize={10.5} fill={inkSecondary}>
+        입력 방향 하나당 한 번 → 기울기 6개를 다 얻으려면 v = e₁, …, e₆으로 6번
+      </text>
+      <line x1={14} x2={420} y1={150} y2={150} stroke="var(--border-hairline)" />
+      <text x={20} y={170} fontSize={11.5} fontWeight={800} fill={colors.orange}>
+        역방향 모드 (VJP): uᵀ J를 왼쪽부터 = 역전파 방향
+      </text>
+      {row(40, yb, 1, colors.orange, 0.8)}
+      <text x={32} y={yb + 4} textAnchor="end" fontSize={11} fontWeight={800} fill={ink}>
+        uᵀ
+      </text>
+      {step(60, 104, yb, "× J₃", colors.orange)}
+      {row(112, yb, 4, colors.orange)}
+      {step(168, 212, yb, "× J₂", colors.orange)}
+      {row(220, yb, 4, colors.orange)}
+      {step(276, 312, yb, "× J₁", colors.orange)}
+      {row(320, yb, 6, colors.orange, 0.6)}
+      <text x={356} y={yb + 22} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={ink}>
+        = 기울기 6개 전부
+      </text>
+      <text x={20} y={244} fontSize={10.5} fill={inkSecondary}>
+        출력 하나당 한 번 → 손실은 스칼라이므로 한 번이면 끝
+      </text>
+      <line x1={440} y1={14} x2={440} y2={248} stroke="var(--border-hairline)" />
+      <text x={456} y={34} fontSize={11.5} fontWeight={800} fill={ink}>
+        기울기 전체에 필요한 패스 수
+      </text>
+      <text x={456} y={66} fontSize={10.5} fontWeight={700} fill={colors.blue}>
+        순방향: 입력 수 n번
+      </text>
+      {Array.from({ length: 6 }, (_, i) => (
+        <rect key={i} x={456 + i * 30} y={74} width={26} height={18} rx={3} fill={colors.blue} fillOpacity={0.5} />
+      ))}
+      <text x={456} y={120} fontSize={10.5} fontWeight={700} fill={colors.orange}>
+        역방향: 출력 수 m번
+      </text>
+      <rect x={456} y={128} width={26} height={18} rx={3} fill={colors.orange} fillOpacity={0.6} />
+      <rect x={456} y={164} width={246} height={74} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <Lines x={468} y={186} lines={["신경망: n ≈ 수억(파라미터), m = 1(손실)", "역방향 1번의 비용 ≈ 순전파의 2~3배", "입력 1개·출력 여럿이면 순방향이 유리"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.55} />
+    </DiagramFrame>
+  );
+}
+
+export function DualNumberTrace() {
+  // 본문 코드: f(x) = x³ + 3x를 x = 2에서. 이원수: x = 2 + 1ε → x·x = 4 + 4ε → (x·x)·x = 8 + 12ε, 3x = 6 + 3ε → 합 14 + 15ε.
+  // 역방향(micrograd): y.grad = 1 → b.grad = c.grad = 1 → a.grad = x = 2, x는 b에서 a = 4, a에서 2x·a.grad = 8, c에서 3을 받아 15.
+  const P = "dnt";
+  const W = 100;
+  const H = 42;
+  const node = (p: number[], op: string, top: string, bottom: string | null, color: string) => (
+    <g>
+      <rect x={p[0]} y={p[1]} width={W} height={H} rx={7} fill={color} fillOpacity={0.1} stroke={color} strokeWidth={1.4} />
+      <text x={p[0] + W / 2} y={p[1] + 13} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={inkSecondary}>
+        {op}
+      </text>
+      <text x={p[0] + W / 2} y={p[1] + (bottom ? 26 : 31)} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink} fontFamily={mono}>
+        {top}
+      </text>
+      {bottom && (
+        <text x={p[0] + W / 2} y={p[1] + 38} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.orange} fontFamily={mono}>
+          {bottom}
+        </text>
+      )}
+    </g>
+  );
+  // 세 줄: a는 위, x·b·y는 가운데, c는 아래.
+  const pos = (oy: number) => ({ x: [16, oy + 30], a: [142, oy], b: [268, oy + 30], c: [142, oy + 60], y: [394, oy + 30] });
+  const T = pos(26);
+  const B = pos(158);
+  const edges = (p: ReturnType<typeof pos>, color: string, m: string) => (
+    <g>
+      <Arr x1={p.x[0] + W} y1={p.x[1] + 14} x2={p.a[0] - 3} y2={p.a[1] + H / 2} color={color} marker={m} width={1.3} />
+      <Arr x1={p.x[0] + W} y1={p.x[1] + H / 2} x2={p.b[0] - 3} y2={p.b[1] + H / 2} color={color} marker={m} width={1.3} />
+      <Arr x1={p.x[0] + W} y1={p.x[1] + H - 14} x2={p.c[0] - 3} y2={p.c[1] + H / 2} color={color} marker={m} width={1.3} />
+      <Arr x1={p.a[0] + W} y1={p.a[1] + H / 2} x2={p.b[0] - 3} y2={p.b[1] + 12} color={color} marker={m} width={1.3} />
+      <Arr x1={p.b[0] + W} y1={p.b[1] + H / 2} x2={p.y[0] - 3} y2={p.y[1] + H / 2} color={color} marker={m} width={1.3} />
+      <Arr x1={p.c[0] + W} y1={p.c[1] + H / 2} x2={p.y[0] + 14} y2={p.y[1] + H + 3} color={color} marker={m} width={1.3} />
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="같은 f′(2) = 15를 얻는 두 길: 이원수(순방향)와 역전파(역방향)"
+      caption="본문 코드의 f(x) = x³ + 3x를 x = 2에서 미분한다(a = x·x, b = a·x, c = 3·x, y = b + c). 위(순방향 모드): 모든 값을 '값 + 미분·ε' 한 쌍으로 들고 다닌다. x = 2 + 1ε에서 출발해 곱셈마다 (a + bε)(c + dε) = ac + (ad + bc)ε, 즉 곱의 미분법을 적용하면 순전파 한 번이 끝날 때 14 + 15ε, 곧 f(2) = 14와 f′(2) = 15가 함께 나온다. 그래프를 저장하지도 거꾸로 가지도 않는다. 아래(역방향 모드, micrograd): 순전파로 값만 계산해 저장한 뒤, 출력의 기울기 1에서 출발해 국소 미분을 곱하며 거꾸로 내려간다. x는 세 경로에서 4, 8, 3을 받아 더한 15가 된다. 입력이 하나뿐인 이 예에서는 두 방법의 일이 비슷하지만, 입력이 n개면 순방향은 n번, 역방향은 한 번이다."
+      viewBox="0 0 720 300"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue, ink: inkMuted }} />
+      <text x={16} y={16} fontSize={11} fontWeight={800} fill={colors.blue}>
+        순방향 모드: (값 + 미분ε) 한 쌍이 앞으로 흐른다 →
+      </text>
+      {edges(T, colors.blue, `${P}-blue`)}
+      {node(T.x, "x", "2 + 1ε", null, colors.blue)}
+      {node(T.a, "a = x·x", "4 + 4ε", null, colors.blue)}
+      {node(T.b, "b = a·x", "8 + 12ε", null, colors.blue)}
+      {node(T.c, "c = 3·x", "6 + 3ε", null, colors.blue)}
+      {node(T.y, "y = b + c", "14 + 15ε", null, colors.blue)}
+      <line x1={10} x2={506} y1={138} y2={138} stroke="var(--border-hairline)" />
+      <text x={16} y={152} fontSize={11} fontWeight={800} fill={colors.orange}>
+        역방향 모드: 값을 저장한 뒤, 기울기(grad)가 거꾸로 흐른다 ←
+      </text>
+      {edges(B, inkMuted, `${P}-ink`)}
+      {node(B.x, "x", "2", "grad 15", colors.orange)}
+      {node(B.a, "a = x·x", "4", "grad 2", colors.orange)}
+      {node(B.b, "b = a·x", "8", "grad 1", colors.orange)}
+      {node(B.c, "c = 3·x", "6", "grad 1", colors.orange)}
+      {node(B.y, "y = b + c", "14", "grad 1", colors.orange)}
+      <line x1={516} y1={14} x2={516} y2={288} stroke="var(--border-hairline)" />
+      <text x={530} y={34} fontSize={11.5} fontWeight={800} fill={ink}>
+        곱셈 규칙 = 곱의 미분법
+      </text>
+      <text x={530} y={58} fontSize={10.5} fontWeight={700} fill={ink} fontFamily={mono}>
+        (a + bε)(c + dε)
+      </text>
+      <text x={530} y={76} fontSize={10.5} fontWeight={700} fill={ink} fontFamily={mono}>
+        = ac + (ad + bc)ε
+      </text>
+      <Lines x={530} y={98} lines={["ε² = 0이라 2차 이상 항이 사라진다", "한 번에 값과 미분, 저장 없음"]} size={10} anchor="start" color={colors.blue} weight={700} gap={1.5} />
+      <text x={530} y={176} fontSize={11.5} fontWeight={800} fill={ink}>
+        x.grad = 세 경로의 합
+      </text>
+      <Lines x={530} y={200} lines={["b를 거쳐: a × 1 = 4", "a를 거쳐: 2x × a.grad = 2·2 × 2 = 8", "c를 거쳐: 3 × 1 = 3", "합: 4 + 8 + 3 = 15"]} size={10} anchor="start" color={colors.orange} weight={700} gap={1.6} />
+    </DiagramFrame>
+  );
+}
+
+export function CheckpointMemory() {
+  // 층 L = 16. 모두 저장하면 활성화 16개. k = 4층마다 체크포인트(4개)를 두고 역전파 중 한 구간(4층)씩만 다시 계산하면 최대 4 + 4 = 8개.
+  // 일반적으로 L/k + k, k = √L에서 최소 2√L(L = 100이면 20).
+  const L = 16;
+  const cw = 22;
+  const x0 = 62;
+  const cell = (i: number, y: number, fill: string, op: number, dashed = false) => (
+    <rect key={i} x={x0 + i * cw} y={y} width={cw - 3} height={20} rx={3} fill={fill} fillOpacity={op} stroke={dashed ? colors.orange : "none"} strokeDasharray={dashed ? "3 2" : undefined} strokeWidth={1.4} />
+  );
+  const G = { left: 476, top: 34, width: 222, height: 160 };
+  const sx = log10Scale(1, 100, G.left, G.left + G.width);
+  const sy = linear(0, 110, G.top + G.height, G.top);
+  const mem = (k: number) => 100 / k + k;
+  return (
+    <DiagramFrame
+      title="그레이디언트 체크포인팅: 계산을 한 번 더 해서 메모리를 √L로 줄인다"
+      caption="층이 16개인 신경망의 역전파에 필요한 활성화 저장을 칸으로 그렸다. 위: 보통의 역전파는 순전파에서 계산한 활성화 16개를 모두 들고 있어야 한다(메모리 ∝ L). 아래: 4층마다 체크포인트(진한 칸, 4·8·12·16층) 4개만 남기고 나머지는 버린다. 역전파가 13~16층 구간에 오면 12층 체크포인트에서 그 구간만 순전파를 다시 해 활성화를 되살리고(점선 칸), 그 구간이 끝나면 버린다. 한순간에 들고 있는 것은 체크포인트 4개 + 다시 계산한 3개 = 7개로, 대략 L/k + k다. 오른쪽: 층 100개를 k층마다 끊으면 메모리는 100/k + k로, k = √100 = 10에서 최소 20이다. 대가는 순전파를 대략 한 번 더 하는 계산이다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <text x={x0} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        보통의 역전파: 활성화를 모두 저장
+      </text>
+      {Array.from({ length: L }, (_, i) => cell(i, 34, colors.blue, 0.55))}
+      <text x={x0 - 8} y={48} textAnchor="end" fontSize={10} fill={inkSecondary}>
+        저장
+      </text>
+      <text x={x0 + L * cw + 6} y={48} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        16개
+      </text>
+      <text x={x0} y={92} fontSize={11.5} fontWeight={800} fill={ink}>
+        체크포인팅 (k = 4층마다)
+      </text>
+      {Array.from({ length: L }, (_, i) => cell(i, 102, colors.blue, i % 4 === 3 ? 0.85 : 0.08))}
+      <text x={x0 - 8} y={116} textAnchor="end" fontSize={10} fill={inkSecondary}>
+        저장
+      </text>
+      <text x={x0 + L * cw + 6} y={116} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        4개
+      </text>
+      {Array.from({ length: L }, (_, i) => (i >= 12 && i < 15 ? cell(i, 132, colors.orange, 0.3, true) : null))}
+      <text x={x0 - 8} y={146} textAnchor="end" fontSize={10} fill={inkSecondary}>
+        재계산
+      </text>
+      <text x={x0 + L * cw + 6} y={146} fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        +3개
+      </text>
+      <path d={`M${x0 + 11 * cw + 9},123 C${x0 + 11 * cw + 9},${142} ${x0 + 11 * cw + 12},${142} ${x0 + 12 * cw - 2},${142}`} fill="none" stroke={colors.orange} strokeWidth={1.3} />
+      <Lines x={x0 + 11 * cw} y={176} lines={["역전파가 13~16층 구간에 오면", "12층 체크포인트에서 13~15층만 다시 순전파"]} size={10} anchor="middle" color={colors.orange} weight={700} gap={1.4} />
+      {Array.from({ length: L }, (_, i) => (
+        <text key={i} x={x0 + i * cw + (cw - 3) / 2} y={224} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+          {i + 1}
+        </text>
+      ))}
+      <text x={x0 + (L * cw) / 2} y={240} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        층 번호
+      </text>
+      <line x1={448} y1={14} x2={448} y2={244} stroke="var(--border-hairline)" />
+      <text x={G.left} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        L = 100층일 때 최대 메모리
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 3, 10, 30, 100]} yTicks={[0, 50, 100]} xLabel="체크포인트 간격 k" />
+      <path d={linePath(sample((u) => mem(10 ** u), 0, 2, 120).map(([u, y]) => [sx(10 ** u), sy(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <circle cx={sx(10)} cy={sy(20)} r={4.5} fill={colors.violet} />
+      <text x={sx(10)} y={sy(20) + 18} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        k = √L = 10 → 20
+      </text>
+      <text x={sx(1) + 6} y={sy(101) + 14} fontSize={9.5} fontWeight={700} fill={inkSecondary}>
+        k = 1: 모두 저장
+      </text>
+      <text x={G.left + G.width / 2} y={G.top + 34} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.violet}>
+        메모리 = L/k + k
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function AdamBiasCorrection() {
+  // 편향 보정 분모 1 − 0.9ᵗ, 1 − 0.999ᵗ(본문 표). 기울기가 일정할 때 보정하지 않은 걸음은 보정한 걸음의 (1 − 0.9ᵗ)/√(1 − 0.999ᵗ)배.
+  const L = { left: 56, top: 30, width: 270, height: 170 };
+  const R = { left: 430, top: 30, width: 270, height: 170 };
+  const lx = log10Scale(1, 1e4, L.left, L.left + L.width);
+  const ly = linear(0, 1, L.top + L.height, L.top);
+  const rx = log10Scale(1, 1e4, R.left, R.left + R.width);
+  const ry = linear(0, 7, R.top + R.height, R.top);
+  const curve = (f: (t: number) => number, sx: (v: number) => number, sy: (v: number) => number) =>
+    linePath(sample((u) => f(10 ** u), 0, 4, 200).map(([u, y]) => [sx(10 ** u), sy(y)] as [number, number]));
+  const b1 = (t: number) => 1 - 0.9 ** t;
+  const b2 = (t: number) => 1 - 0.999 ** t;
+  const infl = (t: number) => b1(t) / Math.sqrt(b2(t));
+  const table = [1, 10, 100, 1000, 5000];
+  return (
+    <DiagramFrame
+      title="Adam의 편향 보정: 0에서 출발한 이동평균을 1 − βᵗ로 나눠 되살린다"
+      caption="왼쪽: 0에서 시작한 이동평균은 기댓값이 실제의 (1 − βᵗ)배로 줄어 있다. β₁ = 0.9인 m은 수십 스텝이면 1에 가까워지지만, β₂ = 0.999인 v는 수천 스텝이 걸린다(점은 본문 표의 값). 오른쪽: 기울기가 일정할 때, 보정하지 않은 Adam의 걸음이 보정한 걸음의 몇 배인지다. m은 거의 회복됐는데 v는 아직 작게 잡혀 있는 동안 걸음이 부풀려진다. t = 10 근처에서 약 6.5배, t = 100에서도 약 3.2배이고, 수천 스텝이 지나야 1배로 돌아온다."
+      viewBox="0 0 720 252"
+      minWidth={620}
+    >
+      <text x={L.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        보정 분모 1 − βᵗ
+      </text>
+      <Axes {...L} sx={lx} sy={ly} xTicks={[1, 10, 100, 1e3, 1e4]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtX={pow10Label} xLabel="스텝 t (로그 눈금)" />
+      <path d={curve(b1, lx, ly)} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <path d={curve(b2, lx, ly)} fill="none" stroke={colors.orange} strokeWidth={2.4} />
+      {table.map((t) => (
+        <g key={t}>
+          <circle cx={lx(t)} cy={ly(b2(t))} r={3.8} fill={colors.orange} />
+          <text x={lx(t) + (t === 5000 ? -6 : 6)} y={ly(b2(t)) + (t === 5000 ? 16 : -6)} textAnchor={t === 5000 ? "end" : "start"} fontSize={9.5} fontWeight={800} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {b2(t).toFixed(3)}
+          </text>
+        </g>
+      ))}
+      <text x={lx(14)} y={ly(0.93)} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        m: 1 − 0.9ᵗ
+      </text>
+      <text x={lx(1000) - 10} y={ly(0.66)} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        v: 1 − 0.999ᵗ
+      </text>
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        보정하지 않으면 걸음이 몇 배가 되나
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[1, 10, 100, 1e3, 1e4]} yTicks={[0, 1, 2, 3, 4, 5, 6, 7]} fmtX={pow10Label} xLabel="스텝 t (로그 눈금)" />
+      <line x1={R.left} x2={R.left + R.width} y1={ry(1)} y2={ry(1)} stroke={colors.green} strokeWidth={1.4} strokeDasharray="5 3" />
+      <text x={R.left + 6} y={ry(1) + 15} fontSize={10} fontWeight={800} fill={colors.green}>
+        보정한 걸음 = 1배
+      </text>
+      <path d={curve(infl, rx, ry)} fill="none" stroke={colors.red} strokeWidth={2.4} />
+      <circle cx={rx(10)} cy={ry(infl(10))} r={4} fill={colors.red} />
+      <text x={rx(10) + 7} y={ry(infl(10)) - 4} fontSize={10} fontWeight={800} fill={colors.red}>
+        {`t = 10: ${infl(10).toFixed(1)}배`}
+      </text>
+      <circle cx={rx(100)} cy={ry(infl(100))} r={4} fill={colors.red} />
+      <text x={rx(100) + 7} y={ry(infl(100)) - 4} fontSize={10} fontWeight={800} fill={colors.red}>
+        {`t = 100: ${infl(100).toFixed(1)}배`}
+      </text>
+      <text x={rx(160)} y={ry(5.6)} fontSize={10} fill={inkSecondary}>
+        (1 − 0.9ᵗ) / √(1 − 0.999ᵗ)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function AdamwDecay() {
+  // NumPy 시뮬레이션: w₀ = 1, η = 10⁻³, β = (0.9, 0.999), 3000스텝, 60스텝 간격 기록.
+  // 왼쪽: 데이터 기울기 0. Adam + L2는 λ = 10⁻⁴, 10⁻², 1 모두 같은 곡선(l2zero). AdamW는 λ에 따라 (1 − ηλ)ᵗ.
+  // 오른쪽: λ = 0.1, 데이터 기울기 = 표준편차 σ인 잡음(200회 평균). Adam + L2는 σ에 따라 감쇠가 달라지고, AdamW는 σ와 무관.
+  const ts = ADAMW_CURVES.l2zero.map((_, i) => i * 60);
+  const L = { left: 52, top: 30, width: 280, height: 170 };
+  const R = { left: 410, top: 30, width: 256, height: 170 };
+  const lx = linear(0, 3000, L.left, L.left + L.width);
+  const rx = linear(0, 3000, R.left, R.left + R.width);
+  const yy = (G: { top: number; height: number }) => linear(0, 1, G.top + G.height, G.top);
+  const ly = yy(L);
+  const ry = yy(R);
+  const line = (ys: number[], sx: (v: number) => number, sy: (v: number) => number) => linePath(ys.map((y, i) => [sx(ts[i]), sy(y)] as [number, number]));
+  return (
+    <DiagramFrame
+      title="Adam + L2 ≠ AdamW: 감쇠가 √v̂로 나뉘면 λ라는 손잡이가 고장 난다"
+      caption="학습률 10⁻³로 3000스텝 동안 가중치 하나(처음 값 1)가 어떻게 줄어드는지 시뮬레이션했다. 왼쪽: 데이터에서 오는 기울기가 0인 파라미터다. Adam에 L2를 넣으면 기울기가 λw뿐이라 m̂/√v̂ ≈ 1이 되어, λ가 10⁻⁴이든 1이든 매 스텝 약 η씩 똑같이 줄어든다(빨간 선 하나에 세 경우가 겹쳐 있다). AdamW는 감쇠를 따로 (1 − ηλ)배로 걸므로 λ에 따라 결과가 달라진다. 오른쪽: λ = 0.1이고 데이터 기울기가 크기 σ인 잡음인 세 파라미터다(200회 평균). Adam + L2에서는 기울기가 크게 흔들릴수록 √v̂가 커져 감쇠가 약해지지만(σ = 10은 거의 그대로), AdamW에서는 세 파라미터가 모두 같은 비율로 줄어든다."
+      viewBox="0 0 720 252"
+      minWidth={620}
+    >
+      <text x={L.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        데이터 기울기가 0인 파라미터
+      </text>
+      <Axes {...L} sx={lx} sy={ly} xTicks={[0, 1000, 2000, 3000]} yTicks={[0, 0.5, 1]} xLabel="스텝" yLabel="가중치 w" />
+      <path d={line(ADAMW_CURVES.l2zero, lx, ly)} fill="none" stroke={colors.red} strokeWidth={3} />
+      <path d={line(ADAMW_CURVES.wzero0_0001, lx, ly)} fill="none" stroke={colors.blue} strokeWidth={2} strokeDasharray="6 3" />
+      <path d={line(ADAMW_CURVES.wzero0_01, lx, ly)} fill="none" stroke={colors.blue} strokeWidth={2} strokeDasharray="2 3" />
+      <path d={line(ADAMW_CURVES.wzero1_0, lx, ly)} fill="none" stroke={colors.blue} strokeWidth={2} />
+      <text x={lx(3000)} y={ly(1) + 14} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.blue}>
+        AdamW λ = 10⁻⁴, 10⁻²
+      </text>
+      <text x={lx(2950)} y={ly(0.05) - 8} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        AdamW λ = 1
+      </text>
+      <Lines x={lx(1300)} y={ly(0.62)} lines={["Adam + L2", "λ = 10⁻⁴, 10⁻², 1이", "모두 이 한 선"]} size={10} anchor="start" color={colors.red} weight={800} gap={1.35} />
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        기울기 잡음이 다른 세 파라미터 (λ = 0.1)
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 1000, 2000, 3000]} yTicks={[0, 0.5, 1]} xLabel="스텝" />
+      <path d={line(ADAMW_CURVES.l2n0_1, rx, ry)} fill="none" stroke={colors.red} strokeWidth={2.2} />
+      <path d={line(ADAMW_CURVES.l2n1_0, rx, ry)} fill="none" stroke={colors.red} strokeWidth={2.2} strokeDasharray="6 3" />
+      <path d={line(ADAMW_CURVES.l2n10_0, rx, ry)} fill="none" stroke={colors.red} strokeWidth={2.2} strokeDasharray="2 3" />
+      <path d={line(ADAMW_CURVES.wn, rx, ry)} fill="none" stroke={colors.blue} strokeWidth={3} strokeOpacity={0.55} />
+      <text x={rx(3000) + 4} y={ry(0.97) + 4} fontSize={9.5} fontWeight={800} fill={colors.red}>
+        σ = 10
+      </text>
+      <text x={rx(3000) + 4} y={ry(0.74) + 12} fontSize={9.5} fontWeight={800} fill={colors.red}>
+        σ = 1
+      </text>
+      <text x={rx(3000) + 4} y={ry(0.07) + 4} fontSize={9.5} fontWeight={800} fill={colors.red}>
+        σ = 0.1
+      </text>
+      <text x={rx(1500)} y={ry(0.75)} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        AdamW: 세 σ 모두 이 한 선
+      </text>
+      <text x={rx(1200)} y={ry(0.3)} fontSize={10} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        Adam + L2: σ에 따라 제각각
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function WarmupVariance() {
+  // 기울기를 평균 0, 분산 1인 잡음으로 단순화하고 파라미터 20만 개의 v̂ₜ(β₂ = 0.999)를 시뮬레이션. 적응 학습률 배율 1/√v̂의 분위수.
+  // WARMUP_Q 행: [t, 1%, 50%, 99%, 99.9%]. 초록: 1000스텝 선형 워밍업(t/1000)을 곱한 99% 분위수.
+  const G = { left: 64, top: 26, width: 430, height: 186 };
+  const sx = log10Scale(1, 1000, G.left, G.left + G.width);
+  const sy = log10Scale(0.03, 1000, G.top + G.height, G.top);
+  const pts = (k: number, f: (t: number) => number = () => 1) => linePath(WARMUP_Q.map((r) => [sx(r[0]), sy(r[k] * f(r[0]))] as [number, number]));
+  const band = `${pts(1)} ${WARMUP_Q.slice()
+    .reverse()
+    .map((r) => `L${sx(r[0]).toFixed(1)},${sy(r[3]).toFixed(1)}`)
+    .join(" ")} Z`;
+  return (
+    <DiagramFrame
+      title="워밍업이 필요한 이유: 초반에는 적응 학습률이 극단적으로 흩어진다"
+      caption="기울기를 평균 0, 분산 1인 잡음으로 단순화하고, 파라미터 20만 개 각각의 v̂(β₂ = 0.999)로 적응 학습률 배율 1/√v̂을 계산한 시뮬레이션이다(두 축 모두 로그 눈금). 첫 스텝의 v̂은 기울기 제곱 하나뿐이라, 우연히 기울기가 작았던 파라미터는 배율이 수십~수백 배로 폭주한다(상위 1%가 78배, 상위 0.1%가 815배). 기울기가 쌓일수록 퍼짐이 줄어 100스텝이면 상위 1%도 1.2배다. 초록 선은 1000스텝 동안 학습률을 0에서 선형으로 올리는 워밍업을 곱한 상위 1%의 배율로, 초반의 폭주가 눌려 내내 1배 근처를 넘지 않는다. RAdam 논문이 보인 '초반 적응 학습률의 큰 분산'을 숫자로 본 것이다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 100, 1000]} yTicks={[0.1, 1, 10, 100, 1000]} fmtX={(v) => String(v)} fmtY={(v) => (v < 1 ? String(v) : String(v))} xLabel="스텝 t (로그 눈금)" yLabel="학습률 배율 1/√v̂" />
+      <path d={band} fill={colors.violet} fillOpacity={0.12} />
+      <path d={pts(4)} fill="none" stroke={colors.red} strokeWidth={1.6} strokeDasharray="4 3" />
+      <path d={pts(3)} fill="none" stroke={colors.red} strokeWidth={2.4} />
+      <path d={pts(2)} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <path d={pts(1)} fill="none" stroke={colors.violet} strokeWidth={1.2} strokeOpacity={0.6} />
+      <path d={pts(3, (t) => t / 1000)} fill="none" stroke={colors.green} strokeWidth={2.6} />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(1)} y2={sy(1)} stroke={inkMuted} strokeDasharray="2 3" />
+      {[
+        { t: "상위 0.1%", c: colors.red, w: 1.6, d: "4 3" },
+        { t: "상위 1%", c: colors.red, w: 2.4 },
+        { t: "중앙값", c: colors.violet, w: 2.4 },
+        { t: "하위 1% (띠 = 하위 1%~상위 1%)", c: colors.violet, w: 1.2 },
+        { t: "상위 1% × 워밍업(1000스텝)", c: colors.green, w: 2.6 },
+      ].map((e, i) => (
+        <g key={e.t}>
+          <line x1={sx(22)} x2={sx(40)} y1={G.top + 12 + i * 15} y2={G.top + 12 + i * 15} stroke={e.c} strokeWidth={e.w} strokeDasharray={e.d} />
+          <text x={sx(44)} y={G.top + 16 + i * 15} fontSize={10} fontWeight={700} fill={e.c}>
+            {e.t}
+          </text>
+        </g>
+      ))}
+      <rect x={520} y={34} width={186} height={164} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={534} y={56} fontSize={11.5} fontWeight={800} fill={ink}>
+        배율의 상위 분위수
+      </text>
+      <text x={640} y={76} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.red}>
+        1%
+      </text>
+      <text x={692} y={76} textAnchor="end" fontSize={9.5} fontWeight={700} fill={colors.red}>
+        0.1%
+      </text>
+      {WARMUP_Q.filter((r) => [1, 10, 100, 1000].includes(r[0])).map((r, i) => (
+        <g key={r[0]}>
+          <text x={534} y={96 + i * 20} fontSize={10.5} fill={inkSecondary} fontFamily={mono}>
+            {`t = ${r[0]}`}
+          </text>
+          <text x={640} y={96 + i * 20} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.red} fontFamily={mono}>
+            {r[3] < 10 ? r[3].toFixed(2) : r[3].toFixed(0)}
+          </text>
+          <text x={692} y={96 + i * 20} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.red} fontFamily={mono}>
+            {r[4] < 10 ? r[4].toFixed(2) : r[4].toFixed(0)}
+          </text>
+        </g>
+      ))}
+      <Lines x={534} y={184} lines={["처음 몇 스텝이 가장 위험하다"]} size={10} anchor="start" color={ink} weight={700} />
+    </DiagramFrame>
+  );
+}
+
+export function GradNormDepth() {
+  // NumPy: 폭 256인 층 50개, 가중치 ~ N(0, (배율)²/256). 출력 쪽 단위 기울기를 역전파해 각 층에 도착한 노름(10회 기하평균).
+  // 잔차: g ← g + Wᵀg, W ~ N(0, (1/√50)²/256).
+  const G = { left: 70, top: 22, width: 430, height: 196 };
+  const sx = linear(0, 50, G.left, G.left + G.width);
+  const sy = log10Scale(1e-6, 1e5, G.top + G.height, G.top);
+  const series = [
+    { k: "g1_2" as const, c: colors.red, t: "층마다 1.2배", end: "9.2 × 10³" },
+    { k: "res" as const, c: colors.green, t: "잔차 연결", end: "1.6" },
+    { k: "g1_0" as const, c: inkSecondary, t: "정확히 1배", end: "≈ 1" },
+    { k: "g0_8" as const, c: colors.blue, t: "층마다 0.8배", end: "1.2 × 10⁻⁵" },
+  ];
+  const endY: Record<string, number> = { g1_2: -4, res: -12, g1_0: 14, g0_8: 4 };
+  return (
+    <DiagramFrame
+      title="기울기는 야코비안의 곱을 지나간다: 50층 뒤에는 10⁻⁵배 또는 9000배"
+      caption="폭 256인 선형 층 50개를 무작위 가중치로 만들고, 출력 쪽에서 크기 1인 기울기를 역전파했을 때 각 층에 도착하는 기울기의 크기다(세로축은 로그 눈금, 10회 반복의 기하평균). 가중치 스케일이 벡터를 층마다 평균 0.8배로 줄이면 50층 뒤 0.8⁵⁰ ≈ 10⁻⁵로 사라지고, 1.2배로 늘리면 1.2⁵⁰ ≈ 9000배로 폭발한다. 정확히 1배일 때만 유지되지만 이 균형은 칼날 위에 서 있다. 초록: 잔차 연결 h + F(h)는 야코비안이 I + ∂F/∂h라 원래 기울기가 그대로 더해지는 경로가 있어, F를 작게 초기화하면 50층을 지나도 약 1.6배에 머문다."
+      viewBox="0 0 720 256"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-6, 1e-4, 1e-2, 1, 1e2, 1e4]} fmtY={pow10Label} xLabel="출력에서 거꾸로 지나온 층 수" yLabel="기울기 크기" />
+      {series.map((s) => (
+        <g key={s.k}>
+          <path d={linePath(GRAD_NORMS[s.k].map((v, i) => [sx(i), sy(v)] as [number, number]))} fill="none" stroke={s.c} strokeWidth={s.k === "g1_0" ? 1.8 : 2.4} />
+          <text x={sx(50) + 8} y={sy(GRAD_NORMS[s.k][50]) + endY[s.k]} fontSize={10.5} fontWeight={800} fill={s.c}>
+            {`${s.t}: ${s.end}`}
+          </text>
+        </g>
+      ))}
+      <line x1={sx(0)} x2={sx(50)} y1={sy(1)} y2={sy(1)} stroke={inkMuted} strokeDasharray="2 3" />
+    </DiagramFrame>
+  );
+}
+
+export function ClipNormVsValue() {
+  // 왼쪽: 2차원 예 g = (6, 8), 임계값 c = 5. 노름 클리핑 → (3, 4)(방향 유지), 원소별 클리핑 → (5, 5)(방향 53.1° → 45°).
+  // 오른쪽: 본문 코드 g = (30, 40, 120), 노름 130 → 5로 클리핑하면 (1.154, 1.538, 4.615), 원소별 [−5, 5]면 (5, 5, 5)(방향이 약 32° 틀어짐).
+  const P = "cnv";
+  const S = 17;
+  const ox = 60;
+  const oy = 214;
+  const px = (x: number) => ox + x * S;
+  const py = (y: number) => oy - y * S;
+  const bars = [
+    { t: "원래 (÷26)", v: [30 / 26, 40 / 26, 120 / 26], c: inkMuted },
+    { t: "노름 클리핑", v: [1.154, 1.538, 4.615], c: colors.green },
+    { t: "원소별 클리핑", v: [5, 5, 5], c: colors.red },
+  ];
+  const by = linear(0, 5.5, 214, 64);
+  return (
+    <DiagramFrame
+      title="기울기 클리핑: 노름 기준은 길이만, 원소별은 방향까지 바꾼다"
+      caption="왼쪽: 2차원으로 그린 원리다. 기울기 g = (6, 8)(길이 10)을 임계값 5로 자를 때, 노름 기준 클리핑은 반지름 5인 원 위로 길이만 줄여 (3, 4)가 되고 방향은 그대로다. 원소마다 [−5, 5]로 자르면 상자 모서리 (5, 5)가 되어 방향이 53°에서 45°로 바뀐다. 오른쪽: 본문 코드의 세 성분 기울기 (30, 40, 120)이다. 노름 클리핑 후 (1.154, 1.538, 4.615)는 원래 비율 30 : 40 : 120을 그대로 지키지만(회색 막대는 원래 값을 26으로 나눠 같은 비율로 그린 것), 원소별 클리핑은 (5, 5, 5)가 되어 방향이 약 32° 틀어진다."
+      viewBox="0 0 720 256"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary, green: colors.green, red: colors.red }} />
+      <line x1={px(0)} x2={px(10.5)} y1={py(0)} y2={py(0)} stroke={inkMuted} />
+      <line x1={px(0)} x2={px(0)} y1={py(0)} y2={py(10.5)} stroke={inkMuted} />
+      <path d={`M${px(5)},${py(0)} A${5 * S},${5 * S} 0 0 0 ${px(0)},${py(5)}`} fill={colors.green} fillOpacity={0.08} stroke={colors.green} strokeWidth={1.4} />
+      <rect x={px(0)} y={py(5)} width={5 * S} height={5 * S} fill="none" stroke={colors.red} strokeWidth={1.4} strokeDasharray="4 3" />
+      <Arr x1={px(0)} y1={py(0)} x2={px(6) - 2} y2={py(8) + 3} color={inkSecondary} marker={`${P}-ink`} width={2} />
+      <Arr x1={px(0)} y1={py(0)} x2={px(3) - 1.5} y2={py(4) + 2} color={colors.green} marker={`${P}-green`} width={2.6} />
+      <Arr x1={px(0)} y1={py(0)} x2={px(5) - 2} y2={py(5) + 2} color={colors.red} marker={`${P}-red`} width={2.2} />
+      <text x={px(6) + 6} y={py(8) + 2} fontSize={10.5} fontWeight={800} fill={ink}>
+        g = (6, 8)
+      </text>
+      <text x={px(5) + 6} y={py(5) + 4} fontSize={10.5} fontWeight={800} fill={colors.red}>
+        원소별 → (5, 5)
+      </text>
+      <text x={px(3) - 6} y={py(4) - 2} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        노름 → (3, 4)
+      </text>
+      <text x={px(7.8)} y={py(1.2)} fontSize={9.5} fill={colors.green} fontWeight={700}>
+        반지름 5인 원
+      </text>
+      <text x={px(5.2)} y={py(-0.9)} fontSize={9.5} fill={colors.red} fontWeight={700}>
+        [−5, 5] 상자
+      </text>
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        2차원으로 보면
+      </text>
+      <line x1={300} y1={14} x2={300} y2={244} stroke="var(--border-hairline)" />
+      <text x={318} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        본문 코드: g = (30, 40, 120), 노름 130 → 5
+      </text>
+      <line x1={340} x2={706} y1={by(0)} y2={by(0)} stroke={inkMuted} />
+      <line x1={340} x2={706} y1={by(5)} y2={by(5)} stroke={colors.red} strokeDasharray="3 3" strokeOpacity={0.6} />
+      <text x={336} y={by(5) + 4} textAnchor="end" fontSize={9.5} fill={colors.red}>
+        5
+      </text>
+      {bars.map((b, gi) => (
+        <g key={b.t}>
+          {b.v.map((v, j) => {
+            const x = 352 + gi * 120 + j * 32;
+            return (
+              <g key={j}>
+                <rect x={x} y={by(v)} width={26} height={by(0) - by(v)} rx={2} fill={b.c} fillOpacity={gi === 0 ? 0.35 : 0.6} />
+                <text x={x + 13} y={by(v) - 4} textAnchor="middle" fontSize={9} fontWeight={800} fill={ink}>
+                  {gi === 0 ? [30, 40, 120][j] : v.toFixed(gi === 1 ? 2 : 0)}
+                </text>
+                <text x={x + 13} y={by(0) + 12} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+                  {`g${"₁₂₃"[j]}`}
+                </text>
+              </g>
+            );
+          })}
+          <text x={352 + gi * 120 + 45} y={by(0) + 28} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={gi === 0 ? inkSecondary : b.c}>
+            {b.t}
+          </text>
+        </g>
+      ))}
+      <Lines x={472 + 45} y={48} lines={["비율 유지"]} size={10} anchor="middle" color={colors.green} weight={800} />
+      <Lines x={592 + 45} y={48} lines={["방향 32° 틀어짐"]} size={10} anchor="middle" color={colors.red} weight={800} />
+    </DiagramFrame>
+  );
+}
