@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box } from "./primitives";
-import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, linePath, sample, seeded, gaussian, mono } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono } from "./chart";
 
 export function NistFramework() {
   const cx = 280;
@@ -1938,6 +1938,537 @@ export function GroupThresholds() {
       <text x={616} y={188} fontSize={10} fill={ink}>
         그 밖
       </text>
+    </DiagramFrame>
+  );
+}
+
+export function ChouldechovaFpr() {
+  // FPR = p/(1 − p) · (1 − PPV)/PPV · (1 − FNR). PPV 0.8, FNR 0.2로 맞추면 기저율 0.5 → 0.2, 0.2 → 0.05, 0.05 → 0.0105(본문 코드).
+  const fpr = (p: number, ppv: number, fnr: number) => (p / (1 - p)) * ((1 - ppv) / ppv) * (1 - fnr);
+  const G = { left: 60, top: 26, width: 380, height: 186 };
+  const sx = linear(0, 0.6, G.left, G.left + G.width);
+  const sy = linear(0, 0.4, G.top + G.height, G.top);
+  const lines = [
+    { ppv: 0.6, c: colors.red },
+    { ppv: 0.8, c: colors.violet },
+    { ppv: 0.95, c: colors.green },
+  ];
+  const pts = [0.5, 0.2, 0.05];
+  return (
+    <DiagramFrame
+      title="Chouldechova 항등식: PPV와 FNR을 맞추면 FPR은 기저율이 정한다"
+      caption="FPR = p/(1 − p) · (1 − PPV)/PPV · (1 − FNR)은 어떤 분류기, 어떤 집단에서나 성립하는 정의상의 등식이다. 두 집단에서 PPV와 FNR을 같게 맞추면 남는 변수는 기저율 p뿐이라, FPR이 곡선 위의 한 점으로 저절로 정해진다. 보라 곡선(PPV 0.8, FNR 0.2)의 점은 본문 코드의 세 집단이다. 기저율 0.5인 집단은 FPR 0.2, 0.2인 집단은 0.05, 0.05인 집단은 약 0.01이 된다. 기저율이 다른데 FPR까지 같게 만들 방법은 없고, 예외는 기저율이 같거나 PPV = 1(위양성 없음)이거나 FNR = 1(아무도 합격시키지 않음)일 때뿐이다. 정밀도를 높게 요구할수록(초록) 곡선이 낮아질 뿐 기울기는 사라지지 않는다."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]} yTicks={[0, 0.1, 0.2, 0.3, 0.4]} xLabel="집단의 기저율 p" yLabel="정해지는 FPR" />
+      {lines.map((l) => (
+        <g key={l.ppv}>
+          <path d={linePath(sample((p) => fpr(p, l.ppv, 0.2), 0.005, 0.6, 160).filter(([, y]) => y <= 0.4).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={l.c} strokeWidth={l.ppv === 0.8 ? 2.8 : 1.8} strokeDasharray={l.ppv === 0.8 ? undefined : "5 3"} />
+        </g>
+      ))}
+      <text x={sx(0.36)} y={sy(0.37)} fontSize={10} fontWeight={800} fill={colors.red}>
+        PPV 0.6
+      </text>
+      <text x={sx(0.52)} y={sy(0.3)} fontSize={10} fontWeight={800} fill={colors.violet}>
+        PPV 0.8
+      </text>
+      <text x={sx(0.5)} y={sy(0.07)} fontSize={10} fontWeight={800} fill={colors.green}>
+        PPV 0.95
+      </text>
+      {pts.map((p) => (
+        <g key={p}>
+          <line x1={sx(p)} x2={sx(p)} y1={sy(0)} y2={sy(fpr(p, 0.8, 0.2))} stroke={colors.violet} strokeDasharray="3 3" strokeOpacity={0.6} />
+          <circle cx={sx(p)} cy={sy(fpr(p, 0.8, 0.2))} r={5} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1.5} />
+          {p === 0.5 && (
+            <text x={sx(p) - 7} y={sy(fpr(p, 0.8, 0.2)) - 8} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+              p 0.5 → FPR 0.20
+            </text>
+          )}
+        </g>
+      ))}
+      <rect x={470} y={36} width={236} height={170} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={484} y={58} fontSize={11.5} fontWeight={800} fill={ink}>
+        PPV 0.8, FNR 0.2로 맞추면
+      </text>
+      {pts.map((p, i) => (
+        <g key={p}>
+          <text x={484} y={84 + i * 22} fontSize={10.5} fill={inkSecondary}>
+            {`기저율 ${p}`}
+          </text>
+          <text x={692} y={84 + i * 22} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.violet} fontFamily={mono}>
+            {`FPR ${fpr(p, 0.8, 0.2).toFixed(p === 0.05 ? 4 : 2)}`}
+          </text>
+        </g>
+      ))}
+      <Lines x={484} y={160} lines={["남는 변수는 기저율뿐: FPR ∝ p / (1 − p)"]} size={10.5} anchor="start" color={colors.violet} weight={800} />
+      <text x={484} y={194} fontSize={9.5} fill={inkSecondary}>
+        고를 수 있는 손잡이가 남지 않는다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function KleinbergBalance() {
+  // 보정된 점수에서 z = p/(1 − p) · (1 − x). 기저율 0.5인 집단 A와 0.2인 집단 B의 직선은 (x, z) = (1, 0)에서만 만난다.
+  const G = { left: 64, top: 26, width: 300, height: 190 };
+  const sx = linear(0, 1, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const groups = [
+    { t: "집단 A (기저율 0.5)", p: 0.5, c: colors.blue },
+    { t: "집단 B (기저율 0.2)", p: 0.2, c: colors.orange },
+  ];
+  return (
+    <DiagramFrame
+      title="Kleinberg의 불가능성: 보정과 균형은 완벽한 예측에서만 함께 성립한다"
+      caption="점수가 보정되어 있으면(점수 0.7을 받은 사람의 70%가 실제 양성) 양성의 평균 점수 x와 음성의 평균 점수 z 사이에 z = p/(1 − p) · (1 − x)라는 관계가 생긴다. 집단마다 이 관계는 기울기가 기저율로 정해지는 직선이다. 균형(양성끼리, 음성끼리 두 집단의 평균 점수가 같음)은 두 집단이 같은 점 (x, z)를 가져야 한다는 뜻인데, 기저율이 다른 두 직선은 x = 1, z = 0, 즉 양성은 모두 1점, 음성은 모두 0점인 완벽한 예측에서만 만난다. 현실의 모델은 완벽하지 않으므로 기저율이 다른 집단에서는 보정과 균형 중 하나를 포기해야 한다."
+      viewBox="0 0 720 256"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.25, 0.5, 0.75, 1]} yTicks={[0, 0.25, 0.5, 0.75, 1]} xLabel="x = 양성의 평균 점수" yLabel="z = 음성의 평균 점수" />
+      {groups.map((g) => (
+        <g key={g.p}>
+          <path d={linePath([0, 1].map((x) => [sx(x), sy((g.p / (1 - g.p)) * (1 - x))] as [number, number]))} fill="none" stroke={g.c} strokeWidth={2.6} />
+          <text x={sx(0.04)} y={sy((g.p / (1 - g.p)) * 0.96) - 8} fontSize={10.5} fontWeight={800} fill={g.c} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {`${g.t}: z = ${(g.p / (1 - g.p)).toFixed(2)}(1 − x)`}
+          </text>
+        </g>
+      ))}
+      <circle cx={sx(1)} cy={sy(0)} r={6} fill={colors.green} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <text x={sx(1) + 2} y={sy(0) - 12} textAnchor="end" fontSize={10.5} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        (1, 0)
+      </text>
+      <line x1={sx(0.7)} x2={sx(0.7)} y1={sy(0.3)} y2={sy(0.075)} stroke={ink} strokeWidth={1.4} />
+      <circle cx={sx(0.7)} cy={sy(0.3)} r={4} fill={colors.blue} />
+      <circle cx={sx(0.7)} cy={sy(0.075)} r={4} fill={colors.orange} />
+      <Lines x={sx(0.68)} y={sy(0.215)} lines={["x가 같아도", "z는 다르다"]} size={10} anchor="end" color={ink} weight={800} gap={1.35} />
+      <rect x={410} y={36} width={296} height={176} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={424} y={58} fontSize={11.5} fontWeight={800} fill={ink}>
+        보정에서 나오는 등식
+      </text>
+      <Lines x={424} y={82} lines={["E[Y(1 − s)] = E[s(1 − s)] = E[s(1 − Y)]", "p(1 − x) = (1 − p)z"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.6} />
+      <Lines x={424} y={136} lines={["두 집단이 같은 (x, z)를 가지려면", "p/(1 − p)(1 − x)가 같아야 한다", "→ 기저율이 다르면 x = 1, z = 0뿐", "   (완벽한 예측, 초록 점)"]} size={10.5} anchor="start" color={colors.violet} weight={800} gap={1.5} />
+    </DiagramFrame>
+  );
+}
+
+export function RandomizedMixing() {
+  // 본문 코드: 두 집단의 FPR f = 0.1, TPR 0.9(높은 집단)와 0.7. λ = (0.7 − 0.1)/(0.9 − 0.1) = 0.75로 섞으면 (0.1, 0.7). 시뮬레이션: TPR 0.70, FPR 0.10.
+  const G = { left: 70, top: 22, width: 200, height: 200 };
+  const sx = linear(0, 1, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const P = "rmx";
+  return (
+    <DiagramFrame
+      title="균등화된 오즈를 맞추는 무작위 혼합: 선분 위의 점은 모두 만들 수 있다"
+      caption="ROC 평면에서 본 Hardt et al.(2016)의 후처리다. 두 판정 규칙을 확률로 섞으면 (FPR, TPR)도 같은 비율로 섞이므로 두 점을 잇는 선분 위의 어느 점이든 만들 수 있다. 점수와 무관하게 확률 f로 합격시키는 규칙은 대각선 위의 점 (f, f)다. 본문 코드처럼 두 집단의 FPR이 0.1로 같고 TPR이 0.9(파랑)와 0.7(주황)이라면, 파랑 집단이 확률 λ = (0.7 − 0.1)/(0.9 − 0.1) = 0.75로 자기 규칙을, 0.25로 무작위 합격을 쓰면 TPR이 정확히 0.7로 내려와 두 집단의 오즈가 같아진다(20만 명 시뮬레이션: TPR 0.70, FPR 0.10). 대가는 파랑 집단의 실제 우수 인재 중 20%p를 일부러 떨어뜨리는 것이고, 같은 점수의 두 사람이 동전 때문에 다른 판정을 받을 수 있다."
+      viewBox="0 0 720 258"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted }} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.1, 0.5, 1]} yTicks={[0, 0.1, 0.5, 0.7, 0.9, 1]} xLabel="FPR" yLabel="TPR" />
+      <line x1={sx(0)} y1={sy(0)} x2={sx(1)} y2={sy(1)} stroke={inkMuted} strokeDasharray="4 3" />
+      <line x1={sx(0.1)} y1={sy(0.1)} x2={sx(0.1)} y2={sy(0.9)} stroke={colors.blue} strokeWidth={2.6} strokeOpacity={0.5} />
+      <circle cx={sx(0.1)} cy={sy(0.9)} r={6} fill={colors.blue} />
+      <circle cx={sx(0.1)} cy={sy(0.7)} r={6} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <circle cx={sx(0.1)} cy={sy(0.1)} r={5} fill={inkMuted} />
+      <text x={sx(0.1) + 10} y={sy(0.9) + 4} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        파랑 집단 규칙 (0.1, 0.9)
+      </text>
+      <text x={sx(0.1) + 10} y={sy(0.7) + 4} fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        주황 집단 (0.1, 0.7) = 섞은 결과
+      </text>
+      <text x={sx(0.1) + 10} y={sy(0.1) + 4} fontSize={10.5} fontWeight={800} fill={inkSecondary}>
+        무작위 합격 (0.1, 0.1)
+      </text>
+      <Lines x={sx(0.1) + 10} y={sy(0.6)} lines={["λ = 0.75로 섞으면", "선분 위 TPR 0.7"]} size={10} anchor="start" color={colors.blue} weight={800} gap={1.35} />
+      <rect x={420} y={34} width={286} height={180} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={434} y={56} fontSize={11.5} fontWeight={800} fill={ink}>
+        확률 λ로 규칙, 1 − λ로 무작위 합격
+      </text>
+      <text x={434} y={84} fontSize={11} fontWeight={700} fill={ink} fontFamily={mono}>
+        λ·t_hi + (1 − λ)·f = t_lo
+      </text>
+      <text x={434} y={106} fontSize={11} fontWeight={700} fill={ink} fontFamily={mono}>
+        λ = (0.7 − 0.1) / (0.9 − 0.1) = 0.75
+      </text>
+      <Lines x={434} y={136} lines={["시뮬레이션(20만 명): TPR 0.70, FPR 0.10", "대가: 우수 인재의 20%p를 일부러 탈락", "같은 점수, 다른 판정(개인 공정성 논쟁)"]} size={10.5} anchor="start" color={inkSecondary} weight={600} gap={1.6} />
+    </DiagramFrame>
+  );
+}
+
+export function LaplaceRatio() {
+  // 본문 코드: 한 사람만 다른 두 데이터셋(개수 12와 13), ε = 1, 민감도 1. 밀도 비는 o ≤ 12에서 e, o ≥ 13에서 e⁻¹, 사이에서 지수적으로 변한다.
+  const eps = 1;
+  const dens = (o: number, c: number) => (eps / 2) * Math.exp(-eps * Math.abs(o - c));
+  const L = { left: 52, top: 30, width: 290, height: 170 };
+  const lx = linear(6, 19, L.left, L.left + L.width);
+  const ly = linear(0, 0.55, L.top + L.height, L.top);
+  const R = { left: 440, top: 30, width: 260, height: 170 };
+  const rx = linear(6, 19, R.left, R.left + R.width);
+  const ry = log10Scale(0.25, 4, R.top + R.height, R.top);
+  return (
+    <DiagramFrame
+      title="라플라스 메커니즘의 증명: 두 밀도의 비는 어디서나 e^ε 이하"
+      caption="왼쪽: 한 사람만 다른 두 데이터셋의 개수 질의(참값 12와 13, 민감도 1)에 ε = 1인 라플라스 잡음을 더한 공개값의 밀도다. 두 분포가 크게 겹쳐, 공개값 하나를 보고 그 사람이 들어 있었는지 확신할 수 없다. 오른쪽: 같은 공개값 o에서 두 밀도의 비(세로축 로그 눈금)다. 12 이하에서는 정확히 e ≈ 2.718, 13 이상에서는 1/e이고 그 사이에서만 변한다. 삼각부등식 때문에 어떤 o에서도 비가 e^ε를 넘지 않는다는 것이 증명의 전부이고, 본문 코드가 잰 최댓값 2.7183도 이와 같다. 밀도의 비가 묶이면 어떤 결과 집합의 확률의 비도 묶이므로, 이후에 어떤 가공을 해도 보장이 약해지지 않는다."
+      viewBox="0 0 720 248"
+      minWidth={600}
+    >
+      <text x={L.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        공개값의 분포 (ε = 1)
+      </text>
+      <Axes {...L} sx={lx} sy={ly} xTicks={[6, 9, 12, 13, 16, 19]} yTicks={[0, 0.25, 0.5]} xLabel="공개값 o" />
+      <path d={linePath(sample((o) => dens(o, 12), 6, 19, 260).map(([a, b]) => [lx(a), ly(b)] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <path d={linePath(sample((o) => dens(o, 13), 6, 19, 260).map(([a, b]) => [lx(a), ly(b)] as [number, number]))} fill="none" stroke={colors.orange} strokeWidth={2.4} />
+      <text x={lx(11.6)} y={ly(0.52)} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.blue}>
+        D: 참값 12
+      </text>
+      <text x={lx(13.4)} y={ly(0.52)} fontSize={10} fontWeight={800} fill={colors.orange}>
+        D′: 참값 13
+      </text>
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        밀도의 비 p_D(o) / p_D′(o)
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[6, 9, 12, 13, 16, 19]} yTicks={[0.25, 0.5, 1, 2, 4]} fmtY={(v) => String(v)} xLabel="공개값 o" />
+      <rect x={R.left} y={ry(Math.E)} width={R.width} height={ry(1 / Math.E) - ry(Math.E)} fill={colors.green} fillOpacity={0.08} />
+      <line x1={R.left} x2={R.left + R.width} y1={ry(Math.E)} y2={ry(Math.E)} stroke={colors.green} strokeDasharray="5 3" />
+      <line x1={R.left} x2={R.left + R.width} y1={ry(1 / Math.E)} y2={ry(1 / Math.E)} stroke={colors.green} strokeDasharray="5 3" />
+      <path d={linePath(sample((o) => dens(o, 12) / dens(o, 13), 6, 19, 260).map(([a, b]) => [rx(a), ry(b)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.6} />
+      <text x={R.left + R.width - 4} y={ry(Math.E) - 6} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.green}>
+        e^ε ≈ 2.718 (상한)
+      </text>
+      <text x={R.left + R.width - 4} y={ry(1 / Math.E) + 14} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.green}>
+        e^−ε ≈ 0.368 (하한)
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function MiaAdvantage() {
+  // (ε, δ = 0)-DP에서 멤버십 추론의 가능 영역: TPR ≤ e^ε·FPR, 1 − FPR ≤ e^ε(1 − TPR). 이득 상한 (e^ε − 1)/(e^ε + 1). 본문 코드의 ε 값들.
+  const L = { left: 56, top: 26, width: 190, height: 190 };
+  const lx = linear(0, 1, L.left, L.left + L.width);
+  const ly = linear(0, 1, L.top + L.height, L.top);
+  const region = (e: number) => {
+    const k = Math.exp(e);
+    const xm = 1 / (k + 1);
+    return `M${lx(0)},${ly(0)} L${lx(xm)},${ly(k * xm)} L${lx(1)},${ly(1)} L${lx(1 - k * xm)},${ly(1 - xm)} Z`;
+  };
+  const eps = [
+    { e: 3, c: colors.red },
+    { e: 1, c: colors.violet },
+    { e: 0.1, c: colors.green },
+  ];
+  const R = { left: 380, top: 26, width: 320, height: 190 };
+  const rx = linear(0, 8, R.left, R.left + R.width);
+  const ry = linear(0, 1, R.top + R.height, R.top);
+  const adv = (e: number) => (Math.exp(e) - 1) / (Math.exp(e) + 1);
+  const pts = [0.1, 1, Math.log(3), 3, 8];
+  return (
+    <DiagramFrame
+      title="ε이 공격자에게 뜻하는 것: 멤버십 추론 이득의 상한 (e^ε − 1)/(e^ε + 1)"
+      caption="왼쪽: 학습이 ε-차등 프라이버시면 '이 기록이 학습에 쓰였는가'를 맞히는 어떤 공격이든 (FPR, TPR)이 두 부등식 TPR ≤ e^ε·FPR, 1 − FPR ≤ e^ε(1 − TPR)이 만드는 영역 안에 있어야 한다. ε = 0.1이면 대각선(무작위 추측)에 거의 붙은 가는 띠이고, ε = 3이면 거의 전체를 덮는다. 오른쪽: 이 영역에서 공격 이득 TPR − FPR의 최댓값이다. ε = 0.1이면 0.05로 동전 던지기 수준, ε = 1이면 0.46, 보충 과정의 무작위 응답에 해당하는 ε = ln 3에서 정확히 0.5, ε = 8이면 0.999로 사실상 아무것도 보장하지 않는다. 그래서 '차등 프라이버시로 학습했다'는 말과 함께 ε 값을 봐야 한다. 이것은 최악의 경우의 상한이고 실제 공격이 이만큼 성공한다는 뜻은 아니다."
+      viewBox="0 0 720 256"
+      minWidth={600}
+    >
+      <text x={L.left} y={16} fontSize={11.5} fontWeight={800} fill={ink}>
+        공격이 가질 수 있는 (FPR, TPR)
+      </text>
+      <Axes {...L} sx={lx} sy={ly} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="FPR" yLabel="TPR" />
+      {eps.map((o) => (
+        <path key={o.e} d={region(o.e)} fill={o.c} fillOpacity={0.14} stroke={o.c} strokeWidth={1.6} />
+      ))}
+      <line x1={lx(0)} y1={ly(0)} x2={lx(1)} y2={ly(1)} stroke={inkMuted} strokeDasharray="4 3" />
+      <text x={lx(0.04)} y={ly(0.93)} fontSize={9.5} fontWeight={800} fill={colors.red}>
+        ε = 3
+      </text>
+      <text x={lx(0.13)} y={ly(0.68)} fontSize={9.5} fontWeight={800} fill={colors.violet}>
+        ε = 1
+      </text>
+      <text x={lx(0.62)} y={ly(0.45)} fontSize={9.5} fontWeight={800} fill={colors.green}>
+        ε = 0.1
+      </text>
+      <line x1={318} y1={14} x2={318} y2={244} stroke="var(--border-hairline)" />
+      <text x={R.left} y={16} fontSize={11.5} fontWeight={800} fill={ink}>
+        이득 TPR − FPR의 최댓값
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 1, 2, 3, 4, 5, 6, 7, 8]} yTicks={[0, 0.25, 0.5, 0.75, 1]} xLabel="ε" />
+      <path d={linePath(sample(adv, 0, 8, 200).map(([a, b]) => [rx(a), ry(b)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.6} />
+      {pts.map((e) => (
+        <g key={e}>
+          <circle cx={rx(e)} cy={ry(adv(e))} r={4.5} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1.5} />
+          <text x={rx(e) + (e > 7 || e === Math.log(3) ? -7 : 7)} y={ry(adv(e)) + (e > 7 || e === 3 || e === 1 ? 16 : -7)} textAnchor={e > 7 || e === Math.log(3) ? "end" : "start"} fontSize={9.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {`${e === Math.log(3) ? "ln 3" : e} → ${adv(e).toFixed(e === 8 ? 3 : 2)}`}
+          </text>
+        </g>
+      ))}
+    </DiagramFrame>
+  );
+}
+
+export function DpSgdStep() {
+  // 본문 코드(시드 0): 표본 4개의 기울기 길이 0.67, 0.66, 1.76, 28.22 → C = 1로 자르면 0.67, 0.66, 1, 1.
+  // 자르지 않은 평균 (−5.94, −3.05, 0.28)은 넷째 표본이 좌우하고, 자른 합에 σC = 1 잡음을 더해 4로 나눈 값은 (−0.56, −0.20, −0.15).
+  const before = [0.666, 0.655, 1.759, 28.224];
+  const after = [0.666, 0.655, 1, 1];
+  const P = "dps";
+  const by = log10Scale(0.3, 40, 206, 60);
+  return (
+    <DiagramFrame
+      title="DP-SGD 한 걸음: 표본마다 자르고, 잡음을 더하고, 기록한다"
+      caption="위: DP-SGD의 한 걸음이다. 표본마다 기울기를 따로 구해 길이가 C를 넘으면 C로 줄이므로, 한 사람이 기울기 합을 바꿀 수 있는 크기(민감도)가 C로 묶인다. 그 합에 표준편차 σC인 가우스 잡음을 더해 배치 크기로 나누고, 매 걸음이 쓴 프라이버시 예산을 회계해 전체 ε을 추적한다. 아래: 본문 코드의 숫자다(세로축 로그 눈금). 넷째 표본의 기울기는 길이 28.2로 다른 표본의 수십 배라, 자르지 않은 평균 (−5.94, −3.05, 0.28)은 사실상 이 한 사람이 정한다. C = 1로 자르면 1이 되어 다른 표본과 같은 무게만 갖는다. 대가는 잡음이다. 잡음의 크기는 대략 σC√d / B라 배치가 작고 파라미터가 많을수록 신호를 덮고, 드문 표본의 영향이 먼저 지워져 소수 집단의 정확도가 더 떨어질 수 있다."
+      viewBox="0 0 720 262"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted }} />
+      {[
+        { t: ["① 표본별 기울기", "g₁, …, g_B"], c: colors.blue },
+        { t: ["② 자르기", "‖g‖ > C면 C로"], c: colors.orange },
+        { t: ["③ 합 + 잡음", "N(0, σ²C²)"], c: colors.violet },
+        { t: ["④ ÷ B 후 갱신", "평균 기울기"], c: colors.green },
+        { t: ["⑤ 회계", "누적 ε, δ 추적"], c: colors.red },
+      ].map((s, i) => (
+        <g key={i}>
+          <Tag x={14 + i * 142} y={14} w={122} h={38} lines={s.t} color={s.c} size={10} />
+          {i < 4 && <Arr x1={138 + i * 142} y1={33} x2={154 + i * 142} y2={33} color={inkMuted} marker={`${P}-ink`} />}
+        </g>
+      ))}
+      <text x={20} y={78} fontSize={11.5} fontWeight={800} fill={ink}>
+        본문 코드: 표본 4개의 기울기 길이 (C = 1)
+      </text>
+      <line x1={60} x2={420} y1={by(1)} y2={by(1)} stroke={colors.orange} strokeDasharray="5 3" />
+      <text x={424} y={by(1) + 4} fontSize={10} fontWeight={800} fill={colors.orange}>
+        C = 1
+      </text>
+      {before.map((v, i) => (
+        <g key={i}>
+          <rect x={72 + i * 88} y={by(v)} width={30} height={by(0.3) - by(v)} rx={3} fill={colors.blue} fillOpacity={0.5} />
+          <rect x={106 + i * 88} y={by(after[i])} width={30} height={by(0.3) - by(after[i])} rx={3} fill={colors.orange} fillOpacity={0.6} />
+          <text x={87 + i * 88} y={by(v) - 5} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.blue}>
+            {v.toFixed(2)}
+          </text>
+          <text x={121 + i * 88} y={by(after[i]) - 5} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.orange}>
+            {after[i].toFixed(2)}
+          </text>
+          <text x={104 + i * 88} y={222} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+            {`표본 ${i + 1}`}
+          </text>
+        </g>
+      ))}
+      <line x1={60} x2={420} y1={by(0.3)} y2={by(0.3)} stroke={inkMuted} />
+      <rect x={72} y={234} width={12} height={10} fill={colors.blue} fillOpacity={0.5} />
+      <text x={88} y={243} fontSize={10} fill={inkSecondary}>
+        자르기 전
+      </text>
+      <rect x={156} y={234} width={12} height={10} fill={colors.orange} fillOpacity={0.6} />
+      <text x={172} y={243} fontSize={10} fill={inkSecondary}>
+        자른 뒤
+      </text>
+      <rect x={462} y={70} width={244} height={156} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={476} y={92} fontSize={11} fontWeight={800} fill={ink}>
+        평균 기울기 (3차원)
+      </text>
+      <text x={476} y={116} fontSize={10} fill={inkSecondary}>
+        자르지 않은 평균
+      </text>
+      <text x={476} y={132} fontSize={10.5} fontWeight={800} fill={colors.blue} fontFamily={mono}>
+        (−5.94, −3.05, 0.28)
+      </text>
+      <text x={476} y={156} fontSize={10} fill={inkSecondary}>
+        자르고 잡음(σC = 1) 더해 ÷ 4
+      </text>
+      <text x={476} y={172} fontSize={10.5} fontWeight={800} fill={colors.violet} fontFamily={mono}>
+        (−0.56, −0.20, −0.15)
+      </text>
+      <Lines x={476} y={198} lines={["넷째 표본 한 사람이 좌우하던 방향이", "더 이상 그 사람 것만이 아니다"]} size={9.5} anchor="start" color={ink} weight={700} gap={1.4} />
+    </DiagramFrame>
+  );
+}
+
+export function PsiJeffreys() {
+  // 예시 분포 p(학습) = (0.1, 0.2, 0.4, 0.2, 0.1), q(운영) = (0.05, 0.15, 0.35, 0.3, 0.15). 구간마다 p ln(p/q)와 q ln(q/p), 그 합 (p − q) ln(p/q).
+  const p = [0.1, 0.2, 0.4, 0.2, 0.1];
+  const q = [0.05, 0.15, 0.35, 0.3, 0.15];
+  const a = p.map((v, i) => v * Math.log(v / q[i]));
+  const b = q.map((v, i) => v * Math.log(v / p[i]));
+  const s = a.map((v, i) => v + b[i]);
+  const sum = (x: number[]) => x.reduce((u, v) => u + v, 0);
+  const G = { left: 60, top: 30, width: 400, height: 180 };
+  const sy = linear(-0.1, 0.13, G.top + G.height, G.top);
+  const gw = G.width / 5;
+  const series = [
+    { v: a, c: colors.blue, t: "p ln(p/q)" },
+    { v: b, c: colors.orange, t: "q ln(q/p)" },
+    { v: s, c: colors.violet, t: "PSI 항 (p − q) ln(p/q)" },
+  ];
+  return (
+    <DiagramFrame
+      title="PSI는 두 방향의 KL 발산을 더한 것(제프리스 발산)이다"
+      caption="학습 때 분포 p와 운영 분포 q의 다섯 구간 예시다. 구간마다 세 막대를 그렸다. 파랑 p ln(p/q)를 모두 더하면 KL(p‖q), 주황 q ln(q/p)를 더하면 KL(q‖p)이고, 보라는 두 값을 더한 PSI의 구간별 항 (p − q) ln(p/q)다. KL의 구간별 항은 음수가 될 수 있지만(p < q인 구간의 파랑), PSI의 항은 p − q와 ln(p/q)의 부호가 항상 같아 구간마다 0 이상이다. 합계는 KL(p‖q) ≈ 0.059, KL(q‖p) ≈ 0.058, PSI ≈ 0.117로, PSI가 정확히 두 방향 KL의 합이다. 대칭이라 학습과 운영을 바꿔 넣어도 같은 값을 준다. 0.1과 0.2라는 경계는 이 발산에 대한 업계의 경험칙일 뿐 통계적 검정의 문턱이 아니다."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Axes {...G} sx={linear(0, 1, G.left, G.left + G.width)} sy={sy} yTicks={[-0.1, -0.05, 0, 0.05, 0.1]} fmtY={(v) => (v === 0 ? "0" : v.toFixed(2).replace("-", "−"))} />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(0)} y2={sy(0)} stroke={ink} strokeWidth={1.2} />
+      {p.map((pv, i) => (
+        <g key={i}>
+          {series.map((sr, k) => {
+            const v = sr.v[i];
+            const x = G.left + i * gw + 10 + k * 20;
+            return <rect key={k} x={x} y={Math.min(sy(v), sy(0))} width={17} height={Math.max(0.8, Math.abs(sy(v) - sy(0)))} rx={2} fill={sr.c} fillOpacity={0.6} />;
+          })}
+          <text x={G.left + i * gw + gw / 2} y={G.top + G.height + 15} textAnchor="middle" fontSize={10} fontWeight={700} fill={ink}>
+            {`구간 ${i + 1}`}
+          </text>
+          <text x={G.left + i * gw + gw / 2} y={G.top + G.height + 29} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+            {`p ${pv} · q ${q[i]}`}
+          </text>
+        </g>
+      ))}
+      <rect x={490} y={36} width={216} height={176} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      {series.map((sr, k) => (
+        <g key={sr.t}>
+          <rect x={504} y={52 + k * 24} width={12} height={12} fill={sr.c} fillOpacity={0.6} />
+          <text x={522} y={62 + k * 24} fontSize={10.5} fontWeight={700} fill={ink}>
+            {sr.t}
+          </text>
+        </g>
+      ))}
+      <Lines x={504} y={140} lines={[`KL(p‖q) = ${sum(a).toFixed(4)}`, `KL(q‖p) = ${sum(b).toFixed(4)}`, `PSI = ${sum(s).toFixed(4)} (합)`]} size={10.5} anchor="start" color={ink} weight={800} gap={1.55} />
+    </DiagramFrame>
+  );
+}
+
+export function PsiNullDistribution() {
+  // 본문 코드(시드 0): 드리프트가 전혀 없는 균등분포에서 PSI를 500번(구간 10개, 학습 표본 1만). 운영 3,000명: 모두 0.02 미만(평균 0.0039).
+  // 운영 100명: 평균 0.099(이론 0.091), 0.1 초과 39.8%, 0.3 이상 3번. 구간 폭 0.01의 도수.
+  const h100 = [0, 5, 8, 16, 32, 51, 41, 51, 53, 44, 47, 26, 24, 24, 19, 18, 12, 5, 4, 6, 2, 2, 1, 1, 1, 1, 2, 1, 0, 0];
+  const h3000 = [498, 2];
+  const G = { left: 60, top: 30, width: 460, height: 180 };
+  const sx = linear(0, 0.3, G.left, G.left + G.width);
+  const sy = linear(0, 60, G.top + G.height, G.top);
+  const bw = sx(0.01) - sx(0);
+  return (
+    <DiagramFrame
+      title="바뀐 것이 없어도 PSI는 0이 아니다: 표본이 작으면 경보가 수시로 울린다"
+      caption="본문 코드처럼 학습 분포와 운영 분포가 완전히 같은(드리프트가 없는) 상황에서 PSI를 500번 잰 분포다(구간 10개, 학습 표본 1만 개). 운영 표본이 3,000명이면 500번 모두 0.02 미만이라 평균 0.004로 경계와 멀다(왼쪽 끝의 가는 막대, 도수 498이라 잘라 그림). 운영 표본이 100명이면 표본 오차만으로 PSI가 넓게 퍼져 평균이 0.099(이론값 (B − 1)(1/n + 1/m) ≈ 0.091)가 되고, 40%가 '관찰 필요' 경계 0.1을 넘는다. 아무 일도 없는데 열 번 중 네 번 경보가 나는 셈이다. 경계값을 고정하기보다, 그 표본 크기에서 드리프트가 없을 때 PSI가 어떻게 분포하는지와 비교해야 한다."
+      viewBox="0 0 720 256"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]} yTicks={[0, 20, 40, 60]} xLabel="드리프트가 없을 때 잰 PSI" yLabel="횟수 (500번 중)" />
+      <rect x={sx(0.1)} y={G.top} width={sx(0.3) - sx(0.1)} height={G.height} fill={colors.red} fillOpacity={0.05} />
+      {h100.map((v, i) => (
+        <rect key={i} x={sx(i * 0.01) + 1} y={sy(v)} width={bw - 2} height={sy(0) - sy(v)} fill={colors.orange} fillOpacity={0.6} />
+      ))}
+      {h3000.map((v, i) => (
+        <rect key={`k${i}`} x={sx(i * 0.01) + 1} y={sy(Math.min(v, 60))} width={bw - 2} height={sy(0) - sy(Math.min(v, 60))} fill={colors.blue} fillOpacity={0.75} />
+      ))}
+      <text x={sx(0.012)} y={sy(58)} fontSize={9.5} fontWeight={800} fill={colors.blue}>
+        ↑ 498 (잘림)
+      </text>
+      {[0.1, 0.2].map((t) => (
+        <g key={t}>
+          <line x1={sx(t)} x2={sx(t)} y1={G.top} y2={G.top + G.height} stroke={colors.red} strokeWidth={1.4} strokeDasharray="5 3" />
+          <text x={sx(t) + 4} y={G.top + 12} fontSize={9.5} fontWeight={800} fill={colors.red}>
+            {t === 0.1 ? "0.1 관찰" : "0.2 재학습 검토"}
+          </text>
+        </g>
+      ))}
+      <rect x={540} y={36} width={166} height={176} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <rect x={554} y={52} width={12} height={12} fill={colors.blue} fillOpacity={0.75} />
+      <text x={572} y={62} fontSize={10.5} fontWeight={800} fill={colors.blue}>
+        운영 3,000명
+      </text>
+      <Lines x={554} y={82} lines={["평균 0.0039", "0.1 초과 0%"]} size={10} anchor="start" color={ink} weight={600} gap={1.45} />
+      <rect x={554} y={122} width={12} height={12} fill={colors.orange} fillOpacity={0.6} />
+      <text x={572} y={132} fontSize={10.5} fontWeight={800} fill={colors.orange}>
+        운영 100명
+      </text>
+      <Lines x={554} y={152} lines={["평균 0.099 (이론 0.091)", "0.1 초과 40%", "0.3 이상 3번(그림 밖)"]} size={10} anchor="start" color={ink} weight={600} gap={1.45} />
+    </DiagramFrame>
+  );
+}
+
+export function MultipleTesting() {
+  // 특징 k개를 각각 유의수준 5%로 검사할 때 거짓 경보가 하나 이상 날 확률 1 − 0.95^k, 본페로니(0.05/k) 후 1 − (1 − 0.05/k)^k.
+  const G = { left: 64, top: 26, width: 420, height: 186 };
+  const sx = linear(1, 100, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const raw = (k: number) => 1 - 0.95 ** k;
+  const bon = (k: number) => 1 - (1 - 0.05 / k) ** k;
+  return (
+    <DiagramFrame
+      title="검사가 많으면 경보도 많다: 다중 비교와 본페로니 보정"
+      caption="아무것도 바뀌지 않았는데 특징 k개를 각각 유의수준 5%로 검사하면, 거짓 경보가 하나 이상 날 확률은 1 − 0.95^k로 빠르게 커진다(빨강). 특징 14개면 이미 50%를 넘고, 본문의 50개면 92%다. 유의수준을 검사 수로 나누는 본페로니 보정(0.05/k)을 하면 이 확률이 k와 상관없이 약 5%로 묶인다(초록). 거짓 발견의 비율을 통제하는 벤자미니–호크버그 방법도 같은 목적이다. 거짓 경보가 잦으면 사람들이 경보를 무시하게 되어(경보 피로) 진짜 경보까지 묻히므로, 이것은 통계의 문제이자 운영의 문제다."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="검사하는 특징 수 k" yLabel="거짓 경보 ≥ 1번" />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(0.05)} y2={sy(0.05)} stroke={colors.green} strokeDasharray="3 3" strokeOpacity={0.5} />
+      <path d={linePath(sample(raw, 1, 100, 200).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.6} />
+      <path d={linePath(sample(bon, 1, 100, 200).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.6} />
+      <circle cx={sx(50)} cy={sy(raw(50))} r={5} fill={colors.red} />
+      <text x={sx(50) + 8} y={sy(raw(50)) + 16} fontSize={10.5} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`k = 50: ${raw(50).toFixed(2)}`}
+      </text>
+      <circle cx={sx(50)} cy={sy(bon(50))} r={5} fill={colors.green} />
+      <text x={sx(50) + 8} y={sy(bon(50)) - 8} fontSize={10.5} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {`본페로니 후 ${bon(50).toFixed(3)}`}
+      </text>
+      <circle cx={sx(14)} cy={sy(raw(14))} r={4} fill={colors.red} />
+      <text x={sx(14) + 8} y={sy(raw(14)) + 14} fontSize={9.5} fontWeight={700} fill={colors.red}>
+        {`k = 14: ${(raw(14) * 100).toFixed(0)}%`}
+      </text>
+      <rect x={510} y={36} width={196} height={170} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={524} y={58} fontSize={11.5} fontWeight={800} fill={ink}>
+        특징 50개, 각 5%
+      </text>
+      <Lines x={524} y={84} lines={["보정 없음: 1 − 0.95⁵⁰", `= ${raw(50).toFixed(2)}`, "본페로니: 0.05/50 = 0.001", `→ ${bon(50).toFixed(3)}`]} size={10.5} anchor="start" color={ink} weight={700} gap={1.6} />
+      <text x={524} y={190} fontSize={9.5} fill={inkSecondary}>
+        경보 피로 → 진짜 경보도 묻힌다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function BbseCorrection() {
+  // BBSE(이진): 운영 예측 양성 비율 μ = TPR·q + FPR·(1 − q). 본문 코드: TPR 0.8, FPR 0.1, μ = 0.31 → q = 0.30.
+  const tpr = 0.8;
+  const fpr = 0.1;
+  const mu = (q: number) => tpr * q + fpr * (1 - q);
+  const G = { left: 64, top: 26, width: 260, height: 190 };
+  const sx = linear(0, 1, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const q0 = (0.31 - fpr) / (tpr - fpr);
+  return (
+    <DiagramFrame
+      title="라벨 드리프트를 라벨 없이: 예측 양성 비율에서 실제 양성 비율로"
+      caption="정답 비율 P(y)만 바뀌고 클래스 안의 모습 P(x | y)는 그대로라면, 운영에서 예측 양성 비율 μ와 실제 양성 비율 q 사이에 μ = TPR·q + FPR·(1 − q)라는 직선 관계가 생긴다(TPR, FPR은 검증 데이터에서 재 둔 값). 본문 코드의 분류기(TPR 0.8, FPR 0.1)라면 μ는 0.1~0.8 사이로 눌린다. 운영에서 예측 양성 비율 0.31을 세었다면 직선을 거꾸로 따라가 실제 양성 비율 (0.31 − 0.1)/(0.8 − 0.1) = 0.30을 얻는다. 예측 비율을 그대로 믿으면 위양성만큼 부풀려진 값을 읽게 된다. 7주차 심화의 채점관 보정(Rogan–Gladen)과 똑같은 식이다. P(x | y)까지 바뀌는 개념 드리프트가 함께 오면 이 추정도 틀린다."
+      viewBox="0 0 720 256"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.25, 0.5, 0.75, 1]} yTicks={[0, 0.25, 0.5, 0.75, 1]} xLabel="실제 양성 비율 q" yLabel="예측 양성 비율 μ" />
+      <line x1={sx(0)} y1={sy(0)} x2={sx(1)} y2={sy(1)} stroke={inkMuted} strokeDasharray="4 3" />
+      <path d={linePath([0, 1].map((q) => [sx(q), sy(mu(q))] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.6} />
+      <line x1={G.left} x2={sx(q0)} y1={sy(0.31)} y2={sy(0.31)} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="4 3" />
+      <line x1={sx(q0)} x2={sx(q0)} y1={sy(0.31)} y2={sy(0)} stroke={colors.green} strokeWidth={1.6} strokeDasharray="4 3" />
+      <circle cx={sx(q0)} cy={sy(0.31)} r={4.5} fill={colors.violet} />
+      <text x={G.left + 6} y={sy(0.31) - 6} fontSize={10} fontWeight={800} fill={colors.orange}>
+        운영 예측 양성 0.31
+      </text>
+      <text x={sx(q0) + 6} y={sy(0.06)} fontSize={10} fontWeight={800} fill={colors.green}>
+        {`실제 ${q0.toFixed(2)}`}
+      </text>
+      <Lines x={sx(0.5)} y={sy(0.86)} lines={["μ = 0.8q + 0.1(1 − q)"]} size={10} anchor="start" color={colors.violet} weight={800} />
+      <rect x={370} y={40} width={336} height={170} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={386} y={64} fontSize={11.5} fontWeight={800} fill={ink}>
+        같은 식, 다른 장면
+      </text>
+      <Lines x={386} y={90} lines={["드리프트(BBSE): 분류기의 예측 비율 → 실제 양성 비율", "채점관 보정(7주차): 채점관의 통과율 → 실제 정확도"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.6} />
+      <text x={386} y={138} fontSize={11} fontWeight={800} fill={colors.green} fontFamily={mono}>
+        q = (μ − FPR) / (TPR − FPR)
+      </text>
+      <Lines x={386} y={166} lines={["클래스가 여럿이면 혼동 행렬 C로 μ = C·w를 풀어", "새 비율 q = w ⊙ p를 얻는다"]} size={10} anchor="start" color={inkSecondary} weight={600} gap={1.5} />
     </DiagramFrame>
   );
 }
