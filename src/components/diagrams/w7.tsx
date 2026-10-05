@@ -2077,3 +2077,609 @@ export function VlmArchitecture() {
     </DiagramFrame>
   );
 }
+
+const INFONCE_COS = [
+  [0.8, 0.2, 0.3, 0.7, 0.1, 0.25],
+  [0.15, 0.85, 0.2, 0.1, 0.3, 0.05],
+  [0.3, 0.25, 0.75, 0.2, 0.15, 0.4],
+  [0.65, 0.1, 0.2, 0.8, 0.05, 0.2],
+  [0.05, 0.35, 0.1, 0.0, 0.9, 0.2],
+  [0.2, 0.0, 0.45, 0.15, 0.25, 0.8],
+];
+
+export function InfonceMatrix() {
+  // 예시 코사인 유사도 6 × 6(대각선이 정답 짝), τ = 0.1. 행 0에는 헷갈리는 오답(열 3, 0.7)이 있다.
+  const tau = 0.1;
+  const N = 6;
+  const c = 30;
+  const x0 = 60;
+  const y0 = 40;
+  const row = INFONCE_COS[0].map((v) => v / tau);
+  const mx = Math.max(...row);
+  const ex = row.map((v) => Math.exp(v - mx));
+  const z = ex.reduce((a, b) => a + b, 0);
+  const P = ex.map((v) => v / z);
+  const G = P.map((p, j) => p - (j === 0 ? 1 : 0));
+  const bx = linear(-0.35, 0.35, 496, 692);
+  const shade = (v: number) => Math.max(0.05, Math.min(0.9, (v + 0.05) / 0.95));
+  return (
+    <DiagramFrame
+      title="InfoNCE는 N지선다 분류다: 정답은 당기고, 오답은 확률만큼 민다"
+      caption="왼쪽: 짝지은 이미지 6장과 캡션 6개의 코사인 유사도 예시다. 대각선(테두리)이 정답 짝이고, 나머지 30칸이 따로 모을 필요 없는 오답(in-batch negatives)이다. 행 하나는 '이미지 i의 짝은 6개 중 무엇인가'를 맞히는 6지선다 분류다. 학습 전처럼 모든 유사도가 같으면 손실은 ln 6 ≈ 1.79에서 출발한다. 오른쪽: 행 0을 온도 τ = 0.1로 softmax한 확률 P와 로짓 기울기 P − I다. 정답 칸은 P − 1 < 0이라 경사하강이 유사도를 올리고(당김), 오답 칸은 그 칸의 확률만큼 내린다(밂). 정답과 헷갈리는 캡션 3(유사도 0.7)이 미는 힘의 거의 전부(0.27)를 차지하고, 쉬운 오답들은 0.01도 안 된다. 대조 학습은 어려운 오답을 저절로 골라 집중한다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <text x={x0} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        유사도 u_i · v_j (행: 이미지, 열: 캡션)
+      </text>
+      {INFONCE_COS.map((r, i) =>
+        r.map((v, j) => (
+          <g key={`${i}${j}`}>
+            <rect x={x0 + j * c} y={y0 + i * c} width={c} height={c} fill={colors.violet} fillOpacity={shade(v)} stroke="var(--surface-card)" strokeWidth={1.5} />
+            <text x={x0 + j * c + c / 2} y={y0 + i * c + 19} textAnchor="middle" fontSize={9.5} fontWeight={i === j ? 800 : 500} fill={v > 0.55 ? "#fff" : ink}>
+              {v.toFixed(2).replace(/^0/, "")}
+            </text>
+          </g>
+        )),
+      )}
+      {Array.from({ length: N }, (_, i) => (
+        <rect key={`d${i}`} x={x0 + i * c + 1} y={y0 + i * c + 1} width={c - 2} height={c - 2} fill="none" stroke={colors.green} strokeWidth={2.4} />
+      ))}
+      <rect x={x0 - 3} y={y0 - 3} width={N * c + 6} height={c + 6} fill="none" stroke={colors.orange} strokeWidth={1.6} strokeDasharray="4 3" />
+      <text x={x0 - 8} y={y0 + 19} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.orange}>
+        행 0
+      </text>
+      {Array.from({ length: N }, (_, j) => (
+        <text key={`c${j}`} x={x0 + j * c + c / 2} y={y0 + N * c + 14} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {`캡션 ${j}`}
+        </text>
+      ))}
+      <Lines x={x0} y={y0 + N * c + 34} lines={["초록 테두리: 정답 짝, 나머지: in-batch 오답"]} size={10} anchor="start" color={inkSecondary} />
+      <line x1={320} y1={14} x2={320} y2={244} stroke="var(--border-hairline)" />
+      <text x={336} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        행 0의 softmax (τ = 0.1)와 기울기 P − I
+      </text>
+      <line x1={bx(0)} x2={bx(0)} y1={40} y2={214} stroke={inkMuted} />
+      <text x={466} y={40} textAnchor="end" fontSize={9.5} fontWeight={700} fill={inkSecondary}>
+        P
+      </text>
+      <text x={bx(0)} y={36} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={inkSecondary}>
+        P − I
+      </text>
+      {P.map((p, j) => {
+        const y = 46 + j * 28;
+        const g = G[j];
+        return (
+          <g key={j}>
+            <text x={336} y={y + 13} fontSize={10} fontWeight={j === 0 || j === 3 ? 800 : 500} fill={j === 0 ? colors.green : j === 3 ? colors.red : ink}>
+              {`캡션 ${j}${j === 0 ? " (정답)" : j === 3 ? " (헷갈림)" : ""}`}
+            </text>
+            <text x={466} y={y + 13} textAnchor="end" fontSize={10} fill={inkSecondary} fontFamily={mono}>
+              {p.toFixed(3)}
+            </text>
+            <rect x={Math.min(bx(0), bx(g))} y={y + 2} width={Math.max(1, Math.abs(bx(g) - bx(0)))} height={16} rx={2} fill={g < 0 ? colors.green : colors.red} fillOpacity={0.6} />
+            <text x={g < 0 ? bx(g) - 4 : bx(g) + 4} y={y + 14} textAnchor={g < 0 ? "end" : "start"} fontSize={9.5} fontWeight={800} fill={g < 0 ? colors.green : colors.red}>
+              {(g < 0 ? "−" : "+") + Math.abs(g).toFixed(3)}
+            </text>
+          </g>
+        );
+      })}
+      <text x={bx(-0.18)} y={234} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.green}>
+        ← 유사도를 올린다(당김)
+      </text>
+      <text x={bx(0.18)} y={234} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.red}>
+        내린다(밂) →
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function TemperatureFocus() {
+  // 같은 행의 코사인 유사도: 정답 0.8, 오답 0.7(헷갈림) · 0.3 · 0.25 · 0.2 · 0.1. 오답들이 받는 미는 힘(P_ij)의 몫과 정답 확률 P_ii를 τ별로.
+  const pos = 0.8;
+  const negs = [0.7, 0.3, 0.25, 0.2, 0.1];
+  const taus = [
+    { t: 0.5, c: colors.blue },
+    { t: 0.1, c: colors.violet },
+    { t: 0.05, c: colors.red },
+  ];
+  const share = (t: number) => {
+    const e = negs.map((s) => Math.exp((s - pos) / t));
+    const z = e.reduce((a, b) => a + b, 0);
+    return { share: e.map((v) => v / z), pii: 1 / (1 + z) };
+  };
+  const G = { left: 60, top: 30, width: 430, height: 170 };
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const gw = G.width / negs.length;
+  return (
+    <DiagramFrame
+      title="온도 τ: 미는 힘을 가장 어려운 오답에 얼마나 몰아줄 것인가"
+      caption="한 행에서 정답의 유사도가 0.8, 오답 다섯의 유사도가 0.7(헷갈리는 오답) · 0.3 · 0.25 · 0.2 · 0.1이라고 하자. 막대는 오답들이 받는 미는 힘(확률 P_ij)을 오답끼리 나눈 몫이다. τ = 0.5면 힘이 여러 오답에 고르게 퍼지고(가장 어려운 오답 40%), τ = 0.1이면 96%, τ = 0.05면 99.9%가 가장 어려운 오답 하나에 몰린다. 작은 τ는 어려운 오답을 세게 다루지만, 그 오답이 사실 같은 뜻인 거짓 오답이면 그것을 세게 밀어내는 부작용이 커진다. 오른쪽 숫자는 정답 확률 P_ii다. τ가 크면 정답과 오답을 가르는 신호가 약하다. CLIP은 τ를 학습하는 파라미터로 두었다(0.07에서 시작)."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Axes {...G} sx={linear(0, 1, G.left, G.left + G.width)} sy={sy} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} yLabel="미는 힘의 몫" />
+      {negs.map((s, i) => (
+        <g key={s}>
+          {taus.map((o, k) => {
+            const v = share(o.t).share[i];
+            const x = G.left + i * gw + 12 + k * 24;
+            return (
+              <g key={o.t}>
+                <rect x={x} y={sy(v)} width={20} height={Math.max(0.8, sy(0) - sy(v))} rx={2} fill={o.c} fillOpacity={0.6} />
+                {(i === 0 || o.t === 0.5) && (
+                  <text x={x + 10} y={sy(v) - 4} textAnchor="middle" fontSize={8.5} fontWeight={800} fill={o.c}>
+                    {`${Math.round(v * 1000) / 10}`}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+          <text x={G.left + i * gw + gw / 2} y={G.top + G.height + 15} textAnchor="middle" fontSize={10} fontWeight={i === 0 ? 800 : 500} fill={i === 0 ? colors.red : inkSecondary}>
+            {`오답 ${s}`}
+          </text>
+        </g>
+      ))}
+      <text x={G.left + gw / 2} y={G.top + G.height + 30} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={colors.red}>
+        (헷갈리는 오답)
+      </text>
+      <rect x={520} y={34} width={186} height={170} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={534} y={56} fontSize={11.5} fontWeight={800} fill={ink}>
+        온도별
+      </text>
+      <text x={694} y={56} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+        정답 확률 P_ii
+      </text>
+      {taus.map((o, k) => (
+        <g key={o.t}>
+          <rect x={534} y={72 + k * 32} width={14} height={12} fill={o.c} fillOpacity={0.6} />
+          <text x={554} y={82 + k * 32} fontSize={11} fontWeight={800} fill={o.c}>
+            {`τ = ${o.t}`}
+          </text>
+          <text x={694} y={82 + k * 32} textAnchor="end" fontSize={11} fontWeight={800} fill={ink} fontFamily={mono}>
+            {share(o.t).pii.toFixed(2)}
+          </text>
+        </g>
+      ))}
+      <Lines x={534} y={180} lines={["작은 τ: 어려운 오답에 집중", "큰 τ: 고르게, 신호는 약하게"]} size={9.5} anchor="start" color={inkSecondary} weight={700} gap={1.45} />
+    </DiagramFrame>
+  );
+}
+
+export function InfonceBound() {
+  // I(U; V) ≥ ln N − L. 손실은 0 아래로 못 가므로 확인할 수 있는 정보량은 최대 ln N nats. 배치 32 → 3.47, 32,768 → 10.4.
+  const G = { left: 64, top: 26, width: 400, height: 180 };
+  const sx = log10Scale(2, 1e5, G.left, G.left + G.width);
+  const sy = linear(0, 12, G.top + G.height, G.top);
+  const marks = [32, 256, 4096, 32768];
+  return (
+    <DiagramFrame
+      title="배치 크기 N이 정하는 상한: InfoNCE로 확인할 수 있는 정보는 ln N nats까지"
+      caption="InfoNCE 손실 L에 대해 상호정보량의 하한 I(U; V) ≥ ln N − L이 성립한다. 손실을 줄이는 것은 이 하한을 올리는 일이지만, 손실은 0 아래로 내려갈 수 없으므로 배치 크기 N으로 확인할 수 있는 정보량은 최대 ln N이다(가로축은 로그 눈금이라 직선으로 보인다). 배치 32개로는 약 3.47 nats, CLIP이 쓴 배치 32,768개로는 약 10.4 nats가 한계다. 대신 유사도 행렬이 N²칸이라 배치 32,768이면 약 10억 7천만 칸이 되어, CLIP은 이 행렬을 여러 GPU에 나눠 계산했다. 이 하한은 느슨해서 실제 상호정보량을 잘 추정하지는 못한다."
+      viewBox="0 0 720 246"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[10, 100, 1e3, 1e4, 1e5]} yTicks={[0, 3, 6, 9, 12]} fmtX={(v) => (v >= 1e3 ? `${v / 1e3}k` : String(v))} xLabel="배치 크기 N (로그 눈금)" yLabel="ln N (nats)" />
+      <path d={`${linePath(sample((u) => Math.log(10 ** u), Math.log10(2), 5, 80).map(([u, y]) => [sx(10 ** u), sy(y)] as [number, number]))} L${sx(1e5)},${sy(0)} L${sx(2)},${sy(0)} Z`} fill={colors.blue} fillOpacity={0.08} />
+      <path d={linePath(sample((u) => Math.log(10 ** u), Math.log10(2), 5, 80).map(([u, y]) => [sx(10 ** u), sy(y)] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      {marks.map((n) => (
+        <g key={n}>
+          <circle cx={sx(n)} cy={sy(Math.log(n))} r={4.5} fill={colors.blue} />
+          <text x={sx(n) - 6} y={sy(Math.log(n)) - 8} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.blue} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {`N = ${n.toLocaleString("en-US")}: ${Math.log(n).toFixed(2)}`}
+          </text>
+        </g>
+      ))}
+      <text x={sx(120)} y={sy(1.6)} fontSize={10} fontWeight={700} fill={colors.blue}>
+        확인할 수 있는 정보량의 범위
+      </text>
+      <rect x={490} y={36} width={216} height={160} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={504} y={58} fontSize={11.5} fontWeight={800} fill={ink}>
+        유사도 행렬 N × N
+      </text>
+      {[
+        [32, "1,024칸"],
+        [256, "65,536칸"],
+        [4096, "약 1,680만 칸"],
+        [32768, "약 10.7억 칸"],
+      ].map(([n, t], i) => (
+        <g key={n}>
+          <text x={504} y={84 + i * 22} fontSize={10.5} fill={inkSecondary} fontFamily={mono}>
+            {(n as number).toLocaleString("en-US")}
+          </text>
+          <text x={694} y={84 + i * 22} textAnchor="end" fontSize={10.5} fontWeight={800} fill={ink}>
+            {t}
+          </text>
+        </g>
+      ))}
+      <Lines x={504} y={180} lines={["오답이 많을수록 어려운 오답도 섞인다"]} size={9.5} anchor="start" color={inkSecondary} weight={700} />
+    </DiagramFrame>
+  );
+}
+
+export function WilsonInterval() {
+  // 본문 코드: 15/20, 17/20, 20/20, 170/200의 95% 구간. 정규 근사(왈드)와 윌슨. 오른쪽: 필요한 문항 수 n ≈ 1.96²·p(1 − p)/m².
+  const cases = [
+    { t: "15/20", wald: [0.56, 0.94], wil: [0.531, 0.888], p: 0.75 },
+    { t: "17/20", wald: [0.694, 1.006], wil: [0.64, 0.948], p: 0.85 },
+    { t: "20/20", wald: [1, 1], wil: [0.839, 1.0], p: 1 },
+    { t: "170/200", wald: [0.801, 0.899], wil: [0.794, 0.893], p: 0.85 },
+  ];
+  const G = { left: 56, top: 30, width: 320, height: 176 };
+  const gx = (i: number) => G.left + 40 + i * 78;
+  const sy = linear(0.5, 1.05, G.top + G.height, G.top);
+  const R = { left: 470, top: 30, width: 230, height: 176 };
+  const rx = linear(0.02, 0.2, R.left, R.left + R.width);
+  const ry = log10Scale(10, 3000, R.top + R.height, R.top);
+  const need = (p: number, m: number) => (1.96 ** 2 * p * (1 - p)) / (m * m);
+  return (
+    <DiagramFrame
+      title="정확도 하나의 불확실성: 윌슨 구간과 필요한 문항 수"
+      caption="왼쪽: 본문 코드의 네 경우에 대한 95% 구간이다. 회색은 흔히 쓰는 정규 근사(p̂ ± 1.96 × 표준오차), 파랑은 윌슨 구간이다. 17/20에서 정규 근사의 위쪽 끝은 1.006으로 1을 넘고, 20/20에서는 표준오차가 0이라 구간이 [1, 1]로 줄어 '확실히 100%'라고 주장하게 된다. 윌슨 구간은 20/20에서도 [0.84, 1.00]이라 진짜 정확도가 84%일 가능성을 남긴다. 같은 0.85라도 170/200이면 구간이 훨씬 좁다. 오른쪽: 오차 범위 ±m(95% 신뢰)을 얻는 데 필요한 문항 수다(세로축 로그 눈금). 가장 보수적인 p = 0.5에서 ±0.10이면 97문항, ±0.05면 385문항, ±0.02면 2,401문항이고, 정확도가 0.9 근처라면 ±0.05에 약 139문항이면 된다. 오차를 반으로 줄이려면 문항이 네 배 필요하다."
+      viewBox="0 0 720 256"
+      minWidth={620}
+    >
+      <text x={G.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        95% 구간: 정규 근사 vs 윌슨
+      </text>
+      <Axes {...G} sx={linear(0, 1, G.left, G.left + G.width)} sy={sy} yTicks={[0.5, 0.6, 0.7, 0.8, 0.9, 1]} />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(1)} y2={sy(1)} stroke={colors.red} strokeDasharray="4 3" strokeOpacity={0.7} />
+      {cases.map((c, i) => (
+        <g key={c.t}>
+          <line x1={gx(i) - 9} x2={gx(i) - 9} y1={sy(c.wald[0])} y2={sy(c.wald[1])} stroke={inkMuted} strokeWidth={5} strokeLinecap="round" />
+          <line x1={gx(i) + 9} x2={gx(i) + 9} y1={sy(c.wil[0])} y2={sy(c.wil[1])} stroke={colors.blue} strokeWidth={5} strokeLinecap="round" />
+          <circle cx={gx(i)} cy={sy(c.p)} r={3.5} fill={ink} />
+          <text x={gx(i)} y={G.top + G.height + 15} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+            {c.t}
+          </text>
+        </g>
+      ))}
+      <text x={gx(1) - 12} y={sy(1.006) - 6} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.red}>
+        1.006 &gt; 1
+      </text>
+      <text x={gx(2) - 14} y={sy(1) + 14} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.red}>
+        [1, 1]
+      </text>
+      <text x={gx(2) + 14} y={sy(0.839) + 4} fontSize={9.5} fontWeight={800} fill={colors.blue}>
+        0.84
+      </text>
+      <line x1={G.left + 6} x2={G.left + 18} y1={G.top + G.height + 32} y2={G.top + G.height + 32} stroke={inkMuted} strokeWidth={5} />
+      <text x={G.left + 22} y={G.top + G.height + 36} fontSize={10} fill={inkSecondary}>
+        정규 근사
+      </text>
+      <line x1={G.left + 86} x2={G.left + 98} y1={G.top + G.height + 32} y2={G.top + G.height + 32} stroke={colors.blue} strokeWidth={5} />
+      <text x={G.left + 102} y={G.top + G.height + 36} fontSize={10} fill={colors.blue}>
+        윌슨
+      </text>
+      <line x1={420} y1={14} x2={420} y2={244} stroke="var(--border-hairline)" />
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        필요한 문항 수
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0.02, 0.05, 0.1, 0.15, 0.2]} yTicks={[10, 100, 1000]} fmtX={(v) => `±${v}`} xLabel="오차 범위 m" />
+      <path d={linePath(sample((m) => need(0.5, m), 0.02, 0.2, 120).map(([a, b]) => [rx(a), ry(b)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <path d={linePath(sample((m) => need(0.9, m), 0.02, 0.2, 120).map(([a, b]) => [rx(a), ry(b)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2} strokeDasharray="5 3" />
+      {[
+        [0.1, 97],
+        [0.05, 385],
+        [0.02, 2401],
+      ].map(([m, n]) => (
+        <g key={m}>
+          <circle cx={rx(m)} cy={ry(need(0.5, m))} r={4} fill={colors.violet} />
+          <text x={rx(m) + 6} y={ry(need(0.5, m)) - 6} fontSize={9.5} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+            {n.toLocaleString("en-US")}
+          </text>
+        </g>
+      ))}
+      <circle cx={rx(0.05)} cy={ry(need(0.9, 0.05))} r={4} fill={colors.green} />
+      <text x={rx(0.05) + 6} y={ry(need(0.9, 0.05)) + 14} fontSize={9.5} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        139
+      </text>
+      <text x={rx(0.2)} y={ry(60)} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.violet}>
+        p = 0.5
+      </text>
+      <text x={rx(0.2)} y={ry(14)} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.green}>
+        p = 0.9
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function PairedComparison() {
+  // 본문: v1 → v2에서 엇갈린 문항 b = 4, c = 2 → McNemar p = 0.6875. 15 : 5면 p ≈ 0.041.
+  // 짝지은 부트스트랩(5000번)의 정확도 차이 분포(본문 코드와 같은 데이터·시드): 95% 구간 [−0.15, 0.35].
+  const binom = (m: number) => Array.from({ length: m + 1 }, (_, k) => {
+    let c = 1;
+    for (let i = 0; i < k; i++) c = (c * (m - i)) / (i + 1);
+    return c / 2 ** m;
+  });
+  const panel = (ox: number, m: number, b: number, p: number, title: string) => {
+    const pmf = binom(m);
+    const G = { left: ox + 14, top: 40, width: 190, height: 140 };
+    const bw = G.width / (m + 1);
+    const top = Math.max(...pmf);
+    const sy = linear(0, top * 1.12, G.top + G.height, G.top);
+    const lo = Math.min(b, m - b);
+    const hi = Math.max(b, m - b);
+    return (
+      <g>
+        <text x={ox + 14} y={22} fontSize={11} fontWeight={800} fill={ink}>
+          {title}
+        </text>
+        <line x1={G.left} x2={G.left + G.width} y1={sy(0)} y2={sy(0)} stroke={inkMuted} />
+        {pmf.map((v, k) => (
+          <rect key={k} x={G.left + k * bw + 1} y={sy(v)} width={bw - 2} height={sy(0) - sy(v)} fill={k <= lo || k >= hi ? colors.red : inkMuted} fillOpacity={k <= lo || k >= hi ? 0.6 : 0.3} />
+        ))}
+        {pmf.map((_, k) =>
+          k % (m > 10 ? 5 : 1) === 0 ? (
+            <text key={`t${k}`} x={G.left + k * bw + bw / 2} y={sy(0) + 13} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+              {k}
+            </text>
+          ) : null,
+        )}
+        <text x={G.left + G.width / 2} y={sy(0) + 28} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {`엇갈린 ${m}문항 중 v2만 맞힌 수`}
+        </text>
+        <text x={G.left + b * bw + bw / 2} y={sy(pmf[b]) - 6} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.red}>
+          {`관측 ${b}`}
+        </text>
+        <text x={G.left + 4} y={G.top + 4} fontSize={10.5} fontWeight={800} fill={p < 0.05 ? colors.green : colors.red}>
+          {`p = ${p}`}
+        </text>
+      </g>
+    );
+  };
+  const vals = [-0.3, -0.25, -0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5];
+  const hp = [2, 11, 51, 91, 225, 398, 595, 744, 801, 768, 594, 352, 220, 93, 35, 14, 5];
+  const H = { left: 500, top: 40, width: 200, height: 140 };
+  const hx = linear(-0.325, 0.525, H.left, H.left + H.width);
+  const hy = linear(0, 880, H.top + H.height, H.top);
+  return (
+    <DiagramFrame
+      title="같은 문항으로 비교하기: 엇갈린 문항만 정보를 준다"
+      caption="두 시스템이 같은 20문항을 풀었다. 둘 다 맞히거나 둘 다 틀린 문항은 차이에 대해 아무것도 말해 주지 않으므로, 결과가 엇갈린 문항만 본다. 실력이 같다면 엇갈린 문항이 어느 쪽으로 갈지는 동전 던지기다(막대: 이항분포, 빨강: 관측값만큼 또는 그보다 치우친 경우). 왼쪽: 본문의 v1 → v2는 엇갈린 6문항이 4 : 2로 갈려 p = 0.6875로 전혀 드물지 않다. 가운데: 같은 3 : 1 비율이라도 엇갈린 문항이 20개(15 : 5)는 되어야 p ≈ 0.041로 0.05 아래가 된다. 오른쪽: 문항 번호를 같이 뽑는 짝지은 부트스트랩(5,000번)으로 본 정확도 차이의 분포다. 95% 구간 [−0.15, 0.35]가 0을 포함하므로, 0.10의 개선은 이 골든셋으로는 우연과 구별되지 않는다."
+      viewBox="0 0 720 248"
+      minWidth={640}
+    >
+      {panel(0, 6, 4, 0.6875, "본문: 엇갈린 6문항, 4 : 2")}
+      <line x1={232} y1={14} x2={232} y2={236} stroke="var(--border-hairline)" />
+      {panel(236, 20, 15, 0.041, "엇갈린 20문항, 15 : 5")}
+      <line x1={470} y1={14} x2={470} y2={236} stroke="var(--border-hairline)" />
+      <text x={H.left} y={22} fontSize={11} fontWeight={800} fill={ink}>
+        짝지은 부트스트랩: 정확도 차이
+      </text>
+      <rect x={hx(-0.15)} y={H.top} width={hx(0.35) - hx(-0.15)} height={H.height} fill={colors.blue} fillOpacity={0.08} />
+      {vals.map((v, i) => (
+        <rect key={v} x={hx(v) - 4.5} y={hy(hp[i])} width={9} height={hy(0) - hy(hp[i])} fill={colors.blue} fillOpacity={0.55} />
+      ))}
+      <line x1={H.left} x2={H.left + H.width} y1={hy(0)} y2={hy(0)} stroke={inkMuted} />
+      <line x1={hx(0)} x2={hx(0)} y1={H.top} y2={hy(0)} stroke={colors.red} strokeWidth={1.6} strokeDasharray="4 3" />
+      {[-0.2, 0, 0.2, 0.4].map((t) => (
+        <text key={t} x={hx(t)} y={hy(0) + 13} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+          {t === 0 ? "0" : t.toFixed(1).replace("-", "−")}
+        </text>
+      ))}
+      <text x={hx(0.1)} y={H.top + 12} textAnchor="middle" fontSize={9.5} fontWeight={800} fill={colors.blue}>
+        95% 구간 [−0.15, 0.35]
+      </text>
+      <text x={hx(0) - 4} y={H.top + 32} textAnchor="end" fontSize={9.5} fontWeight={800} fill={colors.red}>
+        0 포함
+      </text>
+      <text x={H.left + H.width / 2} y={hy(0) + 28} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        v2 정확도 − v1 정확도
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function RoganGladen() {
+  // 채점관 통과율 q = se·p + (1 − sp)(1 − p). se = 0.9, sp = 0.8이면 q = 0.2 + 0.7p. q = 0.78 → p ≈ 0.829.
+  const se = 0.9;
+  const sp = 0.8;
+  const q = (p: number) => se * p + (1 - sp) * (1 - p);
+  const G = { left: 64, top: 26, width: 260, height: 190 };
+  const sx = linear(0, 1, G.left, G.left + G.width);
+  const sy = linear(0, 1, G.top + G.height, G.top);
+  const p0 = (0.78 + sp - 1) / (se + sp - 1);
+  return (
+    <DiagramFrame
+      title="채점관 보정: 관측 통과율에서 진짜 정확도를 거꾸로 푼다"
+      caption="LLM 채점관의 민감도 se(맞은 답을 통과시키는 비율)가 0.9, 특이도 sp(틀린 답을 떨어뜨리는 비율)가 0.8이라면, 진짜 정확도 p인 시스템의 관측 통과율은 q = 0.9p + 0.2(1 − p)다(보라). 대각선(점선)과 비교하면 채점관이 0~1 범위를 0.2~0.9로 눌러 놓는다. 진짜 정확도가 낮을 때는 틀린 답을 20%나 통과시켜 통과율이 부풀려지고, 높을 때는 맞은 답을 10% 떨어뜨려 깎인다. 관측 통과율 0.78을 거꾸로 따라가면 진짜 정확도는 (0.78 + 0.8 − 1)/(0.9 + 0.8 − 1) ≈ 0.829다(Rogan–Gladen). 분모 se + sp − 1이 0에 가까우면, 즉 직선이 수평에 가까우면 거꾸로 풀기가 폭발하므로 먼저 채점관이 쓸 만한지(Cohen's κ) 확인한다."
+      viewBox="0 0 720 256"
+      minWidth={580}
+    >
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 0.25, 0.5, 0.75, 1]} yTicks={[0, 0.25, 0.5, 0.75, 1]} xLabel="진짜 정확도 p" yLabel="채점관 통과율 q" />
+      <line x1={sx(0)} y1={sy(0)} x2={sx(1)} y2={sy(1)} stroke={inkMuted} strokeDasharray="4 3" />
+      <rect x={G.left} y={sy(0.9)} width={G.width} height={sy(0.2) - sy(0.9)} fill={colors.violet} fillOpacity={0.06} />
+      <path d={linePath([0, 1].map((p) => [sx(p), sy(q(p))] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.6} />
+      <line x1={G.left} x2={sx(p0)} y1={sy(0.78)} y2={sy(0.78)} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="4 3" />
+      <line x1={sx(p0)} x2={sx(p0)} y1={sy(0.78)} y2={sy(0)} stroke={colors.green} strokeWidth={1.6} strokeDasharray="4 3" />
+      <circle cx={sx(p0)} cy={sy(0.78)} r={4.5} fill={colors.violet} />
+      <text x={G.left + 6} y={sy(0.78) - 6} fontSize={10} fontWeight={800} fill={colors.orange}>
+        관측 0.78
+      </text>
+      <text x={sx(p0) + 6} y={sy(0.06)} fontSize={10} fontWeight={800} fill={colors.green}>
+        {`진짜 ${p0.toFixed(3)}`}
+      </text>
+      <Lines x={sx(0.03)} y={sy(0.66)} lines={["채점관이 낼 수 있는 통과율:", "0.2(p = 0) ~ 0.9(p = 1)"]} size={9.5} anchor="start" color={colors.violet} weight={700} gap={1.35} />
+      <rect x={370} y={40} width={336} height={170} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
+      <text x={386} y={64} fontSize={11.5} fontWeight={800} fill={ink}>
+        사람이 채점한 일부 문항으로 채점관을 잰다
+      </text>
+      <Lines x={386} y={90} lines={["민감도 se = 맞은 답 중 통과시킨 비율 (0.9)", "특이도 sp = 틀린 답 중 떨어뜨린 비율 (0.8)"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.6} />
+      <text x={386} y={138} fontSize={11} fontWeight={800} fill={colors.violet} fontFamily={mono}>
+        q = se·p + (1 − sp)(1 − p)
+      </text>
+      <text x={386} y={162} fontSize={11} fontWeight={800} fill={colors.green} fontFamily={mono}>
+        p = (q + sp − 1) / (se + sp − 1)
+      </text>
+      <text x={386} y={190} fontSize={10} fill={inkSecondary}>
+        se, sp도 표본 추정치라 불확실성이 더해진다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function CodeDataBoundary() {
+  // SQL 인젝션은 매개변수화된 쿼리(코드와 데이터의 분리)로 해결됐지만, LLM의 입력은 하나로 이어진 토큰 열이다.
+  const P = "cdb";
+  const seg = (x: number, y: number, w: number, t: string, color: string, dashed = false) => (
+    <g>
+      <rect x={x} y={y} width={w} height={30} rx={4} fill={color} fillOpacity={0.14} stroke={color} strokeWidth={1.4} strokeDasharray={dashed ? "4 3" : undefined} />
+      <text x={x + w / 2} y={y + 19} textAnchor="middle" fontSize={10} fontWeight={700} fill={ink}>
+        {t}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="SQL에는 코드와 데이터의 벽이 있고, LLM에는 없다"
+      caption="위: SQL 인젝션은 걸러 내기 필터로는 늘 우회되다가 매개변수화된 쿼리로 해결됐다. 쿼리의 구조(코드)를 먼저 확정하고 사용자 입력은 나중에 값 자리(?)에만 끼워 넣으므로, 입력에 아무리 교묘한 SQL이 들어 있어도 코드가 될 수 없다. 아래: LLM에게는 시스템 프롬프트, 사용자 질문, 검색 문서, 도구 결과가 모두 하나로 이어진 토큰 열이다. 구분자 태그도 토큰일 뿐이라 '여기부터는 데이터'라는 경계를 모델 바깥의 장치가 강제하지 못한다. 그래서 문서 속 지시를 무시하라는 프롬프트나 탐지 분류기는 쓸모 있는 겹이지만 보장은 아니며, 신뢰하지 않는 텍스트를 읽은 모델은 그 텍스트를 쓴 사람이 조종하고 있다고 가정해야 한다."
+      viewBox="0 0 720 230"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted }} />
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        SQL: 매개변수화된 쿼리 — 구조를 먼저 확정하고 값은 자리에만
+      </text>
+      {seg(20, 34, 300, "SELECT * FROM users WHERE name = ?", colors.blue)}
+      <Arr x1={326} y1={49} x2={360} y2={49} color={inkMuted} marker={`${P}-ink`} />
+      {seg(364, 34, 210, "'; DROP TABLE users; --", colors.red, true)}
+      <text x={584} y={46} fontSize={10.5} fontWeight={800} fill={colors.green}>
+        → 그냥 이상한 이름
+      </text>
+      <text x={584} y={60} fontSize={9.5} fill={inkSecondary}>
+        (값으로만 쓰여 실행되지 않음)
+      </text>
+      <text x={20} y={84} fontSize={10} fill={inkSecondary}>
+        코드(파랑)는 고정, 데이터(빨간 점선)는 ? 자리에만 들어간다
+      </text>
+      <line x1={14} x2={706} y1={100} y2={100} stroke="var(--border-hairline)" />
+      <text x={20} y={122} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        LLM: 모든 입력이 하나의 토큰 열 — 벽이 없다
+      </text>
+      {seg(20, 134, 150, "시스템 프롬프트", colors.blue)}
+      {seg(172, 134, 130, "사용자 질문", colors.blue)}
+      {seg(304, 134, 240, "검색 문서: … 이전 지시를 무시하고 …", colors.red, true)}
+      {seg(546, 134, 154, "도구 결과", colors.red, true)}
+      <path d={`M20,172 L700,172`} stroke={inkMuted} strokeWidth={1.4} />
+      {Array.from({ length: 35 }, (_, i) => (
+        <line key={i} x1={20 + i * 20} x2={20 + i * 20} y1={168} y2={176} stroke={inkMuted} />
+      ))}
+      <text x={360} y={192} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        모델이 보는 것: 이어진 토큰들 (구분자 태그도 토큰일 뿐)
+      </text>
+      <text x={360} y={214} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+        원칙: 신뢰하지 않는 텍스트를 읽은 모델은, 그 텍스트를 쓴 사람이 조종한다고 가정한다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function InjectionPatterns() {
+  // Beurer-Kellner et al.(2025), Debenedetti et al.(2025, CaMeL)의 세 설계 패턴.
+  const P = "inj";
+  const col = (ox: number, title: string, color: string) => (
+    <text x={ox} y={22} fontSize={11.5} fontWeight={800} fill={color}>
+      {title}
+    </text>
+  );
+  return (
+    <DiagramFrame
+      title="모델이 속아도 피해가 없게: 세 가지 설계 패턴"
+      caption="왼쪽: 계획 후 실행. 신뢰하는 사용자 요청만 보고 부를 도구와 순서를 먼저 확정한 뒤 외부 데이터를 읽으므로, 외부 데이터는 어떤 행동을 할지를 바꿀 수 없다(행동의 인자에는 여전히 영향을 줄 수 있다). 가운데: 이중 LLM. 도구 권한이 있는 모델은 신뢰하지 않는 텍스트를 아예 읽지 않는다. 그 텍스트는 권한 없는 격리 모델이 처리하고, 결과는 $결과1 같은 이름표로만 넘어가 권한 있는 모델은 내용을 보지 못한 채 전달만 한다. 오른쪽: 정보 흐름 통제(CaMeL). 권한 있는 모델이 쓴 작은 실행 계획을 인터프리터가 돌리며 모든 값에 출처 꼬리표를 달고, 도구를 부르기 직전마다 정책을 검사한다. 검사는 모델 바깥에서 결정적으로 이루어지므로 모델이 무엇에 속았든 정책을 어기는 호출은 실행되지 않는다."
+      viewBox="0 0 720 262"
+      minWidth={640}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted, red: colors.red }} />
+      {col(14, "① 계획 후 실행", colors.blue)}
+      <Tag x={14} y={36} w={200} h={30} lines={["사용자 요청 (신뢰)"]} color={colors.blue} size={10.5} />
+      <Arr x1={114} y1={68} x2={114} y2={84} color={inkMuted} marker={`${P}-ink`} />
+      <Tag x={14} y={86} w={200} h={40} lines={["계획 확정: 도구 · 순서", "(외부 데이터를 읽기 전에)"]} color={colors.blue} size={10} />
+      <Arr x1={114} y1={128} x2={114} y2={144} color={inkMuted} marker={`${P}-ink`} />
+      <Tag x={14} y={146} w={200} h={30} lines={["외부 데이터 읽기 (불신)"]} color={colors.red} size={10.5} dashed />
+      <Arr x1={114} y1={178} x2={114} y2={194} color={inkMuted} marker={`${P}-ink`} />
+      <Tag x={14} y={196} w={200} h={30} lines={["정해진 도구만 실행"]} color={colors.green} size={10.5} />
+      <text x={14} y={246} fontSize={9.5} fill={inkSecondary}>
+        행동은 못 바꾸지만 인자에는 영향 가능
+      </text>
+      <line x1={232} y1={14} x2={232} y2={250} stroke="var(--border-hairline)" />
+      {col(246, "② 이중 LLM", colors.violet)}
+      <Tag x={246} y={40} w={196} h={40} lines={["권한 있는 LLM", "(도구 O, 불신 텍스트 X)"]} color={colors.violet} size={10} />
+      <Tag x={246} y={150} w={196} h={40} lines={["격리된 LLM", "(도구 X, 불신 텍스트 처리)"]} color={colors.orange} size={10} />
+      <Tag x={246} y={206} w={196} h={28} lines={["메일 · 웹페이지 (불신)"]} color={colors.red} size={10} dashed />
+      <Arr x1={344} y1={205} x2={344} y2={192} color={colors.red} marker={`${P}-red`} />
+      <Arr x1={300} y1={149} x2={300} y2={82} color={inkMuted} marker={`${P}-ink`} />
+      <text x={306} y={118} fontSize={10} fontWeight={800} fill={ink} fontFamily={mono}>
+        $결과1
+      </text>
+      <Lines x={346} y={106} lines={["이름표만 전달,", "내용은 못 본다"]} size={9.5} anchor="start" color={inkSecondary} weight={700} gap={1.35} />
+      <line x1={460} y1={14} x2={460} y2={250} stroke="var(--border-hairline)" />
+      {col(474, "③ 정보 흐름 통제 (CaMeL)", colors.green)}
+      <Tag x={474} y={36} w={232} h={30} lines={["권한 있는 LLM이 실행 계획을 쓴다"]} color={colors.violet} size={10} />
+      <Arr x1={590} y1={68} x2={590} y2={84} color={inkMuted} marker={`${P}-ink`} />
+      <Tag x={474} y={86} w={232} h={40} lines={["인터프리터: 모든 값에", "출처 꼬리표 {user}, {inbox} …"]} color={colors.blue} size={10} />
+      <Arr x1={590} y1={128} x2={590} y2={144} color={inkMuted} marker={`${P}-ink`} />
+      <Tag x={474} y={146} w={232} h={40} lines={["도구 호출 직전 정책 검사", "예: 수신자는 {user} 출처만"]} color={colors.green} size={10} />
+      <Arr x1={590} y1={188} x2={590} y2={204} color={inkMuted} marker={`${P}-ink`} />
+      <Tag x={474} y={206} w={110} h={28} lines={["통과 → 실행"]} color={colors.green} size={10} />
+      <Tag x={596} y={206} w={110} h={28} lines={["위반 → 차단"]} color={colors.red} size={10} />
+      <text x={474} y={250} fontSize={9.5} fill={inkSecondary}>
+        검사는 모델 바깥에서 결정적으로
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function TaintPropagation() {
+  // 본문 코드: request·boss는 {user}, inbox는 {inbox}. summary = f(request, inbox) → {user, inbox}. send_email(boss, summary)는 통과,
+  // 메일에서 만든 hijacked_to는 {inbox}라 정책(수신자 출처 = {user})에 걸려 차단.
+  const P = "tnt";
+  const val = (x: number, y: number, w: number, name: string, tag: string, color: string) => (
+    <g>
+      <rect x={x} y={y} width={w} height={44} rx={7} fill={color} fillOpacity={0.12} stroke={color} strokeWidth={1.5} />
+      <text x={x + w / 2} y={y + 18} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink} fontFamily={mono}>
+        {name}
+      </text>
+      <text x={x + w / 2} y={y + 35} textAnchor="middle" fontSize={10} fontWeight={800} fill={color}>
+        {tag}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="출처 꼬리표는 떨어지지 않는다: 값을 섞으면 출처도 합쳐진다"
+      caption="본문 코드의 흐름이다. 사용자 요청과 사용자가 지정한 수신자(boss)는 {user}, 받은 메일은 {inbox} 꼬리표를 단다. 요약문은 요청과 메일을 함께 재료로 썼으므로 두 꼬리표를 모두 물려받아 {user, inbox}가 된다. 정책은 '수신자는 사용자에게서 나온 값이어야 한다'만 검사하므로, 상사에게 요약을 보내는 호출은 통과한다. 모델이 메일 속 숨은 지시에 속아 수신자를 공격자 주소로 바꾸면, 그 주소는 메일에서 만들어진 값이라 {inbox} 꼬리표를 물려받아 차단된다. 모델이 무엇을 믿었는지와 상관없이 결과가 정해진다. 대신 '보낸 사람에게 답장해 줘'처럼 수신자가 정당하게 문서에서 나오는 작업도 막히므로 사용자 확인으로 꼬리표를 바꿔야 한다."
+      viewBox="0 0 720 250"
+      minWidth={640}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted, green: colors.green, red: colors.red }} />
+      {val(14, 8, 150, "boss", "{user}", colors.blue)}
+      {val(14, 72, 150, "request", "{user}", colors.blue)}
+      {val(14, 150, 150, "inbox (메일)", "{inbox}", colors.red)}
+      <Arr x1={166} y1={94} x2={214} y2={88} color={inkMuted} marker={`${P}-ink`} />
+      <Arr x1={166} y1={164} x2={214} y2={102} color={inkMuted} marker={`${P}-ink`} />
+      {val(218, 72, 160, "summary = f(요청, 메일)", "{user, inbox}", colors.violet)}
+      <Arr x1={166} y1={180} x2={214} y2={184} color={colors.red} marker={`${P}-red`} />
+      {val(218, 160, 160, "hijacked_to (속은 모델)", "{inbox}", colors.red)}
+      <path d={`M166,30 C280,30 360,40 414,58`} fill="none" stroke={inkMuted} strokeWidth={1.3} strokeDasharray="4 3" markerEnd={`url(#${P}-ink)`} />
+      <text x={290} y={28} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        수신자
+      </text>
+      <Tag x={418} y={50} w={150} h={64} lines={["send_email", "(boss, summary)", "수신자 출처 {user}"]} color={colors.green} size={10} />
+      <Tag x={418} y={150} w={150} h={64} lines={["send_email", "(hijacked_to, summary)", "수신자 출처 {inbox}"]} color={colors.red} size={10} />
+      <Arr x1={380} y1={94} x2={414} y2={88} color={inkMuted} marker={`${P}-ink`} />
+      <Arr x1={380} y1={182} x2={414} y2={182} color={colors.red} marker={`${P}-red`} />
+      <Arr x1={570} y1={82} x2={600} y2={82} color={colors.green} marker={`${P}-green`} />
+      <Arr x1={570} y1={182} x2={600} y2={182} color={colors.red} marker={`${P}-red`} />
+      <text x={606} y={86} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        발송 완료
+      </text>
+      <text x={606} y={186} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        차단
+      </text>
+      <text x={418} y={238} fontSize={10} fill={inkSecondary}>
+        정책 검사: 수신자의 출처가 정확히 {"{user}"}인가 (모델 바깥에서)
+      </text>
+    </DiagramFrame>
+  );
+}
