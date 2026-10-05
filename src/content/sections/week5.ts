@@ -747,7 +747,7 @@ const sections: Record<string, SectionMeta> = {
         "id": "w5-kv-cache-rope-c2",
         "question": "KV 캐시로 계산한 출력과 전체를 한 번에 계산한 출력의 관계는?",
         "choices": [
-          "캐시 쪽이 근사값이라 조금 다르다",
+          "캐시 쪽이 근삿값이라 조금 다르다",
           "수치 오차 범위에서 같다",
           "캐시 쪽이 더 정확하다",
           "완전히 다른 값이다"
@@ -771,7 +771,7 @@ const sections: Record<string, SectionMeta> = {
         "id": "w5-kv-cache-rope-c4",
         "question": "RoPE로 회전한 $q$(위치 $m$)와 $k$(위치 $n$)의 내적이 의존하는 것은?",
         "choices": [
-          "$m$과 $n$ 각각의 절대값",
+          "$m$과 $n$ 각각의 절댓값",
           "$m - n$(상대 거리)",
           "$m + n$",
           "문장 전체 길이"
@@ -965,7 +965,7 @@ const sections: Record<string, SectionMeta> = {
         "question": "온라인 softmax로 계산한 attention 출력과 점수를 전부 보고 계산한 출력의 관계는?",
         "choices": [
           "(부동소수점 오차를 빼면) 정확히 같다",
-          "근사값이라 조금 다르다",
+          "근삿값이라 조금 다르다",
           "블록 크기가 클수록만 같아진다",
           "최댓값 토큰만 같다"
         ],

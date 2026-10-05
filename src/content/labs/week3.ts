@@ -789,7 +789,7 @@ for epoch in range(1001):
     {
       id: "w3-lab-norm",
       sectionId: "normalization",
-      title: "BatchNorm과 LayerNorm: 같은 숫자, 다른 축",
+      title: "BatchNorm과 LayerNorm: 평균·분산을 구하는 축의 차이",
       tier: "supplement",
       prompt: `
 두 정규화 층을 \`gamma\`, \`beta\`까지 포함해 구현합니다(\`eps=1e-5\`).
@@ -986,7 +986,7 @@ print(early_stop_epoch([0.9, 0.7, 0.6, 0.62, 0.61, 0.65, 0.5], patience=3))
       prompt: `
 「자동미분의 두 모드」 단계의 두 도구를 구현합니다.
 
-1. \`Dual\` 클래스: 값 \`val\`과 미분 \`dot\`을 함께 들고 다니며 \`+\`, \`*\`(숫자와의 연산 포함)를 지원합니다. 곱은 $(a + b\\varepsilon)(c + d\\varepsilon) = ac + (ad + bc)\\varepsilon$입니다. \`dsin\`, \`dexp\`는 연쇄법칙으로 \`dot\`에 $\\cos$, $\\exp$를 곱합니다.
+1. \`Dual\` 클래스: 값 \`val\`과 미분 \`dot\`을 함께 저장하며 \`+\`, \`*\`(숫자와의 연산 포함)를 지원합니다. 곱은 $(a + b\\varepsilon)(c + d\\varepsilon) = ac + (ad + bc)\\varepsilon$입니다. \`dsin\`, \`dexp\`는 연쇄법칙으로 \`dot\`에 $\\cos$, $\\exp$를 곱합니다.
 2. \`derivative(f, x)\`: \`f(Dual(x, 1.0)).dot\`
 3. 행렬 사슬 $y = W_3 W_2 W_1 x$(선형, 출력 벡터)에 대해 \`jvp(Ws, v)\` $= W_3 W_2 W_1 v$와 \`vjp(Ws, u)\` $= u^\\top W_3 W_2 W_1$(결과는 입력 차원의 1차원 배열)을 **행렬을 미리 곱하지 않고** 벡터를 한 층씩 통과시켜 계산합니다.
 `,

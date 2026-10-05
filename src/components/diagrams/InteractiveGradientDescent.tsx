@@ -53,14 +53,14 @@ export default function InteractiveGradientDescent() {
 
   return (
     <DiagramFrame
-      title="경사하강법: L(w) = (w − 3)² 을 최소화"
+      title="경사하강법: L(w) = (w − 3)²을 최소화"
       viewBox={`0 0 ${width} ${height}`}
       interactive
       caption={
         diverged
           ? `η(학습률)=${lr}처럼 너무 크면 한 걸음이 최솟값을 지나쳐 점점 더 멀어진다. 이것이 "발산"이다.`
           : converged
-            ? `η=${lr}일 때 w=0에서 시작해 ${steps.length - 1}번 만에 최솟값 w=3 근처로 수렴했다. 점 사이 간격이 점점 좁아지는 것에 주목.`
+            ? `η=${lr}일 때 w=0에서 시작해 ${steps.length - 1}번 만에 최솟값 w=3 근처로 수렴했다. 점 사이 간격이 점점 좁아진다.`
             : `η=${lr}은 너무 작아서 ${MAX_STEPS}번을 움직여도 아직 w=3에 도달하지 못했다. 더 많은 스텝이 필요하다.`
       }
       controls={
@@ -101,7 +101,7 @@ export default function InteractiveGradientDescent() {
       <Label x={px(0) - 4} y={py(9) - 10} text="w₀=0" color={colors.orange} anchor="start" weight={700} />
       {diverged && (
         <text x={width / 2} y={padT + 18} textAnchor="middle" fontSize={13} fontWeight={800} fill={colors.red}>
-          발산! (그래프 밖으로 튕겨나갔어요)
+          발산 (그래프 밖으로 벗어남)
         </text>
       )}
     </DiagramFrame>

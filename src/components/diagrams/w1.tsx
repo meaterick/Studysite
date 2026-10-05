@@ -6,14 +6,14 @@ export function AiHierarchy() {
   // AI ⊃ ML ⊃ DL ⊃ LLM은 "방법" 기준의 포함관계다. 생성형 AI는 "기능" 기준이라 ML·DL 경계를 가로질러 겹쳐 그린다.
   const layers = [
     { label: "인공지능 (AI)", note: "예: 규칙·탐색 기반 시스템", color: colors.blue, x: 20, y: 20, w: 600, h: 290 },
-    { label: "머신러닝 (ML)", note: "데이터로부터 규칙을 학습", color: colors.aqua, x: 44, y: 54, w: 552, h: 240 },
+    { label: "머신러닝 (ML)", note: "데이터에서 규칙을 학습", color: colors.aqua, x: 44, y: 54, w: 552, h: 240 },
     { label: "딥러닝 (DL)", note: "다층 신경망", color: colors.violet, x: 68, y: 88, w: 330, h: 190 },
   ];
   const gen = { x: 180, y: 146, w: 392, h: 140 };
   return (
     <DiagramFrame
-      title="AI의 지형도: 포함 관계와 겹치는 범주"
-      caption="AI ⊃ 머신러닝 ⊃ 딥러닝 ⊃ LLM은 포함관계다. 생성형 AI(점선)는 '새 데이터를 만드는가'라는 다른 기준의 범주라서 딥러닝 경계를 가로지른다."
+      title="AI·머신러닝·딥러닝의 포함 관계와 생성형 AI"
+      caption="AI ⊃ 머신러닝 ⊃ 딥러닝 ⊃ LLM은 포함 관계다. 생성형 AI(점선)는 '새 데이터를 만드는가'라는 다른 기준으로 묶은 범주라서 딥러닝의 경계에 걸쳐 있다."
       viewBox="0 0 640 330"
       minWidth={440}
     >
@@ -90,9 +90,9 @@ export function MlLoop() {
   const gap = 22;
   return (
     <DiagramFrame
-      title="머신러닝의 한 줄 정의: 손실을 줄이는 루프"
+      title="손실을 줄이는 학습 루프"
       viewBox="0 0 760 220"
-      caption="θ ← θ − η∇θL 를 반복하며 예측이 정답에 가까워지도록 파라미터를 갱신한다."
+      caption="θ ← θ − η∇θL을 반복하면서 예측이 정답에 가까워지도록 파라미터를 갱신한다."
     >
       <ArrowDefs />
       {nodes.map((n, i) => {
@@ -117,7 +117,7 @@ export function MlLoop() {
       <Label
         x={20 + 2.5 * (w + gap)}
         y={y + h + 78}
-        text="θ ← θ − η · ∇θL  (학습률 η 만큼 반대 방향으로 이동)"
+        text="θ ← θ − η · ∇θL  (기울기 반대 방향으로 학습률 η만큼 이동)"
         color={colors.orange}
         weight={700}
         size={12}
@@ -142,8 +142,8 @@ export function NumpyAxis() {
   const bx = 440;
   return (
     <DiagramFrame
-      title="축(axis)과 브로드캐스팅을 한 장으로"
-      caption="axis=0은 위아래로(행을 따라) 훑어 열마다 하나씩, axis=1은 좌우로(열을 따라) 훑어 행마다 하나씩 값을 남긴다. 합쳐진 축은 결과에서 사라진다. 오른쪽: 모양이 (3,)인 배열은 (2, 3) 배열의 각 행에 맞춰 복제된 것처럼 계산된다."
+      title="축(axis)과 브로드캐스팅"
+      caption="axis=0은 위아래로(행을 따라) 합쳐 열마다 값이 하나씩 나오고, axis=1은 좌우로(열을 따라) 합쳐 행마다 값이 하나씩 나온다. 합친 축은 결과의 모양에서 빠진다. 오른쪽: 모양이 (3,)인 배열은 (2, 3) 배열의 각 행에 하나씩 복제된 것처럼 계산된다."
       viewBox="0 0 700 270"
       minWidth={520}
     >
@@ -223,8 +223,8 @@ export function BayesFrequency() {
   );
   return (
     <DiagramFrame
-      title="베이즈 정리를 사람 수로: 1만 명에게 검사했다면"
-      caption="양성 판정 594명 가운데 실제 환자는 99명뿐이다. 환자가 드물면(1%) 건강한 사람 중 5%의 오판(495명)이 진짜 환자보다 많아진다. 이것이 P(병|양성) ≈ 16.7%의 정체다."
+      title="베이즈 정리를 사람 수로 계산하기: 1만 명이 검사를 받으면"
+      caption="양성 판정을 받은 594명 가운데 실제 환자는 99명뿐이다. 환자가 드물면(1%) 건강한 사람의 5%만 잘못 판정해도 그 수(495명)가 실제 환자보다 많아진다. 그래서 P(병|양성)은 약 16.7%에 그친다."
       viewBox="0 0 680 300"
       minWidth={500}
     >
@@ -244,10 +244,10 @@ export function BayesFrequency() {
       <Label x={242} y={160} text="1%" size={10.5} anchor="start" />
       <Label x={438} y={160} text="위양성률 5%" size={10.5} anchor="end" />
       <Label x={572} y={160} text="95%" size={10.5} anchor="start" />
-      {box(30, 186, 120, "양성 99명", "진짜 양성", colors.red, true)}
-      {box(200, 186, 110, "음성 1명", "놓친 환자", colors.red)}
-      {box(370, 186, 120, "양성 495명", "가짜 양성", colors.blue, true)}
-      {box(540, 186, 120, "음성 9,405명", "맞게 음성", colors.blue)}
+      {box(30, 186, 120, "양성 99명", "진양성", colors.red, true)}
+      {box(200, 186, 110, "음성 1명", "위음성(놓친 환자)", colors.red)}
+      {box(370, 186, 120, "양성 495명", "위양성", colors.blue, true)}
+      {box(540, 186, 120, "음성 9,405명", "진음성", colors.blue)}
       <text x={340} y={268} textAnchor="middle" fontSize={13} fontWeight={700} fill={ink}>
         P(병 | 양성) = 99 ÷ (99 + 495) = 99 ÷ 594 ≈ 16.7%
       </text>
@@ -343,12 +343,12 @@ export function RulesVsMl() {
   return (
     <DiagramFrame
       title="규칙을 '넣는' 프로그래밍과 규칙을 '얻는' 머신러닝"
-      caption="두 방식은 입력·규칙·출력이라는 같은 재료를 쓰지만 자리가 바뀐다. 전통적 프로그래밍은 사람이 쓴 규칙(주황)을 넣어 답(파랑)을 얻고, 머신러닝은 답이 달린 데이터를 넣어 규칙(주황)을 얻는다. 이렇게 얻은 규칙에 새 입력을 넣어 답을 내는 것이 추론이다."
+      caption="두 방식 모두 입력·규칙·출력으로 이루어지지만, 무엇을 넣고 무엇을 얻는지가 반대다. 전통적 프로그래밍은 사람이 작성한 규칙(주황)을 넣어 답(파랑)을 얻고, 머신러닝은 답이 달린 데이터를 넣어 규칙(주황)을 얻는다. 이렇게 얻은 규칙에 새 입력을 넣어 답을 내는 것이 추론이다."
       viewBox="0 0 720 250"
       minWidth={540}
     >
       <Markers prefix={P} colors={{ ink: inkSecondary }} />
-      {row(64, "전통적 프로그래밍", "규칙을 사람이 적는다", "메일 본문", ["규칙", "'무료'가 있으면 스팸"], colors.orange, ["프로그램 실행", "규칙대로 계산"], ["출력", "스팸 / 정상"], colors.blue)}
+      {row(64, "전통적 프로그래밍", "사람이 규칙을 작성한다", "메일 본문", ["규칙", "'무료'가 있으면 스팸"], colors.orange, ["프로그램 실행", "규칙대로 계산"], ["출력", "스팸 / 정상"], colors.blue)}
       <line x1={20} y1={126} x2={700} y2={126} stroke="var(--border-hairline)" />
       {row(188, "머신러닝", "규칙을 데이터에서 찾는다", "메일 2만 통", ["출력(정답)", "사람이 단 스팸/정상"], colors.blue, ["학습 알고리즘", "손실을 줄이는 θ 찾기"], ["규칙 = 모델 fθ", "학습된 파라미터 θ"], colors.orange)}
     </DiagramFrame>
@@ -380,8 +380,8 @@ export function ThetaSearch() {
   const curve = sample(mse, 0.8, 3.4, 120).map(([t, v]) => [rx(t), ry(v)] as [number, number]);
   return (
     <DiagramFrame
-      title="함수를 찾는 게임: 후보 θ마다 손실을 재면 '골짜기'가 보인다"
-      caption="왼쪽은 데이터 세 점과 후보 직선 fθ(x) = θx, 오른쪽은 같은 후보들의 평균제곱오차(MSE)다. 보라색 점선은 최적 직선의 오차이고, 오차 제곱의 평균이 오른쪽 곡선의 높이가 된다. 곡선의 바닥 θ* = 31/14 ≈ 2.21이 '가장 잘 맞는 직선'이다. θ = 1에서는 곡선의 기울기가 음수라 θ를 키우는 쪽이 내리막이다. 이 기울기를 따라 바닥으로 내려가는 방법이 경사하강법이다."
+      title="함수를 찾는 게임: 후보 θ마다 손실을 계산하면 골짜기가 보인다"
+      caption="왼쪽은 데이터 세 점과 후보 직선 fθ(x) = θx이고, 오른쪽은 각 후보의 평균제곱오차(MSE)다. 보라색 점선은 최적 직선과 각 점 사이의 오차이며, 이 오차를 제곱해 평균한 값이 오른쪽 곡선의 높이다. 곡선이 가장 낮은 θ* = 31/14 ≈ 2.21이 '가장 잘 맞는 직선'의 기울기다. θ = 1에서는 곡선의 기울기가 음수이므로 θ를 키우는 쪽이 내리막이다. 이 기울기를 따라 최저점으로 내려가는 방법이 경사하강법이다."
       viewBox="0 0 720 290"
       minWidth={540}
     >
@@ -406,11 +406,11 @@ export function ThetaSearch() {
         </g>
       ))}
 
-      <Lines x={R.left + R.width / 2} y={18} lines={["② 후보마다의 손실 L(θ) (MSE)"]} size={12} weight={700} color={ink} />
+      <Lines x={R.left + R.width / 2} y={18} lines={["② 후보별 손실 L(θ) (MSE)"]} size={12} weight={700} color={ink} />
       <Axes {...R} sx={rx} sy={ry} xTicks={[1, 1.5, 2, 2.5, 3]} yTicks={[0, 2, 4, 6, 8, 10]} xLabel="θ (기울기 후보)" yLabel="MSE 손실" />
       <path d={linePath(curve)} fill="none" stroke={inkSecondary} strokeWidth={2} />
       <line x1={rx(0.84)} y1={ry(7 + slope1 * -0.16)} x2={rx(1.36)} y2={ry(7 + slope1 * 0.36)} stroke={colors.blue} strokeWidth={1.8} strokeDasharray="5 3" />
-      <Lines x={rx(1.1)} y={ry(9.1)} lines={["θ = 1의 기울기 ≈ −11.3 < 0", "→ θ를 키우면 손실이 준다"]} size={10} color={colors.blue} anchor="start" />
+      <Lines x={rx(1.1)} y={ry(9.1)} lines={["θ = 1에서 기울기 ≈ −11.3 < 0", "→ θ를 키우면 손실이 줄어든다"]} size={10} color={colors.blue} anchor="start" />
       {cand.map((c) => (
         <g key={c.t}>
           <circle cx={rx(c.t)} cy={ry(mse(c.t))} r={5} fill={c.color} />
@@ -458,7 +458,7 @@ export function TaskTypes() {
   return (
     <DiagramFrame
       title="분류·회귀·생성: 답의 모양으로 구분한다"
-      caption="분류는 경계를 기준으로 새 입력(보라 테두리 점)을 보기 중 하나로 나누고, 회귀는 새 x에 대응하는 숫자 ŷ를 읽어 낸다. 생성은 학습 데이터(회색)가 놓인 분포를 배워 그 분포에서 새로운 표본(별)을 뽑는다."
+      caption="분류는 경계를 기준으로 새 입력(보라 테두리 점)이 어느 보기에 속하는지 정하고, 회귀는 새 x에 대응하는 숫자 ŷ를 예측한다. 생성은 학습 데이터(회색)의 분포를 배운 뒤 그 분포에서 새 표본(별)을 뽑는다."
       viewBox="0 0 720 262"
       minWidth={540}
     >
@@ -570,8 +570,8 @@ export function DiscriminativeGenerative() {
   ];
   return (
     <DiagramFrame
-      title="판별 모델과 생성 모델: 같은 데이터, 다른 질문"
-      caption="왼쪽: 판별 모델은 '이 x는 어느 쪽인가'만 알면 되므로 두 무리를 가르는 경계(P(스팸|x) = 0.5인 선)만 배운다. 오른쪽: 생성 모델은 무리마다 데이터가 어떻게 퍼져 있는지(점선 등고선)를 배운다. 분포를 알면 그럴듯한 새 x(별)를 뽑을 수 있고, 베이즈 정리로 분류도 할 수 있다."
+      title="판별 모델과 생성 모델: 무엇을 학습하는가"
+      caption="왼쪽: 판별 모델은 'x가 어느 클래스인가'만 알면 되므로 두 클래스를 가르는 경계(P(스팸|x) = 0.5인 선)만 학습한다. 오른쪽: 생성 모델은 클래스마다 데이터가 어떻게 분포하는지(점선 등고선)를 학습한다. 분포를 알면 그럴듯한 새 x(별)를 뽑을 수 있고, 베이즈 정리로 분류도 할 수 있다."
       viewBox="0 0 720 290"
       minWidth={540}
     >
@@ -639,7 +639,7 @@ export function DiscriminativeGenerative() {
         결정 경계
       </text>
       <Lines x={14 + plot.w / 2} y={256} lines={["경계만 배운다: 'x가 어느 쪽인가?'", "데이터가 어떻게 생겼는지는 모른다"]} size={11} color={inkSecondary} />
-      <Lines x={368 + plot.w / 2} y={256} lines={["무리마다의 분포를 배운다", "→ 새 x(★)를 뽑을 수 있다"]} size={11} color={inkSecondary} />
+      <Lines x={368 + plot.w / 2} y={256} lines={["클래스별 분포를 배운다", "→ 새 x(★)를 뽑을 수 있다"]} size={11} color={inkSecondary} />
     </DiagramFrame>
   );
 }
@@ -650,9 +650,9 @@ export function LearningParadigms() {
   const H = 172;
   const cells = [
     { x: 12, y: 10, title: "① 지도학습", color: colors.blue, signal: "학습 신호: 사람이 붙인 정답 (x, y)" },
-    { x: 366, y: 10, title: "② 비지도학습", color: colors.aqua, signal: "학습 신호: 정답 없음 — x 안의 구조" },
-    { x: 12, y: 192, title: "③ 자기지도학습", color: colors.violet, signal: "학습 신호: 데이터에서 가린 부분 = 자동 정답" },
-    { x: 366, y: 192, title: "④ 강화학습", color: colors.orange, signal: "학습 신호: 행동에 대한 보상 (늦고 드물다)" },
+    { x: 366, y: 10, title: "② 비지도학습", color: colors.aqua, signal: "학습 신호: 정답 없음, 데이터 자체의 구조" },
+    { x: 12, y: 192, title: "③ 자기지도학습", color: colors.violet, signal: "학습 신호: 데이터에서 가린 부분(자동으로 생기는 정답)" },
+    { x: 366, y: 192, title: "④ 강화학습", color: colors.orange, signal: "학습 신호: 행동에 대한 보상(늦게, 드물게 온다)" },
   ];
   const photo = (x: number, y: number) => (
     <g>
@@ -669,8 +669,8 @@ export function LearningParadigms() {
   ];
   return (
     <DiagramFrame
-      title="4대 학습 패러다임: 무엇을 신호로 배우는가"
-      caption="네 패러다임은 모델 구조가 아니라 학습 신호로 나뉜다. 지도학습은 사람이 단 정답을, 비지도학습은 정답 없이 데이터의 구조를, 자기지도학습은 원문에서 가린 부분을 정답으로, 강화학습은 행동 뒤에 받는 보상을 신호로 쓴다. LLM 사전학습은 ③, RLHF는 ④에 해당한다."
+      title="4대 학습 패러다임: 무엇을 학습 신호로 삼는가"
+      caption="네 패러다임을 가르는 기준은 모델 구조가 아니라 학습 신호다. 지도학습은 사람이 단 정답을, 비지도학습은 정답 없이 데이터 자체의 구조를, 자기지도학습은 원문에서 가린 부분을, 강화학습은 행동 뒤에 받는 보상을 신호로 쓴다. LLM 사전학습은 ③, RLHF는 ④에 해당한다."
       viewBox="0 0 720 374"
       minWidth={560}
     >
@@ -719,7 +719,7 @@ export function LearningParadigms() {
       <Tag x={228} y={238} w={60} h={28} lines={["?"]} color={colors.violet} tint={0.16} size={13} dashed />
       <Arr x1={258} y1={268} x2={258} y2={290} color={colors.violet} marker={`${P}-violet`} />
       <Tag x={228} y={292} w={60} h={28} lines={["좋다"]} color={colors.violet} tint={0.28} size={12} />
-      <Lines x={218} y={302} lines={["가린 단어의 원래 값", "= 사람 없이 얻은 정답"]} size={10.5} weight={600} color={colors.violet} anchor="end" />
+      <Lines x={218} y={302} lines={["가려 둔 원래 단어", "= 사람이 달지 않은 정답"]} size={10.5} weight={600} color={colors.violet} anchor="end" />
       {/* ④ 강화학습 */}
       <Tag x={392} y={248} w={104} h={44} lines={["에이전트", "정책 π"]} color={colors.orange} tint={0.14} size={12} />
       <Tag x={592} y={248} w={104} h={44} lines={["환경", "게임·사용자"]} color={inkMuted} tint={0.08} size={12} />
@@ -767,7 +767,7 @@ export function PythonNameTags() {
   return (
     <DiagramFrame
       title="변수는 상자가 아니라 이름표: b = a는 복사가 아니다"
-      caption="위: b = a는 리스트를 복사하지 않고, 같은 리스트에 b라는 이름표를 하나 더 붙인다. 그래서 b로 4를 추가하면 a로 봐도 바뀌어 있다. 아래: a.copy()는 내용이 같은 새 리스트를 만들므로 c를 고쳐도 a는 그대로다."
+      caption="위: b = a는 리스트를 복사하지 않고, 같은 리스트에 b라는 이름표를 하나 더 붙인다. 그래서 b에 4를 추가하면 a에서도 바뀐 내용이 보인다. 아래: a.copy()는 내용이 같은 새 리스트를 만들므로 c를 고쳐도 a는 그대로다."
       viewBox="0 0 720 236"
       minWidth={560}
     >
@@ -913,8 +913,8 @@ export function NumpyElementwise() {
   const down = (cx: number) => <Arr x1={cx} y1={134} x2={cx} y2={152} color={inkSecondary} marker={`${P}-ink`} />;
   return (
     <DiagramFrame
-      title="같은 기호, 다른 계산: 리스트의 +와 배열의 + · * · @"
-      caption="파이썬 리스트의 +는 두 리스트를 이어 붙인다. NumPy 배열의 +와 *는 같은 자리(같은 색)끼리 계산해 모양 (3,)을 그대로 남긴다. @는 같은 자리끼리 곱한 뒤 모두 더해 숫자 하나를 내는 내적이다: 1·10 + 2·20 + 3·30 = 140."
+      title="리스트의 +와 NumPy 배열의 +, *, @는 계산이 다르다"
+      caption="파이썬 리스트의 +는 두 리스트를 이어 붙인다. NumPy 배열의 +와 *는 같은 자리(같은 색)끼리 계산하므로 결과의 모양도 (3,) 그대로다. @는 같은 자리끼리 곱한 뒤 모두 더해 숫자 하나를 만드는 내적이다(1·10 + 2·20 + 3·30 = 140)."
       viewBox="0 0 720 252"
       minWidth={560}
     >
@@ -991,7 +991,7 @@ export function MatVecRows() {
   const fmt = (v: number) => (v < 0 ? `(${v})` : String(v)).replace("-", "−");
   return (
     <DiagramFrame
-      title="행렬-벡터 곱 Wx = 행마다 x와 내적하기"
+      title="행렬-벡터 곱 Wx: W의 각 행과 x의 내적"
       caption="W의 각 행(색)과 x의 내적이 결과의 같은 색 칸이 된다. 곱하려면 W의 열 수(2)와 x의 길이(2)가 같아야 하고, 결과의 길이는 W의 행 수(3)다. 신경망의 한 층에서는 W의 한 행이 출력 뉴런 하나의 가중치다."
       viewBox="0 0 720 230"
       minWidth={540}
@@ -1091,7 +1091,7 @@ export function VectorLengthDirection() {
   return (
     <DiagramFrame
       title="벡터의 길이와 방향: 코사인 유사도는 방향만 본다"
-      caption="왼쪽: [3, 4]의 길이는 피타고라스 정리로 5이고, 자기 길이로 나누면 방향은 그대로인 단위벡터 [0.6, 0.8]이 된다(점선 원은 길이 1). 오른쪽: a = [1, 2]와 b = [2, 1] 사이 각은 약 36.9°, cos θ = 0.8이다. b를 10배 늘린 [20, 10]은 같은 방향이라 내적은 4 → 40으로 커져도 코사인 유사도는 0.8 그대로다."
+      caption="왼쪽: [3, 4]의 길이는 피타고라스 정리로 5이고, 자기 길이로 나누면 방향은 같고 길이가 1인 단위벡터 [0.6, 0.8]이 된다(점선 원의 반지름이 1). 오른쪽: a = [1, 2]와 b = [2, 1] 사이 각은 약 36.9°, cos θ = 0.8이다. b를 10배 늘린 [20, 10]은 같은 방향이라 내적은 4 → 40으로 커져도 코사인 유사도는 0.8 그대로다."
       viewBox="0 0 720 262"
       minWidth={540}
     >
@@ -1148,8 +1148,8 @@ export function ConditionalVenn() {
   const P = "cvn";
   return (
     <DiagramFrame
-      title="조건부확률: '안다'는 것은 세계를 좁히는 것"
-      caption="100일 가운데 우산을 챙긴 날은 40일이라 P(우산) = 0.4다. 그런데 '비가 왔다'는 것을 알면 비가 오지 않은 70일은 더 이상 후보가 아니다. 남은 30일 중 우산을 챙긴 날이 24일이므로 P(우산 | 비) = 24/30 = 0.8이 된다. 공식 P(A|B) = P(A∩B)/P(B)의 분모가 바로 이 '좁혀진 세계'의 크기다."
+      title="조건부확률: 조건을 알면 따져 볼 범위가 좁아진다"
+      caption="100일 가운데 우산을 챙긴 날은 40일이므로 P(우산) = 0.4다. 그런데 '비가 왔다'는 사실을 알면 비가 오지 않은 70일은 더 따질 필요가 없다. 남은 30일 중 우산을 챙긴 날이 24일이므로 P(우산 | 비) = 24/30 = 0.8이다. 공식 P(A|B) = P(A∩B)/P(B)의 분모 P(B)가 이렇게 좁혀진 범위의 크기다."
       viewBox="0 0 720 262"
       minWidth={540}
     >
@@ -1192,12 +1192,12 @@ export function ConditionalVenn() {
       </text>
 
       <Arr x1={330} y1={132} x2={444} y2={132} color={inkSecondary} marker={`${P}-ink`} width={2} />
-      <Lines x={387} y={104} lines={["'비가 왔다'를 알면", "비 밖은 지운다"]} size={10.5} weight={600} color={inkSecondary} />
+      <Lines x={387} y={104} lines={["'비가 왔다'를 알면", "비 안 온 날은 제외"]} size={10.5} weight={600} color={inkSecondary} />
 
       <circle cx={560} cy={132} r={98} fill={colors.blue} fillOpacity={0.12} stroke={colors.blue} strokeWidth={2} />
       <circle cx={672} cy={132} r={110} fill={colors.violet} fillOpacity={0.32} clipPath="url(#cvn-clip-right)" />
       <text x={560} y={24} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={colors.blue}>
-        새 세계 = 비 온 30일
+        남은 범위 = 비 온 30일
       </text>
       <text x={520} y={138} textAnchor="middle" fontSize={11} fill={colors.blue}>
         우산 없이 6일
@@ -1229,8 +1229,8 @@ export function BaseRateCurve() {
   ];
   return (
     <DiagramFrame
-      title="검사는 그대로인데 결과의 의미가 바뀐다: 기저율과 P(병 | 양성)"
-      caption="민감도 99%·위양성률 5%인 같은 검사라도, 유병률(가로축, 로그 눈금)이 낮을수록 양성 판정이 실제 병을 뜻할 확률(세로축)은 급격히 떨어진다. 직관은 위쪽 점선(99%)처럼 답하지만, 유병률 1%에서는 16.7%에 불과하다. 이 간격이 '기저율 무시'의 크기다."
+      title="같은 검사라도 기저율에 따라 달라지는 P(병 | 양성)"
+      caption="민감도 99%, 위양성률 5%인 같은 검사라도 유병률(가로축, 로그 눈금)이 낮을수록 양성 판정을 받은 사람이 실제 환자일 확률(세로축)은 급격히 떨어진다. 직관적으로는 위쪽 점선(99%) 정도라고 생각하기 쉽지만, 유병률 1%에서는 16.7%밖에 되지 않는다. 이 차이가 기저율을 무시해서 생기는 오류의 크기다."
       viewBox="0 0 720 284"
       minWidth={540}
     >
@@ -1248,7 +1248,7 @@ export function BaseRateCurve() {
       />
       <line x1={A.left} y1={sy(0.99)} x2={A.left + A.width} y2={sy(0.99)} stroke={colors.red} strokeDasharray="6 4" />
       <text x={A.left + 8} y={sy(0.99) - 6} fontSize={10.5} fontWeight={700} fill={colors.red}>
-        직관이 기대하는 값: 민감도 99%
+        직관적으로 떠올리는 값: 민감도 99%
       </text>
       <path d={linePath(pts)} fill="none" stroke={colors.blue} strokeWidth={2.6} />
       <Arr x1={sx(0.01)} y1={sy(0.99) + 4} x2={sx(0.01)} y2={sy(post(0.01)) - 8} color={colors.red} marker={`${P}-red`} width={1.4} dashed />
@@ -1292,7 +1292,7 @@ export function LrConvergenceModes() {
   return (
     <DiagramFrame
       title="학습률 η가 정하는 배율 (1 − 2η): 수렴·진동·발산"
-      caption="왼쪽: w₀ = 0에서 출발한 w의 궤적. 배율이 0.8이면 한쪽에서 다가가고, 0이면 한 번에 도착하고, −0.8이면 정답(점선 w = 3)을 넘나들며 다가가고, −1.2면 넘나들수록 멀어진다(발산). 오른쪽: 손실 (w − 3)²을 로그 눈금으로 그리면 매 스텝 일정한 배율 (1 − 2η)²으로 줄거나 늘어 직선이 된다. 이것이 지수적 감소(증가)다. η = 0.9는 |1 − 2η|가 η = 0.1과 같아 손실도 같은 속도로 준다."
+      caption="왼쪽: w₀ = 0에서 출발한 w의 궤적이다. 배율이 0.8이면 한쪽에서 서서히 다가가고, 0이면 한 번에 도착하며, −0.8이면 정답(점선 w = 3)을 사이에 두고 오가며 다가가고, −1.2면 오갈수록 멀어진다(발산). 오른쪽: 손실 (w − 3)²은 매 스텝 일정한 배율 (1 − 2η)²으로 줄거나 늘어나므로 로그 눈금에서 직선이 된다. 이것이 지수적 감소(증가)다. η = 0.9는 |1 − 2η|가 η = 0.1일 때와 같아서 손실도 같은 속도로 줄어든다."
       viewBox="0 0 720 300"
       minWidth={560}
     >
@@ -1303,7 +1303,7 @@ export function LrConvergenceModes() {
         </clipPath>
       </defs>
       <text x={L.left + L.width / 2} y={18} textAnchor="middle" fontSize={12} fontWeight={700} fill={ink}>
-        ① 스텝마다의 w
+        ① 스텝별 w
       </text>
       <Axes {...L} sx={lx} sy={ly} xTicks={[0, 2, 4, 6, 8]} yTicks={[-5, 0, 5, 10]} xLabel="스텝 t" yLabel="w" fmtY={(v) => String(v).replace("-", "−")} />
       <line x1={L.left} y1={ly(3)} x2={L.left + L.width} y2={ly(3)} stroke={inkSecondary} strokeDasharray="5 4" />
@@ -1375,7 +1375,7 @@ export function ChainRuleChain() {
   return (
     <DiagramFrame
       title="연쇄법칙: 앞으로 계산하고, 뒤로 곱한다"
-      caption="위(파랑): w에서 시작해 ŷ = wx, 오차 e = ŷ − y, 손실 L = e²을 차례로 계산한다. 아래(주황): 끝에서부터 각 단계의 국소 미분(2e, 1, x)을 하나씩 곱해 오면 ∂L/∂w = 2(wx − y)·x = −16이 된다. 기울기가 음수이므로 w를 키우는 쪽으로 갱신한다. 3주차의 역전파는 이 곱셈을 모든 층에 자동으로 반복한다."
+      caption="위(파랑): w에서 시작해 ŷ = wx, 오차 e = ŷ − y, 손실 L = e²을 차례로 계산한다. 아래(주황): 끝에서부터 각 단계의 국소 미분(2e, 1, x)을 하나씩 곱해 나가면 ∂L/∂w = 2(wx − y)·x = −16이 된다. 기울기가 음수이므로 w를 키우는 쪽으로 갱신한다. 3주차에 배울 역전파는 이 곱셈을 모든 층에 대해 자동으로 반복한다."
       viewBox="0 0 720 236"
       minWidth={560}
     >
@@ -1467,13 +1467,13 @@ export function CriticalPoints() {
   return (
     <DiagramFrame
       title="기울기가 0인 곳이 모두 최솟값은 아니다: 극소점과 안장점"
-      caption="왼쪽: 같은 경사하강법이라도 A에서 출발하면 주변보다만 낮은 극소점에, B에서 출발하면 가장 낮은 최솟값에 멈춘다(화살표는 내리막을 따라간 경로). 오른쪽: 안장점에서는 한 방향(파랑)으로는 오르막이라 그릇 바닥처럼 보이지만 다른 방향(주황)으로는 내리막이다. 두 곳 모두 기울기가 0이라 갱신이 느려지거나 멈춘다."
+      caption="왼쪽: 같은 경사하강법이라도 A에서 출발하면 주변보다만 낮은 극소점에, B에서 출발하면 전체에서 가장 낮은 최솟값에 멈춘다(화살표는 내리막을 따라간 경로). 오른쪽: 안장점에서는 한 방향(파랑)으로는 오르막이라 그릇 바닥처럼 보이지만 다른 방향(주황)으로는 내리막이다. 두 곳 모두 기울기가 0이라 갱신이 느려지거나 멈춘다."
       viewBox="0 0 720 262"
       minWidth={560}
     >
       <Markers prefix={P} colors={{ blue: colors.blue, orange: colors.orange }} />
       <text x={A.left + A.width / 2} y={18} textAnchor="middle" fontSize={12} fontWeight={700} fill={ink}>
-        ① 출발점에 따라 다른 바닥
+        ① 출발점에 따라 달라지는 도착점
       </text>
       <path d={linePath(curve)} fill="none" stroke={inkSecondary} strokeWidth={2.2} />
       {runs.map((r) => {
@@ -1535,8 +1535,8 @@ export function ClassObjects() {
   const P = "clo";
   return (
     <DiagramFrame
-      title="클래스는 틀, 객체는 그 틀로 찍어 낸 하나하나"
-      caption="왼쪽의 Perceptron 클래스는 '어떤 속성(w, b)을 갖고 어떤 동작(predict)을 하는가'를 적은 틀이다. Perceptron(w=2, b=1)처럼 부르면 __init__이 자동으로 실행되어 자기만의 w, b를 가진 객체가 하나 생긴다. 같은 틀로 만든 p와 q는 서로의 값을 건드리지 않는다. p.predict(3)을 부르면 파이썬이 self 자리에 p를 넣어 주므로, 계산에는 p의 w와 b가 쓰인다."
+      title="클래스는 틀이고, 객체는 그 틀로 찍어 낸 것이다"
+      caption="왼쪽의 Perceptron 클래스는 '어떤 속성(w, b)을 갖고 어떤 동작(predict)을 하는가'를 적은 틀이다. Perceptron(w=2, b=1)처럼 호출하면 __init__이 자동으로 실행되어 자기만의 w, b를 가진 객체가 하나 생긴다. 같은 틀로 만든 p와 q는 서로의 값에 영향을 주지 않는다. p.predict(3)을 호출하면 파이썬이 self 자리에 p를 넣어 주므로, 계산에는 p의 w와 b가 쓰인다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -1590,7 +1590,7 @@ export function ClassObjects() {
         p.w × 3 + p.b = 2×3 + 1 = 7
       </text>
       <text x={588} y={186} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.violet}>
-        self = 이 메서드를 부른 객체 자신
+        self = 이 메서드를 호출한 객체 자신
       </text>
       <text x={124} y={196} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
         붕어빵 틀 하나로 속이 다른 붕어빵을 여러 개
@@ -1616,7 +1616,7 @@ export function ExceptionFlow() {
   return (
     <DiagramFrame
       title="예외 처리: 오류가 나면 except로 건너뛴다"
-      caption="왼쪽: safe_divide(10, 2)는 try 블록을 끝까지 실행해 5.0을 돌려준다. 가운데: safe_divide(10, 0)은 a / b에서 ZeroDivisionError가 발생하는 순간 try의 나머지를 건너뛰고 except 블록으로 넘어가, 경고를 출력하고 None을 돌려준다. 프로그램은 멈추지 않는다. 오른쪽: 함수 안에서 raise로 일으킨 예외는 그 함수를 빠져나와 호출한 쪽으로 올라가고, 호출한 쪽의 try/except가 받아서 처리한다. 잡는 곳이 없으면 그때 프로그램이 멈춘다."
+      caption="왼쪽: safe_divide(10, 2)는 try 블록을 끝까지 실행해 5.0을 반환한다. 가운데: safe_divide(10, 0)은 a / b에서 ZeroDivisionError가 발생하는 순간 try의 나머지를 건너뛰고 except 블록으로 넘어가, 경고를 출력하고 None을 반환한다. 프로그램은 멈추지 않는다. 오른쪽: 함수 안에서 raise로 일으킨 예외는 그 함수를 빠져나와 호출한 쪽으로 올라가고, 호출한 쪽의 try/except가 받아서 처리한다. 끝까지 잡는 곳이 없으면 그때 프로그램이 멈춘다."
       viewBox="0 0 720 252"
       minWidth={600}
     >
@@ -1626,7 +1626,7 @@ export function ExceptionFlow() {
       </text>
       {box(20, 30, 180, ["try:", "  return a / b   → 5.0"], colors.green)}
       <Arr x1={110} y1={74} x2={110} y2={104} color={colors.green} marker={`${P}-green`} />
-      {chip1(40, 108, "5.0을 돌려줌", colors.green, 140, 28, 0.14, 11)}
+      {chip1(40, 108, "5.0 반환", colors.green, 140, 28, 0.14, 11)}
       <text x={355} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.orange}>
         safe_divide(10, 0)
       </text>
@@ -1637,7 +1637,7 @@ export function ExceptionFlow() {
       <Arr x1={355} y1={74} x2={355} y2={118} color={colors.red} marker={`${P}-red`} width={1.8} />
       {box(260, 122, 190, ["except ZeroDivisionError:", "  print(\"0으로 나눌 수 없습니다.\")", "  return None"], colors.orange)}
       <Arr x1={355} y1={181} x2={355} y2={198} color={colors.orange} marker={`${P}-orange`} />
-      {chip1(275, 202, "None, 프로그램은 계속", colors.orange, 160, 28, 0.14, 11)}
+      {chip1(275, 202, "None 반환, 실행은 계속", colors.orange, 160, 28, 0.14, 11)}
       <line x1={476} y1={14} x2={476} y2={240} stroke="var(--border-hairline)" />
       <text x={596} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
         raise: 호출한 쪽으로 알린다
@@ -1666,8 +1666,8 @@ export function RunningMeanTrace() {
   ];
   return (
     <DiagramFrame
-      title="평균을 이어서 계산하기: 새 값 쪽으로 1/개수만큼만 다가간다"
-      caption="본문 RunningMean의 add()가 하는 일이다. 새 값이 들어오면 지금 평균에서 새 값까지 거리의 1/개수만큼만 움직인다. 첫 값 2에는 끝까지(1/1), 두 번째 값 4에는 절반(1/2)만 다가가 3, 세 번째 값 9에는 1/3만 다가가 5가 된다. 결과는 (2 + 4 + 9) / 3 = 5와 같지만, 값을 모두 저장하지 않고 개수와 평균 두 숫자만 들고 다닌다. 값이 쌓일수록 새 값 하나가 평균을 움직이는 폭이 작아진다."
+      title="평균을 차례로 갱신하기: 새 값 쪽으로 1/개수만큼 다가간다"
+      caption="본문 RunningMean의 add()가 하는 일이다. 새 값이 들어오면 지금 평균에서 새 값까지 거리의 1/개수만큼만 움직인다. 첫 값 2에는 끝까지(1/1), 두 번째 값 4에는 절반(1/2)만 다가가 3, 세 번째 값 9에는 1/3만 다가가 5가 된다. 결과는 (2 + 4 + 9) / 3 = 5와 같지만, 값을 모두 저장하지 않고 개수와 평균 두 숫자만 유지한다. 값이 쌓일수록 새 값 하나가 평균을 움직이는 폭이 작아진다."
       viewBox="0 0 720 204"
       minWidth={560}
     >
@@ -1682,7 +1682,7 @@ export function RunningMeanTrace() {
             <line x1={sx(0)} x2={sx(10)} y1={y} y2={y} stroke="var(--border-strong)" />
             <circle cx={sx(st.old)} cy={y} r={5} fill={inkMuted} />
             <text x={sx(st.old)} y={y + 18} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
-              {`옛 평균 ${st.old}`}
+              {`이전 평균 ${st.old}`}
             </text>
             {st.neu !== st.old && <Arr x1={sx(st.old) + 6} y1={y - 3} x2={sx(st.neu) - 3} y2={y - 3} color={colors.violet} marker={`${P}-violet`} width={2.2} />}
             <circle cx={sx(st.neu)} cy={y} r={st.neu === st.x ? 7 : 5} fill={colors.violet} />
@@ -1711,7 +1711,7 @@ export function VenvIsolation() {
   return (
     <DiagramFrame
       title="가상환경(venv): 프로젝트마다 따로 쓰는 설치 공간"
-      caption="왼쪽: 가상환경 없이 설치하면 모든 프로젝트가 컴퓨터의 설치 공간 하나를 함께 쓴다. 프로젝트 A가 numpy 1.26을, B가 numpy 2.1을 요구하면 둘 중 하나는 깨진다. 오른쪽: python -m venv .venv로 프로젝트 폴더 안에 독립된 설치 공간을 만들고 활성화한 뒤 설치하면, 각 프로젝트가 자기 버전을 따로 가진다. 필요한 패키지 목록은 requirements.txt로 공유한다."
+      caption="왼쪽: 가상환경 없이 설치하면 모든 프로젝트가 컴퓨터의 설치 공간 하나를 함께 쓴다. 프로젝트 A가 numpy 1.26을, B가 numpy 2.1을 요구하면 둘 중 하나는 깨진다. 오른쪽: python -m venv .venv로 프로젝트 폴더 안에 독립된 설치 공간을 만들고 활성화한 뒤 패키지를 설치하면, 프로젝트마다 필요한 버전을 따로 쓸 수 있다. 필요한 패키지 목록은 requirements.txt로 공유한다."
       viewBox="0 0 720 220"
       minWidth={580}
     >
@@ -1773,7 +1773,7 @@ export function GitFlow() {
   return (
     <DiagramFrame
       title="Git의 네 영역: add → commit → push, 그리고 pull"
-      caption="파일을 고치면 작업 폴더가 바뀐다. git add로 다음 기록에 담을 변경을 고르고(스테이징), git commit -m '무엇을 왜'로 하나의 기록을 남긴다. git push는 그 기록을 GitHub에 올리고, git pull은 남이 올린 기록을 받아 온다. git clone은 원격 저장소를 처음 통째로 받는 명령이고, git status는 지금 무엇이 바뀌었는지 보여 준다. .gitignore에 적은 비밀값(.env), 가상환경(.venv/), 큰 데이터는 처음부터 기록에 들어가지 않는다. 한 번 올라간 비밀값은 지워도 기록에 남으므로 키 자체를 폐기해야 한다."
+      caption="파일을 고치면 작업 폴더가 바뀐다. git add로 다음 기록에 담을 변경을 고르고(스테이징), git commit -m '무엇을 왜'로 하나의 기록을 남긴다. git push는 그 기록을 GitHub에 올리고, git pull은 다른 사람이 올린 기록을 받아 온다. git clone은 원격 저장소를 처음 통째로 받는 명령이고, git status는 지금 무엇이 바뀌었는지 보여 준다. .gitignore에 적은 비밀값(.env), 가상환경(.venv/), 큰 데이터는 처음부터 기록에 들어가지 않는다. 한 번 올라간 비밀값은 지워도 기록에 남으므로 키 자체를 폐기해야 한다."
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -1817,7 +1817,7 @@ export function GitFlow() {
       </text>
       <rect x={374} y={178} width={332} height={46} rx={8} fill={card2Bg} stroke="var(--border-hairline)" />
       <text x={384} y={196} fontSize={10.5} fontWeight={700} fill={ink}>
-        하루 흐름: ① pull ② venv 활성화·설치 ③ 실험
+        하루 작업 흐름: ① pull ② venv 활성화·설치 ③ 실험
       </text>
       <text x={384} y={214} fontSize={10.5} fontWeight={700} fill={ink}>
         ④ add → commit -m &quot;무엇을 왜&quot; → push
@@ -1869,8 +1869,8 @@ export function BasisChange() {
   };
   return (
     <DiagramFrame
-      title="같은 벡터, 다른 자: 기저를 바꾸면 좌표가 바뀐다"
-      caption="빨간 화살표는 두 그림에서 똑같은 벡터 v = [3, 1]이다. 왼쪽은 표준기저 e₁ = [1, 0], e₂ = [0, 1]의 격자로 잰 것이라 v = 3e₁ + 1e₂, 좌표는 (3, 1)이다. 오른쪽은 b₁ = [1, 1], b₂ = [1, −1]로 만든 비스듬한 격자로 잰 것이라 v = 2b₁ + 1b₂, 좌표는 (2, 1)이다. 점선은 각 기저 방향으로 몇 칸 갔는지를 보여 준다. 벡터는 그대로이고 자(기저)만 바뀌었다. PCA와 고유벡터는 데이터를 재기에 더 좋은 자를 찾는 일이다."
+      title="기저를 바꾸면 같은 벡터의 좌표가 바뀐다"
+      caption="빨간 화살표는 두 그림에서 똑같은 벡터 v = [3, 1]이다. 왼쪽은 표준기저 e₁ = [1, 0], e₂ = [0, 1]의 격자로 잰 것이라 v = 3e₁ + 1e₂, 좌표는 (3, 1)이다. 오른쪽은 b₁ = [1, 1], b₂ = [1, −1]로 만든 비스듬한 격자로 잰 것이라 v = 2b₁ + 1b₂, 좌표는 (2, 1)이다. 점선은 각 기저 방향으로 몇 칸 갔는지를 보여 준다. 벡터는 그대로이고 자(기저)만 바뀌었다. PCA와 고유벡터 분해는 데이터를 표현하기에 더 좋은 기저를 찾는 방법이다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -1996,7 +1996,7 @@ export function MatmulOrder() {
   return (
     <DiagramFrame
       title="순서를 바꾸면 결과가 바뀐다: AB ≠ BA"
-      caption="(AB)x는 A(Bx)라서 오른쪽의 B를 먼저 적용한다. A는 '둘째 좌표의 2배를 첫째 좌표에 더하기', B는 '첫째 좌표의 3배를 둘째 좌표에 더하기'다. 같은 x = [1, 1]에서 출발해 B 먼저(파랑) 가면 [1, 4]를 거쳐 [9, 4]에, A 먼저(주황) 가면 [3, 1]을 거쳐 [3, 10]에 도착한다. 함수 합성 f(g(x))와 g(f(x))가 다르듯, 앞 변환의 출력이 뒤 변환의 입력이 되므로 순서가 결과를 바꾼다."
+      caption="(AB)x는 A(Bx)라서 오른쪽의 B를 먼저 적용한다. A는 '둘째 좌표의 2배를 첫째 좌표에 더하기', B는 '첫째 좌표의 3배를 둘째 좌표에 더하기'다. 같은 x = [1, 1]에서 출발해 B 먼저(파랑) 가면 [1, 4]를 거쳐 [9, 4]에, A 먼저(주황) 가면 [3, 1]을 거쳐 [3, 10]에 도착한다. 함수 합성 f(g(x))와 g(f(x))가 다르듯, 앞 변환의 출력이 뒤 변환의 입력이 되므로 순서에 따라 결과가 달라진다."
       viewBox="0 0 720 240"
       minWidth={560}
     >
@@ -2053,8 +2053,8 @@ export function InverseSingular() {
     ));
   return (
     <DiagramFrame
-      title="역행렬은 변환을 되돌린다, 행렬식이 0이면 되돌릴 수 없다"
-      caption="왼쪽: A는 단위 정사각형(회색)을 오른쪽으로 민 평행사변형(파랑)으로 바꾼다. 넓이는 행렬식 1·1 − 2·0 = 1 그대로다. A⁻¹ = [[1, −2], [0, 1]]은 둘째 좌표의 2배를 다시 빼서 정확히 원래 정사각형으로 되돌린다(AA⁻¹ = I). 오른쪽: [[1, 2], [2, 4]]는 행렬식이 1·4 − 2·2 = 0이라, 정사각형 전체를 직선 y = 2x 위의 선분(빨강)으로 뭉갠다. 서로 다른 점들이 같은 점으로 겹쳐 버리므로 원래 위치를 되찾을 방법이 없고, 그래서 역행렬이 없다."
+      title="역행렬은 변환을 되돌리고, 행렬식이 0이면 되돌릴 수 없다"
+      caption="왼쪽: A는 단위 정사각형(회색)을 오른쪽으로 민 평행사변형(파랑)으로 바꾼다. 넓이는 행렬식 1·1 − 2·0 = 1 그대로다. A⁻¹ = [[1, −2], [0, 1]]은 둘째 좌표의 2배를 다시 빼서 정확히 원래 정사각형으로 되돌린다(AA⁻¹ = I). 오른쪽: [[1, 2], [2, 4]]는 행렬식이 1·4 − 2·2 = 0이라, 정사각형 전체를 직선 y = 2x 위의 선분(빨강)으로 납작하게 만든다. 서로 다른 점이 같은 점으로 겹치므로 원래 위치를 되찾을 수 없고, 그래서 역행렬이 존재하지 않는다."
       viewBox="0 0 720 236"
       minWidth={560}
     >
@@ -2080,7 +2080,7 @@ export function InverseSingular() {
       <text x={560} y={32} textAnchor="middle" fontSize={12} fontWeight={800} fill={colors.red}>
         [[1, 2], [2, 4]]: 행렬식 0
       </text>
-      <Lines x={520} y={100} lines={["정사각형 전체가", "선분 하나로 뭉개짐", "(1, 0) → (1, 2)", "(0, 1) → (2, 4)", "(1, 1) → (3, 6)"]} size={10.5} anchor="start" color={ink} />
+      <Lines x={520} y={100} lines={["정사각형 전체가", "선분 하나로 납작해짐", "(1, 0) → (1, 2)", "(0, 1) → (2, 4)", "(1, 1) → (3, 6)"]} size={10.5} anchor="start" color={ink} />
       <text x={520} y={196} fontSize={10.5} fontWeight={700} fill={colors.red}>
         ✗ 원래 점을 되찾을 수 없다
       </text>
@@ -2166,8 +2166,8 @@ export function CltSums() {
   const pw = 160;
   return (
     <DiagramFrame
-      title="중심극한정리: 작은 원인을 여러 개 더하면 종 모양이 된다"
-      caption="0~1 사이 균등분포(평평한 직사각형)를 따르는 값을 1개, 2개, 3개, 12개 더한 합의 분포다(파랑). 하나일 때는 평평하고, 둘이면 삼각형, 셋이면 벌써 종에 가까워지며, 열둘이면 같은 평균·분산의 정규분포(점선)와 거의 겹친다. 원래 원인이 어떤 분포든, 작고 서로 무관한 원인이 많이 더해진 결과는 정규분포에 가까워진다. 측정 오차와 센서 잡음을 정규분포로 흉내 내는 이유다."
+      title="중심극한정리: 더하는 값이 많을수록 합의 분포가 종 모양에 가까워진다"
+      caption="0~1 사이 균등분포(평평한 직사각형)를 따르는 값을 1개, 2개, 3개, 12개 더한 합의 분포다(파랑). 하나일 때는 평평하고, 둘이면 삼각형, 셋이면 벌써 종에 가까워지며, 열둘이면 같은 평균·분산의 정규분포(점선)와 거의 겹친다. 원래 분포가 무엇이든, 서로 독립인 작은 요인이 많이 더해지면 그 합은 정규분포에 가까워진다. 그래서 측정 오차나 센서 잡음을 흔히 정규분포로 모델링한다."
       viewBox="0 0 720 196"
       minWidth={580}
     >
@@ -2224,7 +2224,7 @@ export function SigmaSpread() {
   return (
     <DiagramFrame
       title="σ가 클수록 넓게 퍼진다: |값| > 1인 비율"
-      caption={`본문 코드의 두 잡음이다. σ = 0.2(보라)는 평균 근처에 촘촘히 몰려 있어, 1 이상 벗어나려면 5σ 밖으로 나가야 하므로 그런 값은 사실상 없다(5000개 중 0개 수준). σ = 1.5(주황)는 넓게 퍼져서 0.67σ만 벗어나도 |값| > 1이 되므로 약 ${(tail(1.5) * 100).toFixed(1)}%, 5000개 중 2,500개 안팎이 해당한다(칠한 부분). σ = 0.2 곡선의 꼭대기는 약 2.0으로 1보다 크다. 곡선은 확률이 아니라 밀도이고, 전체 넓이가 1이면 된다.`}
+      caption={`본문 코드의 두 잡음이다. σ = 0.2(보라)는 평균 근처에 촘촘히 몰려 있어, 1 이상 벗어나려면 5σ 밖으로 나가야 하므로 그런 값은 사실상 없다(5000개 중 0개 수준). σ = 1.5(주황)는 넓게 퍼져서 0.67σ만 벗어나도 |값| > 1이 되므로 약 ${(tail(1.5) * 100).toFixed(1)}%, 5000개 중 2,500개 안팎이 해당한다(칠한 부분). σ = 0.2 곡선의 꼭대기는 약 2.0으로 1보다 크다. 곡선은 확률이 아니라 밀도이므로 전체 넓이만 1이면 높이는 1을 넘을 수 있다.`}
       viewBox="0 0 720 216"
       minWidth={560}
     >
@@ -2271,7 +2271,7 @@ export function NormBalls() {
   const cy = 112;
   return (
     <DiagramFrame
-      title="노름은 '크기'를 재는 잣대: L2는 직선 거리, L1은 축을 따라 간 거리"
+      title="노름: L2는 직선 거리, L1은 축을 따라 간 거리"
       caption="왼쪽: 본문 예제 a = [3, 4]다. L2 노름은 원점에서 끝점까지의 직선 거리 √(3² + 4²) = 5이고, L1 노름은 좌표축을 따라서만 움직인 거리 |3| + |4| = 7(맨해튼 거리)이다. 오른쪽: 노름이 정확히 1인 점들을 모으면 L2는 원, L1은 꼭짓점이 축 위에 있는 마름모가 된다. 2주차의 L2·L1 정규화가 파라미터를 이 모양 안쪽으로 끌어당기며, 마름모의 뾰족한 꼭짓점 때문에 L1은 일부 파라미터를 정확히 0으로 만들기 쉽다."
       viewBox="0 0 720 232"
       minWidth={580}
@@ -2356,7 +2356,7 @@ export function EigenDirections() {
   return (
     <DiagramFrame
       title="고유벡터: 변환해도 방향이 그대로인 벡터"
-      caption="본문 예제 A = [[2, 1], [1, 2]]다. 단위원 위의 벡터(회색 점)를 A로 보내면(화살표 끝) 대부분 방향이 틀어지며 타원 위로 옮겨 간다. 그런데 [1, 1] 방향(파랑)은 방향이 그대로인 채 길이만 3배가 되고(고유값 3), [1, −1] 방향(주황)은 방향도 길이도 그대로다(고유값 1). 이 두 방향이 A의 고유벡터이고, 그 축 위에서 보면 A가 하는 일은 '한 축은 3배, 다른 축은 1배'로 단순해진다. 타원의 긴 축과 짧은 축이 바로 고유벡터 방향이다."
+      caption="본문 예제 A = [[2, 1], [1, 2]]다. 단위원 위의 벡터(회색 점)를 A로 보내면(화살표 끝) 대부분 방향이 틀어지며 타원 위로 옮겨 간다. 그런데 [1, 1] 방향(파랑)은 방향이 그대로인 채 길이만 3배가 되고(고유값 3), [1, −1] 방향(주황)은 방향도 길이도 그대로다(고유값 1). 이 두 방향이 A의 고유벡터이고, 이 두 방향을 축으로 삼으면 A가 하는 일은 '한 축은 3배, 다른 축은 1배'로 단순해진다. 타원의 장축과 단축 방향이 곧 고유벡터 방향이다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -2443,7 +2443,7 @@ export function SvdSteps() {
   return (
     <DiagramFrame
       title="SVD: 어떤 행렬이든 회전 → 늘이기 → 회전"
-      caption={`전단 행렬 M = [[1, 1], [0, 1]](본문 모나리자 그림의 변환과 같은 종류)을 M = UΣVᵀ로 나눈 것이다. 단위원과 두 기준 벡터 e₁(파랑), e₂(주황)가 단계마다 어떻게 바뀌는지 따라가 보자. ① Vᵀ는 원을 돌리기만 하고, ② Σ는 가로·세로 축 방향으로 특이값 ${s1.toFixed(3)}배와 ${s2.toFixed(3)}배로 늘이고 줄여 타원을 만들며, ③ U가 그 타원을 다시 돌린다. 마지막 결과는 M을 한 번에 곱한 것과 같다(e₁ → [1, 0], e₂ → [1, 1]). 특이값은 이 타원의 반지름이고, 큰 특이값 방향이 데이터의 '큰 구조'를 담는다.`}
+      caption={`전단 행렬 M = [[1, 1], [0, 1]](본문 모나리자 그림의 변환과 같은 종류)을 M = UΣVᵀ로 분해한 것이다. 단위원과 두 표준기저 벡터 e₁(파랑), e₂(주황)가 단계마다 어떻게 바뀌는지 따라가 보자. ① Vᵀ는 원을 돌리기만 하고, ② Σ는 가로·세로 축 방향으로 특이값 ${s1.toFixed(3)}배와 ${s2.toFixed(3)}배로 늘이고 줄여 타원을 만들며, ③ U가 그 타원을 다시 돌린다. 마지막 결과는 M을 한 번에 곱한 것과 같다(e₁ → [1, 0], e₂ → [1, 1]). 특이값은 이 타원의 반축 길이이고, 큰 특이값의 방향에 데이터의 주요 구조가 담긴다.`}
       viewBox="0 0 720 210"
       minWidth={600}
     >
@@ -2491,7 +2491,7 @@ export function LowRankApprox() {
   return (
     <DiagramFrame
       title="저랭크 근사: 큰 특이값 몇 개만 남긴다"
-      caption="본문 코드의 데이터(50 × 3, 셋째 열 = 앞 두 열의 합)다. 왼쪽은 앞 두 열을 점으로 찍은 것이고(세로를 크게 확대했다), 주황 점은 가장 큰 특이값 하나만 남긴 rank-1 근사다. 데이터가 한 방향으로 길쭉해서 근사 점들이 한 직선 위에 놓이고, 원래 점과의 차이(회색 선)는 작다. 오른쪽: 특이값은 [28.11, 2.54, 0]이다. 셋째 값이 0이라 셋째 방향에는 정보가 없고(rank 2), 첫째 특이값이 '에너지'(특이값 제곱)의 99.2%를 담아 rank-1 근사의 상대 오차는 약 9%에 그친다. 이미지 압축, PCA, LoRA가 모두 이 저랭크 근사의 아이디어다."
+      caption="본문 코드의 데이터(50 × 3, 셋째 열 = 앞 두 열의 합)다. 왼쪽은 앞 두 열을 점으로 찍은 것이고(세로를 크게 확대했다), 주황 점은 가장 큰 특이값 하나만 남긴 rank-1 근사다. rank-1 근사 점들은 한 직선 위에 놓이는데, 데이터가 한 방향으로 길쭉하므로 원래 점과의 차이(회색 선)는 작다. 오른쪽: 특이값은 [28.11, 2.54, 0]이다. 셋째 값이 0이라 셋째 방향에는 정보가 없고(rank 2), 첫째 특이값이 '에너지'(특이값 제곱)의 99.2%를 담아 rank-1 근사의 상대 오차는 약 9%에 그친다. 이미지 압축, PCA, LoRA 모두 이 저랭크 근사를 바탕으로 한다."
       viewBox="0 0 720 222"
       minWidth={580}
     >
@@ -2513,7 +2513,7 @@ export function LowRankApprox() {
       </text>
       <line x1={420} y1={14} x2={420} y2={210} stroke="var(--border-hairline)" />
       <text x={566} y={22} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
-        특이값과 담는 에너지
+        특이값과 에너지 비율
       </text>
       <line x1={450} x2={690} y1={by(0)} y2={by(0)} stroke={inkMuted} />
       {S.map((s, i) => (
@@ -2554,8 +2554,8 @@ export function ProbVsLikelihood() {
   const ly = linear(0, 0.3, G2.top + G2.height, G2.top);
   return (
     <DiagramFrame
-      title="같은 식, 다른 질문: 확률과 가능도"
-      caption="두 그림 모두 같은 식 C(10, k)·pᵏ(1 − p)¹⁰⁻ᵏ에서 나온다. 왼쪽은 동전이 공정하다(p = 0.5)고 고정하고 앞면 횟수 k를 바꾼 확률이다. 막대를 모두 더하면 1이고, 정확히 7번이 나올 확률은 약 11.7%다. 오른쪽은 '10번 중 7번'이라는 데이터를 고정하고 p를 바꾼 가능도다. 이 곡선은 넓이가 1일 필요가 없는 p의 함수이고, 가장 높은 곳 p = 0.7이 최대가능도추정값이다. 두 그림의 주황 점(k = 7, p = 0.5)은 같은 값 0.117이다."
+      title="확률과 가능도: 같은 식에서 무엇을 고정하는가"
+      caption="두 그림 모두 같은 식 C(10, k)·pᵏ(1 − p)¹⁰⁻ᵏ에서 나온다. 왼쪽은 동전이 공정하다고(p = 0.5) 고정하고 앞면 횟수 k를 바꿔 가며 구한 확률이다. 막대를 모두 더하면 1이고, 정확히 7번이 나올 확률은 약 11.7%다. 오른쪽은 '10번 중 7번'이라는 데이터를 고정하고 p를 바꿔 가며 구한 가능도다. 이 곡선은 넓이가 1일 필요가 없는 p의 함수이고, 가장 높은 점인 p = 0.7이 최대가능도추정값이다. 두 그림의 주황 점(k = 7, p = 0.5)은 같은 값 0.117이다."
       viewBox="0 0 720 226"
       minWidth={600}
     >
@@ -2611,8 +2611,8 @@ export function MleVsMap() {
   ];
   return (
     <DiagramFrame
-      title="MLE와 MAP: 사전 지식이 추정값을 당긴다"
-      caption="본문 예제(10번 중 7번 앞면)다. 세 곡선은 모양을 비교하려고 각자의 최댓값이 1이 되게 맞췄다. 가능도(파랑)는 p = 0.7에서 가장 높아 MLE는 0.7이다. '동전은 대체로 공정하다'는 사전분포 Beta(2, 2)(회색 점선, 0.5 근처를 선호)를 곱한 사후분포(보라)는 p⁸(1 − p)⁴에 비례하고, 그 최대인 MAP는 8/12 ≈ 0.667로 0.5 쪽으로 조금 당겨진다. 데이터가 많아질수록 가능도가 뾰족해져 사전분포의 영향은 줄고, MAP는 MLE에 가까워진다."
+      title="MLE와 MAP: 사전분포가 추정값을 끌어당긴다"
+      caption="본문 예제(10번 중 7번 앞면)다. 세 곡선은 모양을 비교하기 쉽도록 각각 최댓값이 1이 되게 맞췄다. 가능도(파랑)는 p = 0.7에서 가장 높아 MLE는 0.7이다. '동전은 대체로 공정하다'는 사전분포 Beta(2, 2)(회색 점선, 0.5 근처를 선호)를 곱한 사후분포(보라)는 p⁸(1 − p)⁴에 비례하고, 사후분포가 최대인 MAP는 8/12 ≈ 0.667로 0.5 쪽으로 조금 당겨진다. 데이터가 많아질수록 가능도가 뾰족해져 사전분포의 영향은 줄고, MAP는 MLE에 가까워진다."
       viewBox="0 0 720 226"
       minWidth={580}
     >
@@ -2630,7 +2630,7 @@ export function MleVsMap() {
         MAP 0.667
       </text>
       <text x={sx(0.5) - 4} y={sy(1) - 6} textAnchor="end" fontSize={10} fontWeight={700} fill={inkSecondary}>
-        사전의 중심 0.5
+        사전분포의 중심 0.5
       </text>
       {curves.map((c, i) => (
         <g key={`l${c.t}`}>
@@ -2653,8 +2653,8 @@ export function LogUnderflow() {
   const lg = (n: number) => n * Math.log10(0.5);
   return (
     <DiagramFrame
-      title="가능도를 곱하면 0이 된다: 로그의 합으로 계산하는 이유"
-      caption="확률 0.5를 n번 곱한 값의 크기(10의 몇 제곱인지)다. 곱은 n에 비례해 지수적으로 작아져 n = 1000이면 9.3 × 10⁻³⁰²로 아직 표현되지만, float64의 가장 작은 정규수(약 2.2 × 10⁻³⁰⁸)를 지나 가장 작은 비정규수(약 4.9 × 10⁻³²⁴ = 0.5¹⁰⁷⁴)보다 작아지면 그냥 0이 된다(본문 코드의 0.5¹¹⁰⁰ = 0.0). 로그를 취하면 곱이 합 n·log 0.5가 되어 n = 1100에서도 −762.46으로 아무 문제 없이 계산된다. 그래서 실제 구현은 언제나 로그가능도(또는 음의 로그가능도)를 쓴다."
+      title="확률을 계속 곱하면 0이 된다: 로그를 더해 계산하는 이유"
+      caption="확률 0.5를 n번 곱한 값의 크기(10의 몇 제곱인지)다. 곱은 n이 커질수록 지수적으로 작아져 n = 1000이면 9.3 × 10⁻³⁰²로 아직 표현되지만, float64의 가장 작은 정규수(약 2.2 × 10⁻³⁰⁸)를 지나 가장 작은 비정규수(약 4.9 × 10⁻³²⁴ = 0.5¹⁰⁷⁴)보다 작아지면 0이 되어 버린다(본문 코드의 0.5¹¹⁰⁰ = 0.0). 로그를 취하면 곱이 합 n·log 0.5가 되어 n = 1100에서도 −762.46으로 아무 문제 없이 계산된다. 그래서 실제 구현에서는 늘 로그가능도(또는 음의 로그가능도)를 쓴다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -2702,8 +2702,8 @@ export function CrossEntropyDecomp() {
   const bx = linear(0, 2, 0, 380);
   return (
     <DiagramFrame
-      title="교차 엔트로피 = 엔트로피 + KL 발산, 그리고 KL은 방향이 있다"
-      caption="본문의 숫자다(단위: 비트). 위: 실제 분포가 공정한 동전인데 모델이 (0.9, 0.1)이라고 예측하면 교차 엔트로피는 1.737비트로, 실제 분포의 엔트로피 1비트보다 0.737비트 크다. 이 차이가 '잘못된 분포를 써서 낭비한 비트', 즉 KL(p‖q)다. 아래: 기준과 모델을 바꾸면 엔트로피는 0.469, 교차 엔트로피는 1이라 KL은 0.531로 달라진다. KL은 거리처럼 보이지만 대칭이 아니다. 앞쪽 분포에서 자주 나오는 사건을 뒤쪽 분포가 얼마나 낮게 보는지에 벌점을 주기 때문이다."
+      title="교차 엔트로피 = 엔트로피 + KL 발산, 그리고 KL은 비대칭이다"
+      caption="본문 예제의 숫자다(단위: 비트). 위: 실제 분포가 공정한 동전인데 모델이 (0.9, 0.1)이라고 예측하면 교차 엔트로피는 1.737비트로, 실제 분포의 엔트로피 1비트보다 0.737비트 크다. 이 차이가 '잘못된 분포를 써서 낭비한 비트', 즉 KL(p‖q)다. 아래: 기준과 모델을 바꾸면 엔트로피는 0.469, 교차 엔트로피는 1이라 KL은 0.531로 달라진다. KL은 거리처럼 보이지만 대칭이 아니다. 앞쪽 분포에서 자주 일어나는 사건에 뒤쪽 분포가 낮은 확률을 줄수록 값이 커지기 때문이다."
       viewBox="0 0 720 200"
       minWidth={580}
     >
@@ -2750,8 +2750,8 @@ export function KlDirection() {
   const pw = 300;
   return (
     <DiagramFrame
-      title="KL 발산의 방향이 맞추는 모양을 바꾼다"
-      caption="봉우리가 둘인 분포 p(회색)에 정규분포 q 하나를 맞춘다고 하자(수치 최적화 결과). KL(p‖q)를 줄이면 p가 확률을 두는 곳에서 q가 작으면 큰 벌점을 받으므로, q가 두 봉우리를 모두 덮도록 넓게 퍼진다(평균은 0, 표준편차 2.09). 반대로 KL(q‖p)를 줄이면 q가 확률을 두는 곳에서 p가 작으면 벌점을 받으므로, q는 봉우리 하나에만 좁게 붙는다(평균 2, 표준편차 0.61). 6주차 RLHF의 KL 벌점과 4주차 VAE에서 어느 방향을 쓰느냐가 결과의 성격을 바꾸는 이유다."
+      title="KL 발산의 방향에 따라 근사 분포의 모양이 달라진다"
+      caption="봉우리가 둘인 분포 p(회색)에 정규분포 q 하나를 맞춘다고 하자(수치 최적화 결과). KL(p‖q)를 줄이면 p가 확률을 두는 곳에서 q가 작으면 큰 벌점을 받으므로, q가 두 봉우리를 모두 덮도록 넓게 퍼진다(평균은 0, 표준편차 2.09). 반대로 KL(q‖p)를 줄이면 q가 확률을 두는 곳에서 p가 작으면 벌점을 받으므로, q는 봉우리 하나에만 좁게 맞춰진다(평균 2, 표준편차 0.61). 6주차 RLHF의 KL 벌점과 4주차 VAE에서도 어느 방향의 KL을 쓰느냐에 따라 결과의 성격이 달라진다."
       viewBox="0 0 720 210"
       minWidth={600}
     >
@@ -2811,7 +2811,7 @@ export function ConditionZigzag() {
   return (
     <DiagramFrame
       title="조건수가 크면 경사하강법이 지그재그로 느려진다"
-      caption={`왼쪽: 가로 방향 곡률 1, 세로 방향 곡률 10(κ = 10)인 이차 함수의 등고선(가로세로 같은 축척)과, 최선의 고정 학습률 2/(a_max + a_min)로 움직인 경사하강법의 경로다(원점이 최솟값). 가파른 세로 방향에서는 스텝마다 부호가 바뀌며 벽 사이를 오가고, 완만한 가로 방향으로는 스텝마다 오차의 ${((kappa - 1) / (kappa + 1)).toFixed(2)}배씩만 줄어 계곡 바닥을 따라 느리게 내려간다. 오른쪽: 본문 코드로 오차를 10⁻⁶ 아래로 줄이는 데 걸린 스텝 수다. 조건수가 10배가 될 때마다 스텝 수도 약 10배(69 → 691 → 6908)가 되지만, 곡률로 걸음을 정하는 뉴턴 방법은 κ와 상관없이 한 스텝에 끝난다.`}
+      caption={`왼쪽: 가로 방향 곡률 1, 세로 방향 곡률 10(κ = 10)인 이차 함수의 등고선(가로세로 같은 축척)과, 최선의 고정 학습률 2/(a_max + a_min)로 움직인 경사하강법의 경로다(원점이 최솟값). 가파른 세로 방향에서는 스텝마다 부호가 바뀌며 골짜기의 양쪽 벽 사이를 오가고, 완만한 가로 방향으로는 스텝마다 오차의 ${((kappa - 1) / (kappa + 1)).toFixed(2)}배씩만 줄어 계곡 바닥을 따라 느리게 내려간다. 오른쪽: 본문 코드로 오차를 10⁻⁶ 아래로 줄이는 데 걸린 스텝 수다. 조건수가 10배가 될 때마다 스텝 수도 약 10배(69 → 691 → 6908)가 되지만, 곡률을 반영해 보폭을 정하는 뉴턴 방법은 κ와 상관없이 한 스텝에 끝난다.`}
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -2835,14 +2835,14 @@ export function ConditionZigzag() {
         최솟값
       </text>
       <text x={14} y={204} fontSize={10.5} fontWeight={800} fill={colors.red}>
-        ● 경사하강법: 세로로 튕기며 가로로는 0.82배씩
+        ● 경사하강법: 세로로는 진동하고 가로로는 0.82배씩 줄어듦
       </text>
       <text x={14} y={221} fontSize={10} fill={inkSecondary}>
         같은 축척으로 그려 등고선이 가로로 √10 ≈ 3.2배 길다
       </text>
       <line x1={412} y1={14} x2={412} y2={224} stroke="var(--border-hairline)" />
       <text x={566} y={24} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
-        오차 10⁻⁶까지 걸린 스텝 (로그 막대)
+        오차 10⁻⁶까지 걸린 스텝 수 (로그 눈금)
       </text>
       {steps.map((s, i) => (
         <g key={s.k}>
