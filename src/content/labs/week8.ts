@@ -859,7 +859,7 @@ def _():
       hints: [
         "조합별 인원은 `counts = {}` 다음 `for r in rows: counts[r] = counts.get(r, 0) + 1`로 셉니다. `k_anonymity`는 `min(counts.values())`, `unique_fraction`은 `sum(counts[r] == 1 for r in rows) / len(rows)`.",
         "`yes = np.mean(answers)`이고 $P(\\text{예}) = p\\pi + (1-p)/2$이므로 `(yes - (1 - p_truth) / 2) / p_truth`. $\\varepsilon$은 사실이 예일 때 `p_truth + (1 - p_truth) / 2`, 아니오일 때 `(1 - p_truth) / 2`의 비에 `log`를 취합니다.",
-        "`count + rng.laplace(0, 1 / eps)`. 한 사람이 바꿀 수 있는 개수는 최대 1(민감도 1)이라 척도 $1/\\varepsilon$의 잡음이면 $\\varepsilon$-차등 프라이버시가 됩니다. 잡음의 평균 절대값이 척도와 같다는 것도 확인해 보십시오.",
+        "`count + rng.laplace(0, 1 / eps)`. 한 사람이 바꿀 수 있는 개수는 최대 1(민감도 1)이라 척도 $1/\\varepsilon$의 잡음이면 $\\varepsilon$-차등 프라이버시가 됩니다. 잡음의 평균 절댓값이 척도와 같다는 것도 확인해 보십시오.",
       ],
       solution: py`
 import numpy as np

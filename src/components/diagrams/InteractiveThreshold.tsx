@@ -59,7 +59,7 @@ export default function InteractiveThreshold() {
           <Slider label="임계값 t (이 점수 이상이면 '스팸')" value={t} min={0.05} max={0.95} step={0.01} onChange={setT} format={(v) => v.toFixed(2)} color="var(--series-violet)" />
         </ControlRow>
       }
-      caption={`왼쪽은 정상 메일(파랑)과 스팸(주황)이 받는 점수의 분포, 보라 선이 임계값이다. 선 오른쪽의 진한 부분이 '스팸'으로 판정된 메일로, 주황 진한 부분이 TP, 파랑 진한 부분이 FP다. 지금 t = ${t.toFixed(2)}에서 TPR(Recall) = ${tpr.toFixed(3)}, FPR = ${fpr.toFixed(3)}, Precision = ${precision.toFixed(3)}(스팸 비율 30% 가정)이다. 임계값을 낮추면 놓치는 스팸은 줄지만 억울한 정상 메일이 늘어, 오른쪽 ROC 곡선 위의 점이 오른쪽 위로 미끄러진다. 곡선 자체(AUC ≈ ${auc.toFixed(2)})는 임계값과 무관한 모델의 변별력이다.`}
+      caption={`왼쪽은 정상 메일(파랑)과 스팸(주황)이 받는 점수의 분포, 보라 선이 임계값이다. 선 오른쪽의 진한 부분이 '스팸'으로 판정된 메일로, 주황 진한 부분이 TP, 파랑 진한 부분이 FP다. 지금 t = ${t.toFixed(2)}에서 TPR(Recall) = ${tpr.toFixed(3)}, FPR = ${fpr.toFixed(3)}, Precision = ${precision.toFixed(3)}(스팸 비율 30% 가정)이다. 임계값을 낮추면 놓치는 스팸은 줄지만 스팸으로 잘못 걸리는 정상 메일이 늘어, 오른쪽 ROC 곡선 위의 점이 오른쪽 위로 이동한다. 곡선 자체(AUC ≈ ${auc.toFixed(2)})는 임계값과 무관한 모델의 변별력이다.`}
     >
       <Axes {...D} sx={dx} sy={dy} xTicks={[0, 0.25, 0.5, 0.75, 1]} grid={false} xLabel="모델 점수 (스팸일 확률)" />
       <path d={area(MU_NEG, 0, t)} fill={colors.blue} fillOpacity={0.1} />

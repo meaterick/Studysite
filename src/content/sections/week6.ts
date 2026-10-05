@@ -636,7 +636,7 @@ const sections: Record<string, SectionMeta> = {
           "0.5점"
         ],
         "answer": 0,
-        "explanation": "$0.25 \\times 1 + 0.75 \\times (-1/3) = 0$이다. 오답에 감점이 없으면 찍기(0.25점)가 보류(0점)보다 유리해서 모델이 추측하도록 길들여진다."
+        "explanation": "$0.25 \\times 1 + 0.75 \\times (-1/3) = 0$이다. 오답에 감점이 없으면 찍기(0.25점)가 보류(0점)보다 유리해서 모델이 추측하는 쪽으로 학습된다."
       },
       {
         "id": "w6-hallucination-c6",

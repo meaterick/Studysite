@@ -62,7 +62,7 @@ export function TokenizerBpe() {
     <DiagramFrame
       title="BPE(Byte-Pair Encoding) 토크나이저"
       viewBox="0 0 640 260"
-      caption="가장 빈번하게 붙어 나오는 문자 쌍을 반복적으로 병합해 어휘를 만든다. 어휘 크기와 시퀀스 길이는 절충 관계."
+      caption="가장 빈번하게 붙어 나오는 문자 쌍을 반복적으로 병합해 어휘를 만든다. 어휘 크기와 시퀀스 길이는 절충 관계다."
     >
       {stages.map((s, i) => (
         <g key={i}>
@@ -228,8 +228,8 @@ export function PositionalWaves() {
   const marks = [3, 10];
   return (
     <DiagramFrame
-      title="사인 위치 인코딩: 주파수가 다른 파동을 겹친 번호표"
-      caption="성분마다 다른 빠르기로 도는 사인파를 쓴다. 세로선처럼 한 위치에서 값을 위아래로 읽으면 (빠른, 중간, 느린) 성분 값의 조합이 위치마다 달라져 고유한 번호표가 된다. 빠른 성분은 이웃 위치를, 느린 성분은 먼 위치를 구별한다."
+      title="사인 위치 인코딩: 주파수가 다른 사인파로 위치를 표현한다"
+      caption="성분마다 주파수가 다른 사인파를 쓴다. 세로선처럼 한 위치에서 값을 위아래로 읽으면 (빠른, 중간, 느린) 성분 값의 조합이 위치마다 달라 위치를 구별하는 고유한 값이 된다. 빠른 성분은 이웃한 위치를, 느린 성분은 멀리 떨어진 위치를 구별하는 데 쓰인다."
       viewBox={`0 0 ${W} ${H}`}
       minWidth={480}
     >
@@ -299,7 +299,7 @@ export function TextToIds() {
   return (
     <DiagramFrame
       title="문장이 숫자가 되기까지: 토큰화 → 어휘 사전 → 임베딩 조회"
-      caption="문장을 토큰으로 자르고(①), 어휘 사전에서 번호를 찾는다(②). 사전에 없는 '햄스터'는 0번 <unk>로 바뀌어 어떤 단어였는지 정보가 사라진다. ③ 번호 i의 임베딩은 임베딩 행렬 E(d × |V|)의 i번째 열이다. One-hot 벡터를 실제로 곱할 필요 없이 열 하나를 꺼내 오면(lookup) 되고, PyTorch의 nn.Embedding이 하는 일이 이것이다."
+      caption="문장을 토큰으로 자르고(①), 어휘 사전에서 번호를 찾는다(②). 사전에 없는 '햄스터'는 0번 <unk>로 바뀌어 어떤 단어였는지 정보가 사라진다. ③ 번호 i의 임베딩은 임베딩 행렬 E(d × |V|)의 i번째 열이다. One-hot 벡터를 실제로 곱할 필요 없이 열 하나를 꺼내 오면(lookup) 되고, PyTorch의 nn.Embedding도 이렇게 동작한다."
       viewBox="0 0 720 266"
       minWidth={560}
     >
@@ -348,7 +348,7 @@ export function TextToIds() {
       {Array.from({ length: 3 }, (_, r) => (
         <rect key={r} x={ex + 8 * cw + 70} y={164 + r * cw} width={cw} height={cw} fill={colors.blue} fillOpacity={0.35} stroke={colors.blue} />
       ))}
-      <Lines x={ex + 8 * cw + 116} y={196} lines={["E · e₂ = E[:, 2]", "곱셈 대신 '열 꺼내기'", "d = 300, |V| = 50,000이면", "E에는 1,500만 개의 학습 값"]} size={10.5} anchor="start" />
+      <Lines x={ex + 8 * cw + 116} y={196} lines={["E · e₂ = E[:, 2]", "곱셈 대신 '열 꺼내기'", "d = 300, |V| = 50,000이면", "E에는 학습할 값이 1,500만 개"]} size={10.5} anchor="start" />
     </DiagramFrame>
   );
 }
@@ -398,12 +398,12 @@ export function OnehotVsEmbedding() {
   return (
     <DiagramFrame
       title="One-hot과 임베딩: 단어끼리의 코사인 유사도 표"
-      caption="왼쪽: One-hot 벡터는 서로 다른 단어끼리 내적이 항상 0이라, '고양이'가 '자동차'보다 '강아지'와 비슷하다는 정보를 담을 수 없다. 오른쪽: 의미가 비슷한 단어끼리 가까워지도록 학습된 임베딩(여기서는 장난감 3차원 값)에서는 고양이-강아지의 유사도가 높고 고양이-자동차는 낮다."
+      caption="왼쪽: One-hot 벡터는 서로 다른 단어끼리 내적이 항상 0이라, '고양이'가 '자동차'보다 '강아지'와 비슷하다는 정보를 담을 수 없다. 오른쪽: 의미가 비슷한 단어끼리 가까워지도록 학습된 임베딩(여기서는 예시로 정한 3차원 값)에서는 고양이-강아지의 유사도가 높고 고양이-자동차는 낮다."
       viewBox="0 0 720 262"
       minWidth={540}
     >
       {grid(110, one, "One-hot: 다른 단어끼리 모두 0", colors.orange, "대각선 밖이 전부 0 = 유사도 정보 없음")}
-      {grid(470, dense, "학습된 임베딩: 비슷한 단어끼리 크다", colors.blue, `고양이·강아지 ${dense[0][1].toFixed(2)} vs 고양이·자동차 ${dense[0][2].toFixed(2)}`)}
+      {grid(470, dense, "학습된 임베딩: 비슷한 단어끼리 값이 크다", colors.blue, `고양이·강아지 ${dense[0][1].toFixed(2)} vs 고양이·자동차 ${dense[0][2].toFixed(2)}`)}
       <line x1={360} y1={14} x2={360} y2={250} stroke="var(--border-hairline)" />
     </DiagramFrame>
   );
@@ -416,8 +416,8 @@ export function SkipgramWindow() {
   const x0 = 110;
   return (
     <DiagramFrame
-      title="Skip-gram의 학습 데이터: 창을 밀며 (중심, 문맥) 쌍을 뽑는다"
-      caption="중심 단어(보라)를 한 칸씩 옮기며, 앞뒤 한 칸(윈도우 1) 안의 단어(주황)를 '맞혀야 할 문맥'으로 삼는다. 사람이 정답을 달지 않았는데도 문장 하나에서 쌍 6개가 저절로 생긴다. 말뭉치가 수십억 단어면 이런 쌍도 수십억 개다."
+      title="Skip-gram의 학습 데이터: 윈도우를 옮기며 (중심, 문맥) 쌍을 만든다"
+      caption="중심 단어(보라)를 한 칸씩 옮기며, 앞뒤 한 칸(윈도우 1) 안의 단어(주황)를 '맞혀야 할 문맥'으로 삼는다. 사람이 정답을 달지 않았는데도 문장 하나에서 쌍 6개가 자동으로 생긴다. 말뭉치가 수십억 단어면 이런 쌍도 수십억 개다."
       viewBox="0 0 720 230"
       minWidth={540}
     >
@@ -458,8 +458,8 @@ export function RnnUnrollBptt() {
   const cx = (i: number) => 120 + i * 140;
   return (
     <DiagramFrame
-      title="RNN을 시간축으로 펼치기: 앞으로는 같은 W·U, 뒤로는 야코비안의 곱"
-      caption="파란 화살표가 순전파다. 모든 시점이 같은 W, U로 hₜ = tanh(W·xₜ + U·hₜ₋₁)을 계산하므로, h₂ 안에는 h₁을 거쳐 x₁의 정보도 섞여 있다(앞 두 칸은 본문 예제의 실제 값). 주황 화살표가 BPTT다. 마지막 손실에서 h₁까지 기울기가 오려면 ∂hₜ/∂hₜ₋₁을 시점마다 한 번씩, 모두 세 번 곱해야 한다. 문장이 길수록 곱셈 횟수가 늘어 기울기가 사라지거나 폭발한다."
+      title="RNN을 시간축으로 펼치기: 순전파는 같은 W·U, 역전파는 야코비안의 곱"
+      caption="파란 화살표가 순전파다. 모든 시점이 같은 W, U로 hₜ = tanh(W·xₜ + U·hₜ₋₁)을 계산하므로, h₂ 안에는 h₁을 거쳐 x₁의 정보도 섞여 있다(앞 두 칸은 본문 예제의 실제 값). 주황 화살표가 BPTT다. 마지막 손실에서 h₁까지 기울기가 전달되려면 ∂hₜ/∂hₜ₋₁을 시점마다 한 번씩, 모두 세 번 곱해야 한다. 문장이 길수록 곱셈 횟수가 늘어 기울기가 사라지거나 폭발한다."
       viewBox="0 44 720 206"
       minWidth={560}
     >
@@ -513,7 +513,7 @@ export function Seq2seqBottleneck() {
   return (
     <DiagramFrame
       title="Seq2Seq의 병목과 Attention의 해법"
-      caption="위: 인코더가 원문 전체를 마지막 은닉 상태 하나(문맥 벡터 c)에 압축해 넘기므로, 문장이 길수록 앞부분 정보가 희석된다. 아래: Attention을 쓰면 디코더가 '고양이를'을 만들 차례에 인코더의 모든 상태를 다시 보고, 지금 상태와 관련된 정도(내적 → softmax)만큼 섞어 이번 스텝만의 문맥 c_t를 만든다. 비율은 본문 코드의 결과(I 35%, love 8%, cats 57%)다."
+      caption="위: 인코더가 원문 전체를 마지막 은닉 상태 하나(문맥 벡터 c)에 압축해 전달하므로, 문장이 길수록 앞부분 정보가 희석된다. 아래: Attention을 쓰면 디코더가 '고양이를'을 만들 차례에 인코더의 모든 상태를 다시 보고, 지금 상태와 관련된 정도(내적 → softmax)만큼 섞어 이번 스텝만의 문맥 c_t를 만든다. 비율은 본문 코드의 결과(I 35%, love 8%, cats 57%)다."
       viewBox="0 0 720 300"
       minWidth={560}
     >
@@ -646,8 +646,8 @@ export function PathLengthParallel() {
   const rx = (i: number) => 400 + i * 52;
   return (
     <DiagramFrame
-      title="정보가 지나는 길: RNN은 O(n) 줄, Self-Attention은 한 걸음"
-      caption="왼쪽: RNN에서 1번 토큰의 정보가 6번 토큰에 닿으려면 은닉 상태를 5번 거쳐야 하고(경로 길이 O(n)), 앞 계산이 끝나야 다음을 할 수 있어 순차적으로만 처리된다. 오른쪽: Self-Attention에서는 6번 토큰이 모든 앞 토큰을 내적 한 번으로 직접 본다(경로 길이 1). 모든 쌍을 한꺼번에 행렬곱으로 계산하므로 병렬화가 쉽지만, 쌍의 수가 n²이라 문맥이 길수록 비용이 제곱으로 커진다."
+      title="정보가 전달되는 경로: RNN은 O(n)단계, Self-Attention은 한 단계"
+      caption="왼쪽: RNN에서 1번 토큰의 정보가 6번 토큰에 전달되려면 은닉 상태를 5번 거쳐야 하고(경로 길이 O(n)), 앞 계산이 끝나야 다음을 할 수 있어 순차적으로만 처리된다. 오른쪽: Self-Attention에서는 6번 토큰이 모든 앞 토큰을 내적 한 번으로 직접 본다(경로 길이 1). 모든 쌍을 한꺼번에 행렬곱으로 계산하므로 병렬화가 쉽지만, 쌍의 수가 n²이라 문맥이 길수록 비용이 제곱으로 커진다."
       viewBox="0 0 720 178"
       minWidth={560}
     >
@@ -713,7 +713,7 @@ export function AttentionSteps() {
   ];
   return (
     <DiagramFrame
-      title="Self-Attention 한 줄을 손으로: Query '생선을'의 계산"
+      title="Self-Attention 한 행을 손으로 계산하기: Query '생선을'"
       caption="① '생선을'의 Query [1, 1, 0, 1]을 각 토큰의 Key와 내적해 점수 [1, 3, 0, 1]을 얻는다. ② √d_k = 2로 나눈다. ③ softmax로 합이 1인 비율 18.8%·51.0%·11.4%·18.8%로 바꾼다. ④ 그 비율로 Value를 섞으면 '생선을'의 새 표현 [1.24, 1.65]가 된다. 이 계산을 모든 토큰이 동시에 하는 것이 Self-Attention이다."
       viewBox="0 0 720 270"
       minWidth={560}
@@ -807,8 +807,8 @@ export function AttentionMatrixShapes() {
   );
   return (
     <DiagramFrame
-      title="모든 Query를 한꺼번에: softmax(QKᵀ/√d_k)·V를 shape으로 읽기"
-      caption="Q(n × d_k)와 Kᵀ(d_k × n)를 곱하면 모든 토큰 쌍의 점수표 S(n × n)가 한 번에 나온다. softmax는 행마다 따로 적용해 각 행(한 Query가 나눠 주는 관심)의 합이 1이 되게 한다. 그 비율표 A에 V(n × d_v)를 곱하면 토큰마다 새 표현 하나씩, 입력과 같은 개수의 행이 나온다. 진하게 칠한 둘째 행이 앞 그림의 '생선을' 계산이다."
+      title="모든 Query를 한꺼번에: softmax(QKᵀ/√d_k)·V의 shape 따라가기"
+      caption="Q(n × d_k)와 Kᵀ(d_k × n)를 곱하면 모든 토큰 쌍의 점수표 S(n × n)가 한 번에 나온다. softmax는 행마다 따로 적용해 각 행(한 Query가 각 토큰에 나눠 주는 가중치)의 합이 1이 되게 한다. 그 비율표 A에 V(n × d_v)를 곱하면 토큰마다 새 표현 하나씩, 입력과 같은 개수의 행이 나온다. 진하게 칠한 둘째 행이 앞 그림의 '생선을' 계산이다."
       viewBox="0 40 720 176"
       minWidth={560}
     >
@@ -829,7 +829,7 @@ export function AttentionMatrixShapes() {
       {sym(554, "=")}
       {grid(572, 70, 4, 2, colors.green, "출력", "(n, d_v)", 1)}
       <text x={360} y={204} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-        {"n개 토큰이 각자 한 행씩: 행 i = 'i번째 토큰이 모두를 둘러보고 만든 새 표현'"}
+        {"n개 토큰이 각자 한 행씩: 행 i = 'i번째 토큰이 모든 토큰을 참고해 만든 새 표현'"}
       </text>
     </DiagramFrame>
   );
@@ -1010,7 +1010,7 @@ export function PeOrderTest() {
     toks.map((t, i) => chip(x + i * 70, y, t, i === hi ? color : inkMuted, 64, 24, i === hi ? 0.2 : 0.06, 11));
   return (
     <DiagramFrame
-      title="위치 정보가 없으면 순서를 모른다: 같은 단어, 같은 출력"
+      title="위치 정보가 없으면 순서를 구별하지 못한다: 같은 단어는 같은 출력"
       caption="'고양이가 생선을 먹었다'와 순서를 뒤집은 '먹었다 생선을 고양이가'를 마스크 없는 attention에 넣고, 두 문장에서 '고양이가'의 출력(막대 모양)을 비교했다. 위치 인코딩이 없으면 자리가 달라도 출력이 완전히 같다(본문 코드의 True). 자리마다 다른 위치 벡터를 더하면 같은 단어라도 자리에 따라 출력이 달라진다(False). 막대는 출력 벡터를 개념적으로 나타낸 것이다."
       viewBox="0 0 720 194"
       minWidth={560}
@@ -1061,7 +1061,7 @@ export function AttentionMlpRoles() {
   return (
     <DiagramFrame
       title="블록 안의 역할 분담: Attention은 토큰끼리, MLP는 토큰마다"
-      caption="아래(Attention): 각 토큰이 자기 앞의 토큰들에서 필요한 정보를 가져온다. 토큰 사이에 정보가 오가는 유일한 곳이다(누구를 참고할까). 위(MLP): 같은 가중치의 작은 신경망이 토큰 하나하나를 따로 변환한다(가져온 정보로 무엇을 알아낼까). 블록 파라미터의 약 2/3가 MLP에 있다. 두 부품 모두 결과를 입력에 더하는 잔차 연결로 감싸여 있다."
+      caption="아래(Attention): 각 토큰이 자기 앞의 토큰들에서 필요한 정보를 가져온다. 토큰 사이에 정보가 오가는 유일한 곳이다(누구를 참고할까). 위(MLP): 같은 가중치의 작은 신경망이 토큰 하나하나를 따로 변환한다(가져온 정보로 무엇을 알아낼까). 블록 파라미터의 약 2/3가 MLP에 있다. 두 부분 모두 결과를 입력에 더하는 잔차 연결로 감싸여 있다."
       viewBox="0 0 720 300"
       minWidth={560}
     >
@@ -1141,7 +1141,7 @@ export function LnVsBn() {
   return (
     <DiagramFrame
       title="BatchNorm과 LayerNorm: 평균·분산을 어느 방향으로 구하나"
-      caption="BatchNorm(4주차)은 특징 하나(칠한 열)마다 배치 안의 여러 샘플에 걸쳐 평균·분산을 구하므로 배치 크기와 구성에 영향을 받는다. LayerNorm은 토큰 하나(칠한 행)의 d개 특징만으로 평균·분산을 구해 토큰마다 혼자 정규화한다. 그래서 문장 길이·배치 크기와 상관없이 같은 방식으로 동작하고, 생성할 때 토큰을 하나씩 처리해도 문제가 없다. Transformer가 LayerNorm을 쓰는 이유다."
+      caption="BatchNorm(4주차)은 특징 하나(칠한 열)마다 배치 안의 여러 샘플에 걸쳐 평균·분산을 구하므로 배치 크기와 구성에 영향을 받는다. LayerNorm은 토큰 하나(칠한 행)의 d개 특징만으로 평균·분산을 구해 토큰마다 독립적으로 정규화한다. 그래서 문장 길이·배치 크기와 상관없이 같은 방식으로 동작하고, 생성할 때 토큰을 하나씩 처리해도 문제가 없다. Transformer가 LayerNorm을 쓰는 이유다."
       viewBox="0 0 720 248"
       minWidth={540}
     >
@@ -1254,8 +1254,8 @@ export function LstmCellStep() {
   );
   return (
     <DiagramFrame
-      title="셀 상태 한 스텝: 옛 기억 × f + 새 후보 × i"
-      caption="본문 예제의 숫자다. 셀 상태(컨베이어 벨트)를 따라 들어온 옛 기억 2.0은 forget gate 0.9를 곱해 1.8만 남고, 새 후보 0.4는 input gate 0.5를 곱해 0.2만 더해져 새 셀 상태는 2.0이 된다. 벨트 위에서는 행렬 곱이나 비선형 함수 없이 성분별 곱셈과 덧셈만 일어난다. 아래는 극단적인 두 경우다. f = 1, i = 0이면 기억이 그대로 보존되고, f = 0, i = 1이면 과거를 지우고 새 후보로 덮어쓴다."
+      title="셀 상태 한 스텝: 이전 기억 × f + 새 후보 × i"
+      caption="본문 예제의 숫자다. 셀 상태(컨베이어 벨트)를 따라 들어온 이전 기억 2.0은 forget gate 0.9를 곱해 1.8만 남고, 새 후보 0.4는 input gate 0.5를 곱해 0.2만 더해져 새 셀 상태는 2.0이 된다. 벨트 위에서는 행렬 곱이나 비선형 함수 없이 성분별 곱셈과 덧셈만 일어난다. 아래는 극단적인 두 경우다. f = 1, i = 0이면 기억이 그대로 보존되고, f = 0, i = 1이면 과거를 지우고 새 후보로 덮어쓴다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -1286,7 +1286,7 @@ export function LstmCellStep() {
       <Arr x1={222} y1={136} x2={222} y2={y + 17} color={colors.orange} marker={`${P}-orange`} width={1.8} />
       {chip(170, 138, "f = 0.9", colors.orange, 104, 26, 0.14, 11.5)}
       <text x={222} y={180} textAnchor="middle" fontSize={10} fill={inkSecondary}>
-        forget gate: 옛 기억의 90% 유지
+        forget gate: 이전 기억의 90% 유지
       </text>
       <Arr x1={390} y1={136} x2={390} y2={y + 17} color={colors.green} marker={`${P}-green`} width={1.8} />
       {chip(325, 138, "i ⊙ c̃ = 0.5 × 0.4", colors.green, 130, 26, 0.14, 11)}
@@ -1304,7 +1304,7 @@ export function LstmCellStep() {
       </text>
       <line x1={20} x2={700} y1={196} y2={196} stroke="var(--border-hairline)" />
       <text x={30} y={220} fontSize={11} fontWeight={700} fill={colors.green}>
-        f = 1, i = 0 → 새 c = 옛 c: 기억 보존
+        f = 1, i = 0 → 새 c = 이전 c: 기억 보존
       </text>
       <text x={380} y={220} fontSize={11} fontWeight={700} fill={colors.red}>
         f = 0, i = 1 → 새 c = c̃: 과거를 지우고 덮어쓰기
@@ -1381,7 +1381,7 @@ export function GruVsLstm() {
   return (
     <DiagramFrame
       title="LSTM과 GRU: 게이트와 상태의 수"
-      caption="LSTM은 forget·input·output 게이트와 새 후보, 네 묶음의 가중치를 갖고 셀 상태 c와 은닉 상태 h를 따로 유지한다. GRU는 forget과 input을 업데이트 게이트 z 하나로 합쳐 '옛 상태를 1 − z만큼, 새 후보를 z만큼' 섞고, 리셋 게이트 r로 새 후보를 만들 때 이전 상태를 얼마나 볼지 정한다. 상태도 h 하나뿐이다. 묶음 하나가 d_h(d_x + d_h) + d_h개 파라미터라면 단순 RNN은 1묶음, GRU는 3묶음, LSTM은 4묶음이다(본문 코드의 d_x = 3, d_h = 2에서 LSTM은 48개)."
+      caption="LSTM은 forget·input·output 게이트와 새 후보, 네 묶음의 가중치를 갖고 셀 상태 c와 은닉 상태 h를 따로 유지한다. GRU는 forget과 input을 업데이트 게이트 z 하나로 합쳐 '이전 상태를 1 − z만큼, 새 후보를 z만큼' 섞고, 리셋 게이트 r로 새 후보를 만들 때 이전 상태를 얼마나 볼지 정한다. 상태도 h 하나뿐이다. 묶음 하나가 d_h(d_x + d_h) + d_h개 파라미터라면 단순 RNN은 1묶음, GRU는 3묶음, LSTM은 4묶음이다(본문 코드의 d_x = 3, d_h = 2에서 LSTM은 48개)."
       viewBox="0 0 720 262"
       minWidth={600}
     >
@@ -1424,7 +1424,7 @@ export function GruVsLstm() {
       <circle cx={700} cy={92} r={7} fill={colors.orange} />
       <circle cx={500 + 0.3 * 200} cy={92} r={8} fill={colors.green} stroke="var(--surface-card)" strokeWidth={2} />
       <text x={500} y={118} textAnchor="middle" fontSize={10} fill={colors.blue}>
-        {withSub("h", "t−1", " (옛 상태)", 10)}
+        {withSub("h", "t−1", " (이전 상태)", 10)}
       </text>
       <text x={700} y={118} textAnchor="end" fontSize={10} fill={colors.orange}>
         h̃ (새 후보)
@@ -1432,7 +1432,7 @@ export function GruVsLstm() {
       <text x={560} y={80} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.green}>
         z = 0.3
       </text>
-      <Lines x={600} y={140} lines={["z가 작으면 옛 상태 유지", "(LSTM의 f ≈ 1, i ≈ 0)"]} size={9.5} color={inkSecondary} />
+      <Lines x={600} y={140} lines={["z가 작으면 이전 상태 유지", "(LSTM의 f ≈ 1, i ≈ 0)"]} size={9.5} color={inkSecondary} />
       <text x={16} y={186} fontSize={11} fontWeight={800} fill={ink}>
         파라미터 묶음 수 (묶음 하나 = d_h(d_x + d_h) + d_h)
       </text>
@@ -1481,7 +1481,7 @@ export function KvCacheSteps() {
   return (
     <DiagramFrame
       title="KV 캐시: 과거 토큰의 K, V를 다시 계산하지 않는다"
-      caption="행은 생성 스텝(t번째 토큰을 만드는 중), 열은 그때 attention에 필요한 토큰 1~t의 Key·Value다. 주황은 그 스텝에서 새로 계산하는 것, 파랑은 캐시에서 읽기만 하는 것이다. 캐시가 없으면 스텝마다 지금까지의 모든 토큰의 K, V를 다시 만들어 여섯 스텝에 1 + 2 + … + 6 = 21번 계산하지만, 과거 토큰의 K, V는 뒤에 무엇이 오든 바뀌지 않으므로 캐시에 저장해 두면 스텝마다 새 토큰 하나만 계산해 6번이면 된다. n개를 생성하면 n(n + 1)/2번이 n번으로 준다."
+      caption="행은 생성 스텝(t번째 토큰을 만드는 중), 열은 그때 attention에 필요한 토큰 1~t의 Key·Value다. 주황은 그 스텝에서 새로 계산하는 것, 파랑은 캐시에서 읽기만 하는 것이다. 캐시가 없으면 스텝마다 지금까지의 모든 토큰의 K, V를 다시 만들어 여섯 스텝에 1 + 2 + … + 6 = 21번 계산하지만, 과거 토큰의 K, V는 뒤에 무엇이 오든 바뀌지 않으므로 캐시에 저장해 두면 스텝마다 새 토큰 하나만 계산해 6번이면 된다. n개를 생성하면 n(n + 1)/2번이 n번으로 줄어든다."
       viewBox="0 0 720 230"
       minWidth={580}
     >
@@ -1540,7 +1540,7 @@ export function PrefillDecode() {
   return (
     <DiagramFrame
       title="생성의 두 단계: 프리필과 디코드"
-      caption="개념도다. 프리필에서는 프롬프트 전체를 학습 때처럼 한 번에 병렬로 처리해 KV 캐시를 채운다. 계산은 많지만 GPU가 한꺼번에 처리하므로 빠르고, 이 시간이 첫 글자가 나오기까지의 대기 시간이 된다. 디코드에서는 토큰을 하나씩 만들며 캐시에 덧붙이는데, 토큰마다 계산은 적지만 매번 캐시 전체(와 가중치)를 메모리에서 읽어야 해서 메모리 속도에 묶인다. 그래서 한동안 기다린 뒤 일정한 속도로 글자가 나온다. 아래 막대는 KV 캐시가 차는 모습이다."
+      caption="개념도다. 프리필에서는 프롬프트 전체를 학습 때처럼 한 번에 병렬로 처리해 KV 캐시를 채운다. 계산은 많지만 GPU가 한꺼번에 처리하므로 빠르고, 이 시간이 첫 토큰이 나오기까지의 대기 시간이 된다. 디코드에서는 토큰을 하나씩 만들며 캐시에 덧붙이는데, 토큰마다 계산은 적지만 매번 캐시 전체(와 가중치)를 메모리에서 읽어야 해서 메모리 대역폭이 속도를 좌우한다. 그래서 한동안 기다린 뒤 일정한 속도로 글자가 나온다. 아래 막대는 KV 캐시가 차는 모습이다."
       viewBox="0 0 720 210"
       minWidth={600}
     >
@@ -1604,8 +1604,8 @@ export function GqaSharing() {
   const bx = linear(0, 1.1, 0, 230);
   return (
     <DiagramFrame
-      title="K·V 헤드를 나눠 쓰면 KV 캐시가 준다: MHA · GQA · MQA"
-      caption="위: Query 헤드(파랑) 여덟 개가 Key·Value 헤드(주황)를 어떻게 쓰는지다. MHA는 Query마다 자기 K·V가 있고, GQA는 Query 몇 개가 K·V 하나를 함께 쓰며, MQA는 모든 Query가 K·V 하나만 쓴다. 캐시에 저장하는 것은 K·V이므로 캐시 크기는 K·V 헤드 수에 비례한다. 아래: 본문 예(32층, 헤드당 128차원, 2,048토큰, fp16, 배치 1)에서 Query 헤드 32개에 K·V 헤드가 32개면 약 1.07GB, 8개(GQA, 4 : 1)면 약 0.27GB, 1개(MQA)면 약 0.03GB다. 배치가 8이면 MHA는 8.6GB로 불어난다."
+      title="K·V 헤드를 공유하면 KV 캐시가 줄어든다: MHA, GQA, MQA"
+      caption="위: Query 헤드(파랑) 여덟 개가 Key·Value 헤드(주황)를 어떻게 쓰는지다. MHA는 Query마다 자기 K·V가 있고, GQA는 Query 몇 개가 K·V 하나를 함께 쓰며, MQA는 모든 Query가 K·V 하나만 쓴다. 캐시에 저장하는 것은 K·V이므로 캐시 크기는 K·V 헤드 수에 비례한다. 아래: 본문 예(32층, 헤드당 128차원, 2,048토큰, fp16, 배치 1)에서 Query 헤드 32개에 K·V 헤드가 32개면 약 1.07GB, 8개(GQA, 4 : 1)면 약 0.27GB, 1개(MQA)면 약 0.03GB다. 배치가 8이면 MHA는 8.6GB로 늘어난다."
       viewBox="0 0 720 262"
       minWidth={600}
     >
@@ -1679,7 +1679,7 @@ export function RopeRotation() {
   const R = 58;
   return (
     <DiagramFrame
-      title="RoPE: 돌린 각도의 차이, 즉 상대 거리만 점수에 남는다"
+      title="RoPE: 회전 각도의 차이, 즉 상대 거리만 점수에 반영된다"
       caption="본문 코드의 q, k(θ = 0.3)다. 위치 m의 Query를 mθ만큼, 위치 n의 Key를 nθ만큼 돌린다(파랑 = q, 주황 = k). 위치가 (3, 1), (10, 8), (52, 50)으로 전혀 달라도 거리 m − n이 2로 같으면 두 화살표 사이의 각도가 같아 내적(점수)이 0.2389로 똑같다. 둘 다 같은 만큼 더 돌린 것뿐이기 때문이다. 거리가 4인 (5, 1)에서는 사이 각도가 θ × 2만큼 더 벌어져 점수가 달라진다. 실제 RoPE는 d차원 벡터를 두 성분씩 짝지어 쌍마다 다른 θ로 이 회전을 적용한다."
       viewBox="0 0 720 232"
       minWidth={600}
@@ -1753,7 +1753,7 @@ export function ParamBreakdown() {
   return (
     <DiagramFrame
       title="파라미터는 어디에 있나: 블록당 12d², 그중 3분의 2가 MLP"
-      caption="왼쪽: 디코더 블록 하나는 Q·K·V·출력 투영 4d²(파랑)와 MLP d → 4d → d의 8d²(주황), 합해서 약 12d²다. 오른쪽: 본문 count_params로 센 GPT-2 small은 Attention 28.3M, MLP 56.7M, 임베딩(토큰 + 위치) 39.4M으로 합계 124,439,808개다. 작은 모델에서는 임베딩이 3분의 1을 차지하지만, 같은 구조를 d = 4096, L = 32로 키우면 본체 12Ld²가 압도해 임베딩은 3% 남짓으로 줄어든다."
+      caption="왼쪽: 디코더 블록 하나는 Q·K·V·출력 투영 4d²(파랑)와 MLP d → 4d → d의 8d²(주황), 합해서 약 12d²다. 오른쪽: 본문 count_params로 센 GPT-2 small은 Attention 28.3M, MLP 56.7M, 임베딩(토큰 + 위치) 39.4M으로 합계 124,439,808개다. 작은 모델에서는 임베딩이 3분의 1을 차지하지만, 같은 구조를 d = 4096, L = 32로 키우면 본체 12Ld²가 대부분을 차지해 임베딩은 3% 남짓으로 줄어든다."
       viewBox="0 0 720 214"
       minWidth={600}
     >
@@ -1895,7 +1895,7 @@ export function OnlineSoftmaxSteps() {
   return (
     <DiagramFrame
       title="온라인 softmax: 최댓값이 바뀌면 과거 합계에 e^(m − m′) 한 번만 곱한다"
-      caption="본문 예제의 점수 [1, 2]와 [4]를 두 블록으로 나눠 본다. 막대 높이는 지금까지의 최댓값 m을 기준으로 한 e^(s − m)이고, 그 합이 ℓ이다. 왼쪽: 첫 블록만 보면 m = 2, ℓ = e⁻¹ + e⁰ ≈ 1.368이다. 가운데: 둘째 블록에서 더 큰 점수 4가 나와 기준이 m′ = 4로 바뀐다. 이전 막대를 다시 계산할 필요 없이 이전 합계 ℓ에 e^(2 − 4) ≈ 0.135를 한 번 곱해 새 기준으로 옮기고(옅은 막대), 새 항 e⁰ = 1을 더하면 ℓ′ ≈ 1.185다. 오른쪽: 세 점수를 처음부터 다 보고 계산한 값과 정확히 같다. 가중합 a도 같은 배율로 보정하므로, 점수 행렬 전체를 한 번도 들고 있지 않아도 attention 출력이 근사 없이 정확하다."
+      caption="본문 예제의 점수 [1, 2]와 [4]를 두 블록으로 나눠 본다. 막대 높이는 지금까지의 최댓값 m을 기준으로 한 e^(s − m)이고, 그 합이 ℓ이다. 왼쪽: 첫 블록만 보면 m = 2, ℓ = e⁻¹ + e⁰ ≈ 1.368이다. 가운데: 둘째 블록에서 더 큰 점수 4가 나와 기준이 m′ = 4로 바뀐다. 이전 막대를 다시 계산할 필요 없이 이전 합계 ℓ에 e^(2 − 4) ≈ 0.135를 한 번 곱해 새 기준으로 옮기고(옅은 막대), 새 항 e⁰ = 1을 더하면 ℓ′ ≈ 1.185다. 오른쪽: 세 점수를 처음부터 다 보고 계산한 값과 정확히 같다. 가중합 a도 같은 배율로 보정하므로, 점수 행렬 전체를 메모리에 한 번도 올리지 않아도 attention 출력이 근사 없이 정확하다."
       viewBox="0 0 720 256"
       minWidth={620}
     >
@@ -1931,7 +1931,7 @@ export function OnlineSoftmaxSteps() {
       <Lines x={408} y={46} lines={[`e⁻³ + e⁻² + e⁰ ≈ ${(e(-3) + e(-2) + 1).toFixed(3)}  ✓ 같다`]} size={10.5} anchor="start" color={colors.green} weight={800} />
       <rect x={408} y={78} width={296} height={150} rx={8} fill={card2Bg} stroke="var(--border-strong)" />
       <text x={420} y={100} fontSize={11} fontWeight={800} fill={ink}>
-        들고 다니는 것은 세 개뿐
+        유지하는 값은 세 개뿐
       </text>
       <Lines
         x={420}
@@ -1959,8 +1959,8 @@ export function AttentionMemoryScaling() {
   const marks = [1024, 8192, 32768, 131072, 1048576];
   return (
     <DiagramFrame
-      title="점수 행렬의 메모리는 문맥 길이의 제곱으로 자란다"
-      caption="헤드 하나의 n × n 점수 행렬을 fp16(숫자당 2바이트)으로 메모리에 만들 때의 크기다(두 축 모두 로그 눈금). 문맥이 두 배가 되면 네 배가 되어, 1,024토큰에서 2MiB이던 것이 13만 토큰에서는 32GiB, 100만 토큰에서는 2TiB가 된다. GPU 메모리(HBM) 80GB를 헤드 하나가 넘어선다. FlashAttention은 점수를 작은 타일로만 만들고 버리므로, 남기는 것은 출력 n × d(d = 128)뿐이라 메모리가 n에 비례한다(초록). 연산량 O(n²)은 그대로라는 점은 다르지 않다."
+      title="점수 행렬의 메모리는 문맥 길이의 제곱으로 늘어난다"
+      caption="헤드 하나의 n × n 점수 행렬을 fp16(숫자당 2바이트)으로 메모리에 만들 때의 크기다(두 축 모두 로그 눈금). 문맥이 두 배가 되면 네 배가 되어, 1,024토큰에서 2MiB이던 것이 13만 토큰에서는 32GiB, 100만 토큰에서는 2TiB가 된다. 헤드 하나만으로 GPU 메모리(HBM) 80GB를 넘어선다. FlashAttention은 점수를 작은 타일로만 만들고 버리므로, 남기는 것은 출력 n × d(d = 128)뿐이라 메모리가 n에 비례한다(초록). 다만 연산량은 여전히 O(n²)이다."
       viewBox="0 0 720 256"
       minWidth={600}
     >
@@ -2029,7 +2029,7 @@ export function LinearAttentionAssoc() {
   return (
     <DiagramFrame
       title="선형 어텐션: 곱하는 순서만 바꿔 n × n 행렬을 없앤다"
-      caption="행렬 곱의 결합법칙 (φ(Q)φ(K)ᵀ)V = φ(Q)(φ(K)ᵀV)를 그림으로 본 것이다(n = 10, d = 3인 모양). 위: 보통의 순서는 먼저 n × n 가중치(빨강)를 만든다. 연산은 n²d에 비례하고 메모리도 n²이다. 아래: φ(K)ᵀV를 먼저 계산하면 중간 결과가 d × d(초록) 하나뿐이고, 모든 query가 이것을 공유한다. 연산은 nd²에 비례한다. 오른쪽: d = 128일 때 두 연산량이다. 문맥이 d보다 짧으면 오히려 손해지만, n = 100,000이면 약 780배 싸다. 단, exp 커널은 이렇게 쪼개지지 않아 φ(x) = elu(x) + 1 같은 사상을 쓰므로 softmax attention과 같지 않은 근사가 된다."
+      caption="행렬 곱의 결합법칙 (φ(Q)φ(K)ᵀ)V = φ(Q)(φ(K)ᵀV)를 그림으로 본 것이다(n = 10, d = 3인 모양). 위: 보통의 순서는 먼저 n × n 가중치(빨강)를 만든다. 연산은 n²d에 비례하고 메모리도 n²이다. 아래: φ(K)ᵀV를 먼저 계산하면 중간 결과가 d × d(초록) 하나뿐이고, 모든 query가 이것을 공유한다. 연산은 nd²에 비례한다. 오른쪽: d = 128일 때 두 연산량이다. 문맥이 d보다 짧으면 오히려 손해지만, n = 100,000이면 약 780배 적다. 단, exp 커널은 이렇게 쪼개지지 않아 φ(x) = elu(x) + 1 같은 사상을 쓰므로 softmax attention을 정확히 재현하지 못하는 근사가 된다."
       viewBox="0 0 720 272"
       minWidth={620}
     >
@@ -2104,7 +2104,7 @@ export function LinearAttentionRnn() {
   return (
     <DiagramFrame
       title="인과적 선형 어텐션은 고정 크기 상태를 가진 RNN이다"
-      caption="왼쪽: GPT처럼 앞쪽 토큰만 보는 선형 어텐션을 토큰 순서대로 계산하면, 상태 S(d × d 행렬)와 z(길이 d 벡터)에 φ(k_t)v_tᵀ와 φ(k_t)를 더해 나가기만 하면 된다. 출력 o_t는 현재 query로 상태를 읽은 것이다. 학습할 때는 행렬 형태로 한꺼번에, 생성할 때는 이렇게 토큰 하나당 상태 하나만 갱신한다(본문 코드의 두 형태가 같은 값을 낸다). 오른쪽: head 차원 128에서 들고 있어야 하는 숫자의 개수다. softmax attention의 KV 캐시는 지나온 토큰 수에 비례해 커지지만, 선형 어텐션의 상태는 128 × 128 + 128 = 16,512개로 고정이다. 대신 과거 전체를 고정 크기에 압축하므로 정확한 복사·검색에 약하다."
+      caption="왼쪽: GPT처럼 앞쪽 토큰만 보는 선형 어텐션을 토큰 순서대로 계산하면, 상태 S(d × d 행렬)와 z(길이 d 벡터)에 φ(k_t)v_tᵀ와 φ(k_t)를 더해 나가기만 하면 된다. 출력 o_t는 현재 query로 상태를 읽은 것이다. 학습할 때는 행렬 형태로 한꺼번에, 생성할 때는 이렇게 토큰 하나당 상태 하나만 갱신한다(본문 코드의 두 형태가 같은 값을 낸다). 오른쪽: head 차원 128에서 저장해야 하는 숫자의 개수다. softmax attention의 KV 캐시는 지나온 토큰 수에 비례해 커지지만, 선형 어텐션의 상태는 128 × 128 + 128 = 16,512개로 고정이다. 대신 과거 전체를 고정 크기에 압축하므로 정확한 복사·검색에 약하다."
       viewBox="0 0 720 256"
       minWidth={620}
     >
@@ -2140,11 +2140,11 @@ export function LinearAttentionRnn() {
         …
       </text>
       <text x={20} y={232} fontSize={10.5} fill={inkSecondary}>
-        상태 크기는 토큰이 몇 개든 그대로 (KV 캐시처럼 자라지 않는다)
+        상태 크기는 토큰이 몇 개든 그대로 (KV 캐시처럼 늘어나지 않는다)
       </text>
       <line x1={448} y1={14} x2={448} y2={244} stroke="var(--border-hairline)" />
       <text x={G.left} y={22} fontSize={11} fontWeight={800} fill={ink}>
-        들고 있는 숫자 개수 (d = 128)
+        저장하는 숫자 개수 (d = 128)
       </text>
       <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 100, 1e3, 1e4, 1e5]} yTicks={[100, 1e4, 1e6, 1e8]} fmtX={pow10Label} fmtY={pow10Label} xLabel="지나온 토큰 수" />
       <path d={linePath([1, 1e5].map((n) => [sx(n), sy(2 * n * 128)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.4} />
@@ -2172,7 +2172,7 @@ export function RopeWavelengths() {
   return (
     <DiagramFrame
       title="RoPE의 느린 성분은 학습 길이 안에서 한 바퀴도 돌지 못한다"
-      caption={`본문 코드의 설정(head 차원 128, 성분 쌍 64개, 학습 길이 2048)에서 성분 쌍마다 한 바퀴 도는 데 필요한 위치 수(파장)다. 세로축은 로그 눈금이다. 성분 쌍 0은 약 6위치마다 한 바퀴씩 돌아 학습 중 300바퀴 넘게 모든 각도를 보지만, 뒤쪽 성분일수록 파장이 길어져 점선(학습 길이 2048)을 넘는다. 64쌍 중 ${over}쌍(빨강)은 학습 중 한 바퀴도 돌지 못해, 2048을 넘는 위치에서 처음 보는 각도를 내놓는다. 길이 외삽이 깨지는 곳이 바로 이 느린 성분들이다.`}
+      caption={`본문 코드의 설정(head 차원 128, 성분 쌍 64개, 학습 길이 2048)에서 성분 쌍마다 한 바퀴 도는 데 필요한 위치 수(파장)다. 세로축은 로그 눈금이다. 성분 쌍 0은 약 6위치마다 한 바퀴씩 돌아 학습 중 300바퀴 넘게 모든 각도를 보지만, 뒤쪽 성분일수록 파장이 길어져 점선(학습 길이 2048)을 넘는다. 64쌍 중 ${over}쌍(빨강)은 학습 중 한 바퀴도 돌지 못해, 2048을 넘는 위치에서는 처음 보는 각도가 나온다. 길이 외삽이 실패하는 원인이 바로 이 느린 성분들이다.`}
       viewBox="0 0 720 256"
       minWidth={600}
     >
@@ -2231,7 +2231,7 @@ export function PositionInterpolation() {
   const th = 10000 ** -0.75;
   return (
     <DiagramFrame
-      title="위치 보간: 새 위치를 학습 범위 안으로 눌러 넣고, 해상도를 내준다"
+      title="위치 보간: 새 위치를 학습 범위 안으로 압축하는 대신 해상도를 잃는다"
       caption="학습 길이 2048인 RoPE 모델을 8192 길이에 쓰는 경우다. 왼쪽: 느린 성분(i = 48, 위치당 약 0.001rad)은 학습 중 0~2048 위치에서 원의 약 3분의 1(117°, 파랑)만 봤다. 그대로 8192까지 늘리면 각도가 8.2rad로 한 바퀴를 넘어 처음 보는 각도(빨간 점선)가 나온다. 가운데: 위치 보간은 모든 위치에 2048/8192 = 1/4을 곱해 8192를 2048로 옮기므로, 각도가 다시 학습 때 본 범위 안에 머문다. 오른쪽: 대가는 해상도다. 빠른 성분(i = 0, 위치당 1rad)에서 이웃한 위치 100과 101의 각도 차이가 57°에서 14°로 4분의 1이 되어, 바로 옆 토큰을 구별하는 정보가 흐려진다."
       viewBox="0 0 720 248"
       minWidth={620}
@@ -2292,7 +2292,7 @@ export function RopeLongDecay() {
   return (
     <DiagramFrame
       title="RoPE의 장거리 감쇠: 멀수록 성분들의 cos가 서로 상쇄된다"
-      caption="q와 k가 모든 성분 쌍에서 같은 방향을 가리킨다고 할 때, 상대 거리에 따른 RoPE 점수(64개 성분 쌍의 cos(거리 × θ_i) 평균, head 차원 128)다. 가로축은 로그 눈금이다. 거리가 0이면 모든 성분이 같은 각도라 1이지만, 멀어질수록 성분마다 돌아간 각도가 달라져 cos들이 서로 상쇄되고 평균이 0 근처로 줄어든다. 학습으로 정한 것이 아니라 구조에서 나오는 성질로, 가까운 토큰에 조금 더 주의를 주는 약한 사전 경향이다."
+      caption="q와 k가 모든 성분 쌍에서 같은 방향을 가리킨다고 할 때, 상대 거리에 따른 RoPE 점수(64개 성분 쌍의 cos(거리 × θ_i) 평균, head 차원 128)다. 가로축은 로그 눈금이다. 거리가 0이면 모든 성분이 같은 각도라 1이지만, 멀어질수록 성분마다 돌아간 각도가 달라져 cos들이 서로 상쇄되고 평균이 0 근처로 줄어든다. 학습으로 정해진 것이 아니라 구조에서 나오는 성질이어서, 가까운 토큰을 조금 더 보게 만드는 약한 경향이 처음부터 들어 있는 셈이다."
       viewBox="0 0 720 236"
       minWidth={580}
     >

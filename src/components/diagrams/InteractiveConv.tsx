@@ -49,7 +49,7 @@ export default function InteractiveConv() {
       title="합성곱 연산: 5×5 입력 · 3×3 커널 → 3×3 출력"
       viewBox="0 0 640 260"
       interactive
-      caption={`출력 칸을 클릭해 커널이 슬라이딩하는 위치를 바꿔 보십시오. 지금은 (${sel.r + 1}, ${sel.c + 1}) 위치: ${terms.join(" + ")} = ${sum}. 왼쪽(밝음)에서 오른쪽(어두움)으로 바뀌는 세로 경계에서 값이 커지는 것을 확인하세요.`}
+      caption={`출력 칸을 클릭해 커널이 슬라이딩하는 위치를 바꿔 보십시오. 지금은 (${sel.r + 1}, ${sel.c + 1}) 위치: ${terms.join(" + ")} = ${sum}. 왼쪽(밝음)에서 오른쪽(어두움)으로 바뀌는 세로 경계에서 값이 커지는 것을 확인해 보십시오.`}
     >
       <ArrowDefs />
       {INPUT.map((row, r) =>

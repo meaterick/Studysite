@@ -58,7 +58,7 @@ CIFAR-10 학습처럼 GPU가 필요한 코드는 "Colab에서 실행" 코드로,
 
 ## 합성곱: 파라미터를 공유하는 지역 패턴 검출기 {#convolution}
 
-convolution(합성곱) 연산은 크기 $K \\times K$인 학습 가능한 커널(kernel, 필터(filter)라고도 부른다)을 입력 특징 지도 위에서 정해진 stride(보폭)만큼씩 이동시키며, 각 위치에서 커널과 겹치는 영역의 원소별 곱의 합(내적, dot product)을 계산해 출력 특징 지도의 한 원소를 생성하는 연산이다. 예를 들어 $3 \\times 3$짜리 커널 하나는 학습을 거치면 "세로 방향 가장자리" 같은 특정 국소 패턴에 강하게 반응하도록(그 패턴이 나타난 위치에서 내적값이 커지도록) 가중치가 조정된다. 커널을 입력의 왼쪽 위 모서리부터 시작해 stride만큼씩 오른쪽으로, 한 행이 끝나면 다시 아래로 이동시키면서 이 내적 계산을 반복하면, 그 결과값들이 입력과 같은 격자 배열을 이루며 특징 지도(feature map)를 구성한다. 이때 커널의 가중치는 슬라이딩하는 모든 위치에서 동일하게 재사용된다. 즉 위치와 무관하게 파라미터를 공유한다(parameter sharing). 고양이 귀의 가장자리에 반응하도록 학습된 커널이라면, 그 귀가 이미지의 어느 위치에 있어도 동일한 가중치로 검출할 수 있어야 하기 때문이다.
+convolution(합성곱) 연산은 크기 $K \\times K$인 학습 가능한 커널(kernel, 필터(filter)라고도 부른다)을 입력 특징 지도 위에서 정해진 stride(보폭)만큼씩 이동시키며, 각 위치에서 커널과 겹치는 영역의 원소별 곱의 합(내적, dot product)을 계산해 출력 특징 지도의 한 원소를 생성하는 연산이다. 예를 들어 $3 \\times 3$짜리 커널 하나는 학습을 거치면 "세로 방향 가장자리" 같은 특정 국소 패턴에 강하게 반응하도록(그 패턴이 나타난 위치에서 내적값이 커지도록) 가중치가 조정된다. 커널을 입력의 왼쪽 위 모서리부터 시작해 stride만큼씩 오른쪽으로, 한 행이 끝나면 다시 아래로 이동시키면서 이 내적 계산을 반복하면, 그 결과들이 입력과 같은 격자 배열을 이루며 특징 지도(feature map)를 구성한다. 이때 커널의 가중치는 슬라이딩하는 모든 위치에서 동일하게 재사용된다. 즉 위치와 무관하게 파라미터를 공유한다(parameter sharing). 고양이 귀의 가장자리에 반응하도록 학습된 커널이라면, 그 귀가 이미지의 어느 위치에 있어도 동일한 가중치로 검출할 수 있어야 하기 때문이다.
 
 [[diagram:conv-operation]]
 
@@ -333,7 +333,7 @@ print("axis=(1, 3) 최댓값:\\n", blocks.max(axis=(1, 3)))  # 블록 내부(1, 
 \`\`\`image
 src: /images/week4/resnet-plain-vs-residual.png
 alt: ImageNet에서 학습한 일반(plain) 18층·34층 망과 ResNet 18층·34층 망의 오차 곡선. 일반 망은 34층의 오차가 18층보다 높고, ResNet은 34층의 오차가 18층보다 낮다.
-caption: 왼쪽: 잔차 연결이 없는 일반 망은 34층이 18층보다 오히려 오차가 높다(가는 선 = 학습 오차, 굵은 선 = 검증 오차). 학습 오차까지 높으므로 과적합이 아니라 최적화의 어려움(degradation)이다. 오른쪽: 같은 구조에 잔차 연결만 더한 ResNet은 34층이 18층보다 낮은 오차를 낸다. 곡선이 계단처럼 뚝 떨어지는 지점은 학습률을 1/10로 줄인 때다.
+caption: 왼쪽: 잔차 연결이 없는 일반 망은 34층이 18층보다 오히려 오차가 높다(가는 선 = 학습 오차, 굵은 선 = 검증 오차). 학습 오차까지 높으므로 과적합이 아니라 최적화의 어려움(degradation)이다. 오른쪽: 같은 구조에 잔차 연결만 더한 ResNet은 34층이 18층보다 낮은 오차를 낸다. 곡선이 계단처럼 뚝 떨어지는 지점은 학습률을 1/10로 줄인 시점이다.
 credit: He et al., "Deep Residual Learning for Image Recognition" (CVPR 2016), Figure 4, arXiv:1512.03385
 width: 1200
 height: 391
@@ -354,7 +354,7 @@ height: 391
 말로만 하면 추상적이니, $F'(x)$가 실제로 아주 작은 값이 되는 상황을 하나 만들어 $dy/dx$가 정말로 1 근처에 머무는지 숫자로 확인해보자. 3주차의 수치미분 $\\frac{dy}{dx} \\approx \\frac{y(x+h) - y(x-h)}{2h}$을 그대로 쓴다.
 
 \`\`\`python
-# F(x)를 아주 작은 기울기를 갖는 함수로 두어, 층이 깊어져 기울기가 옅어진 상황을 흉내 낸다.
+# F(x)를 아주 작은 기울기를 갖는 함수로 두어, 층이 깊어져 기울기가 옅어진 상황을 재현한다.
 def F(x):
     return 0.001 * x**3
 
@@ -668,7 +668,7 @@ height: 560
 \`\`\`image
 src: /images/week4/gan-training-1d.png
 alt: 같은 모양의 그림 네 칸 (a)~(d). 각 칸 아래에는 z와 x 두 수평선이 있고 화살표가 z의 점들을 x 위의 점들로 옮긴다. 위쪽에는 검은 점선(실제 데이터 분포), 초록 실선(생성자 분포), 파란 점선(판별자 출력)이 그려져 있다. (a)에서 초록 곡선은 검은 점선과 어긋나 있고 파란 선은 출렁인다. (b)에서 파란 선은 데이터 쪽에서 높고 생성자 쪽에서 낮은 매끈한 곡선이 된다. (c)에서 초록 곡선이 검은 점선 쪽으로 옮겨 간다. (d)에서 초록 곡선은 검은 점선과 겹치고 파란 선은 수평선이 된다.
-caption: GAN 원 논문의 그림이다. 검은 점선은 실제 데이터 분포 p_data, 초록 실선은 생성자가 만드는 분포 p_g, 파란 점선은 판별자의 출력 D(x)(진짜일 확률)다. 맨 아래 수평선 z에서 고르게 뽑은 노이즈를 생성자 x = G(z)가 위의 수평선 x로 옮기는 모습이 화살표다. (a) 수렴에 가까운 상태: p_g가 p_data와 비슷하고 D는 부분적으로만 맞힌다. (b) 판별자를 학습시키면 D*(x) = p_data(x) / (p_data(x) + p_g(x))로 수렴해, 진짜가 많은 곳은 높게, 가짜가 많은 곳은 낮게 답한다. (c) 생성자를 학습시키면 D의 기울기를 따라 G(z)가 진짜로 판정받기 쉬운 쪽으로 흘러간다. (d) 충분히 반복하면 p_g = p_data가 되어 D는 어디서나 1/2, 즉 둘을 구별하지 못한다.
+caption: GAN 원 논문의 그림이다. 검은 점선은 실제 데이터 분포 p_data, 초록 실선은 생성자가 만드는 분포 p_g, 파란 점선은 판별자의 출력 D(x)(진짜일 확률)다. 맨 아래 수평선 z에서 고르게 뽑은 노이즈를 생성자 x = G(z)가 위의 수평선 x로 옮기는 모습이 화살표다. (a) 수렴에 가까운 상태: p_g가 p_data와 비슷하고 D는 부분적으로만 맞힌다. (b) 판별자를 학습시키면 D*(x) = p_data(x) / (p_data(x) + p_g(x))로 수렴해, 진짜가 많은 곳에서는 높은 값을, 가짜가 많은 곳에서는 낮은 값을 출력한다. (c) 생성자를 학습시키면 D의 기울기를 따라 G(z)가 진짜로 판정받기 쉬운 쪽으로 이동한다. (d) 충분히 반복하면 p_g = p_data가 되어 D는 어디서나 1/2, 즉 둘을 구별하지 못한다.
 credit: Goodfellow et al., "Generative Adversarial Nets" (NeurIPS 2014), Figure 1, arXiv:1406.2661
 width: 1500
 height: 478
@@ -689,7 +689,7 @@ height: 478
 \`\`\`image
 src: /images/week4/latent-diffusion.png
 alt: 왼쪽 빨간 영역(Pixel Space)에 이미지 x, 인코더 ℰ, 디코더 𝒟, 복원 이미지 x̃가 있고, 가운데 초록 영역(Latent Space)에는 z에서 z_T로 가는 Diffusion Process 화살표와, 그 아래 교차 어텐션(QKV) 블록 네 개가 들어 있는 Denoising U-Net ε_θ가 T번 반복되는 디노이징 단계가 있다. 오른쪽 회색 영역(Conditioning)에는 Semantic Map, Text, Representations, Images가 인코더 τ_θ를 거쳐 U-Net의 QKV 블록으로 들어간다.
-caption: Stable Diffusion의 바탕이 된 잠재 확산 모델(LDM)의 구조다. 왼쪽(픽셀 공간)에서 인코더 ℰ가 이미지 x를 작은 잠재 z로 압축하고, 가운데(잠재 공간)에서만 확산(위: z → z_T로 노이즈 추가)과 노이즈 제거(아래: 디노이징 U-Net ε_θ를 T번 반복)를 한다. 마지막에 디코더 𝒟가 잠재를 원래 해상도의 이미지 x̃로 되돌린다. 오른쪽(조건)은 텍스트·의미 지도·이미지 같은 조건을 인코더 τ_θ로 벡터로 바꿔 U-Net 안의 교차 어텐션(QKV 상자)에 넣는다. Text-to-Image의 조건부 노이즈 예측이 바로 이 경로다.
+caption: Stable Diffusion의 바탕이 된 잠재 확산 모델(LDM)의 구조다. 왼쪽(픽셀 공간)에서 인코더 ℰ가 이미지 x를 작은 잠재 z로 압축하고, 가운데(잠재 공간)에서만 확산(위: z → z_T로 노이즈 추가)과 노이즈 제거(아래: 디노이징 U-Net ε_θ를 T번 반복)를 한다. 마지막에 디코더 𝒟가 잠재 표현을 원래 해상도의 이미지 x̃로 되돌린다. 오른쪽(조건)은 텍스트·의미 지도·이미지 같은 조건을 인코더 τ_θ로 벡터로 바꿔 U-Net 안의 교차 어텐션(QKV 상자)에 넣는다. Text-to-Image의 조건부 노이즈 예측이 바로 이 경로다.
 credit: Rombach et al., "High-Resolution Image Synthesis with Latent Diffusion Models" (CVPR 2022), Figure 3, arXiv:2112.10752
 width: 1200
 height: 561
@@ -819,7 +819,7 @@ print("반복문 결과와 같은가?", np.allclose(out_matmul, out_loop))
 
 $$\\log p_\\theta(x) \\ge \\underbrace{\\mathbb{E}_{q_\\phi(z\\mid x)}\\big[\\log p_\\theta(x \\mid z)\\big]}_{\\text{복원 항}} - \\underbrace{D_{\\mathrm{KL}}\\big(q_\\phi(z\\mid x)\\,\\|\\,p(z)\\big)}_{\\text{사전분포와의 거리}} = \\text{ELBO}$$
 
-를 얻는다(Evidence Lower BOund). 첫 항은 "$z$로부터 $x$를 잘 복원하라"(디코더가 가우시안이면 2주차 심화에서 본 대로 MSE), 둘째 항은 "인코더의 분포를 사전분포 $\\mathcal{N}(0, I)$ 가까이 두라"는 「생성 모델」 단계의 KL 페널티다. 하한과 실제 값의 차이는 정확히 $D_{\\mathrm{KL}}(q_\\phi(z\\mid x)\\,\\|\\,p_\\theta(z\\mid x))$이므로, ELBO를 키우는 것은 로그가능도를 키우면서 동시에 인코더를 진짜 사후분포에 가깝게 만드는 일이다.
+를 얻는다(Evidence Lower BOund). 첫 항은 "$z$로부터 $x$를 잘 복원하라"(디코더가 가우시안이면 2주차 심화에서 본 대로 MSE), 둘째 항은 "인코더의 분포를 사전분포 $\\mathcal{N}(0, I)$ 가까이 두라"는 「생성 모델」 단계의 KL 페널티다. 하한과 실제 값의 차이는 정확히 $D_{\\mathrm{KL}}(q_\\phi(z\\mid x)\\,\\|\\,p_\\theta(z\\mid x))$이므로, ELBO를 키우는 것은 로그가능도를 키우면서 동시에 인코더를 실제 사후분포에 가깝게 만드는 일이다.
 
 [[diagram:elbo-gap]]
 
@@ -853,7 +853,7 @@ DDPM(Ho et al., 2020)의 순방향 과정은 $q(x_t \\mid x_{t-1}) = \\mathcal{N
 
 $$q(x_t \\mid x_0) = \\mathcal{N}\\!\\left(\\sqrt{\\bar\\alpha_t}\\,x_0,\\ (1-\\bar\\alpha_t)\\,I\\right), \\qquad \\bar\\alpha_t = \\prod_{s=1}^{t}(1-\\beta_s)$$
 
-즉 $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon$이다. 확산 모델도 ELBO를 최대화하도록 유도되는데, 그 ELBO를 시점별 KL 항으로 펼치고 정리하면 놀랍도록 단순한 손실로 줄어든다.
+즉 $x_t = \\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon$이다. 확산 모델도 ELBO를 최대화하도록 유도되는데, 그 ELBO를 시점별 KL 항으로 펼치고 정리하면 매우 단순한 손실로 줄어든다.
 
 $$\\mathcal{L}_{\\text{simple}} = \\mathbb{E}_{t,\\,x_0,\\,\\varepsilon}\\big\\lVert \\varepsilon - \\varepsilon_\\theta(\\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon,\\ t)\\big\\rVert^2$$
 
@@ -902,7 +902,7 @@ $$x_{\\text{adv}} = \\operatorname{clip}_{[0,1]}\\big(x + \\varepsilon\\,\\opera
 \`\`\`image
 src: /images/week4/fgsm-panda.jpg
 alt: 판다 사진(GoogLeNet이 57.7% 확신으로 판다라고 분류)에 손실 기울기의 부호로 만든 알록달록한 노이즈를 0.007배 더하면, 사람 눈에는 똑같은 판다 사진인데 모델은 99.3% 확신으로 긴팔원숭이라고 분류한다.
-caption: FGSM의 대표 예. 원본(왼쪽, 판다 57.7%)에 입력에 대한 손실 기울기의 부호(가운데)를 ε = 0.007배 더하면, 사람 눈에는 차이가 보이지 않는 이미지(오른쪽)를 GoogLeNet이 99.3% 확신으로 긴팔원숭이라고 분류한다. ε = 0.007은 GoogLeNet이 입력을 실수로 바꾼 뒤 8비트 이미지의 가장 작은 한 단계에 해당하는 크기다.
+caption: FGSM의 대표적인 예다. 원본(왼쪽, 판다 57.7%)에 입력에 대한 손실 기울기의 부호(가운데)를 ε = 0.007배 더하면, 사람 눈에는 차이가 보이지 않는 이미지(오른쪽)를 GoogLeNet이 99.3% 확신으로 긴팔원숭이라고 분류한다. ε = 0.007은 GoogLeNet이 입력을 실수로 변환했을 때 8비트 이미지의 최소 단위 한 칸에 해당하는 크기다.
 credit: Goodfellow, Shlens & Szegedy (2015), Explaining and Harnessing Adversarial Examples, Figure 1 (arXiv:1412.6572)
 width: 1760
 height: 636
