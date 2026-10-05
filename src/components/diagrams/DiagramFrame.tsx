@@ -20,7 +20,7 @@ export default function DiagramFrame({
   interactive?: boolean;
 }) {
   return (
-    <figure className="not-prose my-6 overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card">
+    <figure className="diagram-frame not-prose my-6 overflow-hidden rounded-xl border border-[var(--border-hairline)] bg-card">
       <div className="border-b border-[var(--border-hairline)] px-4 py-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>

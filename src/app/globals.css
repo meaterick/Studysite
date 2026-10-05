@@ -140,7 +140,8 @@
     --series-aqua: #199e70;
     --series-yellow: #c98500;
     --series-magenta: #d55181;
-    --series-green: #008300;
+    /* 어두운 바탕에서 글자·선이 읽히도록 밝힌 초록(#008300은 #111 위 대비 약 3.4:1) */
+    --series-green: #34a853;
     --series-violet: #9085e9;
     --series-red: #e66767;
   }
@@ -198,7 +199,7 @@
   --series-aqua: #199e70;
   --series-yellow: #c98500;
   --series-magenta: #d55181;
-  --series-green: #008300;
+  --series-green: #34a853;
   --series-violet: #9085e9;
   --series-red: #e66767;
 }
@@ -617,6 +618,14 @@ code {
   }
   .data-table tbody tr:hover td {
     background: color-mix(in srgb, var(--surface-card-2) 50%, transparent);
+  }
+
+  /* 본문 그림(SVG 다이어그램): 화면 밖에 있는 동안은 레이아웃·페인트를 건너뛴다. 단계 하나에 그림이 여럿이고
+     SVG 글자는 웹폰트 조각이 내려올 때마다 다시 배치되므로, 보이지 않는 그림까지 매번 다시 그리지 않게 한다.
+     건너뛰는 동안의 높이는 420px로 어림하고, 한 번 그린 뒤에는 실제 높이를 기억한다(auto). */
+  .diagram-frame {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 420px;
   }
 }
 

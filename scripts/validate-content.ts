@@ -5,7 +5,9 @@
  *   1. quiz[].id ↔ quizAnswers[].answers 키가 1:1로 대응하는가 (누락/유령 항목 없음)
  *   2. 본문에 등장하는 모든 $...$ 인라인 수식과 ```math 블록이 실제로 유효한 LaTeX인가
  *   3. 본문 안에 $...$로 감싸이지 않은 "날것" 수학 표현이 남아있지 않은가 (KaTeX 렌더링 누락 방지)
- *   4. image 블록이 가리키는 파일이 실제로 존재하고, 선언된 width/height가 실제 픽셀 크기와 맞는가
+ *   4. image 블록이 가리키는 파일이 실제로 존재하고, 선언된 width/height가 실제 픽셀 크기와 맞는가.
+ *      (선택 필드 maxWidth가 있으면 양수인가.)
+ *      [[diagram:id]]의 id가 다이어그램 레지스트리(src/components/diagrams/index.tsx)에 있는가(없으면 화면에 아무것도 그려지지 않는다)
  *   5. 단계 구조: 모든 `##` 단계에 고유한 {#id}가 있고, sections/weekN.ts의 메타(목표·확인 문제·서술형
  *      배정)와 1:1로 대응하는가. 확인 문제의 정답 번호가 유효한가, 서술형 퀴즈가 정확히 한 단계에만
  *      배정되었는가, 외부 자료 링크가 https인가
@@ -25,6 +27,7 @@ import { quizAnswers } from "../src/content/quizAnswers";
 import { parseMarkdown } from "../src/content/markdown";
 import { getWeekOutline } from "../src/content/sections";
 import { LABS } from "../src/content/labs";
+import { DIAGRAMS } from "../src/components/diagrams";
 import type { Block } from "../src/content/types";
 
 const ROOT = path.join(__dirname, "..");
@@ -74,6 +77,9 @@ function getPngSize(filePath: string): { width: number; height: number } | null 
 }
 
 function checkImage(block: Extract<Block, { type: "image" }>, context: string) {
+  if (block.maxWidth !== undefined && !(block.maxWidth > 0)) {
+    fail(`${context}: 이미지 maxWidth는 양수(px)여야 합니다 — ${block.src}`);
+  }
   const filePath = path.join(ROOT, "public", block.src.replace(/^\//, ""));
   if (!fs.existsSync(filePath)) {
     fail(`${context}: 이미지 파일 없음 — ${block.src}`);
@@ -109,6 +115,7 @@ function checkBlocks(blocks: Block[], context: string) {
     else if (b.type === "list") b.items.forEach((it) => checkInlineMath(it, context));
     else if (b.type === "table") b.rows.flat().forEach((c) => checkInlineMath(c, context));
     else if (b.type === "image") checkImage(b, context);
+    else if (b.type === "diagram" && !DIAGRAMS[b.id]) fail(`${context}: 등록되지 않은 다이어그램 id "${b.id}" — src/components/diagrams/index.tsx의 DIAGRAMS에 추가하세요`);
   }
 }
 

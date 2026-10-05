@@ -174,14 +174,18 @@ export function BlocksRenderer({
           case "image":
             return (
               <figure key={i} className="not-prose my-8 overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-card">
-                <Image
-                  src={b.src}
-                  alt={b.alt}
-                  width={b.width}
-                  height={b.height}
-                  className="w-full"
-                  sizes="(max-width: 768px) 100vw, 768px"
-                />
+                {/* 투명 배경 그림(검은 선의 SVG 등)이 어두운 테마에서도 보이도록 흰 바탕 위에 그린다. */}
+                <div className="bg-white">
+                  <Image
+                    src={b.src}
+                    alt={b.alt}
+                    width={b.width}
+                    height={b.height}
+                    className="mx-auto w-full bg-white"
+                    style={b.maxWidth ? { maxWidth: b.maxWidth } : undefined}
+                    sizes={b.maxWidth ? `${b.maxWidth}px` : "(max-width: 768px) 100vw, 768px"}
+                  />
+                </div>
                 {(b.caption || b.credit) && (
                   <figcaption className="border-t border-[var(--border-hairline)] px-4 py-3 text-[13px] text-ink-secondary">
                     {b.caption}

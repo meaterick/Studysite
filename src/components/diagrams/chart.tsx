@@ -1,0 +1,401 @@
+import type { ReactNode } from "react";
+import { gridline, inkMuted, inkSecondary } from "./DiagramFrame";
+
+// 좌표축이 있는 그림(손실 곡선·확률 곡선 등)과 색 화살표를 그리는 도우미.
+// 한 페이지에 그림이 여러 개 있으면 SVG <marker> id가 문서 전체에서 겹치므로, 화살촉 id에는 그림마다 고유한 접두사를 붙인다.
+
+export type Scale = (v: number) => number;
+
+/** 코드·숫자 표기용 고정폭 글꼴 */
+export const mono = "var(--font-mono-code)";
+
+/** 다섯 꼭짓점 별(생성된 표본·강조 표시) */
+export function starPath(cx: number, cy: number, r: number) {
+  const pts: string[] = [];
+  for (let i = 0; i < 10; i++) {
+    const rad = (Math.PI / 5) * i - Math.PI / 2;
+    const rr = i % 2 === 0 ? r : r * 0.45;
+    pts.push(`${(cx + rr * Math.cos(rad)).toFixed(1)},${(cy + rr * Math.sin(rad)).toFixed(1)}`);
+  }
+  return `M${pts.join(" L")} Z`;
+}
+
+/** 표준정규분포의 누적분포함수 Φ(z) (Abramowitz–Stegun 근사, 오차 < 1e-7) */
+export function normCdf(z: number) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
+  const p = d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return z > 0 ? 1 - p : p;
+}
+
+/** 작은 연립방정식 Ax = b (부분 피벗 가우스 소거) */
+export function solveLinear(A: number[][], b: number[]): number[] {
+  const n = b.length;
+  const M = A.map((row, i) => [...row, b[i]]);
+  for (let c = 0; c < n; c++) {
+    let piv = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+    [M[c], M[piv]] = [M[piv], M[c]];
+    for (let r = c + 1; r < n; r++) {
+      const f = M[r][c] / M[c][c];
+      for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+    }
+  }
+  const x = new Array(n).fill(0);
+  for (let r = n - 1; r >= 0; r--) {
+    let acc = M[r][n];
+    for (let k = r + 1; k < n; k++) acc -= M[r][k] * x[k];
+    x[r] = acc / M[r][r];
+  }
+  return x;
+}
+
+/** 데이터 구간 [d0, d1]을 화면 구간 [r0, r1]로 옮기는 선형 눈금 */
+export function linear(d0: number, d1: number, r0: number, r1: number): Scale {
+  return (v) => r0 + ((v - d0) / (d1 - d0)) * (r1 - r0);
+}
+
+/** 로그 눈금(밑 10). d0, d1은 0보다 커야 한다. */
+export function log10Scale(d0: number, d1: number, r0: number, r1: number): Scale {
+  const l0 = Math.log10(d0);
+  const l1 = Math.log10(d1);
+  return (v) => r0 + ((Math.log10(v) - l0) / (l1 - l0)) * (r1 - r0);
+}
+
+/** 10의 거듭제곱 눈금 글자: 1e-5 → "10⁻⁵", 1 → "1" */
+export function pow10Label(v: number) {
+  const e = Math.round(Math.log10(v));
+  if (e === 0) return "1";
+  const sup: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+  return `10${String(e)
+    .split("")
+    .map((ch) => sup[ch] ?? ch)
+    .join("")}`;
+}
+
+/** 화면 좌표 점들을 꺾은선 path로 */
+export function linePath(points: [number, number][]): string {
+  return points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+}
+
+/** f를 [a, b]에서 n등분해 데이터 좌표 점 목록을 만든다 */
+export function sample(f: (x: number) => number, a: number, b: number, n = 80): [number, number][] {
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const x = a + ((b - a) * i) / n;
+    return [x, f(x)] as [number, number];
+  });
+}
+
+/** 결정적 의사난수(그림의 점 구름을 매번 같게 그리기 위한 것) */
+export function seeded(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+/** 표준정규 난수(Box–Muller) */
+export function gaussian(rand: () => number) {
+  const u = Math.max(rand(), 1e-9);
+  const v = rand();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+export function Axes({
+  left,
+  top,
+  width,
+  height,
+  sx,
+  sy,
+  xTicks = [],
+  yTicks = [],
+  fmtX = (v) => String(v),
+  fmtY = (v) => String(v),
+  xLabel,
+  yLabel,
+  grid = true,
+}: {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  sx: Scale;
+  sy: Scale;
+  xTicks?: number[];
+  yTicks?: number[];
+  fmtX?: (v: number) => string;
+  fmtY?: (v: number) => string;
+  xLabel?: string;
+  yLabel?: string;
+  grid?: boolean;
+}) {
+  const bottom = top + height;
+  const right = left + width;
+  return (
+    <g>
+      {grid &&
+        yTicks.map((t) => <line key={`gy${t}`} x1={left} x2={right} y1={sy(t)} y2={sy(t)} stroke={gridline} />)}
+      {grid &&
+        xTicks.map((t) => <line key={`gx${t}`} x1={sx(t)} x2={sx(t)} y1={top} y2={bottom} stroke={gridline} />)}
+      <line x1={left} y1={bottom} x2={right} y2={bottom} stroke={inkMuted} strokeWidth={1.2} />
+      <line x1={left} y1={top} x2={left} y2={bottom} stroke={inkMuted} strokeWidth={1.2} />
+      {xTicks.map((t) => (
+        <text key={`tx${t}`} x={sx(t)} y={bottom + 15} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+          {fmtX(t)}
+        </text>
+      ))}
+      {yTicks.map((t) => (
+        <text key={`ty${t}`} x={left - 6} y={sy(t) + 3.5} textAnchor="end" fontSize={10.5} fill={inkSecondary}>
+          {fmtY(t)}
+        </text>
+      ))}
+      {xLabel && (
+        <text x={left + width / 2} y={bottom + 32} textAnchor="middle" fontSize={11} fontWeight={600} fill={inkSecondary}>
+          {xLabel}
+        </text>
+      )}
+      {yLabel && (
+        <text
+          transform={`translate(${left - 38}, ${top + height / 2}) rotate(-90)`}
+          textAnchor="middle"
+          fontSize={11}
+          fontWeight={600}
+          fill={inkSecondary}
+        >
+          {yLabel}
+        </text>
+      )}
+    </g>
+  );
+}
+
+/** 색마다 화살촉 하나. 화살표는 markerEnd={`url(#${prefix}-${이름})`}로 참조한다. */
+export function Markers({ prefix, colors }: { prefix: string; colors: Record<string, string> }) {
+  return (
+    <defs>
+      {Object.entries(colors).map(([name, c]) => (
+        <marker
+          key={name}
+          id={`${prefix}-${name}`}
+          markerWidth="10"
+          markerHeight="10"
+          refX="8"
+          refY="5"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <path d="M0,0 L10,5 L0,10 Z" fill={c} />
+        </marker>
+      ))}
+    </defs>
+  );
+}
+
+/** 직선 화살표(색 화살촉은 Markers로 미리 정의한 id를 넘긴다) */
+export function Arr({
+  x1,
+  y1,
+  x2,
+  y2,
+  color,
+  marker,
+  width = 1.6,
+  dashed = false,
+}: {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  marker: string;
+  width?: number;
+  dashed?: boolean;
+}) {
+  return (
+    <line
+      x1={x1}
+      y1={y1}
+      x2={x2}
+      y2={y2}
+      stroke={color}
+      strokeWidth={width}
+      strokeDasharray={dashed ? "5 4" : undefined}
+      markerEnd={`url(#${marker})`}
+    />
+  );
+}
+
+/** 곡선 화살표 */
+export function ArrPath({
+  d,
+  color,
+  marker,
+  width = 1.6,
+  dashed = false,
+}: {
+  d: string;
+  color: string;
+  marker: string;
+  width?: number;
+  dashed?: boolean;
+}) {
+  return (
+    <path
+      d={d}
+      fill="none"
+      stroke={color}
+      strokeWidth={width}
+      strokeDasharray={dashed ? "5 4" : undefined}
+      markerEnd={`url(#${marker})`}
+    />
+  );
+}
+
+/** 여러 줄 글. lines의 각 원소가 한 줄이다. */
+export function Lines({
+  x,
+  y,
+  lines,
+  size = 11,
+  color = inkSecondary,
+  anchor = "middle",
+  weight = 400,
+  gap = 1.35,
+}: {
+  x: number;
+  y: number;
+  lines: ReactNode[];
+  size?: number;
+  color?: string;
+  anchor?: "start" | "middle" | "end";
+  weight?: number;
+  gap?: number;
+}) {
+  return (
+    <text x={x} y={y} textAnchor={anchor} fontSize={size} fill={color} fontWeight={weight}>
+      {lines.map((l, i) => (
+        <tspan key={i} x={x} dy={i === 0 ? 0 : size * gap}>
+          {l}
+        </tspan>
+      ))}
+    </text>
+  );
+}
+
+/** 둥근 모서리 상자 + 가운데 글(여러 줄 가능). tint는 옅은 바탕색, stroke는 테두리색 */
+export function Tag({
+  x,
+  y,
+  w,
+  h,
+  lines,
+  color,
+  tint = 0.12,
+  size = 12,
+  weight = 700,
+  textColor,
+  rx = 8,
+  dashed = false,
+}: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  lines: ReactNode[];
+  color: string;
+  tint?: number;
+  size?: number;
+  weight?: number;
+  textColor?: string;
+  rx?: number;
+  dashed?: boolean;
+}) {
+  const lineH = size * 1.3;
+  const firstY = y + h / 2 - ((lines.length - 1) * lineH) / 2 + size * 0.36;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        rx={rx}
+        fill={color}
+        fillOpacity={tint}
+        stroke={color}
+        strokeWidth={1.4}
+        strokeDasharray={dashed ? "5 4" : undefined}
+      />
+      <text x={x + w / 2} y={firstY} textAnchor="middle" fontSize={size} fontWeight={weight} fill={textColor ?? "var(--text-primary)"}>
+        {lines.map((l, i) => (
+          <tspan
+            key={i}
+            x={x + w / 2}
+            dy={i === 0 ? 0 : lineH}
+            fontWeight={i === 0 ? weight : 400}
+            fontSize={i === 0 ? size : size - 1.5}
+            fill={i === 0 ? undefined : inkSecondary}
+          >
+            {l}
+          </tspan>
+        ))}
+      </text>
+    </g>
+  );
+}
+
+/**
+ * 격자 칸 그림(결정 영역·픽셀 이미지)을 값마다 path 하나로 그린다. 칸마다 rect를 두면 칸 수천 개가
+ * HTML과 RSC 데이터에 두 번씩 실려 페이지가 수백 KB 무거워지고 DOM 노드도 그만큼 는다.
+ * keys[i][j]는 i행 j열 칸의 값(색 번호·농도 단계 등), null이면 비운다. 같은 값이 가로로 이어지면 직사각형 하나로 합친다.
+ * 좌표는 칸 단위로 쓰고 translate·scale로 (x, y)에 cw × ch 크기 칸으로 놓는다.
+ * pad: 칸을 오른쪽·아래로 늘리는 폭(칸 단위). 서로 다른 값의 칸이 맞닿는 곳의 안티에일리어싱 틈을 가린다.
+ * crisp: 안티에일리어싱을 끄고 칸 경계를 화면 픽셀에 맞춘다(픽셀 이미지처럼 칸마다 값이 다른 그림에 쓴다. pad가 필요 없다).
+ */
+export function GridCells({
+  keys,
+  x,
+  y,
+  cw,
+  ch = cw,
+  fill,
+  opacity,
+  pad = 0,
+  crisp = false,
+}: {
+  keys: (number | null)[][];
+  x: number;
+  y: number;
+  cw: number;
+  ch?: number;
+  fill: (key: number) => string;
+  opacity?: (key: number) => number;
+  pad?: number;
+  crisp?: boolean;
+}) {
+  const r = (v: number) => Math.round(v * 1000) / 1000;
+  const runs = new Map<number, string[]>();
+  keys.forEach((row, i) => {
+    for (let j = 0; j < row.length; ) {
+      const k = row[j];
+      let e = j + 1;
+      while (e < row.length && row[e] === k) e++;
+      if (k !== null) {
+        const w = r(e - j + pad);
+        let list = runs.get(k);
+        if (!list) runs.set(k, (list = []));
+        list.push(`M${j} ${i}h${w}v${r(1 + pad)}h-${w}z`);
+      }
+      j = e;
+    }
+  });
+  return (
+    <g transform={`translate(${r(x)} ${r(y)}) scale(${r(cw)} ${r(ch)})`} shapeRendering={crisp ? "crispEdges" : undefined}>
+      {[...runs].map(([k, d]) => (
+        <path key={k} d={d.join("")} fill={fill(k)} fillOpacity={opacity?.(k)} />
+      ))}
+    </g>
+  );
+}
