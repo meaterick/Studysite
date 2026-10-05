@@ -786,7 +786,11 @@ print("반복문 결과와 같은가?", np.allclose(out_matmul, out_loop))
 
 입력이 0~24의 연속된 숫자라 모든 창에서 "왼쪽 열 − 오른쪽 열"이 $-2 \\times 3 = -6$으로 같다. 실제 이미지라면 im2col 행렬이 원래 입력보다 약 $K^2$배 커지는 메모리 비용을 감수하고, 그 대신 고도로 최적화된 행렬 곱(GEMM) 하나로 계산한다.
 
+[[diagram:im2col]]
+
 연산량은 출력 위치마다 $K^2C_{in}$번의 곱셈-덧셈을 $C_{out}$개 채널에 대해 하므로, 출력이 $H \\times W$일 때 대략 $2 \\cdot H W K^2 C_{in} C_{out}$ FLOPs다. 파라미터 수($K^2C_{in}C_{out}$)는 입력 크기와 무관하지만 연산량은 출력 해상도에 비례한다는 점이 FC층과 다르다. 해상도가 큰 앞쪽 층이 파라미터는 적어도 연산의 대부분을 차지하는 이유다.
+
+[[diagram:vgg-params-flops]]
 
 ### 합성곱의 역전파도 합성곱이다
 
@@ -797,9 +801,13 @@ print("반복문 결과와 같은가?", np.allclose(out_matmul, out_loop))
 
 즉 역전파도 같은 합성곱 연산 루틴으로 계산된다. 입력의 기울기를 구하는 이 연산은 출력보다 큰 결과를 만들므로, 분할·생성 모델에서 해상도를 키우는 층으로 따로 쓰이기도 한다. 그것이 **전치 합성곱(transposed convolution)**이다. 이름의 "전치"는 im2col로 쓴 합성곱 행렬의 전치 행렬을 곱하는 연산이라는 뜻이다(3주차 「역전파」의 $W^\\top\\delta$와 같은 원리).
 
+[[diagram:conv-backprop-1d]]
+
 ### depthwise separable convolution
 
 표준 $3\\times3$ 합성곱은 공간 패턴($3\\times3$ 이웃)과 채널 결합(모든 입력 채널 섞기)을 한 번에 한다. MobileNet(Howard et al., 2017)은 이것을 두 단계로 나눈다. ① **depthwise**: 채널마다 따로 $3\\times3$ 필터 하나씩(채널끼리 섞지 않음), ② **pointwise**: $1\\times1$ 합성곱으로 채널만 섞기. 파라미터는 $K^2C_{in}C_{out}$에서 $K^2C_{in} + C_{in}C_{out}$으로 줄고, 비율은 대략 $\\frac{1}{C_{out}} + \\frac{1}{K^2}$이다. $K = 3$이면 8~9배 가까이 줄어든다. 표현력이 조금 줄지만 휴대폰에서 실시간으로 돌아가는 모델(MobileNet, EfficientNet)의 기본 부품이 되었고, 이 "공간과 채널을 분리한다"는 발상은 Transformer의 어텐션(토큰 섞기)과 MLP(채널 섞기) 분업에도 그대로 이어진다.
+
+[[diagram:depthwise-separable]]
 
 ## 생성 모델의 수학: ELBO·재매개변수화·확산의 노이즈 예측 {#generative-math}
 
@@ -812,6 +820,8 @@ print("반복문 결과와 같은가?", np.allclose(out_matmul, out_loop))
 $$\\log p_\\theta(x) \\ge \\underbrace{\\mathbb{E}_{q_\\phi(z\\mid x)}\\big[\\log p_\\theta(x \\mid z)\\big]}_{\\text{복원 항}} - \\underbrace{D_{\\mathrm{KL}}\\big(q_\\phi(z\\mid x)\\,\\|\\,p(z)\\big)}_{\\text{사전분포와의 거리}} = \\text{ELBO}$$
 
 를 얻는다(Evidence Lower BOund). 첫 항은 "$z$로부터 $x$를 잘 복원하라"(디코더가 가우시안이면 2주차 심화에서 본 대로 MSE), 둘째 항은 "인코더의 분포를 사전분포 $\\mathcal{N}(0, I)$ 가까이 두라"는 「생성 모델」 단계의 KL 페널티다. 하한과 실제 값의 차이는 정확히 $D_{\\mathrm{KL}}(q_\\phi(z\\mid x)\\,\\|\\,p_\\theta(z\\mid x))$이므로, ELBO를 키우는 것은 로그가능도를 키우면서 동시에 인코더를 진짜 사후분포에 가깝게 만드는 일이다.
+
+[[diagram:elbo-gap]]
 
 인코더가 $q = \\mathcal{N}(\\mu, \\sigma^2)$(차원마다 독립)를 내놓으면 KL 항은 적분 없이 닫힌 형태로 계산된다.
 
@@ -829,9 +839,13 @@ $\\mu = 0$, $\\sigma = 1$이면 0이고, 평균이 원점에서 멀어지거나 
 
 평균이 멀어지는 것은 제곱으로 벌점을 받고, 분산이 너무 작아지거나(점 하나로 모이려 함) 너무 커지는 것도 벌점을 받는다. 분산이 작아지는 쪽의 벌점이 특히 중요하다. KL 항이 없다면 인코더는 분산을 0으로 줄여 VAE를 일반 오토인코더로 되돌려 버린다.
 
+[[diagram:vae-kl-curves]]
+
 ### 재매개변수화 트릭
 
 복원 항은 $z \\sim q_\\phi$에 대한 기댓값이라, 샘플링 단계를 지나 $\\phi$(인코더)로 기울기를 보낼 방법이 없어 보인다. **재매개변수화(reparameterization)**는 무작위성을 파라미터 밖으로 밀어낸다. $z = \\mu_\\phi(x) + \\sigma_\\phi(x)\\,\\varepsilon$, $\\varepsilon \\sim \\mathcal{N}(0, I)$로 쓰면 $z$는 $\\mu, \\sigma$의 미분 가능한 함수가 되고, 무작위성은 학습과 무관한 $\\varepsilon$에만 남는다. 그러면 역전파가 그대로 통한다. 대안인 점수 함수 추정(REINFORCE, $\\nabla_\\phi\\mathbb{E}_q[f] = \\mathbb{E}_q[f\\,\\nabla_\\phi\\log q]$)도 편향은 없지만 분산이 훨씬 커서 같은 샘플 수로 훨씬 덜 정확하다. 6주차 강화학습의 정책 경사가 바로 이 점수 함수 추정이고, 분산을 줄이는 것이 그쪽의 핵심 과제가 된다.
+
+[[diagram:reparameterization]]
 
 ### 확산 모델의 학습 목표
 
@@ -844,6 +858,8 @@ $$q(x_t \\mid x_0) = \\mathcal{N}\\!\\left(\\sqrt{\\bar\\alpha_t}\\,x_0,\\ (1-\\
 $$\\mathcal{L}_{\\text{simple}} = \\mathbb{E}_{t,\\,x_0,\\,\\varepsilon}\\big\\lVert \\varepsilon - \\varepsilon_\\theta(\\sqrt{\\bar\\alpha_t}\\,x_0 + \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon,\\ t)\\big\\rVert^2$$
 
 무작위 시점 $t$를 고르고, 위 식으로 노이즈를 섞은 뒤, 신경망이 섞인 노이즈 $\\varepsilon$을 맞히게 하는 MSE다. 노이즈를 정확히 맞히면 $x_0 = (x_t - \\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon)/\\sqrt{\\bar\\alpha_t}$로 원본을 되찾을 수 있다. 이 노이즈 예측은 데이터 분포의 로그밀도 기울기(score) $\\nabla_x \\log p(x_t)$를 추정하는 것과 같다는 것이 알려져 있어(Song et al., 2021), 확산 모델은 "점수 기반 생성 모델"이라고도 불린다.
+
+[[diagram:ddpm-training-step]]
 
 ## 적대적 예제: 선형성 가설과 FGSM {#adversarial-examples}
 
@@ -873,6 +889,8 @@ for n in (10, 1_000, 150_528):                       # 150,528 = 224 × 224 × 3
 
 맞춘 노이즈의 효과는 차원에 비례해 커지고(약 $\\varepsilon \\cdot 0.8n$), 무작위 노이즈는 $\\sqrt{n}$에 비례해서만 커진다. $224 \\times 224 \\times 3$ 이미지 크기에서는 픽셀당 0.01(256단계 중 약 2.5단계)이라는 눈에 안 보이는 변화가 로짓을 1,200이나 움직인다.
 
+[[diagram:linearity-hypothesis]]
+
 ### FGSM: 기울기 부호 한 번
 
 **FGSM(Fast Gradient Sign Method)**은 위 관찰을 신경망에 그대로 적용한다.
@@ -880,6 +898,15 @@ for n in (10, 1_000, 150_528):                       # 150,528 = 224 × 224 × 3
 $$x_{\\text{adv}} = \\operatorname{clip}_{[0,1]}\\big(x + \\varepsilon\\,\\operatorname{sign}(\\nabla_x L(\\theta, x, y))\\big)$$
 
 학습 때는 파라미터 $\\theta$에 대한 기울기로 손실을 **줄였지만**, 공격자는 입력 $x$에 대한 기울기로 손실을 **키운다**. 역전파 한 번이면 계산되므로 매우 빠르다. 같은 방향으로 작은 걸음을 여러 번 반복하며 허용 범위로 되돌리는 PGD(Madry et al., 2018)는 훨씬 강한 공격이고, 학습 데이터에 PGD 예제를 섞어 학습하는 **적대적 학습(adversarial training)**이 현재까지 가장 믿을 만한 방어로 꼽힌다. 다만 깨끗한 데이터의 정확도가 조금 떨어지고 학습 비용이 몇 배로 늘어나는 대가가 있다.
+
+\`\`\`image
+src: /images/week4/fgsm-panda.jpg
+alt: 판다 사진(GoogLeNet이 57.7% 확신으로 판다라고 분류)에 손실 기울기의 부호로 만든 알록달록한 노이즈를 0.007배 더하면, 사람 눈에는 똑같은 판다 사진인데 모델은 99.3% 확신으로 긴팔원숭이라고 분류한다.
+caption: FGSM의 대표 예. 원본(왼쪽, 판다 57.7%)에 입력에 대한 손실 기울기의 부호(가운데)를 ε = 0.007배 더하면, 사람 눈에는 차이가 보이지 않는 이미지(오른쪽)를 GoogLeNet이 99.3% 확신으로 긴팔원숭이라고 분류한다. ε = 0.007은 GoogLeNet이 입력을 실수로 바꾼 뒤 8비트 이미지의 가장 작은 한 단계에 해당하는 크기다.
+credit: Goodfellow, Shlens & Szegedy (2015), Explaining and Harnessing Adversarial Examples, Figure 1 (arXiv:1412.6572)
+width: 1760
+height: 636
+\`\`\`
 
 ### 왜 중요한가
 

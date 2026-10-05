@@ -1,6 +1,6 @@
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
 import { ArrowDefs, Arrow, Box, Label } from "./primitives";
-import { Axes, Markers, Arr, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono, pow10Label } from "./chart";
+import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono, pow10Label } from "./chart";
 
 export function ResNetSkip() {
   const x = 260;
@@ -1393,6 +1393,776 @@ export function DiceIou() {
         {`(${iou.toFixed(2)}, ${dice.toFixed(3)})`}
       </text>
       <Lines x={628} y={60} lines={["Dice =", "2·IoU / (1 + IoU)", "", "순위는 같고", "Dice ≥ IoU"]} size={10.5} anchor="start" color={ink} weight={600} />
+    </DiagramFrame>
+  );
+}
+
+export function Im2col() {
+  // 본문 코드: 5×5 입력(0~24), 3×3 커널 [[1,0,−1]]×3. 창 9개를 한 줄씩 편 (9, 9) 행렬 @ 커널(9) = 9개 → 3×3, 모두 −6.
+  const P = "i2c";
+  const x0 = 22;
+  const y0 = 44;
+  const c = 24;
+  const wins = [
+    { r: 0, col: 0, color: colors.blue },
+    { r: 1, col: 2, color: colors.orange },
+  ];
+  const mx = 214;
+  const mc = 15;
+  const kern = [1, 0, -1, 1, 0, -1, 1, 0, -1];
+  const rowOf = (r: number, col: number) => r * 3 + col;
+  const winVals = (r: number, col: number) => [0, 1, 2].flatMap((a) => [0, 1, 2].map((b) => (r + a) * 5 + col + b));
+  const hl = (row: number) => wins.find((w) => rowOf(w.r, w.col) === row)?.color;
+  const fmt = (v: number) => (v < 0 ? `−${-v}` : String(v));
+  return (
+    <DiagramFrame
+      title="im2col: 합성곱을 행렬 곱 한 번으로 바꾼다"
+      caption="본문 코드의 5 × 5 입력(0~24)과 3 × 3 커널이다. 왼쪽: 커널이 지나가는 3 × 3 창은 9개다(파랑은 첫 창, 주황은 둘째 줄 셋째 창). 가운데: 창 하나를 한 줄(원소 9개)로 펴서 9줄을 쌓으면 (9, 9) im2col 행렬이 된다. 같은 픽셀이 여러 줄에 중복 복사되는 것이 메모리 비용이다. 오른쪽: 커널도 길이 9인 벡터로 펴서 행렬-벡터 곱을 한 번 하면 9개 값이 나오고, 3 × 3으로 접으면 이중 반복문의 결과와 같다. 입력이 연속된 숫자라 모든 창에서 '왼쪽 열 − 오른쪽 열'이 −6이다. 채널이 있으면 커널 벡터가 (K²C_in × C_out) 가중치 행렬이 되어, GPU가 가장 잘하는 거대한 행렬 곱 하나가 된다."
+      viewBox="0 0 720 262"
+      minWidth={640}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue, orange: colors.orange, ink: inkMuted }} />
+      <text x={x0} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        입력 5 × 5
+      </text>
+      {Array.from({ length: 25 }, (_, v) => {
+        const r = Math.floor(v / 5);
+        const q = v % 5;
+        return (
+          <g key={v}>
+            <rect x={x0 + q * c} y={y0 + r * c} width={c} height={c} fill="none" stroke={inkMuted} strokeOpacity={0.6} />
+            <text x={x0 + q * c + c / 2} y={y0 + r * c + 16} textAnchor="middle" fontSize={10} fill={ink} fontFamily={mono}>
+              {v}
+            </text>
+          </g>
+        );
+      })}
+      {wins.map((w) => (
+        <rect key={w.col} x={x0 + w.col * c + 1.5} y={y0 + w.r * c + 1.5} width={3 * c - 3} height={3 * c - 3} fill={w.color} fillOpacity={0.12} stroke={w.color} strokeWidth={2.2} />
+      ))}
+      <text x={x0} y={196} fontSize={10.5} fontWeight={700} fill={ink}>
+        커널 3 × 3
+      </text>
+      {[0, 1, 2].flatMap((r) =>
+        [0, 1, 2].map((q) => (
+          <g key={`k${r}${q}`}>
+            <rect x={x0 + q * 20} y={204 + r * 18} width={20} height={18} fill={colors.violet} fillOpacity={0.12} stroke={colors.violet} strokeOpacity={0.6} />
+            <text x={x0 + q * 20 + 10} y={204 + r * 18 + 13} textAnchor="middle" fontSize={9.5} fill={ink} fontFamily={mono}>
+              {fmt(kern[r * 3 + q])}
+            </text>
+          </g>
+        )),
+      )}
+      <ArrPath d={`M${x0 + 3 * c + 4},${y0 + 20} C${x0 + 3 * c + 40},${y0 + 10} ${mx - 40},${y0 + 4} ${mx - 4},${y0 + 7}`} color={colors.blue} marker={`${P}-blue`} width={1.4} />
+      <ArrPath d={`M${x0 + 5 * c + 4},${y0 + c + 30} C${x0 + 5 * c + 30},${y0 + c + 30} ${mx - 30},${y0 + 5 * mc + 8} ${mx - 4},${y0 + 5 * mc + 8}`} color={colors.orange} marker={`${P}-orange`} width={1.4} />
+      <text x={mx} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        im2col 행렬 (창 9개 × 원소 9개)
+      </text>
+      {Array.from({ length: 9 }, (_, row) => {
+        const vals = winVals(Math.floor(row / 3), row % 3);
+        const color = hl(row);
+        return (
+          <g key={row}>
+            {color && <rect x={mx} y={y0 + row * mc} width={9 * mc + 9 * 2} height={mc} fill={color} fillOpacity={0.16} stroke={color} strokeWidth={1.4} />}
+            {vals.map((v, j) => (
+              <text key={j} x={mx + j * (mc + 2) + 8} y={y0 + row * mc + 11} textAnchor="middle" fontSize={8.5} fill={color ? ink : inkSecondary} fontWeight={color ? 800 : 400} fontFamily={mono}>
+                {v}
+              </text>
+            ))}
+          </g>
+        );
+      })}
+      <rect x={mx} y={y0} width={9 * (mc + 2)} height={9 * mc} fill="none" stroke={inkMuted} />
+      <text x={mx + 9 * (mc + 2) + 12} y={y0 + 4.5 * mc + 6} textAnchor="middle" fontSize={16} fontWeight={800} fill={ink}>
+        @
+      </text>
+      {kern.map((v, j) => (
+        <g key={j}>
+          <rect x={mx + 9 * (mc + 2) + 26} y={y0 + j * mc} width={22} height={mc} fill={colors.violet} fillOpacity={0.12} stroke={colors.violet} strokeOpacity={0.6} />
+          <text x={mx + 9 * (mc + 2) + 37} y={y0 + j * mc + 11} textAnchor="middle" fontSize={8.5} fill={ink} fontFamily={mono}>
+            {fmt(v)}
+          </text>
+        </g>
+      ))}
+      <text x={mx + 9 * (mc + 2) + 64} y={y0 + 4.5 * mc + 6} textAnchor="middle" fontSize={16} fontWeight={800} fill={ink}>
+        =
+      </text>
+      {Array.from({ length: 9 }, (_, j) => {
+        const color = hl(j);
+        return (
+          <g key={j}>
+            <rect x={mx + 9 * (mc + 2) + 78} y={y0 + j * mc} width={24} height={mc} fill={color ?? inkMuted} fillOpacity={color ? 0.2 : 0.08} stroke={color ?? inkMuted} strokeOpacity={0.7} />
+            <text x={mx + 9 * (mc + 2) + 90} y={y0 + j * mc + 11} textAnchor="middle" fontSize={8.5} fill={ink} fontWeight={800} fontFamily={mono}>
+              −6
+            </text>
+          </g>
+        );
+      })}
+      <Arr x1={mx + 9 * (mc + 2) + 108} y1={y0 + 4.5 * mc} x2={mx + 9 * (mc + 2) + 134} y2={y0 + 4.5 * mc} color={inkMuted} marker={`${P}-ink`} />
+      <text x={mx + 9 * (mc + 2) + 121} y={y0 + 4.5 * mc - 8} textAnchor="middle" fontSize={9} fill={inkSecondary}>
+        접기
+      </text>
+      {Array.from({ length: 9 }, (_, j) => {
+        const color = hl(j);
+        const ox = mx + 9 * (mc + 2) + 140;
+        return (
+          <g key={`o${j}`}>
+            <rect x={ox + (j % 3) * 28} y={y0 + 36 + Math.floor(j / 3) * 22} width={28} height={22} fill={color ?? inkMuted} fillOpacity={color ? 0.2 : 0.06} stroke={color ?? inkMuted} strokeOpacity={0.7} />
+            <text x={ox + (j % 3) * 28 + 14} y={y0 + 36 + Math.floor(j / 3) * 22 + 15} textAnchor="middle" fontSize={10} fill={ink} fontWeight={800} fontFamily={mono}>
+              −6
+            </text>
+          </g>
+        );
+      })}
+      <text x={mx + 9 * (mc + 2) + 182} y={y0 + 28} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+        출력 3 × 3
+      </text>
+      <Lines x={mx} y={y0 + 9 * mc + 26} lines={["채널이 있으면: (창 수 × K²·C_in) @ (K²·C_in × C_out)", "메모리 약 K²배를 내주고, 최적화된 행렬 곱(GEMM) 하나를 얻는다"]} size={10.5} anchor="start" color={inkSecondary} weight={600} gap={1.55} />
+    </DiagramFrame>
+  );
+}
+
+export function ConvBackprop1d() {
+  // 1차원 예: x₁…x₅ ⋆ (k₁, k₂, k₃) = y₁…y₃, yᵢ = xᵢk₁ + xᵢ₊₁k₂ + xᵢ₊₂k₃. 위에서 내려온 기울기 G₁…G₃.
+  // ∂L/∂x₃ = G₁k₃ + G₂k₂ + G₃k₁: 0을 두 칸씩 덧댄 G를 뒤집은 커널(k₃, k₂, k₁)로 합성곱(full).
+  const P = "cbp";
+  const kc = [colors.blue, colors.orange, colors.green];
+  const panel = (ox: number, back: boolean) => {
+    const X = (j: number) => ox + 20 + j * 46;
+    const yTop = 62;
+    const yBot = 168;
+    return (
+      <g>
+        {[0, 1, 2].flatMap((i) =>
+          [0, 1, 2].map((a) => {
+            const strong = back && i + a === 2;
+            const x1 = X(i + 1);
+            const x2 = X(i + a);
+            return back ? (
+              <Arr key={`${i}${a}`} x1={x1} y1={yTop + 12} x2={x2 + (x1 - x2) * 0.12} y2={yBot - 14} color={kc[a]} marker={`${P}-${["blue", "orange", "green"][a]}`} width={strong ? 2.6 : 1.1} />
+            ) : (
+              <Arr key={`${i}${a}`} x1={x2} y1={yBot - 12} x2={x1 + (x2 - x1) * 0.12} y2={yTop + 14} color={kc[a]} marker={`${P}-${["blue", "orange", "green"][a]}`} width={1.4} />
+            );
+          }),
+        )}
+        {[0, 1, 2].map((i) => (
+          <g key={`t${i}`}>
+            <circle cx={X(i + 1)} cy={yTop} r={12} fill={back ? colors.red : colors.violet} fillOpacity={0.15} stroke={back ? colors.red : colors.violet} strokeWidth={1.5} />
+            <text x={X(i + 1)} y={yTop + 4} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+              {back ? `G${"₁₂₃"[i]}` : `y${"₁₂₃"[i]}`}
+            </text>
+          </g>
+        ))}
+        {[0, 1, 2, 3, 4].map((j) => (
+          <g key={`b${j}`}>
+            <circle cx={X(j)} cy={yBot} r={12} fill={back && j === 2 ? colors.red : inkMuted} fillOpacity={back && j === 2 ? 0.2 : 0.12} stroke={back && j === 2 ? colors.red : inkMuted} strokeWidth={1.5} />
+            <text x={X(j)} y={yBot + 4} textAnchor="middle" fontSize={back ? 9.5 : 10.5} fontWeight={800} fill={ink}>
+              {back ? `∂x${"₁₂₃₄₅"[j]}` : `x${"₁₂₃₄₅"[j]}`}
+            </text>
+          </g>
+        ))}
+      </g>
+    );
+  };
+  const cells = (ox: number, y: number, labels: string[], color: string, hlFrom = -1, hlTo = -1) =>
+    labels.map((l, i) => (
+      <g key={i}>
+        <rect x={ox + i * 30} y={y} width={30} height={22} fill={i >= hlFrom && i <= hlTo ? color : inkMuted} fillOpacity={i >= hlFrom && i <= hlTo ? 0.18 : 0.06} stroke={i >= hlFrom && i <= hlTo ? color : inkMuted} strokeOpacity={0.7} />
+        <text x={ox + i * 30 + 15} y={y + 15} textAnchor="middle" fontSize={10} fontWeight={700} fill={l === "0" ? inkSecondary : ink}>
+          {l}
+        </text>
+      </g>
+    ));
+  return (
+    <DiagramFrame
+      title="합성곱의 역전파도 합성곱이다: 뒤집은 커널과 전치 합성곱"
+      caption="1차원으로 그린 합성곱이다(색은 커널 가중치 k₁·k₂·k₃). 왼쪽: 순전파에서 출력 yᵢ는 입력 세 칸을 커널로 가중합한다. 가운데: 역전파에서는 같은 연결을 거꾸로 지나 기울기 G가 입력으로 돌아간다. 가운데 입력 x₃은 y₁에는 k₃로, y₂에는 k₂로, y₃에는 k₁로 기여했으므로 ∂L/∂x₃ = G₁k₃ + G₂k₂ + G₃k₁이다. 오른쪽: 이것은 G 양옆에 0을 K − 1 = 2칸씩 덧대고 커널을 180° 뒤집은 (k₃, k₂, k₁)로 합성곱한 것(full 합성곱)과 같다. 3칸에서 5칸으로 커지는 이 연산을 층으로 쓴 것이 전치 합성곱이다. 커널의 기울기 ∂L/∂k는 입력 x와 G의 합성곱으로 계산된다."
+      viewBox="0 0 720 256"
+      minWidth={640}
+    >
+      <Markers prefix={P} colors={{ blue: colors.blue, orange: colors.orange, green: colors.green }} />
+      <text x={20} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        순전파: y = x ⋆ k
+      </text>
+      {panel(0, false)}
+      <text x={250} y={24} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        역전파: 같은 연결을 거꾸로
+      </text>
+      {panel(230, true)}
+      <text x={342} y={204} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.red}>
+        ∂L/∂x₃ = G₁k₃ + G₂k₂ + G₃k₁
+      </text>
+      {[0, 1, 2].map((a) => (
+        <g key={a}>
+          <line x1={22 + a * 70} x2={40 + a * 70} y1={232} y2={232} stroke={kc[a]} strokeWidth={2.4} />
+          <text x={44 + a * 70} y={236} fontSize={10} fontWeight={700} fill={kc[a]}>
+            {`k${"₁₂₃"[a]}`}
+          </text>
+        </g>
+      ))}
+      <line x1={476} y1={14} x2={476} y2={244} stroke="var(--border-hairline)" />
+      <text x={492} y={24} fontSize={11.5} fontWeight={800} fill={ink}>
+        = 뒤집은 커널로 full 합성곱
+      </text>
+      <text x={492} y={52} fontSize={10} fill={inkSecondary}>
+        G 양옆에 0을 2칸씩
+      </text>
+      {cells(492, 60, ["0", "0", "G₁", "G₂", "G₃", "0", "0"], colors.red, 2, 4)}
+      <text x={492} y={106} fontSize={10} fill={inkSecondary}>
+        뒤집은 커널 (∂x₃ 자리)
+      </text>
+      {cells(492 + 60, 114, ["k₃", "k₂", "k₁"], colors.violet, 0, 2)}
+      <text x={492} y={160} fontSize={10} fill={inkSecondary}>
+        결과: 3칸 → 5칸
+      </text>
+      {cells(492 + 15, 168, ["∂x₁", "∂x₂", "∂x₃", "∂x₄", "∂x₅"], colors.red, 2, 2)}
+      <Lines x={492} y={214} lines={["이 연산을 층으로 쓰면 전치 합성곱", "∂L/∂k = x ⋆ G (입력과 기울기의 합성곱)"]} size={10} anchor="start" color={ink} weight={700} gap={1.55} />
+    </DiagramFrame>
+  );
+}
+
+export function DepthwiseSeparable() {
+  // C_in = 32, C_out = 64, K = 3. 표준: 9·32·64 = 18,432. depthwise 9·32 = 288 + pointwise 32·64 = 2,048 → 2,336(약 7.9분의 1).
+  const cin = 32;
+  const cout = 64;
+  const K = 3;
+  const std = K * K * cin * cout;
+  const dw = K * K * cin;
+  const pw = cin * cout;
+  const cube = (x: number, y: number, f: number, d: number, color: string, op = 0.25) => {
+    const dx = d * 0.7;
+    const dy = d * 0.45;
+    return (
+      <g>
+        <path d={`M${x},${y} L${x + dx},${y - dy} L${x + dx + f},${y - dy} L${x + f},${y} Z`} fill={color} fillOpacity={op * 0.7} stroke={color} strokeWidth={1} />
+        <path d={`M${x + f},${y} L${x + dx + f},${y - dy} L${x + dx + f},${y - dy + f} L${x + f},${y + f} Z`} fill={color} fillOpacity={op * 1.2} stroke={color} strokeWidth={1} />
+        <rect x={x} y={y} width={f} height={f} fill={color} fillOpacity={op} stroke={color} strokeWidth={1.2} />
+      </g>
+    );
+  };
+  const by = linear(0, 20000, 214, 54);
+  return (
+    <DiagramFrame
+      title="depthwise separable 합성곱: 공간과 채널을 나눠 파라미터를 8분의 1로"
+      caption="입력 채널 32개, 출력 채널 64개, 3 × 3 커널의 예다. 위: 표준 합성곱은 출력 채널마다 3 × 3 × 32 크기의 필터 하나(공간 패턴과 채널 섞기를 한 번에)를 두므로 9 × 32 × 64 = 18,432개다. 아래: MobileNet의 depthwise separable은 두 단계로 나눈다. ① depthwise: 채널마다 3 × 3 필터 하나씩, 채널끼리는 섞지 않는다(9 × 32 = 288). ② pointwise: 1 × 1 × 32 필터 64개로 채널만 섞는다(32 × 64 = 2,048). 합계 2,336개로 약 7.9분의 1이고, 비율은 1/C_out + 1/K² = 1/64 + 1/9 ≈ 0.127이다. 연산량도 같은 비율로 준다."
+      viewBox="0 0 720 262"
+      minWidth={620}
+    >
+      <text x={20} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        표준 합성곱: 필터 64개, 각각 3 × 3 × 32
+      </text>
+      {[0, 1, 2, 3].map((i) => (
+        <g key={i}>{cube(28 + i * 74, 62, 26, 46, colors.violet)}</g>
+      ))}
+      <text x={326} y={84} fontSize={14} fontWeight={800} fill={inkSecondary}>
+        … × 64
+      </text>
+      <line x1={14} x2={400} y1={110} y2={110} stroke="var(--border-hairline)" />
+      <text x={20} y={130} fontSize={11.5} fontWeight={800} fill={ink}>
+        ① depthwise: 채널마다 3 × 3 하나 (32개)
+      </text>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <g key={i}>{cube(28 + i * 40, 150, 26, 3, [colors.blue, colors.orange, colors.green, colors.red, colors.aqua, colors.magenta][i])}</g>
+      ))}
+      <text x={276} y={170} fontSize={14} fontWeight={800} fill={inkSecondary}>
+        … × 32
+      </text>
+      <text x={20} y={206} fontSize={11.5} fontWeight={800} fill={ink}>
+        ② pointwise: 1 × 1 × 32 필터 64개
+      </text>
+      {[0, 1, 2, 3].map((i) => (
+        <g key={i}>{cube(28 + i * 60, 236, 9, 46, colors.aqua)}</g>
+      ))}
+      <text x={276} y={248} fontSize={14} fontWeight={800} fill={inkSecondary}>
+        … × 64
+      </text>
+      <line x1={420} y1={14} x2={420} y2={248} stroke="var(--border-hairline)" />
+      <text x={436} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+        파라미터 수
+      </text>
+      <line x1={440} x2={706} y1={by(0)} y2={by(0)} stroke={inkMuted} />
+      <rect x={470} y={by(std)} width={70} height={by(0) - by(std)} rx={3} fill={colors.violet} fillOpacity={0.55} />
+      <text x={505} y={by(std) - 6} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        {std.toLocaleString("en-US")}
+      </text>
+      <rect x={600} y={by(dw + pw)} width={70} height={by(0) - by(pw)} rx={3} fill={colors.aqua} fillOpacity={0.6} />
+      <rect x={600} y={by(dw)} width={70} height={by(0) - by(dw)} rx={0} fill={colors.blue} fillOpacity={0.7} />
+      <text x={635} y={by(dw + pw) - 6} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+        {(dw + pw).toLocaleString("en-US")}
+      </text>
+      <text x={505} y={by(0) + 16} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        표준
+      </text>
+      <text x={635} y={by(0) + 16} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        depthwise + pointwise
+      </text>
+      <Lines x={600} y={90} lines={[`depthwise ${dw}`, `pointwise ${pw.toLocaleString("en-US")}`]} size={10} anchor="start" color={ink} weight={700} gap={1.45} />
+      <text x={570} y={52} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.green}>
+        {`약 ${(std / (dw + pw)).toFixed(1)}분의 1`}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function VggParamsFlops() {
+  // VGG16(224 × 224 입력)의 블록별 파라미터 수와 곱셈-덧셈(MAC) 수를 직접 센 값. 합계 138.4M 파라미터, 15.5G MAC.
+  const blocks = [
+    { t: "블록 1", res: "224²", p: 38720, m: 1936392192, c: colors.blue },
+    { t: "블록 2", res: "112²", p: 221440, m: 2774532096, c: colors.aqua },
+    { t: "블록 3", res: "56²", p: 1475328, m: 4624220160, c: colors.green },
+    { t: "블록 4", res: "28²", p: 5899776, m: 4624220160, c: colors.yellow },
+    { t: "블록 5", res: "14²", p: 7079424, m: 1387266048, c: colors.orange },
+    { t: "FC 3층", res: "", p: 123642856, m: 123633664, c: colors.red },
+  ];
+  const tp = blocks.reduce((s, b) => s + b.p, 0);
+  const tm = blocks.reduce((s, b) => s + b.m, 0);
+  const x0 = 110;
+  const W = 590;
+  const bar = (y: number, key: "p" | "m", total: number) => {
+    let acc = 0;
+    return blocks.map((b) => {
+      const w = (b[key] / total) * W;
+      const x = x0 + acc;
+      acc += w;
+      const pct = (b[key] / total) * 100;
+      return (
+        <g key={b.t}>
+          <rect x={x} y={y} width={Math.max(w, 0.8)} height={34} fill={b.c} fillOpacity={0.7} />
+          {w > 36 && (
+            <text x={x + w / 2} y={y + 21} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={ink}>
+              {`${pct.toFixed(pct < 10 ? 1 : 0)}%`}
+            </text>
+          )}
+        </g>
+      );
+    });
+  };
+  return (
+    <DiagramFrame
+      title="VGG16: 파라미터는 FC층에, 연산은 해상도 큰 앞쪽 합성곱층에"
+      caption="224 × 224 이미지를 넣은 VGG16의 블록별 비중을 직접 센 것이다(전체 1억 3,800만 파라미터, 곱셈-덧셈 155억 번). 위: 파라미터의 89%가 마지막 FC 3층에 있고, 합성곱 블록 1~2는 0.2%에 불과하다. 아래: 연산은 정반대다. 해상도가 큰 블록 1~4가 90% 가까이를 차지하고 FC층은 1%도 안 된다. 합성곱의 파라미터 수(K²·C_in·C_out)는 입력 크기와 무관하지만 연산량은 출력 해상도 H × W에 비례하기 때문이다. 그래서 모델을 가볍게 할 때 메모리를 줄이려면 FC층을, 속도를 높이려면 앞쪽 합성곱층을 손본다."
+      viewBox="0 0 720 220"
+      minWidth={600}
+    >
+      <text x={x0 - 10} y={58} textAnchor="end" fontSize={11} fontWeight={800} fill={ink}>
+        파라미터
+      </text>
+      <text x={x0 - 10} y={72} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+        138.4M
+      </text>
+      {bar(42, "p", tp)}
+      <text x={x0 - 10} y={136} textAnchor="end" fontSize={11} fontWeight={800} fill={ink}>
+        연산(MAC)
+      </text>
+      <text x={x0 - 10} y={150} textAnchor="end" fontSize={9.5} fill={inkSecondary}>
+        15.5G
+      </text>
+      {bar(120, "m", tm)}
+      {blocks.map((b, i) => (
+        <g key={b.t}>
+          <rect x={x0 + i * 98} y={182} width={12} height={12} fill={b.c} fillOpacity={0.7} />
+          <text x={x0 + i * 98 + 16} y={192} fontSize={10.5} fontWeight={700} fill={ink}>
+            {b.t}
+          </text>
+          {b.res && (
+            <text x={x0 + i * 98 + 16} y={206} fontSize={9.5} fill={inkSecondary}>
+              {`해상도 ${b.res}`}
+            </text>
+          )}
+        </g>
+      ))}
+      <text x={x0} y={26} fontSize={10.5} fill={inkSecondary}>
+        왼쪽(입력 쪽) → 오른쪽(출력 쪽) 순서로 쌓은 비중
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function ElboGap() {
+  // 정확히 계산되는 예: p(z) = N(0, 1), p(x | z) = N(z, 0.5²), 관측 x = 1.5. 진짜 사후분포 p(z | x) = N(1.2, 0.2), log p(x) = −1.931.
+  // q = N(μ, s²)일 때 ELBO = E_q[log p(x | z)] − KL(q ‖ p(z)), log p(x) − ELBO = KL(q ‖ p(z | x)).
+  const npdf = (z: number, m: number, s: number) => Math.exp(-((z - m) ** 2) / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI));
+  const x = 1.5;
+  const logpx = -0.5 * Math.log(2 * Math.PI * 1.25) - (x * x) / (2 * 1.25);
+  const ell = (m: number, s: number) => -0.5 * Math.log(2 * Math.PI * 0.25) - ((x - m) ** 2 + s * s) / 0.5;
+  const klPrior = (m: number, s: number) => 0.5 * (m * m + s * s - 1 - Math.log(s * s));
+  const qs = [
+    { t: "q₁ = N(0, 1²) (사전분포 그대로)", m: 0, s: 1, c: colors.blue },
+    { t: "q₂ = N(0.8, 0.6²)", m: 0.8, s: 0.6, c: colors.orange },
+    { t: "q₃ = N(1.2, 0.45²) (진짜 사후분포)", m: 1.2, s: Math.sqrt(0.2), c: colors.violet },
+  ].map((q) => ({ ...q, rec: ell(q.m, q.s), kl: klPrior(q.m, q.s), elbo: ell(q.m, q.s) - klPrior(q.m, q.s) }));
+  const G = { left: 40, top: 30, width: 260, height: 160 };
+  const sx = linear(-3, 3.5, G.left, G.left + G.width);
+  const sy = linear(0, 0.95, G.top + G.height, G.top);
+  const curve = (m: number, s: number) => linePath(sample((z) => npdf(z, m, s), -3, 3.5, 200).map(([a, b]) => [sx(a), sy(b)] as [number, number]));
+  const nx = linear(-7.2, -1.2, 378, 700);
+  const m2 = (v: number) => v.toFixed(2).replace("-", "−");
+  return (
+    <DiagramFrame
+      title="ELBO: 로그가능도의 하한, 간극은 정확히 KL(q ‖ 진짜 사후분포)"
+      caption="정확히 계산되는 작은 예다. 잠재변수 z ~ N(0, 1)에서 x ~ N(z, 0.5²)가 나오는 모델에서 x = 1.5를 관측하면 진짜 사후분포는 N(1.2, 0.2)이고 log p(x) = −1.93이다. 왼쪽: 인코더가 고를 수 있는 근사 분포 q 세 가지다. 오른쪽: 각 q의 ELBO = (복원 항) − KL(q ‖ 사전분포)를 계산해 log p(x)와 비교했다. 사전분포를 그대로 쓰는 q₁은 복원을 못 해 ELBO가 −6.73으로 4.80 모자라고, q₂는 0.51 모자라며, 진짜 사후분포인 q₃에서 간극이 0이 되어 ELBO가 log p(x)와 같아진다. 모자란 양은 정확히 KL(q ‖ p(z | x))이므로, ELBO를 키우는 것은 인코더를 진짜 사후분포에 가깝게 만드는 일이다."
+      viewBox="0 0 720 252"
+      minWidth={640}
+    >
+      <text x={G.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        잠재변수 z의 분포 (x = 1.5를 관측)
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-3, -2, -1, 0, 1, 2, 3]} yTicks={[]} fmtX={(v) => String(v).replace("-", "−")} xLabel="z" />
+      <path d={`${curve(1.2, Math.sqrt(0.2))} L${sx(3.5)},${sy(0)} L${sx(-3)},${sy(0)} Z`} fill={colors.violet} fillOpacity={0.15} />
+      <path d={curve(1.2, Math.sqrt(0.2))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
+      <path d={curve(0, 1)} fill="none" stroke={colors.blue} strokeWidth={2} strokeDasharray="6 3" />
+      <path d={curve(0.8, 0.6)} fill="none" stroke={colors.orange} strokeWidth={2} />
+      <text x={sx(1.2) + 22} y={sy(0.86)} fontSize={10} fontWeight={800} fill={colors.violet}>
+        진짜 사후분포 p(z | x) = q₃
+      </text>
+      <text x={sx(-2.9)} y={sy(0.45)} fontSize={10} fontWeight={800} fill={colors.blue}>
+        q₁ = 사전분포
+      </text>
+      <text x={sx(-0.9)} y={sy(0.62)} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.orange}>
+        q₂
+      </text>
+      <line x1={354} y1={14} x2={354} y2={238} stroke="var(--border-hairline)" />
+      <text x={370} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        ELBO와 log p(x)의 간극
+      </text>
+      <line x1={nx(-7.2)} x2={nx(-1.2)} y1={206} y2={206} stroke={inkMuted} />
+      {[-7, -6, -5, -4, -3, -2].map((t) => (
+        <text key={t} x={nx(t)} y={220} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+          {`−${-t}`}
+        </text>
+      ))}
+      <line x1={nx(logpx)} x2={nx(logpx)} y1={34} y2={206} stroke={colors.violet} strokeWidth={1.6} strokeDasharray="5 3" />
+      <text x={nx(logpx) - 4} y={236} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.violet}>
+        {`log p(x) = ${m2(logpx)}`}
+      </text>
+      {qs.map((q, i) => {
+        const y = 54 + i * 52;
+        const gap = logpx - q.elbo;
+        return (
+          <g key={q.t}>
+            <text x={370} y={y - 10} fontSize={10} fontWeight={800} fill={q.c}>
+              {q.t}
+            </text>
+            {gap > 0.01 && <line x1={nx(q.elbo)} x2={nx(logpx)} y1={y + 4} y2={y + 4} stroke={colors.red} strokeWidth={6} strokeOpacity={0.3} />}
+            <circle cx={nx(q.elbo)} cy={y + 4} r={5} fill={q.c} />
+            <text x={nx(q.elbo) + (gap > 1 ? 8 : -8)} y={y + 22} textAnchor={gap > 1 ? "start" : "end"} fontSize={9.5} fill={inkSecondary}>
+              {`ELBO = 복원 ${m2(q.rec)} − KL ${q.kl.toFixed(2)} = ${m2(q.elbo)}`}
+            </text>
+            {gap > 0.01 && (
+              <text x={gap > 1 ? (nx(q.elbo) + nx(logpx)) / 2 : nx(q.elbo) - 10} y={gap > 1 ? y : y + 8} textAnchor={gap > 1 ? "middle" : "end"} fontSize={9.5} fontWeight={800} fill={colors.red}>
+                {`간극 ${gap.toFixed(2)}`}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </DiagramFrame>
+  );
+}
+
+export function VaeKlCurves() {
+  // KL(N(μ, σ²) ‖ N(0, 1)) = ½(μ² + σ² − 1 − log σ²). 본문 표: (0, 1) → 0, (1, 1) → 0.5, (2, 1) → 2, (0, 0.5) → 0.318, (0, 2) → 0.807.
+  const kl = (m: number, s: number) => 0.5 * (m * m + s * s - 1 - Math.log(s * s));
+  const L = { left: 52, top: 30, width: 270, height: 170 };
+  const R = { left: 420, top: 30, width: 270, height: 170 };
+  const lx = linear(-2.5, 2.5, L.left, L.left + L.width);
+  const ly = linear(0, 3.2, L.top + L.height, L.top);
+  const rx = linear(0, 3, R.left, R.left + R.width);
+  const ry = linear(0, 3.2, R.top + R.height, R.top);
+  const dot = (x: number, y: number, label: string, anchor: "start" | "end" = "start") => (
+    <g>
+      <circle cx={x} cy={y} r={4.5} fill={colors.red} stroke="var(--surface-card)" strokeWidth={1.5} />
+      <text x={x + (anchor === "start" ? 8 : -8)} y={y - 6} textAnchor={anchor} fontSize={10} fontWeight={800} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
+        {label}
+      </text>
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="VAE의 KL 항: 평균은 원점으로, 분산은 1로 끌어당긴다"
+      caption="인코더가 내놓은 N(μ, σ²)와 사전분포 N(0, 1) 사이의 KL 발산 ½(μ² + σ² − 1 − log σ²)를 한 변수씩 바꿔 그렸다. 점은 본문 표의 값이다. 왼쪽: σ = 1로 두면 KL = ½μ²라, 평균이 원점에서 멀어질수록 제곱으로 벌점이 커진다. 오른쪽: μ = 0으로 두면 σ = 1에서 0이고, 분산이 너무 커져도 벌점을 받지만 σ → 0 쪽은 −log σ² 때문에 끝없이 커진다. KL 항이 없다면 인코더는 분산을 0으로 줄여(점 하나로 인코딩) VAE를 일반 오토인코더로 되돌린다. 이 벽이 그것을 막는다."
+      viewBox="0 0 720 248"
+      minWidth={600}
+    >
+      <text x={L.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        σ = 1로 두고 μ를 바꾸면: ½μ²
+      </text>
+      <Axes {...L} sx={lx} sy={ly} xTicks={[-2, -1, 0, 1, 2]} yTicks={[0, 1, 2, 3]} fmtX={(v) => String(v).replace("-", "−")} xLabel="평균 μ" yLabel="KL" />
+      <path d={linePath(sample((m) => kl(m, 1), -2.5, 2.5, 160).map(([a, b]) => [lx(a), ly(b)] as [number, number]))} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      {dot(lx(0), ly(0), "(0, 1) → 0")}
+      {dot(lx(1), ly(0.5), "(1, 1) → 0.5")}
+      {dot(lx(2), ly(2), "(2, 1) → 2.0", "end")}
+      <text x={R.left} y={18} fontSize={11.5} fontWeight={800} fill={ink}>
+        μ = 0으로 두고 σ를 바꾸면
+      </text>
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 0.5, 1, 1.5, 2, 2.5, 3]} yTicks={[0, 1, 2, 3]} xLabel="표준편차 σ" />
+      <path d={linePath(sample((s) => Math.min(kl(0, s), 3.4), 0.06, 3, 240).map(([a, b]) => [rx(a), ry(b)] as [number, number]))} fill="none" stroke={colors.orange} strokeWidth={2.4} />
+      {dot(rx(0.5), ry(kl(0, 0.5)), "(0, 0.5) → 0.318")}
+      {dot(rx(1), ry(0), "(0, 1) → 0")}
+      {dot(rx(2), ry(kl(0, 2)), "(0, 2) → 0.807", "end")}
+      <Lines x={rx(0.18)} y={ry(2.95)} lines={["σ → 0: −log σ² 때문에", "끝없이 커지는 벽"]} size={10} anchor="start" color={colors.orange} weight={800} gap={1.35} />
+    </DiagramFrame>
+  );
+}
+
+export function Reparameterization() {
+  // 오른쪽: ∂/∂μ E_{z~N(μ,1)}[z²]를 μ = 1에서 표본 하나로 추정(참값 2μ = 2). 재매개변수화 2(μ + ε)의 표준편차는 2,
+  // 점수 함수 추정 z²(z − μ) = ε + 2ε² + ε³의 표준편차는 √30 ≈ 5.5(이론값). 히스토그램은 시드 고정 표본 4000개.
+  const P = "rpm";
+  const rand = seeded(11);
+  const N = 4000;
+  const rep: number[] = [];
+  const sf: number[] = [];
+  for (let i = 0; i < N; i++) {
+    const e = gaussian(rand);
+    rep.push(2 * (1 + e));
+    sf.push((1 + e) ** 2 * e);
+  }
+  const lo = -12;
+  const hi = 18;
+  const hist = (v: number[]) => {
+    const h = Array.from({ length: hi - lo }, () => 0);
+    v.forEach((a) => {
+      const k = Math.floor(a - lo);
+      if (k >= 0 && k < h.length) h[k]++;
+    });
+    return h;
+  };
+  const hr = hist(rep);
+  const hs = hist(sf);
+  const G = { left: 430, top: 34, width: 270, height: 150 };
+  const sx = linear(lo, hi, G.left, G.left + G.width);
+  const sy = linear(0, Math.max(...hr, ...hs) * 1.08, G.top + G.height, G.top);
+  const box = (x: number, y: number, w: number, label: string, color: string) => <Tag x={x} y={y} w={w} h={28} lines={[label]} color={color} size={10.5} />;
+  const oval = (cx: number, cy: number, rx: number, label: string, color: string) => (
+    <g>
+      <ellipse cx={cx} cy={cy} rx={rx} ry={15} fill={color} fillOpacity={0.15} stroke={color} strokeWidth={1.5} strokeDasharray="4 2" />
+      <text x={cx} y={cy + 4} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
+        {label}
+      </text>
+    </g>
+  );
+  const chain = (y: number, ok: boolean) => (
+    <g>
+      {box(14, y, 40, "x", inkMuted)}
+      <Arr x1={56} y1={y + 14} x2={68} y2={y + 14} color={inkMuted} marker={`${P}-ink`} />
+      {box(70, y, 62, "인코더 φ", colors.blue)}
+      <Arr x1={134} y1={y + 14} x2={146} y2={y + 14} color={inkMuted} marker={`${P}-ink`} />
+      {box(148, y, 46, "μ, σ", colors.blue)}
+      <Arr x1={196} y1={y + 14} x2={208} y2={y + 14} color={inkMuted} marker={`${P}-ink`} />
+      {ok ? box(210, y, 86, "z = μ + σ·ε", colors.green) : oval(253, y + 14, 43, "z ~ N(μ, σ²)", colors.red)}
+      <Arr x1={298} y1={y + 14} x2={310} y2={y + 14} color={inkMuted} marker={`${P}-ink`} />
+      {box(312, y, 66, "디코더·손실", colors.violet)}
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="재매개변수화 트릭: 무작위성을 바깥으로 빼서 기울기가 통하게 한다"
+      caption="왼쪽 위: 인코더가 낸 μ, σ로 z를 바로 뽑으면 샘플링 노드(점선 타원)는 미분할 수 없는 무작위 연산이라, 손실의 기울기가 인코더로 돌아갈 길이 끊긴다. 왼쪽 아래: z = μ + σ·ε로 쓰고 무작위성은 학습과 무관한 입력 ε ~ N(0, 1)에만 두면, z는 μ와 σ의 평범한 미분 가능한 함수가 되어 역전파가 그대로 통한다(∂z/∂μ = 1, ∂z/∂σ = ε). 오른쪽: 같은 기울기 ∂/∂μ E[z²](z ~ N(μ, 1), μ = 1에서 참값 2)를 표본 하나로 추정한 값의 분포다(4,000번). 둘 다 평균은 2로 편향이 없지만, 재매개변수화 추정 2(μ + ε)는 표준편차가 2인 데 비해 점수 함수 추정(REINFORCE) z²(z − μ)는 √30 ≈ 5.5로 훨씬 넓게, 긴 꼬리를 달고 흩어진다."
+      viewBox="0 0 720 262"
+      minWidth={640}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted, red: colors.red, green: colors.green }} />
+      <text x={14} y={20} fontSize={11.5} fontWeight={800} fill={colors.red}>
+        그대로 뽑으면: 샘플링에서 기울기가 끊긴다
+      </text>
+      {chain(34, false)}
+      <path d={`M${345},${66} C${330},${92} ${282},${92} ${266},${68}`} fill="none" stroke={colors.red} strokeWidth={1.6} strokeDasharray="4 3" markerEnd={`url(#${P}-red)`} />
+      <text x={252} y={102} textAnchor="end" fontSize={11.5} fontWeight={800} fill={colors.red}>
+        ✕ 여기서 기울기가 끊긴다
+      </text>
+      <line x1={10} x2={400} y1={116} y2={116} stroke="var(--border-hairline)" />
+      <text x={14} y={136} fontSize={11.5} fontWeight={800} fill={colors.green}>
+        재매개변수화: z = μ + σ·ε, 무작위성은 ε에만
+      </text>
+      <path d={`M${345},${170} C${330},${146} ${190},${146} ${173},${168}`} fill="none" stroke={colors.green} strokeWidth={1.8} strokeDasharray="4 3" markerEnd={`url(#${P}-green)`} />
+      {chain(170, true)}
+      {oval(253, 236, 40, "ε ~ N(0, 1)", inkMuted)}
+      <Arr x1={253} y1={221} x2={253} y2={200} color={inkMuted} marker={`${P}-ink`} />
+      <Lines x={14} y={226} lines={["초록 점선: 기울기가", "μ, σ를 거쳐 인코더까지"]} size={10} anchor="start" color={colors.green} weight={800} gap={1.4} />
+      <line x1={410} y1={14} x2={410} y2={248} stroke="var(--border-hairline)" />
+      <text x={G.left} y={20} fontSize={11} fontWeight={800} fill={ink}>
+        기울기 추정값의 분포 (참값 2)
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-10, -5, 0, 2, 5, 10, 15]} yTicks={[]} fmtX={(v) => String(v).replace("-", "−")} />
+      {hs.map((v, k) => (
+        <rect key={`s${k}`} x={sx(lo + k) + 0.5} y={sy(v)} width={sx(lo + k + 1) - sx(lo + k) - 1} height={sy(0) - sy(v)} fill={colors.orange} fillOpacity={0.45} />
+      ))}
+      {hr.map((v, k) => (
+        <rect key={`r${k}`} x={sx(lo + k) + 0.5} y={sy(v)} width={sx(lo + k + 1) - sx(lo + k) - 1} height={sy(0) - sy(v)} fill="none" stroke={colors.green} strokeWidth={1.6} />
+      ))}
+      <line x1={sx(2)} x2={sx(2)} y1={G.top} y2={G.top + G.height} stroke={ink} strokeDasharray="4 3" />
+      <rect x={G.left + 150} y={G.top + 6} width={12} height={10} fill="none" stroke={colors.green} strokeWidth={1.6} />
+      <text x={G.left + 166} y={G.top + 15} fontSize={10} fontWeight={700} fill={colors.green}>
+        재매개변수화 (표준편차 2)
+      </text>
+      <rect x={G.left + 150} y={G.top + 24} width={12} height={10} fill={colors.orange} fillOpacity={0.45} />
+      <text x={G.left + 166} y={G.top + 33} fontSize={10} fontWeight={700} fill={colors.orange}>
+        점수 함수 (표준편차 5.5)
+      </text>
+      <text x={G.left + G.width / 2} y={G.top + G.height + 32} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        표본 하나로 낸 기울기 추정값
+      </text>
+    </DiagramFrame>
+  );
+}
+
+const HEART = ["............", "..##....##..", ".####..####.", ".##########.", ".##########.", ".##########.", "..########..", "...######...", "....####....", ".....##.....", "............", "............"];
+
+export function DdpmTrainingStep() {
+  // DDPM 선형 스케줄(β: 10⁻⁴ → 0.02, T = 1000)에서 t = 250: √ᾱ ≈ 0.72, √(1 − ᾱ) ≈ 0.69. x₀는 12 × 12 하트(값 −1 또는 1).
+  const P = "ddp";
+  const T = 1000;
+  let ab = 1;
+  for (let t = 1; t <= 250; t++) ab *= 1 - (1e-4 + ((0.02 - 1e-4) * (t - 1)) / (T - 1));
+  const a = Math.sqrt(ab);
+  const b = Math.sqrt(1 - ab);
+  const x0 = HEART.flatMap((r) => r.split("").map((ch) => (ch === "#" ? 1 : -1)));
+  const rand = seeded(5);
+  const eps = x0.map(() => gaussian(rand));
+  const xt = x0.map((v, i) => a * v + b * eps[i]);
+  const c = 7;
+  const img = (x: number, y: number, vals: number[], range: number) => (
+    <g>
+      {vals.map((v, i) => {
+        const g = Math.round(((Math.max(-range, Math.min(range, v)) + range) / (2 * range)) * 255);
+        return <rect key={i} x={x + (i % 12) * c} y={y + Math.floor(i / 12) * c} width={c} height={c} fill={`rgb(${g},${g},${g})`} />;
+      })}
+      <rect x={x} y={y} width={12 * c} height={12 * c} fill="none" stroke={inkMuted} />
+    </g>
+  );
+  const top = 46;
+  return (
+    <DiagramFrame
+      title="확산 모델의 학습 한 스텝: 섞은 노이즈를 맞혀라"
+      caption={`DDPM 학습의 한 스텝을 실제 숫자로 따라갔다. ① 데이터 x₀(12 × 12 하트, 값 −1 또는 1)를 고르고 ② 시점 t를 무작위로 고른다(여기서는 t = 250, 선형 스케줄에서 √ᾱ_t ≈ ${a.toFixed(2)}, √(1 − ᾱ_t) ≈ ${b.toFixed(2)}). ③ 표준정규 노이즈 ε을 뽑아 ④ 닫힌 형태 x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε로 t단계를 한 번에 건너뛴다. ⑤ 신경망은 x_t와 t를 받아 섞인 노이즈를 예측하고, 손실은 정답 ε과의 평균제곱오차다. 노이즈를 정확히 맞히면 x₀ = (x_t − √(1 − ᾱ_t)·ε) / √ᾱ_t로 원본이 그대로 돌아온다(맨 오른쪽, 정답 ε을 넣어 계산). 이 노이즈 예측은 데이터 분포의 점수 ∇ log p(x_t)를 추정하는 것과 같다.`}
+      viewBox="0 0 720 236"
+      minWidth={640}
+    >
+      <Markers prefix={P} colors={{ ink: inkMuted, red: colors.red }} />
+      <text x={20} y={top - 12} fontSize={10.5} fontWeight={800} fill={ink}>
+        ① 데이터 x₀
+      </text>
+      {img(20, top, x0, 1)}
+      <text x={134} y={top - 12} fontSize={10.5} fontWeight={800} fill={ink}>
+        ③ 노이즈 ε ~ N(0, I)
+      </text>
+      {img(134, top, eps, 2.2)}
+      <text x={120} y={top + 48} textAnchor="middle" fontSize={16} fontWeight={800} fill={inkSecondary}>
+        +
+      </text>
+      <Arr x1={226} y1={top + 42} x2={262} y2={top + 42} color={inkMuted} marker={`${P}-ink`} />
+      <text x={268} y={top - 12} fontSize={10.5} fontWeight={800} fill={ink}>
+        ④ x_t (t = 250)
+      </text>
+      {img(268, top, xt, 2.2)}
+      <Lines x={20} y={top + 112} lines={[`x_t = ${a.toFixed(2)}·x₀ + ${b.toFixed(2)}·ε`, "② t는 무작위로 (1 ~ 1000)"]} size={10.5} anchor="start" color={ink} weight={700} gap={1.5} />
+      <Arr x1={358} y1={top + 42} x2={386} y2={top + 42} color={inkMuted} marker={`${P}-ink`} />
+      <Tag x={388} y={top + 18} w={116} h={48} lines={["⑤ 신경망", "ε_θ(x_t, t)"]} color={colors.violet} size={11} />
+      <Arr x1={506} y1={top + 42} x2={530} y2={top + 42} color={inkMuted} marker={`${P}-ink`} />
+      <rect x={532} y={top} width={84} height={84} rx={4} fill="none" stroke={colors.violet} strokeDasharray="4 3" />
+      <text x={574} y={top + 46} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet}>
+        예측 ε̂
+      </text>
+      <Lines x={446} y={top + 98} lines={["손실 = ‖ε − ε̂‖²", "(정답 ε과의 MSE)"]} size={11} anchor="middle" color={colors.red} weight={800} gap={1.4} />
+      <path d={`M${176},${top + 90} C${176},${top + 150} ${560},${top + 150} ${574},${top + 90}`} fill="none" stroke={colors.red} strokeWidth={1.2} strokeDasharray="4 3" />
+      <text x={636} y={top - 12} fontSize={10} fontWeight={800} fill={ink}>
+        ε을 맞히면 원본
+      </text>
+      {img(632, top, xt.map((v, i) => (v - b * eps[i]) / a), 1)}
+      <text x={674} y={top + 102} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+        (x_t − 0.69ε) / 0.72
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function LinearityHypothesis() {
+  // 왼쪽: 2차원 예 w = (2, 1). 크기 ε인 L2 걸음(w 방향)은 로짓을 ε‖w‖₂ = 2.24ε, L∞ 상자의 모서리 ε·sign(w)는 ε‖w‖₁ = 3ε 바꾼다.
+  // 오른쪽: 본문 코드 출력(ε = 0.01): n = 10 → 0.061 / 0.0044, 1,000 → 7.74 / 0.29, 150,528 → 1,202.9 / 2.25.
+  const P = "lin";
+  const S = 46;
+  const cx = 150;
+  const cy = 130;
+  const w = [2, 1];
+  const nw = Math.hypot(w[0], w[1]);
+  const px = (u: number) => cx + u * S;
+  const py = (v: number) => cy - v * S;
+  const G = { left: 420, top: 30, width: 270, height: 170 };
+  const sx = log10Scale(5, 3e5, G.left, G.left + G.width);
+  const sy = log10Scale(1e-3, 1e4, G.top + G.height, G.top);
+  const pts = [
+    [10, 0.0612, 0.00437],
+    [1000, 7.739, 0.2939],
+    [150528, 1202.9, 2.254],
+  ];
+  return (
+    <DiagramFrame
+      title="선형성 가설: 차원이 클수록 '맞춘' 작은 변화가 로짓을 크게 움직인다"
+      caption="왼쪽: 선형 로짓 w·x에서 w = (2, 1)인 2차원 예다. 회색 선은 로짓이 같은 등고선이다. 각 좌표를 최대 ε만큼만 바꿀 수 있으면(초록 상자) 로짓을 가장 크게 올리는 곳은 모서리 ε·sign(w)이고, 그 변화량은 ε‖w‖₁ = 3ε로, 같은 크기의 L2 걸음(w 방향, 원 위)의 ε‖w‖₂ ≈ 2.24ε보다 크다. FGSM이 기울기의 부호를 쓰는 이유다. 오른쪽: 본문 코드의 출력이다(ε = 0.01, 두 축 모두 로그 눈금). 부호를 w에 맞춘 노이즈의 효과는 차원 n에 비례해(약 ε·0.8n) 커지지만, 같은 크기의 무작위 부호 노이즈는 서로 상쇄되어 √n에 비례해서만 커진다. 224 × 224 × 3 이미지에서는 픽셀당 0.01의 변화가 로짓을 1,200이나 움직인다."
+      viewBox="0 0 720 252"
+      minWidth={620}
+    >
+      <Markers prefix={P} colors={{ red: colors.red, blue: colors.blue }} />
+      <text x={20} y={20} fontSize={11.5} fontWeight={800} fill={ink}>
+        같은 ε, 다른 방향 (w = (2, 1))
+      </text>
+      <defs>
+        <clipPath id="lin-clip">
+          <rect x={20} y={30} width={300} height={210} />
+        </clipPath>
+      </defs>
+      {[-3, -2, -1, 0, 1, 2, 3].map((k) => {
+        const off = (k * 0.5) / nw;
+        const d = [-w[1] / nw, w[0] / nw];
+        const o = [(w[0] / nw) * off, (w[1] / nw) * off];
+        return <line key={k} x1={px(o[0] - 3 * d[0])} y1={py(o[1] - 3 * d[1])} x2={px(o[0] + 3 * d[0])} y2={py(o[1] + 3 * d[1])} stroke={inkMuted} strokeOpacity={0.45} clipPath="url(#lin-clip)" />;
+      })}
+      <rect x={px(-1)} y={py(1)} width={2 * S} height={2 * S} fill={colors.green} fillOpacity={0.08} stroke={colors.green} strokeWidth={1.6} />
+      <circle cx={cx} cy={cy} r={S} fill="none" stroke={colors.blue} strokeWidth={1.4} strokeDasharray="4 3" />
+      <Arr x1={cx} y1={cy} x2={px(w[0] / nw) - 2} y2={py(w[1] / nw) + 2} color={colors.blue} marker={`${P}-blue`} width={2.2} />
+      <Arr x1={cx} y1={cy} x2={px(1) - 3} y2={py(1) + 3} color={colors.red} marker={`${P}-red`} width={2.4} />
+      <circle cx={cx} cy={cy} r={4} fill={ink} />
+      <text x={cx - 8} y={cy + 16} textAnchor="end" fontSize={10} fontWeight={700} fill={ink}>
+        x
+      </text>
+      <text x={px(1) + 6} y={py(1) - 4} fontSize={10} fontWeight={800} fill={colors.red}>
+        ε·sign(w): +3ε
+      </text>
+      <text x={px(w[0] / nw) + 6} y={py(w[1] / nw) + 14} fontSize={10} fontWeight={800} fill={colors.blue}>
+        ε·w/‖w‖₂: +2.24ε
+      </text>
+      <text x={px(-1)} y={py(-1) + 16} fontSize={9.5} fontWeight={700} fill={colors.green}>
+        각 좌표 ±ε 상자
+      </text>
+      <text x={px(1.6)} y={py(-1.6)} fontSize={9.5} fill={inkSecondary}>
+        회색: 로짓 등고선
+      </text>
+      <line x1={330} y1={14} x2={330} y2={240} stroke="var(--border-hairline)" />
+      <text x={G.left - 50} y={20} fontSize={11.5} fontWeight={800} fill={ink}>
+        본문 코드: 로짓 변화의 크기 (ε = 0.01)
+      </text>
+      <Axes {...G} sx={sx} sy={sy} xTicks={[10, 100, 1e3, 1e4, 1e5]} yTicks={[1e-3, 1e-1, 10, 1e3]} fmtX={pow10Label} fmtY={pow10Label} xLabel="입력 차원 n (로그 눈금)" />
+      <path d={linePath([5, 3e5].map((n) => [sx(n), sy(0.01 * 0.798 * n)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={1.6} strokeDasharray="5 3" />
+      <path d={linePath([5, 3e5].map((n) => [sx(n), sy(0.01 * 0.798 * Math.sqrt(n))] as [number, number]))} fill="none" stroke={inkSecondary} strokeWidth={1.6} strokeDasharray="5 3" />
+      {pts.map(([n, t, r]) => (
+        <g key={n}>
+          <circle cx={sx(n)} cy={sy(t)} r={4.5} fill={colors.red} />
+          <circle cx={sx(n)} cy={sy(r)} r={4.5} fill={inkSecondary} />
+        </g>
+      ))}
+      <text x={sx(150528) - 6} y={sy(1202.9) - 8} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.red}>
+        맞춘 노이즈: 1,203
+      </text>
+      <text x={sx(150528) - 6} y={sy(2.254) + 18} textAnchor="end" fontSize={10} fontWeight={800} fill={inkSecondary}>
+        무작위 노이즈: 2.25
+      </text>
+      <text x={sx(200)} y={sy(0.01 * 0.798 * 200) - 10} textAnchor="end" fontSize={10} fontWeight={800} fill={colors.red}>
+        ∝ n
+      </text>
+      <text x={sx(200)} y={sy(0.01 * 0.798 * Math.sqrt(200)) + 16} fontSize={10} fontWeight={800} fill={inkSecondary}>
+        ∝ √n
+      </text>
     </DiagramFrame>
   );
 }
