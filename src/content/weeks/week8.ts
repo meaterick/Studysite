@@ -350,6 +350,7 @@ caption: Govern·Map·Measure·Manage 네 기능이 서로 맞물려 순환하�
 credit: N. Hanacek/NIST, Public Domain (미국 연방정부 저작물)
 width: 700
 height: 790
+maxWidth: 440
 \`\`\`
 
 
