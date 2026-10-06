@@ -395,16 +395,31 @@ export async function gradeSubmission(
   return found ? findSubmission(id) : undefined;
 }
 
+/** 제출 버전의 작업 공간 스냅숏 파일 이름(형식이 맞을 때만). */
+function notebookFileName(version: SubmissionVersion): string | undefined {
+  return version.notebookFile && /^notebook-v\d+\.json$/.test(version.notebookFile) ? version.notebookFile : undefined;
+}
+
 /** 제출 버전에 저장된 작업 공간 스냅숏을 읽는다. */
 export function readNotebook(submission: Submission, version: SubmissionVersion): AssignmentDraft | undefined {
-  if (!version.notebookFile || !/^notebook-v\d+\.json$/.test(version.notebookFile)) return undefined;
-  const file = path.join(UPLOAD_DIR, submission.id, version.notebookFile);
+  const name = notebookFileName(version);
+  if (!name) return undefined;
+  const file = path.join(UPLOAD_DIR, submission.id, name);
   if (!fs.existsSync(file)) return undefined;
   try {
     return JSON.parse(fs.readFileSync(file, "utf8")) as AssignmentDraft;
   } catch {
     return undefined;
   }
+}
+
+/** 작업 공간 스냅숏을 해석하지 않고 그대로 내려보내도록 연다(제출 기록에서 이전 제출본을 펼칠 때). */
+export function openNotebook(submission: Submission, version: SubmissionVersion): { size: number; stream: fs.ReadStream } | null {
+  const name = notebookFileName(version);
+  if (!name) return null;
+  const file = path.join(UPLOAD_DIR, submission.id, name);
+  if (!fs.existsSync(file)) return null;
+  return { size: fs.statSync(file).size, stream: fs.createReadStream(file) };
 }
 
 export function readSubmissionFile(submission: Submission, fileId: string): { file: SubmissionFile; bytes: Buffer } | null {

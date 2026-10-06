@@ -265,7 +265,8 @@ pm2 start "$APP"
   코드 편집기(Monaco)는 외부 CDN이 아니라 빌드 때 `node_modules`에서 복사한 `/vendor/monaco`에서 불러옵니다(`scripts/copy-monaco.mjs`).
 - 남용 방지: 계정별 요청 빈도 제한(채팅·작업 공간 저장·제출·확인 문제, `src/lib/rateLimit.ts`), 채팅 실시간 연결 수 제한
   (계정당 6·전체 300), 과제당 제출 30회·계정당 첨부 합계 100MB, 디스크 여유 512MB 미만이면 큰 쓰기 거절(`src/lib/diskGuard.ts`),
-  사이트 전체 Content-Security-Policy(`next.config.ts`).
+  사이트 전체 Content-Security-Policy(`next.config.ts`). 제출 기록(과제 화면·채점 화면)은 최신 제출본의 작업 공간만 바로 그리고,
+  이전 제출본의 작업 공간은 펼칠 때 그 버전 하나만 받아 온다(`/api/submissions/[id]/notebooks/[version]`). 제출이 쌓여도 화면 하나의 비용이 늘지 않는다.
   운영자가 스터디원의 제출본을 다시 실행해도 그 코드가 운영자 권한으로 사이트에 요청하지 못하도록, 워커는 Pyodide CDN 외의 네트워크 요청·스크립트 로드·하위 워커 생성이 막혀 있습니다(`public/pyodide-worker.js`, `next.config.ts`의 워커 CSP).
   서술형 답안의 작성 중 초안 같은 개인 편의 상태만 브라우저 localStorage에 남고, 진도·과제 초안·제출은 서버에 저장됩니다.
   코딩 실습에서 작성한 코드는 학습 자료 코드 셀처럼 브라우저 IndexedDB에만 저장되고, 서버에는 채점 결과(통과 항목 수)와 힌트 사용 기록만 남습니다.

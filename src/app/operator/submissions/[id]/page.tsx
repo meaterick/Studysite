@@ -12,6 +12,7 @@ import { quizAnswers } from "@/content/quizAnswers";
 import { Inline } from "@/components/MarkdownBlocks";
 import { GradeView, SubmissionVersionView } from "@/components/SubmissionView";
 import NotebookView from "@/components/assignment/NotebookView";
+import SubmissionVersionDetails from "@/components/assignment/SubmissionVersionDetails";
 import GradeForm from "@/components/assignment/GradeForm";
 import ChatPanel from "@/components/chat/ChatPanel";
 import { conversationView } from "@/lib/chatView";
@@ -41,6 +42,8 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
   const conversation = findConversation(submission.userId);
   const unread = unreadCount(conversation, "admin");
   const viewTasks = notebookViewTasks(spec, true);
+  // 이전 제출본 모두에 같은 배열을 넘겨 화면 데이터에 한 번만 실리게 한다.
+  const previousTasks = notebookViewTasks(spec, false);
   const courseDocs = courseDocFiles(spec);
   const currentGrade = grade && grade.version === latest.version ? grade : undefined;
 
@@ -103,31 +106,32 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
                   .slice(0, -1)
                   .reverse()
                   .map((v) => {
-                    const nb = readNotebook(submission, v);
                     const gs = submission.grades.filter((g) => g.version === v.version);
+                    // 이전 제출본의 작업 공간은 펼칠 때 그 버전 하나만 받아 온다(SubmissionVersionDetails).
                     return (
-                      <details key={v.version} className="group">
-                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3.5 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
-                          <span className="tabular-nums">
-                            v{v.version} · {formatDateTime(v.submittedAt)}
-                          </span>
-                          <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
-                        </summary>
-                        <div className="space-y-3 pb-5">
-                          {gs.map((g) => (
-                            <GradeView key={g.gradedAt} grade={g} rubric={spec.rubric} />
-                          ))}
-                          <SubmissionVersionView submission={submission} version={v} />
-                          {nb && (
-                            <NotebookView
-                              tasks={notebookViewTasks(spec, false)}
-                              notebook={nb}
-                              taskComments={gs[gs.length - 1]?.taskComments}
-                              runKey={`${submission.id}:${v.version}`}
-                            />
-                          )}
-                        </div>
-                      </details>
+                      <SubmissionVersionDetails
+                        key={v.version}
+                        className="group"
+                        bodyClassName="space-y-3 pb-5"
+                        summary={
+                          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3.5 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+                            <span className="tabular-nums">
+                              v{v.version} · {formatDateTime(v.submittedAt)}
+                            </span>
+                            <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
+                          </summary>
+                        }
+                        submissionId={submission.id}
+                        version={v.version}
+                        hasNotebook={!!v.notebookFile}
+                        tasks={previousTasks}
+                        taskComments={gs[gs.length - 1]?.taskComments}
+                      >
+                        {gs.map((g) => (
+                          <GradeView key={g.gradedAt} grade={g} rubric={spec.rubric} />
+                        ))}
+                        <SubmissionVersionView submission={submission} version={v} />
+                      </SubmissionVersionDetails>
                     );
                   })}
               </div>
