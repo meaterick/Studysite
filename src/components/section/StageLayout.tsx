@@ -14,6 +14,8 @@ function writeCollapsed(value: boolean) {
  * 학습 자료 화면의 2단 배치. 넓은 화면에서는 오른쪽 "이번 주 단계" 목록을 접어
  * 본문을 넓게 쓸 수 있고, 접은 상태는 쿠키에 기억해 서버 렌더링부터 반영한다. 좁은 화면에서는 본문 위에
  * 접고 펼 수 있는 목록으로 보여 준다(기본은 접힘).
+ * 접힘 여부는 data-collapsed로 내려 주므로, 본문은 `group-data-[collapsed]/stage:` 변형으로
+ * 목록이 줄어든 폭(248px → 40px)만큼 최대 폭을 늘릴 수 있다.
  */
 export default function StageLayout({
   children,
@@ -38,7 +40,8 @@ export default function StageLayout({
 
   return (
     <div
-      className={`grid gap-10 transition-[grid-template-columns] duration-300 xl:gap-16 ${
+      data-collapsed={collapsed ? "true" : undefined}
+      className={`group/stage grid gap-10 transition-[grid-template-columns] duration-300 xl:gap-16 ${
         collapsed ? "lg:grid-cols-[minmax(0,1fr)_40px]" : "lg:grid-cols-[minmax(0,1fr)_248px]"
       }`}
     >
