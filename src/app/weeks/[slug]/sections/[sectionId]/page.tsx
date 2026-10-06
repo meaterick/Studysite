@@ -97,7 +97,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
         list={<StageList status={status} slug={slug} sectionId={sectionId} isAdmin={isAdmin} />}
       >
         <ProgressProvider key={sectionId} items={checkStatuses}>
-          <article className="min-w-0 max-w-[46rem]">
+          <article className="min-w-0 max-w-[46rem] transition-[max-width] duration-300 lg:group-data-[collapsed]/stage:max-w-[59rem]">
             {isAdmin && status.sections.find((r) => r.section.id === sectionId)?.access === "locked" && (
               <p className="callout mb-6 text-xs">운영자 미리보기: 스터디원에게는 아직 잠겨 있는 단계입니다.</p>
             )}
