@@ -212,7 +212,7 @@ export function BlocksRenderer({
               >
                 {(b.title || style.icon) && (
                   <p className="mb-1.5 text-xs font-semibold" style={{ color: quote ? "var(--text-muted)" : style.tone }}>
-                    {b.title || style.icon}
+                    {b.title ? <Inline text={b.title} /> : style.icon}
                   </p>
                 )}
                 {b.blocks.length === 1 && b.blocks[0].type === "paragraph" ? (
