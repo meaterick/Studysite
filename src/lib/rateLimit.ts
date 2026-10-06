@@ -23,6 +23,8 @@ export const RATE_RULES = {
   submission: { burst: 3, perSecond: 1 / 60 },
   checkAnswer: { burst: 20, perSecond: 1 / 2 },
   learningWrite: { burst: 20, perSecond: 1 / 2 },
+  /** 제출 기록에서 이전 제출본의 작업 공간을 펼쳐 볼 때 */
+  notebookRead: { burst: 20, perSecond: 1 },
 } as const satisfies Record<string, RateRule>;
 
 const globalStore = globalThis as unknown as { __aegisRateBuckets?: Map<string, Bucket> };

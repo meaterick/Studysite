@@ -5,6 +5,7 @@ import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import WeekFrame from "@/components/WeekFrame";
 import Workspace from "@/components/assignment/Workspace";
 import NotebookView from "@/components/assignment/NotebookView";
+import SubmissionVersionDetails from "@/components/assignment/SubmissionVersionDetails";
 import Link from "next/link";
 import { GradeView, SubmissionVersionView } from "@/components/SubmissionView";
 import { loadWeekPage } from "@/lib/weekPage";
@@ -43,8 +44,9 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
   const hasUnseenGrade = !!submission && submission.grades.some((g) => isGradeUnseen(record, submission.id, g.gradedAt));
   const gradeIsCurrent = !!grade && !!latest && grade.version === latest.version;
   const savedDraft = readDraft(user.id, slug);
-  const fallback = !savedDraft && submission && latest ? readNotebook(submission, latest) : undefined;
-  const draft = mergeDraft(spec, savedDraft ?? fallback);
+  // 최신 제출본의 작업 공간만 읽는다(제출 기록에 그리고, 초안이 없으면 작업 공간의 시작점으로도 쓴다).
+  const latestNotebook = submission && latest ? readNotebook(submission, latest) : undefined;
+  const draft = mergeDraft(spec, savedDraft ?? latestNotebook);
   const unread = unreadCount(findConversation(user.id), "member");
   const viewTasks = notebookViewTasks(spec, false);
   const courseDocs = courseDocFiles(spec);
@@ -200,34 +202,55 @@ export default async function WeekAssignmentPage({ params }: { params: Promise<{
             </h2>
             <div className="rows border-y border-[var(--border-hairline)]">
               {[...submission.versions].reverse().map((version) => {
-                const notebook = readNotebook(submission, version);
                 const versionGrades = submission.grades.filter((g) => g.version === version.version);
                 const lastGrade = versionGrades[versionGrades.length - 1];
+                const summary = (
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+                    <span>
+                    제출본 v{version.version} · {formatDateTime(version.submittedAt)}
+                    {lastGrade && (lastGrade.decision === "graded" ? ` · ${lastGrade.score}/${lastGrade.maxScore}점` : " · 재제출 요청")}
+                    </span>
+                    <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
+                  </summary>
+                );
+                const gradesAndNote = (
+                  <>
+                    {versionGrades.map((g) => (
+                      <GradeView key={g.gradedAt} grade={g} rubric={spec.rubric} />
+                    ))}
+                    <SubmissionVersionView submission={submission} version={version} />
+                  </>
+                );
+                // 작업 공간은 최신 제출본만 여기서 그린다. 이전 제출본은 펼칠 때 그 버전의 작업 공간만 받아 온다.
+                if (version.version !== latest?.version) {
+                  return (
+                    <SubmissionVersionDetails
+                      key={version.version}
+                      className="group py-1"
+                      bodyClassName="space-y-4 pb-5 pt-1"
+                      summary={summary}
+                      submissionId={submission.id}
+                      version={version.version}
+                      hasNotebook={!!version.notebookFile}
+                      tasks={viewTasks}
+                      taskComments={lastGrade?.taskComments}
+                    >
+                      {gradesAndNote}
+                    </SubmissionVersionDetails>
+                  );
+                }
                 return (
-                  <details
-                    key={version.version}
-                    open={version.version === latest?.version}
-                    className="group py-1"
-                  >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
-                      <span>
-                      제출본 v{version.version} · {formatDateTime(version.submittedAt)}
-                      {lastGrade && (lastGrade.decision === "graded" ? ` · ${lastGrade.score}/${lastGrade.maxScore}점` : " · 재제출 요청")}
-                      </span>
-                      <Icon name="chevronDown" size={16} className="shrink-0 text-ink-muted transition group-open:rotate-180" />
-                    </summary>
+                  <details key={version.version} open className="group py-1">
+                    {summary}
                     <div className="space-y-4 pb-5 pt-1">
-                      {versionGrades.map((g) => (
-                        <GradeView key={g.gradedAt} grade={g} rubric={spec.rubric} />
-                      ))}
-                      <SubmissionVersionView submission={submission} version={version} />
-                      {notebook && (
+                      {gradesAndNote}
+                      {latestNotebook && (
                         <NotebookView
                           tasks={viewTasks}
-                          notebook={notebook}
+                          notebook={latestNotebook}
                           taskComments={lastGrade?.taskComments}
                           runKey={`${submission.id}:${version.version}`}
-                          courseDocs={version.version === latest?.version ? courseDocs : undefined}
+                          courseDocs={courseDocs}
                         />
                       )}
                     </div>
