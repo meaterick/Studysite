@@ -1,5 +1,5 @@
 import "server-only";
-import fs from "node:fs";
+import { readSecuritySnapshot } from "./securitySnapshots";
 import { getMeta, setMeta, run, tx } from "./db";
 import { normalizeIp } from "./ipAddress";
 import { recordSecurityEvent } from "./securityEvents";
@@ -9,13 +9,15 @@ export interface HostSshEvent { id: string; at: string; ip: string; outcome: "fa
 export interface HostFirewall { family: "ipv4" | "ipv6"; checked: boolean; policy: string; publicTcpPorts: number[]; truncated: boolean;
   blockedIps: { ip: string; position: number; coverage: "unreachable" | "partial" | "first" | "review"; earlierAllowedPorts: number[] }[] }
 export interface HostTelemetry { version: 1; checkedAt: string; sshChecked: boolean; sshTruncated: boolean; sshEvents: HostSshEvent[]; firewalls: HostFirewall[] }
+const monitor = globalThis as unknown as { __aegisHostIngestion?: { checkedAt: string; failed: boolean } };
+export function hostIngestionStatus() { return monitor.__aegisHostIngestion; }
 const ports = (v: unknown): v is number[] => Array.isArray(v) && v.length <= 64 && v.every((p) => Number.isInteger(p) && p > 0 && p <= 65535);
 export function hostTelemetry(): { state: "disabled" | "unavailable" | "stale" | "ready"; data: HostTelemetry | null } {
   const file = process.env.SECURITY_HOST_TELEMETRY;
   if (!file) return { state: "disabled", data: null };
-  try {
-    if (fs.statSync(file).size > 128 * 1024) throw new Error("size");
-    const v = JSON.parse(fs.readFileSync(file, "utf8")) as HostTelemetry;
+  const v = readSecuritySnapshot(file, (value): value is HostTelemetry => {
+    const v = value as HostTelemetry;
+    if (!v) return false;
     if (v.version !== 1 || typeof v.checkedAt !== "string" || !Number.isFinite(Date.parse(v.checkedAt))
       || typeof v.sshChecked !== "boolean" || typeof v.sshTruncated !== "boolean" || !Array.isArray(v.sshEvents) || v.sshEvents.length > 200
       || !v.sshEvents.every((e) => e && /^[a-f0-9]{32}$/.test(e.id) && typeof e.at === "string" && Number.isFinite(Date.parse(e.at)) && !!normalizeIp(e.ip)
@@ -23,15 +25,29 @@ export function hostTelemetry(): { state: "disabled" | "unavailable" | "stale" |
       || !Array.isArray(v.firewalls) || v.firewalls.length > 2 || !v.firewalls.every((f) => f && ["ipv4", "ipv6"].includes(f.family) && typeof f.checked === "boolean"
         && ["ACCEPT", "DROP", "REJECT", "unknown"].includes(f.policy) && typeof f.truncated === "boolean" && ports(f.publicTcpPorts)
         && Array.isArray(f.blockedIps) && f.blockedIps.length <= 200 && f.blockedIps.every((r) => r && !!normalizeIp(r.ip) && Number.isInteger(r.position) && r.position > 0
-          && ["unreachable", "partial", "first", "review"].includes(r.coverage) && ports(r.earlierAllowedPorts)))) throw new Error("schema");
-    const age = Date.now() - Date.parse(v.checkedAt);
-    return { state: age > 180_000 || age < -60_000 ? "stale" : "ready", data: v };
-  } catch { return { state: "unavailable", data: null }; }
+          && ["unreachable", "partial", "first", "review"].includes(r.coverage) && ports(r.earlierAllowedPorts)))) return false;
+    return true;
+  });
+  if (!v) return { state: "unavailable", data: null };
+  const age = Date.now() - Date.parse(v.checkedAt);
+  return { state: age > 180_000 || age < -60_000 ? "stale" : "ready", data: v };
 }
 export function pollHostTelemetry(): number {
+  try {
+    const count = ingestHostTelemetry();
+    monitor.__aegisHostIngestion = { checkedAt: new Date().toISOString(), failed: false };
+    return count;
+  } catch (error) {
+    monitor.__aegisHostIngestion = { checkedAt: new Date().toISOString(), failed: true };
+    throw error;
+  }
+}
+function ingestHostTelemetry(): number {
   const snapshot = hostTelemetry();
   if (snapshot.state !== "ready" || !snapshot.data) return 0;
   const data = snapshot.data;
+  // Read first: unchanged snapshots never acquire a SQLite writer lock.
+  if (getMeta("security_host_generation") === data.checkedAt) return 0;
   return tx(() => {
     if (getMeta("security_host_generation") === data.checkedAt) return 0;
     let processed = 0;

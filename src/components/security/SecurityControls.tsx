@@ -32,14 +32,14 @@ export default function SecurityControls({ rules, ownIp, initialIp, autoBan, enf
     <section aria-labelledby="ip-rule-title">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div><h2 id="ip-rule-title" className="section-title">차단 IP 관리</h2><p className="mt-2 text-sm text-ink-secondary">현재 차단과 허용 목록을 확인하고 즉시 해제합니다.</p></div>
-        <span className="rounded-full bg-[var(--surface-section)] px-3 py-2 text-xs text-ink-secondary">현재 IP {ownIp || "확인 불가"}</span>
+        <span className="rounded-full bg-[var(--surface-card-2)] px-3 py-2 text-xs text-ink-secondary">현재 IP {ownIp || "확인 불가"}</span>
       </div>
       {!enforcement && <p role="status" className="callout callout-warn mb-4">복구 모드 · IP 차단 적용이 중지되어 있습니다. 저장된 규칙은 유지됩니다.</p>}
       {!ownIp && <p role="status" className="callout callout-warn mb-4">현재 IP를 확인할 수 없습니다. 본인 IP를 확인하기 전에는 수동 차단을 저장할 수 없습니다.</p>}
       {result.message && <p role={result.ok ? "status" : "alert"} aria-live="polite" className={`mb-4 rounded-xl border border-[var(--border-hairline)] p-4 text-sm ${result.ok ? "text-ink" : "text-[var(--status-critical)]"}`}>{result.message}</p>}
       <div className="mb-6 rounded-2xl border border-[var(--border-hairline)] bg-card p-4 sm:p-5">
         <div role="group" aria-label="IP 규칙 보기" className="flex flex-wrap gap-2">
-          {modes.map((m) => <button key={m.key} type="button" aria-pressed={mode === m.key} onClick={() => { setMode(m.key); setPage(1); }} className={`rounded-lg px-4 py-2 text-sm font-semibold ${mode === m.key ? "bg-ink text-[var(--surface-card)]" : "bg-[var(--surface-section)] text-ink-secondary"}`}>{m.label} <span className="ml-2 tabular-nums">{m.count}</span></button>)}
+          {modes.map((m) => <button key={m.key} type="button" aria-pressed={mode === m.key} onClick={() => { setMode(m.key); setPage(1); }} className={`rounded-lg px-4 py-2 text-sm font-semibold ${mode === m.key ? "bg-ink text-[var(--surface-card)]" : "bg-[var(--surface-card-2)] text-ink-secondary"}`}>{m.label} <span className="ml-2 tabular-nums">{m.count}</span></button>)}
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_10rem_auto] sm:items-end">
           <label className="text-xs text-ink-secondary">IP 검색<input value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }} maxLength={45} placeholder="IP 주소 일부 입력" className={`mt-1 ${input}`} /></label>
@@ -50,7 +50,7 @@ export default function SecurityControls({ rules, ownIp, initialIp, autoBan, enf
       <div className="space-y-3">
         {filtered.length === 0 ? <div className="rounded-2xl border border-dashed border-[var(--border-hairline)] px-5 py-12 text-center"><p className="font-semibold text-ink">{mode === "deny" && !filter && !source ? "현재 차단된 IP가 없습니다" : "조건에 맞는 활성 규칙이 없습니다"}</p><p className="mt-2 text-sm text-ink-muted">만료·해제된 규칙은 아래 변경 이력에서 확인할 수 있습니다.</p></div> : filtered.slice((page - 1) * 10, page * 10).map((r) => <article key={r.ip} className="rounded-2xl border border-[var(--border-hairline)] bg-card p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${r.mode === "deny" ? "bg-[var(--surface-section)] text-[var(--status-critical)]" : "bg-[var(--surface-section)] text-ink-secondary"}`}>{r.mode === "deny" ? "차단 중" : "허용 중"}</span><span className="text-xs text-ink-muted">{r.source === "auto" ? "자동 탐지" : "운영자 수동"}</span></div><p className="mt-3 break-all font-mono text-base font-semibold text-ink">{r.ip}</p><p className="mt-2 break-words text-sm text-ink-secondary">{r.reason}</p></div>
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className={`rounded-md px-2 py-1 text-xs font-semibold ${r.mode === "deny" ? "bg-[var(--surface-card-2)] text-[var(--status-critical)]" : "bg-[var(--surface-card-2)] text-ink-secondary"}`}>{r.mode === "deny" ? "차단 중" : "허용 중"}</span><span className="text-xs text-ink-muted">{r.source === "auto" ? "자동 탐지" : "운영자 수동"}</span></div><p className="mt-3 break-all font-mono text-base font-semibold text-ink">{r.ip}</p><p className="mt-2 break-words text-sm text-ink-secondary">{r.reason}</p></div>
             <div className="flex items-center gap-2"><Link href={`/operator/security?view=events&ip=${encodeURIComponent(r.ip)}`} prefetch={false} className="btn btn-ghost btn-sm">기록 보기</Link><form action={action}><input type="hidden" name="operation" value="remove" /><input type="hidden" name="ip" value={r.ip} /><button disabled={pending} className="btn btn-secondary btn-sm" aria-label={`${r.ip} ${r.mode === "deny" ? "차단 해제" : "허용 해제"}`}>{r.mode === "deny" ? "차단 해제" : "허용 해제"}</button></form></div>
           </div>
           <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-[var(--border-hairline)] pt-4 text-xs lg:grid-cols-4">
@@ -72,7 +72,7 @@ export default function SecurityControls({ rules, ownIp, initialIp, autoBan, enf
           <div className="flex flex-wrap gap-2 sm:col-span-2"><button name="operation" value="deny" disabled={pending || !ownIp} className="btn btn-primary btn-sm">IP 차단</button><button name="operation" value="allow" disabled={pending} className="btn btn-secondary btn-sm">허용 목록에 등록</button></div>
         </form>
       </details>
-      <details className="mt-3 rounded-2xl border border-[var(--border-hairline)] p-5">
+      <details id="auto-policy" className="mt-3 rounded-2xl border border-[var(--border-hairline)] p-5">
         <summary className="cursor-pointer font-semibold text-ink">자동 차단 정책 <span className="ml-2 text-xs font-normal text-ink-muted">{autoBan ? "사용 중" : "중지됨"} · 활성 규칙 {rules.length}/500</span></summary>
         <p className="mt-4 text-sm leading-relaxed text-ink-secondary">5분 안에 민감 경로 3곳을 10회 이상 탐색하거나 30회 이상 반복 탐색하면 15분 차단합니다. 반복 인증 실패·출처 검증 실패·비허용 메서드·일반 404·요청 제한은 경고만 생성합니다.</p>
         <p className="mt-2 text-xs text-ink-muted">중지해도 기존 차단은 만료까지 유지됩니다. 웹 IP 차단은 SSH·DNS·서버 포트 스캔을 막지 않습니다.</p>

@@ -259,6 +259,16 @@ const MIGRATIONS: Migration[] = [
   },
 ];
 
+// Indexes are additive so the previous process can keep serving during deployment.
+MIGRATIONS.push({ version: 6, name: "security-query-indexes", sql: `
+  CREATE INDEX security_events_ip_time ON security_events(ip, last_at DESC, id DESC);
+  CREATE INDEX security_events_kind_time ON security_events(kind, last_at DESC, id DESC);
+  CREATE INDEX security_case_history_case ON security_case_history(case_id, id DESC);
+  CREATE INDEX security_host_seen_time ON security_host_seen(at DESC, id DESC);
+  CREATE INDEX security_request_expiry ON security_request_limits(expires_at);
+  CREATE INDEX security_oauth_expiry ON security_oauth_used(expires_at);
+` });
+
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
 
 interface DbState {

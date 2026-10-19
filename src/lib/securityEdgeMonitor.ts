@@ -7,61 +7,66 @@ import { observeSecuritySignal } from "./securityDetection";
 const KEY = "security_edge_cursor";
 const READ_BYTES = 256 * 1024;
 interface Cursor { file: string; inode: string; offset: number; checkedAt: string; processed: number }
+interface Health { file: string; checkedAt: string; failed: boolean; backlogBytes: number }
+const holder = globalThis as unknown as { __aegisEdgeHealth?: Health };
 export function edgeMonitorStatus(): Cursor | null {
   try {
-    const value = JSON.parse(getMeta(KEY) ?? "null");
-    return value && typeof value.file === "string" && typeof value.inode === "string" &&
-      Number.isSafeInteger(value.offset) && value.offset >= 0 && typeof value.checkedAt === "string" &&
-      Number.isSafeInteger(value.processed) && value.processed >= 0 ? value : null;
+    const v = JSON.parse(getMeta(KEY) ?? "null");
+    return v && typeof v.file === "string" && typeof v.inode === "string" && Number.isSafeInteger(v.offset) && v.offset >= 0
+      && typeof v.checkedAt === "string" && Number.isSafeInteger(v.processed) && v.processed >= 0 ? v : null;
   } catch { return null; }
 }
-
-/** One bounded batch; the transaction shares the cursor across overlapping deployment processes. */
+export function edgeMonitorHealth(): { state: "ready" | "disabled" | "unavailable" | "stale"; checkedAt: string; backlogBytes: number } {
+  const file = process.env.SECURITY_NGINX_LOG?.trim(), h = holder.__aegisEdgeHealth;
+  const state = !file ? "disabled" : !h || h.file !== file || h.failed ? "unavailable"
+    : Date.now() - Date.parse(h.checkedAt) > 45_000 ? "stale" : "ready";
+  return { state, checkedAt: h && h.file === file ? h.checkedAt : "", backlogBytes: h && h.file === file ? h.backlogBytes : 0 };
+}
+/** Read and parse before the write lock, then compare the shared cursor inside it. */
 export function pollSecurityEdgeLog(): number {
   const file = process.env.SECURITY_NGINX_LOG?.trim();
   if (!file) return 0;
   let fd: number | undefined;
   try {
     fd = fs.openSync(file, "r");
-    const descriptor = fd;
-    return tx(() => {
-      const stat = fs.fstatSync(descriptor);
-      if (!stat.isFile()) return 0;
-      const inode = `${stat.dev}:${stat.ino}`;
-      const old = edgeMonitorStatus();
-      // Initial connection starts at EOF. Old requests must not trigger new alerts after deployment.
-      const offset = !old || old.file !== file ? stat.size : old.inode !== inode || stat.size < old.offset ? 0 : old.offset;
-      const buffer = Buffer.alloc(Math.min(READ_BYTES, Math.max(0, stat.size - offset)));
-      const read = buffer.length ? fs.readSync(descriptor, buffer, 0, buffer.length, offset) : 0;
-      const end = buffer.subarray(0, read).lastIndexOf(10);
-      let consumed = end >= 0 ? end + 1 : 0;
-      // A line larger than the bounded buffer is malformed; advance so the detector cannot stall forever.
-      if (end < 0 && read === READ_BYTES) consumed = read;
-      let processed = 0;
-      if (end >= 0) {
-        for (const line of buffer.subarray(0, end).toString("utf8").split("\n")) {
-          const e = parseEdgeLine(line);
-          if (!e || Date.now() - Date.parse(e.at) > 5 * 60_000 || Date.parse(e.at) > Date.now() + 60_000) continue;
-          // Known probes are already counted by Proxy. Other 404/429 signals only alert, never auto-ban.
-          if (e.status === 404 && !e.probe) observeSecuritySignal("not_found", { ip: e.ip, path: e.path, method: e.method, status: e.status });
-          if (e.status === 429) observeSecuritySignal("edge_rate", { ip: e.ip, path: e.path, method: e.method, status: e.status });
-          processed++;
-        }
-      }
-      setMeta(KEY, JSON.stringify({ file, inode, offset: offset + consumed, checkedAt: new Date().toISOString(), processed: (old?.processed ?? 0) + processed } satisfies Cursor));
-      return processed;
+    const stat = fs.fstatSync(fd);
+    if (!stat.isFile()) throw new Error("not a regular file");
+    const inode = String(stat.dev) + ":" + stat.ino, old = edgeMonitorStatus();
+    const offset = !old || old.file !== file ? stat.size : old.inode !== inode || stat.size < old.offset ? 0 : old.offset;
+    const buffer = Buffer.alloc(Math.min(READ_BYTES, Math.max(0, stat.size - offset)));
+    const read = buffer.length ? fs.readSync(fd, buffer, 0, buffer.length, offset) : 0;
+    const end = buffer.subarray(0, read).lastIndexOf(10);
+    const consumed = end >= 0 ? end + 1 : read === READ_BYTES ? read : 0;
+    const now = Date.now();
+    const events = end < 0 ? [] : buffer.subarray(0, end).toString("utf8").split("\n").flatMap((line) => {
+      const e = parseEdgeLine(line);
+      return e && now - Date.parse(e.at) <= 300_000 && Date.parse(e.at) <= now + 60_000 ? [e] : [];
     });
-  } finally {
-    if (fd !== undefined) fs.closeSync(fd);
-  }
+    holder.__aegisEdgeHealth = { file, checkedAt: new Date().toISOString(), failed: false, backlogBytes: Math.max(0, stat.size - offset - consumed) };
+    // Initialize/rotate once. Unchanged files and unfinished short lines need no DB writer.
+    if (old?.file === file && old.inode === inode && old.offset === offset && consumed === 0) return 0;
+    return tx(() => {
+      const current = edgeMonitorStatus();
+      if (JSON.stringify(current) !== JSON.stringify(old)) return 0;
+      for (const e of events) {
+        // App probes are counted by Proxy. These signals never auto-ban.
+        if (e.status === 404 && !e.probe) observeSecuritySignal("not_found", { ip: e.ip, path: e.path, method: e.method, status: e.status });
+        if (e.status === 429) observeSecuritySignal("edge_rate", { ip: e.ip, path: e.path, method: e.method, status: e.status });
+      }
+      setMeta(KEY, JSON.stringify({ file, inode, offset: offset + consumed, checkedAt: new Date().toISOString(), processed: (old?.processed ?? 0) + events.length } satisfies Cursor));
+      return events.length;
+    });
+  } catch (error) {
+    holder.__aegisEdgeHealth = { file, checkedAt: new Date().toISOString(), failed: true, backlogBytes: 0 };
+    throw error;
+  } finally { if (fd !== undefined) fs.closeSync(fd); }
 }
-
 export function startSecurityEdgeMonitor(): void {
   if (!process.env.SECURITY_NGINX_LOG) return;
   const poll = () => {
-    try { pollSecurityEdgeLog(); } catch { /* Display the last successful check; a missing file never stops the app. */ }
+    try { pollSecurityEdgeLog(); } catch { /* Health exposes failures without raw log output. */ }
+    const timer = setTimeout(poll, edgeMonitorHealth().backlogBytes >= READ_BYTES ? 1000 : 10_000);
+    timer.unref();
   };
   poll();
-  const timer = setInterval(poll, 10_000);
-  timer.unref();
 }

@@ -42,6 +42,11 @@ export function activeIpRule(raw: string): IpRule | undefined {
 export function listIpRules(): IpRule[] {
   return all<IpRule>("SELECT * FROM security_ip_rules WHERE expires_at IS NULL OR expires_at > ? ORDER BY created_at DESC, ip", new Date().toISOString()).map((row) => ({ ...row }));
 }
+export function ipRuleCounts() {
+  return get<{ deny: number; allow: number; automatic: number }>(`SELECT COUNT(CASE WHEN mode = 'deny' THEN 1 END) AS deny,
+    COUNT(CASE WHEN mode = 'allow' THEN 1 END) AS allow, COUNT(CASE WHEN mode = 'deny' AND source = 'auto' THEN 1 END) AS automatic
+    FROM security_ip_rules WHERE expires_at IS NULL OR expires_at > ?`, new Date().toISOString())!;
+}
 export function pruneIpDefense(): void {
   tx(() => {
     const now = new Date().toISOString();

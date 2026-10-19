@@ -22,8 +22,8 @@ type GoogleProfile = {
   name?: unknown;
 };
 
-function fail(request: NextRequest, code: string, from = "/account") {
-  recordSecurityEvent("login_failure", securityRequest(request));
+function fail(request: NextRequest, code: string, from = "/account", alreadyRecorded = false) {
+  if (!alreadyRecorded) recordSecurityEvent("login_failure", securityRequest(request));
   const url = new URL("/login", publicOrigin(request));
   url.searchParams.set("error", code);
   if (from !== "/account") url.searchParams.set("from", from);
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
   if (!claimOAuthNonce(state.nonce)) {
     recordSecurityEvent("oauth_replayed", { ...context, status: 307, detail: "로그인 상태 중복 처리 또는 재사용 방지 저장소 한도" });
-    return fail(request, "oauth_failed", returnPath);
+    return fail(request, "oauth_failed", returnPath, true);
   }
   try {
     const callbackUrl = new URL("/api/auth/google/callback", publicOrigin(request)).toString();
