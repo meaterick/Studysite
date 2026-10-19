@@ -1,5 +1,6 @@
 import "server-only";
-import { isIP } from "node:net";
+import { normalizeIp } from "./ipAddress";
+import { observeSecurityEvent } from "./securityDetection";
 import { all, get, run, type Param } from "./db";
 import { cleanLogText, logPath, SECURITY_KINDS, type SecurityKind, type Severity } from "./securityPolicy";
 
@@ -9,6 +10,8 @@ export interface SecurityContext {
   method?: string;
   path?: string;
   status?: number;
+  detail?: string;
+  skipDetection?: boolean;
 }
 
 /** Trust only the header nginx overwrites, and only behind the configured loopback reverse proxy. */
@@ -16,7 +19,7 @@ export function securityRequest(request: { headers: Headers; url?: string; metho
   const value = process.env.TRUST_PROXY === "1" ? request.headers.get("x-real-ip")?.trim() : "";
   let pathname = "";
   try { pathname = request.url ? new URL(request.url).pathname : ""; } catch {}
-  return { ip: value && isIP(value) ? value : "", userId, method: request.method, path: pathname };
+  return { ip: normalizeIp(value), userId, method: request.method, path: pathname };
 }
 
 const retention = () => new Date(Date.now() - 30 * 86400_000).toISOString();
@@ -26,14 +29,15 @@ export function recordSecurityEvent(kind: SecurityKind, context: SecurityContext
   try {
     const now = new Date().toISOString();
     const bucket = new Date(Math.floor(Date.now() / 300_000) * 300_000).toISOString();
-    run(`INSERT INTO security_events (bucket, first_at, last_at, kind, severity, ip, user_id, method, path, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    run(`INSERT INTO security_events (bucket, first_at, last_at, kind, severity, ip, user_id, method, path, status, detail)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT (bucket, kind, ip, user_id, method, path, status)
-      DO UPDATE SET last_at = excluded.last_at, count = count + 1`,
+      DO UPDATE SET last_at = excluded.last_at, count = count + 1, detail = excluded.detail`,
       bucket, now, now, kind, SECURITY_KINDS[kind].severity,
-      context.ip && isIP(context.ip) ? context.ip : "", cleanLogText(context.userId, 80),
-      cleanLogText(context.method, 12), logPath(context.path ?? ""), context.status ?? 0);
+      normalizeIp(context.ip), cleanLogText(context.userId, 80),
+      cleanLogText(context.method, 12), logPath(context.path ?? ""), context.status ?? 0, cleanLogText(context.detail, 500));
     pruneSecurityEvents();
+    observeSecurityEvent(kind, context);
   } catch {
     // Logging failure must not replace the original authorization result. Never print request data.
     console.error("[security] event storage unavailable");
@@ -49,7 +53,7 @@ export function pruneSecurityEvents(): void {
 
 export interface SecurityEvent {
   id: number; first_at: string; last_at: string; kind: SecurityKind; severity: Severity;
-  ip: string; user_id: string; method: string; path: string; status: number; count: number;
+  ip: string; user_id: string; method: string; path: string; status: number; count: number; detail: string;
 }
 export interface SecurityFilters { hours: number; kind: string; severity: string; ip: string; page: number }
 export function securityFilters(raw: Record<string, string | string[] | undefined>): SecurityFilters {
@@ -60,7 +64,7 @@ export function securityFilters(raw: Record<string, string | string[] | undefine
   return { hours: [24, 168, 720].includes(hours) ? hours : 24,
     kind: Object.hasOwn(SECURITY_KINDS, kind) ? kind : "",
     severity: ["info", "warning", "high"].includes(severity) ? severity : "",
-    ip: cleanLogText(scalar("ip"), 45), page: Math.min(200, Math.max(1, Math.floor(Number(scalar("page")) || 1))) };
+    ip: normalizeIp(scalar("ip")) || cleanLogText(scalar("ip"), 45), page: Math.min(200, Math.max(1, Math.floor(Number(scalar("page")) || 1))) };
 }
 
 export function querySecurityEvents(filters: SecurityFilters) {
@@ -82,10 +86,12 @@ export function querySecurityEvents(filters: SecurityFilters) {
 export function securitySummary() {
   pruneSecurityEvents();
   const since = new Date(Date.now() - 86400_000).toISOString();
-  const summary = get<{ total: number; high: number; limited: number; ips: number }>(`SELECT
+  const summary = get<{ total: number; high: number; limited: number; ips: number; detections: number; blocked: number }>(`SELECT
     COALESCE(SUM(count), 0) AS total,
     COALESCE(SUM(CASE WHEN severity = 'high' THEN count ELSE 0 END), 0) AS high,
     COALESCE(SUM(CASE WHEN kind = 'rate_limited' THEN count ELSE 0 END), 0) AS limited,
+    COALESCE(SUM(CASE WHEN kind IN ('scan_detected', 'auth_attack_detected', 'traffic_detected') THEN count ELSE 0 END), 0) AS detections,
+    COALESCE(SUM(CASE WHEN kind = 'ip_blocked' THEN count ELSE 0 END), 0) AS blocked,
     COUNT(DISTINCT CASE WHEN severity != 'info' AND ip != '' THEN ip END) AS ips
     FROM security_events WHERE last_at >= ?`, since)!;
   const topIps = all<{ ip: string; n: number }>(`SELECT ip, SUM(count) AS n FROM security_events

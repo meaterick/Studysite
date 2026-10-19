@@ -1,6 +1,6 @@
 import "server-only";
 import fs from "node:fs";
-import { isIP } from "node:net";
+import { normalizeIp } from "./ipAddress";
 import { cleanLogText, isProbePath, logPath } from "./securityPolicy";
 
 const MAX_BYTES = 512 * 1024;
@@ -23,14 +23,8 @@ export function recentEdgeEvents(): { state: "disabled" | "ready" | "unavailable
     lines.pop();
     const events: EdgeEvent[] = [];
     for (const line of lines) {
-      try {
-        const r = JSON.parse(line);
-        const at = typeof r.at === "string" ? new Date(r.at) : new Date(NaN);
-        if (!Number.isFinite(at.getTime()) || typeof r.ip !== "string" || !isIP(r.ip) ||
-          typeof r.path !== "string" || typeof r.method !== "string" || !Number.isInteger(r.status) || r.status < 100 || r.status > 599) continue;
-        events.push({ at: at.toISOString(), ip: r.ip, method: cleanLogText(r.method, 12), path: logPath(r.path), status: r.status,
-          limited: r.status === 429, probe: isProbePath(r.path) });
-      } catch { /* Ignore malformed or partially rotated lines. */ }
+      const event = parseEdgeLine(line);
+      if (event) events.push(event);
     }
     return { state: "ready", events: events.slice(-100).reverse(), truncated: start > 0 || events.length > 100 };
   } catch {
@@ -38,4 +32,17 @@ export function recentEdgeEvents(): { state: "disabled" | "ready" | "unavailable
   } finally {
     if (fd !== undefined) fs.closeSync(fd);
   }
+}
+
+/** Shared strict parser for display and the incremental detector. */
+export function parseEdgeLine(line: string): EdgeEvent | null {
+  try {
+    const r = JSON.parse(line);
+    const at = typeof r.at === "string" ? new Date(r.at) : new Date(NaN);
+    const ip = normalizeIp(r.ip);
+    if (!Number.isFinite(at.getTime()) || !ip || typeof r.path !== "string" || typeof r.method !== "string" ||
+      !Number.isInteger(r.status) || r.status < 100 || r.status > 599) return null;
+    return { at: at.toISOString(), ip, method: cleanLogText(r.method, 12), path: logPath(r.path), status: r.status,
+      limited: r.status === 429, probe: isProbePath(r.path) };
+  } catch { return null; }
 }

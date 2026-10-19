@@ -169,6 +169,38 @@ const MIGRATIONS: Migration[] = [
       END;
     `,
   },
+  {
+    version: 3,
+    name: "ip-rules-and-intrusion-detection",
+    sql: `
+      ALTER TABLE security_events ADD COLUMN detail TEXT NOT NULL DEFAULT '';
+      CREATE TABLE security_ip_rules (
+        ip TEXT PRIMARY KEY,
+        mode TEXT NOT NULL CHECK (mode IN ('allow', 'deny')),
+        source TEXT NOT NULL CHECK (source IN ('manual', 'auto')),
+        reason TEXT NOT NULL,
+        created_by TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        expires_at TEXT
+      ) WITHOUT ROWID;
+      CREATE TABLE security_detection_windows (
+        ip TEXT NOT NULL,
+        family TEXT NOT NULL,
+        started_at INTEGER NOT NULL,
+        last_at INTEGER NOT NULL,
+        count INTEGER NOT NULL,
+        paths TEXT NOT NULL,
+        alerted INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (ip, family)
+      ) WITHOUT ROWID;
+      CREATE INDEX security_detection_time ON security_detection_windows (last_at);
+      CREATE TRIGGER security_detection_cap AFTER INSERT ON security_detection_windows BEGIN
+        DELETE FROM security_detection_windows WHERE (ip, family) IN (
+          SELECT ip, family FROM security_detection_windows ORDER BY last_at DESC, ip, family LIMIT -1 OFFSET 5000
+        );
+      END;
+    `,
+  },
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;

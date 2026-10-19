@@ -12,7 +12,8 @@
     "lint": "eslint",
     "validate:content": "tsx scripts/validate-content.ts",
     "check:labs": "tsx scripts/check-labs.ts",
-    "test:security": "node --conditions=react-server --import tsx --test scripts/security.test.ts"
+    "test:security": "node --conditions=react-server --import tsx --test scripts/security.test.ts scripts/security-defense.test.ts",
+    "test:security:http": "node scripts/security-http-smoke.mjs"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
