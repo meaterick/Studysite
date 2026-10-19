@@ -14,6 +14,8 @@ export interface SecurityContext {
   skipDetection?: boolean;
   signalAt?: number;
 }
+const writer = globalThis as unknown as { __aegisSecurityWriter?: { at: string; failed: boolean } };
+export function securityWriterStatus() { return writer.__aegisSecurityWriter; }
 
 /** Trust only the header nginx overwrites, and only behind the configured loopback reverse proxy. */
 export function securityRequest(request: { headers: Headers; url?: string; method?: string }, userId?: string): SecurityContext {
@@ -39,9 +41,15 @@ export function recordSecurityEvent(kind: SecurityKind, context: SecurityContext
       cleanLogText(context.method, 12), logPath(context.path ?? ""), context.status ?? 0, cleanLogText(context.detail, 500));
     pruneSecurityEvents();
     observeSecurityEvent(kind, context);
+    writer.__aegisSecurityWriter = { at: now, failed: false };
   } catch {
+    writer.__aegisSecurityWriter = { at: new Date().toISOString(), failed: true };
     // Logging failure must not replace the original authorization result. Never print request data.
-    console.error("[security] event storage unavailable");
+    const state = globalThis as unknown as { __aegisSecurityStorageError?: number };
+    if (Date.now() - (state.__aegisSecurityStorageError ?? 0) > 60_000) {
+      console.error("[security] event storage unavailable");
+      state.__aegisSecurityStorageError = Date.now();
+    }
   }
 }
 

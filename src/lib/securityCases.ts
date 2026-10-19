@@ -37,11 +37,13 @@ export function securityCaseSummary() {
     COUNT(CASE WHEN status = 'investigating' THEN 1 END) AS investigating,
     COUNT(CASE WHEN status IN ('new','investigating') AND reopened > 0 THEN 1 END) AS reopened FROM security_cases`)!;
 }
-export function querySecurityCases(status = "open", ip = "", requestedPage = 1) {
+export function querySecurityCases(status = "open", ip = "", requestedPage = 1, filters: { source?: string; severity?: string } = {}) {
   const clauses: string[] = [], params: Param[] = [];
   if (status === "open") clauses.push("status IN ('new','investigating')");
   else if (Object.hasOwn(CASE_STATUS, status)) { clauses.push("status = ?"); params.push(status); }
   if (ip) { clauses.push("ip = ?"); params.push(ip.slice(0, 45)); }
+  if (["app", "nginx", "ssh"].includes(filters.source || "")) { clauses.push("source = ?"); params.push(filters.source); }
+  if (["high", "warning"].includes(filters.severity || "")) { clauses.push("severity = ?"); params.push(filters.severity); }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
   const total = get<{ n: number }>(`SELECT COUNT(*) AS n FROM security_cases ${where}`, ...params)?.n ?? 0;
   const pages = Math.max(1, Math.ceil(total / 20)), page = Math.min(pages, Math.max(1, requestedPage));
@@ -62,6 +64,9 @@ export function reviewSecurityCase(id: string, status: string, note: string, act
     return true;
   });
 }
+export function findSecurityCase(id: string): SecurityCase | undefined {
+  return /^[a-f0-9]{24}$/.test(id) ? get<SecurityCase>("SELECT * FROM security_cases WHERE id = ?", id) : undefined;
+}
 export function securityCaseHistory(id: string) {
-  return all<{ id: number; status: CaseStatus; note: string; actor_id: string; at: string }>("SELECT * FROM security_case_history WHERE case_id = ? ORDER BY id DESC LIMIT 10", id);
+  return all<{ id: number; status: CaseStatus; note: string; actor_id: string; actor_name: string | null; at: string }>("SELECT h.*, u.name AS actor_name FROM security_case_history h LEFT JOIN users u ON u.id = h.actor_id WHERE h.case_id = ? ORDER BY h.id DESC LIMIT 10", id);
 }
