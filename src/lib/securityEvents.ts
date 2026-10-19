@@ -55,13 +55,13 @@ export interface SecurityEvent {
   id: number; first_at: string; last_at: string; kind: SecurityKind; severity: Severity;
   ip: string; user_id: string; method: string; path: string; status: number; count: number; detail: string;
 }
-export interface SecurityFilters { hours: number; kind: string; severity: string; ip: string; page: number }
+export interface SecurityFilters { hours: number; kind: string; severity: string; ip: string; page: number; group?: string }
 export function securityFilters(raw: Record<string, string | string[] | undefined>): SecurityFilters {
   const scalar = (key: string) => typeof raw[key] === "string" ? raw[key] as string : "";
   const hours = Number(scalar("hours"));
   const kind = scalar("kind");
   const severity = scalar("severity");
-  return { hours: [24, 168, 720].includes(hours) ? hours : 24,
+  return { group: ["detections", "changes"].includes(scalar("group")) ? scalar("group") : "", hours: [24, 168, 720].includes(hours) ? hours : 24,
     kind: Object.hasOwn(SECURITY_KINDS, kind) ? kind : "",
     severity: ["info", "warning", "high"].includes(severity) ? severity : "",
     ip: normalizeIp(scalar("ip")) || cleanLogText(scalar("ip"), 45), page: Math.min(200, Math.max(1, Math.floor(Number(scalar("page")) || 1))) };
@@ -74,6 +74,8 @@ export function querySecurityEvents(filters: SecurityFilters) {
   if (filters.kind) { clauses.push("kind = ?"); params.push(filters.kind); }
   if (filters.severity) { clauses.push("severity = ?"); params.push(filters.severity); }
   if (filters.ip) { clauses.push("ip = ?"); params.push(filters.ip); }
+  if (filters.group === "detections") clauses.push("kind IN ('scan_detected', 'auth_attack_detected', 'traffic_detected')");
+  if (filters.group === "changes") clauses.push("kind IN ('ip_banned', 'ip_allowed', 'ip_rule_removed', 'security_policy_changed')");
   const where = clauses.join(" AND ");
   const total = get<{ n: number }>(`SELECT COUNT(*) AS n FROM security_events WHERE ${where}`, ...params)?.n ?? 0;
   const pages = Math.max(1, Math.ceil(total / 50));
@@ -97,4 +99,10 @@ export function securitySummary() {
   const topIps = all<{ ip: string; n: number }>(`SELECT ip, SUM(count) AS n FROM security_events
     WHERE last_at >= ? AND severity != 'info' AND ip != '' GROUP BY ip ORDER BY n DESC LIMIT 5`, since);
   return { ...summary, topIps };
+}
+
+export function blockedIpActivity(): Record<string, { count: number; lastAt: string }> {
+  const rows = all<{ ip: string; n: number; last_at: string }>(`SELECT ip, SUM(count) AS n, MAX(last_at) AS last_at FROM security_events
+    WHERE kind = 'ip_blocked' AND last_at >= ? GROUP BY ip`, new Date(Date.now() - 86400_000).toISOString());
+  return Object.fromEntries(rows.map((r) => [r.ip, { count: r.n, lastAt: r.last_at }]));
 }

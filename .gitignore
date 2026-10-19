@@ -46,3 +46,6 @@ next-env.d.ts
 
 # 빌드 때 node_modules에서 복사하는 코드 편집기(Monaco) 파일 (scripts/copy-monaco.mjs)
 /public/vendor/
+
+# Python host inventory checks
+__pycache__/

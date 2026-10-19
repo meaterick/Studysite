@@ -31,7 +31,7 @@ export function applySecurityChange(actorId: string, ownIp: string, data: FormDa
       const ip = normalizeIp(value("ip"));
       if (!isBannableIp(ip)) throw new Error("INVALID_IP");
       if (op === "remove") {
-        const removed = removeIpRule(ip);
+        const removed = removeIpRule(ip, actorId);
         if (removed) recordSecurityEvent("ip_rule_removed", { ip, userId: actorId, detail: "운영자가 IP 규칙을 해제했습니다." });
         return { ok: true, message: removed ? "IP 규칙을 해제했습니다." : "이미 해제되었거나 만료된 규칙입니다." };
       }

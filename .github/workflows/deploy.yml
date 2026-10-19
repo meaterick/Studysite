@@ -219,6 +219,10 @@ jobs:
         # Hourly logrotate (systemd timer): cut logs past 20MB or a day old, keep 14.
         run: bash scripts/deploy/logrotate.sh
 
+      - name: Record read-only host security inventory
+        continue-on-error: true
+        run: python3 scripts/deploy/security-inventory.py "$DEPLOY_DIR/data"
+
       - name: Verify the site actually responds
         # Runs from the OCI box itself, so it isn't affected by whatever
         # network path a browser or CI runner elsewhere on the internet

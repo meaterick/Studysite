@@ -201,6 +201,31 @@ const MIGRATIONS: Migration[] = [
       END;
     `,
   },
+  {
+    version: 4,
+    name: "ip-rule-history",
+    sql: `
+      CREATE TABLE security_ip_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip TEXT NOT NULL,
+        action TEXT NOT NULL CHECK (action IN ('saved', 'removed', 'expired', 'existing')),
+        mode TEXT NOT NULL CHECK (mode IN ('allow', 'deny')),
+        source TEXT NOT NULL CHECK (source IN ('manual', 'auto')),
+        reason TEXT NOT NULL,
+        actor_id TEXT NOT NULL,
+        at TEXT NOT NULL,
+        expires_at TEXT
+      );
+      CREATE INDEX security_ip_history_ip ON security_ip_history (ip, id DESC);
+      CREATE TRIGGER security_ip_history_cap AFTER INSERT ON security_ip_history BEGIN
+        DELETE FROM security_ip_history WHERE id IN (
+          SELECT id FROM security_ip_history ORDER BY id DESC LIMIT -1 OFFSET 3000
+        );
+      END;
+      INSERT INTO security_ip_history (ip, action, mode, source, reason, actor_id, at, expires_at)
+        SELECT ip, 'existing', mode, source, reason, created_by, created_at, expires_at FROM security_ip_rules;
+    `,
+  },
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
