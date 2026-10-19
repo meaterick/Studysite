@@ -1,4 +1,6 @@
 import "server-only";
+import { validateSecurityConfig } from "./securityConfig";
+import { pruneSecurityEvents } from "./securityEvents";
 import { ensureDb } from "./db";
 import { hasLegacyFiles, importLegacyJson, startLegacyCatchUp } from "./legacyImport";
 import { startBackupSchedule } from "./backup";
@@ -9,13 +11,19 @@ import { startBackupSchedule } from "./backup";
 export function startDataServices(): void {
   const g = globalThis as unknown as { __aegisDataServices?: boolean };
   if (g.__aegisDataServices) return;
-  g.__aegisDataServices = true;
 
+  validateSecurityConfig();
   ensureDb();
+  pruneSecurityEvents();
+  const pruneTimer = setInterval(() => {
+    try { pruneSecurityEvents(); } catch { console.error("[security] retention cleanup unavailable"); }
+  }, 60 * 60_000);
+  pruneTimer.unref();
   if (hasLegacyFiles()) {
     const report = importLegacyJson();
     console.log("[legacy-import] imported legacy JSON data into the database", report);
     startLegacyCatchUp();
   }
   startBackupSchedule();
+  g.__aegisDataServices = true;
 }

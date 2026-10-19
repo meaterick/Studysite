@@ -1,3 +1,4 @@
+import { securitySummary } from "@/lib/securityEvents";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { countSubmissionsByStatus } from "@/lib/submissionStore";
@@ -11,6 +12,7 @@ export const metadata = { title: "운영자 대시보드" };
 // 운영자 화면 사이 이동은 위의 운영자 메뉴가 맡는다. 대시보드는 지금 할 일과 숫자 네 개만 보여 준다.
 export default async function OperatorHome() {
   await requireAdmin("/operator");
+  const security = securitySummary();
   const byStatus = countSubmissionsByStatus();
   const pending = byStatus.submitted;
   const totalSubmissions = byStatus.submitted + byStatus.graded + byStatus.revision;
@@ -32,6 +34,9 @@ export default async function OperatorHome() {
           </form>
         }
       />
+      <Link href="/operator/security" className={`callout mt-6 block ${security.high > 0 ? "callout-warn" : "callout-good"}`}>
+        보안 기록 · 최근 24시간 높은 위험 신호 {security.high}건 · 요청 한도 초과 {security.limited}건 → 확인하기
+      </Link>
       {pending > 0 ? (
         <NextStep
           title={`채점을 기다리는 과제 ${pending}건`}

@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { recordSecurityEvent, securityRequest } from "./securityEvents";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { decryptSession, SESSION_COOKIE } from "./session";
 import { findUserById, toPublic, type PublicUser } from "./userStore";
@@ -33,6 +34,7 @@ export async function requireUser(from?: string): Promise<PublicUser> {
 export async function requireAdmin(from?: string): Promise<PublicUser> {
   const user = await requireUser(from);
   if (user.role !== "admin") {
+    recordSecurityEvent("forbidden", { ...securityRequest({ headers: await headers() }, user.id), path: from, status: 403 });
     redirect("/");
   }
   return user;

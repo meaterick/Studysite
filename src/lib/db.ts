@@ -142,6 +142,33 @@ const MIGRATIONS: Migration[] = [
       );
     `,
   },
+  {
+    version: 2,
+    name: "security-events",
+    sql: `
+      CREATE TABLE security_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bucket TEXT NOT NULL,
+        first_at TEXT NOT NULL,
+        last_at TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'high')),
+        ip TEXT NOT NULL DEFAULT '',
+        user_id TEXT NOT NULL DEFAULT '',
+        method TEXT NOT NULL DEFAULT '',
+        path TEXT NOT NULL DEFAULT '',
+        status INTEGER NOT NULL DEFAULT 0,
+        count INTEGER NOT NULL DEFAULT 1,
+        UNIQUE (bucket, kind, ip, user_id, method, path, status)
+      );
+      CREATE INDEX security_events_time ON security_events (last_at DESC, id DESC);
+      CREATE TRIGGER security_events_cap AFTER INSERT ON security_events BEGIN
+        DELETE FROM security_events WHERE id IN (
+          SELECT id FROM security_events ORDER BY id DESC LIMIT -1 OFFSET 10000
+        );
+      END;
+    `,
+  },
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;

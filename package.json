@@ -11,7 +11,8 @@
     "start:standalone": "node .next/standalone/server.js",
     "lint": "eslint",
     "validate:content": "tsx scripts/validate-content.ts",
-    "check:labs": "tsx scripts/check-labs.ts"
+    "check:labs": "tsx scripts/check-labs.ts",
+    "test:security": "node --conditions=react-server --import tsx --test scripts/security.test.ts"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
@@ -37,5 +38,9 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "overrides": {
+    "dompurify": "^3.4.17",
+    "source-map-js": "^1.2.2"
   }
 }

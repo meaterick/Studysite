@@ -54,6 +54,9 @@ jobs:
       - name: Validate content (quiz/answers 정합성, LaTeX, 이미지)
         run: npm run validate:content
 
+      - name: Security regression checks
+        run: npm run test:security
+
       - name: Build
         run: npm run build
 
@@ -155,6 +158,10 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
+          if [ "${#SESSION_SECRET}" -lt 32 ] || [[ "$SESSION_SECRET" == aegis-dev-* || "$SESSION_SECRET" == change-me* ]]; then
+            echo "::error::SESSION_SECRET must be random and at least 32 characters. Set the repository Actions secret."
+            exit 1
+          fi
           umask 077
           {
             echo "SESSION_SECRET=${SESSION_SECRET}"
@@ -163,11 +170,11 @@ jobs:
             echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}"
             echo "DATA_DIR=${DEPLOY_DIR}/data"
             echo "PUBLIC_ORIGIN=https://${DOMAIN}"
+            echo "TRUST_PROXY=1"
+            echo "SECURITY_NGINX_LOG=/var/log/aegis-security/events.log"
           } > "$DEPLOY_DIR/.env.production.local"
           chmod 600 "$DEPLOY_DIR/.env.production.local"
-          if [ -z "${SESSION_SECRET}" ]; then
-            echo "::warning::SESSION_SECRET secret is not set — falling back to the built-in dev secret, which means anyone who reads the source code could forge login cookies. Add it under repo Settings > Secrets and variables > Actions (openssl rand -base64 32)."
-          fi
+
 
       - name: Install nginx (first deploy only)
         run: |

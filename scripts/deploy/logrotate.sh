@@ -27,6 +27,16 @@ ${DEPLOY_DIR}/logs/*.log ${PM2_HOME_DIR}/logs/*.log ${PM2_HOME_DIR}/pm2.log {
     notifempty
     copytruncate
 }
+/var/log/aegis-security/events.log {
+    daily
+    maxsize 10M
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}
 CONF
 sudo mkdir -p /etc/aegis-ai-study /var/lib/logrotate
 sudo install -m 644 "$TMP" "$CONF"

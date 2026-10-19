@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import PageHeader from "@/components/PageHeader";
@@ -94,7 +95,7 @@ export default async function OperatorSystemPage({ searchParams }: { searchParam
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
-      <PageHeader title="시스템" description="데이터 저장소와 서버 상태, 백업을 확인합니다." />
+      <PageHeader title="시스템" description="데이터 저장소와 서버 상태, 백업을 확인합니다." actions={<Link href="/operator/security" className="btn btn-secondary btn-sm">보안 기록</Link>} />
 
       {backup === "ok" && <p className="callout callout-good mb-8">백업을 만들었습니다.</p>}
       {backup === "failed" && (

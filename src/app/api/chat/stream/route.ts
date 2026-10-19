@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decryptSession, SESSION_COOKIE } from "@/lib/session";
+import { apiUser } from "@/lib/apiAuth";
+import { recordSecurityEvent, securityRequest } from "@/lib/securityEvents";
 import { findUserById } from "@/lib/userStore";
 import { subscribeChat } from "@/lib/chatStore";
 import { conversationView, inboxView } from "@/lib/chatView";
@@ -36,12 +37,15 @@ function releaseStream(userId: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const session = await decryptSession(request.cookies.get(SESSION_COOKIE)?.value);
-  const user = session ? findUserById(session.uid) : undefined;
+  const user = await apiUser(request);
   if (!user) return NextResponse.json({ error: "authentication_required" }, { status: 401 });
 
   const params = request.nextUrl.searchParams;
   const isAdmin = user.role === "admin";
+  if (!isAdmin && (params.get("inbox") === "1" || (params.get("user") && params.get("user") !== user.id))) {
+    recordSecurityEvent("forbidden", { ...securityRequest(request, user.id), status: 403 });
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   let snapshot: () => unknown;
   let relevant: (userId: string) => boolean;
   if (isAdmin && params.get("inbox") === "1") {
@@ -60,6 +64,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!acquireStream(user.id)) {
+    recordSecurityEvent("rate_limited", { ...securityRequest(request, user.id), status: 429 });
     return NextResponse.json({ error: "too_many_connections" }, { status: 429 });
   }
 

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Aegis AI 스터디 개인정보처리방침",
 };
 
-const UPDATED_AT = "2026년 9월 27일";
+const UPDATED_AT = "2026년 10월 19일";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -66,9 +66,9 @@ export default function PrivacyPage() {
                 </tr>
                 <tr className="border-t border-[var(--border-hairline)]">
                   <td className="px-4 py-3">보안 로그</td>
-                  <td className="px-4 py-3">로그인 시도 시각, 이메일 식별값, IP 주소</td>
-                  <td className="px-4 py-3">무차별 대입 등 인증 공격 방지</td>
-                  <td className="px-4 py-3">최대 15분, 서버 메모리 내에서만</td>
+                  <td className="px-4 py-3">발생 시각, IP 주소(신뢰할 프록시 사용 시), 계정 ID, 요청 경로·메서드·상태, 이벤트 종류·반복 횟수</td>
+                  <td className="px-4 py-3">인증·권한 공격과 과도한 요청 탐지, 운영자 보안 점검</td>
+                  <td className="px-4 py-3">앱 기록 최대 30일·10,000개 묶음. nginx 현재 로그 및 최대 7개 회전 파일(일별 또는 10MB 초과 시 회전, 매시간 검사). DB 백업에 포함된 기록은 백업 보관 주기에 따라 함께 삭제</td>
                 </tr>
               </tbody>
             </table>

@@ -1,4 +1,5 @@
 import "server-only";
+import { recordSecurityEvent } from "./securityEvents";
 
 // 프로세스 메모리 안의 간단한 요청 빈도 제한(토큰 버킷). 서버는 PM2 단일 프로세스로 돌기 때문에
 // (배포 전환 중 몇 초만 두 프로세스가 겹친다) 외부 저장소 없이도 충분하다. 계정 하나가 자동화로
@@ -43,7 +44,11 @@ export function consumeRate(key: string, rule: RateRule): boolean {
     bucket.tokens = Math.min(rule.burst, bucket.tokens + ((now - bucket.updatedAt) / 1000) * rule.perSecond);
     bucket.updatedAt = now;
   }
-  if (bucket.tokens < 1) return false;
+  if (bucket.tokens < 1) {
+    const [action, userId] = key.split(":", 2);
+    recordSecurityEvent("rate_limited", { userId, path: `/actions/${action}`, status: 429 });
+    return false;
+  }
   bucket.tokens -= 1;
   return true;
 }
