@@ -226,6 +226,37 @@ const MIGRATIONS: Migration[] = [
         SELECT ip, 'existing', mode, source, reason, created_by, created_at, expires_at FROM security_ip_rules;
     `,
   },
+  {
+    version: 5,
+    name: "security-cases-and-request-guards",
+    sql: `
+      CREATE TABLE security_cases (
+        id TEXT PRIMARY KEY, family TEXT NOT NULL, ip TEXT NOT NULL, source TEXT NOT NULL,
+        severity TEXT NOT NULL, title TEXT NOT NULL, evidence TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'investigating', 'resolved', 'dismissed')),
+        first_at TEXT NOT NULL, last_at TEXT NOT NULL, last_window INTEGER NOT NULL,
+        windows INTEGER NOT NULL DEFAULT 1, signal_count INTEGER NOT NULL, reopened INTEGER NOT NULL DEFAULT 0,
+        note TEXT NOT NULL DEFAULT '', reviewed_by TEXT NOT NULL DEFAULT '', reviewed_at TEXT NOT NULL DEFAULT '',
+        UNIQUE(family, ip)
+      );
+      CREATE INDEX security_cases_time ON security_cases(last_at DESC);
+      CREATE TABLE security_case_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, case_id TEXT NOT NULL REFERENCES security_cases(id) ON DELETE CASCADE,
+        status TEXT NOT NULL, note TEXT NOT NULL, actor_id TEXT NOT NULL, at TEXT NOT NULL
+      );
+      CREATE TRIGGER security_case_history_cap AFTER INSERT ON security_case_history BEGIN
+        DELETE FROM security_case_history WHERE id IN (SELECT id FROM security_case_history ORDER BY id DESC LIMIT -1 OFFSET 3000);
+      END;
+      CREATE TABLE security_request_limits (
+        key TEXT PRIMARY KEY, started_at INTEGER NOT NULL, count INTEGER NOT NULL, expires_at INTEGER NOT NULL
+      ) WITHOUT ROWID;
+      CREATE TABLE security_oauth_used (nonce_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL) WITHOUT ROWID;
+      CREATE TABLE security_host_seen (id TEXT PRIMARY KEY, at TEXT NOT NULL) WITHOUT ROWID;
+      CREATE TRIGGER security_host_seen_cap AFTER INSERT ON security_host_seen BEGIN
+        DELETE FROM security_host_seen WHERE id IN (SELECT id FROM security_host_seen ORDER BY at DESC, id DESC LIMIT -1 OFFSET 5000);
+      END;
+    `,
+  },
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;

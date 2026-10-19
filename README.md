@@ -301,3 +301,5 @@ OCI VCN Flow Logs 및 호스트 인증 로그를 따로 확인해야 합니다. 
 상세 정책·수집 범위·복구 방법은 [IP 방어 운영 안내](docs/ip-defense.md)를 참고하세요.
 
 서버 노출과 침해 영향 검토: [2026-10-19 Nmap 위험 검토](docs/nmap-risk-review-2026-10-19.md).
+
+보안 센터의 탐지·대응 흐름, 로그인/CSP 추가 방어, SSH·방화벽 읽기 전용 수집기의 범위는 [보안 모니터링 운영 안내](docs/security-monitoring.md)에 정리했습니다.

@@ -1,8 +1,9 @@
+import { randomBytes } from "node:crypto";
 import { enforceIpBan, isVerifiedAdminRequest } from "@/lib/ipDefense";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decryptSession, SESSION_COOKIE } from "@/lib/session";
-import { isProbePath } from "@/lib/securityPolicy";
+import { inspectRequestPath } from "@/lib/securityPolicy";
 import { recordSecurityEvent, securityRequest } from "@/lib/securityEvents";
 import { publicOrigin } from "@/lib/publicOrigin";
 
@@ -14,9 +15,14 @@ export async function proxy(req: NextRequest) {
   const denied = await enforceIpBan(req);
   if (denied) return denied;
   const { pathname } = req.nextUrl;
-  if (isProbePath(pathname)) {
-    recordSecurityEvent("probe", { ...securityRequest(req), status: 404, skipDetection: await isVerifiedAdminRequest(req) });
+  const pathSignal = inspectRequestPath(pathname);
+  if (pathSignal) {
+    recordSecurityEvent("probe", { ...securityRequest(req), status: 404, detail: `${pathSignal.category} · ${pathSignal.reason}`, skipDetection: await isVerifiedAdminRequest(req) });
     return new NextResponse(null, { status: 404 });
+  }
+  if (!["GET", "HEAD", "OPTIONS", "POST"].includes(req.method)) {
+    recordSecurityEvent("request_rejected", { ...securityRequest(req), status: 405, skipDetection: await isVerifiedAdminRequest(req) });
+    return new NextResponse(null, { status: 405, headers: { Allow: "GET, HEAD, OPTIONS, POST", "Cache-Control": "no-store" } });
   }
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     const origin = req.headers.get("origin");
@@ -62,7 +68,22 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/", publicOrigin(req)));
   }
 
-  return NextResponse.next();
+  // All HTML pages already render dynamically through the cookie-backed root layout.
+  // Overwrite caller-controlled nonce/CSP headers; Next attaches this nonce to its own scripts.
+  const nonce = randomBytes(24).toString("base64");
+  const csp = [
+    "default-src 'self'", `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"}`,
+    "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:", "font-src 'self' data:",
+    `connect-src 'self'${process.env.NODE_ENV === "production" ? "" : " ws: wss:"}`, "worker-src 'self' blob:",
+    "frame-src 'none'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
+  ].join("; ");
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
 }
 
 function isLearningArea(pathname: string): boolean {

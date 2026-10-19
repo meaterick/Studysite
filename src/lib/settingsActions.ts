@@ -1,5 +1,6 @@
 "use server";
 
+import { recordSecurityEvent } from "./securityEvents";
 import { refresh } from "next/cache";
 import { requireAdmin } from "./dal";
 import { saveSettings, type ProgressionMode } from "./settingsStore";
@@ -9,7 +10,7 @@ export type SettingsResult = { ok: true } | { ok: false; error: string };
 
 /** 운영 설정 저장(관리자 전용): 단계 진행 방식과 주차별 과제 마감일 */
 export async function updateSiteSettings(formData: FormData): Promise<SettingsResult> {
-  await requireAdmin("/operator/settings");
+  const actor = await requireAdmin("/operator/settings");
   const mode = formData.get("progressionMode");
   if (mode !== "warn" && mode !== "lock") return { ok: false, error: "진행 방식을 선택해 주십시오." };
   const dueDates: Record<string, string> = {};
@@ -22,6 +23,7 @@ export async function updateSiteSettings(formData: FormData): Promise<SettingsRe
     dueDates[week.slug] = value;
   }
   saveSettings({ progressionMode: mode as ProgressionMode, dueDates });
+  recordSecurityEvent("admin_change", { userId: actor.id, path: "/operator/settings", detail: "학습 진행 방식·주차별 마감 설정 저장" });
   refresh();
   return { ok: true };
 }

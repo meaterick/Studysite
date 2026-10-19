@@ -172,6 +172,7 @@ jobs:
             echo "PUBLIC_ORIGIN=https://${DOMAIN}"
             echo "TRUST_PROXY=1"
             echo "SECURITY_NGINX_LOG=/var/log/aegis-security/events.log"
+            echo "SECURITY_HOST_TELEMETRY=/var/lib/aegis-security/telemetry.json"
           } > "$DEPLOY_DIR/.env.production.local"
           chmod 600 "$DEPLOY_DIR/.env.production.local"
 
@@ -218,6 +219,10 @@ jobs:
       - name: Rotate app and PM2 logs
         # Hourly logrotate (systemd timer): cut logs past 20MB or a day old, keep 14.
         run: bash scripts/deploy/logrotate.sh
+
+      - name: Install read-only SSH and firewall collector
+        continue-on-error: true
+        run: bash scripts/deploy/security-collector-install.sh
 
       - name: Record read-only host security inventory
         continue-on-error: true

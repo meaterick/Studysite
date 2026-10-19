@@ -12,6 +12,7 @@ export interface SecurityContext {
   status?: number;
   detail?: string;
   skipDetection?: boolean;
+  signalAt?: number;
 }
 
 /** Trust only the header nginx overwrites, and only behind the configured loopback reverse proxy. */
@@ -74,8 +75,8 @@ export function querySecurityEvents(filters: SecurityFilters) {
   if (filters.kind) { clauses.push("kind = ?"); params.push(filters.kind); }
   if (filters.severity) { clauses.push("severity = ?"); params.push(filters.severity); }
   if (filters.ip) { clauses.push("ip = ?"); params.push(filters.ip); }
-  if (filters.group === "detections") clauses.push("kind IN ('scan_detected', 'auth_attack_detected', 'traffic_detected')");
-  if (filters.group === "changes") clauses.push("kind IN ('ip_banned', 'ip_allowed', 'ip_rule_removed', 'security_policy_changed')");
+  if (filters.group === "detections") clauses.push("kind IN ('scan_detected', 'auth_attack_detected', 'traffic_detected', 'request_attack_detected', 'ssh_attack_detected', 'ssh_root_login')");
+  if (filters.group === "changes") clauses.push("kind IN ('ip_banned', 'ip_allowed', 'ip_rule_removed', 'security_policy_changed', 'case_reviewed', 'admin_change')");
   const where = clauses.join(" AND ");
   const total = get<{ n: number }>(`SELECT COUNT(*) AS n FROM security_events WHERE ${where}`, ...params)?.n ?? 0;
   const pages = Math.max(1, Math.ceil(total / 50));
@@ -92,7 +93,7 @@ export function securitySummary() {
     COALESCE(SUM(count), 0) AS total,
     COALESCE(SUM(CASE WHEN severity = 'high' THEN count ELSE 0 END), 0) AS high,
     COALESCE(SUM(CASE WHEN kind = 'rate_limited' THEN count ELSE 0 END), 0) AS limited,
-    COALESCE(SUM(CASE WHEN kind IN ('scan_detected', 'auth_attack_detected', 'traffic_detected') THEN count ELSE 0 END), 0) AS detections,
+    COALESCE(SUM(CASE WHEN kind IN ('scan_detected', 'auth_attack_detected', 'traffic_detected', 'request_attack_detected', 'ssh_attack_detected', 'ssh_root_login') THEN count ELSE 0 END), 0) AS detections,
     COALESCE(SUM(CASE WHEN kind = 'ip_blocked' THEN count ELSE 0 END), 0) AS blocked,
     COUNT(DISTINCT CASE WHEN severity != 'info' AND ip != '' THEN ip END) AS ips
     FROM security_events WHERE last_at >= ?`, since)!;

@@ -74,7 +74,7 @@ export default function SecurityControls({ rules, ownIp, initialIp, autoBan, enf
       </details>
       <details className="mt-3 rounded-2xl border border-[var(--border-hairline)] p-5">
         <summary className="cursor-pointer font-semibold text-ink">자동 차단 정책 <span className="ml-2 text-xs font-normal text-ink-muted">{autoBan ? "사용 중" : "중지됨"} · 활성 규칙 {rules.length}/500</span></summary>
-        <p className="mt-4 text-sm leading-relaxed text-ink-secondary">5분 안에 민감 경로 3곳을 10회 이상 탐색하거나 30회 이상 반복 탐색하면 15분 차단합니다. 반복 인증 실패·일반 404·요청 제한은 경고만 생성합니다.</p>
+        <p className="mt-4 text-sm leading-relaxed text-ink-secondary">5분 안에 민감 경로 3곳을 10회 이상 탐색하거나 30회 이상 반복 탐색하면 15분 차단합니다. 반복 인증 실패·출처 검증 실패·비허용 메서드·일반 404·요청 제한은 경고만 생성합니다.</p>
         <p className="mt-2 text-xs text-ink-muted">중지해도 기존 차단은 만료까지 유지됩니다. 웹 IP 차단은 SSH·DNS·서버 포트 스캔을 막지 않습니다.</p>
         <form action={action} className="mt-4"><input type="hidden" name="operation" value="policy" /><input type="hidden" name="enabled" value={autoBan ? "0" : "1"} /><button disabled={pending} className="btn btn-secondary btn-sm">{autoBan ? "새 자동 차단 중지" : "자동 차단 사용"}</button></form>
       </details>

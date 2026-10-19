@@ -16,8 +16,19 @@ export const SECURITY_KINDS = {
   ip_rule_removed: { label: "IP 규칙 해제", severity: "info", advice: "운영자가 차단 또는 허용 규칙을 해제했습니다." },
   ip_blocked: { label: "차단 IP 요청 거절", severity: "info", advice: "활성 IP 차단 규칙으로 요청을 거절했습니다. 만료 시간은 연장되지 않습니다." },
   security_policy_changed: { label: "자동 차단 정책 변경", severity: "info", advice: "자동 차단 설정을 변경했습니다. 이미 적용된 차단은 해제하거나 만료를 기다립니다." },
+  request_rejected: { label: "비허용 HTTP 메서드", severity: "warning", advice: "서비스에서 사용하지 않는 메서드를 거절했습니다. 반복되는 IP인지 확인합니다." },
+  auth_rate_limited: { label: "로그인 요청 제한", severity: "warning", advice: "같은 IP의 로그인 요청이 한도를 넘었습니다. 공유 IP의 정상 로그인도 확인합니다." },
+  oauth_replayed: { label: "로그인 응답 재사용 거절", severity: "warning", advice: "이미 처리한 로그인 상태가 재사용됐습니다. 새 로그인으로 다시 시작할 수 있습니다." },
+  ssh_failure: { label: "SSH 인증 실패", severity: "warning", advice: "서버 SSH 인증 실패입니다. 웹 IP 차단은 SSH에 적용되지 않습니다." },
+  ssh_login: { label: "SSH 로그인 성공", severity: "info", advice: "승인된 서버 관리 접속인지 시각과 출발지 IP를 확인합니다." },
+  ssh_root_login: { label: "root SSH 로그인", severity: "warning", advice: "root 접속이 발생했습니다. 본인의 관리 작업인지 확인합니다. 침해 성공을 자동 판정하지 않습니다." },
+  ssh_attack_detected: { label: "반복 SSH 인증 실패 감지", severity: "high", advice: "SSH 인증 실패가 반복됐습니다. OCI·호스트 방화벽과 SSH 접근 제한을 확인합니다. 웹 IP 차단과 별개입니다." },
+  request_attack_detected: { label: "반복 비정상 요청 감지", severity: "warning", advice: "출처 검증 실패·비허용 메서드·로그인 제한이 반복됐습니다. 근거를 확인한 뒤 대응합니다." },
+  case_reviewed: { label: "탐지 대응 상태 변경", severity: "info", advice: "운영자가 탐지 건의 확인·처리 상태를 변경했습니다." },
+  admin_change: { label: "운영 설정 변경", severity: "info", advice: "운영자의 설정 변경입니다. 승인된 작업인지 확인합니다." },
   backup_download: { label: "운영자 백업 다운로드", severity: "info", advice: "민감한 전체 DB 다운로드입니다. 승인된 운영자 작업인지 확인합니다." },
 } as const;
+export const CASE_STATUS = { new: "미확인", investigating: "확인 중", resolved: "처리 완료", dismissed: "정상·오탐" } as const;
 export type SecurityKind = keyof typeof SECURITY_KINDS;
 export type Severity = "info" | "warning" | "high";
 export const SEVERITY_LABEL = { info: "정보", warning: "주의", high: "높음" };
@@ -30,9 +41,19 @@ export function logPath(value: string): string {
   return cleanLogText(value.split(/[?#]/, 1)[0], 240);
 }
 
-/** Heuristic signals only: a match is not proof of a compromise. */
-export function isProbePath(raw: string): boolean {
-  let value = logPath(raw);
-  try { value = decodeURIComponent(value); } catch { /* Keep malformed input as-is. */ }
-  return /(?:^|\/)(?:\.env(?:[.\/]|$)|\.git(?:\/|$)|wp-admin(?:\/|$)|wp-login\.php$|xmlrpc\.php$|phpmyadmin(?:\/|$)|vendor\/phpunit(?:\/|$)|actuator(?:\/|$)|server-status$)/i.test(value);
+export type PathSignal = { category: "traversal" | "private_file" | "admin_probe"; reason: string };
+
+/** Bounded decoding of path ONLY. Never inspect learner code, bodies or query values. */
+export function inspectRequestPath(raw: string): PathSignal | null {
+  let value = raw.split(/[?#]/, 1)[0].slice(0, 4096);
+  for (let i = 0; i <= 3; i++) {
+    const normalized = value.replace(/\\/g, "/");
+    if (/(?:^|\/)\.\.(?:\/|$)/.test(normalized) || /[\u0000-\u001f\u007f]/.test(value)) return { category: "traversal", reason: "상위 디렉터리 이동 또는 제어문자 경로" };
+    if (/(?:^|\/)(?:\.env(?:[.\/]|$)|\.(?:git|svn|hg|ssh|aws)(?:\/|$)|\.(?:npmrc|pypirc|netrc|htpasswd)(?:$|\.)|(?:id_rsa|id_ed25519)(?:$|\.)|(?:aegis|database|sqlite)\.(?:db|sqlite3?)(?:$|[.-])|(?:dump|backup)\.sql(?:$|[.-]))/i.test(normalized)) return { category: "private_file", reason: "환경·저장소·인증키·DB 파일 탐색" };
+    if (/(?:^|\/)(?:wp-admin(?:\/|$)|wp-login\.php$|xmlrpc\.php$|phpmyadmin(?:\/|$)|vendor\/phpunit(?:\/|$)|actuator(?:\/|$)|server-status$|cgi-bin(?:\/|$)|boaform(?:\/|$)|HNAP1(?:\/|$))/i.test(normalized)) return { category: "admin_probe", reason: "이 서비스에 없는 관리 도구 탐색" };
+    if (i === 3) break;
+    try { const decoded = decodeURIComponent(value); if (decoded === value) break; value = decoded; } catch { break; }
+  }
+  return null;
 }
+export function isProbePath(raw: string): boolean { return inspectRequestPath(raw) !== null; }

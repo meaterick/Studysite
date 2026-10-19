@@ -1,3 +1,4 @@
+import { consumeAuthRequest, claimOAuthNonce } from "@/lib/securityRequestGuard";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getGoogleOAuthConfig,
@@ -33,6 +34,12 @@ function fail(request: NextRequest, code: string, from = "/account") {
 
 /** Completes the code exchange, checks Google-verified identity, and creates the local session. */
 export async function GET(request: NextRequest) {
+  const context = securityRequest(request);
+  const limit = consumeAuthRequest(context.ip, "callback");
+  if (!limit.allowed) {
+    recordSecurityEvent("auth_rate_limited", { ...context, status: 429, detail: "로그인 callback 요청의 5분 IP 한도 초과" });
+    return NextResponse.json({ error: "rate_limited", message: "로그인 요청이 잦습니다. 잠시 후 다시 시도해 주십시오." }, { status: 429, headers: { "Retry-After": String(limit.retryAfter), "Cache-Control": "no-store" } });
+  }
   const config = getGoogleOAuthConfig();
   const receivedState = request.nextUrl.searchParams.get("state");
   const storedState = request.cookies.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
@@ -46,6 +53,10 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   if (!code || request.nextUrl.searchParams.get("error")) return fail(request, "oauth_cancelled", returnPath);
 
+  if (!claimOAuthNonce(state.nonce)) {
+    recordSecurityEvent("oauth_replayed", { ...context, status: 307, detail: "로그인 상태 중복 처리 또는 재사용 방지 저장소 한도" });
+    return fail(request, "oauth_failed", returnPath);
+  }
   try {
     const callbackUrl = new URL("/api/auth/google/callback", publicOrigin(request)).toString();
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
