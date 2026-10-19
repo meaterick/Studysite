@@ -1,3 +1,5 @@
+import { recordSecurityEvent, securityRequest } from "@/lib/securityEvents";
+import { consumeAuthRequest } from "@/lib/securityRequestGuard";
 import { NextRequest, NextResponse } from "next/server";
 import {
   createGoogleOAuthState,
@@ -12,6 +14,12 @@ export const runtime = "nodejs";
 
 /** Starts Google OAuth with a signed, short-lived CSRF state token. */
 export async function GET(request: NextRequest) {
+  const context = securityRequest(request);
+  const limit = consumeAuthRequest(context.ip, "start");
+  if (!limit.allowed) {
+    recordSecurityEvent("auth_rate_limited", { ...context, status: 429, detail: "로그인 start 요청의 5분 IP 한도 초과" });
+    return NextResponse.json({ error: "rate_limited", message: "로그인 요청이 잦습니다. 잠시 후 다시 시도해 주십시오." }, { status: 429, headers: { "Retry-After": String(limit.retryAfter), "Cache-Control": "no-store" } });
+  }
   const config = getGoogleOAuthConfig();
   const returnPath = safeReturnPath(request.nextUrl.searchParams.get("from") ?? "");
   if (!config) {

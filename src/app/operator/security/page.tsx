@@ -1,3 +1,6 @@
+import SecurityOverview from "@/components/security/SecurityOverview";
+import SecurityCaseBoard from "@/components/security/SecurityCaseBoard";
+import HostTelemetryPanel from "@/components/security/HostTelemetryPanel";
 import { headers } from "next/headers";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
@@ -8,7 +11,7 @@ import { autoBanEnabled, ipEnforcementEnabled, ipRuleHistory, listIpRules, prune
 import { edgeMonitorStatus } from "@/lib/securityEdgeMonitor";
 import { requireAdmin } from "@/lib/dal";
 import { formatDateTime } from "@/lib/datetime";
-import { blockedIpActivity, querySecurityEvents, securityFilters, securitySummary, securityRequest } from "@/lib/securityEvents";
+import { blockedIpActivity, querySecurityEvents, securityFilters, securityRequest } from "@/lib/securityEvents";
 import { recentEdgeEvents } from "@/lib/securityEdgeLog";
 import { SECURITY_KINDS, SEVERITY_LABEL } from "@/lib/securityPolicy";
 
@@ -16,7 +19,7 @@ export const metadata = { title: "보안 센터" };
 export const dynamic = "force-dynamic";
 const base = "/operator/security";
 const input = "rounded-lg border border-[var(--border-hairline)] bg-card px-3 py-2.5 text-sm text-ink";
-const tabs = [{ key: "overview", label: "요약" }, { key: "blocked", label: "차단 IP" }, { key: "events", label: "보안 기록" }, { key: "edge", label: "웹 요청" }, { key: "host", label: "서버 점검" }];
+const tabs = [{ key: "overview", label: "현황" }, { key: "alerts", label: "탐지·대응" }, { key: "events", label: "접근 기록" }, { key: "blocked", label: "IP 관리" }, { key: "host", label: "보호 점검" }];
 
 export default async function OperatorSecurityPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireAdmin(base);
@@ -24,34 +27,26 @@ export default async function OperatorSecurityPage({ searchParams }: { searchPar
   // eslint-disable-next-line react-hooks/purity -- Request timestamp in this dynamic Server Component, passed once to the client.
   const requestTime = Date.now();
   const filters = securityFilters(raw);
-  const view = typeof raw.view === "string" && tabs.some((t) => t.key === raw.view) ? raw.view
+  const view = typeof raw.view === "string" && (tabs.some((t) => t.key === raw.view) || ["edge", "ssh"].includes(raw.view)) ? raw.view
     : filters.ip || filters.kind || filters.severity || filters.group ? "events" : "overview";
   pruneIpDefense();
   const rules = listIpRules();
   const modes = new Map(rules.map((r) => [r.ip, r.mode]));
   const denied = rules.filter((r) => r.mode === "deny");
-  const summary = securitySummary();
   const monitor = edgeMonitorStatus();
   const autoBan = autoBanEnabled();
   const enforcement = ipEnforcementEnabled();
   const eventHref = (page = 1, extra: Record<string, string> = {}) => `${base}?${new URLSearchParams({ view: "events", hours: String(filters.hours), kind: filters.kind, group: filters.group || "", severity: filters.severity, ip: filters.ip, page: String(page), ...extra })}`;
-  const currentHref = view === "events" ? eventHref(filters.page) : `${base}?${new URLSearchParams({ view, ...(filters.ip ? { ip: filters.ip } : {}), ...(view === "blocked" ? { page: String(filters.page) } : {}) })}`;
+  const caseStatus = typeof raw.status === "string" && ["open", "new", "investigating", "resolved", "dismissed", "all"].includes(raw.status) ? raw.status : "open";
+  const menuView = ["edge", "ssh"].includes(view) ? "events" : view;
+  const currentHref = view === "events" ? eventHref(filters.page) : `${base}?${new URLSearchParams({ view, ...(view === "alerts" ? { status: caseStatus } : {}), ...(filters.ip ? { ip: filters.ip } : {}), ...(view === "blocked" ? { page: String(filters.page) } : {}) })}`;
   return <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-    <PageHeader title="보안 센터" description="탐지 신호를 확인하고 차단된 IP를 관리합니다." actions={<Link href={currentHref} prefetch={false} className="btn btn-secondary btn-sm">새로고침</Link>} />
-    <nav aria-label="보안 센터 메뉴" className="mb-8 flex gap-1 overflow-x-auto border-b border-[var(--border-hairline)]">{tabs.map((t) => <Link key={t.key} href={`${base}?view=${t.key}`} prefetch={false} aria-current={view === t.key ? "page" : undefined} className={`shrink-0 border-b-2 px-4 py-3 text-sm font-semibold ${view === t.key ? "border-current text-ink" : "border-transparent text-ink-muted"}`}>{t.label}{t.key === "blocked" && <span className="ml-2 rounded-full bg-[var(--surface-section)] px-2 py-0.5 text-xs tabular-nums">{denied.length}</span>}</Link>)}</nav>
-    {view === "overview" && <>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h2 className="section-title">지금 확인할 보안 현황</h2><span className="text-xs text-ink-muted">기록 통계는 최근 24시간 기준</span></div>
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">{[
-        { label: "현재 차단된 IP", value: denied.length, note: `자동 ${denied.filter((r) => r.source === "auto").length} · 수동 ${denied.filter((r) => r.source === "manual").length}`, href: `${base}?view=blocked` },
-        { label: "반복 탐지 경고", value: summary.detections, note: "탐지 근거 확인", href: `${base}?view=events&group=detections` },
-        { label: "거절한 차단 IP 요청", value: summary.blocked, note: "HTTP 접근 차단", href: `${base}?view=events&kind=ip_blocked` },
-        { label: "요청 한도 초과", value: summary.limited, note: `주의·높음 IP ${summary.ips}개`, href: `${base}?view=events&kind=rate_limited` },
-      ].map((s) => <Link key={s.label} href={s.href} prefetch={false} className="rounded-2xl border border-[var(--border-hairline)] bg-card p-4 transition-colors hover:bg-[var(--surface-section)] sm:p-5"><p className="text-xs text-ink-secondary">{s.label}</p><p className="my-3 text-3xl font-semibold tabular-nums text-ink">{s.value.toLocaleString()}</p><p className="text-xs text-ink-muted">{s.note} →</p></Link>)}</div>
-      <div className="mb-8 flex flex-wrap gap-x-6 gap-y-2 rounded-xl bg-[var(--surface-section)] px-4 py-3 text-xs text-ink-secondary"><span>IP 차단 적용 · {enforcement ? "사용 중" : "복구 모드 / 중지"}</span><span>새 자동 차단 · {autoBan ? "사용 중" : "중지"}</span><span>웹 탐지 수집 · {monitor ? `${formatDateTime(monitor.checkedAt)} 확인` : "연결 대기"}</span></div>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"><section><div className="mb-4 flex items-center justify-between gap-3"><h2 className="section-title">최근 탐지 경고</h2><Link href={`${base}?view=events&group=detections`} prefetch={false} className="text-xs text-ink-secondary underline underline-offset-4">전체 보기</Link></div><SecurityEventList events={querySecurityEvents({ hours: 24, kind: "", severity: "", ip: "", page: 1, group: "detections" }).events.slice(0, 5)} ruleModes={modes} /></section>
-        <aside><h2 className="section-title mb-4">반복 신호가 많은 IP</h2><div className="rounded-2xl border border-[var(--border-hairline)] bg-card p-5">{summary.topIps.length ? <ol className="space-y-4">{summary.topIps.map((r, i) => <li key={r.ip}><Link href={`${base}?view=events&ip=${encodeURIComponent(r.ip)}`} prefetch={false} className="flex items-start justify-between gap-3 text-xs"><span className="min-w-0 break-all font-mono text-ink"><span className="mr-2 text-ink-muted">{i + 1}.</span>{r.ip}</span><span className="shrink-0 tabular-nums text-ink-secondary">{r.n.toLocaleString()}회</span></Link></li>)}</ol> : <p className="text-sm text-ink-muted">아직 집계된 IP가 없습니다.</p>}<p className="mt-5 text-xs leading-relaxed text-ink-muted">주의·높음 이벤트의 발생 횟수입니다. 공유 IP와 정상 요청이 포함될 수 있습니다.</p></div><div className="mt-4 rounded-2xl bg-[var(--surface-section)] p-5"><h3 className="text-sm font-semibold text-ink">서버 침해가 의심된다면</h3><p className="mt-2 text-xs leading-relaxed text-ink-secondary">웹 IP 차단과 별도로 SSH·DNS·배포 계정의 권한을 확인하십시오. 이 화면의 경고는 침해 성공의 증거가 아닙니다.</p><Link href={`${base}?view=host`} prefetch={false} className="btn btn-secondary btn-sm mt-4">서버 점검 보기</Link></div></aside>
-      </div>
-    </>}
+    <PageHeader title="보안 센터" description="의심 신호를 확인하고, 대응 기록과 IP 차단을 관리합니다." actions={<Link href={currentHref} prefetch={false} className="btn btn-secondary btn-sm">새로고침</Link>} />
+    <nav aria-label="보안 센터 메뉴" className="mb-8 flex gap-1 overflow-x-auto border-b border-[var(--border-hairline)]">{tabs.map((t) => <Link key={t.key} href={`${base}?view=${t.key}`} prefetch={false} aria-current={menuView === t.key ? "page" : undefined} className={`shrink-0 border-b-2 px-4 py-3 text-sm font-semibold ${menuView === t.key ? "border-current text-ink" : "border-transparent text-ink-muted"}`}>{t.label}{t.key === "blocked" && <span className="ml-2 rounded-full bg-[var(--surface-section)] px-2 py-0.5 text-xs tabular-nums">{denied.length}</span>}</Link>)}</nav>
+    {["events", "edge", "ssh"].includes(view) && <nav aria-label="접근 기록 출처" className="mb-6 flex flex-wrap gap-2">{[{ key: "events", label: "앱 보안 기록" }, { key: "edge", label: "nginx 요청" }, { key: "ssh", label: "SSH 인증" }].map((t) => <Link key={t.key} href={`${base}?view=${t.key}`} prefetch={false} aria-current={view === t.key ? "page" : undefined} className={`btn btn-sm ${view === t.key ? "btn-primary" : "btn-secondary"}`}>{t.label}</Link>)}</nav>}
+    {view === "overview" && <SecurityOverview />}
+    {view === "alerts" && <SecurityCaseBoard status={caseStatus} ip={filters.ip} page={filters.page} rules={rules} />}
+    {view === "ssh" && <HostTelemetryPanel logsOnly />}
     {view === "blocked" && <>
       <SecurityControls rules={rules} ownIp={securityRequest({ headers: await headers() }).ip ?? ""} initialIp={filters.ip} autoBan={autoBan} enforcement={enforcement} activity={blockedIpActivity()} now={requestTime} />
       <section className="mt-10" aria-labelledby="ip-history"><h2 id="ip-history" className="section-title">차단·허용 변경 이력</h2><p className="mb-4 mt-2 text-xs leading-relaxed text-ink-muted">설정·해제·자동 만료를 최대 30일·3,000건 보관합니다. 이력 도입 당시 남아 있던 규칙은 ‘기존 규칙’으로 표시합니다. 과거 변경은 복원하지 않습니다.</p>
@@ -73,7 +68,7 @@ export default async function OperatorSecurityPage({ searchParams }: { searchPar
     {view === "edge" && <section><h2 className="section-title mb-3">웹 요청 기록</h2><p className="mb-3 text-sm text-ink-secondary">nginx가 기록한 4xx·5xx 응답입니다. 앱에 도달하기 전에 거절한 요청도 포함되며 앱 통계와 중복될 수 있습니다.</p><div className="mb-5 rounded-xl bg-[var(--surface-section)] p-4 text-xs leading-relaxed text-ink-secondary">반복 탐지 수집 · {monitor ? `마지막 확인 ${formatDateTime(monitor.checkedAt)} · 연결 이후 ${monitor.processed.toLocaleString()}건 처리` : "연결 대기 중"}<p className="mt-2">10초마다 반복 404·429를 확인합니다. 최근 확인 시각이 오래되면 로그 경로와 읽기 권한을 점검하십시오.</p></div>
       {(() => { const edge = recentEdgeEvents(); return edge.state !== "ready" ? <p role="status" className="callout callout-warn">{edge.state === "disabled" ? "nginx 로그 연결이 설정되지 않았습니다." : "nginx 로그를 읽지 못했습니다. 로그 파일과 읽기 권한을 확인하십시오."}</p> : <><p className="mb-4 text-xs text-ink-muted">현재 파일의 마지막 512KB에서 최근 100건 표시 · 약 5초 뒤 반영 · 파일 회전 이전 기록 제외{edge.truncated ? " · 표시 범위 이전 기록 있음" : ""}</p><div className="space-y-2">{edge.events.length ? edge.events.map((e, i) => <article key={i} className="rounded-xl border border-[var(--border-hairline)] bg-card p-4"><div className="flex flex-wrap justify-between gap-2 text-xs"><span className="font-semibold text-ink">HTTP {e.status} · {e.limited ? "요청 한도 초과" : e.probe ? "민감 경로 탐색" : e.status >= 500 ? "서버 오류" : "실패 응답"}</span><time dateTime={e.at} className="text-ink-muted">{formatDateTime(e.at)}</time></div><p className="mt-2 break-all font-mono text-xs text-ink-secondary"><Link className="underline underline-offset-4" href={`${base}?view=events&ip=${encodeURIComponent(e.ip)}`} prefetch={false}>{e.ip}</Link> · {e.method} {e.path}</p></article>) : <p className="rounded-xl bg-[var(--surface-section)] p-5 text-sm text-ink-muted">현재 파일에 표시할 요청이 없습니다.</p>}</div></>; })()}
     </section>}
-    {view === "host" && <HostSecurityPanel />}
-    <p className="mt-10 border-t border-[var(--border-hairline)] pt-5 text-xs leading-relaxed text-ink-muted">이 센터는 웹 서비스의 보안 신호를 보여 줍니다. OCI 방화벽 차단·TCP 포트 스캔·SSH 로그인은 서버 인증 로그와 OCI VCN Flow Logs에서 별도로 확인합니다.</p>
+    {view === "host" && <><HostTelemetryPanel /><HostSecurityPanel /></>}
+    <p className="mt-10 border-t border-[var(--border-hairline)] pt-5 text-xs leading-relaxed text-ink-muted">이 센터는 웹 서비스의 보안 신호를 보여 줍니다. SSH 인증은 서버 수집기 연결 시 확인할 수 있습니다. OCI 방화벽 차단·TCP 포트 스캔·DNS 요청은 OCI VCN Flow Logs와 별도 서버 로그가 필요합니다.</p>
   </div>;
 }

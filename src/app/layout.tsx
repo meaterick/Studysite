@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 // 글꼴은 npm 패키지(@fontsource)에서 자체 호스팅한다. next/font/google은 빌드할 때마다 Google Fonts에서
 // CSS·글꼴 파일을 내려받는데, 그 응답 형식에 따라 빌드가 실패한 적이 있어(Turbopack "queries have exactly one entry")
@@ -30,6 +31,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getCurrentUser();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="ko"
@@ -38,6 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script
+          nonce={nonce}
           // Avoid a flash of the wrong theme: read the stored preference before paint.
           dangerouslySetInnerHTML={{
             // data-motion="full": JavaScript가 켜져 있고 "동작 줄이기"가 아닐 때만 메인 화면의 3D 여정 모드를 쓴다(그리기 전에 정해 깜빡임 방지).

@@ -2,15 +2,12 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-// 사이트 전체의 Content-Security-Policy(보안 검토 P1-5). 스크립트·연결·폰트·이미지를 이 사이트 출처로만
-// 제한해, 만에 하나 스크립트 주입이 생겨도 외부 스크립트를 불러오거나 외부로 데이터를 보내지 못하게 한다.
-// - script-src 'unsafe-inline': Next.js가 페이지마다 넣는 인라인 스크립트(RSC 데이터)와 테마 초기화 스크립트 때문에
-//   필요하다(nonce 방식은 모든 페이지를 요청마다 렌더링해야 해서 1GB 서버에 부담).
-// - worker-src blob:: 코드 편집기(Monaco)가 blob URL로 워커를 만든다.
-// - 개발 서버(next dev)는 eval과 웹소켓(HMR)을 쓰므로 그때만 허용한다.
+// Static/API fallback policy. Dynamic HTML receives a fresh nonce policy from src/proxy.ts;
+// framework scripts and the theme bootstrap carry the same nonce. Inline styles remain allowed
+// for KaTeX/Monaco. Pyodide keeps a separate worker-only CDN/WASM policy below.
 const SITE_CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self'${isDev ? " 'unsafe-inline' 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",

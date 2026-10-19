@@ -1,11 +1,13 @@
 import "server-only";
 import { findUserById } from "./userStore";
+import { reviewSecurityCase, CASE_STATUS, type CaseStatus } from "./securityCases";
 import { tx } from "./db";
 import { BAN_MINUTES, removeIpRule, saveIpRule, setAutoBanEnabled } from "./ipRules";
 import { isBannableIp, normalizeIp } from "./ipAddress";
 import { recordSecurityEvent } from "./securityEvents";
 
 const ERRORS: Record<string, string> = {
+  CASE_NOTE_REQUIRED: "처리 완료·정상·오탐으로 분류할 때는 판단 사유를 입력해 주십시오.",
   INVALID_IP: "공인 IPv4 또는 IPv6 주소 하나를 입력해 주십시오. 내부·루프백·IP 대역은 등록하지 않습니다.",
   INVALID_DURATION: "차단·허용 기간을 선택해 주십시오.", REASON_REQUIRED: "사유를 입력해 주십시오.",
   SELF_BAN: "현재 접속한 본인 IP는 차단할 수 없습니다.",
@@ -21,6 +23,13 @@ export function applySecurityChange(actorId: string, ownIp: string, data: FormDa
   const op = value("operation");
   try {
     return tx(() => {
+      if (op === "case") {
+        const id = value("caseId"), status = value("status");
+        if (!/^[a-f0-9]{24}$/.test(id) || !Object.hasOwn(CASE_STATUS, status)) return { ok: false, message: "올바른 탐지 건과 상태를 선택해 주십시오." };
+        if (!reviewSecurityCase(id, status, value("note"), actorId)) return { ok: false, message: "탐지 건을 찾지 못했습니다. 새로고침해 주십시오." };
+        recordSecurityEvent("case_reviewed", { userId: actorId, detail: `탐지 ${id} · ${CASE_STATUS[status as CaseStatus]} · ${value("note").slice(0, 300)}` });
+        return { ok: true, message: "대응 상태를 저장했습니다. 새 집계창에서 재발하면 다시 미확인으로 표시합니다." };
+      }
       if (op === "policy") {
         const enabled = value("enabled");
         if (enabled !== "1" && enabled !== "0") return { ok: false, message: "올바른 정책을 선택해 주십시오." };

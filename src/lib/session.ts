@@ -32,7 +32,7 @@ export async function encryptSession(payload: SessionPayload): Promise<string> {
 }
 
 export async function decryptSession(token: string | undefined): Promise<SessionPayload | null> {
-  if (!token) return null;
+  if (!token || token.length > 4096) return null;
   try {
     const { payload } = await jwtVerify(token, signingKey(), { algorithms: ["HS256"] });
     if (typeof payload.uid !== "string" || !payload.uid || !["admin", "member"].includes(String(payload.role))) return null;

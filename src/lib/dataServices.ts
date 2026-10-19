@@ -1,4 +1,6 @@
 import "server-only";
+import { pruneSecurityCases } from "./securityCases";
+import { startHostTelemetryMonitor } from "./hostTelemetry";
 import { validateSecurityConfig } from "./securityConfig";
 import { pruneSecurityEvents } from "./securityEvents";
 import { pruneIpDefense } from "./ipRules";
@@ -18,9 +20,11 @@ export function startDataServices(): void {
   ensureDb();
   pruneSecurityEvents();
   pruneIpDefense();
+  pruneSecurityCases();
+  startHostTelemetryMonitor();
   startSecurityEdgeMonitor();
   const pruneTimer = setInterval(() => {
-    try { pruneSecurityEvents(); pruneIpDefense(); } catch { console.error("[security] retention cleanup unavailable"); }
+    try { pruneSecurityEvents(); pruneIpDefense(); pruneSecurityCases(); } catch { console.error("[security] retention cleanup unavailable"); }
   }, 60 * 60_000);
   pruneTimer.unref();
   if (hasLegacyFiles()) {

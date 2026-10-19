@@ -13,13 +13,22 @@ fs.writeFileSync(path.join(dir, "host-security.json"), JSON.stringify({ version:
   os: { NAME: "Ubuntu", VERSION_ID: "24.04" }, kernel: "6.8-test", packages: { "openssh-server": "installed test-version" },
   listeners: [{ protocol: "tcp", port: 53, scope: "all", process: "named" }, { protocol: "tcp", port: 3001, scope: "loopback", process: "node" }],
   tcpChecked: true, udpChecked: true, sshChecked: true, ssh: { passwordauthentication: "no" }, runnerIsRoot: false, runnerPasswordlessSudoAll: true }));
-const env = { ...process.env, NODE_ENV: "production", DATA_DIR: dir, TRUST_PROXY: "1", SESSION_SECRET: "http-smoke-test-secret-with-more-than-32-characters", PUBLIC_ORIGIN: "https://study.example", ADMIN_EMAILS: "owner@example.com", SECURITY_NGINX_LOG: edgeFile, SECURITY_IP_ENFORCEMENT: "1" };
+const telemetryFile = path.join(dir, "telemetry.json");
+const sshBucket = Math.floor(Date.now() / 300_000) * 300_000;
+fs.writeFileSync(telemetryFile, JSON.stringify({ version: 1, checkedAt: new Date().toISOString(), sshChecked: true, sshTruncated: false,
+  sshEvents: Array.from({ length: 10 }, (_, i) => ({ id: i.toString(16).padStart(32, "0"), at: new Date(sshBucket + i).toISOString(), ip: "203.0.113.88", outcome: "failed", method: "password", root: false })),
+  firewalls: [{ family: "ipv4", checked: true, policy: "ACCEPT", publicTcpPorts: [22, 80, 443, 3000], truncated: false,
+    blockedIps: [{ ip: "89.176.0.185", position: 9, coverage: "unreachable", earlierAllowedPorts: [22, 80, 443] }] }] }));
+const env = { ...process.env, SECURITY_HOST_TELEMETRY: telemetryFile, GOOGLE_CLIENT_ID: "offline-test-client", GOOGLE_CLIENT_SECRET: "offline-test-client-secret", NODE_ENV: "production", DATA_DIR: dir, TRUST_PROXY: "1", SESSION_SECRET: "http-smoke-test-secret-with-more-than-32-characters", PUBLIC_ORIGIN: "https://study.example", ADMIN_EMAILS: "owner@example.com", SECURITY_NGINX_LOG: edgeFile, SECURITY_IP_ENFORCEMENT: "1" };
 const seeded = spawnSync(process.execPath, ["--conditions=react-server", "--import", "tsx", "-e", `
 (async()=>{
  const {findOrCreateGoogleUser}=require('./src/lib/userStore.ts');const {encryptSession}=require('./src/lib/session.ts');
  const admin=await findOrCreateGoogleUser({email:'owner@example.com',subject:'smoke-owner',name:'Owner'});
  const member=await findOrCreateGoogleUser({email:'member@example.com',subject:'smoke-member',name:'Member'});
- console.log(JSON.stringify({admin:await encryptSession({uid:admin.id,role:admin.role}),member:await encryptSession({uid:member.id,role:member.role})}));
+ const {createGoogleOAuthState,verifyGoogleOAuthState}=require('./src/lib/googleOAuth.ts');
+ const {claimOAuthNonce}=require('./src/lib/securityRequestGuard.ts');
+ const replay=await createGoogleOAuthState('/account'); const verified=await verifyGoogleOAuthState(replay); claimOAuthNonce(verified.nonce);
+ console.log(JSON.stringify({replay,admin:await encryptSession({uid:admin.id,role:admin.role}),member:await encryptSession({uid:member.id,role:member.role})}));
 })();`], { env, encoding: "utf8" });
 assert.equal(seeded.status, 0, seeded.stderr);
 const cookies = JSON.parse(seeded.stdout.trim());
@@ -37,10 +46,10 @@ const request = (pathname, { cookie, ip = ownerIp, ...init } = {}) => fetch(base
   redirect: "manual", ...init, headers: { "x-real-ip": ip, ...(cookie ? { cookie: `aegis_session=${cookie}` } : {}), ...init.headers },
 });
 const decode = (s) => s.replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
-function hiddenActionForm(html, policy = false) {
+function hiddenActionForm(html, policy = false, caseForm = false) {
   for (const match of html.matchAll(/<form\b[^>]*>([\s\S]*?)<\/form>/g)) {
     const body = match[1];
-    if (policy ? !body.includes('name="operation" value="policy"') : !body.includes('name="reason"')) continue;
+    if (caseForm ? !body.includes('name="operation" value="case"') : policy ? !body.includes('name="operation" value="policy"') : !body.includes('name="reason"')) continue;
     const data = new FormData();
     for (const input of body.matchAll(/<input\b([^>]+)>/g)) {
       const a = Object.fromEntries([...input[1].matchAll(/([\w:$-]+)="([^"]*)"/g)].map((m) => [m[1], decode(m[2])]));
@@ -69,12 +78,22 @@ try {
   const initial = await request("/operator/security", { cookie: cookies.admin });
   assert.equal(initial.status, 200);
   const html = await initial.text();
+  const csp = initial.headers.get("content-security-policy") || "";
+  const scriptsPolicy = csp.split(";").find((p) => p.trim().startsWith("script-src")) || "";
+  assert.equal(scriptsPolicy.includes("unsafe-inline"), false, "inline scripts require a nonce");
+  const nonce = scriptsPolicy.match(/'nonce-([^']+)'/)?.[1];
+  assert.ok(nonce);
+  for (const script of html.matchAll(/<script\b([^>]*)>/g)) assert.ok(script[1].includes(`nonce="${nonce}"`), "framework and theme scripts carry the request nonce");
+  const fresh = await request("/operator/security", { cookie: cookies.admin, headers: { "x-nonce": "attacker", "content-security-policy": "script-src 'unsafe-inline'" } });
+  assert.notEqual(fresh.headers.get("content-security-policy"), csp, "unique nonce per request");
+  assert.equal(fresh.headers.get("content-security-policy").includes("nonce-attacker"), false);
   assert.ok(html.includes("현재 차단된 IP"));
-  for (const view of ["blocked", "events", "edge", "host"]) {
+  for (const view of ["blocked", "events", "edge", "host", "alerts", "ssh"]) {
     const response = await request(`/operator/security?view=${view}`, { cookie: cookies.admin });
     assert.equal(response.status, 200, view);
     const body = await response.text();
-    if (view === "host") { assert.ok(body.includes("서버 전체 권한으로 확대 가능")); assert.ok(body.includes("named")); }
+    if (view === "host") { assert.ok(body.includes("서버 전체 권한으로 확대 가능")); assert.ok(body.includes("named")); assert.ok(body.includes("도달하지 못함")); }
+    if (view === "ssh") assert.ok(body.includes("203.0.113.88"));
     assert.equal((await request(`/operator/security?view=${view}`, { cookie: cookies.member })).status, 307, `member cannot access ${view}`);
   }
   const blockedHtml = await (await request("/operator/security?view=blocked", { cookie: cookies.admin })).text();
@@ -109,6 +128,21 @@ try {
   const scanner = "203.0.113.84";
   for (let i = 0; i < 10; i++) assert.equal((await request(probes[i % 3], { ip: scanner })).status, 404);
   assert.equal((await request("/", { ip: scanner })).status, 403);
+  const alertUrl = `/operator/security?view=alerts&ip=${scanner}`;
+  const caseHtml = await (await request(alertUrl, { cookie: cookies.admin })).text();
+  assert.ok(caseHtml.includes("탐지·대응"));
+  const review = hiddenActionForm(caseHtml, false, true);
+  review.set("status", "resolved"); review.set("note", "HTTP smoke case review");
+  const reviewed = await request(alertUrl, { cookie: cookies.admin, method: "POST", headers: { origin: env.PUBLIC_ORIGIN, "x-forwarded-host": "study.example" }, body: review });
+  assert.equal(reviewed.status, 200);
+  const reviewedHtml = await (await request(`/operator/security?view=alerts&status=resolved&ip=${scanner}`, { cookie: cookies.admin })).text();
+  assert.ok(reviewedHtml.includes("HTTP smoke case review"));
+  const forged = hiddenActionForm(reviewedHtml, false, true);
+  forged.set("status", "dismissed"); forged.set("note", "member-forged-review");
+  await request(alertUrl, { cookie: cookies.member, method: "POST", headers: { origin: env.PUBLIC_ORIGIN, "x-forwarded-host": "study.example" }, body: forged });
+  const unchanged = await (await request(`/operator/security?view=alerts&status=resolved&ip=${scanner}`, { cookie: cookies.admin })).text();
+  assert.equal(unchanged.includes("member-forged-review"), false);
+  assert.ok(unchanged.includes("HTTP smoke case review"));
   await manage({ operation: "remove", ip: scanner });
   assert.equal((await request("/", { ip: scanner })).status, 200);
 
@@ -125,12 +159,21 @@ try {
   for (let i = 0; i < 15; i++) {
     const page = await (await request("/operator/security?kind=scan_detected&ip=203.0.113.85", { cookie: cookies.admin })).text();
     assert.equal(page.includes("not-stored"), false);
-    if (page.includes("not_found 신호 20회")) { detected = true; break; }
+    if (page.includes("서로 다른 주소의 404 응답 20회")) { detected = true; break; }
     await new Promise((r) => setTimeout(r, 1000));
   }
   assert.equal(detected, true, "background nginx collector emits scan alert");
   assert.equal((await request("/", { ip: "203.0.113.85" })).status, 200, "ordinary 404 alerts never auto-ban");
-  console.log("Production HTTP smoke passed: native admin forms, member replay rejection, self protection, manual/allow rules and policy toggle, automatic ban/release, asset denial, admin recovery, background nginx detection.");
+  for (const target of ["/%252eenv", "/.ssh/id_rsa", "/database.sqlite3"]) assert.equal((await request(target, { ip: "203.0.113.90" })).status, 404);
+  assert.equal((await request("/", { ip: "203.0.113.90", method: "DELETE" })).status, 405);
+  for (let i = 0; i < 30; i++) assert.equal((await request("/api/auth/google", { ip: "203.0.113.91" })).status, 307);
+  const limitedAuth = await request("/api/auth/google", { ip: "203.0.113.91" });
+  assert.equal(limitedAuth.status, 429); assert.ok(Number(limitedAuth.headers.get("retry-after")) > 0);
+  const replayed = await request(`/api/auth/google/callback?state=${encodeURIComponent(cookies.replay)}&code=never-exchanged`, { ip: "203.0.113.92", headers: { cookie: `aegis_google_oauth_state=${cookies.replay}` } });
+  assert.equal(replayed.status, 307);
+  const replayLogs = await (await request("/operator/security?view=events&kind=oauth_replayed&ip=203.0.113.92", { cookie: cookies.admin })).text();
+  assert.ok(replayLogs.includes("로그인 응답 재사용 거절")); assert.equal(replayLogs.includes("never-exchanged"), false);
+  console.log("Production HTTP smoke passed: monitoring views and source health, case review and member replay denial, auth quota, OAuth replay rejection, encoded probe/method rejection; native admin forms, member replay rejection, self protection, manual/allow rules and policy toggle, automatic ban/release, asset denial, admin recovery, background nginx detection.");
 } catch (err) {
   console.error(output);
   throw err;

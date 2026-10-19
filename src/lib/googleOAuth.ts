@@ -31,6 +31,7 @@ export async function createGoogleOAuthState(returnPath: string): Promise<string
 }
 
 export async function verifyGoogleOAuthState(token: string): Promise<GoogleOAuthState | null> {
+  if (token.length > 4096) return null;
   try {
     const { payload } = await jwtVerify(token, signingKey(), { algorithms: ["HS256"] });
     if (typeof payload.nonce !== "string" || typeof payload.returnPath !== "string") return null;
