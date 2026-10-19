@@ -6,6 +6,7 @@ import {
   statesMatch,
   verifyGoogleOAuthState,
 } from "@/lib/googleOAuth";
+import { recordSecurityEvent, securityRequest } from "@/lib/securityEvents";
 import { publicOrigin } from "@/lib/publicOrigin";
 import { safeReturnPath } from "@/lib/returnPath";
 import { encryptSession, SESSION_COOKIE, sessionCookieOptions } from "@/lib/session";
@@ -21,6 +22,7 @@ type GoogleProfile = {
 };
 
 function fail(request: NextRequest, code: string, from = "/account") {
+  recordSecurityEvent("login_failure", securityRequest(request));
   const url = new URL("/login", publicOrigin(request));
   url.searchParams.set("error", code);
   if (from !== "/account") url.searchParams.set("from", from);
@@ -57,6 +59,7 @@ export async function GET(request: NextRequest) {
         grant_type: "authorization_code",
       }),
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
     const token = (await tokenResponse.json()) as { access_token?: unknown };
     if (!tokenResponse.ok || typeof token.access_token !== "string") throw new Error("TOKEN_EXCHANGE_FAILED");
@@ -64,6 +67,7 @@ export async function GET(request: NextRequest) {
     const profileResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
       headers: { authorization: `Bearer ${token.access_token}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
     });
     const profile = (await profileResponse.json()) as GoogleProfile;
     if (
@@ -82,6 +86,7 @@ export async function GET(request: NextRequest) {
       name: typeof profile.name === "string" ? profile.name : "Google 사용자",
     });
     const session = await encryptSession({ uid: user.id, role: user.role });
+    recordSecurityEvent("login_success", securityRequest(request, user.id));
     const response = NextResponse.redirect(new URL(returnPath, publicOrigin(request)));
     response.cookies.set(SESSION_COOKIE, session, sessionCookieOptions());
     response.cookies.set(GOOGLE_OAUTH_STATE_COOKIE, "", { ...googleStateCookieOptions, maxAge: 0 });

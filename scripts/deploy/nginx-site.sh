@@ -11,6 +11,14 @@ set -euo pipefail
 
 PORT="${1:?usage: nginx-site.sh <app port>}"
 : "${DOMAIN:?DOMAIN is required}"
+[[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) || { echo "invalid app port"; exit 1; }
+[[ "$DOMAIN" =~ ^[a-zA-Z0-9.-]+$ ]] || { echo "invalid domain"; exit 1; }
+# nginx master writes; the app's group can only read this dedicated, query-free log.
+SECURITY_LOG=/var/log/aegis-security/events.log
+sudo install -d -m 750 -o root -g "$(id -gn)" /var/log/aegis-security
+sudo touch "$SECURITY_LOG"
+sudo chown "root:$(id -gn)" "$SECURITY_LOG"
+sudo chmod 640 "$SECURITY_LOG"
 CONF=/etc/nginx/sites-available/aegis-ai-study.conf
 LIVE="/etc/letsencrypt/live/${DOMAIN}"
 
@@ -23,6 +31,7 @@ if exists "${LIVE}/fullchain.pem" && exists "${LIVE}/privkey.pem"; then HAS_CERT
 common_server() {
   cat <<NGINX
     server_tokens off;
+    access_log ${SECURITY_LOG} aegis_security buffer=32k flush=5s if=\$aegis_security_loggable;
     client_max_body_size 10m;            # 과제 첨부(합계 9MB) — next.config.ts의 bodySizeLimit과 맞춤
     client_header_timeout 15s;
     client_body_timeout 30s;
@@ -39,7 +48,7 @@ common_server() {
     proxy_set_header Host \$host;
     proxy_set_header X-Forwarded-Host \$host;
     proxy_set_header X-Real-IP \$remote_addr;
-    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-For \$remote_addr;
     proxy_set_header X-Forwarded-Proto \$scheme;
     proxy_set_header Upgrade \$http_upgrade;
     proxy_set_header Connection \$aegis_connection_upgrade;
@@ -75,6 +84,13 @@ NGINX
 render() {
   cat <<NGINX
 # 이 파일은 배포(scripts/deploy/nginx-site.sh)가 매번 새로 만든다. 직접 고치지 말 것.
+# Do not log request_uri, args, cookies, referrers or OAuth codes.
+log_format aegis_security escape=json '{"at":"\$time_iso8601","ip":"\$remote_addr","method":"\$request_method","path":"\$uri","status":\$status}';
+map \$status \$aegis_security_loggable {
+    ~^[45] 1;
+    default 0;
+}
+
 upstream aegis_app {
     server 127.0.0.1:${PORT};
     keepalive 16;

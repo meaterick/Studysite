@@ -1,0 +1,26 @@
+name: Security and build checks
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run test:security
+      - run: npm run lint
+      - run: npm run validate:content
+      - run: npm run build
+      # The unpatched braces advisory is confined to the development lint toolchain.
+      - run: npm audit --omit=dev --audit-level=low

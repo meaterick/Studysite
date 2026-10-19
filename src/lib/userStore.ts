@@ -86,8 +86,8 @@ function resolveRole(email: string, isFirstUser: boolean): Role {
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
   if (adminAllowlist.includes(email)) return "admin";
-  // 최초 가입자(=사이트를 처음 배포/방문한 운영자 본인)를 관리자로 지정합니다.
-  if (isFirstUser) return "admin";
+  // Public deployments must never grant admin to the first anonymous visitor.
+  if (isFirstUser && process.env.NODE_ENV !== "production") return "admin";
   return "member";
 }
 
