@@ -35,7 +35,7 @@ export default async function OperatorHome() {
         }
       />
       <Link href="/operator/security" className={`callout mt-6 block ${security.high > 0 ? "callout-warn" : "callout-good"}`}>
-        보안 기록 · 최근 24시간 높은 위험 신호 {security.high}건 · 요청 한도 초과 {security.limited}건 → 확인하기
+        보안 센터 · 최근 24시간 높은 위험 신호 {security.high}건 · 요청 한도 초과 {security.limited}건 → 확인하기
       </Link>
       {pending > 0 ? (
         <NextStep

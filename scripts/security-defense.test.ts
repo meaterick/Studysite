@@ -10,7 +10,7 @@ test("IP defense and detection", async (t) => {
   Object.assign(process.env, { DATA_DIR: dir, SESSION_SECRET: "a-test-secret-with-more-than-32-characters", PUBLIC_ORIGIN: "https://study.example", NODE_ENV: "production", TRUST_PROXY: "1", ADMIN_EMAILS: "owner@example.com" });
   const { all, get, run, tx } = await import("../src/lib/db");
   const { normalizeIp, isBannableIp } = await import("../src/lib/ipAddress");
-  const { activeIpRule, saveIpRule, removeIpRule, setAutoBanEnabled, MAX_IP_RULES, pruneIpDefense, listIpRules } = await import("../src/lib/ipRules");
+  const { activeIpRule, saveIpRule, removeIpRule, setAutoBanEnabled, MAX_IP_RULES, pruneIpDefense, listIpRules, ipRuleHistory } = await import("../src/lib/ipRules");
   const { applySecurityChange } = await import("../src/lib/securityManagement");
   const { recordSecurityEvent, securitySummary } = await import("../src/lib/securityEvents");
   const { observeSecuritySignal } = await import("../src/lib/securityDetection");
@@ -85,6 +85,20 @@ test("IP defense and detection", async (t) => {
     assert.equal((await proxy(req(ip))).status, 200);
     pruneIpDefense();
     assert.equal(get("SELECT 1 FROM security_ip_rules WHERE ip = ?", ip), undefined);
+  });
+
+  await t.test("rule history preserves replacements, removals and automatic expiry with independent pagination", () => {
+    const history = ipRuleHistory("203.0.113.9", 1);
+    assert.ok(history.entries.some((r) => r.action === "saved" && r.mode === "deny" && r.actor_id === admin.id));
+    assert.ok(history.entries.some((r) => r.action === "saved" && r.mode === "allow"));
+    assert.ok(history.entries.some((r) => r.action === "removed" && r.actor_id === admin.id));
+    assert.equal(history.entries.filter((r) => r.action === "expired").length, 1);
+    pruneIpDefense();
+    assert.equal(ipRuleHistory("203.0.113.9", 1).entries.filter((r) => r.action === "expired").length, 1);
+    assert.equal(ipRuleHistory("203.0.113.99", 1).total, 0);
+    assert.equal(ipRuleHistory("203.0.113.9", 9999).page, 1);
+    const { total } = ipRuleHistory("", 1);
+    assert.ok(total >= history.total);
   });
 
   await t.test("an existing chat stream stops sending immediately when its IP is banned", async () => {

@@ -19,6 +19,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:security
+      - run: python3 scripts/security-inventory.test.py
       - run: npm run lint
       - run: npm run validate:content
       - run: npm run build
