@@ -15,7 +15,7 @@ test("security regression", async (t) => {
   const { signingKey, configuredOrigin } = await import("../src/lib/securityConfig");
   const { encryptSession, decryptSession } = await import("../src/lib/session");
   const { SignJWT } = await import("jose");
-  const { all, get, run, tx } = await import("../src/lib/db");
+  const { all, get, run, tx, SCHEMA_VERSION } = await import("../src/lib/db");
   const { findOrCreateGoogleUser } = await import("../src/lib/userStore");
   const { recordSecurityEvent, securityRequest, securityFilters, querySecurityEvents, pruneSecurityEvents } = await import("../src/lib/securityEvents");
   const { isProbePath, logPath } = await import("../src/lib/securityPolicy");
@@ -113,7 +113,7 @@ test("security regression", async (t) => {
   });
 
   await t.test("retention, migration and storage cap work with existing schema data", () => {
-    assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM schema_migrations")?.n, 2);
+    assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM schema_migrations")?.n, SCHEMA_VERSION);
     tx(() => {
       const old = new Date(Date.now() - 31 * 86400_000).toISOString();
       run("INSERT INTO security_events (bucket, first_at, last_at, kind, severity) VALUES (?, ?, ?, 'probe', 'high')", old, old, old);

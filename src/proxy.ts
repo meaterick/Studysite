@@ -1,3 +1,4 @@
+import { enforceIpBan, isVerifiedAdminRequest } from "@/lib/ipDefense";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decryptSession, SESSION_COOKIE } from "@/lib/session";
@@ -10,9 +11,11 @@ import { publicOrigin } from "@/lib/publicOrigin";
 // 피해야 합니다). 실제 권한 확인은 각 페이지/서버 액션에서 다시 한 번
 // `requireUser`/`requireAdmin`으로 수행합니다 — Proxy는 1차 방어선일 뿐입니다.
 export async function proxy(req: NextRequest) {
+  const denied = await enforceIpBan(req);
+  if (denied) return denied;
   const { pathname } = req.nextUrl;
   if (isProbePath(pathname)) {
-    recordSecurityEvent("probe", { ...securityRequest(req), status: 404 });
+    recordSecurityEvent("probe", { ...securityRequest(req), status: 404, skipDetection: await isVerifiedAdminRequest(req) });
     return new NextResponse(null, { status: 404 });
   }
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
@@ -22,6 +25,8 @@ export async function proxy(req: NextRequest) {
       return new NextResponse(null, { status: 403 });
     }
   }
+  // Assets need the IP gate, but not per-request JWT checks or auth routing.
+  if (pathname.startsWith("/_next/") || pathname.startsWith("/vendor/") || ["/favicon.ico", "/apple-icon.png", "/icon.svg", "/pyodide-worker.js"].includes(pathname)) return NextResponse.next();
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = await decryptSession(token);
   if (token && !session) recordSecurityEvent("invalid_session", securityRequest(req));
@@ -71,6 +76,6 @@ function isLearningArea(pathname: string): boolean {
 }
 
 export const config = {
-  // Observe API and probe paths too; static assets stay on the fast path.
-  matcher: ["/((?!_next/static|_next/image|vendor/|favicon.ico|apple-icon.png|icon.svg|pyodide-worker.js).*)"],
+  // IP bans also apply to static files. Their post-gate auth path above stays inexpensive.
+  matcher: ["/:path*"],
 };

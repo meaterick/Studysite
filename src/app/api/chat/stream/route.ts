@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isBlockedIp } from "@/lib/ipDefense";
 import { apiUser } from "@/lib/apiAuth";
 import { recordSecurityEvent, securityRequest } from "@/lib/securityEvents";
 import { findUserById } from "@/lib/userStore";
@@ -68,6 +69,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "too_many_connections" }, { status: 429 });
   }
 
+  const streamIp = securityRequest(request).ip ?? "";
   const encoder = new TextEncoder();
   let cleanup = () => {};
   const stream = new ReadableStream<Uint8Array>({
@@ -75,6 +77,11 @@ export async function GET(request: NextRequest) {
       let closed = false;
       const send = (chunk: string) => {
         if (closed) return;
+        if (isBlockedIp(streamIp, user.id)) {
+          recordSecurityEvent("ip_blocked", { ip: streamIp, userId: user.id, method: "GET", path: "/ip-blocked", status: 403 });
+          cleanup();
+          return;
+        }
         try {
           controller.enqueue(encoder.encode(chunk));
         } catch {

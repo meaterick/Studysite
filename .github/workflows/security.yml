@@ -22,5 +22,11 @@ jobs:
       - run: npm run lint
       - run: npm run validate:content
       - run: npm run build
+      - name: Assemble standalone for HTTP checks
+        run: |
+          mkdir -p .next/standalone/public .next/standalone/.next/static
+          cp -r public/. .next/standalone/public/
+          cp -r .next/static/. .next/standalone/.next/static/
+      - run: npm run test:security:http
       # The unpatched braces advisory is confined to the development lint toolchain.
       - run: npm audit --omit=dev --audit-level=low

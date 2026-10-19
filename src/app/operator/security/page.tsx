@@ -1,8 +1,12 @@
+import { headers } from "next/headers";
+import SecurityControls from "@/components/security/SecurityControls";
+import { activeIpRule, autoBanEnabled, ipEnforcementEnabled, listIpRules } from "@/lib/ipRules";
+import { edgeMonitorStatus } from "@/lib/securityEdgeMonitor";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/dal";
 import { formatDateTime } from "@/lib/datetime";
-import { querySecurityEvents, securityFilters, securitySummary } from "@/lib/securityEvents";
+import { querySecurityEvents, securityFilters, securitySummary, securityRequest } from "@/lib/securityEvents";
 import { recentEdgeEvents } from "@/lib/securityEdgeLog";
 import { SECURITY_KINDS, SEVERITY_LABEL } from "@/lib/securityPolicy";
 
@@ -15,10 +19,15 @@ export default async function OperatorSecurityPage({ searchParams }: { searchPar
   const { events, total, page, pages } = querySecurityEvents(filters);
   const summary = securitySummary();
   const edge = recentEdgeEvents();
+  const monitor = edgeMonitorStatus();
+  const ownIp = securityRequest({ headers: await headers() }).ip ?? "";
+  const ipRules = listIpRules();
+  const autoBan = autoBanEnabled();
+  const enforcement = ipEnforcementEnabled();
   const href = (p: number) => `/operator/security?${new URLSearchParams({ hours: String(filters.hours), kind: filters.kind, severity: filters.severity, ip: filters.ip, page: String(p) })}`;
   const inputClass = "rounded-lg border border-[var(--border-hairline)] bg-[var(--surface-card)] px-3 py-2 text-sm text-ink";
   const stats = [
-    { label: "전체 이벤트", value: summary.total }, { label: "높은 위험 신호", value: summary.high },
+    { label: "반복 탐지 경고", value: summary.detections }, { label: "차단한 요청", value: summary.blocked },
     { label: "요청 한도 초과", value: summary.limited }, { label: "주의·높음 IP 수", value: summary.ips },
   ];
 
@@ -36,6 +45,8 @@ export default async function OperatorSecurityPage({ searchParams }: { searchPar
       </dl>
       {summary.topIps.length > 0 && <div className="mb-8 flex flex-wrap items-center gap-3 text-sm"><span className="text-ink-muted">반복 신호가 많은 IP</span>{summary.topIps.map((ip) => <Link key={ip.ip} href={`/operator/security?ip=${encodeURIComponent(ip.ip)}`} prefetch={false} className="btn btn-ghost btn-sm font-mono">{ip.ip} · {ip.n}건</Link>)}</div>}
 
+      <SecurityControls rules={ipRules} ownIp={ownIp} initialIp={filters.ip} autoBan={autoBan} enforcement={enforcement} />
+
       <section aria-labelledby="app-events">
         <h2 id="app-events" className="section-title mb-4">앱 보안 이벤트</h2>
         <form className="mb-5 flex flex-wrap items-end gap-3" method="get">
@@ -51,10 +62,10 @@ export default async function OperatorSecurityPage({ searchParams }: { searchPar
             <tbody>{events.length === 0 ? <tr><td colSpan={6} className="text-ink-muted">조건에 맞는 보안 기록이 없습니다. 배포 이전의 요청은 소급 수집되지 않습니다.</td></tr> : events.map((e) => <tr key={e.id}>
               <td className="whitespace-nowrap text-xs tabular-nums text-ink-secondary" title={`첫 발생: ${formatDateTime(e.first_at)}`}>{formatDateTime(e.last_at)}</td>
               <td className="min-w-36 text-sm"><span className={e.severity === "high" ? "text-[var(--status-critical)]" : "text-ink-muted"}>{SEVERITY_LABEL[e.severity]}</span><br />{SECURITY_KINDS[e.kind]?.label ?? e.kind}</td>
-              <td className="max-w-56 break-all font-mono text-xs text-ink-secondary">{e.ip || "IP 없음"}{e.user_id && <div className="mt-1 text-ink-muted">{e.user_id}</div>}</td>
+              <td className="max-w-56 break-all font-mono text-xs text-ink-secondary">{e.ip ? <><Link href={`/operator/security?ip=${encodeURIComponent(e.ip)}#ip-rules`} prefetch={false} className="underline">{e.ip}</Link><div className="mt-1 text-ink-muted">{activeIpRule(e.ip)?.mode === "deny" ? "차단 중" : activeIpRule(e.ip)?.mode === "allow" ? "허용 중" : "규칙 없음"}</div></> : "IP 없음"}{e.user_id && <div className="mt-1 text-ink-muted">{e.user_id}</div>}</td>
               <td className="max-w-64 break-all font-mono text-xs text-ink-secondary">{e.method} {e.path || "서버 액션"}</td>
               <td className="whitespace-nowrap text-sm tabular-nums">{e.count.toLocaleString()}회<br /><span className="text-xs text-ink-muted">{e.status || "—"}</span></td>
-              <td className="min-w-56 text-xs leading-relaxed text-ink-secondary">{SECURITY_KINDS[e.kind]?.advice}</td>
+              <td className="min-w-56 text-xs leading-relaxed text-ink-secondary">{SECURITY_KINDS[e.kind]?.advice}{e.detail && <p className="mt-2 break-words text-ink-muted">{e.detail}</p>}</td>
             </tr>)}</tbody>
           </table>
         </div>
@@ -65,6 +76,7 @@ export default async function OperatorSecurityPage({ searchParams }: { searchPar
 
       <section className="mt-12" aria-labelledby="edge-events">
         <h2 id="edge-events" className="section-title mb-3">nginx 요청 기록</h2>
+        <p className="mb-3 text-xs text-ink-muted">nginx 탐지 수집기: {monitor ? `마지막 확인 ${formatDateTime(monitor.checkedAt)} · 연결 후 해석 ${monitor.processed.toLocaleString()}건` : "연결 대기 중"}. 10초마다 새 기록을 읽어 반복 404·429를 경고합니다. 마지막 확인이 오래되면 수집 경로·읽기 권한을 확인해 주십시오.</p>
         <p className="mb-4 text-sm leading-relaxed text-ink-secondary">앱에 도달하기 전에 nginx가 거절한 요청도 포함합니다. 4xx·5xx 응답만 기록하며, 현재 로그 파일의 마지막 512KB 중 최근 100건을 표시합니다. 위 앱 통계와 중복될 수 있어 합산하지 않습니다. 최대 약 5초 뒤 반영되며 파일 회전 후에는 현재 파일만 표시합니다.</p>
         {edge.state !== "ready" ? <p role="status" className="callout callout-warn">{edge.state === "disabled" ? "nginx 로그 연결이 설정되지 않았습니다. 운영 배포는 로그 경로와 읽기 권한을 자동 설정합니다." : "nginx 로그를 읽지 못했습니다. 운영 배포의 로그 파일과 앱 읽기 권한을 확인해 주십시오."}</p> : <>
           {edge.truncated && <p className="mb-3 text-xs text-ink-muted">표시 범위를 넘는 이전 기록이 있습니다. 이 목록은 전체 기간 통계가 아닙니다.</p>}

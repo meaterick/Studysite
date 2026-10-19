@@ -8,6 +8,14 @@ export const SECURITY_KINDS = {
   rate_limited: { label: "요청 한도 초과", severity: "warning", advice: "반복 요청이나 자동화가 의심됩니다. 공유 IP의 정상 이용도 확인합니다." },
   probe: { label: "민감 경로 탐색", severity: "high", advice: "환경 파일·Git·관리 도구 탐색입니다. 해당 경로는 차단됩니다." },
   csrf_rejected: { label: "외부 출처 요청 차단", severity: "high", advice: "다른 사이트에서 보낸 변경 요청입니다. 출처 설정도 확인합니다." },
+  scan_detected: { label: "반복 경로 탐색 감지", severity: "high", advice: "여러 경로를 반복 탐색했습니다. 탐지 근거와 IP 차단 상태를 확인합니다." },
+  auth_attack_detected: { label: "반복 인증·권한 실패 감지", severity: "warning", advice: "만료·취소·공유 IP의 정상 이용도 확인한 뒤 수동 차단을 판단합니다." },
+  traffic_detected: { label: "반복 요청 제한 감지", severity: "warning", advice: "nginx 제한에 반복 도달했습니다. 정상 이용과 자동화 여부를 확인합니다." },
+  ip_banned: { label: "IP 차단 설정", severity: "info", advice: "운영자 또는 탐지 정책이 IP를 차단했습니다. 사유와 만료 시각을 확인합니다." },
+  ip_allowed: { label: "IP 허용 설정", severity: "info", advice: "허용 목록에 있는 IP는 자동·수동 차단 대신 기록만 남깁니다." },
+  ip_rule_removed: { label: "IP 규칙 해제", severity: "info", advice: "운영자가 차단 또는 허용 규칙을 해제했습니다." },
+  ip_blocked: { label: "차단 IP 요청 거절", severity: "info", advice: "활성 IP 차단 규칙으로 요청을 거절했습니다. 만료 시간은 연장되지 않습니다." },
+  security_policy_changed: { label: "자동 차단 정책 변경", severity: "info", advice: "자동 차단 설정을 변경했습니다. 이미 적용된 차단은 해제하거나 만료를 기다립니다." },
   backup_download: { label: "운영자 백업 다운로드", severity: "info", advice: "민감한 전체 DB 다운로드입니다. 승인된 운영자 작업인지 확인합니다." },
 } as const;
 export type SecurityKind = keyof typeof SECURITY_KINDS;

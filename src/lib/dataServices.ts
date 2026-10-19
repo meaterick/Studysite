@@ -1,6 +1,8 @@
 import "server-only";
 import { validateSecurityConfig } from "./securityConfig";
 import { pruneSecurityEvents } from "./securityEvents";
+import { pruneIpDefense } from "./ipRules";
+import { startSecurityEdgeMonitor } from "./securityEdgeMonitor";
 import { ensureDb } from "./db";
 import { hasLegacyFiles, importLegacyJson, startLegacyCatchUp } from "./legacyImport";
 import { startBackupSchedule } from "./backup";
@@ -15,8 +17,10 @@ export function startDataServices(): void {
   validateSecurityConfig();
   ensureDb();
   pruneSecurityEvents();
+  pruneIpDefense();
+  startSecurityEdgeMonitor();
   const pruneTimer = setInterval(() => {
-    try { pruneSecurityEvents(); } catch { console.error("[security] retention cleanup unavailable"); }
+    try { pruneSecurityEvents(); pruneIpDefense(); } catch { console.error("[security] retention cleanup unavailable"); }
   }, 60 * 60_000);
   pruneTimer.unref();
   if (hasLegacyFiles()) {
