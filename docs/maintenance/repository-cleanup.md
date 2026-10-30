@@ -33,6 +33,8 @@
 
 기존 npm 명령 이름은 유지하고 내부 경로·import·Python 수집기 경로·CI 명령을 함께 바꿨습니다. `docs:generate`, `docs:check`, `typecheck`, `test:security:python` 명령을 추가했습니다. Monaco 복사 스크립트는 `fileURLToPath`를 사용해 Windows 드라이브·공백 경로를 해석하도록 수정했습니다. 실습 검증은 `PYTHON` 실행 파일 지정과 UTF-8 입출력을 지원하고, Python 의존성 목록을 `scripts/content/requirements.txt`에 모았습니다. Linux 수집기의 오프라인 검사는 비루트 UID를 모의해 Windows에서도 실행할 수 있게 했습니다.
 
+전체 실습 검증 중 발견한 7주차 RAG 예제의 문서 이름 추출도 `Path(path).stem`으로 수정했습니다. `/`로만 나누던 코드가 Windows CPython에서 `course\\week7`을 문서 이름으로 만들던 문제이며, 브라우저의 `/course/week7.md`와 로컬 환경 모두에서 같은 `week7`을 얻습니다. 과제·셀 ID와 학습 범위는 유지합니다.
+
 ## 삭제와 보존 근거
 
 - `src/components/TierRings.tsx`: import와 호출이 없는 이전 진행률 UI를 제거했습니다.

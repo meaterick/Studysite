@@ -29,6 +29,7 @@ const week7Assignment: AssignmentSpec = {
           id: "rag-code",
           label: "문서 로드·청킹·색인·답변",
           starter: `import re, glob
+from pathlib import Path
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -38,7 +39,7 @@ def load_docs():
         text = open(path, encoding="utf-8").read()
         text = re.sub(r"\`\`\`[\\s\\S]*?\`\`\`", " ", text)   # 코드 블록은 색인에서 제외
         text = re.sub(r"\\[\\[[^\\]]*\\]\\]|\\{#[^}]*\\}|^:::.*$", " ", text, flags=re.M)  # 그림·실습 표시와 상자 기호 제거
-        docs[path.split("/")[-1].removesuffix(".md")] = re.sub(r"\\s+", " ", text)
+        docs[Path(path).stem] = re.sub(r"\\s+", " ", text)
     return docs
 
 def chunk(text, size):
