@@ -35,6 +35,8 @@
 
 전체 실습 검증 중 발견한 7주차 RAG 예제의 문서 이름 추출도 `Path(path).stem`으로 수정했습니다. `/`로만 나누던 코드가 Windows CPython에서 `course\\week7`을 문서 이름으로 만들던 문제이며, 브라우저의 `/course/week7.md`와 로컬 환경 모두에서 같은 `week7`을 얻습니다. 과제·셀 ID와 학습 범위는 유지합니다.
 
+CI의 운영 의존성 감사에서 기존 Next.js 16.3.8이 보안 권고의 영향 범위에 들어가는 것을 확인해 `next`와 `eslint-config-next`를 16.4.3으로 맞췄습니다. 근거는 [이미지 최적화](https://github.com/advisories/GHSA-2464-fhr4-w9xw), [Server Actions](https://github.com/advisories/GHSA-p3m5-59mp-jv5r), [use cache](https://github.com/advisories/GHSA-673q-mjm6-r5xr) 권고입니다. 버전과 전이 의존성은 `package-lock.json`에 고정합니다.
+
 ## 삭제와 보존 근거
 
 - `src/components/TierRings.tsx`: import와 호출이 없는 이전 진행률 UI를 제거했습니다.

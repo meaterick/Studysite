@@ -31,5 +31,5 @@ jobs:
           cp -r public/. .next/standalone/public/
           cp -r .next/static/. .next/standalone/.next/static/
       - run: npm run test:security:http
-      # The unpatched braces advisory is confined to the development lint toolchain.
+      # Audit dependencies shipped with the production server.
       - run: npm audit --omit=dev --audit-level=low
