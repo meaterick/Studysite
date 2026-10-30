@@ -4,8 +4,9 @@
 // `npm run dev`/`npm run build` 직전에 자동으로 실행된다(package.json의 predev/prebuild).
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = path.dirname(path.dirname(new URL(import.meta.url).pathname));
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const src = path.join(root, "node_modules", "monaco-editor", "min", "vs");
 const dest = path.join(root, "public", "vendor", "monaco", "vs");
 const version = JSON.parse(fs.readFileSync(path.join(root, "node_modules", "monaco-editor", "package.json"), "utf8")).version;

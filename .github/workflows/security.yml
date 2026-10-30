@@ -19,10 +19,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:security
-      - run: python3 scripts/security-inventory.test.py
-      - run: python3 scripts/security-collector.test.py
+      - run: python3 tests/security/security-inventory.test.py
+      - run: python3 tests/security/security-collector.test.py
       - run: npm run lint
       - run: npm run validate:content
+      - run: npm run docs:check
       - run: npm run build
       - name: Assemble standalone for HTTP checks
         run: |
@@ -30,5 +31,5 @@ jobs:
           cp -r public/. .next/standalone/public/
           cp -r .next/static/. .next/standalone/.next/static/
       - run: npm run test:security:http
-      # The unpatched braces advisory is confined to the development lint toolchain.
+      # Audit dependencies shipped with the production server.
       - run: npm audit --omit=dev --audit-level=low
