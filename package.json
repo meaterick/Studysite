@@ -10,11 +10,15 @@
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
     "lint": "eslint",
-    "validate:content": "tsx scripts/validate-content.ts",
-    "check:labs": "tsx scripts/check-labs.ts",
-    "test:security": "node --conditions=react-server --import tsx --test scripts/security.test.ts scripts/security-defense.test.ts scripts/security-monitoring.test.ts scripts/security-runtime.test.ts",
-    "bench:security": "node --conditions=react-server --import tsx scripts/security-benchmark.mjs",
-    "test:security:http": "node scripts/security-http-smoke.mjs"
+    "typecheck": "next typegen && tsc --noEmit",
+    "validate:content": "tsx scripts/content/validate.ts",
+    "check:labs": "tsx scripts/content/check-labs.ts",
+    "test:security": "node --conditions=react-server --import tsx --test tests/security/security.test.ts tests/security/security-defense.test.ts tests/security/security-monitoring.test.ts tests/security/security-runtime.test.ts",
+    "bench:security": "node --conditions=react-server --import tsx scripts/security/benchmark.mjs",
+    "test:security:http": "node scripts/security/http-smoke.mjs",
+    "test:security:python": "python tests/security/security-inventory.test.py && python tests/security/security-collector.test.py",
+    "docs:generate": "tsx scripts/docs/generate-curriculum.ts",
+    "docs:check": "tsx scripts/docs/generate-curriculum.ts --check && tsx scripts/docs/check-links.ts"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",

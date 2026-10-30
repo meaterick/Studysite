@@ -1,7 +1,7 @@
 // 코딩 실습 자동 채점과 과제 자동 테스트에 쓰는 Python 프로그램을 만든다.
 // 만든 프로그램은 기존 Pyodide 워커(public/pyodide-worker.js)에서 runPython으로 실행하므로
 // 학습자 코드는 브라우저 밖으로 나가지 않는다. 이 파일은 React·Node 의존성이 없어
-// 화면 컴포넌트와 로컬 검증 스크립트(scripts/check-labs.ts)가 함께 쓴다.
+// 화면 컴포넌트와 로컬 검증 스크립트(scripts/content/check-labs.ts)가 함께 쓴다.
 
 export interface LabTestResult {
   name: string;

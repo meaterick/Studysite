@@ -13,7 +13,7 @@ name: Deploy to OCI
 # systemd service from the moment it's installed, has near-zero RAM
 # overhead, and certbot's official nginx plugin handles obtaining and
 # renewing the certificate end to end. There is nothing to set up by hand
-# on the server — the one-time setup is a GitHub secret (see README).
+# on the server — the one-time setup is a GitHub secret (see docs/operations/deployment.md).
 on:
   push:
     branches: [main]
@@ -53,6 +53,9 @@ jobs:
 
       - name: Validate content (quiz/answers 정합성, LaTeX, 이미지)
         run: npm run validate:content
+
+      - name: Verify curriculum documentation and local links
+        run: npm run docs:check
 
       - name: Security regression checks
         run: npm run test:security
