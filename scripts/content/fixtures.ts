@@ -3,6 +3,59 @@
  * 시작 코드의 TODO를 채운 "모범 답안"이므로 화면에는 쓰지 않는다.
  */
 export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string][]>> = {
+  "python-records-report": {
+    "load-code": [
+      [
+        "            pass  # TODO: 열 개수 → 정수 변환 → 점수 범위 순서로 검사하고, 문제가 있으면 (line_no, 사유)를 problems에 추가합니다.",
+        `            if len(row) != 3:
+                problems.append((line_no, "열 개수 오류"))
+                continue
+            name, subject, raw = (c.strip() for c in row)
+            try:
+                score = int(raw)
+            except ValueError:
+                problems.append((line_no, "점수가 정수가 아님"))
+                continue
+            if not 0 <= score <= 100:
+                problems.append((line_no, "점수 범위 밖"))
+                continue
+            records.append({"name": name, "subject": subject, "score": score})`,
+      ],
+    ],
+    "summary-code": [
+      ["    # TODO: 과목별 점수 리스트를 groups에 모읍니다.", `    for r in records:
+        groups.setdefault(r["subject"], []).append(r["score"])`],
+      ["    return {}  # TODO: groups로 과목별 요약 딕셔너리를 만듭니다.", `    return {s: {"count": len(v), "mean": round(sum(v) / len(v), 2), "max": max(v)} for s, v in groups.items()}`],
+      ["    return {}  # TODO: 학생별 평균을 계산합니다.", `    groups = {}
+    for r in records:
+        groups.setdefault(r["name"], []).append(r["score"])
+    return {n: round(sum(v) / len(v), 2) for n, v in groups.items()}`],
+      ["    return []  # TODO: sorted(means.items(), key=...)로 정렬해 이름만 고릅니다.", `    return [name for name, _ in sorted(means.items(), key=lambda kv: (-kv[1], kv[0]))[:n]]`],
+    ],
+    "class-code": [
+      ["        # TODO: 점수가 int가 아니거나 0~100 밖이면 ValueError를 일으킵니다.", `        if not isinstance(score, int) or isinstance(score, bool) or not 0 <= score <= 100:
+            raise ValueError(f"잘못된 점수: {score!r}")`],
+      ["        # TODO: by_name과 by_subject에 점수를 추가하고 count를 1 늘립니다.", `        self.by_name.setdefault(record["name"], []).append(score)
+        self.by_subject.setdefault(record["subject"], []).append(score)
+        self.count += 1`],
+      ["        return []  # TODO: 복사본을 돌려줍니다.", "        return list(self.by_name.get(name, []))"],
+      ["        return 0.0  # TODO: by_subject에서 평균을 계산합니다.", `        scores = self.by_subject[subject]
+        return sum(scores) / len(scores)`],
+    ],
+    "report-code": [
+      ['        "sample": [],  # TODO: random.Random(seed).sample(sorted(means), 3)으로 학생 3명을 고릅니다.', '        "sample": random.Random(seed).sample(sorted(means), 3),'],
+      ["    pass  # TODO: report를 JSON 파일로 저장합니다.", `    with open(path, "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)`],
+    ],
+    "missing-code": [
+      ["    return {}  # TODO: 학생마다 subjects 중 taken에 없는 과목을 순서대로 모읍니다(빠진 것이 있는 학생만).", `    result = {}
+    for name, got in taken.items():
+        lack = [s for s in subjects if s not in got]
+        if lack:
+            result[name] = lack
+    return result`],
+    ],
+  },
   "math-gd-bayes": {
     "gd-code": [
       ["dw = 0.0  # TODO: ∂L/∂w", "dw = np.mean(2 * err * x)"],

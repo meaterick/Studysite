@@ -6,59 +6,39 @@ export default defineLesson({
   title: "클래스와 객체",
   tier: "core",
   concepts: ["classes-objects"],
-  goal: "클래스로 상태와 동작을 묶고 `self`의 의미를 설명하며, `raise`·`try`/`except`로 오류를 일으키고 다룰 수 있다.",
-  why: "",
+  goal: "클래스로 상태(속성)와 동작(메서드)을 묶고 `self`와 `__init__`의 역할을 설명하며, fit·predict 형태의 모델 클래스를 작성한다.",
+  why: "scikit-learn의 모델은 `model.fit(X, y)`로 학습하고 `model.predict(X)`로 예측하는 클래스이고, PyTorch의 신경망도 클래스로 정의한다([[lesson:pytorch]]). [[lesson:micrograd]]에서 직접 만드는 자동미분 엔진의 `Value`도 값과 기울기를 함께 담은 클래스다.",
   body: md`
-핵심 단계의 문법(변수·제어문·함수·자료구조)만으로도 이번 주 실습과 과제는 모두 풀 수 있다. 이 단계는 실전 코드에서 자주 만나는 두 문법, **클래스**와 **예외 처리**를 미리 익힌다. 3주차에 직접 만드는 자동미분 엔진의 \`Value\` 클래스, 2주차부터 쓰는 scikit-learn의 \`model.fit()\`·\`model.predict()\`가 모두 이 문법 위에 있다.
+### 클래스와 인스턴스
 
-### 클래스와 객체
+**클래스(class)**는 새로운 자료형을 정의한다. 그 자료형의 값이 어떤 데이터를 가지는지(**속성**, attribute)와 어떤 동작을 하는지(**메서드**, method)를 함께 정한다. 클래스로 만든 값 하나하나를 **인스턴스(instance)**라고 한다. \`list\`도 클래스이고, \`[1, 2]\`는 \`list\`의 인스턴스이며, \`append\`는 \`list\`의 메서드다. 같은 클래스의 인스턴스는 같은 메서드를 쓰지만 속성 값은 각자 가진다.
 
-클래스(class)는 서로 관련된 데이터(속성, attribute)와 그 데이터를 다루는 함수(메서드, method)를 하나의 틀(설계도)로 묶어놓은 것이고, 그 틀로 실제로 찍어낸 결과물 하나하나를 객체(object) 또는 인스턴스(instance)라 부른다. 예를 들어 "붕어빵 틀"이 클래스라면, 그 틀로 구워낸 붕어빵 하나하나가 객체다. 같은 틀에서 나왔지만 속 재료(팥이냐 슈크림이냐, 즉 속성 값)는 저마다 다를 수 있다. 아래 코드는 3주차에 배울 신경망의 가장 작은 단위인 퍼셉트론 하나를 클래스로 표현한 예다.
+아래는 입력에 가중치를 곱하고 편향을 더하는 계산을 클래스로 정의한 예다. 신경망을 이루는 가장 작은 계산 단위가 이 형태다([[lesson:perceptron-mlp]]).
 
 \`\`\`python
 class Perceptron:
-    def __init__(self, w, b):   # 객체가 만들어질 때 자동으로 한 번 호출되는 특별한 메서드(생성자)
-        self.w = w   # self는 "만들어지고 있는 객체 자기 자신"을 가리킨다
-        self.b = b   # self.w, self.b는 이 객체만의 속성(인스턴스 변수)이 된다
+    def __init__(self, w, b):    # 인스턴스를 만들 때 자동으로 호출되는 초기화 메서드
+        self.w = w               # self.w, self.b는 이 인스턴스만의 속성이다
+        self.b = b
 
     def predict(self, x):
         return self.w * x + self.b
 
-p = Perceptron(w=2, b=1)  # __init__(self, w=2, b=1)이 자동 호출되어 p.w=2, p.b=1로 설정된다
-print(p.predict(3))  # 2*3 + 1 = 7
+p = Perceptron(w=2, b=1)         # __init__(p, w=2, b=1)이 실행된다
+q = Perceptron(w=-1, b=0.5)
+print(p.predict(3), q.predict(3))   # 7 -2.5
+print(p.w, q.w)                     # 2 -1: 속성은 인스턴스마다 따로 있다
 \`\`\`
 
-\`self\`는 항상 메서드의 첫 번째 매개변수로 적어주며, "이 메서드를 호출한 객체 자신"을 가리킨다. \`p.predict(3)\`을 호출하면 파이썬이 자동으로 \`self\` 자리에 \`p\`를 넣어준다고 생각하면 된다. 같은 \`Perceptron\` 클래스로 \`w\`, \`b\` 값이 다른 객체를 몇 개든 더 만들 수 있고, 각 객체는 자신만의 \`w\`, \`b\`를 독립적으로 가진다.
+\`p.predict(3)\`을 호출하면 파이썬은 \`Perceptron.predict(p, 3)\`을 실행한다. 메서드의 첫 매개변수 \`self\`에는 **메서드를 호출한 인스턴스**가 들어간다. 그래서 \`self.w\`는 \`p\`로 호출하면 \`p.w\`, \`q\`로 호출하면 \`q.w\`다. \`self\`는 관례적인 이름이고, 메서드를 정의할 때는 항상 첫 매개변수로 적는다.
 
 [[diagram:class-objects]]
 
-### 예외 처리
+### 클래스가 필요한 경우
 
-프로그램을 실행하다 보면 0으로 나누기, 존재하지 않는 파일 열기처럼 실행 도중에 오류(예외, exception)가 발생해 프로그램 전체가 멈춰버리는 경우가 있다. \`try\` 블록 안의 코드를 실행하다가 오류가 발생하면, 프로그램이 그대로 멈추는 대신 \`except\` 블록으로 넘어가 미리 정해둔 대응을 수행한다. 이렇게 오류에 미리 대비해두는 것을 예외 처리(exception handling)라 부른다.
+입력을 출력으로 바꾸기만 하는 계산(평균, 코사인 유사도)은 함수로 두는 편이 간결하다. 클래스가 필요한 경우는 **상태와 그 상태를 바꾸는 동작이 항상 함께 다닐 때**다. 학습 중의 손실 기록은 "지금까지 몇 개를 봤고 평균이 얼마인가"라는 상태와 "새 값을 하나 반영한다"는 동작이 짝을 이룬다. 이것을 전역 변수와 함수로 나눠 두면 학습 손실과 검증 손실의 기록이 섞이기 쉽다. 클래스로 묶으면 독립된 기록기를 필요한 만큼 만들 수 있다.
 
-\`\`\`python
-def safe_divide(a, b):
-    try:
-        return a / b
-    except ZeroDivisionError:   # 0으로 나누려 할 때 파이썬이 발생시키는 예외의 이름
-        print("0으로 나눌 수 없습니다.")
-        return None
-
-print(safe_divide(10, 2))  # 5.0: 오류 없이 정상 실행
-print(safe_divide(10, 0))  # 경고 출력 후 None: 프로그램이 멈추지 않고 계속 진행된다
-\`\`\`
-
-\`ZeroDivisionError\`는 파이썬에 미리 정의된 여러 예외 종류 중 하나일 뿐이다(존재하지 않는 딕셔너리 키에 접근하면 \`KeyError\`, 리스트 범위를 벗어나면 \`IndexError\`가 발생하는 식이다). \`except\` 뒤에 예외 종류를 적어두면 그 종류의 오류만 잡아 처리하고, 다른 종류의 오류는 그대로 프로그램을 멈춘다.
-
-[[diagram:exception-flow]]
-
-### 언제 클래스로 묶는가
-
-함수만으로도 프로그램은 만들 수 있다. 클래스가 빛나는 것은 **값(상태)과 그 값을 다루는 동작이 항상 함께 다닐 때**다. 예를 들어 학습 중의 손실 기록은 "지금까지 몇 개를 봤는가, 평균이 얼마인가"라는 상태와 "새 값을 하나 더한다"는 동작이 짝을 이룬다. 이것을 전역 변수와 함수로 흩어 두면 다른 기록과 섞이기 쉽지만, 클래스로 묶으면 기록기를 몇 개든 독립적으로 만들 수 있다. 반대로 상태 없이 입력을 출력으로 바꾸기만 하는 계산(코사인 유사도 같은)은 함수로 두는 편이 간결하다. 예외는 "이 상황에서는 계산을 계속할 수 없다"는 신호를 호출한 쪽에 알리는 수단이다. 함수 안에서 \`raise ValueError("이유")\`로 예외를 일으키면, 호출한 쪽은 \`try\`/\`except\`로 그 신호를 받아 대응을 정할 수 있다.
-
-### 예제: 손실 기록기와 \`raise\`
-
-위의 두 문법을 한 예제로 묶어 보자. 학습 중 손실의 평균을 계속 갱신하는 기록기다. 값을 모두 저장하지 않고 **개수와 평균만** 들고 있다가, 새 값이 오면 $\text{새 평균} = \text{이전 평균} + \frac{\text{새 값} - \text{이전 평균}}{\text{개수}}$로 고친다. 값이 하나도 없는데 결과를 물으면 계산할 수 없으므로 \`raise\`로 예외를 일으킨다.
+아래 기록기는 값을 모두 저장하지 않고 **개수와 평균만** 유지한다. 새 값 $x$가 들어오면 $\bar x_{\text{새}} = \bar x_{\text{이전}} + \frac{x - \bar x_{\text{이전}}}{n}$으로 평균을 고친다. 값이 하나도 없을 때 결과를 물으면 계산할 수 없으므로 예외를 일으킨다([[lesson:errors-debugging]]).
 
 \`\`\`python
 class RunningMean:
@@ -69,11 +49,11 @@ class RunningMean:
 
     def add(self, x):
         self.count += 1
-        self.mean += (x - self.mean) / self.count   # 새 평균 = 이전 평균 + (새 값 - 이전 평균) / 개수
+        self.mean += (x - self.mean) / self.count
 
     def result(self):
         if self.count == 0:
-            raise ValueError("아직 값이 하나도 없습니다")   # 계산할 수 없는 상황을 호출한 쪽에 알린다
+            raise ValueError("아직 값이 하나도 없다")
         return self.mean
 
 train_loss = RunningMean()
@@ -81,16 +61,46 @@ valid_loss = RunningMean()        # 같은 클래스로 독립된 기록기를 �
 for x in [2, 4, 9]:
     train_loss.add(x)
 print(train_loss.result())        # (2 + 4 + 9) / 3 = 5.0
-
-try:
-    valid_loss.result()
-except ValueError as e:           # as e: 예외 객체를 e라는 이름으로 받아 메시지를 꺼낸다
-    print("처리한 오류:", e)
+print(valid_loss.count)           # 0: 다른 인스턴스의 상태는 그대로다
 \`\`\`
 
-\`train_loss\`와 \`valid_loss\`는 같은 클래스에서 나왔지만 서로의 \`count\`와 \`mean\`에 영향을 주지 않는다. \`except ValueError as e:\`의 \`e\`에는 \`raise\`할 때 넣은 메시지가 들어 있다. 적용과 복습의 코딩 실습에서 이 기록기를 평균과 분산을 함께 유지하도록 넓혀 본다.
-
 [[diagram:running-mean-trace]]
+
+### fit과 predict: 모델 클래스의 형태
+
+scikit-learn의 모든 모델은 같은 형태의 클래스다([[lesson:linear-regression]]). 하이퍼파라미터는 \`__init__\`에서 받고, \`fit(X, y)\`는 데이터에서 파라미터를 계산해 속성에 저장한 뒤 \`self\`를 돌려주며, \`predict(X)\`는 저장한 파라미터로 예측한다. 학습으로 정해지는 속성 이름은 끝에 밑줄을 붙이는 관례가 있다(\`coef_\`, \`mean_\`). 같은 형태를 따르면 모델을 바꿔도 학습·평가 코드를 고칠 필요가 없다.
+
+아래는 모든 입력에 대해 학습 데이터 정답의 평균을 예측하는 가장 단순한 모델이다. 복잡한 모델의 성능을 판단할 때 비교 기준으로 쓴다([[lesson:baselines]]).
+
+\`\`\`python
+class MeanRegressor:
+    """모든 입력에 학습 데이터 정답의 평균을 예측하는 기준 모델"""
+    def __init__(self, round_to=None):
+        self.round_to = round_to      # 하이퍼파라미터: 예측값을 반올림할 자릿수
+
+    def fit(self, X, y):
+        self.mean_ = sum(y) / len(y)  # 학습으로 정해지는 파라미터
+        return self                   # model.fit(...).predict(...)처럼 이어서 쓸 수 있다
+
+    def predict(self, X):
+        value = self.mean_ if self.round_to is None else round(self.mean_, self.round_to)
+        return [value for _ in X]
+
+    def __repr__(self):               # print(model)에 보일 문자열
+        return f"MeanRegressor(round_to={self.round_to})"
+
+model = MeanRegressor(round_to=1)
+print(model, model.fit([[1], [2], [3]], [10, 20, 33]).predict([[4], [5]]))   # [21.0, 21.0]
+\`\`\`
+
+\`__init__\`, \`__repr__\`처럼 앞뒤에 밑줄 두 개가 붙은 메서드는 파이썬이 정해진 상황에서 자동으로 호출하는 특수 메서드다. \`__repr__\`은 \`print()\`나 화면 출력에서 인스턴스를 어떻게 보여 줄지 정한다.
+
+:::warn 흔한 실수
+- **메서드 정의에서 \`self\`를 빠뜨린다.** \`def predict(x):\`로 쓰면 \`p.predict(3)\`이 인자 두 개(\`p\`, \`3\`)를 넘겨 \`TypeError\`가 난다.
+- **속성을 \`self.\` 없이 대입한다.** \`__init__\` 안에서 \`w = w\`라고 쓰면 지역 변수일 뿐 인스턴스에 저장되지 않는다.
+- **클래스 본문에 가변 객체를 두고 공유한다.** \`class A: items = []\`의 \`items\`는 모든 인스턴스가 함께 쓰는 클래스 속성이다. 인스턴스마다 따로 두려면 \`__init__\`에서 \`self.items = []\`로 만든다.
+- **fit하지 않은 모델로 predict한다.** \`mean_\` 같은 학습 속성이 없어 \`AttributeError\`가 난다.
+:::
 `,
   checks: [
     {
@@ -109,10 +119,15 @@ except ValueError as e:           # as e: 예외 객체를 e라는 이름으로 
     },
     {
       key: "c3",
-      question: "`try:` 블록에서 `ZeroDivisionError`가 발생했는데 `except KeyError:`만 있다면 어떻게 되는가?",
-      choices: ["예외가 잡히지 않고 프로그램이 멈춘다(호출한 쪽으로 전달된다)", "`except KeyError:` 블록이 실행된다", "오류를 무시하고 다음 줄을 실행한다", "`None`이 자동으로 반환된다"],
-      answer: 0,
-      explanation: "`except` 뒤에 적은 종류의 예외만 잡는다. 종류가 다르면 예외는 그대로 위로 전달되어, 아무도 잡지 않으면 프로그램이 멈춘다.",
+      question: "`__init__` 안에서 `self.w = w` 대신 `w = w`라고 쓰면 어떻게 되는가?",
+      choices: [
+        "똑같이 인스턴스의 속성 `w`가 만들어진다",
+        "`w`는 `__init__` 안의 지역 변수일 뿐이라, 나중에 `self.w`를 읽으면 `AttributeError`가 난다",
+        "`SyntaxError`가 난다",
+        "모든 인스턴스가 같은 `w`를 함께 쓴다",
+      ],
+      answer: 1,
+      explanation: "인스턴스에 값을 저장하려면 `self.이름 = 값`으로 대입해야 한다. `w = w`는 지역 변수에 대입할 뿐이고 함수가 끝나면 사라진다.",
     },
     {
       key: "c4",
@@ -123,10 +138,15 @@ except ValueError as e:           # as e: 예외 객체를 e라는 이름으로 
     },
     {
       key: "c5",
-      question: "함수 안에서 `raise ValueError(\"빈 리스트\")`를 실행했고, 호출한 쪽이 `try:`와 `except ValueError as e: print(e)`로 감쌌다면?",
-      choices: ["`빈 리스트`가 출력되고 프로그램은 계속 실행된다", "프로그램이 즉시 멈춘다", "`ValueError`라는 글자만 출력된다", "아무 일도 일어나지 않는다"],
+      question: "scikit-learn 형태의 모델 클래스에서 `fit`과 `predict`의 역할로 알맞은 것은?",
+      choices: [
+        "`fit`은 데이터에서 파라미터를 계산해 속성에 저장하고, `predict`는 저장한 파라미터로 새 입력의 출력을 계산한다",
+        "`fit`은 예측값을 출력하고, `predict`는 데이터를 불러온다",
+        "`fit`은 하이퍼파라미터를 정하고, `predict`는 파라미터를 학습한다",
+        "두 메서드는 이름만 다르고 같은 일을 한다",
+      ],
       answer: 0,
-      explanation: "`raise`한 예외는 호출한 쪽으로 전달되고, 종류가 맞는 `except`가 잡는다. `e`에는 예외를 만들 때 넣은 메시지가 들어 있다.",
+      explanation: "하이퍼파라미터는 `__init__`에서 받고, `fit`이 학습한 값(예: `mean_`, `coef_`)을 인스턴스 속성에 저장하며, `predict`는 그 값을 써서 예측한다.",
     },
   ],
   exercises,
@@ -149,21 +169,21 @@ b.add()
 print(a.n, b.n)
 `,
       expected: "6 1",
-      explanation: "`add`가 `self`(호출한 객체 자신)를 돌려주므로 `a.add().add(5)`는 `a`에 1을 더한 뒤 같은 `a`에 5를 더합니다. `a`와 `b`는 같은 클래스로 만든 별개의 객체라 `self.n`을 따로 가지므로 `b.n`은 1입니다.",
+      explanation: "`add`가 `self`(호출한 인스턴스)를 돌려주므로 `a.add().add(5)`는 `a`에 1을 더한 뒤 같은 `a`에 5를 더한다. `a`와 `b`는 같은 클래스의 별개 인스턴스라 `self.n`을 따로 가지므로 `b.n`은 1이다.",
     },
   ],
   descriptive: [
     {
       key: "d1",
-      question: "클래스와 객체의 관계를 비유로 설명하고, 메서드의 첫 매개변수 `self`가 무엇을 가리키는지 적어라. 상태와 동작을 클래스로 묶으면 좋은 경우의 예를 하나 들어라.",
+      question: "클래스와 인스턴스의 관계를 설명하고, 메서드의 첫 매개변수 `self`가 무엇을 가리키는지 적어라. 상태와 동작을 클래스로 묶으면 좋은 경우의 예를 하나 들어라.",
       answer: md`
-클래스는 붕어빵 틀, 객체는 그 틀로 찍어 낸 붕어빵 하나하나다. 틀(클래스)은 어떤 상태(속성)와 동작(메서드)을 가질지 정의하고, 객체마다 속성 값은 따로 가진다. \`self\`는 메서드를 호출한 바로 그 객체 자신을 가리키며, \`m.add(3)\`은 \`RunningMean.add(m, 3)\`과 같다. 예: 학습 중 손실의 이동 평균처럼 '누적 합과 개수'라는 상태를 유지하며 값이 들어올 때마다 갱신해야 하는 경우, 함수와 전역 변수로 흩어 두는 것보다 클래스 하나로 묶으면 여러 개를 독립적으로 만들고 잘못 건드릴 일이 줄어든다.
+클래스는 새 자료형을 정의하며, 그 자료형의 값이 가질 속성과 메서드를 정한다. 인스턴스는 그 클래스로 만든 값 하나하나이고, 같은 메서드를 쓰지만 속성 값은 인스턴스마다 따로 가진다. \`self\`는 메서드를 호출한 인스턴스를 가리키며, \`m.add(3)\`은 \`RunningMean.add(m, 3)\`과 같다. 예: 학습 중 손실의 평균처럼 '개수와 평균'이라는 상태를 유지하며 값이 들어올 때마다 갱신해야 하는 경우, 함수와 전역 변수로 흩어 두는 것보다 클래스로 묶으면 학습 손실과 검증 손실의 기록기를 독립적으로 만들 수 있고 다른 코드가 상태를 잘못 바꿀 위험이 줄어든다.
 `,
-      keyPoints: [],
+      keyPoints: ["클래스는 속성과 메서드를 정의하고, 인스턴스는 각자의 속성 값을 가진다", "`self`는 메서드를 호출한 인스턴스다", "상태와 그 상태를 바꾸는 동작이 함께 다니는 경우의 예"],
     },
   ],
   references: [
-    { title: "Python 자습서 — 클래스", url: "https://docs.python.org/ko/3/tutorial/classes.html", note: "9.3 \"클래스와의 첫 만남\"까지만 읽어도 충분" },
-    { title: "Python 자습서 — 에러와 예외", url: "https://docs.python.org/ko/3/tutorial/errors.html", note: "try/except/raise와 예외 종류" },
+    { title: "Python 자습서 9장 — 클래스 (한국어)", url: "https://docs.python.org/ko/3/tutorial/classes.html", note: "9.3 클래스와의 첫 만남, 인스턴스 변수와 클래스 변수" },
+    { title: "scikit-learn — Developing scikit-learn estimators", url: "https://scikit-learn.org/stable/developers/develop.html", note: "fit/predict 규약과 학습 속성의 밑줄 이름 관례 (영문)" },
   ],
 });

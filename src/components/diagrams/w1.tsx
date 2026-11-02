@@ -1531,12 +1531,12 @@ const chip1 = (x: number, y: number, text: string, color: string, w = 64, h = 24
 );
 
 export function ClassObjects() {
-  // 본문 코드의 Perceptron 클래스: 틀(클래스) 하나로 w, b가 다른 객체를 여러 개 찍어 낸다.
+  // 본문 코드의 Perceptron 클래스: 클래스 하나로 w, b가 다른 인스턴스를 여러 개 만든다.
   const P = "clo";
   return (
     <DiagramFrame
-      title="클래스는 틀이고, 객체는 그 틀로 찍어 낸 것이다"
-      caption="왼쪽의 Perceptron 클래스는 '어떤 속성(w, b)을 갖고 어떤 동작(predict)을 하는가'를 적은 틀이다. Perceptron(w=2, b=1)처럼 호출하면 __init__이 자동으로 실행되어 자기만의 w, b를 가진 객체가 하나 생긴다. 같은 틀로 만든 p와 q는 서로의 값에 영향을 주지 않는다. p.predict(3)을 호출하면 파이썬이 self 자리에 p를 넣어 주므로, 계산에는 p의 w와 b가 쓰인다."
+      title="클래스는 속성과 메서드를 정의하고, 인스턴스는 각자의 속성 값을 가진다"
+      caption="왼쪽의 Perceptron 클래스는 인스턴스가 가질 속성(w, b)과 메서드(predict)를 정의한다. Perceptron(w=2, b=1)처럼 호출하면 __init__이 자동으로 실행되어 자기만의 w, b를 가진 인스턴스가 하나 생긴다. 같은 클래스로 만든 p와 q는 서로의 값에 영향을 주지 않는다. p.predict(3)을 호출하면 파이썬이 self 자리에 p를 넣으므로, 계산에는 p의 w와 b가 쓰인다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -1546,7 +1546,7 @@ export function ClassObjects() {
         class Perceptron
       </text>
       <text x={224} y={42} textAnchor="end" fontSize={10} fill={inkSecondary}>
-        틀 (설계도)
+        클래스 정의
       </text>
       {[
         { y: 68, indent: 0, t: "def __init__(self, w, b):" },
@@ -1570,7 +1570,7 @@ export function ClassObjects() {
           </text>
           <rect x={292} y={o.y + 14} width={150} height={56} rx={10} fill={o.c} fillOpacity={0.12} stroke={o.c} strokeWidth={1.6} />
           <text x={304} y={o.y + 36} fontSize={11.5} fontWeight={800} fill={o.c}>
-            {o.name[0]} (객체)
+            {o.name[0]} (인스턴스)
           </text>
           <text x={304} y={o.y + 56} fontSize={11} fill={ink} fontFamily={mono}>
             {`w = ${o.w},  b = ${o.b}`}
@@ -1593,7 +1593,7 @@ export function ClassObjects() {
         self = 이 메서드를 호출한 객체 자신
       </text>
       <text x={124} y={196} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        붕어빵 틀 하나로 속이 다른 붕어빵을 여러 개
+        클래스 하나 → 속성 값이 다른 인스턴스 여러 개
       </text>
     </DiagramFrame>
   );
