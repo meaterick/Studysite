@@ -6,7 +6,7 @@ export default defineExercises([
     title: "거듭제곱법과 저랭크 근사(에카르트-영 정리)",
     prompt: md`
 
-「계수·노름·고유값·SVD」의 두 아이디어를 \`np.linalg.eig\` 없이 확인합니다.
+본문의 두 결과를 \`np.linalg.eig\` 없이 확인합니다.
 
 **1. 거듭제곱법(power iteration).** 임의의 벡터 $v$를 고유벡터들의 합 $v = \sum_i c_i u_i$로 쓰면 $A^k v = \sum_i c_i \lambda_i^k u_i$입니다. 절댓값이 가장 큰 고유값 $\lambda_1$의 성분이 나머지보다 $(\lambda_1/\lambda_i)^k$배씩 빨리 커지므로, $v \leftarrow Av / \lVert Av \rVert$를 반복하면 $v$는 $u_1$ 방향으로 모입니다. 그때 고유값은 레일리 몫 $\lambda = v^\top A v$($v$는 단위벡터)입니다. 구글 PageRank, 신경망 가중치의 최대 특이값을 추정하는 스펙트럼 정규화가 이 방법을 씁니다.
 
@@ -14,7 +14,7 @@ export default defineExercises([
 
 $$\lVert M - M_r \rVert_F = \sqrt{\sigma_{r+1}^2 + \cdots + \sigma_n^2}$$
 
-2주차 PCA가 "분산이 작은 방향을 버려도 정보 손실이 작다"고 말하는 근거입니다.
+주성분 분석([[lesson:kmeans-pca-pipeline]])에서 분산이 작은 방향을 버려도 오차가 작은 근거가 이 식입니다.
 `,
     starter: py`
 import numpy as np

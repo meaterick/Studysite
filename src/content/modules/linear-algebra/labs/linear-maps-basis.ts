@@ -3,16 +3,16 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "기저 좌표와 행렬 곱 직접 계산하기",
+    title: "기저 좌표와 2×2 역행렬 직접 계산하기",
     prompt: md`
 
-「벡터공간·기저와 행렬 곱셈」 단계의 좌표 바꾸기와 행렬 곱셈을 \`np.linalg.solve\`와 \`@\` 없이 구현합니다.
+본문의 좌표 구하기와 역행렬 공식을 \`np.linalg.solve\`, \`np.linalg.inv\` 없이 구현합니다.
 
 1. \`coords(b1, b2, v)\`: $c_1 b_1 + c_2 b_2 = v$를 만족하는 $(c_1, c_2)$를 크라메르 공식으로 구합니다. 기저 행렬 $[b_1\ b_2]$의 행렬식이 0이면(두 벡터가 선형종속이면) 좌표를 정할 수 없으므로 \`ValueError\`를 발생시킵니다.
 
 $$c_1 = \frac{v_x b_{2y} - b_{2x} v_y}{\det},\quad c_2 = \frac{b_{1x} v_y - v_x b_{1y}}{\det},\quad \det = b_{1x} b_{2y} - b_{2x} b_{1y}$$
 
-2. \`matmul(A, B)\`: 중첩 리스트로 된 행렬의 곱. $C_{ij} = \sum_k A_{ik} B_{kj}$. 정사각행렬이 아니어도 동작해야 합니다.
+2. \`inverse2(A)\`: 중첩 리스트로 된 $2 \times 2$ 행렬 $\begin{bmatrix}a & b\\c & d\end{bmatrix}$의 역행렬 $\frac{1}{ad - bc}\begin{bmatrix}d & -b\\-c & a\end{bmatrix}$을 중첩 리스트로 돌려줍니다. 행렬식이 0이면 \`ValueError\`를 발생시킵니다.
 `,
     starter: py`
 def coords(b1, b2, v):
@@ -23,16 +23,15 @@ def coords(b1, b2, v):
     c2 = 0.0  # TODO
     return c1, c2
 
-def matmul(A, B):
-    """리스트로 된 행렬 곱 A @ B (A: n×m, B: m×p)"""
-    n, m, p = len(A), len(B), len(B[0])
-    C = [[0] * p for _ in range(n)]
-    # TODO: 세 겹 반복문으로 C[i][j] = Σ_k A[i][k] * B[k][j] 를 채웁니다.
-    return C
+def inverse2(A):
+    """2×2 행렬 A의 역행렬. 행렬식이 0이면 ValueError"""
+    (a, b), (c, d) = A
+    det = a * d - b * c
+    # TODO: det가 0이면 ValueError, 아니면 [[d, -b], [-c, a]]의 각 원소를 det로 나눈 행렬을 돌려줍니다.
+    return [[0.0, 0.0], [0.0, 0.0]]
 
 print(coords([1, 1], [1, -1], [5, 1]))      # 기대: (3.0, 2.0)
-A, B = [[1, 2], [0, 1]], [[1, 0], [3, 1]]
-print("AB =", matmul(A, B), " BA =", matmul(B, A))
+print(inverse2([[1, 2], [0, 1]]))           # 기대: [[1.0, -2.0], [0.0, 1.0]]
 `,
     tests: py`
 @test("기저 [1,1], [1,-1]에서 [5, 1]의 좌표 = (3, 2)")
@@ -40,7 +39,7 @@ def _():
     c1, c2 = coords([1, 1], [1, -1], [5, 1])
     assert approx(c1, 3) and approx(c2, 2), f"결과: {(c1, c2)}"
 
-@test("표준 기저에서는 좌표 = 원래 성분")
+@test("표준기저에서는 좌표 = 원래 성분")
 def _():
     assert approx(coords([1, 0], [0, 1], [7, -2]), (7, -2))
 
@@ -50,7 +49,7 @@ def _():
     c1, c2 = coords(b1, b2, v)
     assert approx([c1 * b1[0] + c2 * b2[0], c1 * b1[1] + c2 * b2[1]], v)
 
-@test("선형종속([1,2], [2,4])이면 ValueError")
+@test("선형종속([1,2], [2,4])이면 coords가 ValueError")
 def _():
     try:
         coords([1, 2], [2, 4], [3, 6])
@@ -58,18 +57,31 @@ def _():
         return
     raise AssertionError("ValueError가 발생하지 않았습니다.")
 
-@test("AB = [[7, 2], [3, 1]], BA = [[1, 2], [3, 7]]")
+@test("[[1, 2], [0, 1]]의 역행렬 = [[1, -2], [0, 1]]")
 def _():
-    A, B = [[1, 2], [0, 1]], [[1, 0], [3, 1]]
-    assert matmul(A, B) == [[7, 2], [3, 1]], f"AB = {matmul(A, B)}"
-    assert matmul(B, A) == [[1, 2], [3, 7]], f"BA = {matmul(B, A)}"
+    got = inverse2([[1, 2], [0, 1]])
+    assert approx(got, [[1, -2], [0, 1]]), f"결과: {got}"
 
-@test("정사각이 아닌 행렬: (2×3) @ (3×1)")
+@test("A와 역행렬을 곱하면 단위행렬")
 def _():
-    got = matmul([[1, 2, 3], [4, 5, 6]], [[1], [0], [-1]])
-    assert got == [[-2], [-2]], f"결과: {got}"
+    A = [[2, 1], [1, 3]]
+    B = inverse2(A)
+    prod = [[sum(A[i][k] * B[k][j] for k in range(2)) for j in range(2)] for i in range(2)]
+    assert approx(prod, [[1, 0], [0, 1]]), f"A × inverse2(A) = {prod}"
+
+@test("행렬식이 0인 [[1, 2], [2, 4]]이면 inverse2가 ValueError")
+def _():
+    try:
+        inverse2([[1, 2], [2, 4]])
+    except ValueError:
+        return
+    raise AssertionError("ValueError가 발생하지 않았습니다.")
 `,
-    hints: ["`if det == 0: raise ValueError(\"기저가 아닙니다\")`처럼 예외를 발생시킵니다.", "공식을 그대로 옮기면 `c1 = (v[0] * b2[1] - b2[0] * v[1]) / det`입니다. `c2`도 같은 방식입니다.", "`for i in range(n): for j in range(p): for k in range(m): C[i][j] += A[i][k] * B[k][j]`"],
+    hints: [
+      "`if det == 0: raise ValueError(\"기저가 아닙니다\")`처럼 예외를 발생시킵니다.",
+      "공식을 그대로 옮기면 `c1 = (v[0] * b2[1] - b2[0] * v[1]) / det`입니다. `c2`도 같은 방식입니다.",
+      "역행렬은 `[[d / det, -b / det], [-c / det, a / det]]`입니다.",
+    ],
     solution: py`
 def coords(b1, b2, v):
     det = b1[0] * b2[1] - b2[0] * b1[1]
@@ -79,18 +91,15 @@ def coords(b1, b2, v):
     c2 = (b1[0] * v[1] - v[0] * b1[1]) / det
     return c1, c2
 
-def matmul(A, B):
-    n, m, p = len(A), len(B), len(B[0])
-    C = [[0] * p for _ in range(n)]
-    for i in range(n):
-        for j in range(p):
-            for k in range(m):
-                C[i][j] += A[i][k] * B[k][j]
-    return C
+def inverse2(A):
+    (a, b), (c, d) = A
+    det = a * d - b * c
+    if det == 0:
+        raise ValueError("행렬식이 0이라 역행렬이 없습니다.")
+    return [[d / det, -b / det], [-c / det, a / det]]
 
 print(coords([1, 1], [1, -1], [5, 1]))
-A, B = [[1, 2], [0, 1]], [[1, 0], [3, 1]]
-print("AB =", matmul(A, B), " BA =", matmul(B, A))
+print(inverse2([[1, 2], [0, 1]]))
 `,
   },
 ]);
