@@ -6,7 +6,7 @@ import { MODULES, conceptsOf, dependentsOf, directPrerequisitesOf, getModule, ge
 import type { Lesson } from "@/content/types";
 import { parseMarkdown } from "@/content/markdown";
 import { TIER_INFO, TIER_ORDER, lessonLabel } from "@/content/tiers";
-import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
+import { BlocksRenderer, Inline, RichText } from "@/components/MarkdownBlocks";
 import ModuleFrame from "@/components/module/ModuleFrame";
 import LessonLayout from "@/components/lesson/LessonLayout";
 import LessonFooter from "@/components/lesson/LessonFooter";
@@ -173,10 +173,10 @@ export default async function LessonPage({ params }: PageProps<"/modules/[module
                           lessonId={w.lesson.id}
                           itemKey={w.key}
                           index={i}
-                          question={<Inline text={check.question} />}
+                          question={<RichText text={check.question} />}
                           choices={check.choices.map((c, j) => <Inline key={j} text={c} />)}
                           state={s}
-                          explanation={reveal ? <Inline text={check.explanation} /> : undefined}
+                          explanation={reveal ? <RichText text={check.explanation} /> : undefined}
                           correctIndex={s?.correct ? check.answer : undefined}
                         />
                       </div>
@@ -224,7 +224,7 @@ export default async function LessonPage({ params }: PageProps<"/modules/[module
                         code={p.code}
                         state={s ? { correct: !!s.correct, attempts: s.attempts, lastAnswer: s.lastAnswer, revealed: !!s.revealed } : null}
                         expected={revealed ? p.expected : undefined}
-                        explanation={revealed ? <Inline text={p.explanation} /> : undefined}
+                        explanation={revealed ? <RichText text={p.explanation} /> : undefined}
                         weak={!!s?.revealed && !s?.correct}
                       />
                     );
@@ -245,10 +245,10 @@ export default async function LessonPage({ params }: PageProps<"/modules/[module
                   const reveal = !!s && (s.correct || s.wrong.length >= 2);
                   return {
                     itemKey: check.key,
-                    question: <Inline text={check.question} />,
+                    question: <RichText text={check.question} />,
                     choices: check.choices.map((c, j) => <Inline key={j} text={c} />),
                     state: s,
-                    explanation: reveal ? <Inline text={check.explanation} /> : undefined,
+                    explanation: reveal ? <RichText text={check.explanation} /> : undefined,
                     correctIndex: s?.correct ? check.answer : undefined,
                   };
                 })}
@@ -270,7 +270,7 @@ export default async function LessonPage({ params }: PageProps<"/modules/[module
                         lessonId={lesson.id}
                         itemKey={d.key}
                         label={`서술형 ${i + 1}`}
-                        question={<Inline text={d.question} />}
+                        question={<RichText text={d.question} />}
                         savedText={a?.text}
                         review={a?.review}
                         checkedPoints={a?.checkedPoints}

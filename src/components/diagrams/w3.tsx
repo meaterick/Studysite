@@ -489,7 +489,7 @@ export function ClosureRecursion() {
       <Tag x={268} y={168} w={80} h={30} lines={["add5"]} color={inkMuted} tint={0.08} size={12} />
       <Arr x1={308} y1={166} x2={308} y2={114} color={colors.violet} marker={`${P}-violet`} />
       <text x={314} y={146} fontSize={10} fill={inkSecondary}>
-        이름표
+        참조
       </text>
       <text x={30} y={232} fontSize={12} fill={ink} fontFamily={mono}>
         add5(10) → 10 + 5 = 15

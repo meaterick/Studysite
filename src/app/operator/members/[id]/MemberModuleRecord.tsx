@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { Check, Exercise, Lesson, Predict } from "@/content/types";
 import { itemId } from "@/content/course";
 import { lessonLabel } from "@/content/tiers";
-import { Inline } from "@/components/MarkdownBlocks";
+import { Inline, RichText } from "@/components/MarkdownBlocks";
 import ReviewPill from "@/components/ReviewPill";
 import Icon from "@/components/Icon";
 import { readLessonState, readRecallState, type CheckState, type ExerciseState, type LearningRecord, type PredictState, type ReviewStatus } from "@/lib/learningStore";
@@ -185,7 +185,7 @@ export default function MemberModuleRecord({
                     <span className="ml-auto tabular-nums">{formatDateTime(answer.answeredAt)}</span>
                   </p>
                   <p className="mt-1.5 text-[13px] font-medium text-ink">
-                    <Inline text={item.question} />
+                    <RichText text={item.question} />
                   </p>
                   <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-secondary">{answer.text}</p>
                 </li>
@@ -317,7 +317,7 @@ function WrongCheck({ lesson, check, state }: { lesson: Lesson; check: Check; st
         </span>
       </p>
       <div className="mt-1 text-[13px] font-medium text-ink">
-        <Inline text={check.question} />
+        <RichText text={check.question} />
       </div>
       <ul className="mt-1.5 space-y-0.5 text-xs">
         {state.wrong.map((i) => (
@@ -353,7 +353,7 @@ function PredictRow({ lesson, item, state }: { lesson: Lesson; item: Predict; st
       </p>
       {item.question && (
         <div className="mt-1 text-[13px] font-medium text-ink">
-          <Inline text={item.question} />
+          <RichText text={item.question} />
         </div>
       )}
       <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--code-bg)] px-3 py-2 font-mono text-xs leading-relaxed text-ink">{item.code}</pre>

@@ -138,6 +138,8 @@ function checkBlocks(blocks: Block[], context: string) {
 }
 
 const checkMarkdown = (md: string, context: string) => checkBlocks(parseMarkdown(md), context);
+/** 문항·해설: 화면처럼 한 줄이면 인라인, 여러 줄이면 블록 마크다운으로 검사한다. */
+const checkRich = (text: string, context: string) => (text.includes("\n") ? checkMarkdown(text, context) : checkInline(text, context));
 
 // ─── 실습 ──────────────────────────────────────────────────────────────────
 
@@ -190,7 +192,9 @@ function checkLesson(lesson: Lesson, mod: Module) {
     if (new Set(c.choices).size !== c.choices.length) fail(`${cctx}: 선택지 중복`);
     if (!Number.isInteger(c.answer) || c.answer < 0 || c.answer >= c.choices.length) fail(`${cctx}: 정답 번호가 범위를 벗어남`);
     if (!c.explanation.trim()) fail(`${cctx}: 해설이 비어 있음`);
-    [c.question, c.explanation, ...c.choices].forEach((t) => checkInline(t, cctx));
+    checkRich(c.question, cctx);
+    checkRich(c.explanation, cctx);
+    c.choices.forEach((t) => checkInline(t, cctx));
   }
   if (lesson.tier === "core" && !lesson.exercises?.length) warn(`${ctx}: 핵심 레슨에 코딩 실습이 없음`);
   for (const e of lesson.exercises ?? []) {
@@ -202,8 +206,8 @@ function checkLesson(lesson: Lesson, mod: Module) {
     key(p.key, "출력 예측");
     if (!p.code.trim() || !p.expected.trim()) fail(`${pctx}: 코드 또는 정답 출력이 비어 있음`);
     if (!p.explanation.trim()) fail(`${pctx}: 해설이 비어 있음`);
-    checkInline(p.explanation, pctx);
-    if (p.question) checkInline(p.question, pctx);
+    checkRich(p.explanation, pctx);
+    if (p.question) checkRich(p.question, pctx);
   }
   for (const d of lesson.descriptive ?? []) {
     const dctx = `${ctx} 서술형 ${d.key}`;
@@ -211,7 +215,7 @@ function checkLesson(lesson: Lesson, mod: Module) {
     if (!d.question.trim()) fail(`${dctx}: 문항이 비어 있음`);
     if (!d.answer.trim()) fail(`${dctx}: 모범답안이 비어 있음`);
     if (d.keyPoints.length < 2) fail(`${dctx}: 핵심 요소가 2개 미만`);
-    checkInline(d.question, dctx);
+    checkRich(d.question, dctx);
     checkMarkdown(d.answer, `${dctx} 모범답안`);
     d.keyPoints.forEach((k) => checkInline(k, `${dctx} 핵심 요소`));
   }

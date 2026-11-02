@@ -250,6 +250,11 @@ export function BlocksRenderer({
   );
 }
 
+/** 문항·해설용: 한 줄 글은 Inline으로, 여러 줄 글(코드 블록·목록 포함)은 블록으로 렌더링한다. */
+export function RichText({ text }: { text: string }) {
+  return text.includes("\n") ? <BlocksRenderer blocks={parseMarkdown(text)} /> : <Inline text={text} />;
+}
+
 export default function Markdown({
   source,
   docKey,

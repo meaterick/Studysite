@@ -736,7 +736,7 @@ export function LearningParadigms() {
 }
 
 export function PythonNameTags() {
-  // 변수 = 값(객체)에 붙인 이름표. b = a는 같은 리스트에 이름표를 하나 더 붙일 뿐이고, copy()는 새 리스트를 만든다.
+  // 변수는 객체를 가리키는 이름이다. b = a는 이름 b가 같은 리스트 객체를 가리키게 할 뿐이고, copy()는 새 리스트를 만든다.
   const P = "pnt";
   const cell = (x: number, y: number, v: string, isNew = false) => (
     <g key={`${x}-${y}`}>
@@ -766,8 +766,8 @@ export function PythonNameTags() {
   );
   return (
     <DiagramFrame
-      title="변수는 상자가 아니라 이름표: b = a는 복사가 아니다"
-      caption="위: b = a는 리스트를 복사하지 않고, 같은 리스트에 b라는 이름표를 하나 더 붙인다. 그래서 b에 4를 추가하면 a에서도 바뀐 내용이 보인다. 아래: a.copy()는 내용이 같은 새 리스트를 만들므로 c를 고쳐도 a는 그대로다."
+      title="변수는 객체를 가리키는 이름이다: b = a는 복사가 아니다"
+      caption="위: b = a는 리스트를 복사하지 않고, 이름 b가 a와 같은 리스트 객체를 가리키게 한다. 그래서 b로 4를 추가하면 a로 보아도 바뀐 내용이 보인다. 아래: a.copy()는 내용이 같은 새 리스트 객체를 만들므로 c를 고쳐도 a는 그대로다."
       viewBox="0 0 720 236"
       minWidth={560}
     >

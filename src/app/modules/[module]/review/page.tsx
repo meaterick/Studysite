@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { MODULES } from "@/content/course";
 import { parseMarkdown } from "@/content/markdown";
 import { lessonLabel } from "@/content/tiers";
-import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
+import { BlocksRenderer, Inline, RichText } from "@/components/MarkdownBlocks";
 import ModuleFrame from "@/components/module/ModuleFrame";
 import Icon from "@/components/Icon";
 import { loadModulePage } from "@/lib/modulePage";
@@ -49,7 +49,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
       notes.push({
         id: `c:${check.key}`,
         source: "check",
-        question: <Inline text={check.question} />,
+        question: <RichText text={check.question} />,
         attempted: !!s && s.attempts > 0,
         weak: !!s && s.wrong.length > 0,
         href: `${href}#check`,
@@ -60,7 +60,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
               {s.wrong.length > 0 && <span className="ml-2 text-xs text-[var(--status-critical)]">({s.attempts}번째 시도에서 정답)</span>}
             </p>
             <p className="text-ink-muted">
-              <Inline text={check.explanation} />
+              <RichText text={check.explanation} />
             </p>
           </>
         ) : s ? (
@@ -73,7 +73,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
       notes.push({
         id: `d:${d.key}`,
         source: "descriptive",
-        question: <Inline text={d.question} />,
+        question: <RichText text={d.question} />,
         attempted: !!a,
         weak: a?.review === "incorrect",
         href: `${href}#descriptive`,
@@ -112,7 +112,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
                 <span className="font-semibold text-[var(--status-good)]">출력</span> <code className="font-mono">{p.expected}</code>
               </p>
               <p className="text-ink-muted">
-                <Inline text={p.explanation} />
+                <RichText text={p.explanation} />
               </p>
             </>
           ) : (

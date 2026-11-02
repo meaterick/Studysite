@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MODULES, conceptsOf } from "@/content/course";
 import { lessonLabel } from "@/content/tiers";
-import { Inline } from "@/components/MarkdownBlocks";
+import { Inline, RichText } from "@/components/MarkdownBlocks";
 import ModuleFrame from "@/components/module/ModuleFrame";
 import DiagnosticLesson from "@/components/module/DiagnosticLesson";
 import { ProgressProvider, type ProgressStatus } from "@/components/progress/ProgressStore";
@@ -62,10 +62,10 @@ export default async function DiagnosticPage({ params }: PageProps<"/modules/[mo
                     const reveal = !!s && (s.correct || s.wrong.length >= 2);
                     return {
                       itemKey: check.key,
-                      question: <Inline text={check.question} />,
+                      question: <RichText text={check.question} />,
                       choices: check.choices.map((c, j) => <Inline key={j} text={c} />),
                       state: s,
-                      explanation: reveal ? <Inline text={check.explanation} /> : undefined,
+                      explanation: reveal ? <RichText text={check.explanation} /> : undefined,
                       correctIndex: s?.correct ? check.answer : undefined,
                     };
                   })}

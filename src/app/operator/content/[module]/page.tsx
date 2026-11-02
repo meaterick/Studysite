@@ -8,7 +8,7 @@ import { lessonLabel, TIER_INFO } from "@/content/tiers";
 import { descriptiveCountsByLesson, lessonCompletionCounts } from "@/lib/learningStore";
 import { checkStatMap } from "@/lib/operatorStats";
 import { assignmentHref, lessonHref, recallHref } from "@/lib/routes";
-import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
+import { BlocksRenderer, Inline, RichText } from "@/components/MarkdownBlocks";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 
@@ -95,7 +95,7 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
                         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                           <p className="min-w-0 flex-1 font-medium text-ink">
                             <span className="mr-1.5 tabular-nums text-ink-muted">{i + 1}.</span>
-                            <Inline text={check.question} />
+                            <RichText text={check.question} />
                           </p>
                           <span className={`shrink-0 text-xs tabular-nums ${s?.low ? "font-medium text-[var(--status-critical)]" : "text-ink-muted"}`}>
                             {s ? `응답 ${s.answered}명 · 첫 시도 정답 ${percent(s.rate)}${s.low ? " · 점검" : ""}` : "응답 없음"}
@@ -110,7 +110,7 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
                           ))}
                         </ul>
                         <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
-                          <Inline text={check.explanation} />
+                          <RichText text={check.explanation} />
                         </p>
                       </li>
                     );
@@ -134,7 +134,7 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
                       <li key={d.key} className="text-sm">
                         <p className="font-medium text-ink">
                           <span className="mr-1.5 tabular-nums text-ink-muted">{i + 1}.</span>
-                          <Inline text={d.question} />
+                          <RichText text={d.question} />
                         </p>
                         <div className="callout callout-good mt-2 text-[13px] text-ink-body">
                           <BlocksRenderer blocks={parseMarkdown(d.answer)} />
@@ -162,14 +162,14 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
                         {p.question && (
                           <p className="font-medium text-ink">
                             <span className="mr-1.5 tabular-nums text-ink-muted">{i + 1}.</span>
-                            <Inline text={p.question} />
+                            <RichText text={p.question} />
                           </p>
                         )}
                         <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--code-bg)] px-3 py-2 font-mono text-xs leading-relaxed text-ink">{p.code}</pre>
                         <p className="mt-2 text-xs text-ink-muted">정답 출력</p>
                         <pre className="mt-1 overflow-x-auto rounded-lg bg-[var(--code-bg)] px-3 py-2 font-mono text-xs text-[var(--status-good)]">{p.expected}</pre>
                         <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
-                          <Inline text={p.explanation} />
+                          <RichText text={p.explanation} />
                         </p>
                       </li>
                     ))}

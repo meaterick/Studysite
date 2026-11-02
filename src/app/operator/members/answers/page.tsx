@@ -8,7 +8,7 @@ import { MODULES, getModule } from "@/content/course";
 import { parseMarkdown } from "@/content/markdown";
 import type { Descriptive, Lesson } from "@/content/types";
 import { lessonLabel, TIER_INFO } from "@/content/tiers";
-import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
+import { BlocksRenderer, Inline, RichText } from "@/components/MarkdownBlocks";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import ReviewPill from "@/components/ReviewPill";
@@ -210,7 +210,7 @@ export default async function OperatorAnswersPage({ searchParams }: PageProps<"/
                 <article key={item.key} className="surface p-5 sm:p-6">
                   <p className="text-xs font-medium text-ink-muted">서술형</p>
                   <div className="mt-1.5 text-[15px] font-medium leading-relaxed text-ink">
-                    <Inline text={item.question} />
+                    <RichText text={item.question} />
                   </div>
                   <details className="group mt-3">
                     <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-[13px] font-medium text-ink-muted transition hover:text-ink [&::-webkit-details-marker]:hidden">
