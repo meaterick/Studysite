@@ -1,6 +1,6 @@
 import "server-only";
-import type { AssignmentSpec } from "@/content/types";
-import { WEEKS } from "@/content/weeks";
+import type { AssignmentSource as AssignmentSpec } from "@/content/types";
+import { MODULES } from "@/content/course";
 import { parseMarkdown } from "@/content/markdown";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import type { WorkspaceTaskView } from "@/components/assignment/Workspace";
@@ -47,11 +47,14 @@ export function notebookViewTasks(spec: AssignmentSpec, withIntro = true): Noteb
   }));
 }
 
-/** 7주차 RAG 과제에서 코드가 읽는 학습 자료 파일: /course/week1.md … /course/week8.md */
+/**
+ * RAG 과제에서 코드가 읽는 학습 자료 파일: 모듈마다 /course/<모듈 slug>.md 하나.
+ * 파일 안에는 모듈 제목과 레슨별 제목·본문이 들어 있다(확장 모듈 제외).
+ */
 export function courseDocFiles(spec: AssignmentSpec): { path: string; content: string }[] | undefined {
   if (!spec.provideCourseDocs) return undefined;
-  return WEEKS.map((w) => ({
-    path: `/course/week${w.number}.md`,
-    content: `# ${w.number}주차 · ${w.title}\n\n${w.conceptsMd}`,
+  return MODULES.filter((m) => m.track !== "extension").map((m) => ({
+    path: `/course/${m.slug}.md`,
+    content: [`# ${m.code} ${m.title}`, "", ...m.lessons.flatMap((l) => [`## ${l.title}`, "", l.body.trim(), ""])].join("\n"),
   }));
 }

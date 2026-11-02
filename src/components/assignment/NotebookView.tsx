@@ -116,7 +116,7 @@ export default function NotebookView({
             <h4 className="font-semibold tracking-[-0.02em] text-ink">
               과제 {i + 1}. {task.title}
               <span className="ml-2 align-middle">
-                <TierBadge tier={task.tier} compact />
+                <TierBadge tier={task.tier} />
               </span>
               {task.optional && <span className="ml-1 text-xs font-semibold text-ink-muted">(선택)</span>}
             </h4>

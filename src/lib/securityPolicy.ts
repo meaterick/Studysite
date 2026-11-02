@@ -26,7 +26,6 @@ export const SECURITY_KINDS = {
   request_attack_detected: { label: "반복 비정상 요청 감지", severity: "warning", advice: "출처 검증 실패·비허용 메서드·로그인 제한이 반복됐습니다. 근거를 확인한 뒤 대응합니다." },
   case_reviewed: { label: "탐지 대응 상태 변경", severity: "info", advice: "운영자가 탐지 건의 확인·처리 상태를 변경했습니다." },
   admin_change: { label: "운영 설정 변경", severity: "info", advice: "운영자의 설정 변경입니다. 승인된 작업인지 확인합니다." },
-  backup_download: { label: "운영자 백업 다운로드", severity: "info", advice: "민감한 전체 DB 다운로드입니다. 승인된 운영자 작업인지 확인합니다." },
 } as const;
 export const CASE_STATUS = { new: "미확인", investigating: "확인 중", resolved: "처리 완료", dismissed: "정상·오탐" } as const;
 export type SecurityKind = keyof typeof SECURITY_KINDS;
