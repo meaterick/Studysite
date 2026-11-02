@@ -23,7 +23,7 @@ export const CONCEPTS: Concept[] = [
   C(4, "programming", "loops", "반복문과 반복 제어", ["conditionals"]),
   C(5, "programming", "collections", "리스트, 튜플, 딕셔너리, 집합", ["loops"]),
   C(6, "programming", "indexing-slicing", "인덱싱과 슬라이싱", ["collections"]),
-  C(7, "programming", "mutability-copy", "가변·불변 객체, 참조와 복사", ["collections"]),
+  C(7, "programming", "mutability-copy", "가변·불변 객체, 참조와 복사", ["collections", "functions-scope"]),
   C(8, "programming", "functions-scope", "함수, 매개변수, 반환값, 변수의 범위", ["loops"]),
   C(9, "programming", "comprehensions-iterators", "리스트 컴프리헨션과 반복자", ["collections", "functions-scope"]),
   C(10, "programming", "file-io", "파일 입출력: 텍스트, CSV, JSON", ["collections", "functions-scope"]),

@@ -161,12 +161,13 @@ export function parseMarkdownUncached(source: string): Block[] {
         tableLines.push(lines[i].trim());
         i++;
       }
+      // 칸 안의 글자 |는 \|로 쓴다(예: 집합의 합집합 연산자).
       const rows = tableLines.map((l) =>
         l
           .replace(/^\|/, "")
-          .replace(/\|$/, "")
-          .split("|")
-          .map((c) => c.trim())
+          .replace(/(?<!\\)\|$/, "")
+          .split(/(?<!\\)\|/)
+          .map((c) => c.trim().replace(/\\\|/g, "|"))
       );
       const headers = rows[0] ?? [];
       // rows[1] is the separator (---|---), skip it
