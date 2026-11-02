@@ -43,8 +43,10 @@ const SLOW_SECS = 4;
 function runPython(source: string, timeoutMs = 300_000): { stdout: string; stderr: string; status: number | null } {
   const file = path.join(tmp, `run-${checks++}.py`);
   fs.writeFileSync(file, source.replaceAll("/course/", `${courseDir.replace(/\\/g, "/")}/`));
+  // 코드가 만드는 파일(CSV·JSON 등)이 저장소에 남지 않도록 임시 폴더에서 실행한다.
   const res = spawnSync(process.env.PYTHON ?? (process.platform === "win32" ? "python" : "python3"), [file], {
     encoding: "utf8",
+    cwd: tmp,
     timeout: timeoutMs,
     env: { ...process.env, MPLBACKEND: "agg", PYTHONWARNINGS: "ignore", PYTHONIOENCODING: "utf-8" },
   });
