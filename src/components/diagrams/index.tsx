@@ -43,6 +43,7 @@ import {
   KlDirection,
   ConditionZigzag,
 } from "./w1";
+import { SecantTangent, GradientContours } from "./calculus";
 import {
   ConfusionMatrix,
   DataSplitDiagram,
@@ -371,6 +372,8 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "base-rate-curve": BaseRateCurve,
   "lr-convergence-modes": LrConvergenceModes,
   "chain-rule-chain": ChainRuleChain,
+  "secant-tangent": SecantTangent,
+  "gradient-contours": GradientContours,
   "critical-points": CriticalPoints,
   "gradient-descent-curve": InteractiveGradientDescent,
   "bias-variance-curve": InteractiveBiasVariance,
