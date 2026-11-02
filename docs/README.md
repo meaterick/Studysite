@@ -22,6 +22,13 @@
 - [데이터와 백업](operations/data-and-backups.md): SQLite, 마이그레이션, 보관, 복구.
 - [보안 운영 개요](operations/security.md), [IP 방어](operations/ip-defense.md), [보안 모니터링](operations/security-monitoring.md).
 
+## 진행 중인 계획
+
+아직 구현하지 않은 제안입니다. 현재 동작은 위의 문서를 기준으로 합니다.
+
+- [AI 커리큘럼 탑다운 재구성 플랜](plans/top-down-curriculum.md): 80개 AI 개념 기준의 6트랙·25모듈 구조, 사이트 정보 구조와 진도 이전, 실행 순서.
+- [부록: 기존 104단계 재배치표](plans/top-down-curriculum-mapping.md): 현재 모든 단계의 새 위치와 처리.
+
 ## 과거 검토·설계 이력
 
 아래 자료는 당시의 제안·관측 기록입니다. 현재 구현 안내와 구분해서 읽습니다.
