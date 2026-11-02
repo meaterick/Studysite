@@ -1,9 +1,9 @@
 /**
- * 과제 자동 테스트 검증용 참조 노트북(scripts/content/check-labs.ts 전용). 주차 slug → 셀 id → [시작 코드에서 찾을 문자열, 바꿀 문자열].
+ * 과제 자동 테스트 검증용 참조 노트북(scripts/content/check-labs.ts 전용). 과제 저장 키 → 셀 id → [시작 코드에서 찾을 문자열, 바꿀 문자열].
  * 시작 코드의 TODO를 채운 "모범 답안"이므로 화면에는 쓰지 않는다.
  */
 export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string][]>> = {
-  "week-1": {
+  "math-gd-bayes": {
     "gd-code": [
       ["dw = 0.0  # TODO: ∂L/∂w", "dw = np.mean(2 * err * x)"],
       ["db = 0.0  # TODO: ∂L/∂b", "db = np.mean(2 * err)"],
@@ -13,7 +13,7 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ["return 0.0        # TODO", "return sensitivity * prevalence / p_positive"],
     ],
   },
-  "week-2": {
+  "ml-model-comparison": {
     "compare-code": [
       [
         `"Logistic Regression": DummyClassifier(strategy="most_frequent"),  # TODO: StandardScaler + LogisticRegression 파이프라인`,
@@ -26,7 +26,7 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
     ],
     "threshold-code": [["t_star = 0.5  # TODO: 비용으로 정한 임계값 C_FP / (C_FP + C_FN)", "t_star = C_FP / (C_FP + C_FN)"]],
   },
-  "week-3": {
+  "autograd-mlp": {
     "extend-code": [
       [
         "pass  # TODO: ∂(a/b)/∂a, ∂(a/b)/∂b 를 유도해 self.grad, o.grad에 누적합니다.",
@@ -45,14 +45,14 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ],
     ],
   },
-  "week-4": {
+  "cnn-ablation": {
     "ablation-code": [
       ['# "Dropout 제거": dict(dropout=0.0),', '"Dropout 제거": dict(dropout=0.0),'],
       ['# "데이터 증강 제거": dict(augment=False),', '"데이터 증강 제거": dict(augment=False),'],
     ],
     "conv-code": [["return 0  # TODO: 학습 자료의 출력 크기 공식을 직접 써 넣습니다. (정수 나눗셈은 //)", "return (n + 2 * p - k) // s + 1"]],
   },
-  "week-5": {
+  "mini-gpt-block": {
     "mha-code": [
       [
         "scores = np.zeros((n_heads, T, T))          # TODO: Qh와 Kh로 점수를 계산하고, scale=True면 √d_k로 나눕니다. shape: ?",
@@ -67,14 +67,14 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
     ],
     "example-code": [["# TODO: 직접 고른 Query를 하나 이상 추가합니다.", '"먹었다의 Key와 같은 Query": [1, 1, 0, -1],']],
   },
-  "week-6": {
+  "llm-anatomy": {
     "decoding-code": [["q = p  # TODO: 필터 flt를 적용합니다.", "q = flt(p)"]],
     "scaling-code": [
       ["N = 0.0  # TODO", "N = (C / 120) ** 0.5"],
       ["D = 0.0  # TODO", "D = 20 * N"],
     ],
   },
-  "week-7": {
+  "rag-qa-bot": {
     "hybrid-code": [
       [
         "        # TODO: char와 word를 각각 순위(1부터)로 바꿔, 점수가 0보다 큰 조각에만 1 / (self.rrf_k + 순위)를 더합니다.",
@@ -121,7 +121,7 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ["after = RAG(docs, chunk_size=500)   # TODO: 개선한 설정으로 바꿉니다.", "after = RAG(docs, chunk_size=300)"],
     ],
   },
-  "week-8": {
+  "capstone": {
     "code-experiment": [
       [
         "# baseline과 제안 방법을 같은 조건에서 비교합니다.",

@@ -3,10 +3,10 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "함수를 찾는 게임: MSE와 격자 탐색",
+    title: "평균제곱오차와 격자 탐색",
     prompt: md`
 
-「AI의 지형도와 "함수를 찾는 게임"」 단계의 "함수를 찾는 게임"을 코드로 구현합니다. 데이터는 대략 $y = 2x$를 따릅니다.
+레슨의 손실 비교 예제를 코드로 구현합니다. 데이터는 대략 $y = 2x$를 따릅니다.
 
 1. \`mse(theta, xs, ys)\`: 예측 $\hat y = \theta x$와 정답 $y$의 평균제곱오차를 돌려줍니다.
 2. \`grid_search(xs, ys, candidates)\`: 후보 $\theta$ 중 손실이 가장 작은 값을 돌려줍니다. \`min(..., key=...)\` 없이 반복문으로 최솟값을 갱신해 봅니다.

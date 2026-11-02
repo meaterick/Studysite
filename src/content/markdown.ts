@@ -214,11 +214,14 @@ export type InlineToken =
   | { math: string }
   | { link: string; href: string };
 
-/** Render simple inline markdown (**bold**, *italic*, `code`, $math$, [text](https://…)) into tokens. */
+/**
+ * Render simple inline markdown (**bold**, *italic*, `code`, $math$, [text](https://…), [text](/site/path)) into tokens.
+ * 사이트 안 주소(/로 시작)는 레슨 참조 [[lesson:id]]를 풀어 쓴 결과다(src/content/course.ts).
+ */
 export function renderInline(text: string): InlineToken[] {
   const parts: InlineToken[] = [];
   const regex =
-    /(\*\*[^*]+\*\*|`[^`]+`|\$[^$\n]+\$|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\)|\*(?=\S)[^*$\n]+?(?<=\S)\*)/g;
+    /(\*\*[^*]+\*\*|`[^`]+`|\$[^$\n]+\$|\[[^\]\n]+\]\((?:https?:\/\/|\/)[^)\s]*\)|\*(?=\S)[^*$\n]+?(?<=\S)\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {

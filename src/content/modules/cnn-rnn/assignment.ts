@@ -433,185 +433,185 @@ for n, k, s, p, expect in [(8, 3, 2, 1, 4), (32, 5, 1, 2, 32), (32, 5, 2, 2, 16)
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "다채널 합성곱을 반복문 두 개로 벡터화하기",
       prompt: md`
-  
-  실제 CNN의 합성곱은 입력이 여러 채널입니다. \`conv2d_multi(x, w, b, stride, pad)\`를 구현합니다.
-  
-  - \`x\`: (C_in, H, W), \`w\`: (C_out, C_in, K, K), \`b\`: (C_out,) → 출력 (C_out, H_out, W_out)
-  - 출력의 한 칸은 **모든 입력 채널**에 걸친 $K \times K$ 창과 필터의 원소별 곱의 합 + 편향입니다.
-  
-  출력 위치(i, j)에 대한 반복문 두 개만 쓰고, 채널과 필터 축은 \`np.tensordot\`(또는 \`np.einsum\`)으로 한 번에 계산합니다. 채점은 네 겹 반복문 참조 구현과 비교합니다.
-  `,
+
+실제 CNN의 합성곱은 입력이 여러 채널입니다. \`conv2d_multi(x, w, b, stride, pad)\`를 구현합니다.
+
+- \`x\`: (C_in, H, W), \`w\`: (C_out, C_in, K, K), \`b\`: (C_out,) → 출력 (C_out, H_out, W_out)
+- 출력의 한 칸은 **모든 입력 채널**에 걸친 $K \times K$ 창과 필터의 원소별 곱의 합 + 편향입니다.
+
+출력 위치(i, j)에 대한 반복문 두 개만 쓰고, 채널과 필터 축은 \`np.tensordot\`(또는 \`np.einsum\`)으로 한 번에 계산합니다. 채점은 네 겹 반복문 참조 구현과 비교합니다.
+`,
       starter: py`
-  import numpy as np
-  
-  def conv2d_multi(x, w, b, stride=1, pad=0):
-      x = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))
-      C_out, C_in, K, _ = w.shape
-      H_out = (x.shape[1] - K) // stride + 1
-      W_out = (x.shape[2] - K) // stride + 1
-      out = np.zeros((C_out, H_out, W_out))
-      for i in range(H_out):
-          for j in range(W_out):
-              window = x[:, i * stride:i * stride + K, j * stride:j * stride + K]   # (C_in, K, K)
-              # TODO: 모든 필터에 대해 window와의 원소별 곱의 합을 한 번에 구해 out[:, i, j]에 넣고 b를 더합니다.
-      return out
-  
-  rng = np.random.default_rng(0)
-  x = rng.normal(size=(3, 8, 8))
-  w = rng.normal(size=(4, 3, 3, 3))
-  print(conv2d_multi(x, w, np.zeros(4), pad=1).shape)
-  `,
+import numpy as np
+
+def conv2d_multi(x, w, b, stride=1, pad=0):
+    x = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))
+    C_out, C_in, K, _ = w.shape
+    H_out = (x.shape[1] - K) // stride + 1
+    W_out = (x.shape[2] - K) // stride + 1
+    out = np.zeros((C_out, H_out, W_out))
+    for i in range(H_out):
+        for j in range(W_out):
+            window = x[:, i * stride:i * stride + K, j * stride:j * stride + K]   # (C_in, K, K)
+            # TODO: 모든 필터에 대해 window와의 원소별 곱의 합을 한 번에 구해 out[:, i, j]에 넣고 b를 더합니다.
+    return out
+
+rng = np.random.default_rng(0)
+x = rng.normal(size=(3, 8, 8))
+w = rng.normal(size=(4, 3, 3, 3))
+print(conv2d_multi(x, w, np.zeros(4), pad=1).shape)
+`,
       tests: py`
-  import numpy as np
-  rng = np.random.default_rng(1)
-  
-  def reference(x, w, b, stride=1, pad=0):
-      x = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))
-      C_out, C_in, K, _ = w.shape
-      H_out, W_out = (x.shape[1] - K) // stride + 1, (x.shape[2] - K) // stride + 1
-      out = np.zeros((C_out, H_out, W_out))
-      for f in range(C_out):
-          for i in range(H_out):
-              for j in range(W_out):
-                  out[f, i, j] = np.sum(x[:, i * stride:i * stride + K, j * stride:j * stride + K] * w[f]) + b[f]
-      return out
-  
-  @test("출력 shape (C_out, H_out, W_out)")
-  def _():
-      out = conv2d_multi(rng.normal(size=(3, 8, 8)), rng.normal(size=(5, 3, 3, 3)), np.zeros(5), stride=2, pad=1)
-      assert out.shape == (5, 4, 4), f"shape: {out.shape}"
-  
-  @test("참조 구현과 일치 (stride 1, pad 1)")
-  def _():
-      x, w, b = rng.normal(size=(3, 6, 6)), rng.normal(size=(4, 3, 3, 3)), rng.normal(size=4)
-      assert approx(conv2d_multi(x, w, b, pad=1), reference(x, w, b, pad=1))
-  
-  @test("참조 구현과 일치 (5×5 커널, stride 2)")
-  def _():
-      x, w, b = rng.normal(size=(2, 9, 9)), rng.normal(size=(3, 2, 5, 5)), rng.normal(size=3)
-      assert approx(conv2d_multi(x, w, b, stride=2), reference(x, w, b, stride=2))
-  
-  @test("입력 채널이 1개면 흑백 합성곱과 같다")
-  def _():
-      x, k = rng.normal(size=(1, 5, 5)), rng.normal(size=(1, 1, 3, 3))
-      single = np.array([[np.sum(x[0, i:i+3, j:j+3] * k[0, 0]) for j in range(3)] for i in range(3)])
-      assert approx(conv2d_multi(x, k, np.zeros(1))[0], single)
-  `,
+import numpy as np
+rng = np.random.default_rng(1)
+
+def reference(x, w, b, stride=1, pad=0):
+    x = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))
+    C_out, C_in, K, _ = w.shape
+    H_out, W_out = (x.shape[1] - K) // stride + 1, (x.shape[2] - K) // stride + 1
+    out = np.zeros((C_out, H_out, W_out))
+    for f in range(C_out):
+        for i in range(H_out):
+            for j in range(W_out):
+                out[f, i, j] = np.sum(x[:, i * stride:i * stride + K, j * stride:j * stride + K] * w[f]) + b[f]
+    return out
+
+@test("출력 shape (C_out, H_out, W_out)")
+def _():
+    out = conv2d_multi(rng.normal(size=(3, 8, 8)), rng.normal(size=(5, 3, 3, 3)), np.zeros(5), stride=2, pad=1)
+    assert out.shape == (5, 4, 4), f"shape: {out.shape}"
+
+@test("참조 구현과 일치 (stride 1, pad 1)")
+def _():
+    x, w, b = rng.normal(size=(3, 6, 6)), rng.normal(size=(4, 3, 3, 3)), rng.normal(size=4)
+    assert approx(conv2d_multi(x, w, b, pad=1), reference(x, w, b, pad=1))
+
+@test("참조 구현과 일치 (5×5 커널, stride 2)")
+def _():
+    x, w, b = rng.normal(size=(2, 9, 9)), rng.normal(size=(3, 2, 5, 5)), rng.normal(size=3)
+    assert approx(conv2d_multi(x, w, b, stride=2), reference(x, w, b, stride=2))
+
+@test("입력 채널이 1개면 흑백 합성곱과 같다")
+def _():
+    x, k = rng.normal(size=(1, 5, 5)), rng.normal(size=(1, 1, 3, 3))
+    single = np.array([[np.sum(x[0, i:i+3, j:j+3] * k[0, 0]) for j in range(3)] for i in range(3)])
+    assert approx(conv2d_multi(x, k, np.zeros(1))[0], single)
+`,
       hints: ["`w`는 (C_out, C_in, K, K), `window`는 (C_in, K, K)입니다. 뒤쪽 세 축끼리 곱해 더하면 (C_out,)이 남습니다.", "`np.tensordot(w, window, axes=([1, 2, 3], [0, 1, 2]))` 또는 `np.einsum(\"fckl,ckl->f\", w, window)`", "`out[:, i, j] = ... + b`"],
       solution: py`
-  import numpy as np
-  
-  def conv2d_multi(x, w, b, stride=1, pad=0):
-      x = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))
-      C_out, C_in, K, _ = w.shape
-      H_out = (x.shape[1] - K) // stride + 1
-      W_out = (x.shape[2] - K) // stride + 1
-      out = np.zeros((C_out, H_out, W_out))
-      for i in range(H_out):
-          for j in range(W_out):
-              window = x[:, i * stride:i * stride + K, j * stride:j * stride + K]
-              out[:, i, j] = np.tensordot(w, window, axes=([1, 2, 3], [0, 1, 2])) + b
-      return out
-  
-  rng = np.random.default_rng(0)
-  x = rng.normal(size=(3, 8, 8))
-  w = rng.normal(size=(4, 3, 3, 3))
-  print(conv2d_multi(x, w, np.zeros(4), pad=1).shape)
-  `,
+import numpy as np
+
+def conv2d_multi(x, w, b, stride=1, pad=0):
+    x = np.pad(x, ((0, 0), (pad, pad), (pad, pad)))
+    C_out, C_in, K, _ = w.shape
+    H_out = (x.shape[1] - K) // stride + 1
+    W_out = (x.shape[2] - K) // stride + 1
+    out = np.zeros((C_out, H_out, W_out))
+    for i in range(H_out):
+        for j in range(W_out):
+            window = x[:, i * stride:i * stride + K, j * stride:j * stride + K]
+            out[:, i, j] = np.tensordot(w, window, axes=([1, 2, 3], [0, 1, 2])) + b
+    return out
+
+rng = np.random.default_rng(0)
+x = rng.normal(size=(3, 8, 8))
+w = rng.normal(size=(4, 3, 3, 3))
+print(conv2d_multi(x, w, np.zeros(4), pad=1).shape)
+`,
     },
-  {
+    {
       key: "ch2",
       title: "Max Pooling의 역전파: 승자에게만 기울기를",
       prompt: md`
-  
-  Max Pooling은 파라미터가 없지만 역전파는 해야 합니다. $2 \times 2$(stride 2) 풀링의 순전파·역전파를 구현합니다.
-  
-  1. \`maxpool_forward(a)\`: 풀링 결과와, 역전파에 쓸 **각 블록 최댓값의 위치**(마스크)를 돌려줍니다.
-  2. \`maxpool_backward(dout, mask)\`: 상류 기울기 \`dout\`(풀링 출력 크기)을 블록 안에서 최댓값이었던 자리에만 전달하고 나머지는 0으로 둡니다(ReLU처럼 승자독식).
-  
-  블록 안에 최댓값이 여러 개면 첫 번째 위치(행 우선) 하나에만 전달합니다. 채점은 수치미분과 비교합니다.
-  `,
+
+Max Pooling은 파라미터가 없지만 역전파는 해야 합니다. $2 \times 2$(stride 2) 풀링의 순전파·역전파를 구현합니다.
+
+1. \`maxpool_forward(a)\`: 풀링 결과와, 역전파에 쓸 **각 블록 최댓값의 위치**(마스크)를 돌려줍니다.
+2. \`maxpool_backward(dout, mask)\`: 상류 기울기 \`dout\`(풀링 출력 크기)을 블록 안에서 최댓값이었던 자리에만 전달하고 나머지는 0으로 둡니다(ReLU처럼 승자독식).
+
+블록 안에 최댓값이 여러 개면 첫 번째 위치(행 우선) 하나에만 전달합니다. 채점은 수치미분과 비교합니다.
+`,
       starter: py`
-  import numpy as np
-  
-  def maxpool_forward(a):
-      H, W = a.shape
-      blocks = a.reshape(H // 2, 2, W // 2, 2).transpose(0, 2, 1, 3).reshape(H // 2, W // 2, 4)
-      out = blocks.max(axis=2)
-      mask = np.zeros_like(a)
-      # TODO: 블록마다 argmax 위치(0~3)를 원래 좌표 (2*bi + r, 2*bj + c)로 바꿔 mask에 1을 표시합니다.
-      return out, mask
-  
-  def maxpool_backward(dout, mask):
-      # TODO: dout을 각 블록 크기(2×2)로 늘린 뒤 mask를 곱합니다.
-      return np.zeros_like(mask)
-  
-  a = np.array([[1., 3., 2., 1.], [4., 2., 0., 5.], [1., 1., 7., 2.], [0., 2., 3., 3.]])
-  out, mask = maxpool_forward(a)
-  print(out)
-  print(maxpool_backward(np.ones_like(out), mask))
-  `,
+import numpy as np
+
+def maxpool_forward(a):
+    H, W = a.shape
+    blocks = a.reshape(H // 2, 2, W // 2, 2).transpose(0, 2, 1, 3).reshape(H // 2, W // 2, 4)
+    out = blocks.max(axis=2)
+    mask = np.zeros_like(a)
+    # TODO: 블록마다 argmax 위치(0~3)를 원래 좌표 (2*bi + r, 2*bj + c)로 바꿔 mask에 1을 표시합니다.
+    return out, mask
+
+def maxpool_backward(dout, mask):
+    # TODO: dout을 각 블록 크기(2×2)로 늘린 뒤 mask를 곱합니다.
+    return np.zeros_like(mask)
+
+a = np.array([[1., 3., 2., 1.], [4., 2., 0., 5.], [1., 1., 7., 2.], [0., 2., 3., 3.]])
+out, mask = maxpool_forward(a)
+print(out)
+print(maxpool_backward(np.ones_like(out), mask))
+`,
       tests: py`
-  import numpy as np
-  a = np.array([[1., 3., 2., 1.], [4., 2., 0., 5.], [1., 1., 7., 2.], [0., 2., 3., 3.]])
-  
-  @test("순전파 결과 = [[4, 5], [2, 7]]")
-  def _():
-      out, _ = maxpool_forward(a)
-      assert approx(out, [[4, 5], [2, 7]])
-  
-  @test("마스크는 블록마다 최댓값 자리 하나")
-  def _():
-      _, mask = maxpool_forward(a)
-      assert mask.sum() == 4 and mask[1, 0] == 1 and mask[1, 3] == 1 and mask[2, 2] == 1 and mask[3, 1] == 1, f"mask:\n{mask}"
-  
-  @test("동점이면 첫 번째 위치 하나에만")
-  def _():
-      _, mask = maxpool_forward(np.ones((2, 2)))
-      assert mask.tolist() == [[1, 0], [0, 0]], f"mask: {mask.tolist()}"
-  
-  @test("역전파가 수치미분과 일치")
-  def _():
-      rng = np.random.default_rng(0)
-      x = rng.normal(size=(4, 6))
-      dout = rng.normal(size=(2, 3))
-      out, mask = maxpool_forward(x)
-      dx = maxpool_backward(dout, mask)
-      num = np.zeros_like(x)
-      for i in range(4):
-          for j in range(6):
-              xp, xm = x.copy(), x.copy()
-              xp[i, j] += 1e-6; xm[i, j] -= 1e-6
-              num[i, j] = (np.sum(maxpool_forward(xp)[0] * dout) - np.sum(maxpool_forward(xm)[0] * dout)) / 2e-6
-      assert approx(dx, num, 1e-5)
-  `,
+import numpy as np
+a = np.array([[1., 3., 2., 1.], [4., 2., 0., 5.], [1., 1., 7., 2.], [0., 2., 3., 3.]])
+
+@test("순전파 결과 = [[4, 5], [2, 7]]")
+def _():
+    out, _ = maxpool_forward(a)
+    assert approx(out, [[4, 5], [2, 7]])
+
+@test("마스크는 블록마다 최댓값 자리 하나")
+def _():
+    _, mask = maxpool_forward(a)
+    assert mask.sum() == 4 and mask[1, 0] == 1 and mask[1, 3] == 1 and mask[2, 2] == 1 and mask[3, 1] == 1, f"mask:\n{mask}"
+
+@test("동점이면 첫 번째 위치 하나에만")
+def _():
+    _, mask = maxpool_forward(np.ones((2, 2)))
+    assert mask.tolist() == [[1, 0], [0, 0]], f"mask: {mask.tolist()}"
+
+@test("역전파가 수치미분과 일치")
+def _():
+    rng = np.random.default_rng(0)
+    x = rng.normal(size=(4, 6))
+    dout = rng.normal(size=(2, 3))
+    out, mask = maxpool_forward(x)
+    dx = maxpool_backward(dout, mask)
+    num = np.zeros_like(x)
+    for i in range(4):
+        for j in range(6):
+            xp, xm = x.copy(), x.copy()
+            xp[i, j] += 1e-6; xm[i, j] -= 1e-6
+            num[i, j] = (np.sum(maxpool_forward(xp)[0] * dout) - np.sum(maxpool_forward(xm)[0] * dout)) / 2e-6
+    assert approx(dx, num, 1e-5)
+`,
       hints: ["`idx = blocks.argmax(axis=2)`는 (H/2, W/2) 배열이고, 값 0~3은 블록 안 (행, 열) = `divmod(idx, 2)`입니다.", "`r, c = np.divmod(idx, 2)`, `bi, bj = np.indices(idx.shape)`를 만든 뒤 `mask[2 * bi + r, 2 * bj + c] = 1`", "`np.repeat(np.repeat(dout, 2, axis=0), 2, axis=1) * mask`. `np.kron(dout, np.ones((2, 2)))`도 같습니다."],
       solution: py`
-  import numpy as np
-  
-  def maxpool_forward(a):
-      H, W = a.shape
-      blocks = a.reshape(H // 2, 2, W // 2, 2).transpose(0, 2, 1, 3).reshape(H // 2, W // 2, 4)
-      out = blocks.max(axis=2)
-      mask = np.zeros_like(a)
-      idx = blocks.argmax(axis=2)
-      r, c = np.divmod(idx, 2)
-      bi, bj = np.indices(idx.shape)
-      mask[2 * bi + r, 2 * bj + c] = 1
-      return out, mask
-  
-  def maxpool_backward(dout, mask):
-      return np.repeat(np.repeat(dout, 2, axis=0), 2, axis=1) * mask
-  
-  a = np.array([[1., 3., 2., 1.], [4., 2., 0., 5.], [1., 1., 7., 2.], [0., 2., 3., 3.]])
-  out, mask = maxpool_forward(a)
-  print(out)
-  print(maxpool_backward(np.ones_like(out), mask))
-  `,
+import numpy as np
+
+def maxpool_forward(a):
+    H, W = a.shape
+    blocks = a.reshape(H // 2, 2, W // 2, 2).transpose(0, 2, 1, 3).reshape(H // 2, W // 2, 4)
+    out = blocks.max(axis=2)
+    mask = np.zeros_like(a)
+    idx = blocks.argmax(axis=2)
+    r, c = np.divmod(idx, 2)
+    bi, bj = np.indices(idx.shape)
+    mask[2 * bi + r, 2 * bj + c] = 1
+    return out, mask
+
+def maxpool_backward(dout, mask):
+    return np.repeat(np.repeat(dout, 2, axis=0), 2, axis=1) * mask
+
+a = np.array([[1., 3., 2., 1.], [4., 2., 0., 5.], [1., 1., 7., 2.], [0., 2., 3., 3.]])
+out, mask = maxpool_forward(a)
+print(out)
+print(maxpool_backward(np.ones_like(out), mask))
+`,
     },
   ],
 });

@@ -4,6 +4,7 @@ import { parseMarkdown } from "./markdown";
 import { TRACKS, getTrack } from "./curriculum/tracks";
 import { CONCEPTS, getConcept } from "./curriculum/concepts";
 import { MODULE_SOURCES } from "./modules";
+import { lessonHref } from "../lib/routes";
 
 // 콘텐츠 원본(src/content/modules)을 화면과 서버 로직이 쓰는 구조로 바꾸고 조회 함수를 제공한다.
 // 콘텐츠는 빌드에 포함된 상수라 결과를 프로세스 수명 동안 한 번만 계산한다.
@@ -58,9 +59,63 @@ function estimateMinutes(blocks: Block[], lesson: LessonSource): number {
   return Math.max(10, Math.round(raw / 5) * 5);
 }
 
+// ─── 레슨 참조 ────────────────────────────────────────────────────────────
+// 본문에는 다른 레슨을 [[lesson:<id>]] 또는 [[lesson:<id>|표시할 글]]로 가리킨다. 빌드할 때 "모듈 번호 + 레슨 제목"
+// 링크로 바꾸므로, 레슨이 다른 모듈로 옮겨 가도 본문을 고칠 필요가 없다. 없는 id는 그대로 두고 검증 스크립트가 잡는다.
+export const LESSON_REF = /\[\[lesson:([a-z0-9-]+)(?:\|([^\]\n]+))?\]\]/g;
+
+type RefTable = Map<string, { href: string; label: string }>;
+
+function refTable(sources: ModuleSource[]): RefTable {
+  const table: RefTable = new Map();
+  for (const m of sources) {
+    const code = `${getTrack(m.track).code}-${m.order}`;
+    for (const l of m.lessons) table.set(l.id, { href: lessonHref(m.slug, l.id), label: `${code} ${l.title}` });
+  }
+  return table;
+}
+
+function resolveRefs(text: string, table: RefTable): string {
+  return text.replace(LESSON_REF, (whole, id: string, custom?: string) => {
+    const ref = table.get(id);
+    return ref ? `[${custom ?? ref.label}](${ref.href})` : whole;
+  });
+}
+
+/** 레슨의 글 필드 전부에 같은 변환을 적용한다. */
+function mapLessonText(l: LessonSource, f: (text: string) => string): LessonSource {
+  return {
+    ...l,
+    goal: f(l.goal),
+    why: f(l.why),
+    body: f(l.body),
+    checks: l.checks.map((c) => ({ ...c, question: f(c.question), choices: c.choices.map(f), explanation: f(c.explanation) })),
+    exercises: l.exercises?.map((e) => ({ ...e, prompt: f(e.prompt), hints: e.hints.map(f) })),
+    predicts: l.predicts?.map((p) => ({ ...p, question: p.question && f(p.question), explanation: f(p.explanation) })),
+    descriptive: l.descriptive?.map((d) => ({ ...d, question: f(d.question), answer: f(d.answer), keyPoints: d.keyPoints.map(f) })),
+  };
+}
+
+function mapModuleText(m: ModuleSource, f: (text: string) => string): ModuleSource {
+  return {
+    ...m,
+    anchor: f(m.anchor),
+    recall: m.recall.map((r) => ({ prompt: f(r.prompt), hint: r.hint && f(r.hint) })),
+    lessons: m.lessons.map((l) => mapLessonText(l, f)),
+    assignment: m.assignment && {
+      ...m.assignment,
+      summary: f(m.assignment.summary),
+      tasks: m.assignment.tasks.map((t) => ({ ...t, instructions: f(t.instructions) })),
+    },
+  };
+}
+
 function buildModules(sources: ModuleSource[]): Module[] {
   const trackIndex = new Map(TRACKS.map((t, i) => [t.id, i]));
-  const sorted = [...sources].sort((a, b) => (trackIndex.get(a.track)! - trackIndex.get(b.track)!) || a.order - b.order);
+  const table = refTable(sources);
+  const sorted = [...sources]
+    .sort((a, b) => trackIndex.get(a.track)! - trackIndex.get(b.track)! || a.order - b.order)
+    .map((m) => mapModuleText(m, (text) => resolveRefs(text, table)));
   return sorted.map((source) => {
     const trackInfo = getTrack(source.track);
     const ordered = TIER_ORDER.flatMap((tier) => source.lessons.filter((l) => l.tier === tier));
@@ -184,6 +239,17 @@ export function findExercise(id: string) {
 /** 과제 저장 키 → 모듈 */
 export function moduleOfAssignment(key: string): Module | undefined {
   return MODULES.find((m) => m.assignment?.key === key);
+}
+
+/**
+ * RAG 과제에서 코드가 읽는 학습 자료 파일: 모듈마다 /course/<모듈 slug>.md 하나(확장 모듈 제외).
+ * 파일 안에는 모듈 제목과 레슨별 제목·본문이 들어 있다. 과제 작업 공간과 실습 검사 스크립트가 같이 쓴다.
+ */
+export function courseDocuments(): { path: string; content: string }[] {
+  return MODULES.filter((m) => m.track !== "extension").map((m) => ({
+    path: `/course/${m.slug}.md`,
+    content: [`# ${m.code} ${m.title}`, "", ...m.lessons.flatMap((l) => [`## ${l.title}`, "", l.body.trim(), ""])].join("\n"),
+  }));
 }
 
 /** 이 과정의 과제 저장 키 전부(모듈 순서). 이전 과정의 제출물을 집계에서 빼는 데 쓴다. */

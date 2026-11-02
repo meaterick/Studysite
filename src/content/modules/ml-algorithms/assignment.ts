@@ -273,186 +273,186 @@ assert costs[t_star] <= costs[0.5], f"비용: t*={costs[t_star]:.4f}, 0.5={costs
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "L2 규제 로지스틱 회귀를 NumPy로 구현해 sklearn과 맞추기",
       prompt: md`
-  
-  목적함수 $\dfrac{1}{n}\sum \text{BCE} + \dfrac{\lambda}{2}\lVert w \rVert^2$(편향은 규제하지 않음)를 경사하강법으로 최소화하는 \`fit_logreg(X, y, l2, lr, steps)\`를 구현합니다.
-  
-  scikit-learn의 \`LogisticRegression(C=...)\`은 $C\sum \text{BCE} + \tfrac{1}{2}\lVert w \rVert^2$을 최소화하므로, 양변을 $Cn$으로 나누면 $C = \dfrac{1}{n\lambda}$일 때 두 목적함수의 최솟값이 같습니다. 이 대응을 이용해 계수가 소수 둘째 자리까지 일치하는지 확인합니다.
-  `,
+
+목적함수 $\dfrac{1}{n}\sum \text{BCE} + \dfrac{\lambda}{2}\lVert w \rVert^2$(편향은 규제하지 않음)를 경사하강법으로 최소화하는 \`fit_logreg(X, y, l2, lr, steps)\`를 구현합니다.
+
+scikit-learn의 \`LogisticRegression(C=...)\`은 $C\sum \text{BCE} + \tfrac{1}{2}\lVert w \rVert^2$을 최소화하므로, 양변을 $Cn$으로 나누면 $C = \dfrac{1}{n\lambda}$일 때 두 목적함수의 최솟값이 같습니다. 이 대응을 이용해 계수가 소수 둘째 자리까지 일치하는지 확인합니다.
+`,
       starter: py`
-  import numpy as np
-  from sklearn.linear_model import LogisticRegression
-  
-  def fit_logreg(X, y, l2=0.01, lr=0.5, steps=3000):
-      n, d = X.shape
-      w, b = np.zeros(d), 0.0
-      for _ in range(steps):
-          p = 1 / (1 + np.exp(-(X @ w + b)))
-          grad_w = np.zeros(d)  # TODO: 평균 BCE의 기울기 + L2 항의 기울기
-          grad_b = 0.0          # TODO: 편향은 규제하지 않습니다.
-          w -= lr * grad_w
-          b -= lr * grad_b
-      return w, b
-  
-  rng = np.random.default_rng(0)
-  X = rng.normal(size=(200, 2))
-  y = (X @ np.array([2.0, -1.0]) + 0.3 + rng.normal(0, 1, 200) > 0).astype(int)
-  
-  l2 = 0.01
-  w, b = fit_logreg(X, y, l2)
-  sk = LogisticRegression(C=1 / (len(y) * l2)).fit(X, y)
-  print("직접 구현:", np.round(w, 3), round(float(b), 3))
-  print("sklearn  :", np.round(sk.coef_[0], 3), round(float(sk.intercept_[0]), 3))
-  `,
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+
+def fit_logreg(X, y, l2=0.01, lr=0.5, steps=3000):
+    n, d = X.shape
+    w, b = np.zeros(d), 0.0
+    for _ in range(steps):
+        p = 1 / (1 + np.exp(-(X @ w + b)))
+        grad_w = np.zeros(d)  # TODO: 평균 BCE의 기울기 + L2 항의 기울기
+        grad_b = 0.0          # TODO: 편향은 규제하지 않습니다.
+        w -= lr * grad_w
+        b -= lr * grad_b
+    return w, b
+
+rng = np.random.default_rng(0)
+X = rng.normal(size=(200, 2))
+y = (X @ np.array([2.0, -1.0]) + 0.3 + rng.normal(0, 1, 200) > 0).astype(int)
+
+l2 = 0.01
+w, b = fit_logreg(X, y, l2)
+sk = LogisticRegression(C=1 / (len(y) * l2)).fit(X, y)
+print("직접 구현:", np.round(w, 3), round(float(b), 3))
+print("sklearn  :", np.round(sk.coef_[0], 3), round(float(sk.intercept_[0]), 3))
+`,
       tests: py`
-  import numpy as np
-  from sklearn.linear_model import LogisticRegression
-  rng = np.random.default_rng(0)
-  Xt = rng.normal(size=(200, 2))
-  yt = (Xt @ np.array([2.0, -1.0]) + 0.3 + rng.normal(0, 1, 200) > 0).astype(int)
-  
-  @test("λ = 0.01: sklearn(C = 1/(nλ))과 계수가 0.01 이내로 일치")
-  def _():
-      w, b = fit_logreg(Xt, yt, l2=0.01)
-      sk = LogisticRegression(C=1 / (200 * 0.01)).fit(Xt, yt)
-      assert approx(w, sk.coef_[0], 1e-2) and abs(b - sk.intercept_[0]) < 1e-2, f"{w}, {b} vs {sk.coef_[0]}, {sk.intercept_[0]}"
-  
-  @test("규제를 키우면 가중치 크기가 줄어든다")
-  def _():
-      w_small, _ = fit_logreg(Xt, yt, l2=0.001)
-      w_big, _ = fit_logreg(Xt, yt, l2=0.5)
-      assert np.linalg.norm(w_big) < np.linalg.norm(w_small), f"|w|: {np.linalg.norm(w_small):.3f} → {np.linalg.norm(w_big):.3f}"
-  
-  @test("편향은 규제하지 않는다(강한 규제에서도 편향이 0으로 끌려가지 않음)")
-  def _():
-      Xs = rng.normal(size=(300, 1)) * 0.01
-      ys = (rng.random(300) < 0.8).astype(int)
-      _, b = fit_logreg(Xs, ys, l2=1.0, steps=4000)
-      assert abs(b - np.log(ys.mean() / (1 - ys.mean()))) < 0.05, f"편향 {b:.3f}, 기대 {np.log(ys.mean() / (1 - ys.mean())):.3f}"
-  `,
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+rng = np.random.default_rng(0)
+Xt = rng.normal(size=(200, 2))
+yt = (Xt @ np.array([2.0, -1.0]) + 0.3 + rng.normal(0, 1, 200) > 0).astype(int)
+
+@test("λ = 0.01: sklearn(C = 1/(nλ))과 계수가 0.01 이내로 일치")
+def _():
+    w, b = fit_logreg(Xt, yt, l2=0.01)
+    sk = LogisticRegression(C=1 / (200 * 0.01)).fit(Xt, yt)
+    assert approx(w, sk.coef_[0], 1e-2) and abs(b - sk.intercept_[0]) < 1e-2, f"{w}, {b} vs {sk.coef_[0]}, {sk.intercept_[0]}"
+
+@test("규제를 키우면 가중치 크기가 줄어든다")
+def _():
+    w_small, _ = fit_logreg(Xt, yt, l2=0.001)
+    w_big, _ = fit_logreg(Xt, yt, l2=0.5)
+    assert np.linalg.norm(w_big) < np.linalg.norm(w_small), f"|w|: {np.linalg.norm(w_small):.3f} → {np.linalg.norm(w_big):.3f}"
+
+@test("편향은 규제하지 않는다(강한 규제에서도 편향이 0으로 끌려가지 않음)")
+def _():
+    Xs = rng.normal(size=(300, 1)) * 0.01
+    ys = (rng.random(300) < 0.8).astype(int)
+    _, b = fit_logreg(Xs, ys, l2=1.0, steps=4000)
+    assert abs(b - np.log(ys.mean() / (1 - ys.mean()))) < 0.05, f"편향 {b:.3f}, 기대 {np.log(ys.mean() / (1 - ys.mean())):.3f}"
+`,
       hints: ["평균 BCE의 기울기는 `X.T @ (p - y) / n`, `np.mean(p - y)`입니다.", "$\\frac{\\lambda}{2}\\lVert w \\rVert^2$의 기울기는 $\\lambda w$입니다. `grad_w`에만 더합니다.", "편향에 규제를 걸면 강한 규제에서 편향이 0 쪽으로 끌려가 데이터의 기본 비율을 표현하지 못합니다."],
       solution: py`
-  import numpy as np
-  from sklearn.linear_model import LogisticRegression
-  
-  def fit_logreg(X, y, l2=0.01, lr=0.5, steps=3000):
-      n, d = X.shape
-      w, b = np.zeros(d), 0.0
-      for _ in range(steps):
-          p = 1 / (1 + np.exp(-(X @ w + b)))
-          grad_w = X.T @ (p - y) / n + l2 * w
-          grad_b = np.mean(p - y)
-          w -= lr * grad_w
-          b -= lr * grad_b
-      return w, b
-  
-  rng = np.random.default_rng(0)
-  X = rng.normal(size=(200, 2))
-  y = (X @ np.array([2.0, -1.0]) + 0.3 + rng.normal(0, 1, 200) > 0).astype(int)
-  
-  l2 = 0.01
-  w, b = fit_logreg(X, y, l2)
-  sk = LogisticRegression(C=1 / (len(y) * l2)).fit(X, y)
-  print("직접 구현:", np.round(w, 3), round(float(b), 3))
-  print("sklearn  :", np.round(sk.coef_[0], 3), round(float(sk.intercept_[0]), 3))
-  `,
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+
+def fit_logreg(X, y, l2=0.01, lr=0.5, steps=3000):
+    n, d = X.shape
+    w, b = np.zeros(d), 0.0
+    for _ in range(steps):
+        p = 1 / (1 + np.exp(-(X @ w + b)))
+        grad_w = X.T @ (p - y) / n + l2 * w
+        grad_b = np.mean(p - y)
+        w -= lr * grad_w
+        b -= lr * grad_b
+    return w, b
+
+rng = np.random.default_rng(0)
+X = rng.normal(size=(200, 2))
+y = (X @ np.array([2.0, -1.0]) + 0.3 + rng.normal(0, 1, 200) > 0).astype(int)
+
+l2 = 0.01
+w, b = fit_logreg(X, y, l2)
+sk = LogisticRegression(C=1 / (len(y) * l2)).fit(X, y)
+print("직접 구현:", np.round(w, 3), round(float(b), 3))
+print("sklearn  :", np.round(sk.coef_[0], 3), round(float(sk.intercept_[0]), 3))
+`,
     },
-  {
+    {
       key: "ch2",
       title: "부트스트랩으로 편향²과 분산을 숫자로 분해하기",
       prompt: md`
-  
-  같은 참함수 $f(x) = \sin 2\pi x$에서 훈련 데이터를 여러 번 새로 뽑아 다항식 모델을 학습하면, 고정한 점들에서의 예측이 데이터에 따라 흔들립니다.
-  
-  1. \`decompose(preds, truth)\`: \`preds\`의 shape은 (데이터셋 수, 평가 점 수)입니다. 평가 점마다 $\text{bias}^2 = (\bar{\hat y} - f)^2$, $\text{variance} = \overline{(\hat y - \bar{\hat y})^2}$를 구한 뒤 점들에 대해 평균낸 \`(bias2, variance)\`를 돌려줍니다.
-  2. \`simulate(degree, n_sets, seed)\`: \`n_sets\`개의 훈련 데이터(각 30점, 잡음 표준편차 0.3)에 \`np.polyfit\`으로 \`degree\`차 다항식을 맞추고, 평가 점 \`X_EVAL\`에서의 예측 배열을 돌려줍니다.
-  
-  차수 1(과소적합)과 9(과적합)의 편향$^2$·분산을 비교해 보십시오.
-  `,
+
+같은 참함수 $f(x) = \sin 2\pi x$에서 훈련 데이터를 여러 번 새로 뽑아 다항식 모델을 학습하면, 고정한 점들에서의 예측이 데이터에 따라 흔들립니다.
+
+1. \`decompose(preds, truth)\`: \`preds\`의 shape은 (데이터셋 수, 평가 점 수)입니다. 평가 점마다 $\text{bias}^2 = (\bar{\hat y} - f)^2$, $\text{variance} = \overline{(\hat y - \bar{\hat y})^2}$를 구한 뒤 점들에 대해 평균낸 \`(bias2, variance)\`를 돌려줍니다.
+2. \`simulate(degree, n_sets, seed)\`: \`n_sets\`개의 훈련 데이터(각 30점, 잡음 표준편차 0.3)에 \`np.polyfit\`으로 \`degree\`차 다항식을 맞추고, 평가 점 \`X_EVAL\`에서의 예측 배열을 돌려줍니다.
+
+차수 1(과소적합)과 9(과적합)의 편향$^2$·분산을 비교해 보십시오.
+`,
       starter: py`
-  import numpy as np
-  
-  X_EVAL = np.linspace(0.1, 0.9, 30)
-  f = lambda x: np.sin(2 * np.pi * x)
-  
-  def decompose(preds, truth):
-      preds = np.asarray(preds, dtype=float)
-      mean_pred = preds.mean(axis=0)          # 평가 점마다의 평균 예측
-      bias2 = 0.0     # TODO
-      variance = 0.0  # TODO
-      return bias2, variance
-  
-  def simulate(degree, n_sets=200, seed=0):
-      rng = np.random.default_rng(seed)
-      preds = []
-      for _ in range(n_sets):
-          x = rng.uniform(0, 1, 30)
-          y = f(x) + rng.normal(0, 0.3, 30)
-          # TODO: np.polyfit(x, y, degree)로 계수를 구하고 np.polyval로 X_EVAL에서 예측해 preds에 추가합니다.
-      return np.array(preds)
-  
-  print("모델 B 예시:", decompose([[6], [14], [8], [15], [7]], [10]))
-  for d in (1, 3, 9):
-      b2, var = decompose(simulate(d), f(X_EVAL))
-      print(f"차수 {d}: 편향² = {b2:.4f}, 분산 = {var:.4f}")
-  `,
+import numpy as np
+
+X_EVAL = np.linspace(0.1, 0.9, 30)
+f = lambda x: np.sin(2 * np.pi * x)
+
+def decompose(preds, truth):
+    preds = np.asarray(preds, dtype=float)
+    mean_pred = preds.mean(axis=0)          # 평가 점마다의 평균 예측
+    bias2 = 0.0     # TODO
+    variance = 0.0  # TODO
+    return bias2, variance
+
+def simulate(degree, n_sets=200, seed=0):
+    rng = np.random.default_rng(seed)
+    preds = []
+    for _ in range(n_sets):
+        x = rng.uniform(0, 1, 30)
+        y = f(x) + rng.normal(0, 0.3, 30)
+        # TODO: np.polyfit(x, y, degree)로 계수를 구하고 np.polyval로 X_EVAL에서 예측해 preds에 추가합니다.
+    return np.array(preds)
+
+print("모델 B 예시:", decompose([[6], [14], [8], [15], [7]], [10]))
+for d in (1, 3, 9):
+    b2, var = decompose(simulate(d), f(X_EVAL))
+    print(f"차수 {d}: 편향² = {b2:.4f}, 분산 = {var:.4f}")
+`,
       tests: py`
-  import numpy as np
-  
-  @test("본문 모델 B: 편향² 0, 분산 14.0")
-  def _():
-      b2, var = decompose([[6], [14], [8], [15], [7]], [10])
-      assert approx(b2, 0.0) and approx(var, 14.0), f"결과: {(b2, var)}"
-  
-  @test("본문 모델 C: 편향² ≈ 8.41")
-  def _():
-      b2, var = decompose([[7.1], [7.3], [6.9], [7.2], [7.0]], [10])
-      assert approx(b2, 8.41, tol=1e-3) and var < 0.05, f"결과: {(b2, var)}"
-  
-  @test("simulate가 (데이터셋 수, 평가 점 수) 배열을 돌려준다")
-  def _():
-      p = simulate(3, n_sets=5)
-      assert np.shape(p) == (5, len(X_EVAL)), f"shape: {np.shape(p)}"
-  
-  @test("차수 1은 편향²이 크고, 차수 9는 분산이 크다")
-  def _():
-      b1, v1 = decompose(simulate(1), f(X_EVAL))
-      b9, v9 = decompose(simulate(9), f(X_EVAL))
-      assert b1 > 10 * b9, f"편향²: 차수1 {b1:.4f}, 차수9 {b9:.4f}"
-      assert v9 > 3 * v1, f"분산: 차수1 {v1:.4f}, 차수9 {v9:.4f}"
-  `,
+import numpy as np
+
+@test("본문 모델 B: 편향² 0, 분산 14.0")
+def _():
+    b2, var = decompose([[6], [14], [8], [15], [7]], [10])
+    assert approx(b2, 0.0) and approx(var, 14.0), f"결과: {(b2, var)}"
+
+@test("본문 모델 C: 편향² ≈ 8.41")
+def _():
+    b2, var = decompose([[7.1], [7.3], [6.9], [7.2], [7.0]], [10])
+    assert approx(b2, 8.41, tol=1e-3) and var < 0.05, f"결과: {(b2, var)}"
+
+@test("simulate가 (데이터셋 수, 평가 점 수) 배열을 돌려준다")
+def _():
+    p = simulate(3, n_sets=5)
+    assert np.shape(p) == (5, len(X_EVAL)), f"shape: {np.shape(p)}"
+
+@test("차수 1은 편향²이 크고, 차수 9는 분산이 크다")
+def _():
+    b1, v1 = decompose(simulate(1), f(X_EVAL))
+    b9, v9 = decompose(simulate(9), f(X_EVAL))
+    assert b1 > 10 * b9, f"편향²: 차수1 {b1:.4f}, 차수9 {b9:.4f}"
+    assert v9 > 3 * v1, f"분산: 차수1 {v1:.4f}, 차수9 {v9:.4f}"
+`,
       hints: ["편향$^2$은 `np.mean((mean_pred - truth) ** 2)`입니다.", "분산은 `np.mean((preds - mean_pred) ** 2)`처럼 데이터셋 축과 평가 점 축 모두에 대해 평균냅니다.", "`coef = np.polyfit(x, y, degree)` 다음 `preds.append(np.polyval(coef, X_EVAL))`입니다."],
       solution: py`
-  import numpy as np
-  
-  X_EVAL = np.linspace(0.1, 0.9, 30)
-  f = lambda x: np.sin(2 * np.pi * x)
-  
-  def decompose(preds, truth):
-      preds = np.asarray(preds, dtype=float)
-      mean_pred = preds.mean(axis=0)
-      bias2 = float(np.mean((mean_pred - np.asarray(truth, dtype=float)) ** 2))
-      variance = float(np.mean((preds - mean_pred) ** 2))
-      return bias2, variance
-  
-  def simulate(degree, n_sets=200, seed=0):
-      rng = np.random.default_rng(seed)
-      preds = []
-      for _ in range(n_sets):
-          x = rng.uniform(0, 1, 30)
-          y = f(x) + rng.normal(0, 0.3, 30)
-          coef = np.polyfit(x, y, degree)
-          preds.append(np.polyval(coef, X_EVAL))
-      return np.array(preds)
-  
-  print("모델 B 예시:", decompose([[6], [14], [8], [15], [7]], [10]))
-  for d in (1, 3, 9):
-      b2, var = decompose(simulate(d), f(X_EVAL))
-      print(f"차수 {d}: 편향² = {b2:.4f}, 분산 = {var:.4f}")
-  `,
+import numpy as np
+
+X_EVAL = np.linspace(0.1, 0.9, 30)
+f = lambda x: np.sin(2 * np.pi * x)
+
+def decompose(preds, truth):
+    preds = np.asarray(preds, dtype=float)
+    mean_pred = preds.mean(axis=0)
+    bias2 = float(np.mean((mean_pred - np.asarray(truth, dtype=float)) ** 2))
+    variance = float(np.mean((preds - mean_pred) ** 2))
+    return bias2, variance
+
+def simulate(degree, n_sets=200, seed=0):
+    rng = np.random.default_rng(seed)
+    preds = []
+    for _ in range(n_sets):
+        x = rng.uniform(0, 1, 30)
+        y = f(x) + rng.normal(0, 0.3, 30)
+        coef = np.polyfit(x, y, degree)
+        preds.append(np.polyval(coef, X_EVAL))
+    return np.array(preds)
+
+print("모델 B 예시:", decompose([[6], [14], [8], [15], [7]], [10]))
+for d in (1, 3, 9):
+    b2, var = decompose(simulate(d), f(X_EVAL))
+    print(f"차수 {d}: 편향² = {b2:.4f}, 분산 = {var:.4f}")
+`,
     },
   ],
 });

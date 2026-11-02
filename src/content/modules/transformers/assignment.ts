@@ -301,226 +301,226 @@ assert len(queries) >= 3, f"Query가 {len(queries)}개입니다. 직접 고른 Q
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "GPT형 디코더 블록 전체 순전파",
       prompt: md`
-  
-  지금까지 만든 부품으로 **pre-norm GPT 디코더 블록**을 조립합니다.
-  
-  $$h = x + \mathrm{MHA}(\mathrm{LN}(x)),\qquad y = h + \mathrm{MLP}(\mathrm{LN}(h)),\quad \mathrm{MLP}(u) = \mathrm{ReLU}(uW_1 + b_1)W_2 + b_2$$
-  
-  - \`layer_norm(x)\`: 토큰마다(마지막 축) 정규화(\`eps=1e-5\`, gamma·beta 생략)
-  - \`mha(x, Wq, Wk, Wv, Wo, h)\`: causal 멀티헤드 attention
-  - \`decoder_block(x, P)\`: \`P\`는 \`Wq, Wk, Wv, Wo, W1, b1, W2, b2, n_heads\` 키를 가진 딕셔너리
-  - \`n_params(d)\`: $d_{model} = d$, MLP 은닉 $4d$일 때 블록의 가중치 수(편향·LayerNorm 제외)
-  
-  출력 shape이 입력과 같고, 마지막 토큰을 바꿔도 앞 토큰 출력이 그대로여야 합니다.
-  `,
+
+지금까지 만든 부품으로 **pre-norm GPT 디코더 블록**을 조립합니다.
+
+$$h = x + \mathrm{MHA}(\mathrm{LN}(x)),\qquad y = h + \mathrm{MLP}(\mathrm{LN}(h)),\quad \mathrm{MLP}(u) = \mathrm{ReLU}(uW_1 + b_1)W_2 + b_2$$
+
+- \`layer_norm(x)\`: 토큰마다(마지막 축) 정규화(\`eps=1e-5\`, gamma·beta 생략)
+- \`mha(x, Wq, Wk, Wv, Wo, h)\`: causal 멀티헤드 attention
+- \`decoder_block(x, P)\`: \`P\`는 \`Wq, Wk, Wv, Wo, W1, b1, W2, b2, n_heads\` 키를 가진 딕셔너리
+- \`n_params(d)\`: $d_{model} = d$, MLP 은닉 $4d$일 때 블록의 가중치 수(편향·LayerNorm 제외)
+
+출력 shape이 입력과 같고, 마지막 토큰을 바꿔도 앞 토큰 출력이 그대로여야 합니다.
+`,
       starter: py`
-  import numpy as np
-  
-  def layer_norm(x, eps=1e-5):
-      return x  # TODO
-  
-  def mha(x, Wq, Wk, Wv, Wo, h):
-      T, d = x.shape
-      dk = d // h
-      split = lambda M: M.reshape(T, h, dk).transpose(1, 0, 2)
-      Qh, Kh, Vh = split(x @ Wq), split(x @ Wk), split(x @ Wv)
-      S = Qh @ Kh.transpose(0, 2, 1) / np.sqrt(dk)
-      S = np.where(np.triu(np.ones((T, T)), 1) == 1, -1e9, S)
-      A = np.exp(S - S.max(-1, keepdims=True)); A /= A.sum(-1, keepdims=True)
-      return (A @ Vh).transpose(1, 0, 2).reshape(T, d) @ Wo
-  
-  def decoder_block(x, P):
-      return x  # TODO: 잔차 연결 두 번 (pre-norm)
-  
-  def n_params(d):
-      return 0  # TODO: attention 4d² + MLP 2·d·4d
-  
-  rng = np.random.default_rng(0)
-  d, T = 16, 6
-  P = {k: rng.normal(scale=d ** -0.5, size=(d, d)) for k in ("Wq", "Wk", "Wv", "Wo")}
-  P.update(W1=rng.normal(scale=d ** -0.5, size=(d, 4 * d)), b1=np.zeros(4 * d), W2=rng.normal(scale=(4 * d) ** -0.5, size=(4 * d, d)), b2=np.zeros(d), n_heads=4)
-  x = rng.normal(size=(T, d))
-  print(decoder_block(x, P).shape, n_params(768))
-  `,
+import numpy as np
+
+def layer_norm(x, eps=1e-5):
+    return x  # TODO
+
+def mha(x, Wq, Wk, Wv, Wo, h):
+    T, d = x.shape
+    dk = d // h
+    split = lambda M: M.reshape(T, h, dk).transpose(1, 0, 2)
+    Qh, Kh, Vh = split(x @ Wq), split(x @ Wk), split(x @ Wv)
+    S = Qh @ Kh.transpose(0, 2, 1) / np.sqrt(dk)
+    S = np.where(np.triu(np.ones((T, T)), 1) == 1, -1e9, S)
+    A = np.exp(S - S.max(-1, keepdims=True)); A /= A.sum(-1, keepdims=True)
+    return (A @ Vh).transpose(1, 0, 2).reshape(T, d) @ Wo
+
+def decoder_block(x, P):
+    return x  # TODO: 잔차 연결 두 번 (pre-norm)
+
+def n_params(d):
+    return 0  # TODO: attention 4d² + MLP 2·d·4d
+
+rng = np.random.default_rng(0)
+d, T = 16, 6
+P = {k: rng.normal(scale=d ** -0.5, size=(d, d)) for k in ("Wq", "Wk", "Wv", "Wo")}
+P.update(W1=rng.normal(scale=d ** -0.5, size=(d, 4 * d)), b1=np.zeros(4 * d), W2=rng.normal(scale=(4 * d) ** -0.5, size=(4 * d, d)), b2=np.zeros(d), n_heads=4)
+x = rng.normal(size=(T, d))
+print(decoder_block(x, P).shape, n_params(768))
+`,
       tests: py`
-  import numpy as np
-  rng = np.random.default_rng(7)
-  d, T = 16, 6
-  P = {k: rng.normal(scale=d ** -0.5, size=(d, d)) for k in ("Wq", "Wk", "Wv", "Wo")}
-  P.update(W1=rng.normal(scale=d ** -0.5, size=(d, 4 * d)), b1=rng.normal(size=4 * d) * 0.1, W2=rng.normal(scale=(4 * d) ** -0.5, size=(4 * d, d)), b2=rng.normal(size=d) * 0.1, n_heads=4)
-  x = rng.normal(size=(T, d))
-  
-  @test("layer_norm: 토큰마다 평균 0, 표준편차 1")
-  def _():
-      z = layer_norm(rng.normal(3, 2, size=(4, 10)))
-      assert approx(z.mean(-1), np.zeros(4)) and approx(z.std(-1), np.ones(4), 1e-3)
-  
-  @test("블록 출력 = pre-norm 잔차 두 번")
-  def _():
-      def ln(a):
-          return (a - a.mean(-1, keepdims=True)) / np.sqrt(a.var(-1, keepdims=True) + 1e-5)
-      h = x + mha(ln(x), P["Wq"], P["Wk"], P["Wv"], P["Wo"], 4)
-      y = h + np.maximum(0, ln(h) @ P["W1"] + P["b1"]) @ P["W2"] + P["b2"]
-      assert approx(decoder_block(x, P), y)
-  
-  @test("causal: 마지막 토큰을 바꿔도 앞 토큰 출력은 그대로")
-  def _():
-      x2 = x.copy(); x2[-1] = rng.normal(size=d)
-      a, b = decoder_block(x, P), decoder_block(x2, P)
-      assert a.shape == (T, d) and approx(a[:-1], b[:-1]) and not approx(a[-1], b[-1])
-  
-  @test("GPT-2 small(d=768) 블록 가중치 ≈ 708만 개, MLP가 2/3")
-  def _():
-      assert n_params(768) == 4 * 768 ** 2 + 8 * 768 ** 2, f"결과: {n_params(768)}"
-  `,
+import numpy as np
+rng = np.random.default_rng(7)
+d, T = 16, 6
+P = {k: rng.normal(scale=d ** -0.5, size=(d, d)) for k in ("Wq", "Wk", "Wv", "Wo")}
+P.update(W1=rng.normal(scale=d ** -0.5, size=(d, 4 * d)), b1=rng.normal(size=4 * d) * 0.1, W2=rng.normal(scale=(4 * d) ** -0.5, size=(4 * d, d)), b2=rng.normal(size=d) * 0.1, n_heads=4)
+x = rng.normal(size=(T, d))
+
+@test("layer_norm: 토큰마다 평균 0, 표준편차 1")
+def _():
+    z = layer_norm(rng.normal(3, 2, size=(4, 10)))
+    assert approx(z.mean(-1), np.zeros(4)) and approx(z.std(-1), np.ones(4), 1e-3)
+
+@test("블록 출력 = pre-norm 잔차 두 번")
+def _():
+    def ln(a):
+        return (a - a.mean(-1, keepdims=True)) / np.sqrt(a.var(-1, keepdims=True) + 1e-5)
+    h = x + mha(ln(x), P["Wq"], P["Wk"], P["Wv"], P["Wo"], 4)
+    y = h + np.maximum(0, ln(h) @ P["W1"] + P["b1"]) @ P["W2"] + P["b2"]
+    assert approx(decoder_block(x, P), y)
+
+@test("causal: 마지막 토큰을 바꿔도 앞 토큰 출력은 그대로")
+def _():
+    x2 = x.copy(); x2[-1] = rng.normal(size=d)
+    a, b = decoder_block(x, P), decoder_block(x2, P)
+    assert a.shape == (T, d) and approx(a[:-1], b[:-1]) and not approx(a[-1], b[-1])
+
+@test("GPT-2 small(d=768) 블록 가중치 ≈ 708만 개, MLP가 2/3")
+def _():
+    assert n_params(768) == 4 * 768 ** 2 + 8 * 768 ** 2, f"결과: {n_params(768)}"
+`,
       hints: ["`(x - x.mean(-1, keepdims=True)) / np.sqrt(x.var(-1, keepdims=True) + eps)`", "`h = x + mha(layer_norm(x), P[\"Wq\"], P[\"Wk\"], P[\"Wv\"], P[\"Wo\"], P[\"n_heads\"])` 다음 `h + MLP(layer_norm(h))`", "attention 가중치 4개는 각각 $d \\times d$, MLP는 $d \\times 4d$와 $4d \\times d$이므로 합 $12d^2$입니다."],
       solution: py`
-  import numpy as np
-  
-  def layer_norm(x, eps=1e-5):
-      return (x - x.mean(-1, keepdims=True)) / np.sqrt(x.var(-1, keepdims=True) + eps)
-  
-  def mha(x, Wq, Wk, Wv, Wo, h):
-      T, d = x.shape
-      dk = d // h
-      split = lambda M: M.reshape(T, h, dk).transpose(1, 0, 2)
-      Qh, Kh, Vh = split(x @ Wq), split(x @ Wk), split(x @ Wv)
-      S = Qh @ Kh.transpose(0, 2, 1) / np.sqrt(dk)
-      S = np.where(np.triu(np.ones((T, T)), 1) == 1, -1e9, S)
-      A = np.exp(S - S.max(-1, keepdims=True)); A /= A.sum(-1, keepdims=True)
-      return (A @ Vh).transpose(1, 0, 2).reshape(T, d) @ Wo
-  
-  def decoder_block(x, P):
-      h = x + mha(layer_norm(x), P["Wq"], P["Wk"], P["Wv"], P["Wo"], P["n_heads"])
-      return h + np.maximum(0, layer_norm(h) @ P["W1"] + P["b1"]) @ P["W2"] + P["b2"]
-  
-  def n_params(d):
-      return 4 * d * d + 2 * d * 4 * d
-  
-  rng = np.random.default_rng(0)
-  d, T = 16, 6
-  P = {k: rng.normal(scale=d ** -0.5, size=(d, d)) for k in ("Wq", "Wk", "Wv", "Wo")}
-  P.update(W1=rng.normal(scale=d ** -0.5, size=(d, 4 * d)), b1=np.zeros(4 * d), W2=rng.normal(scale=(4 * d) ** -0.5, size=(4 * d, d)), b2=np.zeros(d), n_heads=4)
-  x = rng.normal(size=(T, d))
-  print(decoder_block(x, P).shape, n_params(768))
-  `,
+import numpy as np
+
+def layer_norm(x, eps=1e-5):
+    return (x - x.mean(-1, keepdims=True)) / np.sqrt(x.var(-1, keepdims=True) + eps)
+
+def mha(x, Wq, Wk, Wv, Wo, h):
+    T, d = x.shape
+    dk = d // h
+    split = lambda M: M.reshape(T, h, dk).transpose(1, 0, 2)
+    Qh, Kh, Vh = split(x @ Wq), split(x @ Wk), split(x @ Wv)
+    S = Qh @ Kh.transpose(0, 2, 1) / np.sqrt(dk)
+    S = np.where(np.triu(np.ones((T, T)), 1) == 1, -1e9, S)
+    A = np.exp(S - S.max(-1, keepdims=True)); A /= A.sum(-1, keepdims=True)
+    return (A @ Vh).transpose(1, 0, 2).reshape(T, d) @ Wo
+
+def decoder_block(x, P):
+    h = x + mha(layer_norm(x), P["Wq"], P["Wk"], P["Wv"], P["Wo"], P["n_heads"])
+    return h + np.maximum(0, layer_norm(h) @ P["W1"] + P["b1"]) @ P["W2"] + P["b2"]
+
+def n_params(d):
+    return 4 * d * d + 2 * d * 4 * d
+
+rng = np.random.default_rng(0)
+d, T = 16, 6
+P = {k: rng.normal(scale=d ** -0.5, size=(d, d)) for k in ("Wq", "Wk", "Wv", "Wo")}
+P.update(W1=rng.normal(scale=d ** -0.5, size=(d, 4 * d)), b1=np.zeros(4 * d), W2=rng.normal(scale=(4 * d) ** -0.5, size=(4 * d, d)), b2=np.zeros(d), n_heads=4)
+x = rng.normal(size=(T, d))
+print(decoder_block(x, P).shape, n_params(768))
+`,
     },
-  {
+    {
       key: "ch2",
       title: "바이트 수준 BPE로 한국어 토큰 수 줄이기",
       prompt: md`
-  
-  GPT 계열 토크나이저는 글자가 아니라 **UTF-8 바이트**에서 출발합니다. 한글 한 글자는 3바이트라 병합이 없으면 토큰이 많아집니다.
-  
-  1. \`train_byte_bpe(text, n_merges)\`: 텍스트를 UTF-8 바이트 정수 리스트로 바꾼 뒤, 가장 잦은 인접 쌍을 새 토큰 번호(256, 257, …)로 병합하는 규칙을 학습합니다. \`{(a, b): 새 번호}\` 딕셔너리(학습 순서 유지)를 돌려줍니다.
-  2. \`encode(text, merges)\`: 학습 순서대로 규칙을 적용한 토큰 번호 리스트
-  3. \`decode(tokens, merges)\`: 새 번호를 원래 두 토큰으로 되풀어 바이트로 만든 뒤 UTF-8로 복원합니다. **손실 없이** 원문이 돌아와야 합니다.
-  `,
+
+GPT 계열 토크나이저는 글자가 아니라 **UTF-8 바이트**에서 출발합니다. 한글 한 글자는 3바이트라 병합이 없으면 토큰이 많아집니다.
+
+1. \`train_byte_bpe(text, n_merges)\`: 텍스트를 UTF-8 바이트 정수 리스트로 바꾼 뒤, 가장 잦은 인접 쌍을 새 토큰 번호(256, 257, …)로 병합하는 규칙을 학습합니다. \`{(a, b): 새 번호}\` 딕셔너리(학습 순서 유지)를 돌려줍니다.
+2. \`encode(text, merges)\`: 학습 순서대로 규칙을 적용한 토큰 번호 리스트
+3. \`decode(tokens, merges)\`: 새 번호를 원래 두 토큰으로 되풀어 바이트로 만든 뒤 UTF-8로 복원합니다. **손실 없이** 원문이 돌아와야 합니다.
+`,
       starter: py`
-  from collections import Counter
-  
-  def merge(ids, pair, new_id):
-      out, i = [], 0
-      while i < len(ids):
-          if i < len(ids) - 1 and (ids[i], ids[i + 1]) == pair:
-              out.append(new_id); i += 2
-          else:
-              out.append(ids[i]); i += 1
-      return out
-  
-  def train_byte_bpe(text, n_merges):
-      ids = list(text.encode("utf-8"))
-      merges = {}
-      for k in range(n_merges):
-          pass  # TODO: 최빈 쌍을 256 + k 번으로 병합하고 merges에 기록합니다.
-      return merges
-  
-  def encode(text, merges):
-      ids = list(text.encode("utf-8"))
-      # TODO: merges.items()를 학습 순서대로 적용
-      return ids
-  
-  def decode(tokens, merges):
-      vocab = {i: bytes([i]) for i in range(256)}
-      # TODO: 각 새 번호의 바이트열 = 두 구성 토큰의 바이트열을 이어 붙인 것
-      return b"".join(vocab[t] for t in tokens).decode("utf-8", errors="replace")
-  
-  text = "학습 자료를 읽고 학습 목표를 확인한 뒤 학습을 시작합니다. 학습은 반복이 중요합니다."
-  merges = train_byte_bpe(text, 30)
-  ids = encode(text, merges)
-  print(f"글자 {len(text)}개, 바이트 {len(text.encode('utf-8'))}개 → 토큰 {len(ids)}개")
-  print(decode(ids, merges) == text)
-  `,
+from collections import Counter
+
+def merge(ids, pair, new_id):
+    out, i = [], 0
+    while i < len(ids):
+        if i < len(ids) - 1 and (ids[i], ids[i + 1]) == pair:
+            out.append(new_id); i += 2
+        else:
+            out.append(ids[i]); i += 1
+    return out
+
+def train_byte_bpe(text, n_merges):
+    ids = list(text.encode("utf-8"))
+    merges = {}
+    for k in range(n_merges):
+        pass  # TODO: 최빈 쌍을 256 + k 번으로 병합하고 merges에 기록합니다.
+    return merges
+
+def encode(text, merges):
+    ids = list(text.encode("utf-8"))
+    # TODO: merges.items()를 학습 순서대로 적용
+    return ids
+
+def decode(tokens, merges):
+    vocab = {i: bytes([i]) for i in range(256)}
+    # TODO: 각 새 번호의 바이트열 = 두 구성 토큰의 바이트열을 이어 붙인 것
+    return b"".join(vocab[t] for t in tokens).decode("utf-8", errors="replace")
+
+text = "학습 자료를 읽고 학습 목표를 확인한 뒤 학습을 시작합니다. 학습은 반복이 중요합니다."
+merges = train_byte_bpe(text, 30)
+ids = encode(text, merges)
+print(f"글자 {len(text)}개, 바이트 {len(text.encode('utf-8'))}개 → 토큰 {len(ids)}개")
+print(decode(ids, merges) == text)
+`,
       tests: py`
-  text = "학습 자료를 읽고 학습 목표를 확인한 뒤 학습을 시작합니다. 학습은 반복이 중요합니다."
-  
-  @test("병합 규칙 수와 새 번호(256부터 연속)")
-  def _():
-      m = train_byte_bpe(text, 10)
-      assert len(m) == 10 and sorted(m.values()) == list(range(256, 266)), f"번호: {sorted(m.values())}"
-  
-  @test("병합 0개면 토큰 = UTF-8 바이트 (한글 1글자 = 3바이트)")
-  def _():
-      assert encode("학습", {}) == list("학습".encode("utf-8")) and len(encode("학습", {})) == 6
-  
-  @test("병합을 많이 할수록 토큰 수가 줄어든다")
-  def _():
-      n = [len(encode(text, train_byte_bpe(text, k))) for k in (0, 10, 40)]
-      assert n[0] > n[1] > n[2], f"토큰 수: {n}"
-  
-  @test("decode(encode(x)) == x (학습에 없던 문장 포함)")
-  def _():
-      m = train_byte_bpe(text, 40)
-      for s in (text, "새로운 문장도 학습합니다!", "hello 학습 123"):
-          assert decode(encode(s, m), m) == s, f"복원 실패: {decode(encode(s, m), m)}"
-  `,
+text = "학습 자료를 읽고 학습 목표를 확인한 뒤 학습을 시작합니다. 학습은 반복이 중요합니다."
+
+@test("병합 규칙 수와 새 번호(256부터 연속)")
+def _():
+    m = train_byte_bpe(text, 10)
+    assert len(m) == 10 and sorted(m.values()) == list(range(256, 266)), f"번호: {sorted(m.values())}"
+
+@test("병합 0개면 토큰 = UTF-8 바이트 (한글 1글자 = 3바이트)")
+def _():
+    assert encode("학습", {}) == list("학습".encode("utf-8")) and len(encode("학습", {})) == 6
+
+@test("병합을 많이 할수록 토큰 수가 줄어든다")
+def _():
+    n = [len(encode(text, train_byte_bpe(text, k))) for k in (0, 10, 40)]
+    assert n[0] > n[1] > n[2], f"토큰 수: {n}"
+
+@test("decode(encode(x)) == x (학습에 없던 문장 포함)")
+def _():
+    m = train_byte_bpe(text, 40)
+    for s in (text, "새로운 문장도 학습합니다!", "hello 학습 123"):
+        assert decode(encode(s, m), m) == s, f"복원 실패: {decode(encode(s, m), m)}"
+`,
       hints: ["`pairs = Counter(zip(ids, ids[1:]))`, 비어 있으면 멈추고, `best = pairs.most_common(1)[0][0]`, `ids = merge(ids, best, 256 + k)`, `merges[best] = 256 + k`", "`encode`: `for pair, new_id in merges.items(): ids = merge(ids, pair, new_id)` (딕셔너리는 삽입 순서를 유지합니다)", "`decode`: `for (a, b), new_id in merges.items(): vocab[new_id] = vocab[a] + vocab[b]`. 앞에서 만든 번호가 뒤 규칙의 구성 요소가 될 수 있으므로 학습 순서대로 채웁니다."],
       solution: py`
-  from collections import Counter
-  
-  def merge(ids, pair, new_id):
-      out, i = [], 0
-      while i < len(ids):
-          if i < len(ids) - 1 and (ids[i], ids[i + 1]) == pair:
-              out.append(new_id); i += 2
-          else:
-              out.append(ids[i]); i += 1
-      return out
-  
-  def train_byte_bpe(text, n_merges):
-      ids = list(text.encode("utf-8"))
-      merges = {}
-      for k in range(n_merges):
-          pairs = Counter(zip(ids, ids[1:]))
-          if not pairs:
-              break
-          best = pairs.most_common(1)[0][0]
-          ids = merge(ids, best, 256 + k)
-          merges[best] = 256 + k
-      return merges
-  
-  def encode(text, merges):
-      ids = list(text.encode("utf-8"))
-      for pair, new_id in merges.items():
-          ids = merge(ids, pair, new_id)
-      return ids
-  
-  def decode(tokens, merges):
-      vocab = {i: bytes([i]) for i in range(256)}
-      for (a, b), new_id in merges.items():
-          vocab[new_id] = vocab[a] + vocab[b]
-      return b"".join(vocab[t] for t in tokens).decode("utf-8", errors="replace")
-  
-  text = "학습 자료를 읽고 학습 목표를 확인한 뒤 학습을 시작합니다. 학습은 반복이 중요합니다."
-  merges = train_byte_bpe(text, 30)
-  ids = encode(text, merges)
-  print(f"글자 {len(text)}개, 바이트 {len(text.encode('utf-8'))}개 → 토큰 {len(ids)}개")
-  print(decode(ids, merges) == text)
-  `,
+from collections import Counter
+
+def merge(ids, pair, new_id):
+    out, i = [], 0
+    while i < len(ids):
+        if i < len(ids) - 1 and (ids[i], ids[i + 1]) == pair:
+            out.append(new_id); i += 2
+        else:
+            out.append(ids[i]); i += 1
+    return out
+
+def train_byte_bpe(text, n_merges):
+    ids = list(text.encode("utf-8"))
+    merges = {}
+    for k in range(n_merges):
+        pairs = Counter(zip(ids, ids[1:]))
+        if not pairs:
+            break
+        best = pairs.most_common(1)[0][0]
+        ids = merge(ids, best, 256 + k)
+        merges[best] = 256 + k
+    return merges
+
+def encode(text, merges):
+    ids = list(text.encode("utf-8"))
+    for pair, new_id in merges.items():
+        ids = merge(ids, pair, new_id)
+    return ids
+
+def decode(tokens, merges):
+    vocab = {i: bytes([i]) for i in range(256)}
+    for (a, b), new_id in merges.items():
+        vocab[new_id] = vocab[a] + vocab[b]
+    return b"".join(vocab[t] for t in tokens).decode("utf-8", errors="replace")
+
+text = "학습 자료를 읽고 학습 목표를 확인한 뒤 학습을 시작합니다. 학습은 반복이 중요합니다."
+merges = train_byte_bpe(text, 30)
+ids = encode(text, merges)
+print(f"글자 {len(text)}개, 바이트 {len(text.encode('utf-8'))}개 → 토큰 {len(ids)}개")
+print(decode(ids, merges) == text)
+`,
     },
   ],
 });

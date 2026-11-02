@@ -391,238 +391,238 @@ assert hybrid.answer("MRR은 무엇의 약자인가?")["source"] == "week7"
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "골든셋으로 단어·글자·하이브리드 검색기 비교하기",
       prompt: md`
-  
-  골든셋 8문항으로, 단어 단위 TF-IDF · 글자 2~3-gram TF-IDF · 두 검색기를 RRF로 합친 하이브리드를 비교합니다.
-  
-  1. \`make_scorer(analyzer, ngram_range)\`: \`chunks\`로 TF-IDF를 학습하고, 질문을 받아 모든 조각의 코사인 유사도 배열을 돌려주는 **함수**를 돌려줍니다.
-  2. \`hybrid(*scorers, k=60)\`: 질문을 받아 각 검색기의 순위로 RRF 점수를 더하는 함수를 돌려줍니다. 점수가 0인 조각은 그 검색기가 찾지 못한 것이므로 더하지 않습니다.
-  3. \`evaluate(scorer)\`: 골든셋 정답 조각의 순위 리스트와 R@1, R@3, MRR을 \`(ranks, r1, r3, mrr)\`로 돌려줍니다. 정렬은 \`np.argsort(-s, kind="stable")\`로 해서 동점일 때 앞 번호가 먼저 오게 합니다.
-  
-  단어 단위 검색기는 질문과 겹치는 단어가 없는 조각이 모두 0점 동점이라, 동점을 어떻게 정렬하느냐에 따라 순위가 달라집니다(기본 \`np.argsort\`는 동점 순서를 보장하지 않아 본문 표와 조금 다를 수 있습니다). 평가 코드에서 동점 처리 규칙을 고정해 두는 것도 재현성의 일부입니다.
-  
-  다 풀었다면 \`hybrid\`에서 점수 0인 조각까지 더하도록 바꿔 보십시오. 약한 검색기가 동점 순위로 잡음을 더해 MRR이 약 0.71로 오히려 떨어집니다.
-  `,
+
+골든셋 8문항으로, 단어 단위 TF-IDF · 글자 2~3-gram TF-IDF · 두 검색기를 RRF로 합친 하이브리드를 비교합니다.
+
+1. \`make_scorer(analyzer, ngram_range)\`: \`chunks\`로 TF-IDF를 학습하고, 질문을 받아 모든 조각의 코사인 유사도 배열을 돌려주는 **함수**를 돌려줍니다.
+2. \`hybrid(*scorers, k=60)\`: 질문을 받아 각 검색기의 순위로 RRF 점수를 더하는 함수를 돌려줍니다. 점수가 0인 조각은 그 검색기가 찾지 못한 것이므로 더하지 않습니다.
+3. \`evaluate(scorer)\`: 골든셋 정답 조각의 순위 리스트와 R@1, R@3, MRR을 \`(ranks, r1, r3, mrr)\`로 돌려줍니다. 정렬은 \`np.argsort(-s, kind="stable")\`로 해서 동점일 때 앞 번호가 먼저 오게 합니다.
+
+단어 단위 검색기는 질문과 겹치는 단어가 없는 조각이 모두 0점 동점이라, 동점을 어떻게 정렬하느냐에 따라 순위가 달라집니다(기본 \`np.argsort\`는 동점 순서를 보장하지 않아 본문 표와 조금 다를 수 있습니다). 평가 코드에서 동점 처리 규칙을 고정해 두는 것도 재현성의 일부입니다.
+
+다 풀었다면 \`hybrid\`에서 점수 0인 조각까지 더하도록 바꿔 보십시오. 약한 검색기가 동점 순위로 잡음을 더해 MRR이 약 0.71로 오히려 떨어집니다.
+`,
       starter: py`
-  import numpy as np
-  from sklearn.feature_extraction.text import TfidfVectorizer
-  from sklearn.metrics.pairwise import cosine_similarity
-  
-  chunks = [
-      "Aegis 동아리는 매주 토요일 오후 2시에 정기 세션을 진행한다.",          # 0
-      "스터디 과제는 일요일 23시 59분까지 Colab 링크로 제출한다.",             # 1
-      "백지공부 시트는 금요일까지 제출하며 자기 채점 항목이 포함된다.",         # 2
-      "수료 기준은 70점 이상이며 캡스톤 제출이 필수이다.",                    # 3
-      "세션에 세 번 이상 무단 결석하면 수료 대상에서 제외된다.",               # 4
-      "과제 점수는 운영진이 채점하며 피드백은 월요일에 공개된다.",             # 5
-  ]
-  gold = [
-      ("정기 모임 시간이 언제야?", 0), ("합격 기준 점수는?", 3), ("과제 마감이 언제야?", 1),
-      ("백지 시트는 언제까지 내?", 2), ("결석 몇 번 하면 탈락이야?", 4), ("과제 피드백은 언제 나와?", 5),
-      ("캡스톤은 꼭 해야 돼?", 3), ("세션은 무슨 요일에 해?", 0),
-  ]
-  
-  def make_scorer(analyzer, ngram_range):
-      # TODO: TfidfVectorizer로 chunks를 학습하고, q → 코사인 유사도 배열 함수를 돌려줍니다.
-      return lambda q: np.zeros(len(chunks))
-  
-  def hybrid(*scorers, k=60):
-      def score(q):
-          fused = np.zeros(len(chunks))
-          # TODO: 각 검색기의 순위(1부터)로 1 / (k + rank)를 더하되, 점수 0인 조각은 제외합니다.
-          return fused
-      return score
-  
-  def evaluate(scorer):
-      ranks = []  # TODO: 정답 조각의 순위
-      r1 = r3 = m = 0.0
-      return ranks, r1, r3, m
-  
-  word, char = make_scorer("word", (1, 1)), make_scorer("char", (2, 3))
-  for name, s in [("단어", word), ("글자", char), ("하이브리드", hybrid(word, char))]:
-      ranks, r1, r3, m = evaluate(s)
-      print(f"{name:6s} {str(ranks):26s} R@1 {r1:.2f}  R@3 {r3:.2f}  MRR {m:.3f}")
-  `,
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+chunks = [
+    "Aegis 동아리는 매주 토요일 오후 2시에 정기 세션을 진행한다.",          # 0
+    "스터디 과제는 일요일 23시 59분까지 Colab 링크로 제출한다.",             # 1
+    "백지공부 시트는 금요일까지 제출하며 자기 채점 항목이 포함된다.",         # 2
+    "수료 기준은 70점 이상이며 캡스톤 제출이 필수이다.",                    # 3
+    "세션에 세 번 이상 무단 결석하면 수료 대상에서 제외된다.",               # 4
+    "과제 점수는 운영진이 채점하며 피드백은 월요일에 공개된다.",             # 5
+]
+gold = [
+    ("정기 모임 시간이 언제야?", 0), ("합격 기준 점수는?", 3), ("과제 마감이 언제야?", 1),
+    ("백지 시트는 언제까지 내?", 2), ("결석 몇 번 하면 탈락이야?", 4), ("과제 피드백은 언제 나와?", 5),
+    ("캡스톤은 꼭 해야 돼?", 3), ("세션은 무슨 요일에 해?", 0),
+]
+
+def make_scorer(analyzer, ngram_range):
+    # TODO: TfidfVectorizer로 chunks를 학습하고, q → 코사인 유사도 배열 함수를 돌려줍니다.
+    return lambda q: np.zeros(len(chunks))
+
+def hybrid(*scorers, k=60):
+    def score(q):
+        fused = np.zeros(len(chunks))
+        # TODO: 각 검색기의 순위(1부터)로 1 / (k + rank)를 더하되, 점수 0인 조각은 제외합니다.
+        return fused
+    return score
+
+def evaluate(scorer):
+    ranks = []  # TODO: 정답 조각의 순위
+    r1 = r3 = m = 0.0
+    return ranks, r1, r3, m
+
+word, char = make_scorer("word", (1, 1)), make_scorer("char", (2, 3))
+for name, s in [("단어", word), ("글자", char), ("하이브리드", hybrid(word, char))]:
+    ranks, r1, r3, m = evaluate(s)
+    print(f"{name:6s} {str(ranks):26s} R@1 {r1:.2f}  R@3 {r3:.2f}  MRR {m:.3f}")
+`,
       tests: py`
-  import numpy as np
-  from sklearn.feature_extraction.text import TfidfVectorizer
-  from sklearn.metrics.pairwise import cosine_similarity
-  
-  chunks = [
-      "Aegis 동아리는 매주 토요일 오후 2시에 정기 세션을 진행한다.",          # 0
-      "스터디 과제는 일요일 23시 59분까지 Colab 링크로 제출한다.",             # 1
-      "백지공부 시트는 금요일까지 제출하며 자기 채점 항목이 포함된다.",         # 2
-      "수료 기준은 70점 이상이며 캡스톤 제출이 필수이다.",                    # 3
-      "세션에 세 번 이상 무단 결석하면 수료 대상에서 제외된다.",               # 4
-      "과제 점수는 운영진이 채점하며 피드백은 월요일에 공개된다.",             # 5
-  ]
-  gold = [
-      ("정기 모임 시간이 언제야?", 0), ("합격 기준 점수는?", 3), ("과제 마감이 언제야?", 1),
-      ("백지 시트는 언제까지 내?", 2), ("결석 몇 번 하면 탈락이야?", 4), ("과제 피드백은 언제 나와?", 5),
-      ("캡스톤은 꼭 해야 돼?", 3), ("세션은 무슨 요일에 해?", 0),
-  ]
-  
-  @test("단어 단위: 정답 순위 [1, 5, 3, 1, 5, 1, 4, 1], MRR ≈ 0.623")
-  def _():
-      ranks, r1, r3, m = evaluate(make_scorer("word", (1, 1)))
-      assert list(ranks) == [1, 5, 3, 1, 5, 1, 4, 1] and approx(m, 0.6229, 1e-3) and approx(r3, 0.625), (ranks, r3, m)
-  
-  @test("글자 2~3-gram: R@1 = 0.625, R@3 = 1.0, MRR ≈ 0.792")
-  def _():
-      ranks, r1, r3, m = evaluate(make_scorer("char", (2, 3)))
-      assert approx(r1, 0.625) and approx(r3, 1.0) and approx(m, 0.7917, 1e-3), (ranks, r1, r3, m)
-  
-  @test("하이브리드는 글자 검색기보다 나빠지지 않는다(R@3 = 1.0, MRR ≥ 0.79)")
-  def _():
-      ranks, r1, r3, m = evaluate(hybrid(make_scorer("word", (1, 1)), make_scorer("char", (2, 3))))
-      assert approx(r3, 1.0) and m >= 0.79, (ranks, r3, m)
-  
-  @test("하이브리드 점수: 두 검색기 모두 0점인 조각은 0")
-  def _():
-      q = "결석 몇 번 하면 탈락이야?"
-      w, c = make_scorer("word", (1, 1)), make_scorer("char", (2, 3))
-      s = hybrid(w, c)(q)
-      assert all(s[i] == 0 for i in range(len(chunks)) if w(q)[i] == 0 and c(q)[i] == 0), np.round(s, 4)
-      assert s.max() > 0
-  `,
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+chunks = [
+    "Aegis 동아리는 매주 토요일 오후 2시에 정기 세션을 진행한다.",          # 0
+    "스터디 과제는 일요일 23시 59분까지 Colab 링크로 제출한다.",             # 1
+    "백지공부 시트는 금요일까지 제출하며 자기 채점 항목이 포함된다.",         # 2
+    "수료 기준은 70점 이상이며 캡스톤 제출이 필수이다.",                    # 3
+    "세션에 세 번 이상 무단 결석하면 수료 대상에서 제외된다.",               # 4
+    "과제 점수는 운영진이 채점하며 피드백은 월요일에 공개된다.",             # 5
+]
+gold = [
+    ("정기 모임 시간이 언제야?", 0), ("합격 기준 점수는?", 3), ("과제 마감이 언제야?", 1),
+    ("백지 시트는 언제까지 내?", 2), ("결석 몇 번 하면 탈락이야?", 4), ("과제 피드백은 언제 나와?", 5),
+    ("캡스톤은 꼭 해야 돼?", 3), ("세션은 무슨 요일에 해?", 0),
+]
+
+@test("단어 단위: 정답 순위 [1, 5, 3, 1, 5, 1, 4, 1], MRR ≈ 0.623")
+def _():
+    ranks, r1, r3, m = evaluate(make_scorer("word", (1, 1)))
+    assert list(ranks) == [1, 5, 3, 1, 5, 1, 4, 1] and approx(m, 0.6229, 1e-3) and approx(r3, 0.625), (ranks, r3, m)
+
+@test("글자 2~3-gram: R@1 = 0.625, R@3 = 1.0, MRR ≈ 0.792")
+def _():
+    ranks, r1, r3, m = evaluate(make_scorer("char", (2, 3)))
+    assert approx(r1, 0.625) and approx(r3, 1.0) and approx(m, 0.7917, 1e-3), (ranks, r1, r3, m)
+
+@test("하이브리드는 글자 검색기보다 나빠지지 않는다(R@3 = 1.0, MRR ≥ 0.79)")
+def _():
+    ranks, r1, r3, m = evaluate(hybrid(make_scorer("word", (1, 1)), make_scorer("char", (2, 3))))
+    assert approx(r3, 1.0) and m >= 0.79, (ranks, r3, m)
+
+@test("하이브리드 점수: 두 검색기 모두 0점인 조각은 0")
+def _():
+    q = "결석 몇 번 하면 탈락이야?"
+    w, c = make_scorer("word", (1, 1)), make_scorer("char", (2, 3))
+    s = hybrid(w, c)(q)
+    assert all(s[i] == 0 for i in range(len(chunks)) if w(q)[i] == 0 and c(q)[i] == 0), np.round(s, 4)
+    assert s.max() > 0
+`,
       hints: ["`vec = TfidfVectorizer(analyzer=analyzer, ngram_range=ngram_range); M = vec.fit_transform(chunks)` 다음 `return lambda q: cosine_similarity(vec.transform([q]), M)[0]`", "`for f in scorers: s = f(q); rank = np.argsort(np.argsort(-s, kind=\"stable\"), kind=\"stable\") + 1; fused += np.where(s > 0, 1 / (k + rank), 0)`", "`ranks = [list(np.argsort(-scorer(q), kind=\"stable\")).index(g) + 1 for q, g in gold]`, `r1 = np.mean([r <= 1 for r in ranks])`, `m = np.mean([1 / r for r in ranks])`"],
       solution: py`
-  import numpy as np
-  from sklearn.feature_extraction.text import TfidfVectorizer
-  from sklearn.metrics.pairwise import cosine_similarity
-  
-  chunks = [
-      "Aegis 동아리는 매주 토요일 오후 2시에 정기 세션을 진행한다.",          # 0
-      "스터디 과제는 일요일 23시 59분까지 Colab 링크로 제출한다.",             # 1
-      "백지공부 시트는 금요일까지 제출하며 자기 채점 항목이 포함된다.",         # 2
-      "수료 기준은 70점 이상이며 캡스톤 제출이 필수이다.",                    # 3
-      "세션에 세 번 이상 무단 결석하면 수료 대상에서 제외된다.",               # 4
-      "과제 점수는 운영진이 채점하며 피드백은 월요일에 공개된다.",             # 5
-  ]
-  gold = [
-      ("정기 모임 시간이 언제야?", 0), ("합격 기준 점수는?", 3), ("과제 마감이 언제야?", 1),
-      ("백지 시트는 언제까지 내?", 2), ("결석 몇 번 하면 탈락이야?", 4), ("과제 피드백은 언제 나와?", 5),
-      ("캡스톤은 꼭 해야 돼?", 3), ("세션은 무슨 요일에 해?", 0),
-  ]
-  
-  def make_scorer(analyzer, ngram_range):
-      vec = TfidfVectorizer(analyzer=analyzer, ngram_range=ngram_range)
-      M = vec.fit_transform(chunks)
-      return lambda q: cosine_similarity(vec.transform([q]), M)[0]
-  
-  def hybrid(*scorers, k=60):
-      def score(q):
-          fused = np.zeros(len(chunks))
-          for f in scorers:
-              s = f(q)
-              rank = np.argsort(np.argsort(-s, kind="stable"), kind="stable") + 1
-              fused += np.where(s > 0, 1 / (k + rank), 0)
-          return fused
-      return score
-  
-  def evaluate(scorer):
-      ranks = [list(np.argsort(-scorer(q), kind="stable")).index(g) + 1 for q, g in gold]
-      r1 = float(np.mean([r <= 1 for r in ranks]))
-      r3 = float(np.mean([r <= 3 for r in ranks]))
-      m = float(np.mean([1 / r for r in ranks]))
-      return ranks, r1, r3, m
-  
-  word, char = make_scorer("word", (1, 1)), make_scorer("char", (2, 3))
-  for name, s in [("단어", word), ("글자", char), ("하이브리드", hybrid(word, char))]:
-      ranks, r1, r3, m = evaluate(s)
-      print(f"{name:6s} {str(ranks):26s} R@1 {r1:.2f}  R@3 {r3:.2f}  MRR {m:.3f}")
-  `,
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+chunks = [
+    "Aegis 동아리는 매주 토요일 오후 2시에 정기 세션을 진행한다.",          # 0
+    "스터디 과제는 일요일 23시 59분까지 Colab 링크로 제출한다.",             # 1
+    "백지공부 시트는 금요일까지 제출하며 자기 채점 항목이 포함된다.",         # 2
+    "수료 기준은 70점 이상이며 캡스톤 제출이 필수이다.",                    # 3
+    "세션에 세 번 이상 무단 결석하면 수료 대상에서 제외된다.",               # 4
+    "과제 점수는 운영진이 채점하며 피드백은 월요일에 공개된다.",             # 5
+]
+gold = [
+    ("정기 모임 시간이 언제야?", 0), ("합격 기준 점수는?", 3), ("과제 마감이 언제야?", 1),
+    ("백지 시트는 언제까지 내?", 2), ("결석 몇 번 하면 탈락이야?", 4), ("과제 피드백은 언제 나와?", 5),
+    ("캡스톤은 꼭 해야 돼?", 3), ("세션은 무슨 요일에 해?", 0),
+]
+
+def make_scorer(analyzer, ngram_range):
+    vec = TfidfVectorizer(analyzer=analyzer, ngram_range=ngram_range)
+    M = vec.fit_transform(chunks)
+    return lambda q: cosine_similarity(vec.transform([q]), M)[0]
+
+def hybrid(*scorers, k=60):
+    def score(q):
+        fused = np.zeros(len(chunks))
+        for f in scorers:
+            s = f(q)
+            rank = np.argsort(np.argsort(-s, kind="stable"), kind="stable") + 1
+            fused += np.where(s > 0, 1 / (k + rank), 0)
+        return fused
+    return score
+
+def evaluate(scorer):
+    ranks = [list(np.argsort(-scorer(q), kind="stable")).index(g) + 1 for q, g in gold]
+    r1 = float(np.mean([r <= 1 for r in ranks]))
+    r3 = float(np.mean([r <= 3 for r in ranks]))
+    m = float(np.mean([1 / r for r in ranks]))
+    return ranks, r1, r3, m
+
+word, char = make_scorer("word", (1, 1)), make_scorer("char", (2, 3))
+for name, s in [("단어", word), ("글자", char), ("하이브리드", hybrid(word, char))]:
+    ranks, r1, r3, m = evaluate(s)
+    print(f"{name:6s} {str(ranks):26s} R@1 {r1:.2f}  R@3 {r3:.2f}  MRR {m:.3f}")
+`,
     },
-  {
+    {
       key: "ch2",
       title: "20문항의 0.10 차이는 믿을 만한가: McNemar 검정과 배포 게이트",
       prompt: md`
-  
-  「평가」 단계의 예에서 v2의 정확도는 0.75 → 0.85로 올랐습니다. 20문항에서 이 차이를 믿어도 될까요? 같은 문항을 두 시스템이 푼 **짝지은 비교**이므로, 결과가 엇갈린 문항만 보는 McNemar 검정을 씁니다.
-  
-  1. \`mcnemar_p(v1, v2)\`: $b$ = v1은 틀리고 v2는 맞힌 문항 수, $c$ = 그 반대, $n = b + c$. 차이가 없다면 엇갈린 문항이 어느 쪽으로 갈지는 동전 던지기이므로, 양측 정확 p값은 $\min\left(1,\ 2\sum_{i=0}^{\min(b,c)} \binom{n}{i} \big/ 2^n\right)$입니다. $n = 0$이면 1.0.
-  2. \`deploy_gate(v1, v2, alpha=0.05, max_broken=0)\`: \`{"p", "significant", "broken", "deploy"}\`를 돌려줍니다. \`significant\`는 \`p < alpha\`이면서 v2가 더 많이 맞혔을 때만 참, \`broken\`은 회귀 문항 번호 리스트, \`deploy\`는 v2가 더 많이 맞혔고 회귀 문항 수가 \`max_broken\` 이하일 때만 참입니다.
-  `,
+
+「평가」 단계의 예에서 v2의 정확도는 0.75 → 0.85로 올랐습니다. 20문항에서 이 차이를 믿어도 될까요? 같은 문항을 두 시스템이 푼 **짝지은 비교**이므로, 결과가 엇갈린 문항만 보는 McNemar 검정을 씁니다.
+
+1. \`mcnemar_p(v1, v2)\`: $b$ = v1은 틀리고 v2는 맞힌 문항 수, $c$ = 그 반대, $n = b + c$. 차이가 없다면 엇갈린 문항이 어느 쪽으로 갈지는 동전 던지기이므로, 양측 정확 p값은 $\min\left(1,\ 2\sum_{i=0}^{\min(b,c)} \binom{n}{i} \big/ 2^n\right)$입니다. $n = 0$이면 1.0.
+2. \`deploy_gate(v1, v2, alpha=0.05, max_broken=0)\`: \`{"p", "significant", "broken", "deploy"}\`를 돌려줍니다. \`significant\`는 \`p < alpha\`이면서 v2가 더 많이 맞혔을 때만 참, \`broken\`은 회귀 문항 번호 리스트, \`deploy\`는 v2가 더 많이 맞혔고 회귀 문항 수가 \`max_broken\` 이하일 때만 참입니다.
+`,
       starter: py`
-  import numpy as np
-  v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])
-  v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
-  from math import comb
-  
-  def mcnemar_p(v1, v2):
-      return 0.0  # TODO: 엇갈린 문항 수 b, c로 양측 정확 이항 p값
-  
-  def deploy_gate(v1, v2, alpha=0.05, max_broken=0):
-      return {"p": 0.0, "significant": False, "broken": [], "deploy": True}  # TODO
-  
-  print(mcnemar_p(v1, v2))
-  print(deploy_gate(v1, v2))
-  `,
+import numpy as np
+v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])
+v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
+from math import comb
+
+def mcnemar_p(v1, v2):
+    return 0.0  # TODO: 엇갈린 문항 수 b, c로 양측 정확 이항 p값
+
+def deploy_gate(v1, v2, alpha=0.05, max_broken=0):
+    return {"p": 0.0, "significant": False, "broken": [], "deploy": True}  # TODO
+
+print(mcnemar_p(v1, v2))
+print(deploy_gate(v1, v2))
+`,
       tests: py`
-  import numpy as np
-  v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])
-  v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
-  
-  @test("20문항 비교: b = 4, c = 2 → p = 0.6875(유의하지 않음)")
-  def _():
-      assert approx(mcnemar_p(v1, v2), 0.6875), mcnemar_p(v1, v2)
-      assert approx(mcnemar_p(v2, v1), 0.6875) and mcnemar_p(v1, v1) == 1.0
-  
-  @test("200문항에서 b = 30, c = 8이면 p < 0.001")
-  def _():
-      a = np.array([0] * 30 + [1] * 8 + [1] * 150 + [0] * 12)
-      b = np.array([1] * 30 + [0] * 8 + [1] * 150 + [0] * 12)
-      assert mcnemar_p(a, b) < 1e-3, mcnemar_p(a, b)
-      g = deploy_gate(a, b, max_broken=10)
-      assert g["significant"] and g["deploy"], g
-  
-  @test("배포 게이트: 정확도가 올라도 회귀 2건이면 보류")
-  def _():
-      g = deploy_gate(v1, v2)
-      assert not g["deploy"] and list(g["broken"]) == [8, 16] and not g["significant"], g
-      assert deploy_gate(v1, v2, max_broken=2)["deploy"]
-  
-  @test("더 나빠진 변경은 p가 작아도 significant가 아니고 배포하지 않는다")
-  def _():
-      a = np.array([1] * 30 + [0] * 8 + [1] * 150 + [0] * 12)
-      b = np.array([0] * 30 + [1] * 8 + [1] * 150 + [0] * 12)
-      g = deploy_gate(a, b, max_broken=100)
-      assert g["p"] < 1e-3 and not g["significant"] and not g["deploy"], g
-  `,
+import numpy as np
+v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])
+v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
+
+@test("20문항 비교: b = 4, c = 2 → p = 0.6875(유의하지 않음)")
+def _():
+    assert approx(mcnemar_p(v1, v2), 0.6875), mcnemar_p(v1, v2)
+    assert approx(mcnemar_p(v2, v1), 0.6875) and mcnemar_p(v1, v1) == 1.0
+
+@test("200문항에서 b = 30, c = 8이면 p < 0.001")
+def _():
+    a = np.array([0] * 30 + [1] * 8 + [1] * 150 + [0] * 12)
+    b = np.array([1] * 30 + [0] * 8 + [1] * 150 + [0] * 12)
+    assert mcnemar_p(a, b) < 1e-3, mcnemar_p(a, b)
+    g = deploy_gate(a, b, max_broken=10)
+    assert g["significant"] and g["deploy"], g
+
+@test("배포 게이트: 정확도가 올라도 회귀 2건이면 보류")
+def _():
+    g = deploy_gate(v1, v2)
+    assert not g["deploy"] and list(g["broken"]) == [8, 16] and not g["significant"], g
+    assert deploy_gate(v1, v2, max_broken=2)["deploy"]
+
+@test("더 나빠진 변경은 p가 작아도 significant가 아니고 배포하지 않는다")
+def _():
+    a = np.array([1] * 30 + [0] * 8 + [1] * 150 + [0] * 12)
+    b = np.array([0] * 30 + [1] * 8 + [1] * 150 + [0] * 12)
+    g = deploy_gate(a, b, max_broken=100)
+    assert g["p"] < 1e-3 and not g["significant"] and not g["deploy"], g
+`,
       hints: ["`b = int(np.sum((v1 == 0) & (v2 == 1)))`, `c = int(np.sum((v1 == 1) & (v2 == 0)))`. 두 시스템이 모두 맞히거나 모두 틀린 문항은 차이에 대한 정보가 없어 쓰지 않습니다.", "`p = 2 * sum(comb(n, i) for i in range(min(b, c) + 1)) / 2 ** n`을 1로 자릅니다. 20문항의 b = 4, c = 2는 동전을 6번 던져 4:2가 나온 정도라 흔한 일입니다.", "`improved = v2.sum() > v1.sum()`, `significant = bool(p < alpha and improved)`, `deploy = bool(improved and len(broken) <= max_broken)`"],
       solution: py`
-  import numpy as np
-  v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])
-  v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
-  from math import comb
-  
-  def mcnemar_p(v1, v2):
-      v1, v2 = np.asarray(v1), np.asarray(v2)
-      b = int(np.sum((v1 == 0) & (v2 == 1)))
-      c = int(np.sum((v1 == 1) & (v2 == 0)))
-      n = b + c
-      if n == 0:
-          return 1.0
-      return min(1.0, 2 * sum(comb(n, i) for i in range(min(b, c) + 1)) / 2 ** n)
-  
-  def deploy_gate(v1, v2, alpha=0.05, max_broken=0):
-      v1, v2 = np.asarray(v1), np.asarray(v2)
-      p = mcnemar_p(v1, v2)
-      broken = np.where((v1 == 1) & (v2 == 0))[0].tolist()
-      improved = v2.sum() > v1.sum()
-      return {
-          "p": p,
-          "significant": bool(p < alpha and improved),
-          "broken": broken,
-          "deploy": bool(improved and len(broken) <= max_broken),
-      }
-  
-  print(mcnemar_p(v1, v2))
-  print(deploy_gate(v1, v2))
-  `,
+import numpy as np
+v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])
+v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
+from math import comb
+
+def mcnemar_p(v1, v2):
+    v1, v2 = np.asarray(v1), np.asarray(v2)
+    b = int(np.sum((v1 == 0) & (v2 == 1)))
+    c = int(np.sum((v1 == 1) & (v2 == 0)))
+    n = b + c
+    if n == 0:
+        return 1.0
+    return min(1.0, 2 * sum(comb(n, i) for i in range(min(b, c) + 1)) / 2 ** n)
+
+def deploy_gate(v1, v2, alpha=0.05, max_broken=0):
+    v1, v2 = np.asarray(v1), np.asarray(v2)
+    p = mcnemar_p(v1, v2)
+    broken = np.where((v1 == 1) & (v2 == 0))[0].tolist()
+    improved = v2.sum() > v1.sum()
+    return {
+        "p": p,
+        "significant": bool(p < alpha and improved),
+        "broken": broken,
+        "deploy": bool(improved and len(broken) <= max_broken),
+    }
+
+print(mcnemar_p(v1, v2))
+print(deploy_gate(v1, v2))
+`,
     },
   ],
   provideCourseDocs: true,

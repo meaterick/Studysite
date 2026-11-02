@@ -306,231 +306,231 @@ assert N_pub > 0 and D_pub > 0 and isinstance(name, str) and name, "name, N_pub,
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "빔 서치와 길이 정규화",
       prompt: md`
-  
-  「디코딩 전략과 서빙」의 작은 언어모델 \`lm\`으로 디코딩을 구현합니다.
-  
-  1. \`greedy(lm)\`: 매번 확률이 가장 큰 토큰을 고릅니다(최대 6토큰).
-  2. \`beam_search(lm, width, max_len=6, alpha=0.0)\`: 누적 로그확률 상위 \`width\`개 후보를 유지하며 확장하고, \`<eos>\`로 끝난 후보는 그대로 둡니다. 최종 선택 점수는 $\dfrac{\log P}{(\text{생성 토큰 수})^{\alpha}}$입니다(\`alpha=0\`이면 길이 정규화 없음).
-  
-  두 함수 모두 \`(토큰 리스트(<s> 제외), 누적 로그확률)\`을 돌려줍니다. 그리디는 "나는 그냥 그냥…"에 갇히지만 빔(2)은 "오늘 밥을 먹었다"를 찾아야 합니다.
-  `,
+
+「디코딩 전략과 서빙」의 작은 언어모델 \`lm\`으로 디코딩을 구현합니다.
+
+1. \`greedy(lm)\`: 매번 확률이 가장 큰 토큰을 고릅니다(최대 6토큰).
+2. \`beam_search(lm, width, max_len=6, alpha=0.0)\`: 누적 로그확률 상위 \`width\`개 후보를 유지하며 확장하고, \`<eos>\`로 끝난 후보는 그대로 둡니다. 최종 선택 점수는 $\dfrac{\log P}{(\text{생성 토큰 수})^{\alpha}}$입니다(\`alpha=0\`이면 길이 정규화 없음).
+
+두 함수 모두 \`(토큰 리스트(<s> 제외), 누적 로그확률)\`을 돌려줍니다. 그리디는 "나는 그냥 그냥…"에 갇히지만 빔(2)은 "오늘 밥을 먹었다"를 찾아야 합니다.
+`,
       starter: py`
-  lm = {
-      "<s>":   {"나는": 0.6, "오늘": 0.4},
-      "나는":   {"그냥": 0.55, "밥을": 0.45},
-      "오늘":   {"밥을": 0.95, "그냥": 0.05},
-      "그냥":   {"그냥": 0.5, "<eos>": 0.5},
-      "밥을":   {"먹었다": 0.9, "<eos>": 0.1},
-      "먹었다": {"<eos>": 1.0},
-  }
-  import numpy as np
-  
-  def greedy(lm, max_len=6):
-      seq, logp = ["<s>"], 0.0
-      for _ in range(max_len):
-          if seq[-1] == "<eos>":
-              break
-          pass  # TODO: 확률이 가장 큰 다음 토큰을 붙이고 로그확률을 더합니다.
-      return seq[1:], logp
-  
-  def beam_search(lm, width=2, max_len=6, alpha=0.0):
-      beams = [(["<s>"], 0.0)]
-      for _ in range(max_len):
-          cand = []
-          for seq, lp in beams:
-              pass  # TODO: <eos>로 끝났으면 그대로, 아니면 모든 다음 토큰으로 확장
-          beams = sorted(cand, key=lambda x: -x[1])[:width]
-      score = lambda b: b[1] / max(1, len(b[0]) - 1) ** alpha
-      best = max(beams, key=score)
-      return best[0][1:], best[1]
-  
-  for name, (seq, lp) in [("greedy", greedy(lm)), ("beam(2)", beam_search(lm, 2))]:
-      print(f"{name:8s} {' '.join(seq):22s} 전체 확률 = {np.exp(lp):.3f}")
-  `,
+lm = {
+    "<s>":   {"나는": 0.6, "오늘": 0.4},
+    "나는":   {"그냥": 0.55, "밥을": 0.45},
+    "오늘":   {"밥을": 0.95, "그냥": 0.05},
+    "그냥":   {"그냥": 0.5, "<eos>": 0.5},
+    "밥을":   {"먹었다": 0.9, "<eos>": 0.1},
+    "먹었다": {"<eos>": 1.0},
+}
+import numpy as np
+
+def greedy(lm, max_len=6):
+    seq, logp = ["<s>"], 0.0
+    for _ in range(max_len):
+        if seq[-1] == "<eos>":
+            break
+        pass  # TODO: 확률이 가장 큰 다음 토큰을 붙이고 로그확률을 더합니다.
+    return seq[1:], logp
+
+def beam_search(lm, width=2, max_len=6, alpha=0.0):
+    beams = [(["<s>"], 0.0)]
+    for _ in range(max_len):
+        cand = []
+        for seq, lp in beams:
+            pass  # TODO: <eos>로 끝났으면 그대로, 아니면 모든 다음 토큰으로 확장
+        beams = sorted(cand, key=lambda x: -x[1])[:width]
+    score = lambda b: b[1] / max(1, len(b[0]) - 1) ** alpha
+    best = max(beams, key=score)
+    return best[0][1:], best[1]
+
+for name, (seq, lp) in [("greedy", greedy(lm)), ("beam(2)", beam_search(lm, 2))]:
+    print(f"{name:8s} {' '.join(seq):22s} 전체 확률 = {np.exp(lp):.3f}")
+`,
       tests: py`
-  lm = {
-      "<s>":   {"나는": 0.6, "오늘": 0.4},
-      "나는":   {"그냥": 0.55, "밥을": 0.45},
-      "오늘":   {"밥을": 0.95, "그냥": 0.05},
-      "그냥":   {"그냥": 0.5, "<eos>": 0.5},
-      "밥을":   {"먹었다": 0.9, "<eos>": 0.1},
-      "먹었다": {"<eos>": 1.0},
-  }
-  import numpy as np
-  
-  @test("그리디는 '나는 그냥 그냥…'에 갇힌다(확률 ≈ 0.021)")
-  def _():
-      seq, lp = greedy(lm)
-      assert seq[:3] == ["나는", "그냥", "그냥"] and approx(np.exp(lp), 0.6 * 0.55 * 0.5 ** 4 if seq[-1] != "<eos>" else np.exp(lp), 1e-3), f"결과: {seq}, {np.exp(lp):.4f}"
-  
-  @test("빔(2)은 '오늘 밥을 먹었다 <eos>'(확률 0.342)를 찾는다")
-  def _():
-      seq, lp = beam_search(lm, 2)
-      assert seq == ["오늘", "밥을", "먹었다", "<eos>"] and approx(np.exp(lp), 0.342), f"결과: {seq}, {np.exp(lp):.4f}"
-  
-  @test("빔 너비 1은 그리디와 같은 첫 토큰들을 고른다")
-  def _():
-      assert beam_search(lm, 1)[0][:3] == greedy(lm)[0][:3]
-  
-  @test("<eos>로 끝난 후보는 더 확장하지 않는다")
-  def _():
-      seq, _ = beam_search(lm, 3, max_len=10)
-      assert seq.count("<eos>") == 1 and seq[-1] == "<eos>"
-  `,
+lm = {
+    "<s>":   {"나는": 0.6, "오늘": 0.4},
+    "나는":   {"그냥": 0.55, "밥을": 0.45},
+    "오늘":   {"밥을": 0.95, "그냥": 0.05},
+    "그냥":   {"그냥": 0.5, "<eos>": 0.5},
+    "밥을":   {"먹었다": 0.9, "<eos>": 0.1},
+    "먹었다": {"<eos>": 1.0},
+}
+import numpy as np
+
+@test("그리디는 '나는 그냥 그냥…'에 갇힌다(확률 ≈ 0.021)")
+def _():
+    seq, lp = greedy(lm)
+    assert seq[:3] == ["나는", "그냥", "그냥"] and approx(np.exp(lp), 0.6 * 0.55 * 0.5 ** 4 if seq[-1] != "<eos>" else np.exp(lp), 1e-3), f"결과: {seq}, {np.exp(lp):.4f}"
+
+@test("빔(2)은 '오늘 밥을 먹었다 <eos>'(확률 0.342)를 찾는다")
+def _():
+    seq, lp = beam_search(lm, 2)
+    assert seq == ["오늘", "밥을", "먹었다", "<eos>"] and approx(np.exp(lp), 0.342), f"결과: {seq}, {np.exp(lp):.4f}"
+
+@test("빔 너비 1은 그리디와 같은 첫 토큰들을 고른다")
+def _():
+    assert beam_search(lm, 1)[0][:3] == greedy(lm)[0][:3]
+
+@test("<eos>로 끝난 후보는 더 확장하지 않는다")
+def _():
+    seq, _ = beam_search(lm, 3, max_len=10)
+    assert seq.count("<eos>") == 1 and seq[-1] == "<eos>"
+`,
       hints: ["그리디: `tok, p = max(lm[seq[-1]].items(), key=lambda kv: kv[1])` 다음 `seq.append(tok); logp += np.log(p)`", "빔 확장: `if seq[-1] == \"<eos>\": cand.append((seq, lp)); continue` 다음 `for tok, p in lm[seq[-1]].items(): cand.append((seq + [tok], lp + np.log(p)))`", "빔 서치는 매 단계 상위 width개를 남기므로, 첫 단계에서 덜 유망했던 '오늘'(0.4) 경로를 살려 둘 수 있습니다."],
       solution: py`
-  lm = {
-      "<s>":   {"나는": 0.6, "오늘": 0.4},
-      "나는":   {"그냥": 0.55, "밥을": 0.45},
-      "오늘":   {"밥을": 0.95, "그냥": 0.05},
-      "그냥":   {"그냥": 0.5, "<eos>": 0.5},
-      "밥을":   {"먹었다": 0.9, "<eos>": 0.1},
-      "먹었다": {"<eos>": 1.0},
-  }
-  import numpy as np
-  
-  def greedy(lm, max_len=6):
-      seq, logp = ["<s>"], 0.0
-      for _ in range(max_len):
-          if seq[-1] == "<eos>":
-              break
-          tok, p = max(lm[seq[-1]].items(), key=lambda kv: kv[1])
-          seq.append(tok)
-          logp += np.log(p)
-      return seq[1:], logp
-  
-  def beam_search(lm, width=2, max_len=6, alpha=0.0):
-      beams = [(["<s>"], 0.0)]
-      for _ in range(max_len):
-          cand = []
-          for seq, lp in beams:
-              if seq[-1] == "<eos>":
-                  cand.append((seq, lp))
-                  continue
-              for tok, p in lm[seq[-1]].items():
-                  cand.append((seq + [tok], lp + np.log(p)))
-          beams = sorted(cand, key=lambda x: -x[1])[:width]
-      score = lambda b: b[1] / max(1, len(b[0]) - 1) ** alpha
-      best = max(beams, key=score)
-      return best[0][1:], best[1]
-  
-  for name, (seq, lp) in [("greedy", greedy(lm)), ("beam(2)", beam_search(lm, 2))]:
-      print(f"{name:8s} {' '.join(seq):22s} 전체 확률 = {np.exp(lp):.3f}")
-  `,
+lm = {
+    "<s>":   {"나는": 0.6, "오늘": 0.4},
+    "나는":   {"그냥": 0.55, "밥을": 0.45},
+    "오늘":   {"밥을": 0.95, "그냥": 0.05},
+    "그냥":   {"그냥": 0.5, "<eos>": 0.5},
+    "밥을":   {"먹었다": 0.9, "<eos>": 0.1},
+    "먹었다": {"<eos>": 1.0},
+}
+import numpy as np
+
+def greedy(lm, max_len=6):
+    seq, logp = ["<s>"], 0.0
+    for _ in range(max_len):
+        if seq[-1] == "<eos>":
+            break
+        tok, p = max(lm[seq[-1]].items(), key=lambda kv: kv[1])
+        seq.append(tok)
+        logp += np.log(p)
+    return seq[1:], logp
+
+def beam_search(lm, width=2, max_len=6, alpha=0.0):
+    beams = [(["<s>"], 0.0)]
+    for _ in range(max_len):
+        cand = []
+        for seq, lp in beams:
+            if seq[-1] == "<eos>":
+                cand.append((seq, lp))
+                continue
+            for tok, p in lm[seq[-1]].items():
+                cand.append((seq + [tok], lp + np.log(p)))
+        beams = sorted(cand, key=lambda x: -x[1])[:width]
+    score = lambda b: b[1] / max(1, len(b[0]) - 1) ** alpha
+    best = max(beams, key=score)
+    return best[0][1:], best[1]
+
+for name, (seq, lp) in [("greedy", greedy(lm)), ("beam(2)", beam_search(lm, 2))]:
+    print(f"{name:8s} {' '.join(seq):22s} 전체 확률 = {np.exp(lp):.3f}")
+`,
     },
-  {
+    {
       key: "ch2",
       title: "DPO 기울기를 유도하고 작은 정책을 직접 학습시키기",
       prompt: md`
-  
-  응답 4개에 대한 정책을 logit $\theta$로 두고($\pi = \mathrm{softmax}(\theta)$) DPO로 학습합니다.
-  
-  1. \`dpo_grad(z, beta)\`: $z$를 로그확률 비율의 차이라 할 때 손실 $-\log\sigma(\beta z)$를 $\log\pi(y_w)$와 $\log\pi(y_l)$로 미분한 값 \`(g_w, g_l)\`. $g_w = -\beta\,\sigma(-\beta z)$, $g_l = -g_w$입니다.
-  2. \`train_dpo(pi_ref, pairs, beta, lr, steps)\`: 선호 쌍 \`(w, l)\`들의 평균 DPO 손실로 $\theta$를 경사하강합니다. $\partial \log\pi_i / \partial\theta = e_i - \pi$(원핫 − 정책)를 쓰고, $\theta$는 $\log \pi_{ref}$에서 시작합니다. 학습된 정책 $\pi$를 돌려줍니다.
-  
-  선호 데이터에는 사람 평가처럼 노이즈(25%는 반대 표시)가 섞여 있어 최적점이 유한합니다. 1등 응답의 확률이 커지고, $\beta$가 클수록 기준 모델에서 덜 멀어지는지(KL이 작은지) 확인합니다.
-  `,
+
+응답 4개에 대한 정책을 logit $\theta$로 두고($\pi = \mathrm{softmax}(\theta)$) DPO로 학습합니다.
+
+1. \`dpo_grad(z, beta)\`: $z$를 로그확률 비율의 차이라 할 때 손실 $-\log\sigma(\beta z)$를 $\log\pi(y_w)$와 $\log\pi(y_l)$로 미분한 값 \`(g_w, g_l)\`. $g_w = -\beta\,\sigma(-\beta z)$, $g_l = -g_w$입니다.
+2. \`train_dpo(pi_ref, pairs, beta, lr, steps)\`: 선호 쌍 \`(w, l)\`들의 평균 DPO 손실로 $\theta$를 경사하강합니다. $\partial \log\pi_i / \partial\theta = e_i - \pi$(원핫 − 정책)를 쓰고, $\theta$는 $\log \pi_{ref}$에서 시작합니다. 학습된 정책 $\pi$를 돌려줍니다.
+
+선호 데이터에는 사람 평가처럼 노이즈(25%는 반대 표시)가 섞여 있어 최적점이 유한합니다. 1등 응답의 확률이 커지고, $\beta$가 클수록 기준 모델에서 덜 멀어지는지(KL이 작은지) 확인합니다.
+`,
       starter: py`
-  import numpy as np
-  
-  def softmax(t):
-      e = np.exp(t - t.max())
-      return e / e.sum()
-  
-  def dpo_grad(z, beta):
-      return 0.0, 0.0  # TODO
-  
-  def train_dpo(pi_ref, pairs, beta=0.1, lr=1.0, steps=500):
-      log_ref = np.log(pi_ref)
-      theta = log_ref.copy()
-      for _ in range(steps):
-          pi = softmax(theta)
-          logpi = np.log(pi)
-          grad = np.zeros_like(theta)
-          for w, l in pairs:
-              z = (logpi[w] - log_ref[w]) - (logpi[l] - log_ref[l])
-              g_w, g_l = dpo_grad(z, beta)
-              # TODO: grad에 g_w * (e_w - pi) + g_l * (e_l - pi)를 더합니다.
-          theta -= lr * grad / len(pairs)
-      return softmax(theta)
-  
-  pi_ref = np.array([0.3, 0.3, 0.3, 0.1])
-  pairs = []
-  for i in range(4):
-      for j in range(i + 1, 4):
-          pairs += [(i, j)] * 3 + [(j, i)]   # 평가의 25%는 반대로 표시된 노이즈
-  print(np.round(train_dpo(pi_ref, pairs, beta=0.5), 3), np.round(train_dpo(pi_ref, pairs, beta=2.0), 3))
-  `,
+import numpy as np
+
+def softmax(t):
+    e = np.exp(t - t.max())
+    return e / e.sum()
+
+def dpo_grad(z, beta):
+    return 0.0, 0.0  # TODO
+
+def train_dpo(pi_ref, pairs, beta=0.1, lr=1.0, steps=500):
+    log_ref = np.log(pi_ref)
+    theta = log_ref.copy()
+    for _ in range(steps):
+        pi = softmax(theta)
+        logpi = np.log(pi)
+        grad = np.zeros_like(theta)
+        for w, l in pairs:
+            z = (logpi[w] - log_ref[w]) - (logpi[l] - log_ref[l])
+            g_w, g_l = dpo_grad(z, beta)
+            # TODO: grad에 g_w * (e_w - pi) + g_l * (e_l - pi)를 더합니다.
+        theta -= lr * grad / len(pairs)
+    return softmax(theta)
+
+pi_ref = np.array([0.3, 0.3, 0.3, 0.1])
+pairs = []
+for i in range(4):
+    for j in range(i + 1, 4):
+        pairs += [(i, j)] * 3 + [(j, i)]   # 평가의 25%는 반대로 표시된 노이즈
+print(np.round(train_dpo(pi_ref, pairs, beta=0.5), 3), np.round(train_dpo(pi_ref, pairs, beta=2.0), 3))
+`,
       tests: py`
-  import numpy as np
-  pi_ref = np.array([0.3, 0.3, 0.3, 0.1])
-  pairs = []
-  for i in range(4):
-      for j in range(i + 1, 4):
-          pairs += [(i, j)] * 3 + [(j, i)]   # 평가의 25%는 반대로 표시된 노이즈
-  kl = lambda p, q: float(np.sum(p * np.log(p / q)))
-  
-  @test("dpo_grad가 수치미분과 일치한다")
-  def _():
-      f = lambda z: -np.log(1 / (1 + np.exp(-0.5 * z)))
-      g_w, g_l = dpo_grad(0.7, 0.5)
-      num = (f(0.7 + 1e-6) - f(0.7 - 1e-6)) / 2e-6
-      assert approx(g_w, num, 1e-6) and approx(g_l, -g_w)
-  
-  @test("학습 후 확률 순서가 선호 순서(0 > 1 > 2 > 3)를 따른다")
-  def _():
-      p = train_dpo(pi_ref, pairs, beta=0.5)
-      assert approx(p.sum(), 1.0) and p[0] > p[1] > p[2] > p[3], f"결과: {np.round(p, 3)}"
-  
-  @test("1등 응답 확률이 기준 모델(0.3)보다 커진다(β = 0.5에서 약 0.70)")
-  def _():
-      p0 = train_dpo(pi_ref, pairs, beta=0.5)[0]
-      assert approx(p0, 0.704, 0.01), f"결과: {p0:.3f}"
-  
-  @test("β가 크면 기준 모델에서 덜 멀어진다(KL이 작다)")
-  def _():
-      small = kl(train_dpo(pi_ref, pairs, beta=0.5), pi_ref)
-      big = kl(train_dpo(pi_ref, pairs, beta=2.0), pi_ref)
-      assert big < small / 5, f"KL: β=0.5 {small:.3f}, β=2.0 {big:.3f}"
-  `,
+import numpy as np
+pi_ref = np.array([0.3, 0.3, 0.3, 0.1])
+pairs = []
+for i in range(4):
+    for j in range(i + 1, 4):
+        pairs += [(i, j)] * 3 + [(j, i)]   # 평가의 25%는 반대로 표시된 노이즈
+kl = lambda p, q: float(np.sum(p * np.log(p / q)))
+
+@test("dpo_grad가 수치미분과 일치한다")
+def _():
+    f = lambda z: -np.log(1 / (1 + np.exp(-0.5 * z)))
+    g_w, g_l = dpo_grad(0.7, 0.5)
+    num = (f(0.7 + 1e-6) - f(0.7 - 1e-6)) / 2e-6
+    assert approx(g_w, num, 1e-6) and approx(g_l, -g_w)
+
+@test("학습 후 확률 순서가 선호 순서(0 > 1 > 2 > 3)를 따른다")
+def _():
+    p = train_dpo(pi_ref, pairs, beta=0.5)
+    assert approx(p.sum(), 1.0) and p[0] > p[1] > p[2] > p[3], f"결과: {np.round(p, 3)}"
+
+@test("1등 응답 확률이 기준 모델(0.3)보다 커진다(β = 0.5에서 약 0.70)")
+def _():
+    p0 = train_dpo(pi_ref, pairs, beta=0.5)[0]
+    assert approx(p0, 0.704, 0.01), f"결과: {p0:.3f}"
+
+@test("β가 크면 기준 모델에서 덜 멀어진다(KL이 작다)")
+def _():
+    small = kl(train_dpo(pi_ref, pairs, beta=0.5), pi_ref)
+    big = kl(train_dpo(pi_ref, pairs, beta=2.0), pi_ref)
+    assert big < small / 5, f"KL: β=0.5 {small:.3f}, β=2.0 {big:.3f}"
+`,
       hints: ["$\\frac{d}{dz}[-\\log\\sigma(\\beta z)] = -\\beta(1 - \\sigma(\\beta z)) = -\\beta\\sigma(-\\beta z)$. 코드로는 `g_w = -beta / (1 + np.exp(beta * z))`", "`e = np.eye(len(theta))`일 때 `grad += g_w * (e[w] - pi) + g_l * (e[l] - pi)`", "최적점에서는 암묵적 보상 $\\beta \\log(\\pi/\\pi_{ref})$이 선호 데이터에 맞춰지므로, $\\beta$가 클수록 같은 보상을 더 작은 $\\log(\\pi/\\pi_{ref})$로 표현해 기준 모델 근처에 머뭅니다."],
       solution: py`
-  import numpy as np
-  
-  def softmax(t):
-      e = np.exp(t - t.max())
-      return e / e.sum()
-  
-  def dpo_grad(z, beta):
-      g_w = -beta / (1 + np.exp(beta * z))
-      return g_w, -g_w
-  
-  def train_dpo(pi_ref, pairs, beta=0.1, lr=1.0, steps=500):
-      log_ref = np.log(pi_ref)
-      theta = log_ref.copy()
-      e = np.eye(len(theta))
-      for _ in range(steps):
-          pi = softmax(theta)
-          logpi = np.log(pi)
-          grad = np.zeros_like(theta)
-          for w, l in pairs:
-              z = (logpi[w] - log_ref[w]) - (logpi[l] - log_ref[l])
-              g_w, g_l = dpo_grad(z, beta)
-              grad += g_w * (e[w] - pi) + g_l * (e[l] - pi)
-          theta -= lr * grad / len(pairs)
-      return softmax(theta)
-  
-  pi_ref = np.array([0.3, 0.3, 0.3, 0.1])
-  pairs = []
-  for i in range(4):
-      for j in range(i + 1, 4):
-          pairs += [(i, j)] * 3 + [(j, i)]   # 평가의 25%는 반대로 표시된 노이즈
-  print(np.round(train_dpo(pi_ref, pairs, beta=0.5), 3), np.round(train_dpo(pi_ref, pairs, beta=2.0), 3))
-  `,
+import numpy as np
+
+def softmax(t):
+    e = np.exp(t - t.max())
+    return e / e.sum()
+
+def dpo_grad(z, beta):
+    g_w = -beta / (1 + np.exp(beta * z))
+    return g_w, -g_w
+
+def train_dpo(pi_ref, pairs, beta=0.1, lr=1.0, steps=500):
+    log_ref = np.log(pi_ref)
+    theta = log_ref.copy()
+    e = np.eye(len(theta))
+    for _ in range(steps):
+        pi = softmax(theta)
+        logpi = np.log(pi)
+        grad = np.zeros_like(theta)
+        for w, l in pairs:
+            z = (logpi[w] - log_ref[w]) - (logpi[l] - log_ref[l])
+            g_w, g_l = dpo_grad(z, beta)
+            grad += g_w * (e[w] - pi) + g_l * (e[l] - pi)
+        theta -= lr * grad / len(pairs)
+    return softmax(theta)
+
+pi_ref = np.array([0.3, 0.3, 0.3, 0.1])
+pairs = []
+for i in range(4):
+    for j in range(i + 1, 4):
+        pairs += [(i, j)] * 3 + [(j, i)]   # 평가의 25%는 반대로 표시된 노이즈
+print(np.round(train_dpo(pi_ref, pairs, beta=0.5), 3), np.round(train_dpo(pi_ref, pairs, beta=2.0), 3))
+`,
     },
   ],
   provideCourseDocs: true,

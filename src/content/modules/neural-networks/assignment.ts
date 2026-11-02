@@ -395,311 +395,311 @@ for i in (0, len(params) // 2, len(params) - 1):
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "Value에 log를 추가해 소프트맥스 교차 엔트로피 만들기",
       prompt: md`
-  
-  다중 분류 손실을 \`Value\`의 기본 연산만으로 조립합니다. \`exp\`와 \`__truediv__\`는 완성되어 있습니다.
-  
-  1. \`log()\`의 \`_backward\`: $\dfrac{d}{dx}\ln x = \dfrac{1}{x}$
-  2. \`softmax_ce(logits, target)\`: \`Value\` 리스트 \`logits\`와 정답 번호를 받아 $-\ln \dfrac{e^{z_t}}{\sum_j e^{z_j}}$를 \`Value\`로 돌려줍니다.
-  
-  역전파한 \`logits[j].grad\`가 $\mathrm{softmax}(z)_j - [j = t]$와 같아야 합니다. 2주차 로지스틱 회귀의 $p - y$가 클래스 여러 개로 일반화된 모습입니다.
-  `,
+
+다중 분류 손실을 \`Value\`의 기본 연산만으로 조립합니다. \`exp\`와 \`__truediv__\`는 완성되어 있습니다.
+
+1. \`log()\`의 \`_backward\`: $\dfrac{d}{dx}\ln x = \dfrac{1}{x}$
+2. \`softmax_ce(logits, target)\`: \`Value\` 리스트 \`logits\`와 정답 번호를 받아 $-\ln \dfrac{e^{z_t}}{\sum_j e^{z_j}}$를 \`Value\`로 돌려줍니다.
+
+역전파한 \`logits[j].grad\`가 $\mathrm{softmax}(z)_j - [j = t]$와 같아야 합니다. 2주차 로지스틱 회귀의 $p - y$가 클래스 여러 개로 일반화된 모습입니다.
+`,
       starter: py`
-  import math
-  
-  class Value:
-      def __init__(self, data, _children=(), _op=""):
-          self.data, self.grad = data, 0.0
-          self._prev, self._backward = set(_children), lambda: None
-          self._op = _op
-  
-      def __add__(self, o):
-          o = o if isinstance(o, Value) else Value(o)
-          out = Value(self.data + o.data, (self, o), "+")
-          def _backward():
-              self.grad += out.grad
-              o.grad += out.grad
-          out._backward = _backward
-          return out
-  
-      def __mul__(self, o):
-          o = o if isinstance(o, Value) else Value(o)
-          out = Value(self.data * o.data, (self, o), "*")
-          def _backward():
-              self.grad += o.data * out.grad
-              o.grad += self.data * out.grad
-          out._backward = _backward
-          return out
-  
-      def __radd__(self, o): return self + o
-      def __rmul__(self, o): return self * o
-      def __neg__(self): return self * -1
-      def __sub__(self, o): return self + (-o if isinstance(o, Value) else Value(-o))
-  
-      def __truediv__(self, o):
-          o = o if isinstance(o, Value) else Value(o)
-          out = Value(self.data / o.data, (self, o), "/")
-          def _backward():
-              self.grad += out.grad / o.data
-              o.grad += -self.data / o.data ** 2 * out.grad
-          out._backward = _backward
-          return out
-  
-      def exp(self):
-          e = math.exp(self.data)
-          out = Value(e, (self,), "exp")
-          def _backward():
-              self.grad += e * out.grad
-          out._backward = _backward
-          return out
-  
-      def log(self):
-          out = Value(math.log(self.data), (self,), "log")
-          def _backward():
-              pass  # TODO: d(ln x)/dx = 1/x
-          out._backward = _backward
-          return out
-  
-      def backward(self):
-          topo, seen = [], set()
-          def build(v):
-              if v not in seen:
-                  seen.add(v)
-                  for c in v._prev:
-                      build(c)
-                  topo.append(v)
-          build(self)
-          self.grad = 1.0
-          for v in reversed(topo):
-              v._backward()
-  
-  def softmax_ce(logits, target):
-      # TODO: exps = [z.exp() for z in logits], 확률 = exps[target] / 합, 손실 = -log(확률)
-      return Value(0.0)
-  
-  logits = [Value(2.0), Value(1.0), Value(0.1)]
-  loss = softmax_ce(logits, 0)
-  loss.backward()
-  print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logits])
-  `,
+import math
+
+class Value:
+    def __init__(self, data, _children=(), _op=""):
+        self.data, self.grad = data, 0.0
+        self._prev, self._backward = set(_children), lambda: None
+        self._op = _op
+
+    def __add__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data + o.data, (self, o), "+")
+        def _backward():
+            self.grad += out.grad
+            o.grad += out.grad
+        out._backward = _backward
+        return out
+
+    def __mul__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data * o.data, (self, o), "*")
+        def _backward():
+            self.grad += o.data * out.grad
+            o.grad += self.data * out.grad
+        out._backward = _backward
+        return out
+
+    def __radd__(self, o): return self + o
+    def __rmul__(self, o): return self * o
+    def __neg__(self): return self * -1
+    def __sub__(self, o): return self + (-o if isinstance(o, Value) else Value(-o))
+
+    def __truediv__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data / o.data, (self, o), "/")
+        def _backward():
+            self.grad += out.grad / o.data
+            o.grad += -self.data / o.data ** 2 * out.grad
+        out._backward = _backward
+        return out
+
+    def exp(self):
+        e = math.exp(self.data)
+        out = Value(e, (self,), "exp")
+        def _backward():
+            self.grad += e * out.grad
+        out._backward = _backward
+        return out
+
+    def log(self):
+        out = Value(math.log(self.data), (self,), "log")
+        def _backward():
+            pass  # TODO: d(ln x)/dx = 1/x
+        out._backward = _backward
+        return out
+
+    def backward(self):
+        topo, seen = [], set()
+        def build(v):
+            if v not in seen:
+                seen.add(v)
+                for c in v._prev:
+                    build(c)
+                topo.append(v)
+        build(self)
+        self.grad = 1.0
+        for v in reversed(topo):
+            v._backward()
+
+def softmax_ce(logits, target):
+    # TODO: exps = [z.exp() for z in logits], 확률 = exps[target] / 합, 손실 = -log(확률)
+    return Value(0.0)
+
+logits = [Value(2.0), Value(1.0), Value(0.1)]
+loss = softmax_ce(logits, 0)
+loss.backward()
+print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logits])
+`,
       tests: py`
-  import math
-  
-  def softmax(zs):
-      m = max(zs)
-      e = [math.exp(z - m) for z in zs]
-      return [v / sum(e) for v in e]
-  
-  @test("log의 기울기: d(ln x)/dx at x=4 = 0.25")
-  def _():
-      x = Value(4.0)
-      x.log().backward()
-      assert approx(x.grad, 0.25), f"x.grad = {x.grad}"
-  
-  @test("손실 값 = -ln softmax(z)[t]")
-  def _():
-      zs = [2.0, 1.0, 0.1]
-      loss = softmax_ce([Value(z) for z in zs], 0)
-      assert approx(loss.data, -math.log(softmax(zs)[0])), f"결과: {loss.data}"
-  
-  @test("logits의 기울기 = softmax - 원핫")
-  def _():
-      zs = [0.5, -1.2, 2.0, 0.0]
-      vs = [Value(z) for z in zs]
-      softmax_ce(vs, 2).backward()
-      expect = [p - (1 if j == 2 else 0) for j, p in enumerate(softmax(zs))]
-      assert approx([v.grad for v in vs], expect), f"{[round(v.grad, 4) for v in vs]} vs {[round(e, 4) for e in expect]}"
-  
-  @test("모든 logit이 같으면 손실 = ln(클래스 수)")
-  def _():
-      assert approx(softmax_ce([Value(0.3)] * 1 + [Value(0.3), Value(0.3)], 1).data, math.log(3))
-  `,
+import math
+
+def softmax(zs):
+    m = max(zs)
+    e = [math.exp(z - m) for z in zs]
+    return [v / sum(e) for v in e]
+
+@test("log의 기울기: d(ln x)/dx at x=4 = 0.25")
+def _():
+    x = Value(4.0)
+    x.log().backward()
+    assert approx(x.grad, 0.25), f"x.grad = {x.grad}"
+
+@test("손실 값 = -ln softmax(z)[t]")
+def _():
+    zs = [2.0, 1.0, 0.1]
+    loss = softmax_ce([Value(z) for z in zs], 0)
+    assert approx(loss.data, -math.log(softmax(zs)[0])), f"결과: {loss.data}"
+
+@test("logits의 기울기 = softmax - 원핫")
+def _():
+    zs = [0.5, -1.2, 2.0, 0.0]
+    vs = [Value(z) for z in zs]
+    softmax_ce(vs, 2).backward()
+    expect = [p - (1 if j == 2 else 0) for j, p in enumerate(softmax(zs))]
+    assert approx([v.grad for v in vs], expect), f"{[round(v.grad, 4) for v in vs]} vs {[round(e, 4) for e in expect]}"
+
+@test("모든 logit이 같으면 손실 = ln(클래스 수)")
+def _():
+    assert approx(softmax_ce([Value(0.3)] * 1 + [Value(0.3), Value(0.3)], 1).data, math.log(3))
+`,
       hints: ["`log`의 `_backward`는 `self.grad += out.grad / self.data`입니다.", "`exps = [z.exp() for z in logits]`, 합은 `sum(exps[1:], exps[0])`처럼 Value끼리 더합니다(`__radd__`가 있어 `sum(exps)`도 됩니다).", "`return -(exps[target] / total).log()`. 기울기가 softmax − 원핫이 되는 것은 연쇄법칙이 자동으로 계산해 줍니다."],
       solution: py`
-  import math
-  
-  class Value:
-      def __init__(self, data, _children=(), _op=""):
-          self.data, self.grad = data, 0.0
-          self._prev, self._backward = set(_children), lambda: None
-          self._op = _op
-  
-      def __add__(self, o):
-          o = o if isinstance(o, Value) else Value(o)
-          out = Value(self.data + o.data, (self, o), "+")
-          def _backward():
-              self.grad += out.grad
-              o.grad += out.grad
-          out._backward = _backward
-          return out
-  
-      def __mul__(self, o):
-          o = o if isinstance(o, Value) else Value(o)
-          out = Value(self.data * o.data, (self, o), "*")
-          def _backward():
-              self.grad += o.data * out.grad
-              o.grad += self.data * out.grad
-          out._backward = _backward
-          return out
-  
-      def __radd__(self, o): return self + o
-      def __rmul__(self, o): return self * o
-      def __neg__(self): return self * -1
-      def __sub__(self, o): return self + (-o if isinstance(o, Value) else Value(-o))
-  
-      def __truediv__(self, o):
-          o = o if isinstance(o, Value) else Value(o)
-          out = Value(self.data / o.data, (self, o), "/")
-          def _backward():
-              self.grad += out.grad / o.data
-              o.grad += -self.data / o.data ** 2 * out.grad
-          out._backward = _backward
-          return out
-  
-      def exp(self):
-          e = math.exp(self.data)
-          out = Value(e, (self,), "exp")
-          def _backward():
-              self.grad += e * out.grad
-          out._backward = _backward
-          return out
-  
-      def log(self):
-          out = Value(math.log(self.data), (self,), "log")
-          def _backward():
-              self.grad += out.grad / self.data
-          out._backward = _backward
-          return out
-  
-      def backward(self):
-          topo, seen = [], set()
-          def build(v):
-              if v not in seen:
-                  seen.add(v)
-                  for c in v._prev:
-                      build(c)
-                  topo.append(v)
-          build(self)
-          self.grad = 1.0
-          for v in reversed(topo):
-              v._backward()
-  
-  def softmax_ce(logits, target):
-      exps = [z.exp() for z in logits]
-      total = sum(exps[1:], exps[0])
-      return -(exps[target] / total).log()
-  
-  logits = [Value(2.0), Value(1.0), Value(0.1)]
-  loss = softmax_ce(logits, 0)
-  loss.backward()
-  print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logits])
-  `,
+import math
+
+class Value:
+    def __init__(self, data, _children=(), _op=""):
+        self.data, self.grad = data, 0.0
+        self._prev, self._backward = set(_children), lambda: None
+        self._op = _op
+
+    def __add__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data + o.data, (self, o), "+")
+        def _backward():
+            self.grad += out.grad
+            o.grad += out.grad
+        out._backward = _backward
+        return out
+
+    def __mul__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data * o.data, (self, o), "*")
+        def _backward():
+            self.grad += o.data * out.grad
+            o.grad += self.data * out.grad
+        out._backward = _backward
+        return out
+
+    def __radd__(self, o): return self + o
+    def __rmul__(self, o): return self * o
+    def __neg__(self): return self * -1
+    def __sub__(self, o): return self + (-o if isinstance(o, Value) else Value(-o))
+
+    def __truediv__(self, o):
+        o = o if isinstance(o, Value) else Value(o)
+        out = Value(self.data / o.data, (self, o), "/")
+        def _backward():
+            self.grad += out.grad / o.data
+            o.grad += -self.data / o.data ** 2 * out.grad
+        out._backward = _backward
+        return out
+
+    def exp(self):
+        e = math.exp(self.data)
+        out = Value(e, (self,), "exp")
+        def _backward():
+            self.grad += e * out.grad
+        out._backward = _backward
+        return out
+
+    def log(self):
+        out = Value(math.log(self.data), (self,), "log")
+        def _backward():
+            self.grad += out.grad / self.data
+        out._backward = _backward
+        return out
+
+    def backward(self):
+        topo, seen = [], set()
+        def build(v):
+            if v not in seen:
+                seen.add(v)
+                for c in v._prev:
+                    build(c)
+                topo.append(v)
+        build(self)
+        self.grad = 1.0
+        for v in reversed(topo):
+            v._backward()
+
+def softmax_ce(logits, target):
+    exps = [z.exp() for z in logits]
+    total = sum(exps[1:], exps[0])
+    return -(exps[target] / total).log()
+
+logits = [Value(2.0), Value(1.0), Value(0.1)]
+loss = softmax_ce(logits, 0)
+loss.backward()
+print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logits])
+`,
     },
-  {
+    {
       key: "ch2",
       title: "깊은 망의 층별 기울기 크기 측정과 기울기 클리핑",
       prompt: md`
-  
-  깊이 20인 MLP에서 기울기가 층을 거슬러 올라가며 어떻게 변하는지 직접 측정합니다.
-  
-  1. \`layer_grad_norms(depth, width, act, std, seed)\`: 입력(샘플 64개, 특징 width개)을 \`depth\`개의 "선형(표준편차 std, 편향 없음) → 활성화(\`"tanh"\` 또는 \`"relu"\`)" 층에 통과시킨 뒤, 손실 $L = \text{mean}(\text{출력})$에서 역전파하며 **각 층 입력에 대한 기울기 $\partial L/\partial h_l$의 노름**을 첫 층부터 순서대로 리스트로 돌려줍니다(길이 depth).
-  2. \`clip_by_norm(g, max_norm)\`: 노름이 \`max_norm\`을 넘으면 방향은 그대로 두고 크기만 \`max_norm\`으로 줄입니다.
-  
-  tanh에 작은 초기화를 쓰면 앞쪽 층의 기울기가 사라지고, ReLU + He 초기화면 비교적 일정하게 유지되는지 확인합니다.
-  `,
+
+깊이 20인 MLP에서 기울기가 층을 거슬러 올라가며 어떻게 변하는지 직접 측정합니다.
+
+1. \`layer_grad_norms(depth, width, act, std, seed)\`: 입력(샘플 64개, 특징 width개)을 \`depth\`개의 "선형(표준편차 std, 편향 없음) → 활성화(\`"tanh"\` 또는 \`"relu"\`)" 층에 통과시킨 뒤, 손실 $L = \text{mean}(\text{출력})$에서 역전파하며 **각 층 입력에 대한 기울기 $\partial L/\partial h_l$의 노름**을 첫 층부터 순서대로 리스트로 돌려줍니다(길이 depth).
+2. \`clip_by_norm(g, max_norm)\`: 노름이 \`max_norm\`을 넘으면 방향은 그대로 두고 크기만 \`max_norm\`으로 줄입니다.
+
+tanh에 작은 초기화를 쓰면 앞쪽 층의 기울기가 사라지고, ReLU + He 초기화면 비교적 일정하게 유지되는지 확인합니다.
+`,
       starter: py`
-  import numpy as np
-  
-  def layer_grad_norms(depth=20, width=64, act="tanh", std=0.1, seed=0):
-      rng = np.random.default_rng(seed)
-      Ws = [rng.normal(0, std, (width, width)) for _ in range(depth)]
-      h = rng.normal(size=(64, width))
-      inputs, pre = [], []
-      for W in Ws:                         # 순전파: 각 층의 입력 h와 활성화 전 값 z를 기록
-          inputs.append(h)
-          z = h @ W
-          pre.append(z)
-          h = np.tanh(z) if act == "tanh" else np.maximum(0, z)
-      g = np.ones_like(h) / h.size         # ∂L/∂(출력), L = mean(출력)
-      norms = []
-      for W, z in zip(reversed(Ws), reversed(pre)):
-          # TODO: 활성화의 국소 미분을 곱해 ∂L/∂z를 구하고, W.T를 곱해 ∂L/∂(이 층의 입력)으로 내려보냅니다.
-          norms.append(np.linalg.norm(g))
-      return norms[::-1]                   # 첫 층부터의 순서로
-  
-  def clip_by_norm(g, max_norm):
-      return g  # TODO
-  
-  for name, act, std in [("tanh, 작은 초기화", "tanh", 0.1), ("relu, He 초기화", "relu", np.sqrt(2 / 64))]:
-      n = layer_grad_norms(act=act, std=std)
-      print(f"{name}: 첫 층 {n[0]:.2e}, 마지막 층 {n[-1]:.2e}")
-  `,
+import numpy as np
+
+def layer_grad_norms(depth=20, width=64, act="tanh", std=0.1, seed=0):
+    rng = np.random.default_rng(seed)
+    Ws = [rng.normal(0, std, (width, width)) for _ in range(depth)]
+    h = rng.normal(size=(64, width))
+    inputs, pre = [], []
+    for W in Ws:                         # 순전파: 각 층의 입력 h와 활성화 전 값 z를 기록
+        inputs.append(h)
+        z = h @ W
+        pre.append(z)
+        h = np.tanh(z) if act == "tanh" else np.maximum(0, z)
+    g = np.ones_like(h) / h.size         # ∂L/∂(출력), L = mean(출력)
+    norms = []
+    for W, z in zip(reversed(Ws), reversed(pre)):
+        # TODO: 활성화의 국소 미분을 곱해 ∂L/∂z를 구하고, W.T를 곱해 ∂L/∂(이 층의 입력)으로 내려보냅니다.
+        norms.append(np.linalg.norm(g))
+    return norms[::-1]                   # 첫 층부터의 순서로
+
+def clip_by_norm(g, max_norm):
+    return g  # TODO
+
+for name, act, std in [("tanh, 작은 초기화", "tanh", 0.1), ("relu, He 초기화", "relu", np.sqrt(2 / 64))]:
+    n = layer_grad_norms(act=act, std=std)
+    print(f"{name}: 첫 층 {n[0]:.2e}, 마지막 층 {n[-1]:.2e}")
+`,
       tests: py`
-  import numpy as np
-  
-  @test("길이 = depth, 마지막 층 기울기는 출력 쪽 기울기를 W와 활성화로 한 번 내려보낸 값")
-  def _():
-      n = layer_grad_norms(depth=5, act="relu", std=0.2)
-      assert len(n) == 5, f"길이 {len(n)}"
-      rng = np.random.default_rng(0)
-      Ws = [rng.normal(0, 0.2, (64, 64)) for _ in range(5)]
-      h = rng.normal(size=(64, 64))
-      for W in Ws[:-1]:
-          h = np.maximum(0, h @ W)
-      z = h @ Ws[-1]
-      g = (np.ones_like(z) / z.size) * (z > 0) @ Ws[-1].T
-      assert approx(n[-1], np.linalg.norm(g)), f"{n[-1]} vs {np.linalg.norm(g)}"
-  
-  @test("tanh + 작은 초기화: 첫 층 기울기가 마지막 층의 1/100 미만(소실)")
-  def _():
-      n = layer_grad_norms(act="tanh", std=0.1)
-      assert n[0] / n[-1] < 1e-2, f"비율 {n[0] / n[-1]:.2e}"
-  
-  @test("relu + He 초기화: 첫 층/마지막 층 비율이 0.05~20 사이")
-  def _():
-      n = layer_grad_norms(act="relu", std=np.sqrt(2 / 64))
-      assert 0.05 < n[0] / n[-1] < 20, f"비율 {n[0] / n[-1]:.3f}"
-  
-  @test("clip_by_norm: 크기만 줄이고 방향은 유지, 작으면 그대로")
-  def _():
-      g = np.array([30.0, 40.0])
-      c = clip_by_norm(g, 5.0)
-      assert approx(np.linalg.norm(c), 5.0) and approx(c / np.linalg.norm(c), g / 50.0)
-      assert approx(clip_by_norm(np.array([0.3, 0.4]), 5.0), [0.3, 0.4])
-  `,
+import numpy as np
+
+@test("길이 = depth, 마지막 층 기울기는 출력 쪽 기울기를 W와 활성화로 한 번 내려보낸 값")
+def _():
+    n = layer_grad_norms(depth=5, act="relu", std=0.2)
+    assert len(n) == 5, f"길이 {len(n)}"
+    rng = np.random.default_rng(0)
+    Ws = [rng.normal(0, 0.2, (64, 64)) for _ in range(5)]
+    h = rng.normal(size=(64, 64))
+    for W in Ws[:-1]:
+        h = np.maximum(0, h @ W)
+    z = h @ Ws[-1]
+    g = (np.ones_like(z) / z.size) * (z > 0) @ Ws[-1].T
+    assert approx(n[-1], np.linalg.norm(g)), f"{n[-1]} vs {np.linalg.norm(g)}"
+
+@test("tanh + 작은 초기화: 첫 층 기울기가 마지막 층의 1/100 미만(소실)")
+def _():
+    n = layer_grad_norms(act="tanh", std=0.1)
+    assert n[0] / n[-1] < 1e-2, f"비율 {n[0] / n[-1]:.2e}"
+
+@test("relu + He 초기화: 첫 층/마지막 층 비율이 0.05~20 사이")
+def _():
+    n = layer_grad_norms(act="relu", std=np.sqrt(2 / 64))
+    assert 0.05 < n[0] / n[-1] < 20, f"비율 {n[0] / n[-1]:.3f}"
+
+@test("clip_by_norm: 크기만 줄이고 방향은 유지, 작으면 그대로")
+def _():
+    g = np.array([30.0, 40.0])
+    c = clip_by_norm(g, 5.0)
+    assert approx(np.linalg.norm(c), 5.0) and approx(c / np.linalg.norm(c), g / 50.0)
+    assert approx(clip_by_norm(np.array([0.3, 0.4]), 5.0), [0.3, 0.4])
+`,
       hints: ["tanh의 국소 미분은 $1 - \\tanh^2(z)$, ReLU는 `(z > 0)`입니다. `g = g * 국소미분`이 $\\partial L / \\partial z$입니다.", "`h = z_prev_act @ W`이므로 입력에 대한 기울기는 $\\partial L / \\partial z$에 `W.T`를 곱한 값입니다. `g = g @ W.T`", "`norm = np.linalg.norm(g)`, `return g * min(1.0, max_norm / norm)`. 0으로 나누지 않도록 norm이 0이면 그대로 돌려줍니다."],
       solution: py`
-  import numpy as np
-  
-  def layer_grad_norms(depth=20, width=64, act="tanh", std=0.1, seed=0):
-      rng = np.random.default_rng(seed)
-      Ws = [rng.normal(0, std, (width, width)) for _ in range(depth)]
-      h = rng.normal(size=(64, width))
-      inputs, pre = [], []
-      for W in Ws:
-          inputs.append(h)
-          z = h @ W
-          pre.append(z)
-          h = np.tanh(z) if act == "tanh" else np.maximum(0, z)
-      g = np.ones_like(h) / h.size
-      norms = []
-      for W, z in zip(reversed(Ws), reversed(pre)):
-          local = 1 - np.tanh(z) ** 2 if act == "tanh" else (z > 0)
-          g = (g * local) @ W.T
-          norms.append(np.linalg.norm(g))
-      return norms[::-1]
-  
-  def clip_by_norm(g, max_norm):
-      norm = np.linalg.norm(g)
-      return g if norm == 0 else g * min(1.0, max_norm / norm)
-  
-  for name, act, std in [("tanh, 작은 초기화", "tanh", 0.1), ("relu, He 초기화", "relu", np.sqrt(2 / 64))]:
-      n = layer_grad_norms(act=act, std=std)
-      print(f"{name}: 첫 층 {n[0]:.2e}, 마지막 층 {n[-1]:.2e}")
-  `,
+import numpy as np
+
+def layer_grad_norms(depth=20, width=64, act="tanh", std=0.1, seed=0):
+    rng = np.random.default_rng(seed)
+    Ws = [rng.normal(0, std, (width, width)) for _ in range(depth)]
+    h = rng.normal(size=(64, width))
+    inputs, pre = [], []
+    for W in Ws:
+        inputs.append(h)
+        z = h @ W
+        pre.append(z)
+        h = np.tanh(z) if act == "tanh" else np.maximum(0, z)
+    g = np.ones_like(h) / h.size
+    norms = []
+    for W, z in zip(reversed(Ws), reversed(pre)):
+        local = 1 - np.tanh(z) ** 2 if act == "tanh" else (z > 0)
+        g = (g * local) @ W.T
+        norms.append(np.linalg.norm(g))
+    return norms[::-1]
+
+def clip_by_norm(g, max_norm):
+    norm = np.linalg.norm(g)
+    return g if norm == 0 else g * min(1.0, max_norm / norm)
+
+for name, act, std in [("tanh, 작은 초기화", "tanh", 0.1), ("relu, He 초기화", "relu", np.sqrt(2 / 64))]:
+    n = layer_grad_norms(act=act, std=std)
+    print(f"{name}: 첫 층 {n[0]:.2e}, 마지막 층 {n[-1]:.2e}")
+`,
     },
   ],
 });

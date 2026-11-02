@@ -253,205 +253,205 @@ assert all(math.isfinite(float(x)) for v in results.values() for x in v), "점�
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "적대적 학습으로 FGSM에 강한 분류기 만들기",
       prompt: md`
-  
-  숫자 3과 8을 구별하는 로지스틱 회귀를 NumPy 경사하강으로 직접 학습시키고, FGSM에 대한 강건성을 높입니다.
-  
-  1. \`fgsm(w, b, X, y, eps)\`: 모델 $(w, b)$에 대한 FGSM 예제. $p = \sigma(Xw + b)$, $x' = \mathrm{clip}(x + \varepsilon\,\mathrm{sign}((p - y)\,w), 0, 1)$
-  2. \`train(X, y, adv_eps=0.0, epochs=300, lr=0.5, l2=1e-3)\`: 0에서 시작해 교차 엔트로피 + L2로 \`epochs\`번 경사하강하고 \`(w, b)\`를 돌려줍니다. \`adv_eps > 0\`이면 매 epoch마다 **현재 모델**로 만든 FGSM 예제를 원본과 함께 학습합니다(적대적 학습).
-  3. \`logit_shift(w, eps)\`: 클리핑이 없을 때 FGSM이 logit을 최대 얼마나 움직이는지. 선형 모델에서는 $\varepsilon\,\lVert w \rVert_1$입니다.
-  
-  적대적 학습이 강건 정확도를 높이는 방식이 $\lVert w \rVert_1$과 어떤 관계인지 확인하십시오.
-  `,
+
+숫자 3과 8을 구별하는 로지스틱 회귀를 NumPy 경사하강으로 직접 학습시키고, FGSM에 대한 강건성을 높입니다.
+
+1. \`fgsm(w, b, X, y, eps)\`: 모델 $(w, b)$에 대한 FGSM 예제. $p = \sigma(Xw + b)$, $x' = \mathrm{clip}(x + \varepsilon\,\mathrm{sign}((p - y)\,w), 0, 1)$
+2. \`train(X, y, adv_eps=0.0, epochs=300, lr=0.5, l2=1e-3)\`: 0에서 시작해 교차 엔트로피 + L2로 \`epochs\`번 경사하강하고 \`(w, b)\`를 돌려줍니다. \`adv_eps > 0\`이면 매 epoch마다 **현재 모델**로 만든 FGSM 예제를 원본과 함께 학습합니다(적대적 학습).
+3. \`logit_shift(w, eps)\`: 클리핑이 없을 때 FGSM이 logit을 최대 얼마나 움직이는지. 선형 모델에서는 $\varepsilon\,\lVert w \rVert_1$입니다.
+
+적대적 학습이 강건 정확도를 높이는 방식이 $\lVert w \rVert_1$과 어떤 관계인지 확인하십시오.
+`,
       starter: py`
-  import numpy as np
-  from sklearn.datasets import load_digits
-  
-  d = load_digits()
-  m = np.isin(d.target, [3, 8])
-  X, y = d.data[m] / 16.0, (d.target[m] == 8).astype(float)
-  idx = np.random.default_rng(0).permutation(len(X))
-  Xtr, ytr, Xte, yte = X[idx[:250]], y[idx[:250]], X[idx[250:]], y[idx[250:]]
-  sig = lambda z: 1 / (1 + np.exp(-z))
-  acc = lambda w, b, X, y: float(np.mean((sig(X @ w + b) >= 0.5) == y))
-  
-  def fgsm(w, b, X, y, eps):
-      return X  # TODO
-  
-  def train(X, y, adv_eps=0.0, epochs=300, lr=0.5, l2=1e-3):
-      w, b = np.zeros(X.shape[1]), 0.0
-      for _ in range(epochs):
-          Xb, yb = X, y
-          # TODO: adv_eps > 0이면 현재 (w, b)로 만든 FGSM 예제를 원본에 이어 붙입니다.
-          p = sig(Xb @ w + b)
-          # TODO: w, b를 교차 엔트로피 + L2 기울기로 갱신합니다.
-      return w, b
-  
-  def logit_shift(w, eps):
-      return 0.0  # TODO
-  
-  for name, ae in [("일반 학습", 0.0), ("적대적 학습", 0.1)]:
-      w, b = train(Xtr, ytr, adv_eps=ae)
-      print(f"{name}: 깨끗한 정확도 {acc(w, b, Xte, yte):.3f}, ε=0.1 FGSM 정확도 {acc(w, b, fgsm(w, b, Xte, yte, 0.1), yte):.3f}, ‖w‖₁ = {np.abs(w).sum():.1f}")
-  `,
+import numpy as np
+from sklearn.datasets import load_digits
+
+d = load_digits()
+m = np.isin(d.target, [3, 8])
+X, y = d.data[m] / 16.0, (d.target[m] == 8).astype(float)
+idx = np.random.default_rng(0).permutation(len(X))
+Xtr, ytr, Xte, yte = X[idx[:250]], y[idx[:250]], X[idx[250:]], y[idx[250:]]
+sig = lambda z: 1 / (1 + np.exp(-z))
+acc = lambda w, b, X, y: float(np.mean((sig(X @ w + b) >= 0.5) == y))
+
+def fgsm(w, b, X, y, eps):
+    return X  # TODO
+
+def train(X, y, adv_eps=0.0, epochs=300, lr=0.5, l2=1e-3):
+    w, b = np.zeros(X.shape[1]), 0.0
+    for _ in range(epochs):
+        Xb, yb = X, y
+        # TODO: adv_eps > 0이면 현재 (w, b)로 만든 FGSM 예제를 원본에 이어 붙입니다.
+        p = sig(Xb @ w + b)
+        # TODO: w, b를 교차 엔트로피 + L2 기울기로 갱신합니다.
+    return w, b
+
+def logit_shift(w, eps):
+    return 0.0  # TODO
+
+for name, ae in [("일반 학습", 0.0), ("적대적 학습", 0.1)]:
+    w, b = train(Xtr, ytr, adv_eps=ae)
+    print(f"{name}: 깨끗한 정확도 {acc(w, b, Xte, yte):.3f}, ε=0.1 FGSM 정확도 {acc(w, b, fgsm(w, b, Xte, yte, 0.1), yte):.3f}, ‖w‖₁ = {np.abs(w).sum():.1f}")
+`,
       tests: py`
-  import numpy as np
-  from sklearn.datasets import load_digits
-  
-  d = load_digits()
-  m = np.isin(d.target, [3, 8])
-  X, y = d.data[m] / 16.0, (d.target[m] == 8).astype(float)
-  idx = np.random.default_rng(0).permutation(len(X))
-  Xtr, ytr, Xte, yte = X[idx[:250]], y[idx[:250]], X[idx[250:]], y[idx[250:]]
-  sig = lambda z: 1 / (1 + np.exp(-z))
-  acc = lambda w, b, X, y: float(np.mean((sig(X @ w + b) >= 0.5) == y))
-  
-  @test("일반 학습: 깨끗한 정확도 0.97 이상, ε = 0.1 FGSM에서는 0.8 미만")
-  def _():
-      w, b = train(Xtr, ytr)
-      clean, robust = acc(w, b, Xte, yte), acc(w, b, fgsm(w, b, Xte, yte, 0.1), yte)
-      assert clean >= 0.97 and robust < 0.8, (clean, robust)
-  
-  @test("적대적 학습: 강건 정확도가 0.1 이상 오르고 깨끗한 정확도는 0.95 이상 유지")
-  def _():
-      w0, b0 = train(Xtr, ytr)
-      w1, b1 = train(Xtr, ytr, adv_eps=0.1)
-      r0, r1 = acc(w0, b0, fgsm(w0, b0, Xte, yte, 0.1), yte), acc(w1, b1, fgsm(w1, b1, Xte, yte, 0.1), yte)
-      assert r1 >= r0 + 0.1 and acc(w1, b1, Xte, yte) >= 0.95, (r0, r1)
-  
-  @test("FGSM의 logit 변화 = ε‖w‖₁(클리핑 없을 때), 적대적 학습은 ‖w‖₁을 줄인다")
-  def _():
-      rng = np.random.default_rng(3)
-      w, b = rng.normal(size=64), 0.1
-      x = np.full((1, 64), 0.5)
-      xa = np.clip(x + 0.01 * np.sign((sig(x @ w + b) - 1.0)[:, None] * w), 0, 1)
-      assert approx(abs((xa @ w - x @ w)[0]), logit_shift(w, 0.01)), (abs((xa @ w - x @ w)[0]), logit_shift(w, 0.01))
-      w0, _ = train(Xtr, ytr)
-      w1, _ = train(Xtr, ytr, adv_eps=0.1)
-      assert np.abs(w1).sum() < np.abs(w0).sum(), (np.abs(w0).sum(), np.abs(w1).sum())
-  `,
+import numpy as np
+from sklearn.datasets import load_digits
+
+d = load_digits()
+m = np.isin(d.target, [3, 8])
+X, y = d.data[m] / 16.0, (d.target[m] == 8).astype(float)
+idx = np.random.default_rng(0).permutation(len(X))
+Xtr, ytr, Xte, yte = X[idx[:250]], y[idx[:250]], X[idx[250:]], y[idx[250:]]
+sig = lambda z: 1 / (1 + np.exp(-z))
+acc = lambda w, b, X, y: float(np.mean((sig(X @ w + b) >= 0.5) == y))
+
+@test("일반 학습: 깨끗한 정확도 0.97 이상, ε = 0.1 FGSM에서는 0.8 미만")
+def _():
+    w, b = train(Xtr, ytr)
+    clean, robust = acc(w, b, Xte, yte), acc(w, b, fgsm(w, b, Xte, yte, 0.1), yte)
+    assert clean >= 0.97 and robust < 0.8, (clean, robust)
+
+@test("적대적 학습: 강건 정확도가 0.1 이상 오르고 깨끗한 정확도는 0.95 이상 유지")
+def _():
+    w0, b0 = train(Xtr, ytr)
+    w1, b1 = train(Xtr, ytr, adv_eps=0.1)
+    r0, r1 = acc(w0, b0, fgsm(w0, b0, Xte, yte, 0.1), yte), acc(w1, b1, fgsm(w1, b1, Xte, yte, 0.1), yte)
+    assert r1 >= r0 + 0.1 and acc(w1, b1, Xte, yte) >= 0.95, (r0, r1)
+
+@test("FGSM의 logit 변화 = ε‖w‖₁(클리핑 없을 때), 적대적 학습은 ‖w‖₁을 줄인다")
+def _():
+    rng = np.random.default_rng(3)
+    w, b = rng.normal(size=64), 0.1
+    x = np.full((1, 64), 0.5)
+    xa = np.clip(x + 0.01 * np.sign((sig(x @ w + b) - 1.0)[:, None] * w), 0, 1)
+    assert approx(abs((xa @ w - x @ w)[0]), logit_shift(w, 0.01)), (abs((xa @ w - x @ w)[0]), logit_shift(w, 0.01))
+    w0, _ = train(Xtr, ytr)
+    w1, _ = train(Xtr, ytr, adv_eps=0.1)
+    assert np.abs(w1).sum() < np.abs(w0).sum(), (np.abs(w0).sum(), np.abs(w1).sum())
+`,
       hints: ["`p = sig(X @ w + b)`, `return np.clip(X + eps * np.sign((p - y)[:, None] * w[None, :]), 0, 1)`", "적대적 학습은 `Xb = np.vstack([X, fgsm(w, b, X, y, adv_eps)])`, `yb = np.concatenate([y, y])`. 갱신은 `w -= lr * (Xb.T @ (p - yb) / len(yb) + l2 * w)`, `b -= lr * np.mean(p - yb)`", "FGSM은 모든 픽셀을 $\\varepsilon$씩 $w$의 부호 방향으로 밀므로 logit 변화는 $\\sum_j \\varepsilon |w_j| = \\varepsilon\\,\\lVert w \\rVert_1$입니다. 적대적 학습은 이 최악의 변화를 견디도록 $\\lVert w \\rVert_1$을 줄이는 쪽으로 학습됩니다."],
       solution: py`
-  import numpy as np
-  from sklearn.datasets import load_digits
-  
-  d = load_digits()
-  m = np.isin(d.target, [3, 8])
-  X, y = d.data[m] / 16.0, (d.target[m] == 8).astype(float)
-  idx = np.random.default_rng(0).permutation(len(X))
-  Xtr, ytr, Xte, yte = X[idx[:250]], y[idx[:250]], X[idx[250:]], y[idx[250:]]
-  sig = lambda z: 1 / (1 + np.exp(-z))
-  acc = lambda w, b, X, y: float(np.mean((sig(X @ w + b) >= 0.5) == y))
-  
-  def fgsm(w, b, X, y, eps):
-      p = sig(X @ w + b)
-      return np.clip(X + eps * np.sign((p - y)[:, None] * w[None, :]), 0, 1)
-  
-  def train(X, y, adv_eps=0.0, epochs=300, lr=0.5, l2=1e-3):
-      w, b = np.zeros(X.shape[1]), 0.0
-      for _ in range(epochs):
-          Xb, yb = X, y
-          if adv_eps > 0:
-              Xb = np.vstack([X, fgsm(w, b, X, y, adv_eps)])
-              yb = np.concatenate([y, y])
-          p = sig(Xb @ w + b)
-          w = w - lr * (Xb.T @ (p - yb) / len(yb) + l2 * w)
-          b = b - lr * np.mean(p - yb)
-      return w, b
-  
-  def logit_shift(w, eps):
-      return eps * float(np.abs(w).sum())
-  
-  for name, ae in [("일반 학습", 0.0), ("적대적 학습", 0.1)]:
-      w, b = train(Xtr, ytr, adv_eps=ae)
-      print(f"{name}: 깨끗한 정확도 {acc(w, b, Xte, yte):.3f}, ε=0.1 FGSM 정확도 {acc(w, b, fgsm(w, b, Xte, yte, 0.1), yte):.3f}, ‖w‖₁ = {np.abs(w).sum():.1f}")
-  `,
+import numpy as np
+from sklearn.datasets import load_digits
+
+d = load_digits()
+m = np.isin(d.target, [3, 8])
+X, y = d.data[m] / 16.0, (d.target[m] == 8).astype(float)
+idx = np.random.default_rng(0).permutation(len(X))
+Xtr, ytr, Xte, yte = X[idx[:250]], y[idx[:250]], X[idx[250:]], y[idx[250:]]
+sig = lambda z: 1 / (1 + np.exp(-z))
+acc = lambda w, b, X, y: float(np.mean((sig(X @ w + b) >= 0.5) == y))
+
+def fgsm(w, b, X, y, eps):
+    p = sig(X @ w + b)
+    return np.clip(X + eps * np.sign((p - y)[:, None] * w[None, :]), 0, 1)
+
+def train(X, y, adv_eps=0.0, epochs=300, lr=0.5, l2=1e-3):
+    w, b = np.zeros(X.shape[1]), 0.0
+    for _ in range(epochs):
+        Xb, yb = X, y
+        if adv_eps > 0:
+            Xb = np.vstack([X, fgsm(w, b, X, y, adv_eps)])
+            yb = np.concatenate([y, y])
+        p = sig(Xb @ w + b)
+        w = w - lr * (Xb.T @ (p - yb) / len(yb) + l2 * w)
+        b = b - lr * np.mean(p - yb)
+    return w, b
+
+def logit_shift(w, eps):
+    return eps * float(np.abs(w).sum())
+
+for name, ae in [("일반 학습", 0.0), ("적대적 학습", 0.1)]:
+    w, b = train(Xtr, ytr, adv_eps=ae)
+    print(f"{name}: 깨끗한 정확도 {acc(w, b, Xte, yte):.3f}, ε=0.1 FGSM 정확도 {acc(w, b, fgsm(w, b, Xte, yte, 0.1), yte):.3f}, ‖w‖₁ = {np.abs(w).sum():.1f}")
+`,
     },
-  {
+    {
       key: "ch2",
       title: "부트스트랩 신뢰구간으로 캡스톤 결과의 불확실성 보고하기",
       prompt: md`
-  
-  캡스톤 리포트의 "정확도 0.75"에는 얼마만큼의 불확실성이 있을까요? 문항별 정답 여부(0/1)를 복원추출로 다시 뽑는 **부트스트랩**으로 신뢰구간을 구합니다.
-  
-  1. \`bootstrap_ci(correct, n_boot=2000, alpha=0.05, seed=0)\`: 문항 인덱스를 \`len(correct)\`개 복원추출해 평균을 \`n_boot\`번 구하고, 백분위수 $100\cdot\alpha/2$, $100\cdot(1-\alpha/2)$로 \`(lo, hi)\`를 돌려줍니다.
-  2. \`paired_bootstrap_diff(v1, v2, n_boot=2000, alpha=0.05, seed=0)\`: 두 시스템이 같은 문항을 풀었으므로 **같은 인덱스**로 함께 복원추출해 정확도 차이(v2 − v1)의 \`(관측 차이, lo, hi)\`를 돌려줍니다.
-  
-  7주차 회귀 테스트의 0.75 → 0.85가 20문항으로는 확신할 수 없는 차이라는 것을 신뢰구간으로 확인합니다.
-  `,
+
+캡스톤 리포트의 "정확도 0.75"에는 얼마만큼의 불확실성이 있을까요? 문항별 정답 여부(0/1)를 복원추출로 다시 뽑는 **부트스트랩**으로 신뢰구간을 구합니다.
+
+1. \`bootstrap_ci(correct, n_boot=2000, alpha=0.05, seed=0)\`: 문항 인덱스를 \`len(correct)\`개 복원추출해 평균을 \`n_boot\`번 구하고, 백분위수 $100\cdot\alpha/2$, $100\cdot(1-\alpha/2)$로 \`(lo, hi)\`를 돌려줍니다.
+2. \`paired_bootstrap_diff(v1, v2, n_boot=2000, alpha=0.05, seed=0)\`: 두 시스템이 같은 문항을 풀었으므로 **같은 인덱스**로 함께 복원추출해 정확도 차이(v2 − v1)의 \`(관측 차이, lo, hi)\`를 돌려줍니다.
+
+7주차 회귀 테스트의 0.75 → 0.85가 20문항으로는 확신할 수 없는 차이라는 것을 신뢰구간으로 확인합니다.
+`,
       starter: py`
-  import numpy as np
-  v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])    # 7주차 회귀 테스트의 문항별 정답 여부
-  v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
-  
-  def bootstrap_ci(correct, n_boot=2000, alpha=0.05, seed=0):
-      m = float(np.mean(correct))
-      return m, m  # TODO
-  
-  def paired_bootstrap_diff(v1, v2, n_boot=2000, alpha=0.05, seed=0):
-      d = float(np.mean(v2) - np.mean(v1))
-      return d, d, d  # TODO: 같은 인덱스로 v1, v2를 함께 뽑습니다.
-  
-  print("v1 정확도 95% CI:", np.round(bootstrap_ci(v1), 3))
-  print("v2 - v1 차이와 95% CI:", np.round(paired_bootstrap_diff(v1, v2), 3))
-  `,
+import numpy as np
+v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])    # 7주차 회귀 테스트의 문항별 정답 여부
+v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
+
+def bootstrap_ci(correct, n_boot=2000, alpha=0.05, seed=0):
+    m = float(np.mean(correct))
+    return m, m  # TODO
+
+def paired_bootstrap_diff(v1, v2, n_boot=2000, alpha=0.05, seed=0):
+    d = float(np.mean(v2) - np.mean(v1))
+    return d, d, d  # TODO: 같은 인덱스로 v1, v2를 함께 뽑습니다.
+
+print("v1 정확도 95% CI:", np.round(bootstrap_ci(v1), 3))
+print("v2 - v1 차이와 95% CI:", np.round(paired_bootstrap_diff(v1, v2), 3))
+`,
       tests: py`
-  import numpy as np
-  v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])    # 7주차 회귀 테스트의 문항별 정답 여부
-  v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
-  
-  @test("20문항 정확도 0.75의 95% CI는 0.75를 포함하고 폭이 0.25 이상")
-  def _():
-      lo, hi = bootstrap_ci(v1)
-      assert lo < 0.75 < hi and hi - lo > 0.25, (lo, hi)
-  
-  @test("문항이 2,000개면 같은 정확도라도 CI 폭이 0.06 미만")
-  def _():
-      big = np.tile(v1, 100)
-      lo, hi = bootstrap_ci(big)
-      assert lo < 0.75 < hi and hi - lo < 0.06, (lo, hi)
-  
-  @test("같은 시드면 같은 구간(재현성)")
-  def _():
-      assert tuple(bootstrap_ci(v1, seed=5)) == tuple(bootstrap_ci(v1, seed=5))
-  
-  @test("v1 → v2 차이 0.10의 95% CI는 0을 포함하고, 200문항에서 30개 개선·2개 회귀면 0을 넘는다")
-  def _():
-      d, lo, hi = paired_bootstrap_diff(v1, v2)
-      assert approx(d, 0.10) and lo < 0 < hi, (d, lo, hi)
-      a = np.array([0] * 30 + [1] * 2 + [1] * 150 + [0] * 18)
-      b = np.array([1] * 30 + [0] * 2 + [1] * 150 + [0] * 18)
-      d2, lo2, hi2 = paired_bootstrap_diff(a, b)
-      assert approx(d2, 0.14) and lo2 > 0, (d2, lo2, hi2)
-  `,
+import numpy as np
+v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])    # 7주차 회귀 테스트의 문항별 정답 여부
+v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
+
+@test("20문항 정확도 0.75의 95% CI는 0.75를 포함하고 폭이 0.25 이상")
+def _():
+    lo, hi = bootstrap_ci(v1)
+    assert lo < 0.75 < hi and hi - lo > 0.25, (lo, hi)
+
+@test("문항이 2,000개면 같은 정확도라도 CI 폭이 0.06 미만")
+def _():
+    big = np.tile(v1, 100)
+    lo, hi = bootstrap_ci(big)
+    assert lo < 0.75 < hi and hi - lo < 0.06, (lo, hi)
+
+@test("같은 시드면 같은 구간(재현성)")
+def _():
+    assert tuple(bootstrap_ci(v1, seed=5)) == tuple(bootstrap_ci(v1, seed=5))
+
+@test("v1 → v2 차이 0.10의 95% CI는 0을 포함하고, 200문항에서 30개 개선·2개 회귀면 0을 넘는다")
+def _():
+    d, lo, hi = paired_bootstrap_diff(v1, v2)
+    assert approx(d, 0.10) and lo < 0 < hi, (d, lo, hi)
+    a = np.array([0] * 30 + [1] * 2 + [1] * 150 + [0] * 18)
+    b = np.array([1] * 30 + [0] * 2 + [1] * 150 + [0] * 18)
+    d2, lo2, hi2 = paired_bootstrap_diff(a, b)
+    assert approx(d2, 0.14) and lo2 > 0, (d2, lo2, hi2)
+`,
       hints: ["`rng = np.random.default_rng(seed)`, `idx = rng.integers(0, n, size=(n_boot, n))`, `means = np.asarray(correct)[idx].mean(axis=1)`", "`lo, hi = np.percentile(means, [100 * alpha / 2, 100 * (1 - alpha / 2)])`", "짝지은 부트스트랩은 같은 `idx`로 `np.asarray(v2)[idx].mean(axis=1) - np.asarray(v1)[idx].mean(axis=1)`을 구합니다. 문항 난이도를 공유하므로 두 시스템을 따로 뽑을 때보다 구간이 좁아집니다."],
       solution: py`
-  import numpy as np
-  v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])    # 7주차 회귀 테스트의 문항별 정답 여부
-  v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
-  
-  def bootstrap_ci(correct, n_boot=2000, alpha=0.05, seed=0):
-      correct = np.asarray(correct)
-      rng = np.random.default_rng(seed)
-      idx = rng.integers(0, len(correct), size=(n_boot, len(correct)))
-      means = correct[idx].mean(axis=1)
-      lo, hi = np.percentile(means, [100 * alpha / 2, 100 * (1 - alpha / 2)])
-      return float(lo), float(hi)
-  
-  def paired_bootstrap_diff(v1, v2, n_boot=2000, alpha=0.05, seed=0):
-      v1, v2 = np.asarray(v1), np.asarray(v2)
-      rng = np.random.default_rng(seed)
-      idx = rng.integers(0, len(v1), size=(n_boot, len(v1)))
-      diffs = v2[idx].mean(axis=1) - v1[idx].mean(axis=1)
-      lo, hi = np.percentile(diffs, [100 * alpha / 2, 100 * (1 - alpha / 2)])
-      return float(v2.mean() - v1.mean()), float(lo), float(hi)
-  
-  print("v1 정확도 95% CI:", np.round(bootstrap_ci(v1), 3))
-  print("v2 - v1 차이와 95% CI:", np.round(paired_bootstrap_diff(v1, v2), 3))
-  `,
+import numpy as np
+v1 = np.array([1,1,1,0,1,1,0,1,1,1, 0,1,1,1,0,1,1,0,1,1])    # 7주차 회귀 테스트의 문항별 정답 여부
+v2 = np.array([1,1,1,1,1,1,1,1,0,1, 1,1,1,1,1,1,0,0,1,1])
+
+def bootstrap_ci(correct, n_boot=2000, alpha=0.05, seed=0):
+    correct = np.asarray(correct)
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(correct), size=(n_boot, len(correct)))
+    means = correct[idx].mean(axis=1)
+    lo, hi = np.percentile(means, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+    return float(lo), float(hi)
+
+def paired_bootstrap_diff(v1, v2, n_boot=2000, alpha=0.05, seed=0):
+    v1, v2 = np.asarray(v1), np.asarray(v2)
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(v1), size=(n_boot, len(v1)))
+    diffs = v2[idx].mean(axis=1) - v1[idx].mean(axis=1)
+    lo, hi = np.percentile(diffs, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+    return float(v2.mean() - v1.mean()), float(lo), float(hi)
+
+print("v1 정확도 95% CI:", np.round(bootstrap_ci(v1), 3))
+print("v2 - v1 차이와 95% CI:", np.round(paired_bootstrap_diff(v1, v2), 3))
+`,
     },
   ],
   provideCourseDocs: true,

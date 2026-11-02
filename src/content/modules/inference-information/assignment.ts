@@ -190,206 +190,206 @@ assert abs(posterior(0.3, 0.9, 0.1) - 0.27 / (0.27 + 0.07)) < 1e-4, "민감도·
 ` },
   ],
   challenges: [
-  {
+    {
       key: "ch1",
       title: "미니배치 확률적 경사하강법",
       prompt: md`
-  
-  과제의 선형회귀를 **미니배치 SGD**로 바꿉니다. 에폭마다 데이터를 섞고(\`rng.permutation\`) \`batch_size\`개씩 잘라, 그 배치의 MSE 기울기로 $w, b$를 갱신합니다. 에폭이 끝날 때마다 **전체 데이터**의 MSE를 기록합니다.
-  
-  배치 크기 1, 10, 100의 결과를 비교해 보십시오. 배치 100(전체)은 과제의 일반 경사하강법과 정확히 같아야 합니다.
-  `,
+
+과제의 선형회귀를 **미니배치 SGD**로 바꿉니다. 에폭마다 데이터를 섞고(\`rng.permutation\`) \`batch_size\`개씩 잘라, 그 배치의 MSE 기울기로 $w, b$를 갱신합니다. 에폭이 끝날 때마다 **전체 데이터**의 MSE를 기록합니다.
+
+배치 크기 1, 10, 100의 결과를 비교해 보십시오. 배치 100(전체)은 과제의 일반 경사하강법과 정확히 같아야 합니다.
+`,
       starter: py`
-  import numpy as np
-  
-  rng = np.random.default_rng(42)
-  n = 100
-  x = rng.uniform(-3, 3, n)
-  y = 2 * x + 1 + rng.normal(0, 0.5, n)
-  
-  def minibatch_sgd(x, y, lr=0.05, batch_size=10, epochs=50, seed=0):
-      """반환: (w, b, 에폭마다 전체 데이터 MSE를 담은 리스트)"""
-      rng = np.random.default_rng(seed)
-      w, b = 0.0, 0.0
-      losses = []
-      for epoch in range(epochs):
-          order = rng.permutation(len(x))
-          for start in range(0, len(x), batch_size):
-              idx = order[start:start + batch_size]
-              xb, yb = x[idx], y[idx]
-              # TODO: 배치에서 MSE의 기울기 dw, db를 구하고 w, b를 갱신합니다.
-          losses.append(float(np.mean((w * x + b - y) ** 2)))
-      return w, b, losses
-  
-  for bs in (1, 10, 100):
-      w, b, losses = minibatch_sgd(x, y, batch_size=bs)
-      print(f"batch={bs:>3}: w={w:.3f}, b={b:.3f}, 마지막 loss={losses[-1]:.4f}")
-  `,
+import numpy as np
+
+rng = np.random.default_rng(42)
+n = 100
+x = rng.uniform(-3, 3, n)
+y = 2 * x + 1 + rng.normal(0, 0.5, n)
+
+def minibatch_sgd(x, y, lr=0.05, batch_size=10, epochs=50, seed=0):
+    """반환: (w, b, 에폭마다 전체 데이터 MSE를 담은 리스트)"""
+    rng = np.random.default_rng(seed)
+    w, b = 0.0, 0.0
+    losses = []
+    for epoch in range(epochs):
+        order = rng.permutation(len(x))
+        for start in range(0, len(x), batch_size):
+            idx = order[start:start + batch_size]
+            xb, yb = x[idx], y[idx]
+            # TODO: 배치에서 MSE의 기울기 dw, db를 구하고 w, b를 갱신합니다.
+        losses.append(float(np.mean((w * x + b - y) ** 2)))
+    return w, b, losses
+
+for bs in (1, 10, 100):
+    w, b, losses = minibatch_sgd(x, y, batch_size=bs)
+    print(f"batch={bs:>3}: w={w:.3f}, b={b:.3f}, 마지막 loss={losses[-1]:.4f}")
+`,
       tests: py`
-  import numpy as np
-  rng = np.random.default_rng(42)
-  xx = rng.uniform(-3, 3, 100)
-  yy = 2 * xx + 1 + rng.normal(0, 0.5, 100)
-  w_star, b_star = np.linalg.lstsq(np.column_stack([xx, np.ones(100)]), yy, rcond=None)[0]
-  
-  @test("batch 10: 해석해와 0.05 이내")
-  def _():
-      w, b, losses = minibatch_sgd(xx, yy, lr=0.05, batch_size=10, epochs=50)
-      assert abs(w - w_star) < 0.05 and abs(b - b_star) < 0.05, f"w={w:.3f}, b={b:.3f} / 해석해 {w_star:.3f}, {b_star:.3f}"
-  
-  @test("에폭마다 손실을 기록하고, 손실이 줄었다")
-  def _():
-      w, b, losses = minibatch_sgd(xx, yy, batch_size=10, epochs=20)
-      assert len(losses) == 20 and losses[-1] < losses[0], f"손실 기록: {losses[:3]} ..."
-  
-  @test("배치 100(전체)이면 일반 경사하강법과 같다")
-  def _():
-      w, b, _ = minibatch_sgd(xx, yy, lr=0.1, batch_size=100, epochs=200)
-      w2, b2 = 0.0, 0.0
-      for _ in range(200):
-          err = w2 * xx + b2 - yy
-          w2, b2 = w2 - 0.1 * np.mean(2 * err * xx), b2 - 0.1 * np.mean(2 * err)
-      assert approx(w, w2) and approx(b, b2), f"({w}, {b}) vs ({w2}, {b2})"
-  
-  @test("같은 seed면 같은 결과(재현성)")
-  def _():
-      assert minibatch_sgd(xx, yy, seed=3)[:2] == minibatch_sgd(xx, yy, seed=3)[:2]
-  `,
+import numpy as np
+rng = np.random.default_rng(42)
+xx = rng.uniform(-3, 3, 100)
+yy = 2 * xx + 1 + rng.normal(0, 0.5, 100)
+w_star, b_star = np.linalg.lstsq(np.column_stack([xx, np.ones(100)]), yy, rcond=None)[0]
+
+@test("batch 10: 해석해와 0.05 이내")
+def _():
+    w, b, losses = minibatch_sgd(xx, yy, lr=0.05, batch_size=10, epochs=50)
+    assert abs(w - w_star) < 0.05 and abs(b - b_star) < 0.05, f"w={w:.3f}, b={b:.3f} / 해석해 {w_star:.3f}, {b_star:.3f}"
+
+@test("에폭마다 손실을 기록하고, 손실이 줄었다")
+def _():
+    w, b, losses = minibatch_sgd(xx, yy, batch_size=10, epochs=20)
+    assert len(losses) == 20 and losses[-1] < losses[0], f"손실 기록: {losses[:3]} ..."
+
+@test("배치 100(전체)이면 일반 경사하강법과 같다")
+def _():
+    w, b, _ = minibatch_sgd(xx, yy, lr=0.1, batch_size=100, epochs=200)
+    w2, b2 = 0.0, 0.0
+    for _ in range(200):
+        err = w2 * xx + b2 - yy
+        w2, b2 = w2 - 0.1 * np.mean(2 * err * xx), b2 - 0.1 * np.mean(2 * err)
+    assert approx(w, w2) and approx(b, b2), f"({w}, {b}) vs ({w2}, {b2})"
+
+@test("같은 seed면 같은 결과(재현성)")
+def _():
+    assert minibatch_sgd(xx, yy, seed=3)[:2] == minibatch_sgd(xx, yy, seed=3)[:2]
+`,
       hints: ["배치의 오차는 `err = w * xb + b - yb`입니다. 기울기는 전체 데이터 대신 배치에서 평균을 냅니다.", "`dw = np.mean(2 * err * xb)`, `db = np.mean(2 * err)`입니다.", "두 파라미터를 같은 기울기 시점에서 갱신해야 합니다. `w -= lr * dw`와 `b -= lr * db`를 기울기를 모두 구한 뒤에 실행합니다."],
       solution: py`
-  import numpy as np
-  
-  rng = np.random.default_rng(42)
-  n = 100
-  x = rng.uniform(-3, 3, n)
-  y = 2 * x + 1 + rng.normal(0, 0.5, n)
-  
-  def minibatch_sgd(x, y, lr=0.05, batch_size=10, epochs=50, seed=0):
-      rng = np.random.default_rng(seed)
-      w, b = 0.0, 0.0
-      losses = []
-      for epoch in range(epochs):
-          order = rng.permutation(len(x))
-          for start in range(0, len(x), batch_size):
-              idx = order[start:start + batch_size]
-              xb, yb = x[idx], y[idx]
-              err = w * xb + b - yb
-              dw, db = np.mean(2 * err * xb), np.mean(2 * err)
-              w -= lr * dw
-              b -= lr * db
-          losses.append(float(np.mean((w * x + b - y) ** 2)))
-      return w, b, losses
-  
-  for bs in (1, 10, 100):
-      w, b, losses = minibatch_sgd(x, y, batch_size=bs)
-      print(f"batch={bs:>3}: w={w:.3f}, b={b:.3f}, 마지막 loss={losses[-1]:.4f}")
-  `,
+import numpy as np
+
+rng = np.random.default_rng(42)
+n = 100
+x = rng.uniform(-3, 3, n)
+y = 2 * x + 1 + rng.normal(0, 0.5, n)
+
+def minibatch_sgd(x, y, lr=0.05, batch_size=10, epochs=50, seed=0):
+    rng = np.random.default_rng(seed)
+    w, b = 0.0, 0.0
+    losses = []
+    for epoch in range(epochs):
+        order = rng.permutation(len(x))
+        for start in range(0, len(x), batch_size):
+            idx = order[start:start + batch_size]
+            xb, yb = x[idx], y[idx]
+            err = w * xb + b - yb
+            dw, db = np.mean(2 * err * xb), np.mean(2 * err)
+            w -= lr * dw
+            b -= lr * db
+        losses.append(float(np.mean((w * x + b - y) ** 2)))
+    return w, b, losses
+
+for bs in (1, 10, 100):
+    w, b, losses = minibatch_sgd(x, y, batch_size=bs)
+    print(f"batch={bs:>3}: w={w:.3f}, b={b:.3f}, 마지막 loss={losses[-1]:.4f}")
+`,
     },
-  {
+    {
       key: "ch2",
       title: "수치미분으로 기울기 검산하기 (gradient check)",
       prompt: md`
-  
-  손으로 유도한 기울기가 맞는지 확인하는 표준 방법인 **gradient check**를 일반 함수로 만듭니다. 3주차 역전파 구현을 검증할 때도 그대로 씁니다.
-  
-  1. \`numerical_grad(f, params, eps)\`: 파라미터 리스트의 각 성분만 $\pm\varepsilon$ 움직여 중앙 차분 $\dfrac{f(\theta + \varepsilon) - f(\theta - \varepsilon)}{2\varepsilon}$을 구합니다. 원래 \`params\`는 바꾸지 않습니다.
-  2. \`relative_error(a, b)\` $= \dfrac{|a - b|}{\max(10^{-12}, |a| + |b|)}$
-  
-  일부러 틀린 기울기(2를 빠뜨린 것)를 넣었을 때 상대오차가 크게 나오는지도 확인합니다.
-  `,
+
+손으로 유도한 기울기가 맞는지 확인하는 표준 방법인 **gradient check**를 일반 함수로 만듭니다. 3주차 역전파 구현을 검증할 때도 그대로 씁니다.
+
+1. \`numerical_grad(f, params, eps)\`: 파라미터 리스트의 각 성분만 $\pm\varepsilon$ 움직여 중앙 차분 $\dfrac{f(\theta + \varepsilon) - f(\theta - \varepsilon)}{2\varepsilon}$을 구합니다. 원래 \`params\`는 바꾸지 않습니다.
+2. \`relative_error(a, b)\` $= \dfrac{|a - b|}{\max(10^{-12}, |a| + |b|)}$
+
+일부러 틀린 기울기(2를 빠뜨린 것)를 넣었을 때 상대오차가 크게 나오는지도 확인합니다.
+`,
       starter: py`
-  def numerical_grad(f, params, eps=1e-6):
-      """f(params)의 각 성분에 대한 중앙 차분 기울기 리스트. params는 float 리스트"""
-      grads = []
-      for i in range(len(params)):
-          plus, minus = list(params), list(params)
-          # TODO: i번째 성분만 ±eps 움직이고 (f(plus) - f(minus)) / (2 * eps)를 grads에 추가합니다.
-      return grads
-  
-  def relative_error(a, b):
-      return 0.0  # TODO: |a - b| / max(1e-12, |a| + |b|)
-  
-  xs, ys = [1.0, 2.0, 3.0], [3.0, 5.0, 7.5]
-  
-  def loss(params):
-      w, b = params
-      return sum((w * x + b - y) ** 2 for x, y in zip(xs, ys)) / len(xs)
-  
-  def analytic_grad(params):
-      w, b = params
-      n = len(xs)
-      dw = sum(2 * (w * x + b - y) * x for x, y in zip(xs, ys)) / n
-      db = sum(2 * (w * x + b - y) for x, y in zip(xs, ys)) / n
-      return [dw, db]
-  
-  p = [0.5, -1.0]
-  num, ana = numerical_grad(loss, p), analytic_grad(p)
-  print("수치미분:", num)
-  print("해석적  :", ana)
-  print("상대오차:", [relative_error(a, b) for a, b in zip(ana, num)])
-  `,
+def numerical_grad(f, params, eps=1e-6):
+    """f(params)의 각 성분에 대한 중앙 차분 기울기 리스트. params는 float 리스트"""
+    grads = []
+    for i in range(len(params)):
+        plus, minus = list(params), list(params)
+        # TODO: i번째 성분만 ±eps 움직이고 (f(plus) - f(minus)) / (2 * eps)를 grads에 추가합니다.
+    return grads
+
+def relative_error(a, b):
+    return 0.0  # TODO: |a - b| / max(1e-12, |a| + |b|)
+
+xs, ys = [1.0, 2.0, 3.0], [3.0, 5.0, 7.5]
+
+def loss(params):
+    w, b = params
+    return sum((w * x + b - y) ** 2 for x, y in zip(xs, ys)) / len(xs)
+
+def analytic_grad(params):
+    w, b = params
+    n = len(xs)
+    dw = sum(2 * (w * x + b - y) * x for x, y in zip(xs, ys)) / n
+    db = sum(2 * (w * x + b - y) for x, y in zip(xs, ys)) / n
+    return [dw, db]
+
+p = [0.5, -1.0]
+num, ana = numerical_grad(loss, p), analytic_grad(p)
+print("수치미분:", num)
+print("해석적  :", ana)
+print("상대오차:", [relative_error(a, b) for a, b in zip(ana, num)])
+`,
       tests: py`
-  @test("f = (a-1)² + 3b² 의 기울기 = [2(a-1), 6b]")
-  def _():
-      g = numerical_grad(lambda p: (p[0] - 1) ** 2 + 3 * p[1] ** 2, [2.0, -1.0])
-      assert len(g) == 2 and approx(g, [2.0, -6.0], 1e-5), f"결과: {g}"
-  
-  @test("원래 params 리스트를 바꾸지 않는다")
-  def _():
-      p = [0.3, 0.7]
-      numerical_grad(lambda q: q[0] * q[1], p)
-      assert p == [0.3, 0.7], f"params가 {p}로 바뀌었습니다."
-  
-  @test("relative_error 정의")
-  def _():
-      assert approx(relative_error(1.0, 1.1), 0.1 / 2.1) and relative_error(0.0, 0.0) == 0.0
-  
-  @test("MSE의 해석적 기울기와 상대오차 1e-6 미만")
-  def _():
-      p = [0.5, -1.0]
-      num, ana = numerical_grad(loss, p), analytic_grad(p)
-      assert len(num) == 2 and all(relative_error(a, b) < 1e-6 for a, b in zip(ana, num)), f"{num} vs {ana}"
-  
-  @test("틀린 기울기(2를 빠뜨림)는 큰 상대오차로 잡아낸다")
-  def _():
-      p = [0.5, -1.0]
-      wrong = [g / 2 for g in analytic_grad(p)]
-      num = numerical_grad(loss, p)
-      assert len(num) == 2 and max(relative_error(a, b) for a, b in zip(wrong, num)) > 0.1
-  `,
+@test("f = (a-1)² + 3b² 의 기울기 = [2(a-1), 6b]")
+def _():
+    g = numerical_grad(lambda p: (p[0] - 1) ** 2 + 3 * p[1] ** 2, [2.0, -1.0])
+    assert len(g) == 2 and approx(g, [2.0, -6.0], 1e-5), f"결과: {g}"
+
+@test("원래 params 리스트를 바꾸지 않는다")
+def _():
+    p = [0.3, 0.7]
+    numerical_grad(lambda q: q[0] * q[1], p)
+    assert p == [0.3, 0.7], f"params가 {p}로 바뀌었습니다."
+
+@test("relative_error 정의")
+def _():
+    assert approx(relative_error(1.0, 1.1), 0.1 / 2.1) and relative_error(0.0, 0.0) == 0.0
+
+@test("MSE의 해석적 기울기와 상대오차 1e-6 미만")
+def _():
+    p = [0.5, -1.0]
+    num, ana = numerical_grad(loss, p), analytic_grad(p)
+    assert len(num) == 2 and all(relative_error(a, b) < 1e-6 for a, b in zip(ana, num)), f"{num} vs {ana}"
+
+@test("틀린 기울기(2를 빠뜨림)는 큰 상대오차로 잡아낸다")
+def _():
+    p = [0.5, -1.0]
+    wrong = [g / 2 for g in analytic_grad(p)]
+    num = numerical_grad(loss, p)
+    assert len(num) == 2 and max(relative_error(a, b) for a, b in zip(wrong, num)) > 0.1
+`,
       hints: ["`plus[i] += eps`, `minus[i] -= eps`로 i번째 성분만 움직입니다. `list(params)`로 복사했으므로 원본은 그대로입니다.", "`grads.append((f(plus) - f(minus)) / (2 * eps))`", "`relative_error`는 `abs(a - b) / max(1e-12, abs(a) + abs(b))`입니다. 분모의 1e-12는 둘 다 0일 때 0으로 나누는 것을 막습니다."],
       solution: py`
-  def numerical_grad(f, params, eps=1e-6):
-      grads = []
-      for i in range(len(params)):
-          plus, minus = list(params), list(params)
-          plus[i] += eps
-          minus[i] -= eps
-          grads.append((f(plus) - f(minus)) / (2 * eps))
-      return grads
-  
-  def relative_error(a, b):
-      return abs(a - b) / max(1e-12, abs(a) + abs(b))
-  
-  xs, ys = [1.0, 2.0, 3.0], [3.0, 5.0, 7.5]
-  
-  def loss(params):
-      w, b = params
-      return sum((w * x + b - y) ** 2 for x, y in zip(xs, ys)) / len(xs)
-  
-  def analytic_grad(params):
-      w, b = params
-      n = len(xs)
-      dw = sum(2 * (w * x + b - y) * x for x, y in zip(xs, ys)) / n
-      db = sum(2 * (w * x + b - y) for x, y in zip(xs, ys)) / n
-      return [dw, db]
-  
-  p = [0.5, -1.0]
-  num, ana = numerical_grad(loss, p), analytic_grad(p)
-  print("수치미분:", num)
-  print("해석적  :", ana)
-  print("상대오차:", [relative_error(a, b) for a, b in zip(ana, num)])
-  `,
+def numerical_grad(f, params, eps=1e-6):
+    grads = []
+    for i in range(len(params)):
+        plus, minus = list(params), list(params)
+        plus[i] += eps
+        minus[i] -= eps
+        grads.append((f(plus) - f(minus)) / (2 * eps))
+    return grads
+
+def relative_error(a, b):
+    return abs(a - b) / max(1e-12, abs(a) + abs(b))
+
+xs, ys = [1.0, 2.0, 3.0], [3.0, 5.0, 7.5]
+
+def loss(params):
+    w, b = params
+    return sum((w * x + b - y) ** 2 for x, y in zip(xs, ys)) / len(xs)
+
+def analytic_grad(params):
+    w, b = params
+    n = len(xs)
+    dw = sum(2 * (w * x + b - y) * x for x, y in zip(xs, ys)) / n
+    db = sum(2 * (w * x + b - y) for x, y in zip(xs, ys)) / n
+    return [dw, db]
+
+p = [0.5, -1.0]
+num, ana = numerical_grad(loss, p), analytic_grad(p)
+print("수치미분:", num)
+print("해석적  :", ana)
+print("상대오차:", [relative_error(a, b) for a, b in zip(ana, num)])
+`,
     },
   ],
 });
