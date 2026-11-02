@@ -44,6 +44,7 @@ import {
   ConditionZigzag,
 } from "./w1";
 import { SecantTangent, GradientContours } from "./calculus";
+import { BinomialBars } from "./probability";
 import {
   ConfusionMatrix,
   DataSplitDiagram,
@@ -374,6 +375,7 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "chain-rule-chain": ChainRuleChain,
   "secant-tangent": SecantTangent,
   "gradient-contours": GradientContours,
+  "binomial-bars": BinomialBars,
   "critical-points": CriticalPoints,
   "gradient-descent-curve": InteractiveGradientDescent,
   "bias-variance-curve": InteractiveBiasVariance,
