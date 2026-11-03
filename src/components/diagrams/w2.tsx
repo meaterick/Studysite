@@ -1,44 +1,67 @@
 import { Fragment } from "react";
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, gridline, card2Bg } from "./DiagramFrame";
-import { ArrowDefs, Arrow, Label } from "./primitives";
 import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, pow10Label, linePath, sample, seeded, gaussian, mono, solveLinear, starPath, normCdf, GridCells } from "./chart";
 
 export function ConfusionMatrix() {
-  const cell = 110;
-  const x0 = 170;
-  const y0 = 50;
+  // 행은 실제 클래스, 열은 예측 클래스. 정밀도는 예측 양성 열(TP + FP), 재현율은 실제 양성 행(TP + FN)으로 나눈다.
+  const cell = 100;
+  const x0 = 150;
+  const y0 = 64;
   const cells = [
-    { label: "TP", sub: "실제 양성 · 예측 양성", x: x0, y: y0, color: colors.aqua },
-    { label: "FN", sub: "실제 양성 · 예측 음성", x: x0 + cell, y: y0, color: colors.red },
-    { label: "FP", sub: "실제 음성 · 예측 양성", x: x0, y: y0 + cell, color: colors.red },
-    { label: "TN", sub: "실제 음성 · 예측 음성", x: x0 + cell, y: y0 + cell, color: colors.aqua },
+    { label: "TP", sub: "맞힌 양성", x: x0, y: y0, color: colors.aqua },
+    { label: "FN", sub: "놓친 양성", x: x0 + cell, y: y0, color: colors.red },
+    { label: "FP", sub: "잘못 양성 판정", x: x0, y: y0 + cell, color: colors.red },
+    { label: "TN", sub: "맞힌 음성", x: x0 + cell, y: y0 + cell, color: colors.aqua },
   ];
   return (
     <DiagramFrame
-      title="혼동행렬과 Precision / Recall"
-      viewBox="0 0 560 300"
-      caption="Precision = TP/(TP+FP)는 예측 열(세로) 기준, Recall = TP/(TP+FN)은 실제 행(가로) 기준이다."
+      title="혼동행렬: 정밀도는 예측 양성 열, 재현율은 실제 양성 행으로 나눈다"
+      viewBox="0 0 600 330"
+      caption="행은 실제 클래스, 열은 예측 클래스다. 정밀도 = TP/(TP + FP)는 양성으로 판정한 열(주황 테두리) 안에서 맞힌 비율이고, 재현율 = TP/(TP + FN)은 실제 양성인 행(파랑 테두리) 안에서 찾아낸 비율이다."
     >
-      <ArrowDefs />
-      <Label x={x0 + cell} y={30} text="예측" color={inkMuted} weight={700} />
-      <Label x={x0 - 60} y={y0 + cell} text="실제" color={inkMuted} weight={700} />
-      <Label x={x0} y={y0 - 8} text="양성" color={inkSecondary} />
-      <Label x={x0 + cell} y={y0 - 8} text="음성" color={inkSecondary} />
-      <Label x={x0 - 30} y={y0 + 20} text="양성" color={inkSecondary} anchor="end" />
-      <Label x={x0 - 30} y={y0 + cell + 20} text="음성" color={inkSecondary} anchor="end" />
-      {cells.map((c, i) => (
-        <g key={i}>
-          <rect x={c.x} y={c.y} width={cell} height={cell} fill={card2Bg} stroke={c.color} strokeWidth={2} />
-          <text x={c.x + cell / 2} y={c.y + cell / 2 - 6} textAnchor="middle" fontSize={20} fontWeight={800} fill={c.color}>
+      <text x={x0 + cell} y={22} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={inkMuted}>
+        예측
+      </text>
+      <text x={x0 + cell / 2} y={y0 - 12} textAnchor="middle" fontSize={11.5} fill={inkSecondary}>
+        양성
+      </text>
+      <text x={x0 + cell * 1.5} y={y0 - 12} textAnchor="middle" fontSize={11.5} fill={inkSecondary}>
+        음성
+      </text>
+      <text x={x0 - 62} y={y0 + cell + 4} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={inkMuted}>
+        실제
+      </text>
+      <text x={x0 - 14} y={y0 + cell / 2 + 4} textAnchor="end" fontSize={11.5} fill={inkSecondary}>
+        양성
+      </text>
+      <text x={x0 - 14} y={y0 + cell * 1.5 + 4} textAnchor="end" fontSize={11.5} fill={inkSecondary}>
+        음성
+      </text>
+      {cells.map((c) => (
+        <g key={c.label}>
+          <rect x={c.x} y={c.y} width={cell} height={cell} fill={card2Bg} stroke={gridline} />
+          <text x={c.x + cell / 2} y={c.y + cell / 2 - 4} textAnchor="middle" fontSize={20} fontWeight={800} fill={c.color}>
             {c.label}
           </text>
-          <text x={c.x + cell / 2} y={c.y + cell / 2 + 16} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          <text x={c.x + cell / 2} y={c.y + cell / 2 + 18} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
             {c.sub}
           </text>
         </g>
       ))}
-      <Arrow x1={x0 - 10} y1={y0 + cell * 2 + 20} x2={x0 + cell * 2 + 10} y2={y0 + cell * 2 + 20} color={colors.blue} />
-      <Label x={x0 + cell} y={y0 + cell * 2 + 36} text="Precision: 예측 '양성' 열 안에서 TP 비율" color={colors.blue} weight={700} />
+      <rect x={x0 - 4} y={y0 + 4} width={cell * 2 + 8} height={cell - 8} rx={8} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      <rect x={x0 + 4} y={y0 - 4} width={cell - 8} height={cell * 2 + 8} rx={8} fill="none" stroke={colors.orange} strokeWidth={2.4} strokeDasharray="7 4" />
+      <text x={x0 + cell * 2 + 22} y={y0 + cell / 2 - 4} fontSize={12} fontWeight={700} fill={colors.blue}>
+        재현율 = TP / (TP + FN)
+      </text>
+      <text x={x0 + cell * 2 + 22} y={y0 + cell / 2 + 14} fontSize={10.5} fill={inkSecondary}>
+        실제 양성 가운데 찾아낸 비율
+      </text>
+      <text x={x0 + cell / 2} y={y0 + cell * 2 + 30} textAnchor="middle" fontSize={12} fontWeight={700} fill={colors.orange}>
+        정밀도 = TP / (TP + FP)
+      </text>
+      <text x={x0 + cell / 2} y={y0 + cell * 2 + 48} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        양성 판정 가운데 실제 양성의 비율
+      </text>
     </DiagramFrame>
   );
 }
@@ -1287,8 +1310,8 @@ export function SpamWaffle() {
   ];
   return (
     <DiagramFrame
-      title="메일 100통으로 보는 Precision과 Recall"
-      caption="왼쪽 30칸이 실제 스팸, 오른쪽 70칸이 실제 정상 메일이다. 보라 점선 안이 모델이 '스팸'이라고 판정한 25통이다. Precision은 점선 안에서 실제 스팸(진한 파랑)의 비율 20/25이고, Recall은 실제 스팸 30통 가운데 점선 안에 들어온 비율 20/30이다. 정확도 85%만 보면 연한 파랑 10통(놓친 스팸)이 보이지 않는다."
+      title="메일 100통으로 보는 정밀도와 재현율"
+      caption="왼쪽 30칸이 실제 스팸, 오른쪽 70칸이 실제 정상 메일이다. 보라 점선 안이 모델이 '스팸'이라고 판정한 25통이다. 정밀도는 점선 안에서 실제 스팸(진한 파랑)의 비율 20/25이고, 재현율은 실제 스팸 30통 가운데 점선 안에 들어온 비율 20/30이다. 정확도 85%만 보면 연한 파랑 10통(놓친 스팸)이 보이지 않는다."
       viewBox="0 0 720 270"
       minWidth={560}
     >
@@ -1314,19 +1337,19 @@ export function SpamWaffle() {
         </g>
       ))}
       <text x={500} y={176} fontSize={12} fontWeight={700} fill={ink}>
-        Precision = 20 / (20 + 5) = 80%
+        정밀도 = 20 / (20 + 5) = 80%
       </text>
       <text x={500} y={194} fontSize={10.5} fill={inkSecondary}>
-        스팸이라 판정한 것 중 실제 스팸
+        스팸으로 판정한 것 가운데 실제 스팸
       </text>
       <text x={500} y={218} fontSize={12} fontWeight={700} fill={ink}>
-        Recall = 20 / (20 + 10) ≈ 66.7%
+        재현율 = 20 / (20 + 10) ≈ 66.7%
       </text>
       <text x={500} y={236} fontSize={10.5} fill={inkSecondary}>
-        실제 스팸 중 잡아낸 것
+        실제 스팸 가운데 찾아낸 것
       </text>
       <text x={500} y={258} fontSize={11} fontWeight={700} fill={inkSecondary}>
-        Accuracy = (20 + 65) / 100 = 85%
+        정확도 = (20 + 65) / 100 = 85%
       </text>
     </DiagramFrame>
   );
@@ -1430,15 +1453,15 @@ export function R2Squares() {
   const yh = [2.5, 5.5, 6, 10];
   const u = 15.5;
   const panels = [
-    { x0: 30, title: "우리 모델: 오차 제곱의 합 = 2.5", pred: yh, color: colors.blue },
-    { x0: 388, title: "베이스라인(항상 평균 6): 합 = 20", pred: [6, 6, 6, 6], color: colors.orange },
+    { x0: 30, title: "모델: 오차 제곱의 합 = 2.5", pred: yh, color: colors.blue },
+    { x0: 388, title: "기준 모델(항상 평균 6): 합 = 20", pred: [6, 6, 6, 6], color: colors.orange },
   ];
   const xs = [1, 4.6, 8.2, 11.8];
   const base = 232;
   return (
     <DiagramFrame
-      title="R²를 넓이로 보기: 모델의 오차 넓이 ÷ 베이스라인의 오차 넓이"
-      caption="점은 실제값 y, 가로 막대는 예측값이다. 각 정사각형의 넓이가 그 샘플의 오차 제곱이다. 모델의 정사각형 넓이 합(2.5)은 '항상 평균만 예측하는' 베이스라인의 넓이 합(20)의 12.5%이므로 R² = 1 − 2.5/20 = 0.875다. 모델의 넓이가 베이스라인보다 크면 R²는 음수가 된다."
+      title="R²를 넓이로 보기: 모델의 오차 넓이 ÷ 기준 모델의 오차 넓이"
+      caption="점은 실제값 y, 가로 막대는 예측값이다. 각 정사각형의 넓이가 그 샘플의 오차 제곱이다. 모델의 정사각형 넓이 합(2.5)은 항상 평균만 예측하는 기준 모델의 넓이 합(20)의 12.5%이므로 R² = 1 − 2.5/20 = 0.875다. 모델의 넓이가 기준 모델보다 크면 R²는 음수가 된다."
       viewBox="0 0 720 286"
       minWidth={560}
     >
@@ -1459,7 +1482,7 @@ export function R2Squares() {
                 </text>
               </g>
             ))}
-            {p.title.startsWith("베이스라인") && <line x1={p.x0} y1={Y(6)} x2={p.x0 + 280} y2={Y(6)} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="6 4" />}
+            {p.title.startsWith("기준 모델") && <line x1={p.x0} y1={Y(6)} x2={p.x0 + 280} y2={Y(6)} stroke={colors.orange} strokeWidth={1.6} strokeDasharray="6 4" />}
             {y.map((v, i) => {
               const r = Math.abs(v - p.pred[i]);
               const topV = Math.max(v, p.pred[i]);
@@ -1483,7 +1506,7 @@ export function R2Squares() {
         );
       })}
       <text x={360} y={262} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={ink}>
-        R² = 1 − (모델 넓이 2.5) / (베이스라인 넓이 20) = 1 − 0.125 = 0.875
+        R² = 1 − (모델 넓이 2.5) / (기준 모델 넓이 20) = 1 − 0.125 = 0.875
       </text>
       <line x1={360} y1={14} x2={360} y2={240} stroke="var(--border-hairline)" />
     </DiagramFrame>
@@ -2332,11 +2355,11 @@ export function PrVsRoc() {
   return (
     <DiagramFrame
       title="양성 비율이 바뀌면 ROC 곡선은 그대로지만 PR 곡선은 달라진다"
-      caption={`점수 분포가 같은 하나의 분류기(음성 ~ N(0, 1), 양성 ~ N(1.6, 1))를 양성 비율만 바꿔 평가했다. ROC 곡선은 TPR과 FPR만 쓰므로 세 경우가 완전히 같은 곡선이고 AUC도 ${auc.toFixed(2)}로 같다. PR 곡선은 Precision에 양성 비율이 들어가므로 양성이 드물수록 아래로 내려간다. 무작위 분류기의 기준선(점선)도 양성 비율과 같다. 양성 1%에서 AP ${pis[2].ap.toFixed(2)}는 낮아 보이지만 기준선 0.01의 약 ${Math.round(pis[2].ap / 0.01)}배다. 양성이 드문 문제에서는 ROC-AUC만 보지 말고 PR 곡선과 AP를 함께 본다.`}
+      caption={`점수 분포가 같은 하나의 분류기(음성 ~ N(0, 1), 양성 ~ N(1.6, 1))를 양성 비율만 바꿔 평가했다. ROC 곡선은 TPR과 FPR만 쓰므로 세 경우가 완전히 같은 곡선이고 AUC도 ${auc.toFixed(2)}로 같다. PR 곡선은 정밀도에 양성 비율이 들어가므로 양성이 드물수록 아래로 내려간다. 무작위 분류기의 기준선(점선)도 양성 비율과 같다. 양성 1%에서 AP ${pis[2].ap.toFixed(2)}는 낮아 보이지만 기준선 0.01의 약 ${Math.round(pis[2].ap / 0.01)}배다. 양성이 드문 문제에서는 ROC-AUC만 보지 말고 PR 곡선과 AP를 함께 본다.`}
       viewBox="0 0 720 252"
       minWidth={600}
     >
-      <Axes {...L} sx={lx} sy={ly} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="FPR (위양성률)" yLabel="TPR (Recall)" />
+      <Axes {...L} sx={lx} sy={ly} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="FPR (위양성률)" yLabel="TPR (재현율)" />
       <line x1={lx(0)} y1={ly(0)} x2={lx(1)} y2={ly(1)} stroke={inkMuted} strokeDasharray="4 3" />
       <path d={linePath(roc.map(([x, y]) => [lx(x), ly(y)] as [number, number]))} fill="none" stroke={colors.violet} strokeWidth={2.4} />
       <text x={lx(0.5)} y={ly(0.5) + 34} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
@@ -2345,7 +2368,7 @@ export function PrVsRoc() {
       <text x={L.left + S / 2} y={12} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
         ROC 곡선
       </text>
-      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="Recall" yLabel="Precision" />
+      <Axes {...R} sx={rx} sy={ry} xTicks={[0, 0.5, 1]} yTicks={[0, 0.5, 1]} xLabel="재현율" yLabel="정밀도" />
       <text x={R.left + S / 2} y={12} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
         PR 곡선
       </text>

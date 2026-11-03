@@ -46,7 +46,7 @@ import {
 import { SecantTangent, GradientContours } from "./calculus";
 import { BinomialBars } from "./probability";
 import { SamplingBias, BoxplotAnatomy, CorrelationGallery, LlnRunningMean, CiCoverage, PValueArea } from "./statistics";
-import { LossShapes } from "./ml";
+import { LossShapes, ResidualPatterns } from "./ml";
 import {
   ConfusionMatrix,
   DataSplitDiagram,
@@ -385,6 +385,7 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "ci-coverage": CiCoverage,
   "p-value-area": PValueArea,
   "loss-shapes": LossShapes,
+  "residual-patterns": ResidualPatterns,
   "critical-points": CriticalPoints,
   "gradient-descent-curve": InteractiveGradientDescent,
   "bias-variance-curve": InteractiveBiasVariance,

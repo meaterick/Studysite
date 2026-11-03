@@ -6,7 +6,7 @@ export default defineExercises([
     title: "비용 기반 임계값과 신뢰도 표",
     prompt: md`
 
-「불균형 데이터와 임계값 결정」 단계의 계산을 함수로 만듭니다.
+본문의 비용 기반 임계값과 확률 보정 계산을 함수로 만듭니다.
 
 1. \`optimal_threshold(c_fp, c_fn)\` $= \dfrac{C_{FP}}{C_{FP} + C_{FN}}$
 2. \`expected_cost(y, p, t, c_fp, c_fn)\`: \`p >= t\`이면 양성으로 예측할 때의 **샘플당 평균 비용** $(C_{FP}\cdot FP + C_{FN}\cdot FN)/n$

@@ -6,7 +6,7 @@ export default defineExercises([
     title: "Ridge = MAP, 로지스틱 손실의 헤세 행렬",
     prompt: md`
 
-「손실함수의 확률적 기원」 단계의 결론을 코드로 검증합니다.
+본문의 결론을 코드로 확인합니다.
 
 1. \`gaussian_nll(w, X, y, sigma2)\`: 잡음 분산 $\sigma^2$을 가정한 **샘플당** 음의 로그가능도 $\frac{1}{2}\log(2\pi\sigma^2) + \frac{1}{2\sigma^2}\cdot\frac{1}{n}\lVert y - Xw\rVert^2$
 2. \`ridge_closed_form(X, y, lam)\` $= (X^\top X + \lambda I)^{-1}X^\top y$ (\`np.linalg.solve\` 사용, 절편 없음)
