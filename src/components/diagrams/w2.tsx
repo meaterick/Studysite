@@ -237,7 +237,7 @@ export function DataPrepPipeline() {
   return (
     <DiagramFrame
       title="모델에 넣기 전의 세 단계: 수집 → 정제 → 전처리"
-      caption="원본 데이터에는 결측·이상치·표기 불일치·중복이 섞여 있다. 정제는 이 오류를 바로잡는 단계로 순서(표기 통일 → 중복 제거 → 결측 채우기)가 중요하고, 전처리는 정제된 표를 모델에 넣을 숫자 벡터로 바꾼다. 어느 단계에서 생긴 결함이든 모델의 출력에 그대로, 때로는 더 크게 드러난다(Garbage in, garbage out)."
+      caption="원본 데이터에는 결측·이상치·표기 불일치·중복이 섞여 있다. 정제는 이 오류를 바로잡는 단계로 순서(표기 통일 → 중복 제거 → 결측 채우기)가 중요하고, 전처리는 정제된 표를 모델에 넣을 숫자 벡터로 바꾼다. 어느 단계에서 생긴 결함이든 모델은 그 결함을 그대로 학습한다."
       viewBox="0 0 720 250"
       minWidth={560}
     >
@@ -328,7 +328,7 @@ export function OutlierIqrVsZ() {
   return (
     <DiagramFrame
       title="IQR과 Z-score로 이상치 찾기: Z-score는 95를 놓친다"
-      caption="위: Q1 = 13, Q3 = 15.5인 상자는 95와 상관없이 정해지므로 상한선 19.25 밖의 95를 바로 잡아낸다. 아래: 95가 평균을 24로 끌어올리고 표준편차를 26.86으로 부풀린 탓에 '평균 + 3σ' 경계가 104.6까지 밀려나, 정작 95(z ≈ 2.64)는 정상 값으로 판정된다. 가로축은 30과 85 사이를 생략했다."
+      caption="위: Q1 = 13, Q3 = 15.25(np.quantile의 기본 방법)인 상자는 95와 거의 관계없이 정해지므로, 상한선 18.63 밖의 95를 이상치로 판정한다. 아래: 95가 평균을 24로 끌어올리고 표준편차를 26.86으로 부풀린 탓에 '평균 + 3σ' 경계가 104.6까지 밀려나, 정작 95(z ≈ 2.64)는 정상 값으로 판정된다. 가로축은 30과 85 사이를 생략했다."
       viewBox="0 0 720 270"
       minWidth={560}
     >
@@ -344,19 +344,19 @@ export function OutlierIqrVsZ() {
         </g>
       ))}
       {/* IQR */}
-      <rect x={X(13)} y={r1 - 44} width={X(15.5) - X(13)} height={22} fill={colors.blue} fillOpacity={0.18} stroke={colors.blue} />
+      <rect x={X(13)} y={r1 - 44} width={X(15.25) - X(13)} height={22} fill={colors.blue} fillOpacity={0.18} stroke={colors.blue} />
       <line x1={X(14)} y1={r1 - 44} x2={X(14)} y2={r1 - 22} stroke={colors.blue} strokeWidth={2} />
       <line x1={X(12)} y1={r1 - 33} x2={X(13)} y2={r1 - 33} stroke={colors.blue} />
-      <line x1={X(15.5)} y1={r1 - 33} x2={X(16)} y2={r1 - 33} stroke={colors.blue} />
+      <line x1={X(15.25)} y1={r1 - 33} x2={X(16)} y2={r1 - 33} stroke={colors.blue} />
       <text x={X(13) - 4} y={r1 - 48} textAnchor="end" fontSize={10} fontWeight={700} fill={colors.blue}>
         Q1 = 13
       </text>
-      <text x={X(15.5) + 4} y={r1 - 48} fontSize={10} fontWeight={700} fill={colors.blue}>
-        Q3 = 15.5
+      <text x={X(15.25) + 4} y={r1 - 48} fontSize={10} fontWeight={700} fill={colors.blue}>
+        Q3 = 15.25
       </text>
-      <line x1={X(19.25)} y1={r1 - 40} x2={X(19.25)} y2={r1} stroke={colors.red} strokeWidth={1.6} strokeDasharray="5 3" />
-      <text x={X(19.25) + 5} y={r1 - 26} fontSize={10.5} fontWeight={700} fill={colors.red}>
-        상한선 = Q3 + 1.5×IQR = 19.25
+      <line x1={X(18.625)} y1={r1 - 40} x2={X(18.625)} y2={r1} stroke={colors.red} strokeWidth={1.6} strokeDasharray="5 3" />
+      <text x={X(18.625) + 5} y={r1 - 26} fontSize={10.5} fontWeight={700} fill={colors.red}>
+        상한선 = Q3 + 1.5×IQR = 18.63
       </text>
       {dots(r1, true)}
       <text x={X(95)} y={r1 - 20} textAnchor="middle" fontSize={11} fontWeight={700} fill={colors.red}>
@@ -555,7 +555,7 @@ export function ScalingContours() {
   return (
     <DiagramFrame
       title="스케일링이 경사하강법을 빠르게 하는 이유"
-      caption="왼쪽: 면적(수백 단위)과 방 개수(한 자릿수)처럼 스케일이 크게 다르면 손실 등고선이 길쭉한 타원이 된다. 가파른 방향(세로) 때문에 학습률을 작게 써야 하고, 경사하강법은 등고선에 수직으로 움직이므로 세로로 지그재그하며 완만한 가로 방향으로는 느리게 나아간다. 오른쪽: 표준화하면 등고선이 원에 가까워져 큰 학습률로 몇 걸음 만에 최솟값에 도착한다. 표준화로 바뀌는 것은 답(최솟값)이 아니라 그 답을 찾아가는 경로다."
+      caption="왼쪽: 면적(수백 단위)과 방 개수(한 자릿수)처럼 스케일이 크게 다르면 손실 등고선이 길쭉한 타원이 된다. 가파른 방향(세로) 때문에 학습률을 작게 써야 하고, 경사하강법은 등고선에 수직으로 움직이므로 세로로 지그재그하며 완만한 가로 방향으로는 느리게 나아간다. 오른쪽: 표준화하면 등고선이 원에 가까워져 큰 학습률로 몇 번의 갱신만에 최솟값에 도착한다. 표준화로 바뀌는 것은 답(최솟값)이 아니라 그 답을 찾아가는 경로다."
       viewBox="0 0 720 270"
       minWidth={560}
     >

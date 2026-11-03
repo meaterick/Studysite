@@ -3,6 +3,51 @@
  * 시작 코드의 TODO를 채운 "모범 답안"이므로 화면에는 쓰지 않는다.
  */
 export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string][]>> = {
+  "data-card-eda": {
+    "load-code": [
+      ['    return pd.read_csv(path)  # TODO: na_values로 "N/A"를 결측으로 지정합니다.', '    return pd.read_csv(path, na_values=["N/A"])'],
+      ["    # TODO: brand의 앞뒤 공백을 지우고 BRAND_MAP으로 바꿉니다.", '    df["brand"] = df["brand"].str.strip().replace(BRAND_MAP)'],
+      ['    # TODO: mileage_km의 쉼표를 지우고 숫자로 바꿉니다(errors="coerce").', '    df["mileage_km"] = pd.to_numeric(df["mileage_km"].str.replace(",", ""), errors="coerce")'],
+      ["    # TODO: listed_date를 날짜로 바꿉니다.", '    df["listed_date"] = pd.to_datetime(df["listed_date"], format="%Y-%m-%d")'],
+    ],
+    "quality-code": [
+      ["    # TODO: 결측(있는 열만), 완전 중복, 키 중복, 범위 밖 개수를 셉니다.", `    missing = df.isna().sum()
+    out_of_range = {}
+    for name, (lo, hi) in ranges.items():
+        col = df[name].dropna()
+        out_of_range[name] = int(((col < lo) | (col > hi)).sum())
+    return {
+        "rows": len(df),
+        "missing": {k: int(v) for k, v in missing.items() if v > 0},
+        "full_duplicates": int(df.duplicated().sum()),
+        "key_duplicates": int(df.duplicated(subset=[key]).sum()),
+        "out_of_range": out_of_range,
+    }`],
+      ["    # TODO: 본문의 순서대로 고칩니다.", `    out = out.drop_duplicates()
+    out = out.sort_values("listed_date").drop_duplicates(subset=["listing_id"], keep="last").copy()
+    out["year"] = out["year"].astype(float)
+    out.loc[~out["year"].between(2000, 2025), "year"] = np.nan
+    out.loc[out["accidents"].notna() & ~out["accidents"].between(0, 10), "accidents"] = np.nan
+    out = out[out["price"].between(1, 20000)]
+    out = out.sort_values("listing_id").reset_index(drop=True)`],
+    ],
+    "features-code": [
+      ["    return []  # TODO: 수치형 열의 목표 변수와의 |상관계수|가 threshold보다 큰 열(큰 순서)", `    numeric = df.select_dtypes("number").drop(columns=[target])
+    corr = numeric.corrwith(df[target]).abs()
+    return corr[corr > threshold].sort_values(ascending=False).index.tolist()`],
+      ['        "medians": {},  # TODO: NUMERIC 열마다 학습 데이터의 중앙값(float)', '        "medians": {c: float(train[c].median()) for c in NUMERIC},'],
+      ["    # TODO: 결측 표시 → 중앙값 채우기 → age, km_per_year → fuel_·brand_ 원-핫", `    for c in ["mileage_km", "accidents"]:
+        X[f"{c}_missing"] = df[c].isna().astype(int)
+    for c in NUMERIC:
+        X[c] = df[c].fillna(params["medians"][c])
+    X["age"] = 2024 - X["year"]
+    X["km_per_year"] = X["mileage_km"] / X["age"].clip(lower=1)
+    for v in params["fuels"]:
+        X[f"fuel_{v}"] = (df["fuel"] == v).astype(int)
+    for v in params["brands"]:
+        X[f"brand_{v}"] = (df["brand"] == v).astype(int)`],
+    ],
+  },
   "python-records-report": {
     "load-code": [
       [
