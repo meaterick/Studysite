@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "온라인 softmax로 블록 단위 attention 계산하기",
     prompt: md`
-
-「긴 문맥의 비용」 단계의 온라인 softmax를 구현합니다.
+본문의 온라인 softmax를 구현합니다.
 
 1. \`stable_softmax(s)\`: 최댓값을 뺀 softmax (1차원)
 2. \`online_attention_row(q, K, V, block)\`: query 하나에 대해 \`K\`, \`V\`를 \`block\`개씩 나눠 보면서 최댓값 $m$, 지수 합 $\ell$, 가중합 $a$를 본문의 갱신식으로 누적하고 $a/\ell$을 돌려줍니다. 점수는 $k^\top q/\sqrt{d}$입니다. $n \times n$이든 $n$ 길이든 점수 배열을 **한꺼번에 만들지 않아야** 합니다(블록 크기만큼만).

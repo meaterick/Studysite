@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "인과적 선형 어텐션: 행렬 계산과 RNN 계산",
     prompt: md`
-
-「선형 어텐션」 단계의 두 계산을 구현합니다. 특징 사상은 $\phi(x) = \mathrm{elu}(x) + 1$(양수면 $x+1$, 아니면 $e^x$)입니다.
+본문의 두 계산을 구현합니다. 특성 사상은 $\phi(x) = \mathrm{elu}(x) + 1$(양수면 $x+1$, 아니면 $e^x$)입니다.
 
 1. \`phi(x)\`
 2. \`causal_linear_quadratic(Q, K, V)\`: $A = \phi(Q)\phi(K)^\top$의 아래 삼각 부분(대각 포함)만 남겨 $AV$를 각 행의 합으로 나눈 \`(n, d_v)\`

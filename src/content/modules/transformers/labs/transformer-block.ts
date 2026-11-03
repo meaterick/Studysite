@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "사인·코사인 위치 인코딩으로 순서 구별하기",
     prompt: md`
-
 1. \`sinusoidal_pe(n, d)\`: 위치 $pos$, 짝수 차원 $2i$에 대해 $\sin(pos / 10000^{2i/d})$, 다음 홀수 차원에 $\cos(\cdot)$를 넣은 (n, d) 행렬
 2. \`self_attention(X, Wq, Wk, Wv)\`: 마스크 없는 단일 헤드 attention(스케일링 포함)
 

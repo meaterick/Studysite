@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "헤드 나누기·합치기와 causal mask",
     prompt: md`
-
 멀티헤드 attention에서 가장 실수가 잦은 텐서 조작 세 가지를 따로 구현합니다.
 
 1. \`split_heads(M, h)\`: (T, d) → (h, T, d/h). 헤드 $i$는 원래 열 \`[i*dk : (i+1)*dk]\`를 담당합니다.

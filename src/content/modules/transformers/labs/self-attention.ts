@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "softmax(QKᵀ/√d_k)V 직접 계산하기",
     prompt: md`
-
 \`attention(Q, K, V, scale=True)\`가 \`(출력, 가중치)\`를 돌려주게 구현합니다. 가중치는 각 Query 행마다 Key들에 대한 softmax이며, \`scale=True\`면 점수를 $\sqrt{d_k}$로 나눕니다.
 
 본문의 "고양이가 생선을 맛있게 먹었다" 예제(Query $[1,1,0,1]$)에서 가중치 18.8% · 51.0% · 11.4% · 18.8%, 출력 $[1.24, 1.65]$가 나와야 합니다.

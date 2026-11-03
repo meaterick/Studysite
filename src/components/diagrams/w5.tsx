@@ -121,8 +121,8 @@ export function CausalMask() {
   );
   return (
     <DiagramFrame
-      title="Causal mask: 대각선 위(미래)를 가린다"
-      caption="행은 '보는' 토큰(Query), 열은 '참조되는' 토큰(Key)이다. 대각선 위 칸에 −∞를 넣으면 softmax 뒤 정확히 0이 되어, 각 행은 자기 자신과 앞 토큰들 사이에서만 비율을 나눠 갖는다. 그래서 첫 토큰은 자기 자신에게 100%를 준다."
+      title="Causal mask: 대각선 위(뒤쪽 토큰)를 가린다"
+      caption="행은 참조하는 토큰(Query), 열은 참조되는 토큰(Key)이다. 대각선 위 칸에 −∞를 넣으면 softmax 뒤 정확히 0이 되어, 각 행은 자기 자신과 앞 토큰들 사이에서만 가중치를 나눈다. 그래서 첫 토큰은 자기 자신에게 가중치 1을 준다."
       viewBox="0 0 640 260"
       minWidth={520}
     >
@@ -513,7 +513,7 @@ export function Seq2seqBottleneck() {
   return (
     <DiagramFrame
       title="Seq2Seq의 병목과 Attention의 해법"
-      caption="위: 인코더가 원문 전체를 마지막 은닉 상태 하나(문맥 벡터 c)에 압축해 전달하므로, 문장이 길수록 앞부분 정보가 희석된다. 아래: Attention을 쓰면 디코더가 '고양이를'을 만들 차례에 인코더의 모든 상태를 다시 보고, 지금 상태와 관련된 정도(내적 → softmax)만큼 섞어 이번 스텝만의 문맥 c_t를 만든다. 비율은 본문 코드의 결과(I 35%, love 8%, cats 57%)다."
+      caption="위: 인코더가 원문 전체를 마지막 은닉 상태 하나(문맥 벡터 c)로 요약해 전달하므로, 문장이 길수록 앞부분의 정보가 약해진다. 아래: attention을 쓰면 디코더가 '고양이를'을 생성할 차례에 인코더의 모든 상태를 다시 참조하고, 지금 상태와의 관련도(내적 → softmax)를 가중치로 가중합해 이번 스텝의 문맥 c_t를 만든다. 비율은 본문 코드의 결과(I 35%, love 8%, cats 57%)다."
       viewBox="0 0 720 300"
       minWidth={560}
     >
@@ -595,7 +595,7 @@ export function TeacherForcing() {
   return (
     <DiagramFrame
       title="Teacher Forcing과 노출 편향: 학습 때와 추론 때 입력이 다르다"
-      caption="학습 때는 디코더의 각 스텝 입력으로 정답 문장을 한 칸 밀어 넣는다(초록). 스텝 3에서 '싫어한다'로 틀려도 스텝 4의 입력은 정답 '좋아한다'라 오차가 번지지 않고 학습이 안정적이다. 추론 때는 정답이 없어 모델 자신의 예측(주황 화살표)을 다음 입력으로 쓰므로, 학습 때 한 번도 겪지 못한 '자기 실수가 섞인 입력'을 처음 만난다. 이 불일치가 노출 편향이다."
+      caption="학습 때는 디코더의 각 스텝 입력으로 정답 문장을 한 칸 밀어 넣는다(초록). 스텝 3에서 '싫어한다'로 틀려도 스텝 4의 입력은 정답 '좋아한다'이므로 오류가 다음 스텝으로 이어지지 않고 학습이 안정적이다. 추론 때는 정답이 없어 모델 자신의 예측(주황 화살표)을 다음 입력으로 쓰므로, 학습 중에 본 적 없는 자기 예측의 오류가 섞인 입력을 받는다. 이 차이가 노출 편향이다."
       viewBox="0 0 720 286"
       minWidth={560}
     >
@@ -647,7 +647,7 @@ export function PathLengthParallel() {
   return (
     <DiagramFrame
       title="정보가 전달되는 경로: RNN은 O(n)단계, Self-Attention은 한 단계"
-      caption="왼쪽: RNN에서 1번 토큰의 정보가 6번 토큰에 전달되려면 은닉 상태를 5번 거쳐야 하고(경로 길이 O(n)), 앞 계산이 끝나야 다음을 할 수 있어 순차적으로만 처리된다. 오른쪽: Self-Attention에서는 6번 토큰이 모든 앞 토큰을 내적 한 번으로 직접 본다(경로 길이 1). 모든 쌍을 한꺼번에 행렬곱으로 계산하므로 병렬화가 쉽지만, 쌍의 수가 n²이라 문맥이 길수록 비용이 제곱으로 커진다."
+      caption="왼쪽: RNN에서 1번 토큰의 정보가 6번 토큰에 전달되려면 은닉 상태를 5번 거쳐야 하고(경로 길이 O(n)), 앞 계산이 끝나야 다음을 할 수 있어 순차적으로만 처리된다. 오른쪽: self-attention에서는 6번 토큰이 모든 앞 토큰과의 관련도를 내적 한 번으로 직접 계산한다(경로 길이 1). 모든 쌍을 한꺼번에 행렬곱으로 계산하므로 병렬화가 쉽지만, 쌍의 수가 n²이라 문맥이 길수록 비용이 제곱으로 커진다."
       viewBox="0 0 720 178"
       minWidth={560}
     >
@@ -714,7 +714,7 @@ export function AttentionSteps() {
   return (
     <DiagramFrame
       title="Self-Attention 한 행을 손으로 계산하기: Query '생선을'"
-      caption="① '생선을'의 Query [1, 1, 0, 1]을 각 토큰의 Key와 내적해 점수 [1, 3, 0, 1]을 얻는다. ② √d_k = 2로 나눈다. ③ softmax로 합이 1인 비율 18.8%·51.0%·11.4%·18.8%로 바꾼다. ④ 그 비율로 Value를 섞으면 '생선을'의 새 표현 [1.24, 1.65]가 된다. 이 계산을 모든 토큰이 동시에 하는 것이 Self-Attention이다."
+      caption="① '생선을'의 Query [1, 1, 0, 1]을 각 토큰의 Key와 내적해 점수 [1, 3, 0, 1]을 얻는다. ② √d_k = 2로 나눈다. ③ softmax로 합이 1인 비율 18.8%·51.0%·11.4%·18.8%로 바꾼다. ④ 그 비율로 Value를 가중합하면 '생선을'의 새 표현 [1.24, 1.65]가 된다. 모든 토큰에 대해 이 계산을 동시에 하는 것이 self-attention이다."
       viewBox="0 0 720 270"
       minWidth={560}
     >
@@ -807,7 +807,7 @@ export function AttentionMatrixShapes() {
   );
   return (
     <DiagramFrame
-      title="모든 Query를 한꺼번에: softmax(QKᵀ/√d_k)·V의 shape 따라가기"
+      title="모든 Query를 한꺼번에: softmax(QKᵀ/√d_k)·V의 모양 따라가기"
       caption="Q(n × d_k)와 Kᵀ(d_k × n)를 곱하면 모든 토큰 쌍의 점수표 S(n × n)가 한 번에 나온다. softmax는 행마다 따로 적용해 각 행(한 Query가 각 토큰에 나눠 주는 가중치)의 합이 1이 되게 한다. 그 비율표 A에 V(n × d_v)를 곱하면 토큰마다 새 표현 하나씩, 입력과 같은 개수의 행이 나온다. 진하게 칠한 둘째 행이 앞 그림의 '생선을' 계산이다."
       viewBox="0 40 720 176"
       minWidth={560}
@@ -852,7 +852,7 @@ export function SqrtDkSoftmax() {
   const sx = linear(0, 30, L.left, L.left + 200);
   return (
     <DiagramFrame
-      title="√d_k로 나누는 이유: 차원이 커지면 점수가 커지고 softmax가 뾰족해진다"
+      title="√d_k로 나누는 이유: 차원이 커지면 점수가 커지고 softmax가 한 칸에 집중된다"
       caption="왼쪽: 성분이 평균 0·분산 1인 q와 k의 내적은 d_k개 항의 합이라 표준편차가 √d_k로 커진다(빨강). √d_k로 나누면 차원과 상관없이 1로 돌아온다(초록). 오른쪽: 본문 코드의 점수 8개를 그대로 쓴 softmax다. 스케일이 맞으면 0.04~0.21로 고루 나뉘지만, 같은 점수가 √512 ≈ 22.6배가 되면 가장 큰 두 칸만 남고 나머지는 0이 된다. 이렇게 원-핫에 가까워진 softmax는 기울기가 거의 0이라 학습이 멈춘다."
       viewBox="0 0 720 226"
       minWidth={560}
@@ -943,8 +943,8 @@ export function MultiheadPatterns() {
   const c = 38;
   return (
     <DiagramFrame
-      title="여러 헤드는 서로 다른 관계를 본다 (예시)"
-      caption="같은 문장을 세 헤드가 각자의 Wq·Wk·Wv로 본 attention 가중치다(행 = 보는 토큰, 진할수록 큰 비율, 회색은 causal mask로 가린 미래). 헤드 1은 바로 앞 단어에, 헤드 2는 주어 '고양이가'에, 헤드 3은 목적어 '생선을'에 주목한다. 실제 학습된 모델에서도 이런 역할 분담이 관찰된다. 하나의 softmax로는 이 관계들이 평균 내어져 흐려지지만, 헤드를 나누면 각자 따로 담을 수 있다. 값은 설명을 위해 정한 예시다."
+      title="헤드마다 서로 다른 관계에 큰 가중치를 준다 (예시)"
+      caption="같은 문장에 대해 세 헤드가 각자의 Wq·Wk·Wv로 계산한 attention 가중치의 예시다(행은 Query 토큰, 진할수록 큰 가중치, 회색은 causal mask로 가린 뒤쪽 토큰). 헤드 1은 바로 앞 단어에, 헤드 2는 주어 '고양이가'에, 헤드 3은 목적어 '생선을'에 큰 가중치를 준다. 학습된 모델에서도 헤드마다 이런 차이가 관찰된다. 헤드 하나의 softmax로는 이 관계들이 평균되지만, 헤드를 나누면 관계마다 따로 가중치를 나타낼 수 있다."
       viewBox="0 0 720 250"
       minWidth={560}
     >
@@ -1061,7 +1061,7 @@ export function AttentionMlpRoles() {
   return (
     <DiagramFrame
       title="블록 안의 역할 분담: Attention은 토큰끼리, MLP는 토큰마다"
-      caption="아래(Attention): 각 토큰이 자기 앞의 토큰들에서 필요한 정보를 가져온다. 토큰 사이에 정보가 오가는 유일한 곳이다(누구를 참고할까). 위(MLP): 같은 가중치의 작은 신경망이 토큰 하나하나를 따로 변환한다(가져온 정보로 무엇을 알아낼까). 블록 파라미터의 약 2/3가 MLP에 있다. 두 부분 모두 결과를 입력에 더하는 잔차 연결로 감싸여 있다."
+      caption="아래(Attention): 각 토큰이 자기 앞의 토큰들의 값 벡터를 가중합해 정보를 가져온다. 블록 안에서 토큰 사이에 정보가 전달되는 곳은 attention뿐이다. 위(MLP): 같은 가중치의 작은 신경망이 토큰마다 따로 표현을 변환한다. 블록 파라미터의 약 2/3가 MLP에 있다. 두 부분 모두 잔차 연결로 결과를 입력에 더한다."
       viewBox="0 0 720 300"
       minWidth={560}
     >
@@ -1107,46 +1107,6 @@ export function AttentionMlpRoles() {
       <text x={360} y={18} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
         다음 블록으로
       </text>
-    </DiagramFrame>
-  );
-}
-
-export function LnVsBn() {
-  // BatchNorm: 특징(열) 하나에 대해 배치(행들) 방향으로 평균·분산. LayerNorm: 토큰(행) 하나에 대해 특징 방향으로.
-  const c = 24;
-  const rows = 6;
-  const cols = 8;
-  const panel = (x0: number, title: string, sub: string, color: string, mode: "col" | "row", rowLabel: string) => (
-    <g>
-      <text x={x0 + (cols * c) / 2} y={22} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={color}>
-        {title}
-      </text>
-      <text x={x0 + (cols * c) / 2} y={40} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        {sub}
-      </text>
-      {Array.from({ length: rows }, (_, i) =>
-        Array.from({ length: cols }, (_, j) => {
-          const on = mode === "col" ? j === 2 : i === 3;
-          return <rect key={`${i}${j}`} x={x0 + j * c} y={54 + i * c} width={c} height={c} fill={on ? color : card2Bg} fillOpacity={on ? 0.45 : 1} stroke="var(--border-strong)" strokeWidth={0.6} />;
-        }),
-      )}
-      <text x={x0 + (cols * c) / 2} y={54 + rows * c + 18} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        특징(d개) →
-      </text>
-      <text transform={`translate(${x0 - 10}, ${54 + (rows * c) / 2}) rotate(-90)`} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        {rowLabel}
-      </text>
-    </g>
-  );
-  return (
-    <DiagramFrame
-      title="BatchNorm과 LayerNorm: 평균·분산을 어느 방향으로 구하나"
-      caption="BatchNorm(4주차)은 특징 하나(칠한 열)마다 배치 안의 여러 샘플에 걸쳐 평균·분산을 구하므로 배치 크기와 구성에 영향을 받는다. LayerNorm은 토큰 하나(칠한 행)의 d개 특징만으로 평균·분산을 구해 토큰마다 독립적으로 정규화한다. 그래서 문장 길이·배치 크기와 상관없이 같은 방식으로 동작하고, 생성할 때 토큰을 하나씩 처리해도 문제가 없다. Transformer가 LayerNorm을 쓰는 이유다."
-      viewBox="0 0 720 248"
-      minWidth={540}
-    >
-      {panel(80, "BatchNorm", "특징 하나를 배치 방향으로", colors.orange, "col", "← 배치의 샘플들")}
-      {panel(440, "LayerNorm", "토큰 하나를 특징 방향으로", colors.blue, "row", "← 문장의 토큰들")}
     </DiagramFrame>
   );
 }
@@ -1960,7 +1920,7 @@ export function AttentionMemoryScaling() {
   return (
     <DiagramFrame
       title="점수 행렬의 메모리는 문맥 길이의 제곱으로 늘어난다"
-      caption="헤드 하나의 n × n 점수 행렬을 fp16(숫자당 2바이트)으로 메모리에 만들 때의 크기다(두 축 모두 로그 눈금). 문맥이 두 배가 되면 네 배가 되어, 1,024토큰에서 2MiB이던 것이 13만 토큰에서는 32GiB, 100만 토큰에서는 2TiB가 된다. 헤드 하나만으로 GPU 메모리(HBM) 80GB를 넘어선다. FlashAttention은 점수를 작은 타일로만 만들고 버리므로, 남기는 것은 출력 n × d(d = 128)뿐이라 메모리가 n에 비례한다(초록). 다만 연산량은 여전히 O(n²)이다."
+      caption="헤드 하나의 n × n 점수 행렬을 fp16(숫자당 2바이트)으로 메모리에 만들 때의 크기다(두 축 모두 로그 눈금). 문맥이 두 배가 되면 네 배가 되어, 1,024토큰에서 2MiB이던 것이 13만 토큰에서는 32GiB, 100만 토큰에서는 2TiB가 된다. 헤드 하나만으로 GPU 메모리(HBM) 80GB를 넘어선다. FlashAttention은 점수를 작은 타일 단위로만 계산하고 저장하지 않으므로, 남기는 것은 출력 n × d(d = 128)뿐이라 메모리가 n에 비례한다(초록). 다만 연산량은 여전히 O(n²)이다."
       viewBox="0 0 720 256"
       minWidth={600}
     >
@@ -2104,7 +2064,7 @@ export function LinearAttentionRnn() {
   return (
     <DiagramFrame
       title="인과적 선형 어텐션은 고정 크기 상태를 가진 RNN이다"
-      caption="왼쪽: GPT처럼 앞쪽 토큰만 보는 선형 어텐션을 토큰 순서대로 계산하면, 상태 S(d × d 행렬)와 z(길이 d 벡터)에 φ(k_t)v_tᵀ와 φ(k_t)를 더해 나가기만 하면 된다. 출력 o_t는 현재 query로 상태를 읽은 것이다. 학습할 때는 행렬 형태로 한꺼번에, 생성할 때는 이렇게 토큰 하나당 상태 하나만 갱신한다(본문 코드의 두 형태가 같은 값을 낸다). 오른쪽: head 차원 128에서 저장해야 하는 숫자의 개수다. softmax attention의 KV 캐시는 지나온 토큰 수에 비례해 커지지만, 선형 어텐션의 상태는 128 × 128 + 128 = 16,512개로 고정이다. 대신 과거 전체를 고정 크기에 압축하므로 정확한 복사·검색에 약하다."
+      caption="왼쪽: GPT처럼 앞쪽 토큰만 참조하는 선형 attention을 토큰 순서대로 계산하면, 상태 S(d × d 행렬)와 z(길이 d 벡터)에 φ(k_t)v_tᵀ와 φ(k_t)를 더해 나가기만 하면 된다. 출력 o_t는 현재 query로 상태를 읽은 것이다. 학습할 때는 행렬 형태로 한꺼번에, 생성할 때는 이렇게 토큰 하나당 상태 하나만 갱신한다(본문 코드의 두 형태가 같은 값을 낸다). 오른쪽: head 차원 128에서 저장해야 하는 숫자의 개수다. softmax attention의 KV 캐시는 지나온 토큰 수에 비례해 커지지만, 선형 어텐션의 상태는 128 × 128 + 128 = 16,512개로 고정이다. 대신 과거 전체를 고정 크기에 압축하므로 정확한 복사·검색에 약하다."
       viewBox="0 0 720 256"
       minWidth={620}
     >
@@ -2171,8 +2131,8 @@ export function RopeWavelengths() {
   const bw = G.width / 64;
   return (
     <DiagramFrame
-      title="RoPE의 느린 성분은 학습 길이 안에서 한 바퀴도 돌지 못한다"
-      caption={`본문 코드의 설정(head 차원 128, 성분 쌍 64개, 학습 길이 2048)에서 성분 쌍마다 한 바퀴 도는 데 필요한 위치 수(파장)다. 세로축은 로그 눈금이다. 성분 쌍 0은 약 6위치마다 한 바퀴씩 돌아 학습 중 300바퀴 넘게 모든 각도를 보지만, 뒤쪽 성분일수록 파장이 길어져 점선(학습 길이 2048)을 넘는다. 64쌍 중 ${over}쌍(빨강)은 학습 중 한 바퀴도 돌지 못해, 2048을 넘는 위치에서는 처음 보는 각도가 나온다. 길이 외삽이 실패하는 원인이 바로 이 느린 성분들이다.`}
+      title="RoPE의 느린 성분은 학습 길이 안에서 한 바퀴도 돌지 않는다"
+      caption={`본문 코드의 설정(head 차원 128, 성분 쌍 64개, 학습 길이 2048)에서 성분 쌍마다 한 바퀴 도는 데 필요한 위치 수(파장)다. 세로축은 로그 눈금이다. 성분 쌍 0은 약 6위치마다 한 바퀴씩 돌아 학습 중 300바퀴 이상 회전해 모든 각도가 나오지만, 뒤쪽 성분일수록 파장이 길어져 점선(학습 길이 2048)을 넘는다. 64쌍 중 ${over}쌍(빨강)은 학습 중 한 바퀴도 돌지 않아, 2048을 넘는 위치에서는 학습 중에 나오지 않은 각도가 나온다. 학습 길이보다 긴 입력에서 성능이 떨어지는 원인이 이 느린 성분들이다.`}
       viewBox="0 0 720 256"
       minWidth={600}
     >
@@ -2231,8 +2191,8 @@ export function PositionInterpolation() {
   const th = 10000 ** -0.75;
   return (
     <DiagramFrame
-      title="위치 보간: 새 위치를 학습 범위 안으로 압축하는 대신 해상도를 잃는다"
-      caption="학습 길이 2048인 RoPE 모델을 8192 길이에 쓰는 경우다. 왼쪽: 느린 성분(i = 48, 위치당 약 0.001rad)은 학습 중 0~2048 위치에서 원의 약 3분의 1(117°, 파랑)만 봤다. 그대로 8192까지 늘리면 각도가 8.2rad로 한 바퀴를 넘어 처음 보는 각도(빨간 점선)가 나온다. 가운데: 위치 보간은 모든 위치에 2048/8192 = 1/4을 곱해 8192를 2048로 옮기므로, 각도가 다시 학습 때 본 범위 안에 머문다. 오른쪽: 대가는 해상도다. 빠른 성분(i = 0, 위치당 1rad)에서 이웃한 위치 100과 101의 각도 차이가 57°에서 14°로 4분의 1이 되어, 바로 옆 토큰을 구별하는 정보가 흐려진다."
+      title="위치 보간: 새 위치를 학습 범위 안으로 줄이는 대신 해상도가 줄어든다"
+      caption="학습 길이 2048인 RoPE 모델을 8192 길이에 쓰는 경우다. 왼쪽: 느린 성분(i = 48, 위치당 약 0.001rad)은 학습 중 0~2048 위치에서 원의 약 3분의 1(117°, 파랑)만 지났다. 그대로 8192까지 늘리면 각도가 8.2rad로 한 바퀴를 넘어 학습 중에 나오지 않은 각도(빨간 점선)가 나온다. 가운데: 위치 보간은 모든 위치에 2048/8192 = 1/4을 곱해 8192를 2048로 옮기므로, 각도가 다시 학습 때의 범위 안에 있게 된다. 오른쪽: 대가는 해상도다. 빠른 성분(i = 0, 위치당 1rad)에서 이웃한 위치 100과 101의 각도 차이가 57°에서 14°로 4분의 1이 되어, 바로 옆 토큰을 구별하기 어려워진다."
       viewBox="0 0 720 248"
       minWidth={620}
     >

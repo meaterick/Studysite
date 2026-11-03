@@ -5,14 +5,13 @@ export default defineExercises([
     key: "ex1",
     title: "BPE 병합 규칙 학습과 새 단어 토큰화",
     prompt: md`
-
-「토크나이저: BPE」의 알고리즘을 처음부터 구현합니다.
+본문의 BPE 알고리즘을 처음부터 구현합니다.
 
 1. \`merge_pair(tokens, pair)\`: 토큰 리스트에서 연속한 \`pair\`를 왼쪽부터 겹치지 않게 하나로 합칩니다.
 2. \`train_bpe(words, n_merges)\`: 각 단어를 "글자 + \`</w>\`"로 쪼갠 상태에서, 매번 **가장 자주 나온 인접 쌍**(\`Counter.most_common(1)\`)을 병합 규칙으로 추가하고 말뭉치 전체에 적용합니다. 병합 규칙 리스트를 돌려줍니다.
 3. \`bpe_encode(word, merges)\`: 새 단어에 학습된 규칙을 **학습한 순서대로** 적용합니다.
 
-학습에 없던 "slow"가 \`['s', 'low</w>']\`로 잘려야 합니다(OOV 완화).
+학습에 없던 "slow"가 \`['s', 'low</w>']\`로 토큰화되어야 합니다(OOV 완화).
 `,
     starter: py`
 from collections import Counter

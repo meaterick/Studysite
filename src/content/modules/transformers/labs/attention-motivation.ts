@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "디코더가 필요할 때마다 다시 보는 attention",
     prompt: md`
-
 Seq2Seq의 병목을 푼 attention의 핵심 세 줄을 구현합니다.
 
 - \`attention_weights(H, s)\`: 인코더 은닉 상태 \`H\`(T, d) 각각과 디코더 상태 \`s\`(d,)의 내적을 점수로 삼아 softmax한 가중치(합 1)

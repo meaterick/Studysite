@@ -5,10 +5,9 @@ export default defineAssignment({
   kind: "module",
   title: "나만의 미니 GPT 블록",
   summary: md`
+GPT 블록의 핵심인 멀티헤드 causal self-attention을 NumPy로 직접 구현하고, 세 가지 독립적인 방법으로 정확성을 검증합니다. [[lesson:self-attention]]의 숫자 예제를 코드로 재현하고 Query를 바꿔 비교하며, 마스크와 $\sqrt{d_k}$ 스케일링이 attention 가중치에 어떤 영향을 주는지 히트맵으로 관찰합니다. 마지막으로 "Attention Is All You Need" 논문을 읽고 리포트를 작성합니다.
 
-GPT 블록의 핵심인 멀티헤드 causal self-attention을 NumPy로 직접 구현하고, 세 가지 독립적인 방법으로 정확성을 검증합니다. 「Self-Attention」 단계의 숫자 예제를 코드로 재현해 변형해 보고, 마스크와 $\sqrt{d_k}$ 스케일링이 attention 가중치에 어떤 영향을 주는지 히트맵으로 관찰합니다. 마지막으로 "Attention Is All You Need" 논문을 읽고 리포트를 작성합니다.
-
-**핵심** 항목은 모두 핵심 과정만으로 풀 수 있고 채점 기준도 핵심 항목만 봅니다. **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
+**핵심** 항목은 모두 핵심 레슨만으로 풀 수 있고 채점 기준도 핵심 항목만 봅니다. **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
 `,
   requirements: [
     "`multi_head_attention`의 점수 계산 TODO를 채우고, 모든 중간 텐서 옆에 shape 주석을 적는다($W^O$ 출력 투영 포함).",
@@ -23,7 +22,6 @@ GPT 블록의 핵심인 멀티헤드 causal self-attention을 NumPy로 직접 �
       title: "멀티헤드 causal self-attention 구현",
       tier: "core",
       instructions: md`
-
 코드 셀의 \`multi_head_attention\`을 완성합니다. \`TODO\`로 표시한 attention 점수 계산을 채우고, \`# shape: ?\`로 표시한 모든 중간 텐서 옆에 shape을 적습니다(예: \`# shape: (n_heads, T, d_k)\`). $W^O$ 출력 투영까지 포함해야 합니다.
 
 $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^\top}{\sqrt{d_k}} + M\right)V$$
@@ -74,7 +72,6 @@ print("각 행의 가중치 합(모두 1이어야 함):", np.round(weights.sum(-
       title: "정확성 검증 세 가지",
       tier: "core",
       instructions: md`
-
 구현이 맞는지 서로 다른 세 방법으로 확인합니다. 세 검증 모두 \`True\`가 나와야 합니다.
 
 - (a) **헤드별 계산과 비교**: 헤드마다 $W^Q, W^K, W^V$의 해당 열만 잘라 단일 헤드 attention을 따로 계산해 이어 붙인 결과가 구현과 \`np.allclose\`로 일치하는지 확인합니다.
@@ -126,8 +123,7 @@ print("(c) 반복문 참조 구현과 일치:", np.allclose(out, out_c))
       title: "숫자 예제 재현과 변형",
       tier: "core",
       instructions: md`
-
-「Self-Attention」 단계의 예제("고양이가 생선을 맛있게 먹었다", Query $=[1,1,0,1]$, $d_k=4$)를 코드로 재현해 가중치 18.8% · 51.0% · 11.4% · 18.8%와 출력 $[1.24, 1.65]$가 나오는지 확인합니다. 그다음 Query를 두 가지 이상 다른 값(예: "맛있게"의 Key와 같은 $[0,0,1,0]$)으로 바꿔 가중치와 출력이 어떻게 달라지는지 표로 정리하고 이유를 설명합니다.
+[[lesson:self-attention]]의 예제("고양이가 생선을 맛있게 먹었다", Query $=[1,1,0,1]$, $d_k=4$)를 코드로 재현해 가중치 18.8% · 51.0% · 11.4% · 18.8%와 출력 $[1.24, 1.65]$가 나오는지 확인합니다. 그다음 Query를 두 가지 이상 다른 값(예: "맛있게"의 Key와 같은 $[0,0,1,0]$)으로 바꿔 가중치와 출력이 어떻게 달라지는지 표로 정리하고 이유를 설명합니다.
 `,
       cells: [
         { kind: "code", id: "example-code", label: "숫자 예제", starter: py`
@@ -164,7 +160,6 @@ for name, q in queries.items():
       title: "마스크와 스케일링 관찰 실험",
       tier: "core",
       instructions: md`
-
 토큰 8개 입력으로 attention 가중치를 (i) 마스크 유무와 (ii) $\sqrt{d_k}$ 스케일링 유무의 네 조합으로 그립니다. 두 번째 셀에서는 $d_k$를 키울 때 스케일링 유무에 따른 최대 가중치 차이가 어떻게 커지는지 확인합니다. 관찰 결과를 세 문장 이상으로 적습니다.
 `,
       cells: [
@@ -200,7 +195,6 @@ for d in (4, 16, 64, 256):
       title: "논문 리포트",
       tier: "core",
       instructions: md`
-
 "Attention Is All You Need"(Vaswani et al., 2017, [arXiv:1706.03762](https://arxiv.org/abs/1706.03762))의 3장을 중심으로 읽고 다음을 작성합니다.
 
 - (a) 가장 인상 깊었던 설계 선택과 그 이유
@@ -224,14 +218,13 @@ for d in (4, 16, 64, 256):
       title: "심화: 문자 단위 언어모델·KV 캐시·효율적 attention",
       tier: "advanced",
       instructions: md`
-
 다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않습니다.
 
 - 구현한 블록을 이용해 짧은 문장으로 문자 단위 다음 글자 예측 모델의 순전파를 구성하고, 무작위 가중치에서의 손실이 $\ln(\text{어휘 수})$ 근처인지 확인합니다.
 - BPE를 50줄 안팎으로 직접 구현해 한국어와 영어 문장의 토큰 수를 비교합니다.
 - KV 캐시를 쓰는 생성 루프를 구현하고, 캐시 유무에 따른 계산량(행렬곱 횟수 또는 실행 시간)을 토큰 수별로 비교합니다.
-- 구현한 \`multi_head_attention\`의 softmax 부분을 온라인 softmax(블록 단위)로 바꿔 결과가 같은지 확인하고, 점수 행렬 없이 계산할 때의 최대 메모리를 비교합니다(「긴 문맥의 비용」).
-- 같은 블록을 인과적 선형 어텐션으로 바꿔 행렬 계산과 RNN식 순환 계산이 같은지 확인하고, softmax 버전과 출력이 얼마나 다른지 비교합니다(「선형 어텐션」).
+- 구현한 \`multi_head_attention\`의 softmax 부분을 온라인 softmax(블록 단위)로 바꿔 결과가 같은지 확인하고, 점수 행렬 없이 계산할 때의 최대 메모리를 비교합니다([[lesson:efficient-attention]]).
+- 같은 블록을 인과적 선형 attention으로 바꿔 행렬 계산과 RNN식 순환 계산이 같은지 확인하고, softmax 버전과 출력이 얼마나 다른지 비교합니다([[lesson:linear-attention]]).
 `,
       cells: [
         { kind: "code", id: "advanced-code", label: "심화 실험", starter: py`
@@ -305,7 +298,6 @@ assert len(queries) >= 3, f"Query가 {len(queries)}개입니다. 직접 고른 Q
       key: "ch1",
       title: "GPT형 디코더 블록 전체 순전파",
       prompt: md`
-
 지금까지 만든 부품으로 **pre-norm GPT 디코더 블록**을 조립합니다.
 
 $$h = x + \mathrm{MHA}(\mathrm{LN}(x)),\qquad y = h + \mathrm{MLP}(\mathrm{LN}(h)),\quad \mathrm{MLP}(u) = \mathrm{ReLU}(uW_1 + b_1)W_2 + b_2$$
@@ -413,7 +405,6 @@ print(decoder_block(x, P).shape, n_params(768))
       key: "ch2",
       title: "바이트 수준 BPE로 한국어 토큰 수 줄이기",
       prompt: md`
-
 GPT 계열 토크나이저는 글자가 아니라 **UTF-8 바이트**에서 출발합니다. 한글 한 글자는 3바이트라 병합이 없으면 토큰이 많아집니다.
 
 1. \`train_byte_bpe(text, n_merges)\`: 텍스트를 UTF-8 바이트 정수 리스트로 바꾼 뒤, 가장 잦은 인접 쌍을 새 토큰 번호(256, 257, …)로 병합하는 규칙을 학습합니다. \`{(a, b): 새 번호}\` 딕셔너리(학습 순서 유지)를 돌려줍니다.

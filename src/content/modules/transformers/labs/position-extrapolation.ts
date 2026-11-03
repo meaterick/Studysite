@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "RoPE의 파장·상대 위치와 위치 보간",
     prompt: md`
-
-「위치 인코딩의 수학과 길이 외삽」 단계의 계산을 구현합니다. 성분 쌍 $i = 0, \dots, d/2 - 1$의 회전 속도는 $\theta_i = \text{base}^{-2i/d}$입니다.
+본문의 계산을 구현합니다. 성분 쌍 $i = 0, \dots, d/2 - 1$의 회전 속도는 $\theta_i = \text{base}^{-2i/d}$입니다.
 
 1. \`rope_freqs(d, base=10000)\`: 길이 $d/2$인 $\theta$ 배열
 2. \`rope(v, pos, freqs)\`: 벡터 \`v\`(길이 $d$)의 성분 쌍 \`(v[2i], v[2i+1])\`을 각도 \`pos * freqs[i]\`만큼 회전한 새 벡터
