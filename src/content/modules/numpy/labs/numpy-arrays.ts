@@ -3,14 +3,15 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "NumPy 축(axis)과 브로드캐스팅",
+    title: "점수표를 축별로 요약하기",
     prompt: md`
 
-학생 4명, 과목 3개짜리 점수표로 축과 브로드캐스팅을 연습합니다. **반복문 없이** NumPy 연산만 씁니다.
+행이 학생, 열이 과목인 점수표(모양 \`(학생 수, 과목 수)\`)를 **반복문 없이** NumPy 연산으로 요약합니다.
 
-1. \`subject_means(scores)\`: 과목별 평균, shape \`(과목 수,)\`
-2. \`center_by_student(scores)\`: 학생(행)마다 자기 평균을 빼서 각 행의 평균이 0이 되게 합니다. 브로드캐스팅이 행 방향으로 맞으려면 \`keepdims=True\`가 필요합니다(「NumPy 첫걸음: 배열·축·브로드캐스팅」 단계 참고).
-3. \`count_high(scores, threshold)\`: \`threshold\` 이상인 칸의 개수(불리언 배열 활용)
+1. \`subject_means(scores)\`: 과목별 평균, 모양 \`(과목 수,)\`
+2. \`student_totals(scores)\`: 학생별 총점, 모양 \`(학생 수,)\`
+3. \`top_student_per_subject(scores)\`: 과목마다 점수가 가장 높은 학생의 번호(행 번호), 모양 \`(과목 수,)\`
+4. \`to_ratio(scores, max_score)\`: 각 점수를 만점에 대한 비율(0~1의 실수)로 바꾼 배열. 결과의 자료형은 \`float64\`여야 합니다.
 `,
     starter: py`
 import numpy as np
@@ -21,54 +22,60 @@ scores = np.array([[90, 80, 70],
                    [70, 60, 90]])   # (학생 4명, 과목 3개)
 
 def subject_means(scores):
-    """과목별 평균, shape (과목 수,)"""
-    return None  # TODO: mean의 axis를 골라 씁니다.
+    return None  # TODO: 학생 축을 합칩니다.
 
-def center_by_student(scores):
-    """각 학생(행)의 평균을 빼서 행 평균이 0이 되게 한다. shape은 그대로"""
-    return None  # TODO: keepdims=True로 (학생 수, 1) 모양의 평균을 만들어 뺍니다.
+def student_totals(scores):
+    return None  # TODO: 과목 축을 합칩니다.
 
-def count_high(scores, threshold=80):
-    """threshold 이상인 칸의 개수"""
-    return None  # TODO: 불리언 배열 scores >= threshold 를 활용합니다.
+def top_student_per_subject(scores):
+    return None  # TODO: argmax의 axis를 고릅니다.
 
-print(subject_means(scores))
-print(center_by_student(scores))
-print(count_high(scores))
+def to_ratio(scores, max_score=100):
+    return None  # TODO: 실수 나눗셈
+
+print(subject_means(scores))             # 기대: [76.25 76.25 83.75]
+print(student_totals(scores))            # 기대: [240 230 255 220]
+print(top_student_per_subject(scores))   # 기대: [0 1 2]
+print(to_ratio(scores))                  # 기대: 첫 행이 [0.9 0.8 0.7]인 실수 배열
 `,
     tests: py`
 import numpy as np
 S = np.array([[90, 80, 70], [60, 90, 80], [85, 75, 95], [70, 60, 90]])
 
-@test("과목별 평균 = [76.25, 76.25, 83.75]")
+@test("과목별 평균 = [76.25, 76.25, 83.75], 모양 (3,)")
 def _():
     m = subject_means(S)
-    assert m is not None and np.shape(m) == (3,), f"shape: {np.shape(m)}"
+    assert m is not None and np.shape(m) == (3,), f"모양: {np.shape(m)}"
     assert approx(m, [76.25, 76.25, 83.75]), f"결과: {m}"
 
-@test("학생별 중심화: shape 유지, 각 행 평균 0")
+@test("학생별 총점 = [240, 230, 255, 220], 모양 (4,)")
 def _():
-    c = center_by_student(S)
-    assert c is not None and np.shape(c) == (4, 3), f"shape: {np.shape(c)}"
-    assert approx(np.asarray(c).mean(axis=1), [0, 0, 0, 0])
+    t = student_totals(S)
+    assert t is not None and np.shape(t) == (4,), f"모양: {np.shape(t)}"
+    assert list(np.asarray(t)) == [240, 230, 255, 220], f"결과: {t}"
 
-@test("열 평균이 아니라 행 평균을 뺐다")
+@test("과목별 최고점 학생 = [0, 1, 2]")
 def _():
-    c = np.asarray(center_by_student(S))
-    assert approx(c[0], [10, 0, -10]), f"첫 학생 결과: {c[0]}"
+    got = top_student_per_subject(S)
+    assert got is not None and list(np.asarray(got)) == [0, 1, 2], f"결과: {got}"
 
-@test("80점 이상 7칸, 90점 이상 4칸")
+@test("비율 배열: float64, 0~1, 첫 행 [0.9, 0.8, 0.7]")
 def _():
-    assert count_high(S) == 7, f"count_high(S) = {count_high(S)}"
-    assert count_high(S, 90) == 4, f"count_high(S, 90) = {count_high(S, 90)}"
+    r = to_ratio(S)
+    assert r is not None and np.asarray(r).dtype == np.float64, f"자료형: {np.asarray(r).dtype if r is not None else None}"
+    assert approx(np.asarray(r)[0], [0.9, 0.8, 0.7]) and np.asarray(r).max() <= 1
 
 @test("다른 크기(3×4)에도 그대로 동작")
 def _():
     R = np.arange(12).reshape(3, 4)
     assert np.shape(subject_means(R)) == (4,) and approx(subject_means(R), R.mean(axis=0))
-    assert approx(np.asarray(center_by_student(R)).mean(axis=1), [0, 0, 0])
+    assert np.shape(student_totals(R)) == (3,) and list(np.asarray(top_student_per_subject(R))) == [2, 2, 2, 2]
 `,
-    hints: ["axis=0은 행 방향으로 훑어 같은 열끼리 묶고, axis=1은 열 방향으로 훑어 같은 행끼리 묶습니다. 과목은 열입니다.", "`scores.mean(axis=1)`의 shape은 (4,)라서 (4, 3)에서 빼면 뒤쪽 축(3 ≠ 4)이 맞지 않습니다. `scores.mean(axis=1, keepdims=True)`는 (4, 1)이 되어 열 방향으로 복제됩니다.", "`scores >= threshold`는 True/False 배열입니다. True는 1로 계산되므로 `.sum()`을 붙이면 개수가 됩니다."],
+    hints: [
+      "결과에서 사라질 축을 지정합니다. 과목별 값이 필요하면 학생 축 `axis=0`, 학생별 값이 필요하면 `axis=1`입니다.",
+      "`scores.argmax(axis=0)`은 열(과목)마다 가장 큰 값이 있는 행 번호를 돌려줍니다.",
+      "`/`는 정수 배열을 나눠도 실수 배열을 돌려줍니다. `scores / max_score`이면 됩니다.",
+    ],
     solution: py`
 import numpy as np
 
@@ -80,15 +87,19 @@ scores = np.array([[90, 80, 70],
 def subject_means(scores):
     return scores.mean(axis=0)
 
-def center_by_student(scores):
-    return scores - scores.mean(axis=1, keepdims=True)
+def student_totals(scores):
+    return scores.sum(axis=1)
 
-def count_high(scores, threshold=80):
-    return int((scores >= threshold).sum())
+def top_student_per_subject(scores):
+    return scores.argmax(axis=0)
+
+def to_ratio(scores, max_score=100):
+    return scores / max_score
 
 print(subject_means(scores))
-print(center_by_student(scores))
-print(count_high(scores))
+print(student_totals(scores))
+print(top_student_per_subject(scores))
+print(to_ratio(scores))
 `,
   },
 ]);
