@@ -5,7 +5,7 @@ export default defineLesson({
   title: "GPU, 혼합 정밀도와 PyTorch 실습",
   tier: "supplement",
   goal: "GPU가 행렬 연산을 빠르게 처리하는 이유와 혼합 정밀도 학습의 underflow·loss scaling을 설명하고, 같은 모델을 NumPy와 PyTorch로 학습해 결과와 코드 구조를 비교한다.",
-  why: "모델과 데이터가 커지면 학습 시간과 GPU 메모리가 먼저 한계에 도달한다. 혼합 정밀도는 대형 모델 학습의 기본 설정이고, Hugging Face의 사전학습 모델([[lesson:pretraining]])을 불러와 파인튜닝할 때도 이 레슨의 학습 루프를 그대로 쓴다.",
+  why: "모델과 데이터가 커지면 학습 시간과 GPU 메모리가 먼저 한계에 도달한다. 혼합 정밀도는 대형 모델 학습의 기본 설정이고, Hugging Face의 사전학습 모델([[lesson:pretraining]])을 불러와 미세조정할 때도 이 레슨의 학습 루프를 그대로 쓴다.",
   body: md`
 ### CPU와 GPU
 
@@ -139,7 +139,7 @@ print(f"PyTorch: w={model.weight.item():.4f}, b={model.bias.item():.4f}, loss={l
 
 ### Hugging Face
 
-Hugging Face의 \`transformers\` 라이브러리는 BERT, GPT 계열처럼 큰 데이터로 사전학습한 모델의 구조와 가중치를 몇 줄의 코드로 불러온다. 불러온 모델도 \`nn.Module\`이므로 [[lesson:pytorch]]의 옵티마이저와 학습 루프로 파인튜닝할 수 있다. Transformer와 LLM 모듈([[lesson:transformer-block]], [[lesson:pretraining]])에서 이 방식을 쓴다.
+Hugging Face의 \`transformers\` 라이브러리는 BERT, GPT 계열처럼 큰 데이터로 사전학습한 모델의 구조와 가중치를 몇 줄의 코드로 불러온다. 불러온 모델도 \`nn.Module\`이므로 [[lesson:pytorch]]의 옵티마이저와 학습 루프로 미세조정할 수 있다. Transformer와 LLM 모듈([[lesson:transformer-block]], [[lesson:pretraining]])에서 이 방식을 쓴다.
 `,
   checks: [
     {

@@ -20,14 +20,14 @@ export default defineLesson({
 | Bahdanau et al., "Neural Machine Translation by Jointly Learning to Align and Translate" | 2014 | 디코더가 인코더의 모든 위치를 참조하는 어텐션 메커니즘을 최초 도입 |
 | He et al., "Deep Residual Learning" (ResNet) | 2015 | 잔차 연결로 100층 이상의 신경망 학습을 가능케 함 |
 | Vaswani et al., "Attention Is All You Need" (Transformer) | 2017 | 순환 구조 없이 어텐션만으로 시퀀스를 처리하는 아키텍처 제시 |
-| Devlin et al., "BERT" | 2018 | 양방향 사전학습과 마스킹 언어모델로 다운스트림 NLP 성능을 크게 끌어올림 |
+| Devlin et al., "BERT" | 2018 | 양방향 사전학습과 마스킹 언어 모델로 다운스트림 NLP 성능을 크게 끌어올림 |
 | Radford et al., "GPT / GPT-2 / GPT-3" | 2018–2020 | 단방향 사전학습 Transformer의 스케일업만으로 few-shot 능력이 나타남을 입증 |
 | Dosovitskiy et al., "An Image is Worth 16x16 Words" (ViT) | 2020 | 이미지를 패치 시퀀스로 취급한 순수 Transformer로 대규모 이미지 분류에서 CNN과 대등한 성능 |
 | Lewis et al., "Retrieval-Augmented Generation" (RAG) | 2020 | 파라메트릭 생성 모델과 비파라메트릭 검색을 결합하는 프레임워크를 정식화하고 RAG라는 이름을 붙임 |
 | Ho et al., "Denoising Diffusion Probabilistic Models" (DDPM) | 2020 | 노이즈 예측으로 확산모델을 학습하는 방법을 정리해 고품질 이미지 생성을 실용 수준으로 끌어올림 |
 | Radford et al., "CLIP" | 2021 | 이미지-텍스트 쌍을 대조 학습으로 하나의 임베딩 공간에 정렬 |
 | Hu et al., "LoRA" | 2021 | 저랭크 행렬만 학습해 거대 모델을 적은 파라미터로 미세조정하는 방법 제시 |
-| Rafailov et al., "Direct Preference Optimization" (DPO) | 2023 | 별도 보상모델 없이 선호도 데이터로 정책을 직접 최적화하는 정렬 방법 제시 |
+| Rafailov et al., "Direct Preference Optimization" (DPO) | 2023 | 별도 보상 모델 없이 선호도 데이터로 정책을 직접 최적화하는 정렬 방법 제시 |
 
 표의 순서는 발표 연도순이지만, 실제로 읽을 때는 관심 있는 계열(예: 어텐션 $\to$ Transformer $\to$ BERT/GPT, 또는 사전학습 $\to$ LoRA $\to$ DPO)을 따라가는 편이 흐름을 이해하기 쉽다.
 
@@ -99,7 +99,7 @@ D-7까지 유형과 주제를 확정하지 못하면 남은 기간 동안 완성
       question: "LoRA와 DPO가 각각 다루는 단계는?",
       choices: ["둘 다 사전학습", "LoRA는 효율적 미세조정, DPO는 선호 정렬", "LoRA는 정렬, DPO는 토큰화", "둘 다 추론 가속"],
       answer: 1,
-      explanation: "LoRA는 저랭크 행렬만 학습해 파인튜닝 비용을 줄이고, DPO는 보상모델 없이 선호 데이터로 정책을 직접 최적화한다.",
+      explanation: "LoRA는 저랭크 행렬만 학습해 미세조정 비용을 줄이고, DPO는 보상 모델 없이 선호 데이터로 정책을 직접 최적화한다.",
     },
     {
       key: "c3",
@@ -143,9 +143,9 @@ BERT는 문장의 일부를 가리고 맞히는 Masked Language Modeling으로 �
     },
     {
       key: "d3",
-      question: "LoRA와 DPO는 각각 거대 언어모델을 다루는 어느 단계(미세조정/정렬)에서, 어떤 문제를 해결하기 위해 제안되었는지 설명하라.",
+      question: "LoRA와 DPO는 각각 거대 언어 모델을 다루는 어느 단계(미세조정/정렬)에서, 어떤 문제를 해결하기 위해 제안되었는지 설명하라.",
       answer: md`
-LoRA는 파인튜닝(사전학습 이후 특정 태스크에 맞추는) 단계에서 저랭크 행렬로 학습 파라미터 수를 줄여 효율화하는 기법이고, DPO는 정렬(사람의 선호에 맞추는) 단계에서 별도의 보상모델과 강화학습 없이 선호도 데이터로 정책을 직접 최적화하는 기법이다(기준 모델 $\pi_{ref}$는 여전히 필요하다). 둘은 서로 다른 단계의 문제를 해결한다.
+LoRA는 미세조정(사전학습 이후 특정 태스크에 맞추는) 단계에서 저랭크 행렬로 학습 파라미터 수를 줄여 효율화하는 기법이고, DPO는 정렬(사람의 선호에 맞추는) 단계에서 별도의 보상 모델과 강화학습 없이 선호도 데이터로 정책을 직접 최적화하는 기법이다(기준 모델 $\pi_{ref}$는 여전히 필요하다). 둘은 서로 다른 단계의 문제를 해결한다.
 `,
       keyPoints: [],
     },

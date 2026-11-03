@@ -3,10 +3,9 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "정책 경사의 기준선과 PPO 클리핑",
+    title: "정책 경사의 기준값과 PPO 클리핑",
     prompt: md`
-
-「정책 경사와 PPO」 단계의 식을 소프트맥스 정책(로짓 \`theta\`)에서 정확히 계산합니다. 샘플링 없이 기댓값과 분산을 모든 행동에 대한 합으로 구합니다.
+본문의 식을 소프트맥스 정책(로짓 \`theta\`)에서 정확히 계산합니다. 샘플링 없이 기댓값과 분산을 모든 행동에 대한 합으로 구합니다.
 
 1. \`grad_log_softmax(theta, a)\`: $\nabla_\theta\log\pi_\theta(a) = \text{onehot}(a) - \pi_\theta$
 2. \`exact_policy_gradient(theta, rewards)\`: $\nabla_\theta\sum_a\pi_\theta(a)r(a) = \pi \odot (r - \pi\cdot r)$
@@ -59,13 +58,13 @@ def _():
     num = np.array([(J(th + 1e-6 * e) - J(th - 1e-6 * e)) / 2e-6 for e in np.eye(3)])
     assert approx(exact_policy_gradient(th, r), num, 1e-6)
 
-@test("기준선 b를 바꿔도 추정의 기댓값은 정확한 기울기 그대로")
+@test("기준값 b를 바꿔도 추정의 기댓값은 정확한 기울기 그대로")
 def _():
     th = np.array([0.3, -0.7, 1.1])
     for b in (0.0, 1.5, 10.0, -3.0):
         assert approx(expected_estimator(th, r, b), exact_policy_gradient(th, r)), f"b={b}"
 
-@test("분산: 기준선 0이면 [0.574, 0.741, 0.907], 평균 보상이면 0.241씩, 10이면 훨씬 크다")
+@test("분산: 기준값 0이면 [0.574, 0.741, 0.907], 평균 보상이면 0.241씩, 10이면 훨씬 크다")
 def _():
     assert approx(estimator_variance(th0, r, 0.0), [0.5741, 0.7407, 0.9074], 1e-3), f"결과: {estimator_variance(th0, r, 0.0)}"
     assert approx(estimator_variance(th0, r, 1.5), [0.2407] * 3, 1e-3)

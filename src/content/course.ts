@@ -106,6 +106,7 @@ function mapModuleText(m: ModuleSource, f: (text: string) => string): ModuleSour
       ...m.assignment,
       summary: f(m.assignment.summary),
       tasks: m.assignment.tasks.map((t) => ({ ...t, instructions: f(t.instructions) })),
+      challenges: m.assignment.challenges.map((e) => ({ ...e, prompt: f(e.prompt), hints: e.hints.map(f) })),
     },
   };
 }

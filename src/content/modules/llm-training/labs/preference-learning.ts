@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "DPO 손실과 KL 페널티 아래의 최적 정책",
     prompt: md`
-
 1. \`dpo_loss(lw, lw_ref, ll, ll_ref, beta)\` $= -\log\sigma\big(\beta[(\log\pi_\theta(y_w) - \log\pi_{ref}(y_w)) - (\log\pi_\theta(y_l) - \log\pi_{ref}(y_l))]\big)$
 2. \`optimal_policy(pi_ref, r, beta)\`: $E[r] - \beta\,\mathrm{KL}(\pi \parallel \pi_{ref})$를 최대화하는 정책 $\pi^*(y) \propto \pi_{ref}(y)\,e^{r(y)/\beta}$ (합이 1이 되도록 정규화)
 3. \`kl(p, q)\` $= \sum p \log(p/q)$

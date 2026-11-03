@@ -215,7 +215,7 @@ for d in (4, 16, 64, 256):
     },
     {
       id: "advanced",
-      title: "심화: 문자 단위 언어모델·KV 캐시·효율적 attention",
+      title: "심화: 문자 단위 언어 모델·KV 캐시·효율적 attention",
       tier: "advanced",
       instructions: md`
 다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않습니다.

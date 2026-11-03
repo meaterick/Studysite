@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "KL 규제 최적 정책과 DPO의 암묵적 보상",
     prompt: md`
-
-「DPO의 유도」 단계의 세 단계를 코드로 확인합니다. 정책은 응답별 확률 배열입니다.
+본문의 유도 과정 세 부분을 코드로 확인합니다. 정책은 응답별 확률 배열입니다.
 
 1. \`optimal_policy(pi_ref, r, beta)\`: $\pi^*(y) \propto \pi_{ref}(y)\,e^{r(y)/\beta}$ (정규화까지)
 2. \`kl_objective(pi, pi_ref, r, beta)\`: $\sum_y \pi(y)r(y) - \beta\sum_y \pi(y)\log\frac{\pi(y)}{\pi_{ref}(y)}$

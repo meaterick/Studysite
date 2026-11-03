@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "다수결과 best-of-n의 정답률 계산기",
     prompt: md`
-
-「추론 시간 계산」 단계의 식을 함수로 만듭니다. 표본은 모두 독립이라고 가정합니다.
+본문의 식을 함수로 만듭니다. 표본은 모두 독립이라고 가정합니다.
 
 1. \`majority_correct(p, n)\`: 정답·오답 두 갈래인 문제를 \`n\`번(홀수) 풀어 다수결할 때 정답일 확률 $\sum_{k > n/2}\binom{n}{k}p^k(1-p)^{n-k}$ (\`math.comb\` 사용)
 2. \`perfect_best_of_n(p, n)\`: 완벽한 검증기로 고를 때의 정답률 $1 - (1-p)^n$
@@ -71,7 +70,7 @@ def _():
     assert approx(verifier_limit(0.3, 0.9, 0.5), 0.4355, 1e-3)
     assert approx(best_of_n_exact(0.3, 500, 0.9, 0.5), verifier_limit(0.3, 0.9, 0.5))
 `,
-    hints: ["`majority_correct`는 `sum(comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n // 2 + 1, n + 1))`입니다.", "`best_of_n_exact`는 `(1 - u ** n) * a / (a + b) + u ** n * p * (1 - tpr) / u`입니다. 통과한 후보가 하나라도 있으면 고른 후보가 정답일 확률은 몇 개가 통과했든 `a / (a + b)`입니다.", "`verifier_limit`는 `a / (a + b)`, 즉 2주차의 정밀도와 같은 식입니다."],
+    hints: ["`majority_correct`는 `sum(comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n // 2 + 1, n + 1))`입니다.", "`best_of_n_exact`는 `(1 - u ** n) * a / (a + b) + u ** n * p * (1 - tpr) / u`입니다. 통과한 후보가 하나라도 있으면 고른 후보가 정답일 확률은 몇 개가 통과했든 `a / (a + b)`입니다.", "`verifier_limit`는 `a / (a + b)`, 즉 정밀도와 같은 식입니다([[lesson:classification-metrics]])."],
     solution: py`
 from math import comb
 

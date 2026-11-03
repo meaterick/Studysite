@@ -67,7 +67,7 @@ export function AiHierarchy() {
         다음 토큰 예측으로 사전학습
       </text>
       <text x={485} y={206} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-        n-gram 언어모델 · HMM
+        n-gram 언어 모델 · HMM
       </text>
       <text x={485} y={222} textAnchor="middle" fontSize={10} fill={inkSecondary}>
         (생성하지만 신경망 아님)

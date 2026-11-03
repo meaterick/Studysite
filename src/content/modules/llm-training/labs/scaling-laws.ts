@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "스케일링 법칙으로 컴퓨트 최적 모델 크기 찾기",
     prompt: md`
-
 재추정한 Chinchilla 상수 $E = 1.82$, $A = 482.01$, $B = 2085.43$, $\alpha = 0.3478$, $\beta = 0.3658$으로 계산합니다.
 
 1. \`loss(N, D)\` $= E + A/N^\alpha + B/D^\beta$ (배열에도 동작)

@@ -166,7 +166,7 @@ A4 3~5쪽 분량의 리포트를 작성합니다. 결과에는 baseline과의 �
 | --- | --- |
 | 이론·연구 | [CS229](https://cs229.stanford.edu/), [CS224n](https://web.stanford.edu/class/cs224n/), [CS336](https://stanford-cs336.github.io/) 과제, 주 1편 논문 스터디 |
 | 강화학습 | [Berkeley CS285](https://rail.eecs.berkeley.edu/deeprlcourse/), [Hugging Face Deep RL Course](https://huggingface.co/learn/deep-rl-course/unit0/introduction) |
-| LLM 엔지니어링 | 파인튜닝(LoRA·[PEFT](https://huggingface.co/docs/peft/index)), 서빙([vLLM](https://docs.vllm.ai/)), 평가, 에이전트 프레임워크 |
+| LLM 엔지니어링 | 미세조정(LoRA·[PEFT](https://huggingface.co/docs/peft/index)), 서빙([vLLM](https://docs.vllm.ai/)), 평가, 에이전트 프레임워크 |
 | 비전·멀티모달 | [CS231n](https://cs231n.github.io/) 과제, CLIP·확산 모델 |
 | 정책·윤리 | [Stanford HAI](https://hai.stanford.edu/), [NIST AI RMF](https://www.nist.gov/itl/ai-risk-management-framework) |
 `,

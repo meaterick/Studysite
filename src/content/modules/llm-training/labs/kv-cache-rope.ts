@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "KV 캐시로 한 토큰씩 생성하기와 RoPE의 상대 거리",
     prompt: md`
-
 1. \`generate_with_cache(X, Wq, Wk, Wv)\`: 토큰이 하나씩 들어온다고 보고, 매 스텝 **새 토큰의 q, k, v만** 계산해 K·V 캐시에 쌓은 뒤 캐시 전체에 attention해 출력을 모읍니다. \`(출력들 (n, d), K·V 계산 횟수)\`를 돌려줍니다. 결과는 문장 전체를 causal mask로 한 번에 계산한 것과 **정확히 같아야** 합니다.
 2. \`rope(v, pos, theta=0.3)\`: 성분 쌍 $(v_{2i}, v_{2i+1})$을 각도 $pos \cdot \theta / 10000^{2i/d}$만큼 회전합니다. 회전한 $q$(위치 $m$)와 $k$(위치 $n$)의 내적은 $m - n$에만 의존해야 합니다.
 `,

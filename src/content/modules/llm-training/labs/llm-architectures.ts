@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "GPT(CLM)와 BERT(MLM)의 학습 문제와 attention 마스크",
     prompt: md`
-
 같은 문장에서 두 목적함수가 만드는 학습 문제를 비교합니다.
 
 1. \`clm_examples(tokens)\`: 위치 1부터 \`(" ".join(앞 토큰들), 다음 토큰)\` 리스트

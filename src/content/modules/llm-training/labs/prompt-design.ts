@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "구분자 탈출 막기, 출력 계약 검사, 다수결",
     prompt: md`
-
-「프롬프트 설계 원칙」의 구분자·구조화 출력·Self-Consistency를 실제 LLM 없이 코드로 만듭니다.
+본문의 구분자, 구조화 출력, Self-Consistency를 실제 LLM 없이 코드로 만듭니다.
 
 1. \`wrap_data(text, tag)\`: 데이터를 \`<tag>\` … \`</tag>\`로 감쌉니다. 데이터 안에 같은 태그(\`<tag>\`, \`</tag>\`)가 들어 있으면 지워서, 데이터가 구분자를 "탈출"해 지시처럼 보이지 못하게 합니다.
 2. \`validate(reply)\`: 모델 응답이 하류 코드와의 계약 \`{"decisions": [문자열...], "todos": [{"who", "what", "due"}...]}\`을 지키면 \`"ok"\`, 아니면 \`"✗ "\`로 시작하는 이유를 돌려줍니다. JSON이 아님 / decisions가 문자열 리스트가 아님 / todo 필드가 정확히 who·what·due가 아님 / due가 문자열도 null도 아님을 서로 다른 메시지로 구분합니다.

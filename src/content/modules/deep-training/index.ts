@@ -21,7 +21,7 @@ export default defineModule({
     "역전파에서 국소 미분의 곱으로 기울기가 소실·폭주하는 원리를 설명하고, 분산 계산으로 Xavier·He 초기화를 유도한다.",
     "BatchNorm과 LayerNorm이 평균과 분산을 계산하는 축을 계산으로 구분하고, 학습 모드와 평가 모드의 차이를 설명한다.",
     "역드롭아웃의 보정과 잔차 연결의 기울기 $F'(x) + 1$을 계산하고, 성능 저하 문제가 최적화의 문제인 이유를 설명한다.",
-    "데이터의 양과 유사도에 따라 특성 추출과 파인튜닝을 고르고, 초기 손실과 배치 하나 과적합으로 학습 실패의 원인을 진단한다.",
+    "데이터의 양과 유사도에 따라 특성 추출과 미세조정을 고르고, 초기 손실과 배치 하나 과적합으로 학습 실패의 원인을 진단한다.",
     "PyTorch의 텐서·autograd·nn.Module·옵티마이저·DataLoader로 GPU 학습 루프와 검증 루프를 작성한다.",
   ],
   lessons: [initialization, normalizationLayers, dropoutResidual, transferLearning, pytorch, pytorchPractice, trainingSchedules, gradientFlow],

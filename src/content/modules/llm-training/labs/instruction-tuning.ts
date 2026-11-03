@@ -3,13 +3,13 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "LoRA 저랭크 근사와 블록 단위 양자화",
+    title: "LoRA의 파라미터 수와 낮은 랭크 근사",
     prompt: md`
+LoRA와 전체 미세조정의 비용을 계산하는 함수를 구현합니다.
 
 1. \`lora_params(d, k, r)\`: $\Delta W = BA$($B$: $d \times r$, $A$: $r \times k$)의 학습 파라미터 수
-2. \`low_rank(dW, r)\`: SVD로 얻은 가장 좋은 랭크-$r$ 근사 $B A$를 돌려줍니다.
-3. \`quantize(W, bits)\`: 대칭 양자화. $q_{max} = 2^{bits-1} - 1$, $\text{scale} = \max|W| / q_{max}$, 정수 $\mathrm{clip}(\mathrm{round}(W/\text{scale}), -q_{max}, q_{max})$에 다시 scale을 곱한 **복원값**을 돌려줍니다.
-4. \`quantize_blocks(W, bits, block)\`: 1차원 \`W\`를 \`block\`개씩 나눠 블록마다 따로 \`quantize\`합니다(QLoRA 방식의 핵심 아이디어).
+2. \`low_rank(dW, r)\`: SVD $\Delta W = U S V^\top$로 얻은 가장 좋은 랭크-$r$ 근사 $U_r S_r V_r^\top$를 돌려줍니다.
+3. \`full_finetune_gb(n_params, bytes_per_param=16)\`: Adam으로 전체 미세조정할 때 가중치·기울기·옵티마이저 상태에 필요한 메모리(GB, $10^9$바이트)
 `,
     starter: py`
 import numpy as np
@@ -18,19 +18,17 @@ def lora_params(d, k, r):
     return 0  # TODO
 
 def low_rank(dW, r):
-    return np.zeros_like(dW)  # TODO
+    return np.zeros_like(dW)  # TODO: U, S, Vt = np.linalg.svd(dW, full_matrices=False)
 
-def quantize(W, bits):
-    return W  # TODO
-
-def quantize_blocks(W, bits, block=64):
-    return W  # TODO
+def full_finetune_gb(n_params, bytes_per_param=16):
+    return 0.0  # TODO
 
 rel = lambda a, b: np.linalg.norm(a - b) / np.linalg.norm(a)
 rng = np.random.default_rng(0)
-W = rng.normal(0, 0.02, 10000)
+dW = rng.normal(size=(64, 4)) @ rng.normal(size=(4, 48))     # 랭크 4인 변화량
 print("LoRA(4096, 4096, 16):", lora_params(4096, 4096, 16))
-print("INT4 전체:", rel(W, quantize(W, 4)), " INT4 블록:", rel(W, quantize_blocks(W, 4)))
+print("r=2 오차:", rel(dW, low_rank(dW, 2)), " r=4 오차:", rel(dW, low_rank(dW, 4)))
+print("70B 전체 미세조정:", full_finetune_gb(70e9), "GB")
 `,
     tests: py`
 import numpy as np
@@ -41,27 +39,26 @@ rng = np.random.default_rng(1)
 def _():
     assert lora_params(4096, 4096, 16) == 131072 and 4096 * 4096 // lora_params(4096, 4096, 16) == 128
 
-@test("랭크 4인 변화량은 r=4 근사로 거의 완벽히 복원된다")
+@test("랭크 4인 변화량은 r=4 근사로 거의 완전히 복원되고, r=2로는 복원되지 않는다")
 def _():
     dW = rng.normal(size=(64, 4)) @ rng.normal(size=(4, 48))
     assert rel(dW, low_rank(dW, 4)) < 1e-8 and rel(dW, low_rank(dW, 2)) > 0.1
 
-@test("INT8 복원 오차 2% 미만, INT2는 훨씬 크다")
+@test("근사의 랭크는 r 이하이고, r이 클수록 오차가 줄어든다")
 def _():
-    W = rng.normal(0, 0.02, 5000)
-    assert rel(W, quantize(W, 8)) < 0.02 and rel(W, quantize(W, 2)) > 0.3
+    M = rng.normal(size=(40, 30))
+    assert np.linalg.matrix_rank(low_rank(M, 3)) <= 3
+    assert rel(M, low_rank(M, 10)) < rel(M, low_rank(M, 3)) < rel(M, low_rank(M, 1))
 
-@test("양자화 값의 종류는 최대 2·q_max + 1개")
+@test("70B 모델의 전체 미세조정 메모리는 약 1,120GB")
 def _():
-    W = rng.normal(0, 1, 5000)
-    assert len(np.unique(np.round(quantize(W, 4) / (np.abs(W).max() / 7)))) <= 15
-
-@test("블록 단위 양자화가 INT4 오차를 줄인다")
-def _():
-    W = rng.normal(0, 0.02, 10000)
-    assert rel(W, quantize_blocks(W, 4, 64)) < 0.8 * rel(W, quantize(W, 4))
+    assert abs(full_finetune_gb(70e9) - 1120) < 1e-6 and abs(full_finetune_gb(7e9, 2) - 14) < 1e-6
 `,
-    hints: ["LoRA는 `d * r + r * k`, 저랭크 근사는 `U, S, Vt = np.linalg.svd(dW)` 다음 `(U[:, :r] * S[:r]) @ Vt[:r]`", "`qmax = 2 ** (bits - 1) - 1`, `scale = np.abs(W).max() / qmax`, `np.clip(np.round(W / scale), -qmax, qmax) * scale`", "`np.concatenate([quantize(W[i:i + block], bits) for i in range(0, len(W), block)])`. 블록마다 최댓값이 작으면 scale도 작아져 더 촘촘히 표현됩니다."],
+    hints: [
+      "LoRA의 파라미터 수는 `d * r + r * k`입니다.",
+      "`U, S, Vt = np.linalg.svd(dW, full_matrices=False)` 다음 `(U[:, :r] * S[:r]) @ Vt[:r]`가 랭크-r 근사입니다.",
+      "메모리는 `n_params * bytes_per_param / 1e9`입니다.",
+    ],
     solution: py`
 import numpy as np
 
@@ -72,19 +69,15 @@ def low_rank(dW, r):
     U, S, Vt = np.linalg.svd(dW, full_matrices=False)
     return (U[:, :r] * S[:r]) @ Vt[:r]
 
-def quantize(W, bits):
-    qmax = 2 ** (bits - 1) - 1
-    scale = np.abs(W).max() / qmax
-    return np.clip(np.round(W / scale), -qmax, qmax) * scale
-
-def quantize_blocks(W, bits, block=64):
-    return np.concatenate([quantize(W[i:i + block], bits) for i in range(0, len(W), block)])
+def full_finetune_gb(n_params, bytes_per_param=16):
+    return n_params * bytes_per_param / 1e9
 
 rel = lambda a, b: np.linalg.norm(a - b) / np.linalg.norm(a)
 rng = np.random.default_rng(0)
-W = rng.normal(0, 0.02, 10000)
+dW = rng.normal(size=(64, 4)) @ rng.normal(size=(4, 48))
 print("LoRA(4096, 4096, 16):", lora_params(4096, 4096, 16))
-print("INT4 전체:", rel(W, quantize(W, 4)), " INT4 블록:", rel(W, quantize_blocks(W, 4)))
+print("r=2 오차:", rel(dW, low_rank(dW, 2)), " r=4 오차:", rel(dW, low_rank(dW, 4)))
+print("70B 전체 미세조정:", full_finetune_gb(70e9), "GB")
 `,
   },
 ]);

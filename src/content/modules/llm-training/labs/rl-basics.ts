@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "점진적 평균과 벨만 방정식으로 Q값 배우기",
     prompt: md`
-
 1. \`update_mean(est, n, r)\`: 지금까지 \`n\`번의 평균 \`est\`에 새 보상 \`r\`을 반영한 평균. 모든 보상을 저장하지 않고 $est + (r - est)/(n+1)$로 갱신합니다.
 2. \`q_learning(n_states, gamma, lr, episodes, eps, seed)\`: 칸 0~(n−1) 복도에서 행동 0=왼쪽, 1=오른쪽. 오른쪽 끝에 닿으면 보상 1로 에피소드가 끝납니다. $\varepsilon$-탐욕으로 행동을 고르고(두 Q값이 같으면 무작위) $Q(s,a) \leftarrow Q(s,a) + \eta\,[r + \gamma \max_{a'} Q(s', a') - Q(s,a)]$로 갱신합니다(끝 상태의 미래 가치는 0). Q 테이블 (n_states, 2)를 돌려줍니다.
 

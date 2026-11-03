@@ -46,7 +46,7 @@ export function TransferLearning() {
     <DiagramFrame
       title="전이학습: 사전학습된 백본 + 새 분류 헤드"
       viewBox="0 0 620 220"
-      caption="① 특성 추출: 사전학습한 층(백본)을 고정하고(freeze) 새 분류층만 학습한다(데이터가 매우 적을 때). ② 파인튜닝: 작은 학습률로 전체 층(또는 뒤쪽 층)까지 갱신한다."
+      caption="① 특성 추출: 사전학습한 층(백본)을 고정하고(freeze) 새 분류층만 학습한다(데이터가 매우 적을 때). ② 미세조정: 작은 학습률로 전체 층(또는 뒤쪽 층)까지 갱신한다."
     >
       <ArrowDefs />
       {blocks.map((b, i) => {

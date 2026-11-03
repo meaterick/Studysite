@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "temperature·top-k·top-p·반복 페널티 구현",
     prompt: md`
-
 1. \`softmax_T(logits, T)\`: $\mathrm{softmax}(z/T)$ (최댓값을 빼서 안정화)
 2. \`top_k(p, k)\`: 확률이 큰 순서로 $k$개만 남기고 다시 정규화(동점은 고려하지 않아도 됨)
 3. \`top_p(p, top_p)\`: 큰 순서로 누적합이 \`top_p\` 이상이 되는 **최소 개수**만 남기고 다시 정규화
