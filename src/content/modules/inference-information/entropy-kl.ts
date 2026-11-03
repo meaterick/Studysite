@@ -3,62 +3,63 @@ import exercises from "./labs/entropy-kl";
 
 export default defineLesson({
   id: "entropy-kl",
-  title: "엔트로피, 교차 엔트로피, KL 발산",
+  title: "교차엔트로피의 분해와 KL 발산",
   tier: "advanced",
-  goal: "엔트로피·교차 엔트로피·KL 발산을 동전 예제로 계산하고, 교차 엔트로피가 분류 손실로 쓰이는 이유와 KL의 비대칭성을 설명할 수 있다.",
-  why: "",
+  requires: ["likelihood-entropy"],
+  goal: "교차엔트로피를 엔트로피와 KL 발산으로 분해하고, KL 발산의 성질(0 이상, 비대칭)을 계산으로 확인하며, 교차엔트로피를 최소화하는 학습이 KL 발산을 줄이는 이유와 KL의 방향에 따라 근사 결과가 달라지는 이유를 설명한다.",
+  why: "분류와 언어 모델의 학습은 데이터 분포와 모델 분포 사이의 KL 발산을 줄이는 일이다. VAE는 잠재변수 분포에 KL 항을 두고([[lesson:generative-math]]), 언어 모델을 선호 데이터로 조정할 때는 원래 모델에서 너무 멀어지지 않도록 KL 벌점을 준다([[lesson:preference-learning]]).",
   body: md`
-지금까지는 확률분포의 "모양"(균등, 정규, 베르누이)을 다뤘다. 이제 그 분포가 "얼마나 불확실한가"를 숫자 하나로 요약하는 도구, 엔트로피(entropy)를 살펴보자. 이는 2주차 이후 계속 마주치게 될 교차 엔트로피 손실함수를 이해하기 위한 사전 준비이기도 하다.
+[[lesson:likelihood-entropy]]에서 엔트로피 $H(p) = -\sum_x p(x)\log p(x)$와 교차엔트로피 $H(p, q) = -\sum_x p(x)\log q(x)$를 정의했다. 이 레슨은 두 값의 차이인 KL 발산의 성질과 쓰임을 다룬다. 이 레슨의 계산은 밑이 2인 로그(비트)로 한다.
 
-정보이론에서 확률변수 $X$의 엔트로피는 다음과 같이 정의된다.
+### 교차엔트로피의 분해
 
-\`\`\`math
-H(X) = -\sum_{x} p(x)\log p(x)
-\`\`\`
-
-이 값은 "그 분포가 얼마나 불확실한가", 달리 말하면 "$X$의 값을 관찰하기 전까지 얼마나 많은 정보를 모르고 있었는가"를 나타낸다. 로그의 밑을 2로 잡으면 단위는 비트(bit)가 된다. 동전 던지기로 직접 계산해서 직관을 얻어 보자.
-
-동전이 완전히 공정할 때($p=0.5$): $H = -[0.5\log_2 0.5 + 0.5\log_2 0.5] = -[0.5\times(-1) + 0.5\times(-1)] = 1$ 비트. 반대로 동전이 앞면만 나오도록 완전히 조작되어 있을 때($p=1$, $1-p=0$, 이때 $0\log_2 0 = 0$으로 정의한다): $H = -[1\times\log_2 1 + 0] = 0$ 비트다. 즉 결과를 완전히 예측할 수 있는 상황(엔트로피 0)과, 결과가 완전히 반반이라 가장 예측하기 어려운 상황(엔트로피 1비트, 결과가 두 가지뿐인 베르누이 분포에서 나올 수 있는 최댓값이다) 사이를 엔트로피가 정확히 숫자로 재고 있다는 것을 확인할 수 있다. 중간값도 하나 확인해보자. 동전이 앞면 쪽으로 약간 치우쳐 있을 때($p=0.9$): $H = -[0.9\log_2 0.9 + 0.1\log_2 0.1] \approx -[0.9\times(-0.152) + 0.1\times(-3.322)] \approx 0.469$ 비트로, 0과 1 사이의 값이 나온다. 어느 정도 예측 가능하지만 완전히 확실하지는 않은 중간 상태다.
-
-\`\`\`image
-src: /images/week1/binary-entropy-plot.svg
-alt: 이항 엔트로피 함수 H(p) 그래프. 가로축은 앞면이 나올 확률 p(0~1), 세로축은 엔트로피(0~1비트)이며 p=0.5에서 최댓값 1비트를 가지는 위로 볼록한 곡선
-caption: 이항 엔트로피 함수. p=0(또는 1)일 때 결과가 완전히 확실하므로 엔트로피가 0이고, p=0.5일 때 가장 불확실하므로 엔트로피가 최댓값 1비트에 이른다.
-credit: Brona(원안)·Alessio Damato(벡터화)·Krishnavedala(단순화), CC BY-SA 3.0 / GFDL, Wikimedia Commons
-width: 300
-height: 300
-\`\`\`
-
-이제 두 분포를 비교하는 도구인 교차 엔트로피(cross entropy)로 넘어가자. 실제 데이터의 분포가 $p$이고, 우리 모델이 예측한 분포가 $q$일 때, 교차 엔트로피는 다음과 같이 정의된다.
+실제 분포가 공정한 동전 $p = (0.5, 0.5)$인데 모델이 $q = (0.9, 0.1)$이라고 예측했다면, 교차엔트로피는
 
 \`\`\`math
-H(p, q) = -\sum_x p(x)\log q(x)
+H(p, q) = -[0.5\log_2 0.9 + 0.5\log_2 0.1] \approx 0.5 \times 0.152 + 0.5 \times 3.322 \approx 1.737\text{비트}
 \`\`\`
 
-이 값은 "실제 분포 $p$를 따르는 사건들을, 모델이 생각하는 분포 $q$의 잣대로 예측하려 할 때 평균적으로 얼마나 많은 비트가 필요한가"를 뜻한다. $q$가 $p$와 완전히 같아지면 $H(p,q)$는 $H(p)$와 같아지는 최솟값에 도달하고, $q$가 $p$와 다를수록 $H(p,q)$는 $H(p)$보다 커진다(이를 깁스 부등식이라 부른다). 즉 교차 엔트로피는 "두 분포가 얼마나 다른가"를 재는 도구이기도 하다. 2주차 이후 분류 모델의 손실함수로 쓰이는 이유가 바로 이것이다. 모델이 정답 분포 $p$를 얼마나 잘 맞히는 예측 분포 $q$를 내놓는지를, 이 교차 엔트로피를 최소화하는 것으로 학습시킬 수 있기 때문이다.
-
-숫자로 확인해보자. 실제 분포가 공정한 동전 $p=(0.5, 0.5)$인데, 모델이 자신 있게(하지만 틀리게) $q=(0.9, 0.1)$이라고 예측했다고 하자. 교차 엔트로피는 $H(p,q) = -[0.5\log_2 0.9 + 0.5\log_2 0.1] \approx -[0.5\times(-0.152)+0.5\times(-3.322)] \approx 1.737$ 비트로, 앞서 구한 $H(p)=1$ 비트보다 크다는 것을 바로 확인할 수 있다.
-
-이 둘의 차이, 즉 "모델이 잘못된 분포를 썼기 때문에 낭비된 비트 수"를 정확히 정의하는 것이 쿨백-라이블러 발산(KL Divergence)이다.
+로, $p$의 엔트로피 $H(p) = 1$비트보다 크다. 교차엔트로피와 엔트로피의 차이를 **KL 발산**(쿨백-라이블러 발산)이라고 한다.
 
 \`\`\`math
-D_{\mathrm{KL}}(p \parallel q) = H(p, q) - H(p)
+D_{\mathrm{KL}}(p \parallel q) = H(p, q) - H(p) = \sum_x p(x)\log\frac{p(x)}{q(x)}
 \`\`\`
 
-위 예제에 대입하면 $D_{\mathrm{KL}}(p\parallel q) \approx 1.737 - 1 = 0.737$ 비트다. KL 발산은 항상 0 이상이며(깁스 부등식), $p$와 $q$가 완전히 같을 때만 정확히 0이 된다. 즉 "두 분포가 서로 얼마나 먼가"를 재는, 언뜻 거리처럼 보이지만 $D_{\mathrm{KL}}(p\parallel q) \ne D_{\mathrm{KL}}(q\parallel p)$이므로 엄밀한 의미의 거리(대칭성을 만족하는)는 아닌 척도다.
+위 예에서는 $1.737 - 1 = 0.737$비트다. 정보이론에서는 $p$를 따르는 결과를 $q$에 맞춘 부호로 기록할 때, $p$에 맞춘 부호보다 평균적으로 더 쓰게 되는 비트 수로 해석한다.
 
 [[diagram:cross-entropy-decomp]]
 
-### 비트와 냇(nat), 그리고 코드로 확인
+### KL 발산의 성질
 
-여기서는 밑이 2인 로그를 써서 비트로 계산했지만, PyTorch 같은 딥러닝 라이브러리는 자연로그($\ln$)를 쓰고 단위는 **냇(nat)**이다. $1\text{ 비트} = \ln 2 \approx 0.693\text{ 냇}$이라 값이 0.693배가 될 뿐 의미는 같다. 예를 들어 정답 클래스에 0.9를 준 예측의 손실은 $-\log_2 0.9 \approx 0.152$비트, $-\ln 0.9 \approx 0.105$냇이다. 앞으로 학습 로그에서 보는 손실 값은 거의 모두 냇 단위다. 이 단계의 숫자들과 KL의 비대칭성을 코드로 확인해 보자.
+- **0 이상이다.** $D_{\mathrm{KL}}(p \parallel q) \ge 0$이고, $p = q$일 때만 0이다(깁스 부등식). 그래서 $H(p, q) \ge H(p)$다.
+- **대칭이 아니다.** 위 예에서 순서를 바꾸면 $D_{\mathrm{KL}}(q \parallel p) = H(q, p) - H(q) = 1 - 0.469 = 0.531$비트로 값이 다르다. 그래서 KL 발산은 거리(대칭이어야 한다)가 아니라 "발산"이라고 부른다.
+- **$p(x) > 0$인데 $q(x) = 0$이면 무한대다.** $p$에서 일어나는 사건에 $q$가 확률 0을 주면 $\log\frac{p(x)}{0}$이 무한대가 된다. 모델의 예측 확률이 정확히 0이 되지 않도록 하는 이유 중 하나다.
+
+### 교차엔트로피 최소화는 KL 최소화다
+
+학습에서 $p$는 데이터의 분포라 고정되어 있고, 모델이 바꿀 수 있는 것은 $q$뿐이다. $H(p, q) = H(p) + D_{\mathrm{KL}}(p \parallel q)$에서 $H(p)$는 $q$와 관계없는 상수이므로, **교차엔트로피를 최소화하는 $q$와 KL 발산을 최소화하는 $q$는 같다.** 분류 모델의 교차엔트로피 손실이 0까지 내려가지 않고 멈추는 것도 이 식으로 설명된다. 같은 입력에 정답이 여럿일 수 있으면 데이터 분포 자체의 엔트로피 $H(p)$가 0보다 크기 때문이다.
+
+### KL의 방향과 근사의 모양
+
+복잡한 분포 $p$를 단순한 분포 $q$로 근사할 때, 어느 방향의 KL을 줄이느냐에 따라 결과가 다르다.
+
+- $D_{\mathrm{KL}}(p \parallel q)$를 줄이면, $p$가 확률을 두는 곳에서 $q$가 작을 때 큰 벌점을 받는다. 그래서 $q$는 $p$의 모든 봉우리를 덮도록 넓게 퍼진다.
+- $D_{\mathrm{KL}}(q \parallel p)$를 줄이면, $q$가 확률을 두는 곳에서 $p$가 작을 때 벌점을 받는다. 그래서 $q$는 $p$의 봉우리 하나에 좁게 맞춰진다.
+
+[[diagram:kl-direction]]
+
+최대가능도추정과 교차엔트로피 학습은 첫째 방향($p$가 데이터)이다. VAE의 학습식에는 근사 분포를 기준으로 한 둘째 방향의 KL이 들어가고([[lesson:generative-math]]), 언어 모델을 선호 데이터로 조정할 때는 조정 중인 모델 $\pi$와 원래 모델 $\pi_{\text{ref}}$ 사이의 $D_{\mathrm{KL}}(\pi \parallel \pi_{\text{ref}})$를 벌점으로 둔다([[lesson:preference-learning]]).
+
+### 비트와 냇, 코드로 확인
+
+딥러닝 라이브러리는 자연로그를 쓰므로 손실과 KL의 단위가 냇이다. $1\text{비트} = \ln 2 \approx 0.693\text{냇}$이라 값이 0.693배가 될 뿐 의미는 같다.
 
 \`\`\`python
 import numpy as np
 
 def entropy(p):
     p = np.asarray(p, dtype=float)
-    p = p[p > 0]                         # 0·log 0 = 0으로 처리
+    p = p[p > 0]                         # 0 · log 0 = 0
     return -np.sum(p * np.log2(p))
 
 def cross_entropy(p, q):
@@ -70,77 +71,78 @@ print(round(entropy(fair), 3), round(entropy(biased), 3))            # 1.0 0.469
 print(round(cross_entropy(fair, biased), 3))                         # 1.737
 print("KL(fair‖biased) =", round(cross_entropy(fair, biased) - entropy(fair), 3))
 print("KL(biased‖fair) =", round(cross_entropy(biased, fair) - entropy(biased), 3))
-print("정답 확률 0.9일 때 손실:", round(-np.log(0.9), 3), "nats =", round(-np.log2(0.9), 3), "bits")
+print("KL(fair‖biased)를 냇으로:", round((cross_entropy(fair, biased) - entropy(fair)) * np.log(2), 3))
 \`\`\`
 
-$D_{\mathrm{KL}}(\text{fair}\parallel\text{biased}) \approx 0.737$, $D_{\mathrm{KL}}(\text{biased}\parallel\text{fair}) \approx 0.531$로 순서를 바꾸면 값이 다르다. 앞쪽 분포가 기준이 되어 "그 분포에서 자주 나오는 사건을 뒤쪽 분포가 얼마나 낮게 보는가"에 벌점을 주기 때문이다. 6주차 RLHF의 KL 벌점과 4주차 VAE에서 이 방향의 차이가 다시 중요해진다.
-
-[[diagram:kl-direction]]
+:::warn 흔한 실수
+- **KL 발산을 거리처럼 대칭으로 쓴다.** $D_{\mathrm{KL}}(p \parallel q) \ne D_{\mathrm{KL}}(q \parallel p)$이므로 어느 분포가 기준인지 명시한다.
+- **예측 확률이 0인 경우를 처리하지 않는다.** $p(x) > 0$인 곳에서 $q(x) = 0$이면 KL과 교차엔트로피가 무한대가 된다.
+- **교차엔트로피 손실이 0이 되어야 한다고 생각한다.** 데이터 분포의 엔트로피 $H(p)$가 0보다 크면 손실의 최솟값은 $H(p)$다.
+:::
 `,
   checks: [
     {
       key: "c1",
-      question: "결과가 네 가지이고 모두 확률 $1/4$로 같은 분포의 엔트로피(밑 2)는?",
-      choices: ["1 비트", "2 비트", "4 비트", "0.25 비트"],
-      answer: 1,
-      explanation: "$H = -4 \\times \\frac14 \\log_2 \\frac14 = \\log_2 4 = 2$ 비트. 균등한 $k$개 결과의 엔트로피는 $\\log_2 k$로, 가능한 최댓값이다.",
+      question: "$p = (0.5, 0.5)$, $q = (0.75, 0.25)$일 때 $D_{\\mathrm{KL}}(p \\parallel q)$(비트)에 가장 가까운 값은?",
+      choices: ["약 0.208", "0", "약 0.811", "1"],
+      answer: 0,
+      explanation: "$H(p, q) = -[0.5\\log_2 0.75 + 0.5\\log_2 0.25] \\approx 0.5 \\times 0.415 + 0.5 \\times 2 = 1.208$이고 $H(p) = 1$이므로 KL은 약 0.208비트다.",
     },
     {
       key: "c2",
-      question: "KL 발산 $D_{\\mathrm{KL}}(p\\parallel q)$에 대한 설명으로 **틀린** 것은?",
-      choices: ["항상 0 이상이다", "$p = q$일 때만 0이다", "$H(p,q) - H(p)$와 같다", "항상 $D_{\\mathrm{KL}}(q\\parallel p)$와 같다"],
+      question: "KL 발산 $D_{\\mathrm{KL}}(p \\parallel q)$에 대한 설명으로 **틀린** 것은?",
+      choices: ["항상 0 이상이다", "$p = q$일 때만 0이다", "$H(p, q) - H(p)$와 같다", "항상 $D_{\\mathrm{KL}}(q \\parallel p)$와 같다"],
       answer: 3,
-      explanation: "KL 발산은 비대칭이다. 한 예로 공정한 분포와 치우친 분포 사이에서 $D_{\\mathrm{KL}}(\\text{fair}\\parallel\\text{biased}) \\approx 0.737$, $D_{\\mathrm{KL}}(\\text{biased}\\parallel\\text{fair}) \\approx 0.531$로 서로 다르다.",
+      explanation: "KL 발산은 대칭이 아니다. 공정한 분포와 (0.9, 0.1) 사이에서 $D_{\\mathrm{KL}}(\\text{fair} \\parallel \\text{biased}) \\approx 0.737$, $D_{\\mathrm{KL}}(\\text{biased} \\parallel \\text{fair}) \\approx 0.531$이다.",
     },
     {
       key: "c3",
-      question: "정답이 0번 클래스일 때, 모델이 0번 클래스에 준 확률 $q_0$가 0.9에서 0.5로 떨어지면 교차 엔트로피 손실은?",
-      choices: ["줄어든다", "늘어난다 (약 0.15 → 1 비트)", "변하지 않는다", "음수가 된다"],
-      answer: 1,
-      explanation: "정답이 원-핫 $[1, 0]$이면 손실은 $-\\log_2 q_0$이다. $q_0$가 작아질수록 손실이 커지므로, 이 손실을 줄이는 학습은 정답 클래스의 확률을 높인다.",
+      question: "데이터 분포 $p$가 고정되어 있을 때, 모델 분포 $q$에 대해 교차엔트로피 $H(p, q)$를 최소화하는 것과 같은 것은?",
+      choices: ["$D_{\\mathrm{KL}}(p \\parallel q)$를 최소화하는 것", "$D_{\\mathrm{KL}}(q \\parallel p)$를 최소화하는 것", "$H(q)$를 최대화하는 것", "$H(p)$를 최소화하는 것"],
+      answer: 0,
+      explanation: "$H(p, q) = H(p) + D_{\\mathrm{KL}}(p \\parallel q)$이고 $H(p)$는 $q$와 관계없는 상수다. 따라서 두 최소화 문제의 해가 같다.",
     },
     {
       key: "c4",
-      question: "정답 클래스에 확률 0.5를 준 예측의 교차 엔트로피 손실은 비트와 냇으로 각각 얼마인가?",
-      choices: ["1비트, 약 0.693냇", "0.5비트, 0.5냇", "약 0.693비트, 1냇", "2비트, 약 1.386냇"],
+      question: "봉우리가 둘인 분포 $p$를 정규분포 $q$ 하나로 근사할 때, $D_{\\mathrm{KL}}(p \\parallel q)$를 줄인 결과로 알맞은 것은?",
+      choices: [
+        "$q$가 두 봉우리를 모두 덮도록 넓게 퍼진다",
+        "$q$가 봉우리 하나에 좁게 맞춰진다",
+        "$q$가 $p$와 정확히 같아진다",
+        "$q$의 분산이 0이 된다",
+      ],
       answer: 0,
-      explanation: "$-\\log_2 0.5 = 1$비트, $-\\ln 0.5 = \\ln 2 \\approx 0.693$냇이다. 단위만 다르고 같은 양이다.",
+      explanation: "$p$가 확률을 두는 곳에서 $q$가 작으면 큰 벌점을 받으므로 $q$는 두 봉우리를 모두 덮는다. 반대 방향 $D_{\\mathrm{KL}}(q \\parallel p)$를 줄이면 봉우리 하나에 맞춰진다.",
     },
     {
       key: "c5",
-      question: "모델의 예측 분포 $q$가 정답 분포 $p$와 완전히 같아지면 교차 엔트로피 $H(p, q)$는?",
-      choices: ["$p$의 엔트로피 $H(p)$와 같아지고 KL 발산은 0이 된다", "0이 된다", "무한대가 된다", "1비트가 된다"],
+      question: "모델의 예측 분포 $q$가 정답 분포 $p$와 완전히 같아지면 교차엔트로피 $H(p, q)$는?",
+      choices: ["$H(p)$와 같아지고 KL 발산은 0이 된다", "0이 된다", "무한대가 된다", "1비트가 된다"],
       answer: 0,
-      explanation: "$H(p, q) = H(p) + D_{\\mathrm{KL}}(p\\parallel q)$이고 $q = p$면 KL이 0이다. 정답 분포 자체가 불확실하면 $H(p) > 0$이라 손실이 0까지 내려가지는 않는다.",
+      explanation: "$H(p, q) = H(p) + D_{\\mathrm{KL}}(p \\parallel q)$이고 $q = p$면 KL이 0이다. 정답 분포 자체가 불확실하면 $H(p) > 0$이라 손실이 0까지 내려가지 않는다.",
     },
     {
       key: "c6",
       question: "엔트로피 구현의 `p = p[p > 0]` 줄을 지우고 `entropy([1.0, 0.0])`을 계산하면?",
       choices: ["0.0이 정상적으로 나온다", "`nan`이 나온다. $0 \\cdot \\log 0$이 `0 * -inf = nan`이 되기 때문이다", "1.0이 나온다", "`ZeroDivisionError`가 발생한다"],
       answer: 1,
-      explanation: "NumPy에서 `np.log2(0)`은 `-inf`이고 `0 * -inf`는 `nan`입니다. 수학에서는 극한으로 $0 \\cdot \\log 0 = 0$이라 정의하므로, 코드에서도 확률이 0인 항을 빼고 더해야 정의와 같아집니다.",
+      explanation: "NumPy에서 `np.log2(0)`은 `-inf`이고 `0 * -inf`는 `nan`이다. 수학에서는 극한으로 $0 \\cdot \\log 0 = 0$으로 정의하므로, 코드에서도 확률이 0인 항을 빼고 더해야 정의와 같아진다.",
     },
   ],
   exercises,
   descriptive: [
     {
       key: "d1",
-      question: "공정한 동전($p=0.5$)과 항상 앞면만 나오는 동전($p=1$)의 엔트로피를 각각 계산하고 비교하라.",
+      question: "교차엔트로피 $H(p, q)$와 KL 발산 $D_{\\mathrm{KL}}(p \\parallel q)$의 관계식을 쓰고, 분류 모델을 교차엔트로피로 학습하는 것이 무엇을 줄이는 것인지 설명하라. 손실이 0까지 내려가지 않는 경우도 설명하라.",
       answer: md`
-$p=0.5$(50:50)일 때 엔트로피는 최댓값인 1비트로, 결과를 가장 예측하기 어려운 상태다. $p=1$(한쪽으로 확실)일 때 엔트로피는 0비트로, 불확실성이 전혀 없다는 뜻이다.
+$H(p, q) = H(p) + D_{\mathrm{KL}}(p \parallel q)$이다. 교차엔트로피는 데이터 분포 $p$ 자체의 불확실성 $H(p)$와, 모델 분포 $q$가 $p$와 달라서 생기는 추가분 $D_{\mathrm{KL}}(p \parallel q)$의 합이다.
+
+학습에서 $p$는 데이터로 정해져 있어 $H(p)$는 상수다. 따라서 교차엔트로피를 최소화하는 것은 데이터 분포와 모델 분포 사이의 KL 발산을 최소화하는 것과 같다. KL 발산은 $q = p$일 때 0이 되므로, 그때 손실은 최솟값 $H(p)$가 된다. 같은 입력에 정답이 여럿일 수 있는 데이터(예: 다음 단어가 여러 개 가능한 문장)는 $H(p) > 0$이라, 모델이 데이터 분포를 정확히 맞혀도 손실이 0이 되지 않는다.
 `,
-      keyPoints: [],
-    },
-    {
-      key: "d2",
-      question: "교차 엔트로피 $H(p,q)$와 KL 발산 $D_{\\mathrm{KL}}(p\\parallel q)$의 관계식을 쓰고, 그 의미를 설명하라.",
-      answer: md`
-$\text{KL}(p\|q) = H(p,q) - H(p)$ 관계가 성립한다. 교차 엔트로피 $H(p,q)$는 실제 분포 $p$ 대신 잘못된 분포 $q$를 썼을 때 드는 평균 비트 수이고, 여기서 $p$ 자체의 고유한 불확실성 $H(p)$를 뺀 나머지(KL divergence)가 순수하게 $q$가 $p$와 다르기 때문에 '낭비된' 비트 수다.
-`,
-      keyPoints: [],
+      keyPoints: ["$H(p, q) = H(p) + D_{\\mathrm{KL}}(p \\parallel q)$", "$H(p)$는 $q$와 관계없는 상수", "교차엔트로피 최소화 = $D_{\\mathrm{KL}}(p \\parallel q)$ 최소화", "$H(p) > 0$이면 손실의 최솟값은 0이 아니라 $H(p)$"],
     },
   ],
   references: [
-    { title: "Chris Olah — Visual Information Theory", url: "https://colah.github.io/posts/2015-09-Visual-Information/", note: "엔트로피·교차 엔트로피·KL을 그림으로 설명한 대표적인 글 (영문)" },
+    { title: "Chris Olah — Visual Information Theory", url: "https://colah.github.io/posts/2015-09-Visual-Information/", note: "엔트로피·교차엔트로피·KL 발산을 그림으로 설명한 글 (영문)" },
   ],
 });

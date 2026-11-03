@@ -8,7 +8,7 @@ export default defineAssignment({
 
 NumPy만으로 선형회귀를 경사하강법으로 학습하고, 학습률에 따른 수렴 양상을 비교합니다. 이어서 베이즈 정리 예제의 조건을 바꿔 사후확률이 어떻게 달라지는지 확인합니다. 모든 작업은 이 페이지의 코드 셀과 답안 칸에서 진행하며, 코드는 브라우저에서 실행됩니다.
 
-**핵심** 항목 세 개(경사하강법·학습률 비교·베이즈 정리)는 핵심 과정만으로 풀 수 있도록 구성했고, 채점 기준은 이 세 항목만 봅니다. **보충**(해석해 비교)과 **심화**(조건수·미니배치 등) 항목은 선택이며, 점수 대신 피드백을 받습니다.
+**핵심** 항목 세 개(경사하강법·학습률 비교·베이즈 정리)는 트랙 2의 핵심 레슨만으로 풀 수 있도록 구성했고, 채점 기준은 이 세 항목만 봅니다. **보충**(해석해 비교)과 **심화**(조건수·미니배치 등) 항목은 선택이며, 점수 대신 피드백을 받습니다.
 `,
   requirements: [
     "`grad`의 TODO 두 줄을 직접 유도한 편미분으로 채우고, 학습 결과 $w \\approx 2$, $b \\approx 1$을 얻는다.",
@@ -24,7 +24,7 @@ NumPy만으로 선형회귀를 경사하강법으로 학습하고, 학습률에 
       tier: "core",
       instructions: md`
 
-데이터 $y = 2x + 1 + \varepsilon$ 100개를 생성하고(노이즈 $\varepsilon$은 「연속 확률분포」 단계에서 보는 정규분포 난수 \`rng.normal(0, 0.5, n)\`입니다), 평균제곱오차 $L(w, b) = \frac{1}{n}\sum_i (w x_i + b - y_i)^2$를 경사하강법으로 최소화합니다.
+데이터 $y = 2x + 1 + \varepsilon$ 100개를 생성하고(잡음 $\varepsilon$은 [[lesson:distributions]]의 정규분포 난수 \`rng.normal(0, 0.5, n)\`입니다), 평균제곱오차 $L(w, b) = \frac{1}{n}\sum_i (w x_i + b - y_i)^2$를 경사하강법으로 최소화합니다.
 
 1. 답안 칸에 $\partial L/\partial w$와 $\partial L/\partial b$를 유도 과정과 함께 적습니다.
 2. 코드 셀의 \`grad\` 함수에서 \`TODO\` 두 줄을 유도한 식으로 채우고 실행합니다. 학습이 끝났을 때 $w \approx 2$, $b \approx 1$이 나오면 올바르게 구현한 것입니다.
@@ -97,7 +97,7 @@ plt.show()
       tier: "core",
       instructions: md`
 
-「확률과 베이즈 정리」 단계의 예제(유병률 1%, 민감도 99%, 위양성률 5%)를 함수로 만들고, 유병률을 0.1%, 1%, 10%, 30%로 바꿔 양성 판정을 받은 사람이 실제로 병이 있을 확률 $P(\text{병} \mid \text{양성})$을 계산합니다. 유병률에 따라 결과가 크게 달라지는 이유를 적습니다.
+[[lesson:bayes]]의 예제(유병률 1%, 민감도 99%, 위양성률 5%)를 함수로 만들고, 유병률을 0.1%, 1%, 10%, 30%로 바꿔 양성 판정을 받은 사람이 실제로 병이 있을 확률 $P(\text{병} \mid \text{양성})$을 계산합니다. 유병률에 따라 결과가 크게 달라지는 이유를 적습니다.
 `,
       cells: [
         { kind: "code", id: "bayes-code", label: "사후확률 계산", starter: py`
@@ -118,7 +118,7 @@ for prev in (0.001, 0.01, 0.1, 0.3):
       tier: "supplement",
       instructions: md`
 
-선형회귀는 반복 없이 한 번에 푸는 해석해(최소제곱 해)가 있습니다. 설계 행렬 $X = [x, 1]$(각 행이 $[x_i, 1]$)을 만들면 예측은 $X\begin{bmatrix}w\\b\end{bmatrix}$이고, \`np.linalg.lstsq\`가 $\lVert Xw - y \rVert^2$을 최소화하는 해를 바로 구합니다. 경사하강법 결과와의 차이를 출력하고, 차이가 생긴다면 그 원인이 무엇인지(스텝 수, 학습률 등) 적습니다. 보충 과정의 「벡터공간·기저와 행렬 곱셈」 단계를 먼저 보면 설계 행렬이 더 잘 읽힙니다.
+선형회귀는 반복 없이 한 번에 푸는 해석해(최소제곱 해)가 있습니다. 설계 행렬 $X = [x, 1]$(각 행이 $[x_i, 1]$)을 만들면 예측은 $X\begin{bmatrix}w\\b\end{bmatrix}$이고, \`np.linalg.lstsq\`가 $\lVert Xw - y \rVert^2$을 최소화하는 해를 바로 구합니다. 경사하강법 결과와의 차이를 출력하고, 차이가 생긴다면 그 원인이 무엇인지(스텝 수, 학습률 등) 적습니다. [[lesson:matrix-multiplication]]의 샘플 묶음 계산을 먼저 보면 설계 행렬이 더 잘 읽힙니다.
 `,
       cells: [
         { kind: "code", id: "lstsq-code", label: "최소제곱 해석해", starter: py`
@@ -137,9 +137,9 @@ print(f"차이: |Δw| = {abs(w - w_star):.2e}, |Δb| = {abs(b - b_star):.2e}")
       tier: "advanced",
       instructions: md`
 
-다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않으며, 심화 단계의 내용을 실제 데이터에 적용해 보는 것이 목적입니다.
+다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않으며, 심화 레슨의 내용을 실제 데이터에 적용해 보는 것이 목적입니다.
 
-- **조건수 실험:** 입력을 $x' = 100x + 50$으로 바꾸면 경사하강법이 발산하지 않는 최대 학습률이 얼마로 줄어드는지 예측하고 확인합니다. 헤세 행렬 $H = \frac{2}{n}X^\top X$의 고유값으로 상한 $2/\lambda_{\max}$와 조건수를 계산하고, $x'$을 표준화했을 때와 비교합니다(「경사하강법의 수렴 조건과 조건수」).
+- **조건수 실험:** 입력을 $x' = 100x + 50$으로 바꾸면 경사하강법이 발산하지 않는 최대 학습률이 얼마로 줄어드는지 예측하고 확인합니다. 헤세 행렬 $H = \frac{2}{n}X^\top X$의 고유값으로 상한 $2/\lambda_{\max}$와 조건수를 계산하고, $x'$을 표준화했을 때와 비교합니다([[lesson:gd-convergence]]).
 - 미니배치 확률적 경사하강법으로 바꾸고, 배치 크기(1, 10, 100)에 따라 loss 곡선의 잡음이 어떻게 달라지는지 비교합니다.
 - 스텝이 진행될수록 학습률을 줄이는 학습률 스케줄을 적용해 고정 학습률과 수렴 속도를 비교합니다.
 - 가상의 10만 명을 만들어 베이즈 정리 결과를 시뮬레이션으로 검증하거나, 동전 던지기의 MLE와 MAP 추정치가 시행 횟수 $n$이 커질수록 가까워지는지 확인합니다.
@@ -160,13 +160,13 @@ print(f"차이: |Δw| = {abs(w - w_star):.2e}, |Δb| = {abs(b - b_star):.2e}")
   ],
   gradingNotes: md`
 - **경사하강법으로 w, b 학습하기**: $\dfrac{\partial L}{\partial w} = \dfrac{2}{n}\sum_i (wx_i+b-y_i)x_i$, $\dfrac{\partial L}{\partial b} = \dfrac{2}{n}\sum_i (wx_i+b-y_i)$이다. 학습률 0.1로 200스텝 학습하면 $w \approx 2.006$, $b \approx 0.994$가 되어 해석해와 소수점 넷째 자리까지 일치한다.
-- **학습률 네 가지 비교**: $x \sim U(-3, 3)$이므로 $\mathbb{E}[x^2]=3$이고, 손실의 헤세 행렬 고윳값은 약 6과 2다. 학습률이 $2/6 \approx 0.33$을 넘는 0.5는 발산하고, 0.001은 200스텝 안에 수렴하지 않는다.
+- **학습률 네 가지 비교**: $x \sim U(-3, 3)$이므로 $\mathbb{E}[x^2]=3$이고, 손실의 헤세 행렬 고유값은 약 6과 2다. 학습률이 $2/6 \approx 0.33$을 넘는 0.5는 발산하고, 0.001은 200스텝 안에 수렴하지 않는다.
 - **베이즈 정리 다시 계산하기**: 민감도 99%, 위양성률 5%에서 유병률 0.1%, 1%, 10%, 30%의 사후확률은 각각 약 1.9%, 16.7%, 68.8%, 89.5%다.
 - 우수 답안은 발산 경계를 곡률로 설명하고, 유병률이 낮을 때 위양성의 절대 수가 진양성보다 많아지는 구조를 사람 수로 보인다.
 `,
   maxScore: 10,
   autoTests: [
-    { id: "w1-at-grad", taskId: "gd", title: "grad가 수치미분과 일치한다", hint: "평균의 1/n과 제곱을 미분할 때 나오는 2를 빠뜨리지 않았는지 확인하십시오.", code: py`
+    { id: "gd-at-grad", taskId: "gd", title: "grad가 수치미분과 일치한다", hint: "평균의 1/n과 제곱을 미분할 때 나오는 2를 빠뜨리지 않았는지 확인하십시오.", code: py`
 for w0, b0 in [(0.0, 0.0), (1.5, -0.5)]:
     dw, db = grad(w0, b0)
     h = 1e-6
@@ -175,14 +175,14 @@ for w0, b0 in [(0.0, 0.0), (1.5, -0.5)]:
     assert abs(dw - num_dw) < 1e-4 and abs(db - num_db) < 1e-4, (
         f"(w, b) = ({w0}, {b0})에서 grad = ({dw:.4f}, {db:.4f}), 수치미분 = ({num_dw:.4f}, {num_db:.4f})")
 ` },
-    { id: "w1-at-train", taskId: "gd", title: "학습 결과가 w ≈ 2, b ≈ 1이고 손실이 줄었다", hint: "`grad`를 고친 뒤 첫 코드 셀을 다시 실행해야 `w`, `b`, `history`가 새로 계산됩니다.", code: py`
+    { id: "gd-at-train", taskId: "gd", title: "학습 결과가 w ≈ 2, b ≈ 1이고 손실이 줄었다", hint: "`grad`를 고친 뒤 첫 코드 셀을 다시 실행해야 `w`, `b`, `history`가 새로 계산됩니다.", code: py`
 assert abs(w - 2) < 0.1 and abs(b - 1) < 0.1, f"w = {w:.3f}, b = {b:.3f}"
 assert history[-1] < history[0], "손실이 줄지 않았습니다."
 ` },
-    { id: "w1-at-lstsq", taskId: "lstsq", title: "경사하강법 결과가 해석해와 0.01 이내", code: py`
+    { id: "gd-at-lstsq", taskId: "lstsq", title: "경사하강법 결과가 해석해와 0.01 이내", code: py`
 assert abs(w - w_star) < 0.01 and abs(b - b_star) < 0.01, f"|Δw| = {abs(w - w_star):.2e}, |Δb| = {abs(b - b_star):.2e}"
 ` },
-    { id: "w1-at-bayes", taskId: "bayes", title: "posterior가 베이즈 정리와 일치하고 유병률에 따라 커진다", hint: "전체 확률의 법칙: $P(\\text{양성}) = P(\\text{양성} \\mid \\text{병})P(\\text{병}) + P(\\text{양성} \\mid \\text{건강})P(\\text{건강})$", code: py`
+    { id: "gd-at-bayes", taskId: "bayes", title: "posterior가 베이즈 정리와 일치하고 유병률에 따라 커진다", hint: "전체 확률의 법칙: $P(\\text{양성}) = P(\\text{양성} \\mid \\text{병})P(\\text{병}) + P(\\text{양성} \\mid \\text{건강})P(\\text{건강})$", code: py`
 assert abs(posterior(0.01) - 0.0099 / 0.0594) < 1e-4, f"posterior(0.01) = {posterior(0.01)}"
 vals = [posterior(p) for p in (0.001, 0.01, 0.1, 0.3)]
 assert all(a < b for a, b in zip(vals, vals[1:])), f"유병률 순서대로의 값: {vals}"
@@ -290,16 +290,16 @@ for bs in (1, 10, 100):
       title: "수치미분으로 기울기 검산하기 (gradient check)",
       prompt: md`
 
-손으로 유도한 기울기가 맞는지 확인하는 표준 방법인 **gradient check**를 일반 함수로 만듭니다. 3주차 역전파 구현을 검증할 때도 그대로 씁니다.
+손으로 유도한 기울기가 맞는지 확인하는 표준 방법인 **기울기 검사**(gradient check)를 일반 함수로 만듭니다. 역전파를 직접 구현할 때도 이 방법으로 결과를 검증합니다.
 
-1. \`numerical_grad(f, params, eps)\`: 파라미터 리스트의 각 성분만 $\pm\varepsilon$ 움직여 중앙 차분 $\dfrac{f(\theta + \varepsilon) - f(\theta - \varepsilon)}{2\varepsilon}$을 구합니다. 원래 \`params\`는 바꾸지 않습니다.
+1. \`numerical_grad(f, params, eps)\`: 파라미터 리스트의 각 성분만 $\pm\varepsilon$ 움직여 중심차분 $\dfrac{f(\theta + \varepsilon) - f(\theta - \varepsilon)}{2\varepsilon}$을 구합니다. 원래 \`params\`는 바꾸지 않습니다.
 2. \`relative_error(a, b)\` $= \dfrac{|a - b|}{\max(10^{-12}, |a| + |b|)}$
 
 일부러 틀린 기울기(2를 빠뜨린 것)를 넣었을 때 상대오차가 크게 나오는지도 확인합니다.
 `,
       starter: py`
 def numerical_grad(f, params, eps=1e-6):
-    """f(params)의 각 성분에 대한 중앙 차분 기울기 리스트. params는 float 리스트"""
+    """f(params)의 각 성분에 대한 중심차분 기울기 리스트. params는 float 리스트"""
     grads = []
     for i in range(len(params)):
         plus, minus = list(params), list(params)

@@ -3,10 +3,10 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "MLE·MAP의 닫힌 해와 분산 추정의 편향",
+    title: "MLE·MAP의 닫힌 형태의 해와 분산 추정의 편향",
     prompt: md`
 
-「이산확률분포와 가능도: MLE와 MAP」에서 격자 탐색으로 찾은 값을 **닫힌 형태의 해**로 구하고, 최대가능도 추정이 언제 치우치는지 확인합니다.
+[[lesson:likelihood-entropy]]에서 격자 탐색으로 찾은 최대가능도추정값과 본문의 MAP 추정값을 **닫힌 형태의 해**로 구하고, 최대가능도추정이 언제 치우치는지 확인합니다.
 
 1. \`bernoulli_mle(xs)\`: 0/1 관측의 MLE $\hat p = k/n$
 2. \`beta_map(k, n, a, b)\`: 사전분포 $\text{Beta}(a, b)$의 로그 $(a-1)\log p + (b-1)\log(1-p)$를 로그가능도에 더해 미분하면

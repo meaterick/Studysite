@@ -221,3 +221,156 @@ export function CorrelationGallery() {
     </DiagramFrame>
   );
 }
+
+/** 큰 수의 법칙: 주사위 누적 평균이 3.5로 다가가고, 흔들림은 1/√n으로 줄어든다 */
+export function LlnRunningMean() {
+  const N = 2000;
+  const sigma = Math.sqrt(35 / 12);
+  const G = { left: 56, top: 22, width: 600, height: 190 };
+  const lx = (n: number) => Math.log10(n);
+  const sx = linear(0, lx(N), G.left, G.left + G.width);
+  const sy = linear(1.5, 5.5, G.top + G.height, G.top);
+  const runs = [3, 8, 21].map((seed, i) => {
+    const rand = seeded(seed);
+    let sum = 0;
+    const pts: string[] = [];
+    for (let n = 1; n <= N; n++) {
+      sum += 1 + Math.floor(rand() * 6);
+      if (n < 20 || n % 5 === 0) pts.push(`${sx(lx(n)).toFixed(1)},${sy(Math.max(1.5, Math.min(5.5, sum / n))).toFixed(1)}`);
+    }
+    return { pts: pts.join(" "), color: [colors.blue, colors.orange, colors.aqua][i] };
+  });
+  const band = (sign: number) =>
+    Array.from({ length: 120 }, (_, i) => {
+      const n = 10 ** ((i / 119) * lx(N));
+      return `${sx(lx(n)).toFixed(1)},${sy(Math.max(1.5, Math.min(5.5, 3.5 + sign * 1.96 * sigma / Math.sqrt(n)))).toFixed(1)}`;
+    });
+  const bandPath = `M${band(1).join(" L")} L${band(-1).reverse().join(" L")} Z`;
+  return (
+    <DiagramFrame
+      title="큰 수의 법칙: 표본평균은 모평균으로 다가간다"
+      caption="주사위를 던질 때마다 그때까지의 평균을 그린 것이다(세 번 반복, 가로축은 로그 눈금). 처음에는 평균이 크게 흔들리지만 던진 횟수 n이 늘수록 모평균 3.5(점선)에 가까워진다. 옅은 띠는 3.5 ± 1.96σ/√n으로, 표본평균의 약 95%가 들어가는 범위다. 띠의 폭은 1/√n에 비례하므로 n을 100배로 늘려야 폭이 10분의 1로 줄어든다."
+      viewBox="0 0 700 258"
+      minWidth={560}
+    >
+      <path d={bandPath} fill={colors.violet} fillOpacity={0.1} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 1, 2, 3]} yTicks={[2, 3, 3.5, 4, 5]} fmtX={(v) => String(10 ** v)} xLabel="던진 횟수 n (로그 눈금)" yLabel="누적 평균" />
+      <line x1={G.left} x2={G.left + G.width} y1={sy(3.5)} y2={sy(3.5)} stroke={ink} strokeDasharray="5 4" />
+      {runs.map((r) => (
+        <polyline key={r.color} points={r.pts} fill="none" stroke={r.color} strokeWidth={1.6} />
+      ))}
+      <text x={G.left + G.width - 4} y={sy(3.5) - 6} textAnchor="end" fontSize={10.5} fontWeight={700} fill={ink} {...halo}>
+        모평균 3.5
+      </text>
+    </DiagramFrame>
+  );
+}
+
+/** 95% 신뢰구간 40개: 대부분 모평균을 포함하고, 약 5%는 포함하지 못한다 */
+export function CiCoverage() {
+  const mu = 50;
+  const sigma = 10;
+  const n = 30;
+  const rand = seeded(5);
+  const intervals = Array.from({ length: 40 }, () => {
+    const xs = Array.from({ length: n }, () => mu + sigma * gaussian(rand));
+    const m = mean(xs);
+    const s = Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / (n - 1));
+    const half = 1.96 * (s / Math.sqrt(n));
+    return { m, lo: m - half, hi: m + half };
+  });
+  const misses = intervals.filter((iv) => iv.lo > mu || iv.hi < mu).length;
+  const sx = linear(42, 58, 60, 660);
+  const rowH = 5.2;
+  const top = 26;
+  return (
+    <DiagramFrame
+      title="95% 신뢰구간의 뜻: 같은 방법을 반복하면 95%가 모평균을 포함한다"
+      caption={`모평균 50, 표준편차 10인 모집단에서 크기 30인 표본을 40번 뽑아, 표본마다 95% 신뢰구간 x̄ ± 1.96·s/√n을 그렸다. 구간은 표본마다 다르고, 이번에는 40개 중 ${misses}개(빨강)가 모평균(점선)을 포함하지 못했다. "95%"는 이 방법으로 만든 구간 가운데 모평균을 포함하는 비율이다. 이미 만든 구간 하나가 모평균을 포함할 확률이 95%라는 뜻이 아니다.`}
+      viewBox="0 0 720 264"
+      minWidth={560}
+    >
+      <line x1={sx(mu)} x2={sx(mu)} y1={top - 8} y2={top + intervals.length * rowH + 6} stroke={ink} strokeDasharray="5 4" />
+      {intervals.map((iv, i) => {
+        const miss = iv.lo > mu || iv.hi < mu;
+        const y = top + i * rowH;
+        const c = miss ? colors.red : colors.blue;
+        return (
+          <g key={i}>
+            <line x1={sx(iv.lo)} x2={sx(iv.hi)} y1={y} y2={y} stroke={c} strokeWidth={miss ? 2.4 : 1.6} />
+            <circle cx={sx(iv.m)} cy={y} r={1.8} fill={c} />
+          </g>
+        );
+      })}
+      <line x1={sx(42)} x2={sx(58)} y1={240} y2={240} stroke={inkMuted} />
+      {[42, 46, 50, 54, 58].map((t) => (
+        <g key={t}>
+          <line x1={sx(t)} x2={sx(t)} y1={240} y2={244} stroke={inkMuted} />
+          <text x={sx(t)} y={257} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+            {t}
+          </text>
+        </g>
+      ))}
+      <text x={sx(mu) + 6} y={top - 10} fontSize={10.5} fontWeight={700} fill={ink}>
+        모평균 μ = 50
+      </text>
+    </DiagramFrame>
+  );
+}
+
+/** 양측 검정의 p값: 귀무가설 아래에서 관찰값보다 극단적인 z가 나올 확률(양쪽 꼬리 넓이) */
+export function PValueArea() {
+  const z0 = 2.2;
+  const G = { left: 40, top: 20, width: 640, height: 170 };
+  const sx = linear(-4, 4, G.left, G.left + G.width);
+  const phi = (z: number) => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+  const sy = linear(0, 0.42, G.top + G.height, G.top);
+  const curve = Array.from({ length: 161 }, (_, i) => {
+    const z = -4 + i * 0.05;
+    return `${sx(z).toFixed(1)},${sy(phi(z)).toFixed(1)}`;
+  }).join(" ");
+  const tail = (a: number, b: number) => {
+    const pts = Array.from({ length: 41 }, (_, i) => {
+      const z = a + ((b - a) * i) / 40;
+      return `${sx(z).toFixed(1)},${sy(phi(z)).toFixed(1)}`;
+    });
+    return `M${sx(a).toFixed(1)},${sy(0).toFixed(1)} L${pts.join(" L")} L${sx(b).toFixed(1)},${sy(0).toFixed(1)} Z`;
+  };
+  return (
+    <DiagramFrame
+      title="p값: 귀무가설이 맞을 때 관찰한 것만큼 극단적인 결과가 나올 확률"
+      caption="동전을 100번 던져 앞면이 61번 나왔다. 귀무가설(공정한 동전, p = 0.5) 아래에서 앞면 비율의 표준오차는 0.05이므로 z = (0.61 − 0.5) / 0.05 = 2.2다. 양측 검정의 p값은 표준정규분포에서 |z| ≥ 2.2인 양쪽 꼬리의 넓이(빨강) 약 0.028이다. 유의수준 0.05보다 작으므로 귀무가설을 기각한다. 점선은 유의수준 0.05의 경계 ±1.96이다."
+      viewBox="0 0 720 240"
+      minWidth={560}
+    >
+      <path d={tail(z0, 4)} fill={colors.red} fillOpacity={0.35} />
+      <path d={tail(-4, -z0)} fill={colors.red} fillOpacity={0.35} />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[-3, -2, -1, 0, 1, 2, 3]} fmtX={minusText} grid={false} xLabel="z (귀무가설 아래의 표준정규분포)" />
+      <polyline points={curve} fill="none" stroke={colors.blue} strokeWidth={2.4} />
+      {[-1.96, 1.96].map((c) => (
+        <line key={c} x1={sx(c)} x2={sx(c)} y1={sy(0)} y2={sy(0.3)} stroke={ink} strokeDasharray="4 4" strokeOpacity={0.6} />
+      ))}
+      {[-z0, z0].map((z) => (
+        <g key={z}>
+          <line x1={sx(z)} x2={sx(z)} y1={sy(0)} y2={sy(0.2)} stroke={colors.red} strokeWidth={2} />
+          <text x={sx(z)} y={sy(0.2) - 6} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.red} {...halo}>
+            {`z = ${minusText(z)}`}
+          </text>
+        </g>
+      ))}
+      <text x={sx(3.1)} y={sy(0.06)} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.red} {...halo}>
+        0.014
+      </text>
+      <text x={sx(-3.1)} y={sy(0.06)} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.red} {...halo}>
+        0.014
+      </text>
+      <text x={sx(0)} y={sy(0.2)} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink} {...halo}>
+        p값 = 0.014 + 0.014 ≈ 0.028
+      </text>
+    </DiagramFrame>
+  );
+}
+
+function minusText(v: number) {
+  return String(v).replace("-", "−");
+}

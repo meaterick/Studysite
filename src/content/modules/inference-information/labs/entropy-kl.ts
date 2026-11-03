@@ -6,13 +6,13 @@ export default defineExercises([
     title: "엔트로피·교차 엔트로피·KL 발산 구현",
     prompt: md`
 
-「엔트로피·교차 엔트로피·KL 발산」의 세 정의를 밑이 2인 로그(비트)로 구현합니다.
+본문의 세 정의를 밑이 2인 로그(비트)로 구현합니다.
 
 - $H(p) = -\sum_i p_i \log_2 p_i$ (단, $0 \cdot \log 0 = 0$)
 - $H(p, q) = -\sum_i p_i \log_2 q_i$ ($p_i = 0$인 항은 기여하지 않음)
 - $D_{\mathrm{KL}}(p \parallel q) = H(p, q) - H(p)$
 
-확률이 0인 항 때문에 \`nan\`이 나오지 않도록 하는 것이 이 문제의 핵심입니다.
+확률이 0인 항 때문에 \`nan\`이 나오지 않도록 처리해야 합니다.
 `,
     starter: py`
 import numpy as np
