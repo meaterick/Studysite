@@ -5,9 +5,10 @@ export default defineExercises([
     key: "ex1",
     title: "반복문 없는 풀링과 수용영역 계산기",
     prompt: md`
+풀링과 수용영역을 계산하는 함수를 구현합니다.
 
 1. \`max_pool(a)\`, \`avg_pool(a)\`: $2 \times 2$ 영역, stride 2 풀링을 **반복문 없이** \`reshape\`와 \`axis\`로 구현합니다. (H, W)를 (H/2, 2, W/2, 2)로 바꾸면 블록 내부가 1번·3번 축이 됩니다.
-2. \`receptive_field(layers)\`: \`(커널, 보폭)\` 리스트를 받아 마지막 층 한 칸이 입력에서 보는 범위를 돌려줍니다. 층마다 $r \leftarrow r + (k-1)\,j$, $j \leftarrow j \cdot s$로 갱신합니다($r = j = 1$에서 시작).
+2. \`receptive_field(layers)\`: \`(커널 크기, stride)\` 리스트를 받아 마지막 층 한 칸의 수용영역 크기를 돌려줍니다. 층마다 $r \leftarrow r + (k-1)\,j$, $j \leftarrow j \cdot s$로 갱신합니다($r = j = 1$에서 시작).
 `,
     starter: py`
 import numpy as np
@@ -43,7 +44,7 @@ def _():
     a = np.array([[1.0, 3.0], [2.0, 4.0]])
     assert approx(max_pool(a), [[4.0]]) and approx(avg_pool(a), [[2.5]])
 
-@test("4×4 특징 지도: max [[9,2],[1,2]], avg [[3,1.25],[1,1.25]]")
+@test("4×4 특성 맵: max [[9,2],[1,2]], avg [[3,1.25],[1,1.25]]")
 def _():
     assert approx(max_pool(y), [[9, 2], [1, 2]]), f"max:\n{max_pool(y)}"
     assert approx(avg_pool(y), [[3, 1.25], [1, 1.25]]), f"avg:\n{avg_pool(y)}"

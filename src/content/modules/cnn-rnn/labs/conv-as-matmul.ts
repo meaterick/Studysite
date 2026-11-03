@@ -5,12 +5,11 @@ export default defineExercises([
     key: "ex1",
     title: "im2col 합성곱과 합성곱의 역전파",
     prompt: md`
+본문의 im2col, 합성곱의 역전파, depthwise separable 합성곱의 파라미터 비율을 구현합니다. 모든 합성곱은 stride 1, padding 0(교차상관)입니다.
 
-「합성곱의 계산」 단계의 결론을 구현합니다. 모든 합성곱은 stride 1, padding 0(교차상관)입니다.
-
-1. \`im2col(x, kh, kw)\`: 모든 $k_h\times k_w$ 창을 행 우선 순서로 꺼내 한 줄씩 편 \`(창 개수, kh*kw)\` 행렬. 역전파에서 \`G\`를 커널처럼 쓰므로 커널이 정사각형이 아닐 수 있습니다.
+1. \`im2col(x, kh, kw)\`: 모든 $k_h\times k_w$ 창을 행 우선 순서로 한 줄씩 편 \`(창 개수, kh*kw)\` 행렬. 역전파에서 \`G\`를 커널처럼 쓰므로 커널이 정사각형이 아닐 수 있습니다.
 2. \`conv_matmul(x, k)\`: \`im2col\`과 행렬 곱 한 번으로 합성곱 출력 \`(H-kh+1, W-kw+1)\`
-3. \`conv_backward(x, k, G)\`: 출력 기울기 \`G\`로부터 \`(dx, dk)\`. \`dk\`는 \`x\`와 \`G\`의 합성곱, \`dx\`는 \`G\`를 위아래로 \`kh-1\`칸, 좌우로 \`kw-1\`칸씩 0으로 감싼 뒤 180° 뒤집은 커널로 합성곱한 것입니다. 2번의 \`conv_matmul\`을 재사용하십시오.
+3. \`conv_backward(x, k, G)\`: 출력 기울기 \`G\`로부터 \`(dx, dk)\`. \`dk\`는 \`x\`와 \`G\`의 합성곱, \`dx\`는 \`G\`의 위아래에 \`kh-1\`칸, 좌우에 \`kw-1\`칸씩 0을 채운 뒤 180° 뒤집은 커널로 합성곱한 것입니다. 2번의 \`conv_matmul\`을 재사용하십시오.
 4. \`separable_ratio(K, c_in, c_out)\`: depthwise separable 파라미터 / 표준 합성곱 파라미터
 `,
     starter: py`

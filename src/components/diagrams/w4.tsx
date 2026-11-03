@@ -197,7 +197,7 @@ export function ConvPaddingStride() {
 }
 
 export function FcVsConv() {
-  // 연결 방식과 파라미터 수: 224×224×3 입력에서 64개 특징을 뽑을 때 합성곱 1,792개 vs 완전연결 9,633,856개.
+  // 연결 방식과 파라미터 수: 224×224×3 입력에서 출력 64개를 계산할 때 합성곱 1,792개 vs 완전연결 9,633,856개.
   const P = "fvc";
   const c = 18;
   const n = 6;
@@ -211,7 +211,7 @@ export function FcVsConv() {
   return (
     <DiagramFrame
       title="완전연결층과 합성곱층: 연결 수와 파라미터 수"
-      caption="왼쪽: 완전연결(FC)층은 출력 하나가 모든 픽셀과 각각 다른 가중치로 연결된다. 오른쪽: 합성곱층의 출력 하나는 3×3 창만 보고, 같은 커널(같은 색 가중치)을 모든 위치에서 재사용한다. 그래서 224×224×3 사진에서 특징 64개를 뽑는 데 합성곱은 1,792개, 완전연결은 약 963만 개(약 5,400배)의 파라미터가 필요하다(아래 막대는 로그 눈금)."
+      caption="왼쪽: 완전연결(FC)층은 출력 하나가 모든 픽셀과 각각 다른 가중치로 연결된다. 오른쪽: 합성곱층의 출력 하나는 3×3 창만 보고, 같은 커널(같은 색 가중치)을 모든 위치에서 재사용한다. 그래서 224×224×3 이미지에서 출력 64개를 계산하는 데 합성곱은 1,792개, 완전연결은 약 963만 개(약 5,400배)의 파라미터가 필요하다(아래 막대는 로그 눈금)."
       viewBox="0 0 720 280"
       minWidth={560}
     >
@@ -283,7 +283,7 @@ export function FcVsConv() {
 }
 
 export function PoolMaxVsAvg() {
-  // 본문 코드의 4×4 특징 지도 y. 왼쪽 위 블록에만 강한 반응 9가 있다.
+  // 본문 코드의 4×4 특성 맵 y. 왼쪽 위 블록에만 큰 값 9가 있다.
   const y = [
     [1, 1, 2, 1],
     [1, 9, 1, 1],
@@ -326,28 +326,28 @@ export function PoolMaxVsAvg() {
   return (
     <DiagramFrame
       title="Max Pooling과 Average Pooling의 차이"
-      caption="4×4 특징 지도를 2×2 블록(같은 색)마다 하나의 값으로 줄인다. 왼쪽 위 블록에 강한 반응 9가 있을 때 Max Pooling은 9를 그대로 살려 '이 패턴이 여기 있었다'는 사실을 전달하고, Average Pooling은 (1 + 1 + 1 + 9)/4 = 3으로 희석해 '블록 전체가 얼마나 활성화됐나'를 전달한다."
+      caption="4×4 특성 맵을 2×2 블록(같은 색)마다 값 하나로 줄인다. 왼쪽 위 블록에 큰 값 9가 있을 때 Max Pooling은 9를 그대로 남겨 이 블록에 강한 반응이 있었다는 정보를 전달하고, Average Pooling은 (1 + 1 + 1 + 9)/4 = 3을 남겨 블록 전체의 평균 반응을 전달한다."
       viewBox="0 0 720 240"
       minWidth={540}
     >
-      {grid(40, 50, y, c, "입력 특징 지도 4×4")}
+      {grid(40, 50, y, c, "입력 특성 맵 4×4")}
       <text x={240} y={136} textAnchor="middle" fontSize={20} fontWeight={700} fill={inkSecondary}>
         →
       </text>
       {grid(300, 70, maxP, 52, "Max Pooling 2×2", colors.red)}
       {grid(500, 70, avgP, 52, "Average Pooling 2×2", colors.blue)}
       <text x={352} y={208} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-        강한 반응 9가 그대로
+        큰 값 9를 그대로 남김
       </text>
       <text x={552} y={208} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-        9가 3으로 희석
+        평균하면 3
       </text>
     </DiagramFrame>
   );
 }
 
 export function ReceptiveField1d() {
-  // 본문 예제: conv 3×3(s1) → max pool 2×2(s2) → conv 3×3(s1). 맨 위 한 칸이 입력 8칸을 본다(1차원으로 그림).
+  // 본문 예제: conv 3×3(s1) → max pool 2×2(s2) → conv 3×3(s1). 맨 위 한 칸의 수용영역은 입력 8칸이다(1차원으로 그림).
   const u = 44;
   const left = 70;
   const X = (pos: number) => left + pos * u;
@@ -359,7 +359,7 @@ export function ReceptiveField1d() {
   ];
   const w = 30;
   const h = 24;
-  // 위층의 '뜨거운' 칸이 아래층의 어떤 칸을 보는지
+  // 위층의 강조한 칸이 아래층의 어떤 칸으로 계산되는지
   const links: [number, number, number, number][] = [];
   rows[3].units.forEach((t, n) => {
     if (!t.hot) return;
@@ -376,7 +376,7 @@ export function ReceptiveField1d() {
   return (
     <DiagramFrame
       title="수용영역이 넓어지는 과정: conv → pool(stride 2) → conv"
-      caption="맨 위 한 칸(진하게)이 아래층의 어떤 칸들을 거쳐 입력의 어디까지 보는지 따라간 것이다(가로 한 방향만 그림). 첫 conv 뒤 수용영역은 3칸, 풀링 뒤 4칸이고, 풀링이 칸 사이 간격(점프 j)을 2로 늘려 놓았기 때문에 마지막 3×3 conv는 2칸이 아니라 4칸을 더 넓혀 8칸을 본다. 본문 표의 r = 3, 4, 8과 같다."
+      caption="맨 위 한 칸(진하게)이 아래층의 어떤 칸들을 거쳐 입력의 어느 범위로 계산되는지 나타낸 것이다(가로 방향만 그림). 첫 합성곱 뒤 수용영역은 3칸, 풀링 뒤 4칸이다. 풀링이 칸 사이 간격(점프 j)을 2로 늘렸기 때문에 마지막 3×3 합성곱은 수용영역을 2칸이 아니라 4칸 넓혀 8칸이 된다. 본문 표의 r = 3, 4, 8과 같다."
       viewBox="0 0 720 292"
       minWidth={560}
     >
@@ -398,7 +398,7 @@ export function ReceptiveField1d() {
       ))}
       <path d={`M${X(0)},${258} L${X(0)},264 L${X(8)},264 L${X(8)},258`} fill="none" stroke={colors.violet} strokeWidth={1.6} />
       <text x={X(4)} y={282} textAnchor="middle" fontSize={11} fontWeight={700} fill={colors.violet}>
-        맨 위 한 칸이 보는 입력: 8칸
+        맨 위 한 칸의 수용영역: 입력 8칸
       </text>
     </DiagramFrame>
   );
@@ -472,104 +472,6 @@ export function ProjectionShortcut() {
   );
 }
 
-export function BatchnormDropout() {
-  // 본문 코드 그대로: BatchNorm 입력(배치 4 × 채널 3)과 Dropout(p = 0.5, np.random.seed(0)의 마스크 [1,1,1,1,0,1]).
-  const P = "bnd";
-  const raw = [
-    [10, 12, 8, 14],
-    [1, 3, -1, 5],
-    [100, 120, 90, 130],
-  ];
-  const norm = raw.map((ch) => {
-    const m = ch.reduce((a, b) => a + b, 0) / ch.length;
-    const sd = Math.sqrt(ch.reduce((a, b) => a + (b - m) ** 2, 0) / ch.length);
-    return ch.map((v) => (v - m) / sd);
-  });
-  const chColor = [colors.blue, colors.orange, colors.aqua];
-  const bx = linear(-10, 140, 70, 370);
-  const ax = linear(-2, 2, 70, 370);
-  const h = [1, 2, 3, 4, 5, 6];
-  const mask = [1, 1, 1, 1, 0, 1];
-  return (
-    <DiagramFrame
-      title="BatchNorm과 Dropout의 실제 출력: 위 두 코드 셀의 결과"
-      caption="왼쪽: 세 채널은 값의 범위가 크게 다르지만(세 번째 채널은 90~130), 채널마다 자기 평균을 빼고 표준편차로 나누면 모두 평균 0·표준편차 1 근처의 같은 눈금에 놓인다. 그 뒤 학습되는 γ·β로 채널마다 다시 크기와 위치를 정한다. 오른쪽: Dropout(p = 0.5)은 학습 때 뉴런을 무작위로 끄고(여기서는 5번째) 살아남은 값을 1/(1 − p) = 2배로 키워 평균 크기를 맞춘다. 평가 때는 아무것도 끄지 않는다."
-      viewBox="0 0 720 262"
-      minWidth={560}
-    >
-      <Markers prefix={P} colors={{ ink: inkSecondary }} />
-      <text x={220} y={20} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={ink}>
-        BatchNorm: 채널마다 (x − μ) / σ
-      </text>
-      <text x={14} y={48} fontSize={10.5} fontWeight={700} fill={inkSecondary}>
-        정규화 전
-      </text>
-      <line x1={70} y1={92} x2={370} y2={92} stroke={inkMuted} />
-      {[0, 50, 100].map((t) => (
-        <text key={t} x={bx(t)} y={106} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
-          {t}
-        </text>
-      ))}
-      {raw.map((ch, i) =>
-        ch.map((v, j) => <circle key={`r${i}${j}`} cx={bx(v)} cy={62 + i * 11} r={4.2} fill={chColor[i]} fillOpacity={0.85} />),
-      )}
-      <Arr x1={220} y1={116} x2={220} y2={138} color={inkSecondary} marker={`${P}-ink`} />
-      <text x={14} y={160} fontSize={10.5} fontWeight={700} fill={inkSecondary}>
-        정규화 후
-      </text>
-      <line x1={70} y1={206} x2={370} y2={206} stroke={inkMuted} />
-      {[-2, -1, 0, 1, 2].map((t) => (
-        <text key={t} x={ax(t)} y={220} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
-          {String(t).replace("-", "−")}
-        </text>
-      ))}
-      {norm.map((ch, i) =>
-        ch.map((v, j) => <circle key={`n${i}${j}`} cx={ax(v)} cy={174 + i * 11} r={4.2} fill={chColor[i]} fillOpacity={0.85} />),
-      )}
-      {["채널 1 (8~14)", "채널 2 (−1~5)", "채널 3 (90~130)"].map((t, i) => (
-        <g key={t}>
-          <rect x={70 + i * 102} y={238} width={10} height={10} rx={2} fill={chColor[i]} />
-          <text x={84 + i * 102} y={247} fontSize={10} fill={ink}>
-            {t}
-          </text>
-        </g>
-      ))}
-
-      <line x1={400} y1={14} x2={400} y2={252} stroke="var(--border-hairline)" />
-      <text x={560} y={20} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={ink}>
-        Dropout (p = 0.5): 끄고 2배로
-      </text>
-      {[
-        { y: 44, label: "출력 h", vals: h.map(String) },
-        { y: 112, label: "마스크", vals: mask.map(String) },
-        { y: 180, label: "h·mask / (1 − p)", vals: h.map((v, i) => String((v * mask[i]) / 0.5)) },
-      ].map((r) => (
-        <g key={r.label}>
-          <text x={560} y={r.y - 6} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
-            {r.label}
-          </text>
-          {r.vals.map((v, i) => {
-            const off = mask[i] === 0;
-            return (
-              <g key={i}>
-                <rect x={428 + i * 44} y={r.y} width={38} height={32} rx={6} fill={off ? colors.red : r.y === 180 ? colors.green : colors.blue} fillOpacity={off ? 0.14 : 0.12} stroke={off ? colors.red : "var(--border-strong)"} />
-                <text x={447 + i * 44} y={r.y + 21} textAnchor="middle" fontSize={13} fontWeight={700} fill={ink} fontFamily={mono}>
-                  {v}
-                </text>
-              </g>
-            );
-          })}
-        </g>
-      ))}
-      <line x1={428 + 4 * 44} y1={44} x2={428 + 4 * 44 + 38} y2={76} stroke={colors.red} strokeWidth={1.6} />
-      <line x1={428 + 4 * 44 + 38} y1={44} x2={428 + 4 * 44} y2={76} stroke={colors.red} strokeWidth={1.6} />
-      <text x={560} y={236} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        학습: model.train() · 평가: model.eval()이면 모두 켜고 그대로
-      </text>
-    </DiagramFrame>
-  );
-}
-
 export function AugmentationLabel() {
   // "이 변환을 해도 사람이 같은 라벨을 붙이는가?" — 라벨을 보존하는 증강과 라벨을 바꾸는 증강.
   // 자동차는 (0, 0)~(96, 55) 좌표로 그리고, 0.8배로 줄여 놓는다. flip이면 좌우 반전.
@@ -598,7 +500,7 @@ export function AugmentationLabel() {
   return (
     <DiagramFrame
       title="데이터 증강의 기준: 변환해도 같은 라벨인가?"
-      caption="증강은 '사람이 봐도 같은 라벨'인 변환만 써야 한다. 자동차 사진은 좌우로 뒤집어도 자동차지만, 손글씨 6을 뒤집으면 9가 되고 좌회전 표지판을 좌우로 뒤집으면 우회전 표지판이 된다. 이런 변환은 모델에게 틀린 정답을 가르친다. 같은 변환이라도 데이터에 따라 안전할 수도, 위험할 수도 있다."
+      caption="증강에는 변환한 뒤에도 사람이 같은 라벨을 붙이는 변환만 써야 한다. 자동차 사진은 좌우로 뒤집어도 자동차지만, 손글씨 6을 뒤집으면 9가 되고 좌회전 표지판을 좌우로 뒤집으면 우회전 표지판이 된다. 이런 변환을 쓰면 잘못된 라벨로 학습하게 된다. 같은 변환이라도 데이터에 따라 라벨을 보존하기도 하고 바꾸기도 한다."
       viewBox="0 0 720 230"
       minWidth={560}
     >
@@ -712,7 +614,7 @@ export function SanityChecks() {
 
 export function CnnDepthTimeline() {
   // ILSVRC 분류 top-5 오류율(%). 2012 AlexNet 15.3(2위 26.2), 2013 ZFNet 11.7, 2014 GoogLeNet 6.7·VGG 7.3, 2015 ResNet 3.57.
-  // 사람(훈련된 주석자) 약 5.1%는 Russakovsky et al.(2015)의 보고.
+  // 사람(숙련된 주석자) 약 5.1%는 Russakovsky et al.(2015)의 보고.
   const bars = [
     { yr: "2010", name: "", err: 28.2, depth: "얕은 모델", c: inkMuted },
     { yr: "2011", name: "", err: 25.8, depth: "얕은 모델", c: inkMuted },
@@ -729,7 +631,7 @@ export function CnnDepthTimeline() {
   return (
     <DiagramFrame
       title="ImageNet(ILSVRC) top-5 오류율과 층 수의 변화"
-      caption="연도별 ILSVRC 분류 부문의 대표 결과다. CNN이 아닌 얕은 모델이 25~28%에 머물던 2012년, 8층의 AlexNet이 15.3%로 2위(26.2%)를 크게 앞섰다. 이후 3 × 3 커널을 19층까지 쌓은 VGG(7.3%, 2014년 2위), 22층의 GoogLeNet(6.7%, 2014년 우승)을 거쳐, 잔차 연결로 152층을 학습시킨 ResNet이 3.57%로 2015년에 우승했다. 점선은 훈련된 사람 주석자의 오류율(약 5.1%)이다. 층이 깊어질수록 오류가 줄었고, 그 깊이를 가능하게 한 것이 ReLU·GPU·작은 커널·잔차 연결이었다. 1998년의 LeNet은 32 × 32 흑백 손글씨용 모델이라 이 대회와는 관계가 없다."
+      caption="연도별 ILSVRC 분류 부문의 대표 결과다. CNN이 아닌 얕은 모델이 25~28%에 머물던 2012년, 8층의 AlexNet이 15.3%로 2위(26.2%)를 크게 앞섰다. 이후 3 × 3 커널을 19층까지 쌓은 VGG(7.3%, 2014년 2위), 22층의 GoogLeNet(6.7%, 2014년 우승)을 거쳐, 잔차 연결로 152층을 학습시킨 ResNet이 3.57%로 2015년에 우승했다. 점선은 숙련된 사람 주석자의 오류율(약 5.1%)이다. 층이 깊어질수록 오류가 줄었고, 그 깊이를 가능하게 한 것이 ReLU·GPU·작은 커널·잔차 연결이었다. 1998년의 LeNet은 32 × 32 흑백 손글씨용 모델이라 이 대회와는 관계가 없다."
       viewBox="0 0 720 240"
       minWidth={600}
     >
@@ -783,8 +685,8 @@ export function VggStack() {
   const bx = linear(0, 210000, 0, 250);
   return (
     <DiagramFrame
-      title="3 × 3 합성곱 세 층은 7 × 7 한 층과 같은 범위를 더 적은 파라미터로 본다"
-      caption="왼쪽: 입력의 7 × 7 격자에서 가운데 출력 하나가 보는 범위다. 3 × 3 합성곱(stride 1)을 한 번 거치면 3 × 3, 두 번이면 5 × 5, 세 번이면 7 × 7을 본다. 7 × 7 합성곱 한 층과 같은 범위다. 오른쪽: 입력·출력 채널이 64일 때 파라미터 수다. 7 × 7 한 층은 49 × 64 × 64 = 200,704개, 3 × 3 세 층은 3 × 9 × 64 × 64 = 110,592개로 약 45% 적다. 게다가 층마다 ReLU를 거치므로 비선형 함수를 세 번 적용할 수 있다."
+      title="3 × 3 합성곱 세 층은 7 × 7 한 층과 수용영역이 같고 파라미터는 더 적다"
+      caption="왼쪽: 입력의 7 × 7 격자에서 가운데 출력 하나의 수용영역이다. 3 × 3 합성곱(stride 1)을 한 번 거치면 3 × 3, 두 번이면 5 × 5, 세 번이면 7 × 7로, 7 × 7 합성곱 한 층의 수용영역과 같다. 오른쪽: 입력·출력 채널이 64일 때 파라미터 수다. 7 × 7 한 층은 49 × 64 × 64 = 200,704개, 3 × 3 세 층은 3 × 9 × 64 × 64 = 110,592개로 약 45% 적다. 또 층마다 ReLU를 거치므로 비선형 함수를 세 번 적용한다."
       viewBox="0 0 720 220"
       minWidth={580}
     >
@@ -1426,7 +1328,7 @@ export function Im2col() {
   return (
     <DiagramFrame
       title="im2col: 합성곱을 행렬 곱 한 번으로 바꾼다"
-      caption="본문 코드의 5 × 5 입력(0~24)과 3 × 3 커널이다. 왼쪽: 커널이 지나가는 3 × 3 창은 9개다(파랑은 첫 창, 주황은 둘째 줄 셋째 창). 가운데: 창 하나를 한 줄(원소 9개)로 펴서 9줄을 쌓으면 (9, 9) im2col 행렬이 된다. 같은 픽셀이 여러 줄에 중복해서 복사되므로 메모리가 더 든다. 오른쪽: 커널도 길이 9인 벡터로 펴서 행렬-벡터 곱을 한 번 하면 9개 값이 나오고, 3 × 3으로 접으면 이중 반복문의 결과와 같다. 입력이 연속된 숫자라 모든 창에서 '왼쪽 열 − 오른쪽 열'이 −6이다. 채널이 있으면 커널 벡터가 (K²C_in × C_out) 가중치 행렬이 되어, GPU가 가장 효율적으로 처리하는 큰 행렬 곱 하나가 된다."
+      caption="본문 코드의 5 × 5 입력(0~24)과 3 × 3 커널이다. 왼쪽: 커널이 놓이는 3 × 3 창은 9개다(파랑은 첫 창, 주황은 둘째 줄 셋째 창). 가운데: 창 하나를 한 줄(원소 9개)로 펴서 9줄을 쌓으면 (9, 9) im2col 행렬이 된다. 같은 픽셀이 여러 줄에 중복해서 복사되므로 메모리가 더 든다. 오른쪽: 커널도 길이 9인 벡터로 펴서 행렬-벡터 곱을 한 번 하면 9개 값이 나오고, 3 × 3으로 접으면 이중 반복문의 결과와 같다. 입력이 연속된 숫자라 모든 창에서 '왼쪽 열 − 오른쪽 열'이 −6이다. 채널이 있으면 커널 벡터가 (K²C_in × C_out) 가중치 행렬이 되어, GPU가 가장 효율적으로 처리하는 큰 행렬 곱 하나가 된다."
       viewBox="0 0 720 262"
       minWidth={640}
     >
@@ -1585,7 +1487,7 @@ export function ConvBackprop1d() {
   return (
     <DiagramFrame
       title="합성곱의 역전파도 합성곱이다: 뒤집은 커널과 전치 합성곱"
-      caption="1차원으로 그린 합성곱이다(색은 커널 가중치 k₁·k₂·k₃). 왼쪽: 순전파에서 출력 yᵢ는 입력 세 칸을 커널로 가중합한다. 가운데: 역전파에서는 같은 연결을 거꾸로 지나 기울기 G가 입력으로 돌아간다. 가운데 입력 x₃은 y₁에는 k₃으로, y₂에는 k₂로, y₃에는 k₁로 기여했으므로 ∂L/∂x₃ = G₁k₃ + G₂k₂ + G₃k₁이다. 오른쪽: 이것은 G 양옆에 0을 K − 1 = 2칸씩 덧대고 커널을 180° 뒤집은 (k₃, k₂, k₁)로 합성곱한 것(full 합성곱)과 같다. 3칸에서 5칸으로 커지는 이 연산을 층으로 쓴 것이 전치 합성곱이다. 커널의 기울기 ∂L/∂k는 입력 x와 G의 합성곱으로 계산된다."
+      caption="1차원으로 그린 합성곱이다(색은 커널 가중치 k₁·k₂·k₃). 왼쪽: 순전파에서 출력 yᵢ는 입력 세 칸을 커널로 가중합한다. 가운데: 역전파에서는 같은 연결을 반대 방향으로 지나 기울기 G가 입력 쪽으로 전달된다. 가운데 입력 x₃은 y₁에는 k₃으로, y₂에는 k₂로, y₃에는 k₁로 기여했으므로 ∂L/∂x₃ = G₁k₃ + G₂k₂ + G₃k₁이다. 오른쪽: 이것은 G 양옆에 0을 K − 1 = 2칸씩 채우고 커널을 180° 뒤집은 (k₃, k₂, k₁)로 합성곱한 것(full 합성곱)과 같다. 3칸에서 5칸으로 커지는 이 연산을 층으로 쓴 것이 전치 합성곱이다. 커널의 기울기 ∂L/∂k는 입력 x와 G의 합성곱으로 계산된다."
       viewBox="0 0 720 256"
       minWidth={640}
     >
@@ -1748,8 +1650,8 @@ export function VggParamsFlops() {
   };
   return (
     <DiagramFrame
-      title="VGG16: 파라미터는 FC층에, 연산은 해상도가 큰 앞쪽 합성곱층에 몰려 있다"
-      caption="224 × 224 이미지를 넣은 VGG16의 블록별 비중을 직접 센 것이다(전체 1억 3,800만 파라미터, 곱셈-덧셈 155억 번). 위: 파라미터의 89%가 마지막 FC 3층에 있고, 합성곱 블록 1~2는 0.2%밖에 되지 않는다. 아래: 연산은 정반대다. 해상도가 큰 블록 1~4가 90% 가까이를 차지하고 FC층은 1%도 안 된다. 합성곱의 파라미터 수(K²·C_in·C_out)는 입력 크기와 무관하지만 연산량은 출력 해상도 H × W에 비례하기 때문이다. 그래서 모델을 가볍게 할 때 메모리를 줄이려면 FC층을, 속도를 높이려면 앞쪽 합성곱층을 손본다."
+      title="VGG16: 파라미터는 FC층에, 연산은 해상도가 큰 앞쪽 합성곱층에 집중되어 있다"
+      caption="224 × 224 이미지를 넣은 VGG16의 블록별 비중을 직접 센 것이다(전체 1억 3,800만 파라미터, 곱셈-덧셈 155억 번). 위: 파라미터의 89%가 마지막 FC 3층에 있고, 합성곱 블록 1~2는 0.2%밖에 되지 않는다. 아래: 연산은 정반대다. 해상도가 큰 블록 1~4가 90% 가까이를 차지하고 FC층은 1%도 안 된다. 합성곱의 파라미터 수(K²·C_in·C_out)는 입력 크기와 무관하지만 연산량은 출력 해상도 H × W에 비례하기 때문이다. 그래서 모델을 가볍게 할 때 메모리를 줄이려면 FC층을, 속도를 높이려면 앞쪽 합성곱층을 줄인다."
       viewBox="0 0 720 220"
       minWidth={600}
     >

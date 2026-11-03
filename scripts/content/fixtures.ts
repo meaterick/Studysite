@@ -148,7 +148,7 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
       ['# "Dropout 제거": dict(dropout=0.0),', '"Dropout 제거": dict(dropout=0.0),'],
       ['# "데이터 증강 제거": dict(augment=False),', '"데이터 증강 제거": dict(augment=False),'],
     ],
-    "conv-code": [["return 0  # TODO: 학습 자료의 출력 크기 공식을 직접 써 넣습니다. (정수 나눗셈은 //)", "return (n + 2 * p - k) // s + 1"]],
+    "conv-code": [["return 0  # TODO: 본문의 출력 크기 공식을 직접 써 넣습니다. (정수 나눗셈은 //)", "return (n + 2 * p - k) // s + 1"]],
   },
   "mini-gpt-block": {
     "mha-code": [

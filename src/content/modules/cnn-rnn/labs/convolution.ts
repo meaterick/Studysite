@@ -5,12 +5,13 @@ export default defineExercises([
     key: "ex1",
     title: "합성곱 직접 구현과 파라미터 수 계산",
     prompt: md`
+합성곱과 두 층의 파라미터 수를 계산하는 함수를 구현합니다.
 
-1. \`conv2d(x, k, stride=1, padding=0)\`: 흑백 이미지 \`x\`(H, W)에 정사각 커널 \`k\`를 미끄러뜨리며 **원소별 곱의 합**을 구합니다. 패딩은 0으로 채웁니다(\`np.pad\`). 출력 크기는 $\lfloor (N + 2P - K)/S \rfloor + 1$입니다.
+1. \`conv2d(x, k, stride=1, padding=0)\`: 흑백 이미지 \`x\`(H, W) 위에서 정사각 커널 \`k\`를 이동하며 **원소별 곱의 합**을 구합니다. 패딩은 0으로 채웁니다(\`np.pad\`). 출력 크기는 $\lfloor (N + 2P - K)/S \rfloor + 1$입니다.
 2. \`conv_params(k, c_in, c_out)\`: $k \times k$ 커널, 입력 채널 \`c_in\`, 출력 채널 \`c_out\`인 합성곱층의 파라미터 수(편향 포함)
 3. \`fc_params(n_in, n_out)\`: 완전연결층의 파라미터 수(편향 포함)
 
-본문 예제처럼 $3 \times 3$ conv(3→64)는 1,792개, 같은 출력 수의 FC층($224 \times 224 \times 3 \to 64$)은 9,633,856개여야 합니다.
+본문의 예처럼 $3 \times 3$ 합성곱층(채널 3→64)은 1,792개, 출력 수가 같은 완전연결층($224 \times 224 \times 3 \to 64$)은 9,633,856개여야 합니다.
 `,
     starter: py`
 import numpy as np

@@ -5,13 +5,12 @@ export default defineExercises([
     key: "ex1",
     title: "LSTM 셀 한 스텝 구현하기",
     prompt: md`
-
 \`lstm_step(x, h, c, P)\`를 구현합니다. \`P\`는 게이트마다 \`(W, U, b)\`를 담은 딕셔너리이고 키는 \`"f"\`(forget), \`"i"\`(input), \`"g"\`(후보), \`"o"\`(output)입니다.
 
 $$f = \sigma(W_f x + U_f h + b_f),\ i = \sigma(\cdots),\ \tilde c = \tanh(W_g x + U_g h + b_g),\ o = \sigma(\cdots)$$
 $$c' = f \odot c + i \odot \tilde c,\qquad h' = o \odot \tanh(c')$$
 
-\`(h', c')\`를 돌려줍니다. forget gate가 1, input gate가 0이면 셀 상태가 **그대로** 보존되는지 확인합니다. 이 덧셈 경로가 장기 기억의 핵심입니다.
+\`(h', c')\`를 돌려줍니다. forget gate가 1, input gate가 0이면 셀 상태가 **그대로** 유지되는지 확인합니다. 이 경로가 셀 상태가 값을 오래 유지하는 이유입니다.
 `,
     starter: py`
 import numpy as np

@@ -151,7 +151,7 @@ export function CausalMask() {
 }
 
 export function GradientDecay() {
-  // 야코비안 크기를 r 하나로 단순화했을 때 r^n: 1보다 조금만 작아도 소실, 조금만 커도 폭발.
+  // 야코비안 크기를 r 하나로 단순화했을 때 r^n: 1보다 조금만 작아도 소실, 조금만 커도 폭주.
   const W = 640;
   const H = 270;
   const x0 = 70;
@@ -164,13 +164,13 @@ export function GradientDecay() {
   const sx = (n: number) => x0 + (n / nMax) * (x1 - x0);
   const sy = (v: number) => yBot - ((Math.log10(v) - logMin) / (logMax - logMin)) * (yBot - yTop);
   const series = [
-    { r: 1.1, color: colors.orange, label: "r = 1.1 → 폭발" },
+    { r: 1.1, color: colors.orange, label: "r = 1.1 → 폭주" },
     { r: 1.0, color: inkSecondary, label: "r = 1.0 → 유지" },
     { r: 0.9, color: colors.blue, label: "r = 0.9 → 소실" },
   ];
   return (
     <DiagramFrame
-      title="같은 수를 거듭 곱하면: 기울기 소실과 폭발"
+      title="같은 수를 여러 번 곱하면: 기울기 소실과 폭주"
       caption="세로축은 로그 눈금이다. 각 스텝의 야코비안 크기가 0.9면 50스텝 뒤 기울기는 약 0.005배로 줄고, 1.1이면 약 117배로 커진다. RNN은 문장 길이만큼 이 곱셈을 반복한다."
       viewBox={`0 0 ${W} ${H}`}
       minWidth={480}
@@ -354,7 +354,7 @@ export function TextToIds() {
 }
 
 export function OnehotVsEmbedding() {
-  // One-hot은 서로 다른 단어끼리 코사인 유사도가 언제나 0. 학습된 임베딩(장난감 값)은 의미가 비슷한 단어끼리 크다.
+  // One-hot은 서로 다른 단어끼리 코사인 유사도가 언제나 0. 학습된 임베딩(예시 값)은 의미가 비슷한 단어끼리 크다.
   const words = ["고양이", "강아지", "자동차"];
   const emb = [
     [0.9, 0.6, 0.1],
@@ -410,14 +410,14 @@ export function OnehotVsEmbedding() {
 }
 
 export function SkipgramWindow() {
-  // 본문 예제: "나는 고양이를 정말 좋아한다", 윈도우 크기 1 → (중심, 문맥) 쌍 6개.
-  const toks = ["나는", "고양이를", "정말", "좋아한다"];
+  // 본문 예제: "나는 오늘 고양이를 보았다", 윈도우 크기 1 → (중심, 문맥) 쌍 6개.
+  const toks = ["나는", "오늘", "고양이를", "보았다"];
   const w = 84;
   const x0 = 110;
   return (
     <DiagramFrame
       title="Skip-gram의 학습 데이터: 윈도우를 옮기며 (중심, 문맥) 쌍을 만든다"
-      caption="중심 단어(보라)를 한 칸씩 옮기며, 앞뒤 한 칸(윈도우 1) 안의 단어(주황)를 '맞혀야 할 문맥'으로 삼는다. 사람이 정답을 달지 않았는데도 문장 하나에서 쌍 6개가 자동으로 생긴다. 말뭉치가 수십억 단어면 이런 쌍도 수십억 개다."
+      caption="중심 단어(보라)를 한 칸씩 옮기며, 앞뒤 한 칸(윈도우 1) 안의 단어(주황)를 예측할 문맥 단어로 정한다. 사람이 라벨을 붙이지 않아도 문장 하나에서 쌍 6개가 만들어진다. 말뭉치가 수십억 단어이면 이런 쌍도 수십억 개다."
       viewBox="0 0 720 230"
       minWidth={540}
     >
@@ -440,7 +440,7 @@ export function SkipgramWindow() {
         );
       })}
       <text x={490} y={212} fontSize={11.5} fontWeight={700} fill={colors.violet}>
-        모두 6쌍 = 자동으로 만든 정답
+        모두 6쌍 = 문장에서 만든 학습 쌍
       </text>
     </DiagramFrame>
   );
@@ -459,7 +459,7 @@ export function RnnUnrollBptt() {
   return (
     <DiagramFrame
       title="RNN을 시간축으로 펼치기: 순전파는 같은 W·U, 역전파는 야코비안의 곱"
-      caption="파란 화살표가 순전파다. 모든 시점이 같은 W, U로 hₜ = tanh(W·xₜ + U·hₜ₋₁)을 계산하므로, h₂ 안에는 h₁을 거쳐 x₁의 정보도 섞여 있다(앞 두 칸은 본문 예제의 실제 값). 주황 화살표가 BPTT다. 마지막 손실에서 h₁까지 기울기가 전달되려면 ∂hₜ/∂hₜ₋₁을 시점마다 한 번씩, 모두 세 번 곱해야 한다. 문장이 길수록 곱셈 횟수가 늘어 기울기가 사라지거나 폭발한다."
+      caption="파란 화살표가 순전파다. 모든 시점이 같은 W, U로 hₜ = tanh(W·xₜ + U·hₜ₋₁)을 계산하므로, h₂는 h₁을 거쳐 x₁에도 의존한다(앞 두 칸은 본문 예제의 실제 값). 주황 화살표가 BPTT다. 마지막 손실에서 h₁까지 기울기가 전달되려면 ∂hₜ/∂hₜ₋₁을 시점마다 한 번씩, 모두 세 번 곱해야 한다. 문장이 길수록 곱셈 횟수가 늘어 기울기가 소실되거나 폭주한다."
       viewBox="0 44 720 206"
       minWidth={560}
     >
@@ -1254,15 +1254,15 @@ export function LstmCellStep() {
   );
   return (
     <DiagramFrame
-      title="셀 상태 한 스텝: 이전 기억 × f + 새 후보 × i"
-      caption="본문 예제의 숫자다. 셀 상태(컨베이어 벨트)를 따라 들어온 이전 기억 2.0은 forget gate 0.9를 곱해 1.8만 남고, 새 후보 0.4는 input gate 0.5를 곱해 0.2만 더해져 새 셀 상태는 2.0이 된다. 벨트 위에서는 행렬 곱이나 비선형 함수 없이 성분별 곱셈과 덧셈만 일어난다. 아래는 극단적인 두 경우다. f = 1, i = 0이면 기억이 그대로 보존되고, f = 0, i = 1이면 과거를 지우고 새 후보로 덮어쓴다."
+      title="셀 상태 한 스텝: 이전 셀 상태 × f + 새 후보 × i"
+      caption="본문 예제의 숫자다. 이전 시점에서 전달된 셀 상태 2.0에 forget gate 0.9를 곱해 1.8이 남고, 새 후보 0.4에 input gate 0.5를 곱한 0.2가 더해져 새 셀 상태는 2.0이 된다. 셀 상태의 갱신에는 행렬 곱이나 비선형 함수 없이 성분별 곱셈과 덧셈만 쓰인다. 아래는 극단적인 두 경우다. f = 1, i = 0이면 이전 값이 그대로 유지되고, f = 0, i = 1이면 이전 값을 지우고 새 후보로 바뀐다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
       <Markers prefix={P} colors={{ ink: inkSecondary, violet: colors.violet, orange: colors.orange, green: colors.green }} />
       <rect x={20} y={y - 16} width={560} height={32} rx={16} fill={colors.violet} fillOpacity={0.08} stroke={colors.violet} strokeOpacity={0.4} />
       <text x={30} y={y - 22} fontSize={10} fontWeight={700} fill={colors.violet}>
-        셀 상태 (장기 기억의 컨베이어 벨트)
+        셀 상태 c (시점 사이에 전달되는 값)
       </text>
       {box(36, 104, colors.violet, withSub("c", "t−1", " = 2.0", 11.5))}
       <Arr x1={142} y1={y} x2={206} y2={y} color={colors.violet} marker={`${P}-violet`} width={2.2} />
@@ -1286,12 +1286,12 @@ export function LstmCellStep() {
       <Arr x1={222} y1={136} x2={222} y2={y + 17} color={colors.orange} marker={`${P}-orange`} width={1.8} />
       {chip(170, 138, "f = 0.9", colors.orange, 104, 26, 0.14, 11.5)}
       <text x={222} y={180} textAnchor="middle" fontSize={10} fill={inkSecondary}>
-        forget gate: 이전 기억의 90% 유지
+        forget gate: 이전 셀 상태의 90% 유지
       </text>
       <Arr x1={390} y1={136} x2={390} y2={y + 17} color={colors.green} marker={`${P}-green`} width={1.8} />
       {chip(325, 138, "i ⊙ c̃ = 0.5 × 0.4", colors.green, 130, 26, 0.14, 11)}
       <text x={390} y={180} textAnchor="middle" fontSize={10} fill={inkSecondary}>
-        input gate: 새 후보의 50%만 쓰기
+        input gate: 새 후보의 50%를 더함
       </text>
       <Arr x1={568} y1={y} x2={600} y2={y} color={colors.violet} marker={`${P}-violet`} width={2.2} />
       <Lines x={606} y={y - 4} lines={["다음 스텝으로"]} size={10} anchor="start" color={inkSecondary} />
@@ -1304,10 +1304,10 @@ export function LstmCellStep() {
       </text>
       <line x1={20} x2={700} y1={196} y2={196} stroke="var(--border-hairline)" />
       <text x={30} y={220} fontSize={11} fontWeight={700} fill={colors.green}>
-        f = 1, i = 0 → 새 c = 이전 c: 기억 보존
+        f = 1, i = 0 → 새 c = 이전 c: 이전 값 유지
       </text>
       <text x={380} y={220} fontSize={11} fontWeight={700} fill={colors.red}>
-        f = 0, i = 1 → 새 c = c̃: 과거를 지우고 덮어쓰기
+        f = 0, i = 1 → 새 c = c̃: 이전 값을 지우고 후보로 교체
       </text>
     </DiagramFrame>
   );
@@ -1332,8 +1332,8 @@ export function LstmRetention() {
   const sy2 = linear(-2, 2, G2.top + G2.height, G2.top);
   return (
     <DiagramFrame
-      title="셀 상태 경로는 기억을 오래 남긴다"
-      caption="왼쪽: 셀 상태를 따라 한 스텝 거슬러 갈 때마다 대략 forget gate 값이 곱해진다. f = 0.99를 유지하면 50스텝 뒤에도 0.99⁵⁰ ≈ 0.61이 남지만, 단순 RNN에서 매 스텝 0.9씩 줄어드는 경우는 0.9⁵⁰ ≈ 0.005로 사실상 사라진다(세로축은 로그 눈금). 오른쪽: 본문 LSTM 코드의 실제 출력이다. forget gate 편향을 3으로 잡아 f가 0.94~1.00으로 1에 가깝고, 셀에 넣어 둔 기억 [1, −1]의 부호가 다섯 스텝 내내 유지된다."
+      title="셀 상태 경로는 이전 값을 오래 유지한다"
+      caption="왼쪽: 역전파로 셀 상태 경로를 한 스텝 지날 때마다 대략 forget gate 값이 곱해진다. f = 0.99이면 50스텝 뒤에도 0.99⁵⁰ ≈ 0.61이 남지만, 기본 RNN에서 스텝마다 0.9배가 되면 0.9⁵⁰ ≈ 0.005로 0에 가까워진다(세로축은 로그 눈금). 오른쪽: 본문 LSTM 코드의 실제 출력이다. forget gate 편향을 3으로 초기화해 f가 0.94~1.00으로 1에 가깝고, 셀 상태의 초깃값 [1, −1]의 부호가 다섯 스텝 동안 유지된다."
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -1381,13 +1381,13 @@ export function GruVsLstm() {
   return (
     <DiagramFrame
       title="LSTM과 GRU: 게이트와 상태의 수"
-      caption="LSTM은 forget·input·output 게이트와 새 후보, 네 묶음의 가중치를 갖고 셀 상태 c와 은닉 상태 h를 따로 유지한다. GRU는 forget과 input을 업데이트 게이트 z 하나로 합쳐 '이전 상태를 1 − z만큼, 새 후보를 z만큼' 섞고, 리셋 게이트 r로 새 후보를 만들 때 이전 상태를 얼마나 볼지 정한다. 상태도 h 하나뿐이다. 묶음 하나가 d_h(d_x + d_h) + d_h개 파라미터라면 단순 RNN은 1묶음, GRU는 3묶음, LSTM은 4묶음이다(본문 코드의 d_x = 3, d_h = 2에서 LSTM은 48개)."
+      caption="LSTM은 forget·input·output 게이트와 새 후보, 네 묶음의 가중치를 갖고 셀 상태 c와 은닉 상태 h를 따로 유지한다. GRU는 forget과 input을 업데이트 게이트 z 하나로 합쳐 '이전 상태를 1 − z만큼, 새 후보를 z만큼' 섞고, 리셋 게이트 r로 새 후보를 계산할 때 이전 상태를 얼마나 반영할지 정한다. 상태도 h 하나뿐이다. 묶음 하나가 d_h(d_x + d_h) + d_h개 파라미터라면 단순 RNN은 1묶음, GRU는 3묶음, LSTM은 4묶음이다(본문 코드의 d_x = 3, d_h = 2에서 LSTM은 48개)."
       viewBox="0 0 720 262"
       minWidth={600}
     >
       <Markers prefix={P} colors={{ ink: inkSecondary }} />
       {[
-        { x: 16, t: "LSTM", c: colors.violet, gates: ["f: forget", "i: input", "o: output"], cand: "후보 c̃", states: ["c_t: 장기 기억", "h_t: 출력"], n: 4 },
+        { x: 16, t: "LSTM", c: colors.violet, gates: ["f: forget", "i: input", "o: output"], cand: "후보 c̃", states: ["c_t: 셀 상태", "h_t: 출력"], n: 4 },
         { x: 250, t: "GRU", c: colors.green, gates: ["z: update", "r: reset"], cand: "후보 h̃", states: ["h_t 하나"], n: 3 },
       ].map((m) => (
         <g key={m.t}>

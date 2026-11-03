@@ -3,10 +3,11 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "ViT처럼 이미지를 패치 토큰으로 자르기",
+    title: "ViT처럼 이미지를 패치 토큰으로 나누기",
     prompt: md`
+ViT의 패치 나누기와 VGG의 파라미터 비교를 함수로 구현합니다.
 
-1. \`patchify(img, P)\`: (H, W) 이미지를 $P \times P$ 패치로 잘라, 패치를 **왼쪽 위부터 행 순서대로** 한 줄씩 편 (패치 수, P·P) 행렬을 돌려줍니다. 반복문 없이 \`reshape\`와 \`transpose\`로 씁니다.
+1. \`patchify(img, P)\`: (H, W) 이미지를 $P \times P$ 패치로 나눠, 패치를 **왼쪽 위부터 행 순서대로** 한 줄씩 편 (패치 수, P·P) 행렬을 돌려줍니다. 반복문 없이 \`reshape\`와 \`transpose\`로 씁니다.
 2. \`n_tokens(img_size, patch)\`: 정사각 이미지에서 나오는 패치 토큰 수
 3. \`vgg_compare(C)\`: 채널 C일 때 ($3 \times 3$ conv 세 층의 가중치 수, $7 \times 7$ conv 한 층의 가중치 수)
 

@@ -3,8 +3,9 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "RNN 순전파와 시간을 거슬러 줄어드는 기울기",
+    title: "RNN 순전파와 시점 거리에 따라 줄어드는 기울기",
     prompt: md`
+RNN의 순전파와 BPTT의 야코비안 곱을 구현합니다.
 
 1. \`rnn_forward(xs, W, U, b)\`: $h_t = \tanh(Wx_t + Uh_{t-1} + b)$를 $h_0 = 0$에서 시작해 계산하고 모든 $h_t$의 리스트를 돌려줍니다. 길이와 상관없이 같은 $W, U, b$를 씁니다(파라미터 공유).
 2. \`grad_norms(hs, U)\`: BPTT에서 $\partial h_T/\partial h_k = \prod_{t=k+1}^{T} \mathrm{diag}(1 - h_t^2)\,U$입니다. 뒤에서부터 야코비안을 하나씩 곱해 가며 거리 1, 2, …, T−1의 **스펙트럼 노름**(\`np.linalg.norm(J, 2)\`)을 리스트로 돌려줍니다.

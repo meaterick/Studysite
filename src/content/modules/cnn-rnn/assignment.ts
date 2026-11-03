@@ -3,21 +3,20 @@ import { defineAssignment, md, py } from "../../kit";
 export default defineAssignment({
   key: "cnn-ablation",
   kind: "track",
-  title: "합성곱 구현과 정규화 Ablation 실험 노트",
+  title: "합성곱 구현과 정규화·규제 기법의 Ablation 실험 노트",
   summary: md`
+두 부분으로 이루어집니다. ① BatchNorm, Dropout, 데이터 증강, weight decay 같은 기법이 실제로 얼마나 도움이 되는지, 기준 모델에서 **한 번에 하나씩만** 바꾸는 ablation 실험으로 확인합니다. ② 합성곱 층을 NumPy로 직접 구현해 출력 크기 공식, 파라미터 공유, 평행이동 등변성을 확인합니다.
 
-두 부분으로 이루어집니다. ① BatchNorm, Dropout, 데이터 증강, weight decay 같은 기법이 실제로 얼마나 도움이 되는지, 기준선에서 **한 번에 하나씩만** 바꾸는 ablation 실험으로 확인합니다. ② 합성곱 층을 NumPy로 직접 구현해 출력 크기 공식, 파라미터 공유, 평행이동 등변성을 확인합니다.
+GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8 \times 8$ 픽셀) 데이터를 쓰고, ablation 실험의 모델은 속도를 위해 합성곱 대신 NumPy로 구현한 **완전연결 신경망(MLP)**을 씁니다. 그래서 ①의 결과는 정규화·규제 기법이 이 MLP에서 어떻게 작용하는지를 보여 주며, CIFAR-10 같은 컬러 사진과 CNN에서는 효과의 크기가 다를 수 있습니다(예: CNN의 BatchNorm은 채널마다 배치·높이·너비 전체로 통계를 냅니다). CNN 학습과 전이학습은 [[lesson:cnn-training]]과 [[lesson:transfer-learning]]의 Colab 코드로 다룹니다.
 
-GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8 \times 8$ 픽셀) 데이터를 쓰고, ablation 실험의 모델은 속도를 위해 합성곱 대신 NumPy로 구현한 **완전연결 신경망(MLP)**을 씁니다. 그래서 ①의 결과는 "정규화 기법이 이 MLP에서 어떻게 작용하는가"이며, CIFAR-10 같은 컬러 사진과 CNN에서는 효과의 크기가 다를 수 있습니다(예: CNN의 BatchNorm은 채널마다 배치·높이·너비 전체로 통계를 냅니다). CNN 학습과 전이학습은 학습 자료의 Colab 코드로 다룹니다.
-
-모든 **핵심** 항목은 핵심 과정만으로 풀 수 있고 채점 기준도 핵심 항목만 봅니다. **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
+모든 **핵심** 항목은 핵심 레슨만으로 풀 수 있고 채점 기준도 핵심 항목만 봅니다. **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
 `,
   requirements: [
     "실험 엔진 셀은 수정하지 않고, 설정은 `train(...)`의 인자로만 바꾼다.",
-    "학습 전 초기 손실이 $\\ln 10 \\approx 2.303$ 근처인지 먼저 확인하고, 기준선의 train/val 곡선을 그린다.",
+    "학습 전 초기 손실이 $\\ln 10 \\approx 2.303$ 근처인지 먼저 확인하고, 기준 모델의 train/val 곡선을 그린다.",
     "후보 중 ablation 두 가지를 골라 실행 **전에** 가설을 적고, 결과 표와 비교해 맞고 틀린 이유를 설명한다.",
     "틀린 테스트 이미지에서 공통 패턴을 두 가지 이상 찾아 개선 아이디어를 낸다.",
-    "`out_size`의 TODO를 출력 크기 공식으로 채워 다섯 설정이 모두 '일치'가 되게 하고, 파라미터 수·특징 지도·평행이동 등변성을 해석한다.",
+    "`out_size`의 TODO를 출력 크기 공식으로 채워 다섯 설정이 모두 '일치'가 되게 하고, 파라미터 수·특성 맵·평행이동 등변성을 해석한다.",
   ],
   tasks: [
     {
@@ -25,7 +24,6 @@ GPU 없이 브라우저에서 몇 초 만에 학습되도록 손글씨 숫자($8
       title: "실험 엔진 읽고 준비하기",
       tier: "core",
       instructions: md`
-
 첫 코드 셀은 데이터 분할과 신경망(64 → 128 → 64 → 10, ReLU), 학습 루프를 정의합니다. 먼저 실행한 뒤 코드를 읽으며 다음을 확인합니다. 이 셀은 수정하지 않는 것이 원칙이며, 설정은 \`train(dropout=0.0)\`처럼 인자로만 바꿉니다.
 
 - \`forward\`의 \`train\` 인자가 BatchNorm과 Dropout의 동작을 어떻게 바꾸는지
@@ -42,7 +40,7 @@ digits = load_digits()
 X_all = digits.images / 16.0                 # (1797, 8, 8), 0~1
 y_all = digits.target
 X_rest, X_test, y_rest, y_test = train_test_split(X_all, y_all, test_size=0.25, stratify=y_all, random_state=0)
-# 일반화 기법의 효과가 드러나도록 훈련 데이터를 500장으로 줄입니다.
+# 일반화 기법의 효과가 드러나도록 학습 데이터를 500장으로 줄입니다.
 X_train, X_val, y_train, y_val = train_test_split(X_rest, y_rest, train_size=500, stratify=y_rest, random_state=0)
 print("train", X_train.shape, "val", X_val.shape, "test", X_test.shape)
 
@@ -151,7 +149,7 @@ def train(**overrides):
             idx = order[s:s + cfg["batch"]]
             xb, yb = X_train[idx], y_train[idx]
             if cfg["augment"]:
-                xb = augment_batch(xb, rng)          # 증강은 훈련 배치에만 적용합니다.
+                xb = augment_batch(xb, rng)          # 증강은 학습 배치에만 적용합니다.
             logits, cache, h_last = forward(P, xb, cfg, train=True, stats=stats, rng=rng)
             _, p = softmax_ce(logits, yb)
             G = backward(P, cache, h_last, p, yb, cfg)
@@ -170,14 +168,13 @@ print("엔진 준비 완료. train(**변경할_설정)으로 실험합니다.")
     },
     {
       id: "baseline",
-      title: "기준선 학습과 초기 손실 확인",
+      title: "기준 모델 학습과 초기 손실 확인",
       tier: "core",
       instructions: md`
-
-학습 전에 Karpathy 레시피의 초기 손실 점검을 먼저 합니다. 클래스가 10개이므로 무작위로 초기화한 모델의 손실은 $\ln 10 \approx 2.303$ 근처여야 합니다. 그다음 기준선을 학습해 train/val 손실과 정확도 곡선을 그립니다.
+학습 전에 초기 손실을 먼저 확인합니다([[lesson:transfer-learning]]의 학습 진단 순서). 클래스가 10개이므로 무작위로 초기화한 모델의 손실은 $\ln 10 \approx 2.303$ 근처여야 합니다. 그다음 기준 모델을 학습해 train/val 손실과 정확도 곡선을 그립니다.
 `,
       cells: [
-        { kind: "code", id: "baseline-code", label: "초기 손실 점검과 기준선 학습", starter: py`
+        { kind: "code", id: "baseline-code", label: "초기 손실 점검과 기준 모델 학습", starter: py`
 import matplotlib.pyplot as plt
 
 P0, stats0 = init_params(BASE, np.random.default_rng(0)), {}
@@ -186,7 +183,7 @@ print(f"초기 손실 {loss0:.3f} (기댓값 ln 10 = {np.log(10):.3f})")
 
 base = train()
 h = base["hist"]
-print(f"기준선: val 정확도 {h['val_acc'][-1]:.3f}, train-val 차이 {h['train_acc'][-1] - h['val_acc'][-1]:.3f}, {base['seconds']:.1f}초")
+print(f"기준 모델: val 정확도 {h['val_acc'][-1]:.3f}, train-val 차이 {h['train_acc'][-1] - h['val_acc'][-1]:.3f}, {base['seconds']:.1f}초")
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 3.5))
 axes[0].plot(h["train_loss"], label="train"); axes[0].plot(h["val_loss"], label="val")
@@ -202,8 +199,7 @@ plt.show()
       title: "Ablation 두 가지",
       tier: "core",
       instructions: md`
-
-아래 후보 중 **두 가지**를 골라, 실행하기 **전에** 결과를 예측하는 가설을 한 줄씩 적습니다. 그다음 코드 셀의 \`ABLATIONS\`에서 고른 항목의 주석을 해제하고 실행합니다. 각 실험은 기준선에서 설정 하나만 바꿉니다.
+아래 후보 중 **두 가지**를 골라, 실행하기 **전에** 결과를 예측하는 가설을 한 줄씩 적습니다. 그다음 코드 셀의 \`ABLATIONS\`에서 고른 항목의 주석을 해제하고 실행합니다. 각 실험은 기준 모델에서 설정 하나만 바꿉니다.
 
 | 후보 | 설정 |
 | --- | --- |
@@ -231,7 +227,7 @@ ABLATIONS = {
     # "작은 초기화": dict(init="small"),
 }
 
-results = {"기준선": base}
+results = {"기준 모델": base}
 for name, change in ABLATIONS.items():
     results[name] = train(**change)
 
@@ -240,10 +236,10 @@ for name, r in results.items():
     h = r["hist"]
     print(f"{name:<14}{h['val_acc'][-1]:>10.3f}{h['train_acc'][-1] - h['val_acc'][-1]:>16.3f}{r['seconds']:>14.1f}")
 ` },
-        { kind: "text", id: "ablation-answer", prompt: "결과를 표로 정리하고, 각 실험의 결과가 가설과 맞았는지, 틀렸다면 왜인지 단계에서 배운 개념으로 설명해 주십시오.", minChars: 320, template: md`
+        { kind: "text", id: "ablation-answer", prompt: "결과를 표로 정리하고, 각 실험의 결과가 가설과 맞았는지, 틀렸다면 왜인지 레슨에서 배운 개념으로 설명해 주십시오.", minChars: 320, template: md`
 | 변경 항목 | val 정확도 | train-val 차이 | 학습 시간 |
 | --- | --- | --- | --- |
-| 기준선 |  |  |  |
+| 기준 모델 |  |  |  |
 |  |  |  |  |
 |  |  |  |  |
 
@@ -256,8 +252,7 @@ for name, r in results.items():
       title: "오류 분석",
       tier: "core",
       instructions: md`
-
-기준선 모델이 테스트셋에서 틀린 이미지를 최대 16장까지 (정답, 예측)과 함께 시각화합니다. 공통 패턴을 두 가지 이상 찾아 적습니다(예: 획이 끊긴 숫자, 비슷한 모양의 숫자 쌍).
+기준 모델이 테스트 데이터에서 틀린 이미지를 최대 16장까지 (정답, 예측)과 함께 시각화합니다. 공통 패턴을 두 가지 이상 찾아 적습니다(예: 획이 끊긴 숫자, 비슷한 모양의 숫자 쌍).
 `,
       cells: [
         { kind: "code", id: "errors-code", label: "틀린 테스트 이미지 시각화", starter: py`
@@ -282,10 +277,9 @@ plt.show()
       title: "재현성 체크리스트",
       tier: "core",
       instructions: md`
-
 실험 엔진 코드에서 아래 두 가지를 직접 찾아, 해당 코드 줄 번호와 함께 답합니다. 코드 셀 왼쪽의 줄 번호를 참고합니다.
 
-1. 데이터 증강이 훈련 데이터에만 적용되고, 검증·테스트 평가에는 적용되지 않는가?
+1. 데이터 증강이 학습 데이터에만 적용되고, 검증·테스트 평가에는 적용되지 않는가?
 2. 평가할 때 PyTorch의 \`model.eval()\`에 해당하는 처리(Dropout 끄기, BatchNorm 이동 평균 사용)를 하는가?
 
 마지막으로, 같은 셀을 다시 실행했을 때 결과가 똑같이 나오는지 확인하고 그 이유를 적습니다.
@@ -299,12 +293,11 @@ plt.show()
       title: "합성곱 층 직접 구현하기",
       tier: "core",
       instructions: md`
-
-이번 주의 주인공인 합성곱을 NumPy로 직접 구현해, 학습 자료의 네 가지 주장을 숫자로 확인합니다. 위의 ablation 실험은 속도 때문에 완전연결 신경망(MLP)을 썼으므로, CNN만의 성질은 이 과제에서 따로 다룹니다.
+합성곱을 NumPy로 직접 구현해, [[lesson:convolution]]의 네 가지 성질을 숫자로 확인합니다. 위의 ablation 실험은 속도 때문에 완전연결 신경망(MLP)을 썼으므로, CNN만의 성질은 이 과제에서 따로 다룹니다.
 
 1. **출력 크기:** \`out_size\`의 \`TODO\`에 출력 크기 공식 $N_{out} = \lfloor (N + 2P - K)/S \rfloor + 1$을 써 넣고, 공식을 쓰지 않고 위치를 직접 세어 슬라이딩하는 \`conv2d\`의 결과와 다섯 설정 모두 일치하는지 확인합니다.
 2. **파라미터 공유·지역성:** $3 \times 3$ 필터 8개짜리 합성곱과, 같은 크기의 출력을 내는 완전연결층의 파라미터 수를 비교합니다.
-3. **특징 지도:** 손으로 만든 두 필터(세로·가로 경계)가 숫자 이미지의 어디에 반응하는지 봅니다.
+3. **특성 맵:** 손으로 만든 두 필터(세로·가로 경계)가 숫자 이미지의 어디에 반응하는지 봅니다.
 4. **평행이동 등변성:** 입력을 한 칸 옮겼을 때 stride 1 합성곱의 출력도 한 칸 옮겨지는지(가장자리 열 제외), stride 2에서는 어떻게 되는지 확인합니다.
 `,
       cells: [
@@ -316,8 +309,8 @@ from sklearn.datasets import load_digits
 img = load_digits().images[0] / 16.0     # 8×8 숫자 0 (값 0~1)
 
 def out_size(n, k, s, p):
-    """입력 한 변 n, 커널 k, 보폭 s, 패딩 p일 때 출력 한 변의 길이"""
-    return 0  # TODO: 학습 자료의 출력 크기 공식을 직접 써 넣습니다. (정수 나눗셈은 //)
+    """입력 한 변 n, 커널 k, stride s, padding p일 때 출력 한 변의 길이"""
+    return 0  # TODO: 본문의 출력 크기 공식을 직접 써 넣습니다. (정수 나눗셈은 //)
 
 def conv2d(x, w, b, stride=1, pad=0):
     """x: (H, W) 흑백 이미지, w: (필터 수, kH, kW), b: (필터 수,) → (필터 수, H_out, W_out)
@@ -346,7 +339,7 @@ conv_params = n_filters * (3 * 3 * 1) + n_filters
 fc_params = (8 * 8) * (n_filters * 8 * 8) + n_filters * 8 * 8
 print(f"\n파라미터 수: 합성곱 {conv_params:,}개 vs 완전연결 {fc_params:,}개 (약 {fc_params / conv_params:,.0f}배)")
 
-# 3) 손으로 만든 필터 두 개로 특징 지도 보기
+# 3) 손으로 만든 필터 두 개로 특성 맵 보기
 sobel = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=float)
 filters = np.stack([sobel, sobel.T])            # 0번: 세로 경계, 1번: 가로 경계에 반응
 maps = conv2d(img, filters, np.zeros(2), pad=1)
@@ -357,7 +350,7 @@ for ax, a, title in zip(axes, [img, maps[0], maps[1]], ["input", "filter 0 (vert
     ax.axis("off")
 plt.show()
 
-# 4) 평행이동 등변성: 입력을 오른쪽으로 한 칸 옮기면 특징 지도도 한 칸 옮겨지는가?
+# 4) 평행이동 등변성: 입력을 오른쪽으로 한 칸 옮기면 특성 맵도 한 칸 옮겨지는가?
 def shift_right(a):
     out = np.zeros_like(a)
     out[..., 1:] = a[..., :-1]
@@ -380,14 +373,13 @@ print("stride 2 | 옮기기 전 출력과의 차이:", np.abs(fmap2_moved - fmap
       title: "심화: 반복 실험·추가 ablation·적대적 강건성",
       tier: "advanced",
       instructions: md`
-
 다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않습니다.
 
 - ablation을 네 가지 이상으로 늘리고, 시드 세 개로 반복해 평균과 표준편차로 보고합니다.
-- 훈련 데이터를 100장, 250장, 500장, 1000장으로 바꿔 가며 정규화 기법의 효과가 데이터 양에 따라 어떻게 달라지는지 확인합니다.
+- 학습 데이터를 100장, 250장, 500장, 1000장으로 바꿔 가며 정규화·규제 기법의 효과가 데이터 양에 따라 어떻게 달라지는지 확인합니다.
 - \`forward\`를 수정해 BatchNorm을 ReLU 뒤에 두는 순서로 바꾸고 결과를 비교합니다.
-- 기준선 모델과 정규화를 모두 켠 모델에 FGSM 공격($\varepsilon = 0.05, 0.1$)을 걸어, 깨끗한 정확도와 적대적 정확도가 어떻게 다른지 비교합니다(「적대적 예제」). 입력 기울기는 \`backward\`를 한 층 더 내려 계산합니다.
-- 과제의 \`conv2d\`를 im2col 행렬 곱으로 다시 구현해 결과가 같은지, 속도가 얼마나 다른지 비교합니다(「합성곱의 계산」).
+- 기준 모델과, 정규화·규제를 모두 끈 모델에 FGSM 공격($\varepsilon = 0.05, 0.1$)을 걸어, 깨끗한 정확도와 적대적 정확도가 어떻게 다른지 비교합니다([[lesson:adversarial-examples]]). 입력 기울기는 \`backward\`를 한 층 더 내려 계산합니다.
+- 과제의 \`conv2d\`를 im2col 행렬 곱으로 다시 구현해 결과가 같은지, 속도가 얼마나 다른지 비교합니다([[lesson:conv-as-matmul]]).
 `,
       cells: [
         { kind: "code", id: "advanced-code", label: "심화 실험", starter: py`
@@ -398,15 +390,15 @@ print("stride 2 | 옮기기 전 출력과의 차이:", np.abs(fmap2_moved - fmap
     },
   ],
   rubric: [
-    { id: "control", label: "실험 통제", points: 3, guide: "기준선을 두고 한 번에 하나만 바꾸며, 시드를 고정했습니다." },
-    { id: "hypothesis", label: "가설과 해석의 깊이", points: 3, guide: "실행 전에 가설을 세우고, 결과를 단계에서 배운 개념으로 설명했습니다." },
+    { id: "control", label: "실험 통제", points: 3, guide: "기준 모델을 두고 한 번에 하나만 바꾸며, 시드를 고정했습니다." },
+    { id: "hypothesis", label: "가설과 해석의 깊이", points: 3, guide: "실행 전에 가설을 세우고, 결과를 레슨에서 배운 개념으로 설명했습니다." },
     { id: "errors", label: "오류 분석", points: 2, guide: "틀린 사례에서 구체적인 공통 패턴을 찾고 개선 방향을 제시했습니다." },
     { id: "conv", label: "합성곱 구현과 귀납편향 해석", points: 2, guide: "출력 크기 공식을 구현해 검증하고, 파라미터 수 차이와 등변성 결과를 파라미터 공유·지역성·stride로 정확히 설명했습니다." },
     { id: "checklist", label: "체크리스트와 재현성", points: 1, guide: "초기 손실 점검, 증강 적용 범위, 평가 모드를 코드 근거와 함께 확인했습니다." },
     { id: "clarity", label: "가독성", points: 1, guide: "표와 그래프가 정리되어 있고 서술이 간결합니다." },
   ],
   gradingNotes: md`
-- **기준선 학습과 초기 손실 확인**: 기준선(드롭아웃 0.2, 증강, BatchNorm, weight decay $10^{-4}$, 60에폭)의 검증 정확도는 약 0.96이다.
+- **기준 모델 학습과 초기 손실 확인**: 기준 모델(드롭아웃 0.2, 증강, BatchNorm, weight decay $10^{-4}$, 60에폭)의 검증 정확도는 약 0.96이다.
 - **Ablation 두 가지**: 학습률 10배는 발산하고(정확도 약 0.2), BatchNorm 제거는 약 3%p 하락이 전형적이다. $8 \times 8$ 이미지에서는 1픽셀 이동이 이미지 폭의 12.5%에 해당해 증강을 빼는 편이 정확도가 더 높게 나올 수 있다. 이를 가설과 다른 결과로 그대로 보고하고 이유(데이터 해상도에 비해 증강 강도가 크다)를 설명하면 우수 답안이다.
 - **재현성 체크리스트**: 증강이 학습 루프 안에서만 호출되는 줄과, evaluate가 \`train=False\`로 forward를 호출하는 줄을 지목해야 한다. 같은 셀을 다시 실행하면 시드 고정으로 결과가 똑같이 나와야 한다.
 - **합성곱 층 직접 구현하기**: 출력 크기는 \`(n + 2 * p - k) // s + 1\`이고 다섯 설정 모두 일치해야 한다(n=8, k=3, s=2, p=1이면 \`(8 + 2 - 3) // 2 + 1 = 4\`). 파라미터 수는 합성곱 80개, 완전연결 33,280개(약 416배)다. 같은 $3 \times 3$ 필터를 모든 위치에 재사용하고(파라미터 공유) 주변 9칸만 보기(지역성) 때문이다. stride 1에서는 입력을 한 칸 옮기면 출력도 정확히 한 칸 옮겨지고(최대 차이 0), stride 2에서는 한 칸 이동이 출력 격자에서 반 칸이 되어 등변성이 깨진다는 점을 짚으면 우수 답안이다. MLP에는 이런 귀납 편향이 없어 1픽셀 이동도 전혀 다른 입력으로 처리한다는 점을 증강 결과 해석과 연결하면 좋다.
@@ -417,9 +409,9 @@ print("stride 2 | 옮기기 전 출력과의 차이:", np.abs(fmap2_moved - fmap
 import numpy as np
 assert abs(loss0 - np.log(10)) < 0.1, f"loss0 = {loss0:.3f}"
 ` },
-    { id: "w4-at-baseline", taskId: "baseline", title: "기준선 val 정확도 0.85 이상", hint: "엔진 셀을 수정하지 않았는지, 기준선 셀을 끝까지 실행했는지 확인하십시오.", code: py`
+    { id: "w4-at-baseline", taskId: "baseline", title: "기준 모델 val 정확도 0.85 이상", hint: "엔진 셀을 수정하지 않았는지, 기준 모델 셀을 끝까지 실행했는지 확인하십시오.", code: py`
 acc = base["hist"]["val_acc"][-1]
-assert acc >= 0.85, f"기준선 val 정확도 {acc:.3f}"
+assert acc >= 0.85, f"기준 모델 val 정확도 {acc:.3f}"
 ` },
     { id: "w4-at-ablation", taskId: "ablation", title: "ablation 두 가지를 각각 설정 하나만 바꿔 실행했다", code: py`
 assert len(ABLATIONS) == 2, f"고른 ablation이 {len(ABLATIONS)}개입니다(2개여야 함)."
@@ -437,7 +429,6 @@ for n, k, s, p, expect in [(8, 3, 2, 1, 4), (32, 5, 1, 2, 32), (32, 5, 2, 2, 16)
       key: "ch1",
       title: "다채널 합성곱을 반복문 두 개로 벡터화하기",
       prompt: md`
-
 실제 CNN의 합성곱은 입력이 여러 채널입니다. \`conv2d_multi(x, w, b, stride, pad)\`를 구현합니다.
 
 - \`x\`: (C_in, H, W), \`w\`: (C_out, C_in, K, K), \`b\`: (C_out,) → 출력 (C_out, H_out, W_out)
@@ -527,7 +518,6 @@ print(conv2d_multi(x, w, np.zeros(4), pad=1).shape)
       key: "ch2",
       title: "Max Pooling의 역전파: 승자에게만 기울기를",
       prompt: md`
-
 Max Pooling은 파라미터가 없지만 역전파는 해야 합니다. $2 \times 2$(stride 2) 풀링의 순전파·역전파를 구현합니다.
 
 1. \`maxpool_forward(a)\`: 풀링 결과와, 역전파에 쓸 **각 블록 최댓값의 위치**(마스크)를 돌려줍니다.
