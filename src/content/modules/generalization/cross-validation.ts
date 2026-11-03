@@ -6,135 +6,138 @@ export default defineLesson({
   title: "교차검증, 시계열 검증, 하이퍼파라미터 탐색",
   tier: "core",
   concepts: ["cross-validation-tuning"],
-  goal: "숫자·범주·결측이 섞인 데이터를 ColumnTransformer 파이프라인으로 누수 없이 전처리하고, GridSearchCV로 하이퍼파라미터를 고르며, 그룹·시계열 데이터에 맞는 분할을 고를 수 있다.",
-  why: "",
+  goal: "K-Fold 교차검증으로 모든 샘플을 한 번씩 검증에 쓰고, 층화·그룹·시계열 분할을 데이터 구조에 맞게 고르며, 전처리를 포함한 파이프라인을 교차검증하고, GridSearchCV·RandomizedSearchCV로 하이퍼파라미터를 고른 뒤 best_score_가 낙관적인 이유를 설명한다.",
+  why: "검증 데이터를 한 번만 떼어 두면 데이터가 적을 때 점수가 그 분할에 크게 좌우된다([[lesson:baselines]]). 교차검증은 같은 데이터로 더 안정된 추정을 얻는 방법이고, 하이퍼파라미터 탐색과 모델 비교의 기본 절차다. 두 모델의 점수 차이를 통계적으로 판단하는 방법은 [[lesson:model-evaluation-stats]]에서 다룬다.",
   body: md`
-핵심 과정에서는 숫자 열만 있는 깔끔한 데이터(유방암 진단)로 "전처리는 파이프라인 안에"라는 원칙을 익혔다. 실제 표 데이터는 다르다. 나이·소득 같은 숫자 열과 도시·가입 경로 같은 범주 열이 섞여 있고, 열마다 결측 비율도 다르며, 같은 환자·같은 사용자의 기록이 여러 줄로 반복된다. 이 단계는 그런 데이터를 **한 번의 \`fit\`으로 누수 없이** 처리하는 실무 표준 도구 세 가지를 다룬다. ① 열 종류마다 다른 전처리를 묶는 \`ColumnTransformer\`, ② 하이퍼파라미터를 검증 점수로 고르는 \`GridSearchCV\`, ③ 같은 그룹·미래 정보가 섞이지 않게 나누는 \`GroupKFold\`·\`TimeSeriesSplit\`이다.
+### K-Fold 교차검증
 
-### 열 종류별 전처리를 하나로: ColumnTransformer
-
-숫자 열은 "결측을 중앙값으로 채운 뒤 표준화", 범주 열은 "원-핫 인코딩"처럼 열마다 처리가 다르다. 이것을 손으로 따로 하면 훈련·검증 분할마다 똑같은 순서를 반복해야 하고, 어느 한 곳에서 전체 데이터로 \`fit\`하는 순간 누수가 생긴다. \`ColumnTransformer\`는 "어느 열에 어떤 변환을 할지"를 목록으로 받아 하나의 변환기로 묶고, 이것을 모델과 함께 \`make_pipeline\`에 넣으면 전처리 전체가 모델의 일부가 된다.
+**K-Fold 교차검증**은 학습 데이터를 겹치지 않는 조각(**fold**) $K$개로 나누고, 매번 한 조각을 검증에, 나머지 $K - 1$개를 학습에 쓰는 일을 $K$번 반복한다. 모든 샘플이 정확히 한 번씩 검증에 쓰이고, 점수 $K$개의 평균을 성능 추정으로 쓴다. 한 번의 분할에서 나온 점수 하나보다 분할에 덜 좌우된다.
 
 \`\`\`python
 import numpy as np
-import pandas as pd
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import KFold
 
-df = pd.DataFrame({
-    "나이": [25, 47, 33, 52, 41],
-    "소득": [210, np.nan, 260, 400, np.nan],
-    "도시": ["서울", "부산", "서울", "대구", "부산"],
-})
-numeric = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())   # 숫자 열: 중앙값 대체 → 표준화
-pre = ColumnTransformer([
-    ("num", numeric, ["나이", "소득"]),
-    ("cat", OneHotEncoder(handle_unknown="ignore"), ["도시"]),                # 범주 열: 원-핫
-])
-print(pre.fit_transform(df).round(2))
-print("만들어진 열:", list(pre.get_feature_names_out()))
-
-model = make_pipeline(pre, LogisticRegression())   # 전처리 + 모델 = 하나의 추정기
+X = np.arange(10)                                      # 샘플 10개의 번호
+for i, (tr, va) in enumerate(KFold(n_splits=5).split(X), start=1):
+    print(f"fold {i}: 학습 {tr} / 검증 {va}")
+# fold 1: 학습 [2 3 4 5 6 7 8 9] / 검증 [0 1]
+# ...
+# fold 5: 학습 [0 1 2 3 4 5 6 7] / 검증 [8 9]
 \`\`\`
 
-출력은 숫자 열 2개와 도시 원-핫 열 3개를 합친 5열 표다. \`handle_unknown="ignore"\`는 실무에서 반드시 챙겨야 할 옵션이다. 훈련 데이터에 없던 도시(예: "광주")가 예측 시점에 들어오면 기본 설정은 오류를 내고 서비스가 멈춘다. \`"ignore"\`로 두면 그 행의 도시 열을 모두 0으로 두고 예측을 계속한다.
+데이터의 순서에 패턴이 있을 수 있으므로 보통 \`shuffle=True\`로 섞어서 나누고, 분류에서는 fold마다 클래스 비율을 유지하는 \`StratifiedKFold\`를 쓴다. $K$를 키우면 한 번의 학습에 쓰는 데이터가 늘어(5-Fold는 80%, 10-Fold는 90%) 전체 데이터로 학습한 모델의 성능에 더 가까워지지만, 학습을 $K$번 해야 하므로 계산 비용이 커진다. 보통 5나 10을 쓴다.
 
-[[diagram:column-transformer]]
+### 파이프라인을 교차검증한다
 
-### 하이퍼파라미터를 검증 점수로 고르기: GridSearchCV
-
-로지스틱 회귀의 규제 강도 \`C\`, 트리의 \`max_depth\`처럼 경사하강법이 직접 정하지 않는 값은 검증 점수로 골라야 한다(「데이터 분할·교차검증·데이터 누수」 단계). \`GridSearchCV\`는 후보 조합마다 교차검증을 돌려 평균 점수가 가장 높은 조합을 고르고, 그 조합으로 훈련 데이터 전체에 다시 학습한다. 파이프라인 안쪽 단계의 파라미터는 **\`단계이름__파라미터\`**(밑줄 두 개)로 가리킨다. \`make_pipeline\`은 단계 이름을 클래스 이름의 소문자로 자동으로 붙이므로 로지스틱 회귀의 \`C\`는 \`logisticregression__C\`가 된다.
+전처리를 모델과 함께 파이프라인에 넣고 \`cross_val_score\`에 넘기면, fold마다 학습 부분으로만 전처리 규칙을 계산하므로 누수가 생기지 않는다([[lesson:data-splits]]). 테스트 데이터는 처음에 떼어 두고 교차검증에는 쓰지 않는다.
 
 \`\`\`python
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
+import numpy as np
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 
-model = make_pipeline(StandardScaler(), LogisticRegression())
-print("단계 이름:", list(model.named_steps))                      # ['standardscaler', 'logisticregression']
-grid = {"logisticregression__C": [0.01, 0.1, 1, 10]}               # 단계이름__파라미터
-search = GridSearchCV(model, grid, cv=StratifiedKFold(5, shuffle=True, random_state=0), scoring="roc_auc")
-# search.fit(X, y) 뒤에 search.best_params_, search.best_score_, search.best_estimator_를 쓴다
+X, y = load_breast_cancer(return_X_y=True)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
+model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))
+scores = cross_val_score(model, X_tr, y_tr, cv=StratifiedKFold(5, shuffle=True, random_state=0))
+print(np.round(scores, 3), round(scores.mean(), 3), round(scores.std(), 3))
+# [0.989 0.967 0.978 0.967 0.989] 0.978 0.01
 \`\`\`
 
-탐색 비용도 계산해 두자. 후보가 \`C\` 4개, \`penalty\` 2개, \`class_weight\` 2개면 조합이 $4 \times 2 \times 2 = 16$개이고, 5-Fold면 학습이 $16 \times 5 = 80$번(마지막 재학습 1번 별도) 일어난다. 하이퍼파라미터 종류가 늘면 조합이 곱으로 폭발하므로, 후보가 많을 때는 정해진 횟수만큼 무작위로 조합을 뽑는 \`RandomizedSearchCV\`를 쓴다. 중요한 하이퍼파라미터가 한두 개뿐인 경우가 많아서, 같은 예산이면 격자보다 무작위 탐색이 그 축의 값을 더 다양하게 시험해 보는 경우가 많다.
+결과를 "정확도 0.978 ± 0.010"처럼 쓸 때 ±는 fold 점수 다섯 개가 흩어진 정도일 뿐 신뢰구간이 아니다. 5-Fold에서 두 fold의 학습 데이터는 75%가 겹쳐 fold 점수끼리 독립이 아니기 때문이다. 두 모델을 비교할 때는 같은 fold에서 짝지은 점수 차이를 본다([[lesson:model-evaluation-stats]]).
+
+[[diagram:cv-splitters]]
+
+### 그룹과 시간이 있는 데이터
+
+데이터 분할에서 본 그룹 분할과 시간 분할([[lesson:data-splits]])을 교차검증으로 확장한 도구가 있다.
+
+- **GroupKFold**: 환자·사용자처럼 같은 그룹의 샘플이 학습과 검증에 동시에 들어가지 않게 fold를 나눈다. \`cross_val_score(model, X, y, cv=GroupKFold(5), groups=groups)\`처럼 그룹 번호를 함께 넘긴다.
+- **TimeSeriesSplit**: 항상 과거 구간으로 학습하고 바로 뒤 구간으로 검증한다. fold가 진행될수록 학습 구간이 앞에서부터 늘어나고, 검증 구간은 항상 학습 구간보다 뒤에 있다.
+
+같은 환자의 샘플이 여러 개인 데이터에서 일반 K-Fold로 평가하면, 모델이 그 환자의 다른 샘플을 기억해 맞히므로 처음 보는 환자에 대한 성능보다 훨씬 높은 점수가 나온다. 실습에서 이 차이를 직접 잰다.
+
+### 하이퍼파라미터 탐색
+
+**GridSearchCV**는 후보 조합마다 교차검증을 해서 평균 점수가 가장 높은 조합을 고르고, 그 조합으로 학습 데이터 전체에 다시 학습한다. 파이프라인 안쪽 단계의 파라미터는 \`단계이름__파라미터\`(밑줄 두 개)로 가리키고, \`make_pipeline\`은 클래스 이름을 소문자로 바꾼 것을 단계 이름으로 붙인다.
+
+\`\`\`python
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+X, y = load_breast_cancer(return_X_y=True)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
+model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))
+grid = {"logisticregression__C": [0.01, 0.1, 1, 10, 100]}   # 단계이름__파라미터
+search = GridSearchCV(model, grid, cv=StratifiedKFold(5, shuffle=True, random_state=0))
+search.fit(X_tr, y_tr)
+print(search.best_params_, round(search.best_score_, 3))   # {'logisticregression__C': 1} 0.978
+print(round(search.score(X_te, y_te), 3))                  # 0.982: 떼어 둔 테스트 데이터로 한 번 평가
+\`\`\`
+
+후보가 \`C\` 5개라면 학습은 $5 \times 5 = 25$번(마지막 재학습 1번 별도)이다. 하이퍼파라미터 종류가 늘면 조합 수가 곱으로 늘어나므로, 후보가 많으면 정해진 횟수만큼 조합을 무작위로 뽑는 **RandomizedSearchCV**를 쓴다. 성능에 큰 영향을 주는 하이퍼파라미터는 한두 개인 경우가 많아, 같은 횟수라면 무작위 탐색이 그 값들을 더 다양하게 시험한다.
 
 [[diagram:grid-vs-random]]
 
-여기서 꼭 기억할 점이 하나 있다. \`best_score_\`는 여러 후보 중 **가장 운이 좋았던** 점수를 고른 값이라 실제 성능보다 낙관적이다. 후보가 많을수록 더 그렇다. 고른 모델의 성능을 정직하게 보고하려면 따로 떼어 둔 테스트셋으로 한 번 평가하거나, 심화 과정의 「평가의 통계학」 단계에서 다루는 중첩 교차검증을 쓴다.
+\`best_score_\`는 여러 후보의 교차검증 점수 가운데 최댓값이다. 고르는 데 쓴 점수는 실제 성능보다 높게 나오므로([[lesson:data-splits]]) 이 값도 낙관적이다. 고른 모델의 성능은 떼어 둔 테스트 데이터로 한 번 재거나, 데이터가 적으면 탐색 전체를 바깥 교차검증 안에 넣는 중첩 교차검증으로 잰다([[lesson:model-evaluation-stats]]).
 
-### 같은 사람, 미래의 정보: GroupKFold와 TimeSeriesSplit
-
-「데이터 분할·교차검증·데이터 누수」 단계의 누수 사례 중 "동일 환자의 샘플이 train/test 양쪽에 존재"와 "미래 정보가 특징에 포함"은 분할 방식만 바꿔도 막을 수 있다.
-
-- **GroupKFold**: 한 환자(사용자, 문서, 기기)의 샘플이 여러 개라면 그룹 단위로 fold를 나눠, 같은 그룹이 훈련과 검증에 동시에 들어가지 않게 한다. 그렇지 않으면 모델이 "이 환자의 다른 사진"을 외워서 맞히고, 처음 보는 환자에게는 그 점수가 나오지 않는다.
-- **TimeSeriesSplit**: 시간 순서가 있는 데이터에서 항상 **과거로 학습하고 미래로 검증**한다. 무작위로 섞으면 내일 값을 보고 어제를 맞히는 셈이 된다.
-
-\`\`\`python
-import numpy as np
-from sklearn.model_selection import TimeSeriesSplit
-
-for train_idx, val_idx in TimeSeriesSplit(n_splits=3).split(np.arange(12)):
-    print("훈련", train_idx, "→ 검증", val_idx)
-\`\`\`
-
-훈련 구간이 [0~2] → [0~5] → [0~8]로 늘어나고, 검증 구간은 항상 훈련 구간보다 뒤에 있다. 실제 운영에서 모델이 처하는 상황(지금까지의 데이터로 학습해 앞으로를 예측)과 같은 조건이다.
-
-[[diagram:cv-splitters]]
+:::warn 흔한 실수
+- **교차검증 바깥에서 전처리를 fit한다.** 전처리는 파이프라인에 넣어 fold마다 학습 부분으로만 fit한다.
+- **같은 환자·사용자의 샘플이 여러 개인데 일반 K-Fold를 쓴다.** GroupKFold로 그룹 단위로 나눈다.
+- **\`best_score_\`를 최종 성능으로 보고한다.** 고르는 데 쓴 점수다. 테스트 데이터나 중첩 교차검증으로 다시 잰다.
+:::
 `,
   checks: [
     {
       key: "c1",
-      question: "`make_pipeline(StandardScaler(), LogisticRegression())`의 규제 강도 `C`를 `GridSearchCV`에서 탐색할 때 파라미터 이름은?",
-      choices: ["`logisticregression__C`", "`C`", "`LogisticRegression.C`", "`pipeline_C`"],
+      question: "샘플 100개로 5-Fold 교차검증을 할 때, 각 샘플이 검증에 쓰이는 횟수와 한 번의 학습에 쓰이는 샘플 수는?",
+      choices: ["검증에 정확히 1번, 학습에는 80개", "검증에 5번, 학습에는 100개", "검증에 1번, 학습에는 20개", "검증에 0번, 학습에는 80개"],
       answer: 0,
-      explanation: "파이프라인 안쪽 단계의 파라미터는 `단계이름__파라미터`(밑줄 두 개)로 가리킨다. `make_pipeline`은 단계 이름을 클래스 이름의 소문자로 붙이므로 `logisticregression__C`다.",
+      explanation: "100개를 20개씩 다섯 조각으로 나눠, 매번 한 조각을 검증에 쓰고 나머지 80개로 학습한다. 다섯 번 반복하면 모든 샘플이 한 번씩 검증에 쓰인다.",
     },
     {
       key: "c2",
-      question: "훈련 데이터에 없던 도시 \"광주\"가 예측 시점에 들어왔다. `OneHotEncoder(handle_unknown=\"ignore\")`의 동작은?",
-      choices: ["도시 원-핫 열을 모두 0으로 두고 예측을 계속한다", "오류를 내고 멈춘다", "가장 흔한 도시로 바꿔 넣는다", "그 행을 삭제한다"],
+      question: "5-Fold 교차검증 결과 \"정확도 0.978 ± 0.010\"에서 ±0.010에 대한 설명으로 옳은 것은?",
+      choices: [
+        "fold 점수 다섯 개의 흩어짐이고, fold끼리 학습 데이터가 겹쳐 독립이 아니므로 신뢰구간으로 해석하면 안 된다",
+        "참 정확도가 95% 확률로 0.968~0.988에 있다는 신뢰구간이다",
+        "테스트 데이터에서의 오차 범위다",
+        "표준편차가 작을수록 모델이 더 정확하다는 뜻이다",
+      ],
       answer: 0,
-      explanation: "기본값(`\"error\"`)은 처음 보는 범주에서 오류를 낸다. `\"ignore\"`는 해당 원-핫 열을 모두 0으로 두어 서비스가 멈추지 않게 한다.",
+      explanation: "5-Fold에서 두 fold의 학습 데이터는 75%가 겹친다. 이 상관 때문에 fold 점수의 표준편차로 평균의 불확실성을 바로 계산할 수 없다.",
     },
     {
       key: "c3",
-      question: "환자 80명에게서 각각 5장의 사진을 얻었다. 환자 단위로 일반화 성능을 재려면 어떤 분할이 알맞은가?",
-      choices: ["GroupKFold(환자 ID를 그룹으로)", "샘플을 섞는 KFold", "TimeSeriesSplit", "분할 없이 훈련 정확도"],
+      question: "환자 80명에게서 각각 사진 5장을 얻었다. 처음 보는 환자에 대한 성능을 재려면 어떤 교차검증이 알맞은가?",
+      choices: ["GroupKFold(환자 번호를 그룹으로)", "샘플을 섞는 KFold", "TimeSeriesSplit", "교차검증 없이 학습 데이터 정확도"],
       answer: 0,
-      explanation: "같은 환자의 다른 사진이 훈련에 있으면 모델이 그 환자를 외워 맞힌다. 한 실험에서 1-NN이 KFold로는 1.000, GroupKFold로는 약 0.64로 갈렸다. 그룹 단위로 나눠야 처음 보는 환자에 대한 성능이 된다.",
+      explanation: "같은 환자의 다른 사진이 학습에 있으면 모델이 그 환자를 기억해 맞힌다. 그룹 단위로 나눠야 처음 보는 환자에 대한 성능이 된다.",
     },
     {
       key: "c4",
-      question: "`GridSearchCV`의 `best_score_`에 대한 설명으로 옳은 것은?",
-      choices: ["후보 중 가장 높은 교차검증 점수라 실제 성능보다 낙관적이다", "테스트셋 점수와 같다", "항상 실제 성능보다 낮다", "후보 전체의 평균 점수다"],
+      question: "`make_pipeline(StandardScaler(), LogisticRegression())`의 `C`를 GridSearchCV로 탐색할 때 파라미터 이름은?",
+      choices: ["`logisticregression__C`", "`C`", "`LogisticRegression.C`", "`pipeline_C`"],
       answer: 0,
-      explanation: "잡음이 있는 점수 여러 개 중 최댓값을 골랐으므로 체계적으로 부풀려진다. 정직한 추정은 따로 떼어 둔 테스트셋이나 중첩 교차검증으로 얻는다.",
+      explanation: "안쪽 단계의 파라미터는 `단계이름__파라미터`(밑줄 두 개)로 가리킨다. 단계 이름은 `list(model.named_steps)`로 확인할 수 있다.",
     },
     {
       key: "c5",
-      question: "후보가 `max_depth` 5개와 `n_estimators` 3개의 모든 조합이고 5-Fold인 `GridSearchCV`는 (최종 재학습을 빼고) 모델을 몇 번 학습하는가?",
-      choices: ["75번", "15번", "8번", "25번"],
+      question: "`max_depth` 후보 5개와 `n_estimators` 후보 3개의 모든 조합을 5-Fold로 탐색하는 GridSearchCV의 학습 횟수(최종 재학습 제외)와 `best_score_`의 성질은?",
+      choices: [
+        "75번이고, best_score_는 후보 중 최댓값이라 실제 성능보다 낙관적이다",
+        "15번이고, best_score_는 테스트 점수와 같다",
+        "75번이고, best_score_는 실제 성능보다 항상 낮다",
+        "8번이고, best_score_는 후보 점수의 평균이다",
+      ],
       answer: 0,
-      explanation: "조합이 $5 \\times 3 = 15$개이고 조합마다 fold 5개를 돌리므로 $15 \\times 5 = 75$번이다.",
-    },
-    {
-      key: "c6",
-      question: "하이퍼파라미터 종류가 많아 조합이 수천 개일 때 흔히 쓰는 대안은?",
-      choices: ["정해진 횟수만큼 조합을 무작위로 뽑는 `RandomizedSearchCV`", "테스트셋으로 직접 고르기", "모든 조합을 한 fold로만 평가하기", "하이퍼파라미터를 학습 중에 경사하강법으로 정하기"],
-      answer: 0,
-      explanation: "격자 탐색은 조합이 곱으로 늘어난다. 무작위 탐색은 예산을 정해 두고 다양한 값을 시험한다. 테스트셋으로 고르면 누수다.",
-    },
-    {
-      key: "c7",
-      question: "`make_pipeline(SimpleImputer(), RandomForestClassifier())`의 트리 깊이를 `GridSearchCV`로 탐색하려면 파라미터 그리드의 키를 무엇으로 써야 하는가?",
-      choices: ["`randomforestclassifier__max_depth`", "`max_depth`", "`RandomForestClassifier__max_depth`", "`pipeline.max_depth`"],
-      answer: 0,
-      explanation: "`make_pipeline`은 각 단계에 클래스 이름을 소문자로 바꾼 이름을 붙이고, 안쪽 단계의 파라미터는 `단계이름__파라미터`(밑줄 두 개)로 가리킵니다. 단계 이름은 `list(model.named_steps)`로 확인할 수 있습니다.",
+      explanation: "조합 $5 \\times 3 = 15$개마다 fold 5개를 학습하므로 75번이다. 잡음이 있는 점수 15개 가운데 최댓값을 골랐으므로 실제보다 높게 나온다.",
     },
   ],
   exercises,
@@ -148,21 +151,29 @@ for tr, te in TimeSeriesSplit(n_splits=2).split(np.arange(6)):
     print(tr.tolist(), te.tolist())
 `,
       expected: "[0, 1] [2, 3]\n[0, 1, 2, 3] [4, 5]",
-      explanation: "TimeSeriesSplit은 항상 과거로 학습하고 바로 뒤의 미래로 검증합니다. 6개를 2번 나누면 검증 구간 크기는 6 // 3 = 2이고, 훈련 구간은 앞에서부터 점점 늘어납니다. 검증 구간이 훈련 구간보다 앞에 오는 일은 없습니다.",
+      explanation: "TimeSeriesSplit은 항상 과거로 학습하고 바로 뒤 구간으로 검증한다. 6개를 2번 나누면 검증 구간 크기는 $6 // 3 = 2$이고, 학습 구간은 앞에서부터 늘어난다.",
     },
   ],
   descriptive: [
     {
       key: "d1",
-      question: "숫자 열과 범주 열이 섞인 데이터에서 전처리를 `ColumnTransformer`로 묶어 파이프라인 안에 넣어야 하는 이유는 무엇인가? `OneHotEncoder(handle_unknown=\"ignore\")`가 필요한 상황과, 같은 환자의 샘플이 여러 개일 때 `GroupKFold`를 써야 하는 이유도 함께 설명하라.",
+      question: "K-Fold 교차검증에서 K를 5에서 10으로 늘릴 때의 장점과 단점을 쓰고, GridSearchCV의 best_score_를 최종 성능으로 보고하면 안 되는 이유와 대신 할 일을 쓰라.",
       answer: md`
-전처리 규칙(중앙값, 평균·표준편차, 범주 목록)도 데이터에서 배우는 값이라, 교차검증의 각 fold에서 훈련 부분만 보고 배워야 누수가 없다. 열 종류마다 처리가 다르면 손으로 따로 하기 쉬운데, 그러다 한 곳에서라도 전체 데이터로 fit하면 검증 정보가 섞인다. ColumnTransformer로 열별 변환을 하나의 변환기로 묶어 모델과 함께 파이프라인에 넣으면 fit 한 번에 fold마다 올바르게 학습된다. handle_unknown="ignore"는 훈련 때 없던 범주(새 도시)가 예측 시점에 들어와도 오류 없이 해당 원-핫 열을 모두 0으로 두기 위해 필요하다. 같은 환자의 샘플이 여러 개면 일반 KFold는 같은 환자를 훈련과 검증에 나눠 넣어 모델이 그 환자를 외워 맞히게 되므로(예: 1-NN 1.000 → GroupKFold 약 0.64), 환자 단위로 일반화 성능을 재려면 GroupKFold로 그룹째 나눠야 한다.
+K를 10으로 늘리면 한 번의 학습에 쓰는 데이터가 전체의 80%에서 90%로 늘어, 전체 데이터로 학습한 모델의 성능을 더 가깝게 추정한다. 데이터가 적을 때 특히 유리하다. 대신 학습을 10번 해야 하므로 계산 비용이 두 배가 되고, 검증 fold가 작아져 fold 점수 하나하나는 더 흔들린다.
+
+best_score_는 여러 후보의 교차검증 점수 가운데 최댓값이다. 점수에는 잡음이 있으므로 최댓값을 고르면 그 후보가 우연히 잘 맞은 몫까지 들어가 실제 성능보다 높게 나온다. 그래서 탐색에 쓰지 않은 테스트 데이터로 고른 모델을 한 번 평가해 보고하거나, 데이터가 적으면 탐색 전체를 바깥 교차검증 안에 넣는 중첩 교차검증으로 성능을 잰다.
 `,
-      keyPoints: [],
+      keyPoints: [
+        "K를 늘리면 학습 데이터 비율이 늘어 추정의 편향이 줄어든다",
+        "대신 계산 비용이 늘고 fold 점수 하나하나는 더 흔들린다",
+        "best_score_는 후보 중 최댓값이라 낙관적이다",
+        "테스트 데이터나 중첩 교차검증으로 다시 잰다",
+      ],
     },
   ],
   references: [
-    { title: "scikit-learn — Column Transformer with Mixed Types", url: "https://scikit-learn.org/stable/auto_examples/compose/plot_column_transformer_mixed_types.html", note: "숫자·범주 열을 함께 처리하는 공식 예제" },
-    { title: "scikit-learn — Cross-validation iterators for grouped data", url: "https://scikit-learn.org/stable/modules/cross_validation.html#group-k-fold", note: "GroupKFold·TimeSeriesSplit이 필요한 상황" },
+    { title: "scikit-learn — Cross-validation: evaluating estimator performance", url: "https://scikit-learn.org/stable/modules/cross_validation.html", note: "K-Fold·Stratified·Group·TimeSeriesSplit (영문)" },
+    { title: "scikit-learn — Tuning the hyper-parameters of an estimator", url: "https://scikit-learn.org/stable/modules/grid_search.html", note: "GridSearchCV·RandomizedSearchCV와 파이프라인 파라미터 이름 (영문)" },
+    { title: "Bergstra & Bengio (2012) — Random Search for Hyper-Parameter Optimization", url: "https://www.jmlr.org/papers/v13/bergstra12a.html", note: "무작위 탐색이 격자 탐색보다 효율적인 이유 (영문)" },
   ],
 });

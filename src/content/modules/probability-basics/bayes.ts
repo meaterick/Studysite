@@ -7,7 +7,7 @@ export default defineLesson({
   tier: "core",
   concepts: ["conditional-bayes"],
   goal: "조건부확률을 정의하고 곱셈 법칙과 전체확률의 법칙으로 확률을 계산하며, 베이즈 정리로 사전확률을 사후확률로 갱신하고 기저율이 결과에 미치는 영향을 사람 수로 설명한다.",
-  why: "스팸 필터에 쓰는 나이브 베이즈 분류기는 베이즈 정리를 그대로 적용한 모델이고([[lesson:naive-bayes]]), 분류 모델의 정밀도는 \"양성으로 예측했을 때 실제 양성일 조건부확률\"이다([[lesson:classification-metrics]]). 사전확률과 데이터를 결합하는 베이즈 관점은 MAP 추정과 정규화로 이어진다([[lesson:mle-map]]).",
+  why: "스팸 필터에 쓰는 나이브 베이즈 분류기는 베이즈 정리를 그대로 적용한 모델이고([[lesson:naive-bayes]]), 분류 모델의 정밀도는 \"양성으로 예측했을 때 실제 양성일 조건부확률\"이다([[lesson:classification-metrics]]). 사전확률과 데이터를 결합하는 베이즈 관점은 MAP 추정과 규제로 이어진다([[lesson:mle-map]]).",
   body: md`
 ### 조건부확률
 

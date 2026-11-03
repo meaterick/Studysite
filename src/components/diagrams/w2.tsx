@@ -190,10 +190,10 @@ export function SigmoidCurve() {
 }
 
 export function LearningCurves() {
-  // 훈련 데이터 양에 따른 훈련 오차(파랑)와 검증 오차(주황). 왼쪽: 과적합(틈이 큼), 오른쪽: 과소적합(둘 다 높게 만남).
+  // 학습 데이터 양에 따른 학습 오차(파랑)와 검증 오차(주황). 왼쪽: 과적합(틈이 큼), 오른쪽: 과소적합(둘 다 높게 만남).
   const panels = [
     { title: "과적합(분산이 큼)", train: [0.02, 0.05, 0.08, 0.1, 0.12], val: [0.6, 0.42, 0.32, 0.26, 0.22], note: "간격이 크다 → 데이터를 늘리면 좋아진다" },
-    { title: "과소적합(편향이 큼)", train: [0.25, 0.33, 0.37, 0.39, 0.4], val: [0.62, 0.5, 0.45, 0.43, 0.42], note: "둘 다 높게 수렴 → 데이터보다 모델을 키워야 한다" },
+    { title: "과소적합(편향이 큼)", train: [0.25, 0.33, 0.37, 0.39, 0.4], val: [0.62, 0.5, 0.45, 0.43, 0.42], note: "둘 다 높은 곳에서 만남 → 더 복잡한 모델이 필요하다" },
   ];
   const pw = 280;
   const ph = 150;
@@ -201,7 +201,7 @@ export function LearningCurves() {
   return (
     <DiagramFrame
       title="학습 곡선으로 진단하기"
-      caption="훈련 데이터를 늘려 가며 훈련 오차와 검증 오차를 그린 학습 곡선이다. 두 곡선 사이의 간격은 분산을, 두 곡선이 만나는 높이는 편향을 보여 준다."
+      caption="학습 데이터를 늘려 가며 학습 오차와 검증 오차를 그린 학습 곡선이다. 두 곡선 사이의 간격은 분산을, 두 곡선이 만나는 높이는 편향을 보여 준다."
       viewBox="0 0 660 250"
       minWidth={480}
     >
@@ -220,13 +220,13 @@ export function LearningCurves() {
             <polyline points={line(p.train)} fill="none" stroke={colors.blue} strokeWidth={2.4} />
             <polyline points={line(p.val)} fill="none" stroke={colors.orange} strokeWidth={2.4} />
             <text x={ox + pw} y={top + ph + 16} textAnchor="end" fontSize={10.5} fill={inkSecondary}>
-              훈련 데이터 양 →
+              학습 데이터 양 →
             </text>
             <text x={ox - 6} y={top + 6} textAnchor="end" fontSize={10.5} fill={inkSecondary}>
               오차
             </text>
             <text x={sx(4) - 4} y={sy(p.train[4]) + (k === 0 ? 16 : 18)} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.blue}>
-              훈련
+              학습
             </text>
             <text x={sx(4) - 4} y={sy(p.val[4]) - 8} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.orange}>
               검증
@@ -296,7 +296,7 @@ export function DataPrepPipeline() {
         — 앞 단계의 결함은 뒤에서 고칠 수 없다
       </text>
       <text x={12} y={228} fontSize={11} fontWeight={600} fill={colors.orange}>
-        주의: 결측을 채울 중앙값, 스케일링의 평균·최솟값·최댓값 같은 통계는 훈련 데이터에서만 계산한다(「데이터 분할」 단계).
+        주의: 결측을 채울 중앙값, 스케일링의 평균·최솟값·최댓값 같은 통계는 학습 데이터에서만 계산한다.
       </text>
     </DiagramFrame>
   );
@@ -983,7 +983,7 @@ export function BoostingResiduals() {
 }
 
 export function BiasVarianceStrips() {
-  // 본문 예제: 참값 10, 서로 다른 훈련 데이터 5세트로 학습한 세 모델의 예측.
+  // 본문 예제: 참값 10, 서로 다른 학습 데이터 5세트로 학습한 세 모델의 예측.
   const P = "bvs";
   const sx = linear(5, 16, 170, 560);
   const models = [
@@ -993,8 +993,8 @@ export function BiasVarianceStrips() {
   ];
   return (
     <DiagramFrame
-      title="편향과 분산: 훈련 데이터를 바꿔 같은 모델을 다섯 번 학습시키면"
-      caption="점 하나하나는 서로 다른 훈련 데이터로 학습한 모델의 예측이고, 세모는 그 평균이다. A는 참값(초록 점선) 근처에 모여 있고, B는 평균은 참값과 같지만 개별 예측이 6~15로 흩어진다(분산). C는 늘 일관되지만 평균 7.1이 참값에서 2.9만큼 벗어나 있다(편향). B와 C는 오차 크기가 비슷해도 원인이 반대라 처방도 반대다."
+      title="편향과 분산: 학습 데이터를 바꿔 같은 모델을 다섯 번 학습시키면"
+      caption="점 하나하나는 서로 다른 학습 데이터로 학습한 모델의 예측이고, 세모는 그 평균이다. A는 참값(초록 점선) 근처에 모여 있고, B는 평균은 참값과 같지만 개별 예측이 6~15로 흩어진다(분산). C는 늘 일관되지만 평균 7.1이 참값에서 2.9만큼 벗어나 있다(편향). B와 C는 오차 크기가 비슷해도 원인이 반대라 처방도 반대다."
       viewBox="0 0 720 266"
       minWidth={560}
     >
@@ -1051,7 +1051,7 @@ export function BiasVarianceStrips() {
 
 export function PolyFitTriptych() {
   // sin(2πx) + 잡음(σ = 0.2) 30개 중 18개로 학습, 12개로 검증. 차수 1·4·12 다항식을 최소제곱으로 맞춘다(체비쇼프 기저로 계산해 수치적으로 안정).
-  // 시드 40: 훈련 오차는 차수와 함께 줄고(0.19 → 0.04 → 0.02) 검증 오차는 U자(0.34 → 0.08 → 0.84)를 그린다.
+  // 시드 40: 학습 오차는 차수와 함께 줄고(0.19 → 0.04 → 0.02) 검증 오차는 U자(0.34 → 0.08 → 0.84)를 그린다.
   const rand = seeded(40);
   const all = Array.from({ length: 30 }, () => {
     const x = rand();
@@ -1083,7 +1083,7 @@ export function PolyFitTriptych() {
   return (
     <DiagramFrame
       title="다항식 차수를 올리면: 과소적합 → 적당함 → 과적합"
-      caption="회색 점선이 데이터를 만든 참 함수 sin(2πx), 검은 점이 학습에 쓴 18개, 주황 테두리 점이 검증용 12개다. 차수 1은 곡선을 따라가지 못해 훈련·검증 오차가 모두 크고(편향), 차수 12는 훈련 점을 거의 지나가지만 점 사이에서 크게 출렁여 검증 오차가 커진다(분산). 아래 숫자는 각 그림의 실제 평균제곱오차다."
+      caption="회색 점선이 데이터를 만든 참 함수 sin(2πx), 검은 점이 학습에 쓴 18개, 주황 테두리 점이 검증용 12개다. 차수 1은 곡선을 따라가지 못해 학습·검증 오차가 모두 크고(편향), 차수 12는 학습 점을 거의 지나가지만 점 사이에서 크게 진동해 검증 오차가 커진다(분산). 아래 숫자는 각 그림의 실제 평균제곱오차다."
       viewBox="0 0 720 262"
       minWidth={560}
     >
@@ -1116,7 +1116,7 @@ export function PolyFitTriptych() {
               ))}
             </g>
             <text x={x0 + pw / 2} y={top + ph + 22} textAnchor="middle" fontSize={11} fill={ink}>
-              {`훈련 MSE ${mse(f, train).toFixed(3)}`}
+              {`학습 MSE ${mse(f, train).toFixed(3)}`}
             </text>
             <text x={x0 + pw / 2} y={top + ph + 40} textAnchor="middle" fontSize={11} fontWeight={700} fill={colors.orange}>
               {`검증 MSE ${mse(f, val).toFixed(3)}`}
@@ -1129,7 +1129,7 @@ export function PolyFitTriptych() {
 }
 
 export function L1L2Geometry() {
-  // 손실 등고선(타원)이 제약 영역(L2: 원, L1: 마름모)에 처음 닿는 점이 정규화된 해다. 마름모는 꼭짓점이 뾰족해 축 위(한 가중치 = 0)에서 먼저 닿기 쉽다.
+  // 손실 등고선(타원)이 제약 영역(L2: 원, L1: 마름모)에 처음 닿는 점이 규제된 해다. 마름모는 꼭짓점이 뾰족해 축 위(한 가중치 = 0)에서 먼저 닿기 쉽다.
   // 이 설정에서 L2의 접점은 약 (0.35, 0.94), L1의 접점은 꼭짓점 (0, 1)이다(아래에서 경계를 촘촘히 훑어 계산).
   const c: [number, number] = [1.1, 2.4];
   const phi = (-15 * Math.PI) / 180;
@@ -1169,8 +1169,8 @@ export function L1L2Geometry() {
   ];
   return (
     <DiagramFrame
-      title="L1·L2 정규화의 기하학적 해석: L1은 왜 가중치를 0으로 만드는가"
-      caption="파란 타원은 원래 손실의 등고선이고 가운데 점이 정규화 없는 해 ŵ다. 정규화는 '가중치 크기 ≤ 일정 값'이라는 영역 안에서 손실이 가장 작은 점을 찾는 것과 같아서, 등고선이 영역에 처음 닿는 점이 답이 된다. 원(L2)은 매끄러워 대개 축이 아닌 곳에서 닿지만, 마름모(L1)는 꼭짓점이 튀어나와 축 위에서 먼저 닿기 쉽다. 접점이 축 위에 있다는 것은 가중치 하나가 정확히 0이라는 뜻이다."
+      title="L1·L2 규제의 기하학적 해석: L1이 가중치를 0으로 만드는 이유"
+      caption="파란 타원은 원래 손실의 등고선이고 가운데 점이 규제 없는 해 ŵ다. 규제는 '가중치 크기 ≤ 일정 값'이라는 영역 안에서 손실이 가장 작은 점을 찾는 것과 같아서, 등고선이 영역에 처음 닿는 점이 답이 된다. 원(L2)은 매끄러워 대개 축이 아닌 곳에서 닿지만, 마름모(L1)는 꼭짓점이 축 위에 있어 축 위에서 먼저 닿기 쉽다. 접점이 축 위에 있다는 것은 가중치 하나가 정확히 0이라는 뜻이다."
       viewBox="0 0 720 300"
       minWidth={560}
     >
@@ -1216,7 +1216,7 @@ export function L1L2Geometry() {
             ))}
             <circle cx={X(c[0])} cy={Y(c[1])} r={4} fill={colors.blue} />
             <text x={X(c[0]) + 7} y={Y(c[1]) - 6} fontSize={11} fontWeight={700} fill={colors.blue}>
-              ŵ (정규화 없음)
+              ŵ (규제 없음)
             </text>
             <circle cx={X(p.sol[0])} cy={Y(p.sol[1])} r={6} fill={colors.red} stroke="var(--surface-card)" strokeWidth={1.6} />
             <text x={X(p.sol[0]) + 9} y={Y(p.sol[1]) + 16} fontSize={11} fontWeight={700} fill={colors.red} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
@@ -1541,7 +1541,7 @@ export function KnnVote() {
   return (
     <DiagramFrame
       title="KNN(K = 3): 가장 가까운 세 이웃의 다수결"
-      caption="본문 예제의 여섯 점과 새 샘플 X(2, 2)다. X에서 각 점까지 유클리드 거리를 재어 가까운 순으로 정렬하면 B(1.000), C(1.000), A(1.414)가 가장 가까운 세 점이다(점선 원 안). 셋 모두 클래스 0이므로 다수결로 X는 클래스 0이 된다. 학습 단계에서는 훈련 데이터를 저장하기만 하고, 거리 계산은 예측할 때 한다."
+      caption="본문 예제의 여섯 점과 새 샘플 X(2, 2)다. X에서 각 점까지 유클리드 거리를 재어 가까운 순으로 정렬하면 B(1.000), C(1.000), A(1.414)가 가장 가까운 세 점이다(점선 원 안). 셋 모두 클래스 0이므로 다수결로 X는 클래스 0이 된다. 학습 단계에서는 학습 데이터를 저장하기만 하고, 거리 계산은 예측할 때 한다."
       viewBox="0 0 720 262"
       minWidth={580}
     >
@@ -1621,7 +1621,7 @@ export function KnnKEffect() {
   return (
     <DiagramFrame
       title="K가 정하는 복잡도: 작으면 과적합, 크면 과소적합"
-      caption={`겹치는 두 클래스(파란 원 32개, 주황 사각형 28개)에 KNN을 적용해 평면의 각 위치를 어느 클래스로 예측하는지 칠했다. K = 1은 훈련 점마다 섬을 만들어 훈련 정확도가 100%지만 같은 분포에서 새로 뽑은 데이터에서는 떨어진다(분산이 큰 모델). K = 60은 모든 이웃을 세므로 어디서나 다수 클래스인 0으로 예측한다(편향이 큰 모델). 그 사이의 K가 새 데이터에서 가장 잘 맞는다. K는 교차검증으로 고르는 하이퍼파라미터다.`}
+      caption={`겹치는 두 클래스(파란 원 32개, 주황 사각형 28개)에 KNN을 적용해 평면의 각 위치를 어느 클래스로 예측하는지 칠했다. K = 1은 학습 점 하나하나의 주변을 그 점의 클래스로 칠해 학습 정확도가 100%지만 같은 분포에서 새로 뽑은 데이터에서는 떨어진다(분산이 큰 모델). K = 60은 모든 이웃을 세므로 어디서나 다수 클래스인 0으로 예측한다(편향이 큰 모델). 그 사이의 K가 새 데이터에서 가장 잘 맞는다. K는 교차검증으로 고르는 하이퍼파라미터다.`}
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -1655,7 +1655,7 @@ export function KnnKEffect() {
             </g>
             <rect x={x0} y={y0} width={pw} height={ph} fill="none" stroke="var(--border-strong)" />
             <text x={x0 + pw / 2} y={y0 + ph + 18} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-              {`훈련 ${Math.round(acc(train, pn.k) * 100)}%`}
+              {`학습 ${Math.round(acc(train, pn.k) * 100)}%`}
               <tspan dx={8} fontWeight={800} fill={pn.c}>{`새 데이터 ${Math.round(acc(test, pn.k) * 100)}%`}</tspan>
             </text>
           </g>
@@ -2110,7 +2110,7 @@ export function ColumnTransformerFlow() {
   return (
     <DiagramFrame
       title="ColumnTransformer: 열 종류마다 다른 전처리를 하나로 묶는다"
-      caption="본문 코드를 실제로 실행한 결과다. 숫자 열(나이·소득)은 결측을 중앙값 260으로 채운 뒤(노란 칸) 평균 0, 표준편차 1로 표준화하고, 범주 열(도시)은 원-핫 열 3개로 펼친다. 결과는 숫자 2열 + 도시 3열의 5열 표다. 이 전처리 전체를 make_pipeline으로 모델 앞에 붙이면 fit 한 번에 훈련 데이터의 중앙값·평균·표준편차·범주 목록을 배우므로, 교차검증의 fold마다 검증 데이터의 정보가 섞여 들어가지 않는다."
+      caption="본문 코드를 실제로 실행한 결과다. 숫자 열(나이·소득)은 결측을 중앙값 260으로 채운 뒤(노란 칸) 평균 0, 표준편차 1로 표준화하고, 범주 열(도시)은 원-핫 열 3개로 펼친다. 결과는 숫자 2열 + 도시 3열의 5열 표다. 이 전처리 전체를 make_pipeline으로 모델 앞에 붙이면 fit 한 번에 학습 데이터의 중앙값·평균·표준편차·범주 목록을 배우므로, 교차검증의 fold마다 검증 데이터의 정보가 섞여 들어가지 않는다."
       viewBox="0 0 720 262"
       minWidth={600}
     >
@@ -2171,7 +2171,7 @@ export function ColumnTransformerFlow() {
         model = make_pipeline(pre, LogisticRegression())
       </text>
       <text x={360} y={237} textAnchor="middle" fontSize={10} fill={inkSecondary}>
-        전처리 + 모델이 하나의 추정기: fit 한 번에 훈련 데이터의 중앙값·평균·범주 목록까지 배운다
+        전처리 + 모델이 하나의 추정기: fit 한 번에 학습 데이터의 중앙값·평균·범주 목록까지 배운다
       </text>
     </DiagramFrame>
   );
@@ -2266,7 +2266,7 @@ export function CvSplitters() {
   return (
     <DiagramFrame
       title="분할 단위를 바꿔 누수를 막는다: KFold, GroupKFold, TimeSeriesSplit"
-      caption="파랑은 훈련, 주황은 검증, 점선은 쓰지 않는 샘플이다. 위 왼쪽: 환자 A~D의 샘플을 무작위로 나누면, 검증에 들어간 A·B·C 샘플의 같은 환자 기록이 훈련에도 남아 모델이 환자를 외워서 맞힌다. 위 오른쪽: GroupKFold는 환자 단위로 fold를 만들어 검증 환자를 훈련에서 완전히 뺀다. 아래: 본문 코드의 TimeSeriesSplit(n_splits=3)은 훈련 구간을 [0~2] → [0~5] → [0~8]로 늘려 가며 항상 바로 뒤의 3개로 검증한다. 미래 데이터는 훈련에 쓰지 않는다."
+      caption="파랑은 학습, 주황은 검증, 점선은 쓰지 않는 샘플이다. 위 왼쪽: 환자 A~D의 샘플을 무작위로 나누면, 검증에 들어간 A·B·C 샘플의 같은 환자 기록이 학습에도 남아, 모델이 그 환자의 다른 샘플과 닮은 점을 이용해 맞힌다. 위 오른쪽: GroupKFold는 환자 단위로 fold를 만들어 검증 환자를 학습에서 완전히 뺀다. 아래: TimeSeriesSplit(n_splits=3)은 학습 구간을 [0~2] → [0~5] → [0~8]로 늘려 가며 항상 바로 뒤의 3개로 검증한다. 미래 데이터는 학습에 쓰지 않는다."
       viewBox="0 0 720 284"
       minWidth={620}
     >
@@ -2279,7 +2279,7 @@ export function CvSplitters() {
           ↑
         </text>
       ))}
-      <Lines x={20} y={84} lines={["검증의 A·B·C와 같은 환자의 다른 샘플이", "훈련에 있다 → 환자를 외워서 맞힌다"]} size={10.5} anchor="start" color={colors.red} weight={700} />
+      <Lines x={20} y={84} lines={["검증의 A·B·C와 같은 환자의 다른 샘플이", "학습에 있다 → 그 샘플과 닮아서 맞힌다"]} size={10.5} anchor="start" color={colors.red} weight={700} />
       <text x={20} y={136} fontSize={10} fill={inkSecondary}>
         같은 글자 = 같은 환자
       </text>
@@ -2905,7 +2905,7 @@ export function DoubleDescent() {
   return (
     <DiagramFrame
       title="이중 하강: 파라미터가 샘플보다 많아지면 테스트 오차가 다시 내려간다"
-      caption="잠재 요인 3개에서 나온 잡음 섞인 특징을 앞에서부터 p개 쓰는 선형회귀를 샘플 n = 40개로 학습한 시뮬레이션이다(200회 반복의 중앙값, 두 축 모두 로그 눈금). 빨강은 최소 노름 최소제곱이다(p > n이면 훈련 데이터를 정확히 지나는 해 중 노름이 가장 작은 해). p가 작을 때는 고전적인 U자를 그리다가(p = 16에서 0.38), 보간 임계점 p = n = 40에서 16.5로 치솟고, p > n에서 다시 내려가 p = 800에서는 0.11로 p < n의 어떤 모델보다도 낮다. 오른쪽: 정점의 원인은 X의 가장 작은 특이값이 p = n 근처에서 0에 가까워지는 것이다. 유사역행렬은 그 역수를 곱하므로 잡음이 크게 증폭된다. 파란 점선처럼 적당한 Ridge 규제(λ = 4)를 넣으면 정점이 사라진다."
+      caption="잠재 요인 3개에서 나온 잡음 섞인 특징을 앞에서부터 p개 쓰는 선형회귀를 샘플 n = 40개로 학습한 시뮬레이션이다(200회 반복의 중앙값, 두 축 모두 로그 눈금). 빨강은 최소 노름 최소제곱이다(p > n이면 학습 데이터를 정확히 지나는 해 중 노름이 가장 작은 해). p가 작을 때는 고전적인 U자를 그리다가(p = 16에서 0.38), 보간 임계점 p = n = 40에서 16.5로 치솟고, p > n에서 다시 내려가 p = 800에서는 0.11로 p < n의 어떤 모델보다도 낮다. 오른쪽: 정점의 원인은 X의 가장 작은 특이값이 p = n 근처에서 0에 가까워지는 것이다. 유사역행렬은 그 역수를 곱하므로 잡음이 크게 증폭된다. 파란 점선처럼 적당한 Ridge 규제(λ = 4)를 넣으면 정점이 사라진다."
       viewBox="0 0 720 256"
       minWidth={620}
     >
@@ -2958,7 +2958,7 @@ export function DoubleDescent() {
 }
 
 export function FoldOverlap() {
-  // 5-Fold에서 fold k는 블록 k로 검증하고 나머지 4블록으로 훈련한다. 어느 두 fold든 훈련 블록 3개가 같다(75%).
+  // 5-Fold에서 fold k는 블록 k로 검증하고 나머지 4블록으로 학습한다. 어느 두 fold든 학습 블록 3개가 같다(75%).
   const bw = 50;
   const bh = 24;
   const x0 = 78;
@@ -2973,8 +2973,8 @@ export function FoldOverlap() {
   const dx = linear(0.94, 1.0, 498, 690);
   return (
     <DiagramFrame
-      title="fold 점수는 독립 표본이 아니다: 훈련 데이터가 75%씩 겹친다"
-      caption="5-Fold 교차검증에서 각 fold는 블록 하나(주황)로 검증하고 나머지 넷(파랑)으로 훈련한다. fold 1과 fold 2의 훈련 데이터를 비교하면 블록 3·4·5가 같아 4블록 중 3블록(75%)이 겹친다. 어느 두 fold를 골라도 마찬가지라, 다섯 점수는 서로 상관된 값이고 독립 표본처럼 다룰 수 없다. 그래서 '0.97 ± 0.01'의 ±는 점수의 흩어짐을 요약한 것일 뿐 신뢰구간이 아니다. 오른쪽: 같은 점수 5개라도 N으로 나누는 np.std(ddof=0)와 N − 1로 나누는 pandas의 .std()(ddof=1)는 √(5/4) ≈ 1.12배, 약 12% 다르다. 보고서에는 어느 쪽으로 계산했는지 밝힌다."
+      title="fold 점수는 독립 표본이 아니다: 학습 데이터가 75%씩 겹친다"
+      caption="5-Fold 교차검증에서 각 fold는 블록 하나(주황)로 검증하고 나머지 넷(파랑)으로 학습한다. fold 1과 fold 2의 학습 데이터를 비교하면 블록 3·4·5가 같아 4블록 중 3블록(75%)이 겹친다. 어느 두 fold를 골라도 마찬가지라, 다섯 점수는 서로 상관된 값이고 독립 표본처럼 다룰 수 없다. 그래서 '0.97 ± 0.01'의 ±는 점수의 흩어짐을 요약한 것일 뿐 신뢰구간이 아니다. 오른쪽: 같은 점수 5개라도 N으로 나누는 np.std(ddof=0)와 N − 1로 나누는 pandas의 .std()(ddof=1)는 √(5/4) ≈ 1.12배, 약 12% 다르다. 보고서에는 어느 쪽으로 계산했는지 밝힌다."
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -2997,10 +2997,10 @@ export function FoldOverlap() {
           {`블록 ${j + 1}`}
         </text>
       ))}
-      <Lines x={bx(5) + 8} y={by(0) + 12} lines={["fold 1과 2의", "훈련 데이터:", "4블록 중 3블록", "같다 (75%)"]} size={10.5} anchor="start" color={colors.green} weight={800} gap={1.35} />
+      <Lines x={bx(5) + 8} y={by(0) + 12} lines={["fold 1과 2의", "학습 데이터:", "4블록 중 3블록", "같다 (75%)"]} size={10.5} anchor="start" color={colors.green} weight={800} gap={1.35} />
       <rect x={bx(5) + 8} y={by(3) + 2} width={12} height={10} fill={colors.blue} fillOpacity={0.45} />
       <text x={bx(5) + 24} y={by(3) + 11} fontSize={10} fill={inkSecondary}>
-        훈련
+        학습
       </text>
       <rect x={bx(5) + 8} y={by(3) + 20} width={12} height={10} fill={colors.orange} fillOpacity={0.75} />
       <text x={bx(5) + 24} y={by(3) + 29} fontSize={10} fill={inkSecondary}>
@@ -3129,7 +3129,7 @@ export function NestedCv() {
   return (
     <DiagramFrame
       title="중첩 교차검증: 고르는 과정까지 바깥 fold로 평가한다"
-      caption="바깥 교차검증(여기서는 5-fold)의 각 fold마다 바깥 테스트 블록(빨강)을 떼어 두고, 나머지 바깥 훈련 데이터 안에서만 안쪽 교차검증(4-fold)으로 하이퍼파라미터 후보를 비교해 하나를 고른다. 고른 설정으로 바깥 훈련 데이터 전체에 다시 학습한 뒤, 한 번도 고르는 데 쓰이지 않은 바깥 테스트 블록으로 평가한다. 이것을 바깥 fold 5개에 반복해 얻은 점수의 평균이 '이 튜닝 절차로 만든 모델'의 성능 추정이다. fold마다 고른 설정이 달라도 괜찮다. 평가 대상이 특정 설정이 아니라 고르는 절차이기 때문이다."
+      caption="바깥 교차검증(여기서는 5-fold)의 각 fold마다 바깥 테스트 블록(빨강)을 떼어 두고, 나머지 바깥 학습 데이터 안에서만 안쪽 교차검증(4-fold)으로 하이퍼파라미터 후보를 비교해 하나를 고른다. 고른 설정으로 바깥 학습 데이터 전체에 다시 학습한 뒤, 한 번도 고르는 데 쓰이지 않은 바깥 테스트 블록으로 평가한다. 이것을 바깥 fold 5개에 반복해 얻은 점수의 평균이 '이 튜닝 절차로 만든 모델'의 성능 추정이다. fold마다 고른 설정이 달라도 괜찮다. 평가 대상이 특정 설정이 아니라 고르는 절차이기 때문이다."
       viewBox="0 0 720 262"
       minWidth={620}
     >
@@ -3144,7 +3144,7 @@ export function NestedCv() {
         바깥 테스트
       </text>
       <text x={(ox(1) + ox(4) + ow) / 2} y={50} textAnchor="middle" fontSize={10} fontWeight={800} fill={ink}>
-        바깥 훈련 (이 안에서만 고른다)
+        바깥 학습 (이 안에서만 고른다)
       </text>
       <path d={`M${ox(1)},64 L${ox(1)},70 L${ox(4) + ow},70 L${ox(4) + ow},64`} fill="none" stroke={inkSecondary} />
       <Arr x1={(ox(1) + ox(4) + ow) / 2} y1={70} x2={(ox(1) + ox(4) + ow) / 2} y2={92} color={inkSecondary} marker={`${P}-ink`} />
@@ -3162,7 +3162,7 @@ export function NestedCv() {
         후보 7개 각각을 안쪽 4-fold로 채점
       </text>
       <Tag x={364} y={96} w={146} h={40} lines={["① 안쪽 CV 점수가", "가장 좋은 설정 선택"]} color={colors.orange} size={10.5} />
-      <Tag x={364} y={146} w={146} h={40} lines={["② 그 설정으로 바깥", "훈련 전체에 재학습"]} color={colors.blue} size={10.5} />
+      <Tag x={364} y={146} w={146} h={40} lines={["② 그 설정으로 바깥", "학습 전체에 재학습"]} color={colors.blue} size={10.5} />
       <Tag x={364} y={196} w={146} h={40} lines={["③ 바깥 테스트로 한 번", "평가 → 점수₁"]} color={colors.red} size={10.5} />
       <Arr x1={437} y1={136} x2={437} y2={144} color={inkSecondary} marker={`${P}-ink`} />
       <Arr x1={437} y1={186} x2={437} y2={194} color={inkSecondary} marker={`${P}-ink`} />
@@ -3219,7 +3219,7 @@ export function PairedT() {
   return (
     <DiagramFrame
       title="두 모델 비교: 같은 분할의 짝지은 차이와 보정된 t 검정"
-      caption="유방암 데이터(sklearn)에서 로지스틱 회귀와 랜덤 포레스트를 같은 분할 15개(5-fold × 3회 반복)로 평가한 실제 결과다. 왼쪽: 분할마다 두 점수가 함께 오르내리므로 분할의 난이도를 상쇄하도록 분할별 차이 d를 본다. 가운데: 차이의 평균은 0.0105다. 평범한 t 검정으로 구간을 만들면 0을 포함하지 않아 p = 0.026으로 '유의'해 보이지만, 훈련 데이터의 겹침을 반영한 Nadeau–Bengio 보정을 하면 구간이 0을 포함하고 p = 0.27이다. 오른쪽: 표준오차를 표본표준편차 s의 몇 배로 잡는지다. 보통 t는 1/√J라 반복을 늘릴수록 0으로 줄지만, 보정 t는 √(1/J + 0.25)라 0.5 밑으로 내려가지 않는다. 반복 횟수만 늘려 유의한 결과를 만들어 내는 착시를 막아 준다."
+      caption="유방암 데이터(sklearn)에서 로지스틱 회귀와 랜덤 포레스트를 같은 분할 15개(5-fold × 3회 반복)로 평가한 실제 결과다. 왼쪽: 분할마다 두 점수가 함께 오르내리므로 분할의 난이도를 상쇄하도록 분할별 차이 d를 본다. 가운데: 차이의 평균은 0.0105다. 평범한 t 검정으로 구간을 만들면 0을 포함하지 않아 p = 0.026으로 '유의'해 보이지만, 학습 데이터의 겹침을 반영한 Nadeau–Bengio 보정을 하면 구간이 0을 포함하고 p = 0.27이다. 오른쪽: 표준오차를 표본표준편차 s의 몇 배로 잡는지다. 보통 t는 1/√J라 반복을 늘릴수록 0으로 줄지만, 보정 t는 √(1/J + 0.25)라 0.5 밑으로 내려가지 않는다. 반복 횟수만 늘려 유의한 결과를 만들어 내는 착시를 막아 준다."
       viewBox="0 0 720 256"
       minWidth={640}
     >

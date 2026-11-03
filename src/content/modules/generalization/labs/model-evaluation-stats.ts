@@ -6,7 +6,7 @@ export default defineExercises([
     title: "짝지은 비교: 단순 t, 보정 t, McNemar",
     prompt: md`
 
-「평가의 통계학」 단계의 검정 통계량을 직접 구현합니다. 차이 \`d\`는 같은 분할에서 얻은 두 모델의 점수 차이 $J$개입니다.
+본문의 검정 통계량을 직접 구현합니다. 차이 \`d\`는 같은 분할에서 얻은 두 모델의 점수 차이 $J$개입니다.
 
 1. \`naive_t(d)\` $= \dfrac{\bar d}{\sqrt{s^2 / J}}$ ($s^2$은 \`ddof=1\` 표본분산)
 2. \`corrected_t(d, n_train, n_test)\` $= \dfrac{\bar d}{\sqrt{(1/J + n_{test}/n_{train})\, s^2}}$ (나도-벤지오 보정)
