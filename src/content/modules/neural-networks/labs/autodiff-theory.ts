@@ -6,7 +6,7 @@ export default defineExercises([
     title: "이원수 순방향 모드와 JVP·VJP",
     prompt: md`
 
-「자동미분의 두 모드」 단계의 두 도구를 구현합니다.
+본문의 두 도구를 구현합니다.
 
 1. \`Dual\` 클래스: 값 \`val\`과 미분 \`dot\`을 함께 저장하며 \`+\`, \`*\`(숫자와의 연산 포함)를 지원합니다. 곱은 $(a + b\varepsilon)(c + d\varepsilon) = ac + (ad + bc)\varepsilon$입니다. \`dsin\`, \`dexp\`는 연쇄법칙으로 \`dot\`에 $\cos$, $\exp$를 곱합니다.
 2. \`derivative(f, x)\`: \`f(Dual(x, 1.0)).dot\`

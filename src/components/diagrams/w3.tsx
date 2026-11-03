@@ -120,8 +120,8 @@ export function XorHidden() {
   };
   return (
     <DiagramFrame
-      title="XOR: 은닉층이 공간을 바꿔 직선 하나로 나눌 수 있게 만든다"
-      caption="왼쪽 입력 공간에서는 주황(출력 1)과 파랑(출력 0)을 직선 하나로 나눌 수 없다. ReLU 은닉층을 지나면 (0,1)과 (1,0)이 한 점으로 모이고 (1,1)이 멀리 밀려나, 오른쪽처럼 직선 h1 − 2h2 = 0.5(점선) 하나로 나뉜다."
+      title="XOR: 은닉층이 입력을 새 좌표로 바꿔 직선 하나로 나뉘게 한다"
+      caption="왼쪽 입력 공간에서는 주황(출력 1)과 파랑(출력 0)을 직선 하나로 나눌 수 없다. ReLU 은닉층을 지나면 (0,1)과 (1,0)이 한 점 (1,0)이 되고 (1,1)은 (2,1)이 되어, 오른쪽처럼 직선 h1 − 2h2 = 0.5(점선) 하나로 나뉜다."
       viewBox="0 0 560 270"
       minWidth={440}
     >
@@ -145,7 +145,7 @@ export function NeuronAnatomy() {
   return (
     <DiagramFrame
       title="뉴런 하나가 하는 일: 곱하고, 더하고, 활성화 함수에 통과시킨다"
-      caption="각 입력에 해당 가중치를 곱해(0.5×2 = 1, −1×1 = −1) 모두 더하고 편향 0.1을 더하면 활성화 전 값 z = 0.1이다. ReLU는 z가 양수라 그대로 통과시켜 출력도 0.1이다. 편향이 −0.5였다면 z = −0.5가 되어 ReLU의 출력은 0이 된다(뉴런이 꺼진다). MLP의 한 층은 이런 뉴런을 여러 개 나란히 둔 것이다."
+      caption="각 입력에 해당 가중치를 곱해(0.5×2 = 1, −1×1 = −1) 모두 더하고 편향 0.1을 더하면 활성화 전 값 z = 0.1이다. ReLU는 z가 양수라 그대로 통과시켜 출력도 0.1이다. 편향이 −0.5였다면 z = −0.5가 되어 ReLU의 출력은 0이 된다. MLP의 한 층은 이런 뉴런을 여러 개 나란히 둔 것이다."
       viewBox="0 0 720 250"
       minWidth={560}
     >
@@ -462,13 +462,13 @@ export function ClosureRecursion() {
   return (
     <DiagramFrame
       title="클로저와 재귀: 자동미분 엔진 구현에 쓰이는 두 문법"
-      caption="왼쪽: make_adder(5)는 실행이 끝났지만, 반환된 함수 add는 바깥 변수 n = 5를 계속 기억한다. 그래서 나중에 add5(10)을 부르면 15가 나온다. Value의 _backward도 이렇게 '지금은 정의만 하고, 필요한 값(out.grad)이 준비된 뒤에 실행'된다. 오른쪽: countdown(3)은 더 작은 문제로 자기 자신을 부르며 호출이 쌓이고, 멈추는 조건(n == 0)에 이르면 차례로 돌아온다. backward()의 build()도 이런 방식으로 그래프를 훑는다."
+      caption="왼쪽: make_adder(5)는 실행이 끝났지만, 반환된 함수 add는 바깥 변수 n = 5를 계속 참조한다. 그래서 나중에 add5(10)을 부르면 15가 나온다. Value의 _backward도 이렇게 '지금은 정의만 하고, 필요한 값(out.grad)이 준비된 뒤에 실행'된다. 오른쪽: countdown(3)은 더 작은 문제로 자기 자신을 부르며 호출이 쌓이고, 멈추는 조건(n == 0)에 이르면 차례로 돌아온다. backward()의 build()도 이런 방식으로 그래프를 훑는다."
       viewBox="0 0 720 262"
       minWidth={560}
     >
       <Markers prefix={P} colors={{ ink: inkSecondary, violet: colors.violet, orange: colors.orange }} />
       <text x={14} y={22} fontSize={12.5} fontWeight={700} fill={colors.violet}>
-        클로저: 함수가 바깥 변수를 기억한다
+        클로저: 함수가 바깥 변수를 참조한다
       </text>
       <rect x={14} y={38} width={190} height={92} rx={10} fill="none" stroke={inkMuted} strokeDasharray="5 4" />
       <text x={24} y={56} fontSize={11} fill={inkSecondary} fontFamily={mono}>
@@ -484,7 +484,7 @@ export function ClosureRecursion() {
       <Tag x={236} y={52} w={112} h={58} lines={["함수 add", "x + n 을 계산"]} color={colors.violet} tint={0.12} size={12} />
       <ArrPath d="M262,112 C262,140 120,140 66,98" color={colors.orange} marker={`${P}-orange`} dashed />
       <text x={190} y={152} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.orange}>
-        끝난 뒤에도 n = 5를 기억한다
+        끝난 뒤에도 n = 5를 참조한다
       </text>
       <Tag x={268} y={168} w={80} h={30} lines={["add5"]} color={inkMuted} tint={0.08} size={12} />
       <Arr x1={308} y1={166} x2={308} y2={114} color={colors.violet} marker={`${P}-violet`} />
@@ -657,7 +657,7 @@ export function GradAccumulate() {
 }
 
 export function OptimizerPaths() {
-  // f(x, y) = ½(x² + 25y²): 세로가 25배 가파른 협곡. 같은 출발점에서 25스텝씩.
+  // f(x, y) = ½(x² + 25y²): 세로가 25배 가파른 손실. 같은 출발점에서 25스텝씩.
   const start = [-4.5, 1.2];
   const grad = (x: number, y: number) => [x, 25 * y];
   const N = 25;
@@ -711,15 +711,15 @@ export function OptimizerPaths() {
   const panels = [
     { title: "SGD (η = 0.07)", pts: sgd(), color: colors.red, note: "세로로 진동, 가로로 느림" },
     { title: "Momentum (β = 0.8)", pts: momentum(), color: colors.orange, note: "일정한 가로 방향으로 가속" },
-    { title: "Adam (η = 0.25)", pts: adam(), color: colors.blue, note: "축마다 보폭을 맞춰 대각선으로" },
+    { title: "Adam (η = 0.25)", pts: adam(), color: colors.blue, note: "축마다 갱신량을 맞춰 대각선으로" },
   ];
   const pw = 214;
   const ph = 150;
   const top = 38;
   return (
     <DiagramFrame
-      title="좁은 골짜기에서 SGD, Momentum, Adam이 25스텝 동안 움직인 경로"
-      caption="세로 방향이 가로보다 25배 가파른 손실 f = ½(x² + 25y²)에서 같은 점(큰 점)에서 출발해 25번 갱신한 경로다. SGD는 가파른 세로축 때문에 학습률을 키울 수 없어 가로 방향으로는 아직 최솟값에서 멀다. Momentum은 매번 같은 가로 방향의 기울기가 누적돼 빨라지고(조금 지나쳤다 돌아온다), 진동하는 세로 성분은 상쇄된다. Adam은 축마다 기울기 크기로 나눠 보폭을 비슷하게 만들므로 처음부터 대각선으로 내려간다."
+      title="등고선이 길쭉한 손실에서 SGD, Momentum, Adam이 25스텝 동안 움직인 경로"
+      caption="세로 방향이 가로보다 25배 가파른 손실 f = ½(x² + 25y²)에서 같은 점(큰 점)에서 출발해 25번 갱신한 경로다. SGD는 가파른 세로축 때문에 학습률을 키울 수 없어 가로 방향으로는 아직 최솟값에서 멀다. Momentum은 매번 같은 가로 방향의 기울기가 누적돼 빨라지고(최솟값을 조금 지나쳤다 돌아온다), 진동하는 세로 성분은 상쇄된다. Adam은 축마다 기울기 크기로 나눠 갱신량을 비슷하게 만들므로 처음부터 대각선 방향으로 움직인다."
       viewBox="0 0 720 240"
       minWidth={560}
     >
@@ -769,12 +769,12 @@ export function MomentumVelocity() {
   const alt = [1, -0.1, 0.91, -0.181, 0.837];
   const panels = [
     { title: "같은 방향 기울기: 계속 쌓인다", v: same, color: colors.blue, note: "한계는 1/(1 − β) = 10배" },
-    { title: "부호가 바뀌는 기울기: 서로 상쇄된다", v: alt, color: colors.orange, note: "1 안팎에서 맴돈다" },
+    { title: "부호가 바뀌는 기울기: 서로 상쇄된다", v: alt, color: colors.orange, note: "크기가 1을 넘지 않는다" },
   ];
   return (
     <DiagramFrame
       title="Momentum의 속도 v: 일관된 방향은 가속, 진동은 상쇄"
-      caption="v ← 0.9v + g를 다섯 번 반복한 값(본문 코드의 출력)이다. 기울기가 매번 같은 방향이면 v가 1, 1.9, 2.71, …로 커져 최대 10배까지 가속된다. 부호가 번갈아 바뀌면 앞의 기여가 반대 부호와 상쇄되어 v가 1 근처에 머문다. 그래서 골짜기의 긴 축 방향으로는 빨라지고 좁은 축 방향의 진동은 줄어든다."
+      caption="v ← 0.9v + g를 다섯 번 반복한 값(본문 코드의 출력)이다. 기울기가 매번 같은 방향이면 v가 1, 1.9, 2.71, …로 커져 최대 10배까지 가속된다. 부호가 번갈아 바뀌면 앞의 값이 반대 부호의 기울기와 상쇄되어 v의 크기가 1을 넘지 않는다. 그래서 등고선이 길쭉한 손실에서 완만한 방향으로는 빨라지고 가파른 방향의 진동은 줄어든다."
       viewBox="0 0 720 230"
       minWidth={540}
     >

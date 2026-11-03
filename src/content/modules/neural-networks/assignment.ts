@@ -6,14 +6,14 @@ export default defineAssignment({
   title: "미니 자동미분 엔진으로 MLP 학습하기",
   summary: md`
 
-「미니 자동미분 엔진」 단계의 \`Value\` 클래스에 나눗셈과 지수 함수를 추가하고, 이 엔진만으로 MLP를 만들어 make_moons 데이터를 분류합니다. gradient check로 구현을 검증하고, 같은 모델을 NumPy 행렬 연산으로 구현한 버전과 속도·정확도를 비교합니다.
+[[lesson:micrograd]]의 \`Value\` 클래스에 나눗셈과 지수 함수를 추가하고, 이 엔진만으로 MLP를 만들어 make_moons 데이터를 분류합니다. gradient check로 구현을 검증하고, 같은 모델을 NumPy 행렬 연산으로 구현한 버전과 속도·정확도를 비교합니다.
 
 **핵심** 항목 네 개(Value 확장·MLP 학습·gradient check·계산 그래프)는 핵심 과정만으로 풀 수 있고, 채점 기준은 이 네 항목만 봅니다. **보충**(NumPy 벡터화 비교)과 **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
 `,
   requirements: [
     "`Value`의 `__truediv__`와 `exp`의 `_backward`를 완성해, 두 검증 식 모두 상대오차 $10^{-5}$ 미만(✓)을 받는다.",
-    "`Neuron`·`Layer`·`MLP`로 make_moons(100개)를 학습해 훈련 정확도 90% 이상을 달성하고 손실 곡선과 결정경계를 그린다.",
-    "학습한 MLP의 파라미터 5개에 대해 역전파 기울기와 중앙차분의 상대오차 표를 만든다.",
+    "`Neuron`·`Layer`·`MLP`로 make_moons(100개)를 학습해 학습 데이터 정확도 90% 이상을 달성하고 손실 곡선과 결정경계를 그린다.",
+    "학습한 MLP의 파라미터 5개에 대해 역전파 기울기와 중심차분의 상대오차 표를 만든다.",
     "노드 4~6개짜리 계산 그래프를 직접 설계해 손 계산 표와 `Value` 결과를 비교한다.",
     "(보충) 같은 구조의 NumPy 구현과 정확도·속도를 비교하고, `Value` 구현이 느린 이유를 세 가지 이상 설명한다.",
   ],
@@ -133,7 +133,7 @@ check(lambda a, b: (a * b) / (a + b), 1.5, -0.7)
       tier: "core",
       instructions: md`
 
-\`Neuron\`, \`Layer\`, \`MLP\` 클래스는 제공합니다. 학습 루프의 \`TODO\` 두 곳(기울기 초기화와 파라미터 갱신)을 채운 뒤 실행합니다. 권장 설정(샘플 100개, 은닉층 8개 2층, tanh, 학습률 0.3, 60에폭, 전체 배치)에서 **훈련 정확도 90% 이상**이면 통과입니다. 실행에는 20~40초 정도 걸립니다.
+\`Neuron\`, \`Layer\`, \`MLP\` 클래스는 제공합니다. 학습 루프의 \`TODO\` 두 곳(기울기 초기화와 파라미터 갱신)을 채운 뒤 실행합니다. 권장 설정(샘플 100개, 은닉층 8개 2층, tanh, 학습률 0.3, 60에폭, 전체 배치)에서 **학습 데이터 정확도 90% 이상**이면 통과입니다. 실행에는 20~40초 정도 걸립니다.
 
 정확도가 90%에 못 미치면 ① 학습률이 적절한지, ② 매 스텝 \`grad\`를 0으로 초기화했는지, ③ 가중치를 무작위로 초기화했는지, ④ 손실이 실제로 줄고 있는지를 순서대로 확인하고, 무엇을 고쳤는지 답안에 적습니다.
 `,
@@ -228,7 +228,7 @@ plt.show()
       tier: "core",
       instructions: md`
 
-학습한 MLP에서 파라미터 5개를 무작위로 골라, 역전파 기울기와 중앙차분 수치미분 $\frac{L(\theta + h) - L(\theta - h)}{2h}$의 상대오차를 표로 출력합니다. 코드 셀의 \`TODO\`를 채웁니다. 상대오차가 $10^{-5}$를 넘는 항목이 있다면 원인을 찾아 고치고 과정을 답안에 적습니다.
+학습한 MLP에서 파라미터 5개를 무작위로 골라, 역전파 기울기와 중심차분 수치미분 $\frac{L(\theta + h) - L(\theta - h)}{2h}$의 상대오차를 표로 출력합니다. 코드 셀의 \`TODO\`를 채웁니다. 상대오차가 $10^{-5}$를 넘는 항목이 있다면 원인을 찾아 고치고 과정을 답안에 적습니다.
 `,
       cells: [
         { kind: "code", id: "gradcheck-code", label: "파라미터 5개 gradient check", starter: py`
@@ -244,7 +244,7 @@ print(f"{'#':>4}{'역전파':>14}{'수치미분':>14}{'상대오차':>12}")
 for i in rng_check.sample(range(len(params)), 5):
     p = params[i]
     original = p.data
-    num = 0.0  # TODO: p.data를 original ± h로 바꿔 total_loss(model)[0].data를 두 번 계산해 중앙차분을 구합니다.
+    num = 0.0  # TODO: p.data를 original ± h로 바꿔 total_loss(model)[0].data를 두 번 계산해 중심차분을 구합니다.
     p.data = original
     rel = abs(p.grad - num) / max(1e-12, abs(p.grad) + abs(num))
     print(f"{i:>4}{p.grad:>14.8f}{num:>14.8f}{rel:>12.1e}", "✓" if rel < 1e-5 else "✗")
@@ -331,11 +331,11 @@ print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
       tier: "advanced",
       instructions: md`
 
-다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않으며, 심화 단계의 내용을 과제의 MLP에 적용해 보는 것이 목적입니다.
+다음 중 하나 이상을 골라 실험합니다. 점수에는 들어가지 않으며, 심화 레슨의 내용을 과제의 MLP에 적용해 보는 것이 목적입니다.
 
-- SGD, Momentum, Adam, AdamW를 NumPy MLP에 직접 구현해 손실 곡선을 비교합니다. 최적화기마다 학습률을 따로 조정했는지, Adam + L2와 AdamW에서 같은 $\lambda$가 가중치 노름에 주는 효과가 어떻게 다른지 밝힙니다(「Adam의 이론」).
-- ReLU와 tanh를 쓴 20층 네트워크에서 층별 기울기 크기를 기록하고, 잔차 연결과 노름 기준 기울기 클리핑을 더했을 때 어떻게 달라지는지 비교합니다(「기울기 흐름의 수학」).
-- \`Value\`에 이원수(dual number) 기반 순방향 모드를 붙여, 같은 MLP의 한 파라미터에 대한 미분을 역방향 모드 결과와 비교합니다(「자동미분의 두 모드」).
+- SGD, Momentum, Adam, AdamW를 NumPy MLP에 직접 구현해 손실 곡선을 비교합니다. 최적화기마다 학습률을 따로 조정했는지, Adam + L2와 AdamW에서 같은 $\lambda$가 가중치 노름에 주는 효과가 어떻게 다른지 밝힙니다([[lesson:adam-theory]]).
+- ReLU와 tanh를 쓴 20층 네트워크에서 층별 기울기 크기를 기록하고, 잔차 연결과 노름 기준 기울기 클리핑을 더했을 때 어떻게 달라지는지 비교합니다([[lesson:gradient-flow]]).
+- \`Value\`에 이원수(dual number) 기반 순방향 모드를 붙여, 같은 MLP의 한 파라미터에 대한 미분을 역방향 모드 결과와 비교합니다([[lesson:autodiff-theory]]).
 `,
       cells: [
         { kind: "code", id: "advanced-code", label: "심화 실험", starter: py`
@@ -348,12 +348,12 @@ print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
   rubric: [
     { id: "derivation", label: "국소 미분 유도의 정확성", points: 3, guide: "나눗셈·exp의 국소 미분과 직접 설계한 계산 그래프의 역전파가 정확합니다." },
     { id: "gradcheck", label: "구현 정확성", points: 3, guide: "확장한 Value와 MLP 전체의 gradient check를 통과했습니다." },
-    { id: "mlp", label: "MLP 학습과 문제 해결 과정", points: 3, guide: "훈련 정확도 90% 이상을 달성하고, 손실 곡선·결정경계와 문제 해결 과정을 제시했습니다." },
+    { id: "mlp", label: "MLP 학습과 문제 해결 과정", points: 3, guide: "학습 데이터 정확도 90% 이상을 달성하고, 손실 곡선·결정경계와 문제 해결 과정을 제시했습니다." },
     { id: "quality", label: "코드 품질과 가독성", points: 1, guide: "코드와 답안이 읽기 쉽고, 모든 셀이 처음부터 순서대로 실행됩니다." },
   ],
   gradingNotes: md`
 - **Value에 나눗셈과 exp 추가하기**: 나눗셈은 $\partial(a/b)/\partial a = 1/b$, $\partial(a/b)/\partial b = -a/b^2$이고, exp는 출력값 $e^x$를 그대로 곱한다. $a \cdot b^{-1}$로 기존 연산을 재사용한 구현도 정답이다. 나눗셈의 역전파가 없으면 손실을 샘플 수로 나누는 단계에서 기울기가 끊겨 MLP 학습이 진행되지 않는다. 이 원인을 스스로 찾아 기록했다면 "MLP 학습과 문제 해결 과정" 항목에서 높게 평가한다.
-- **Value로 만든 MLP로 make_moons 분류하기**: 학습률 0.3, 60에폭이면 훈련 정확도 약 0.95에 도달한다.
+- **Value로 만든 MLP로 make_moons 분류하기**: 학습률 0.3, 60에폭이면 학습 데이터 정확도 약 0.95에 도달한다.
 - **MLP 전체에 대한 gradient check**: 상대오차가 $10^{-9}$ 수준이어야 한다.
 - **보충: NumPy 벡터화 구현과 비교하기**: NumPy 구현이 수백에서 수천 배 빠르다. 느린 이유로 Python 객체 생성, 노드마다의 클로저 호출, 스칼라 단위 연산(벡터화 부재), 위상 정렬 비용을 들면 충분하다.
 `,
@@ -371,7 +371,7 @@ x = Value(0.5)
 (x.exp() + x.exp()).backward()
 assert abs(x.grad - 2 * math.exp(0.5)) < 1e-9, f"x.grad = {x.grad}, 기대 {2 * math.exp(0.5)}"
 ` },
-    { id: "w3-at-mlp", taskId: "mlp", title: "학습한 MLP의 훈련 정확도 90% 이상, 손실 감소", hint: "매 스텝 모든 파라미터의 grad를 0으로 되돌렸는지, 갱신을 `p.data -= lr * p.grad`로 했는지 확인하십시오.", code: py`
+    { id: "w3-at-mlp", taskId: "mlp", title: "학습한 MLP의 학습 데이터 정확도 90% 이상, 손실 감소", hint: "매 스텝 모든 파라미터의 grad를 0으로 되돌렸는지, 갱신을 `p.data -= lr * p.grad`로 했는지 확인하십시오.", code: py`
 _, acc = total_loss(model)
 assert acc >= 0.9, f"현재 정확도 {acc:.2f}"
 assert len(losses) > 1 and losses[-1] < losses[0], "손실이 줄지 않았습니다."
@@ -405,7 +405,7 @@ for i in (0, len(params) // 2, len(params) - 1):
 1. \`log()\`의 \`_backward\`: $\dfrac{d}{dx}\ln x = \dfrac{1}{x}$
 2. \`softmax_ce(logits, target)\`: \`Value\` 리스트 \`logits\`와 정답 번호를 받아 $-\ln \dfrac{e^{z_t}}{\sum_j e^{z_j}}$를 \`Value\`로 돌려줍니다.
 
-역전파한 \`logits[j].grad\`가 $\mathrm{softmax}(z)_j - [j = t]$와 같아야 합니다. 2주차 로지스틱 회귀의 $p - y$가 클래스 여러 개로 일반화된 모습입니다.
+역전파한 \`logits[j].grad\`가 $\mathrm{softmax}(z)_j - [j = t]$와 같아야 합니다. 로지스틱 회귀의 기울기 $p - y$를 클래스 여러 개로 일반화한 결과입니다.
 `,
       starter: py`
 import math
@@ -605,7 +605,7 @@ print("loss =", round(loss.data, 4), " grads =", [round(z.grad, 4) for z in logi
 
 깊이 20인 MLP에서 기울기가 층을 거슬러 올라가며 어떻게 변하는지 직접 측정합니다.
 
-1. \`layer_grad_norms(depth, width, act, std, seed)\`: 입력(샘플 64개, 특징 width개)을 \`depth\`개의 "선형(표준편차 std, 편향 없음) → 활성화(\`"tanh"\` 또는 \`"relu"\`)" 층에 통과시킨 뒤, 손실 $L = \text{mean}(\text{출력})$에서 역전파하며 **각 층 입력에 대한 기울기 $\partial L/\partial h_l$의 노름**을 첫 층부터 순서대로 리스트로 돌려줍니다(길이 depth).
+1. \`layer_grad_norms(depth, width, act, std, seed)\`: 입력(샘플 64개, 특성 width개)을 \`depth\`개의 "선형(표준편차 std, 편향 없음) → 활성화(\`"tanh"\` 또는 \`"relu"\`)" 층에 통과시킨 뒤, 손실 $L = \text{mean}(\text{출력})$에서 역전파하며 **각 층 입력에 대한 기울기 $\partial L/\partial h_l$의 노름**을 첫 층부터 순서대로 리스트로 돌려줍니다(길이 depth).
 2. \`clip_by_norm(g, max_norm)\`: 노름이 \`max_norm\`을 넘으면 방향은 그대로 두고 크기만 \`max_norm\`으로 줄입니다.
 
 tanh에 작은 초기화를 쓰면 앞쪽 층의 기울기가 사라지고, ReLU + He 초기화면 비교적 일정하게 유지되는지 확인합니다.

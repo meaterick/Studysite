@@ -138,7 +138,7 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
     ],
     "gradcheck-code": [
       [
-        "num = 0.0  # TODO: p.data를 original ± h로 바꿔 total_loss(model)[0].data를 두 번 계산해 중앙차분을 구합니다.",
+        "num = 0.0  # TODO: p.data를 original ± h로 바꿔 total_loss(model)[0].data를 두 번 계산해 중심차분을 구합니다.",
         "p.data = original + h; lp = total_loss(model)[0].data; p.data = original - h; lm = total_loss(model)[0].data; num = (lp - lm) / (2 * h)",
       ],
     ],

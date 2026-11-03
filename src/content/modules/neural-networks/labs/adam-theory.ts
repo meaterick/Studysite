@@ -6,7 +6,7 @@ export default defineExercises([
     title: "편향 보정 Adam과 분리된 가중치 감쇠(AdamW)",
     prompt: md`
 
-「Adam의 이론」 단계의 결론을 최적화기로 구현해 확인합니다.
+본문의 결론을 최적화기로 구현해 확인합니다.
 
 1. \`adam_step(w, g, state, lr, lam, decoupled, b1=0.9, b2=0.999, eps=1e-8)\`: \`state\`는 \`{"t": 0, "m": 0, "v": 0}\` 딕셔너리(배열도 가능)입니다. \`t\`를 1 늘리고,
    - \`decoupled=False\`(Adam + L2)면 기울기를 \`g + lam * w\`로 바꿔 $m, v$를 갱신하고 편향 보정한 $\hat m/(\sqrt{\hat v}+\epsilon)$로 갱신합니다.
