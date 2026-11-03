@@ -3,15 +3,14 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "Karpathy 레시피: 초기 손실 점검과 배치 하나 외우기",
+    title: "학습 진단: 초기 손실 확인과 배치 하나에 과적합하기",
     prompt: md`
-
-학습이 이상할 때 가장 먼저 하는 두 가지 검사를 구현합니다.
+학습이 기대대로 되지 않을 때 가장 먼저 하는 두 가지 점검을 구현합니다.
 
 1. \`softmax(Z)\`(행마다, 최댓값을 빼서 안정화)와 \`cross_entropy(P, y)\`(정답 클래스 확률의 $-\log$ 평균)
 2. \`overfit_batch(X, y, n_classes, steps, lr)\`: 선형 분류기 $XW + b$를 작은 초기화로 시작해 소프트맥스 교차 엔트로피로 학습하고 \`(정확도, 손실)\`을 돌려줍니다. 기울기는 $\partial L/\partial Z = (P - \text{원핫})/n$입니다.
 
-클래스 10개를 균등하게 예측하면 손실은 $\ln 10 \approx 2.303$이고, 샘플 10개짜리 배치는 정확도 1.0까지 외울 수 있어야 합니다.
+클래스 10개를 균등하게 예측하면 손실은 $\ln 10 \approx 2.303$이고, 샘플 10개로 이루어진 배치에서는 정확도 1.0에 도달해야 합니다.
 `,
     starter: py`
 import numpy as np
@@ -59,7 +58,7 @@ def _():
     W0 = np.random.default_rng(0).normal(0, 0.01, (64, 10))
     assert abs(cross_entropy(softmax(X @ W0), y) - np.log(10)) < 0.05
 
-@test("샘플 10개 배치를 정확도 1.0으로 외운다")
+@test("샘플 10개 배치에서 정확도 1.0, 손실 0.1 미만")
 def _():
     acc, loss = overfit_batch(X[:10], y[:10])
     assert acc == 1.0 and loss < 0.1, f"정확도 {acc}, 손실 {loss:.4f}"

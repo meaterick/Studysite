@@ -53,7 +53,7 @@ $w = 2$, $x = 3$, $c = 1$이라 하자. 그래프를 $u = wx$(곱셈), $v = u + 
 - 덧셈 노드: $\partial L / \partial u = 14$, $\partial L / \partial c = 14$
 - 곱셈 노드: $\partial L / \partial w = 14 \times x = 42$, $\partial L / \partial x = 14 \times w = 28$
 
-수치미분으로 검산하면 $w$를 0.001 늘렸을 때 $L = 7.003^2 \approx 49.042$이므로 $\Delta L / \Delta w \approx 42$다. 기울기를 직접 구현했을 때 이렇게 수치미분과 비교하는 것을 **기울기 검사**(gradient check)라 한다.
+수치미분으로 검산하면 $w$를 0.001 늘렸을 때 $L = 7.003^2 \approx 49.042$이므로 $\Delta L / \Delta w \approx 42$다. 기울기를 직접 구현했을 때 이렇게 수치미분과 비교하는 것을 **기울기 검사**(gradient check)라 한다. 두 값의 상대오차 $|g_{\text{역전파}} - g_{\text{수치}}| / (|g_{\text{역전파}}| + |g_{\text{수치}}|)$가 $10^{-5}$보다 작으면 구현이 맞다고 본다.
 :::
 
 ### 한 층의 역전파

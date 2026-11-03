@@ -9,7 +9,7 @@ export function ResNetSkip() {
     <DiagramFrame
       title="ResNet 잔차 연결(Residual Connection)"
       viewBox="0 0 560 340"
-      caption="y = F(x) + x. 역전파 시 dL/dx = dL/dy · (F′(x) + 1)이며, '+1' 항이 기울기가 사라지지 않도록 지름길을 만든다."
+      caption="잔차 블록은 층들의 출력 F(x)에 입력 x를 더해 y = F(x) + x를 출력한다(주황 경로가 shortcut). 역전파에서 dL/dx = dL/dy · (F′(x) + 1)이므로, F′(x)가 작아도 shortcut 경로의 1만큼 기울기가 앞쪽 층으로 전달된다."
     >
       <ArrowDefs />
       <Box x={x} y={16} w={w} h={40} label="입력 x" fill={card2Bg} />
@@ -31,7 +31,8 @@ export function ResNetSkip() {
         strokeWidth={2}
         markerEnd="url(#arrowhead)"
       />
-      <Label x={100} y={150} text="skip connection" color={colors.orange} weight={700} anchor="middle" />
+      <Label x={186} y={138} text="shortcut" color={colors.orange} weight={700} anchor="middle" />
+      <Label x={186} y={156} text="(x를 그대로 더함)" color={colors.orange} anchor="middle" />
     </DiagramFrame>
   );
 }
@@ -45,7 +46,7 @@ export function TransferLearning() {
     <DiagramFrame
       title="전이학습: 사전학습된 백본 + 새 분류 헤드"
       viewBox="0 0 620 220"
-      caption="① 특징추출: 백본을 얼리고(freeze) 마지막 층만 학습(데이터가 매우 적을 때). ② 파인튜닝: 작은 학습률로 전체(또는 상위층)까지 갱신."
+      caption="① 특성 추출: 사전학습한 층(백본)을 고정하고(freeze) 새 분류층만 학습한다(데이터가 매우 적을 때). ② 파인튜닝: 작은 학습률로 전체 층(또는 뒤쪽 층)까지 갱신한다."
     >
       <ArrowDefs />
       {blocks.map((b, i) => {
@@ -73,7 +74,7 @@ export function TransferLearning() {
           </g>
         );
       })}
-      <Label x={20} y={y - 24} text="파란 막대 = freeze(특징추출 모드)" color={colors.blue} anchor="start" />
+      <Label x={20} y={y - 24} text="파란 막대 = 고정한 층(특성 추출)" color={colors.blue} anchor="start" />
     </DiagramFrame>
   );
 }
@@ -412,12 +413,12 @@ export function ResidualGradientProduct() {
   const res = Array.from({ length: 51 }, (_, n) => [sx(n), sy(1.01 ** n)] as [number, number]);
   return (
     <DiagramFrame
-      title="블록 50개를 거슬러 온 기울기: 잔차 연결이 있을 때와 없을 때"
-      caption="잔차 연결이 없으면 블록마다 국소 미분(여기서는 0.5)이 곱해져 50블록 뒤 기울기가 약 8.9×10⁻¹⁶, 사실상 0이 된다(세로축은 로그 눈금). 잔차 연결이 있으면 블록마다 1 + F′이 곱해지므로 F′ = 0.01처럼 작아도 1.01⁵⁰ ≈ 1.64로 유지된다. 앞쪽 층까지 학습 신호가 전달되는 것은 이 '+1' 덕분이다."
+      title="역전파로 블록 50개를 지난 기울기: 잔차 연결이 있을 때와 없을 때"
+      caption="잔차 연결이 없으면 블록마다 국소 미분(여기서는 0.5)이 곱해져 50블록 뒤 기울기가 약 8.9×10⁻¹⁶, 사실상 0이 된다(세로축은 로그 눈금). 잔차 연결이 있으면 블록마다 1 + F′이 곱해지므로 F′ = 0.01처럼 작아도 1.01⁵⁰ ≈ 1.64로 유지된다. 앞쪽 층까지 기울기가 전달되는 것은 이 '+1' 항 때문이다."
       viewBox="0 0 720 270"
       minWidth={540}
     >
-      <Axes {...A} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-15, 1e-10, 1e-5, 1]} fmtY={pow10Label} xLabel="거슬러 올라간 블록 수" yLabel="앞쪽에 도착한 기울기 크기" />
+      <Axes {...A} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-15, 1e-10, 1e-5, 1]} fmtY={pow10Label} xLabel="역전파로 지난 블록 수" yLabel="앞쪽 층의 기울기 크기" />
       <path d={linePath(res)} fill="none" stroke={colors.green} strokeWidth={2.6} />
       <path d={linePath(plain)} fill="none" stroke={colors.red} strokeWidth={2.6} />
       <text x={sx(50) + 8} y={sy(1.64) + 4} fontSize={11.5} fontWeight={700} fill={colors.green}>
@@ -440,8 +441,8 @@ export function ProjectionShortcut() {
   const P = "prs";
   return (
     <DiagramFrame
-      title="모양이 바뀌는 블록의 지름길: 1×1 합성곱(stride 2)으로 맞춘다"
-      caption="단계가 바뀌는 블록에서 F(x) 경로는 stride 2로 해상도를 절반(56 → 28)으로 줄이고 채널을 두 배(64 → 128)로 늘린다. 그대로는 x와 더할 수 없으므로, 지름길에 1×1 합성곱(stride 2)을 두어 x도 같은 128×28×28로 바꾼 뒤 더한다(projection shortcut). 모양이 같은 블록에서는 지름길이 아무 계산 없이 x를 그대로 전달한다."
+      title="모양이 바뀌는 블록의 shortcut: 1×1 합성곱(stride 2)으로 맞춘다"
+      caption="해상도가 바뀌는 블록에서 F(x) 경로는 stride 2로 해상도를 절반(56 → 28)으로 줄이고 채널을 두 배(64 → 128)로 늘린다. 그대로는 x와 더할 수 없으므로, shortcut에 1×1 합성곱(stride 2)을 두어 x도 128×28×28로 바꾼 뒤 더한다(projection shortcut). 모양이 같은 블록에서는 shortcut이 계산 없이 x를 그대로 전달한다."
       viewBox="0 0 720 230"
       minWidth={560}
     >
@@ -455,7 +456,7 @@ export function ProjectionShortcut() {
         F(x)
       </text>
       <Arr x1={126} y1={124} x2={164} y2={162} color={colors.violet} marker={`${P}-violet`} />
-      <Tag x={168} y={140} w={332} h={52} lines={["지름길: 1×1 conv, stride 2", "채널만 섞어 64 → 128, 해상도 56 → 28"]} color={colors.violet} tint={0.12} size={11.5} />
+      <Tag x={168} y={140} w={332} h={52} lines={["shortcut: 1×1 conv, stride 2", "채널 64 → 128, 해상도 56 → 28"]} color={colors.violet} tint={0.12} size={11.5} />
       <Arr x1={502} y1={56} x2={556} y2={100} color={inkSecondary} marker={`${P}-ink`} />
       <Arr x1={502} y1={166} x2={556} y2={124} color={colors.violet} marker={`${P}-violet`} />
       <circle cx={576} cy={112} r={20} fill={card2Bg} stroke="var(--border-strong)" strokeWidth={1.6} />
@@ -465,7 +466,7 @@ export function ProjectionShortcut() {
       <Arr x1={598} y1={112} x2={622} y2={112} color={inkSecondary} marker={`${P}-ink`} />
       <Tag x={626} y={86} w={86} h={52} lines={["y", "128×28×28"]} color={colors.green} tint={0.14} size={12} />
       <text x={360} y={222} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        덧셈 y = F(x) + 지름길(x)은 두 텐서의 모양이 같아야 한다
+        덧셈 y = F(x) + shortcut(x)은 두 텐서의 모양이 같아야 한다
       </text>
     </DiagramFrame>
   );
@@ -646,14 +647,14 @@ export function AugmentationLabel() {
 }
 
 export function SanityChecks() {
-  // Karpathy 레시피의 두 검산: ① 10클래스 초기 손실 ≈ ln 10 ≈ 2.30, ② 배치 하나는 거의 0까지 외워야 한다.
+  // 학습 진단의 두 점검: ① 10클래스 초기 손실 ≈ ln 10 ≈ 2.30, ② 배치 하나에서는 손실이 거의 0까지 줄어야 한다.
   const panels = [
     {
       title: "② 초기 손실이 ln(클래스 수)인가",
       ok: (t: number) => 2.302 * Math.exp(-t / 120) + 0.6 * (1 - Math.exp(-t / 120)),
       bad: (t: number) => 6.5 * Math.exp(-t / 40) + 1.4,
-      okLabel: "정상: 2.30에서 출발",
-      badLabel: "의심: 6.5에서 출발 (초기화·손실 버그)",
+      okLabel: "정상: 2.30에서 시작",
+      badLabel: "의심: 6.5에서 시작 (초기화·손실 오류)",
       ref: Math.log(10),
       refLabel: "ln 10 ≈ 2.30",
     },
@@ -661,16 +662,16 @@ export function SanityChecks() {
       title: "③ 배치 하나에 과적합되는가",
       ok: (t: number) => 2.302 * Math.exp(-t / 18) + 0.01,
       bad: (t: number) => 2.302 - 0.05 * (1 - Math.exp(-t / 30)) + 0.04 * Math.sin(t / 3),
-      okLabel: "정상: 거의 0까지 외움",
-      badLabel: "버그: 2.3 근처에서 안 내려감",
+      okLabel: "정상: 손실이 거의 0까지 감소",
+      badLabel: "오류: 2.3 근처에서 줄지 않음",
       ref: 0,
       refLabel: "",
     },
   ];
   return (
     <DiagramFrame
-      title="학습 진단 레시피의 빠른 점검 두 가지"
-      caption="왼쪽: 10개 클래스 분류기가 처음에 모든 클래스에 1/10씩 확률을 준다면 손실은 −ln(1/10) = ln 10 ≈ 2.30에서 출발해야 한다. 크게 벗어나면 학습 전에 이미 손실 함수나 초기화에 버그가 있다는 뜻이다. 오른쪽: 데이터 몇 개짜리 배치 하나는 어떤 모델이든 거의 완벽히 외울 수 있어야 한다. 이것조차 안 되면 데이터가 아니라 파이프라인(기울기가 흐르지 않음, 레이블이 어긋남 등)의 버그다."
+      title="학습 진단의 빠른 점검 두 가지"
+      caption="왼쪽: 10클래스 분류기가 처음에 모든 클래스에 1/10씩 확률을 준다면 손실은 −ln(1/10) = ln 10 ≈ 2.30에서 시작해야 한다. 이 값과 크게 다르면 손실 함수나 초기화에 오류가 있다. 오른쪽: 샘플 몇 개로 이루어진 배치 하나라면 용량이 충분한 모델은 손실을 거의 0까지 줄일 수 있어야 한다. 그렇지 않으면 데이터가 아니라 코드(기울기가 전달되지 않음, 라벨이 입력과 어긋남 등)에 오류가 있다."
       viewBox="0 0 720 250"
       minWidth={560}
     >

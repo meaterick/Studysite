@@ -3,13 +3,12 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "BatchNorm과 LayerNorm: 평균·분산을 구하는 축의 차이",
+    title: "BatchNorm과 LayerNorm: 평균과 분산을 구하는 축의 차이",
     prompt: md`
-
 두 정규화 층을 \`gamma\`, \`beta\`까지 포함해 구현합니다(\`eps=1e-5\`).
 
-- \`batch_norm(z, gamma, beta)\`: 배치 축(axis=0)으로 특징마다 평균·분산을 구해 정규화
-- \`layer_norm(z, gamma, beta)\`: **마지막 축**으로 샘플(토큰)마다 평균·분산을 구해 정규화. (B, T, d) 모양의 Transformer 텐서에도 그대로 동작해야 합니다.
+- \`batch_norm(z, gamma, beta)\`: 배치 축(axis=0)으로 특성마다 평균과 분산을 구해 정규화
+- \`layer_norm(z, gamma, beta)\`: **마지막 축**으로 샘플(토큰)마다 평균과 분산을 구해 정규화. (B, T, d) 모양의 Transformer 텐서에도 그대로 동작해야 합니다.
 
 정규화한 뒤 \`gamma * 정규화값 + beta\`를 돌려줍니다.
 `,
@@ -18,12 +17,12 @@ import numpy as np
 
 def batch_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
     z = np.asarray(z, dtype=float)
-    # TODO: axis=0 평균·분산
+    # TODO: axis=0 평균과 분산
     return z
 
 def layer_norm(z, gamma=1.0, beta=0.0, eps=1e-5):
     z = np.asarray(z, dtype=float)
-    # TODO: 마지막 축 평균·분산 (keepdims=True)
+    # TODO: 마지막 축 평균과 분산 (keepdims=True)
     return z
 
 z = np.array([[2.0, 4.0], [6.0, 8.0]])
@@ -34,7 +33,7 @@ print("LN:\n", np.round(layer_norm(z), 3))
 import numpy as np
 z = np.array([[2.0, 4.0], [6.0, 8.0]])
 
-@test("BN: 특징(열)마다 평균 0 → [[-1, -1], [1, 1]]")
+@test("BN: 특성(열)마다 평균 0 → [[-1, -1], [1, 1]]")
 def _():
     assert approx(batch_norm(z), [[-1, -1], [1, 1]], 1e-4), f"결과: {batch_norm(z)}"
 
@@ -42,7 +41,7 @@ def _():
 def _():
     assert approx(layer_norm(z), [[-1, 1], [-1, 1]], 1e-4), f"결과: {layer_norm(z)}"
 
-@test("배치가 1개면 BN은 0이 되지만 LN은 의미 있는 값")
+@test("배치 크기가 1이면 BN의 출력은 모두 0이고, LN은 0이 아닌 값을 낸다")
 def _():
     one = np.array([[3.0, 7.0, 1.0]])
     assert approx(batch_norm(one), [[0, 0, 0]]) and np.abs(layer_norm(one)).max() > 0.5
