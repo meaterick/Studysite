@@ -44,61 +44,59 @@ export function ConfusionMatrix() {
 }
 
 export function DataSplitDiagram() {
-  const width = 620;
-  const barY = 40;
-  const barH = 40;
-  const segs = [
-    { label: "Train 60~80%", w: 340, color: colors.blue },
-    { label: "Val 10~20%", w: 130, color: colors.aqua },
-    { label: "Test 10~20%", w: 130, color: colors.red },
+  // 위: 트랙 3까지의 두 부분(학습용 70% · 평가용 30%). 아래: 평가용을 검증·테스트로 나눈 세 부분과 각 부분의 역할.
+  const x0 = 20;
+  const total = 600;
+  const barH = 38;
+  const topY = 44;
+  const bottomY = 142;
+  const trainW = total * 0.7;
+  const halfW = (total - trainW) / 2;
+  const parts = [
+    { label: "학습 데이터", x: x0, w: trainW, color: colors.blue, box: { x: 120, w: 200 }, role: ["파라미터를 정한다", "model.fit"] },
+    { label: "검증", x: x0 + trainW, w: halfW, color: colors.aqua, box: { x: 340, w: 136 }, role: ["모델을 고른다", "여러 번 사용"] },
+    { label: "테스트", x: x0 + trainW + halfW, w: halfW, color: colors.red, box: { x: 488, w: 136 }, role: ["최종 성능을 잰다", "마지막에 한 번"] },
   ];
-  let cx = 20;
-  const foldY = 150;
-  const foldW = 90;
-  const foldH = 34;
-  const folds = 5;
+  const boxY = bottomY + barH + 30;
   return (
     <DiagramFrame
-      title="데이터 분할과 K-Fold 교차검증"
-      viewBox={`0 0 ${width} 260`}
-      caption="Test는 하이퍼파라미터 튜닝에 절대 사용하지 않고 최종 1회 평가에만 쓴다. K-Fold는 Val 위치를 바꿔 가며 평균 성능을 측정한다."
+      title="평가용 데이터를 검증 데이터와 테스트 데이터로 나눈다"
+      viewBox="0 0 640 272"
+      caption="트랙 3까지 쓴 평가용 데이터를 검증 데이터와 테스트 데이터로 나눈다. 검증 데이터로는 하이퍼파라미터와 모델을 비교해 고르고, 테스트 데이터는 모든 선택이 끝난 뒤 한 번만 쓴다."
     >
-      {segs.map((s, i) => {
-        const node = (
-          <g key={i}>
-            <rect x={cx} y={barY} width={s.w} height={barH} fill={s.color} opacity={0.85} />
-            <text x={cx + s.w / 2} y={barY + barH / 2 + 4} textAnchor="middle" fontSize={12} fontWeight={700} fill="#fff">
-              {s.label}
-            </text>
-          </g>
-        );
-        cx += s.w;
-        return node;
-      })}
-      <rect x={20} y={barY} width={600} height={barH} fill="none" stroke={gridline} />
+      <text x={x0} y={topY - 10} fontSize={11.5} fill={inkSecondary}>
+        트랙 3까지: 두 부분
+      </text>
+      <rect x={x0} y={topY} width={trainW} height={barH} fill={colors.blue} opacity={0.85} />
+      <text x={x0 + trainW / 2} y={topY + barH / 2 + 4} textAnchor="middle" fontSize={12} fontWeight={700} fill="#fff">
+        학습용 70%
+      </text>
+      <rect x={x0 + trainW} y={topY} width={total - trainW} height={barH} fill={inkMuted} opacity={0.55} />
+      <text x={x0 + trainW + (total - trainW) / 2} y={topY + barH / 2 + 4} textAnchor="middle" fontSize={12} fontWeight={700} fill="#fff">
+        평가용 30%
+      </text>
+      <rect x={x0} y={topY} width={total} height={barH} fill="none" stroke={gridline} />
 
-      {Array.from({ length: folds }).map((_, r) => (
-        <g key={r}>
-          {Array.from({ length: folds }).map((_, c) => (
-            <rect
-              key={c}
-              x={20 + c * (foldW + 6)}
-              y={foldY + r * (foldH + 6)}
-              width={foldW}
-              height={foldH}
-              fill={c === r ? colors.aqua : card2Bg}
-              stroke={gridline}
-            />
-          ))}
-          <text x={20 + folds * (foldW + 6) + 8} y={foldY + r * (foldH + 6) + foldH / 2 + 4} fontSize={11} fill={inkSecondary}>
-            Fold {r + 1}: 검증 세트 ={" "}
-            <tspan fontWeight={700} fill={colors.aqua}>
-              {r + 1}
-            </tspan>
+      <line x1={x0 + trainW} y1={topY + barH} x2={x0 + trainW} y2={bottomY} stroke={inkMuted} strokeDasharray="4 4" />
+      <line x1={x0 + total} y1={topY + barH} x2={x0 + total} y2={bottomY} stroke={inkMuted} strokeDasharray="4 4" />
+      <text x={x0 + trainW + (total - trainW) / 2} y={topY + barH + 34} textAnchor="middle" fontSize={11.5} fill={inkSecondary}>
+        다시 반으로 나눈다
+      </text>
+
+      <text x={x0} y={bottomY - 10} fontSize={11.5} fill={inkSecondary}>
+        이 레슨부터: 세 부분
+      </text>
+      {parts.map((p) => (
+        <g key={p.label}>
+          <rect x={p.x} y={bottomY} width={p.w} height={barH} fill={p.color} opacity={0.85} />
+          <text x={p.x + p.w / 2} y={bottomY + barH / 2 + 4} textAnchor="middle" fontSize={12} fontWeight={700} fill="#fff">
+            {p.label}
           </text>
+          <line x1={p.x + p.w / 2} y1={bottomY + barH} x2={p.box.x + p.box.w / 2} y2={boxY} stroke={p.color} strokeWidth={1.4} />
+          <Tag x={p.box.x} y={boxY} w={p.box.w} h={46} lines={[p.role[0], <tspan key="sub" fontWeight={400} fontFamily={p.role[1].includes(".") ? mono : undefined}>{p.role[1]}</tspan>]} color={p.color} tint={0.1} size={11.5} textColor={ink} />
         </g>
       ))}
-      <ArrowDefs />
+      <rect x={x0} y={bottomY} width={total} height={barH} fill="none" stroke={gridline} />
     </DiagramFrame>
   );
 }
@@ -1217,7 +1215,7 @@ export function LeakageScaler() {
   return (
     <DiagramFrame
       title="데이터 누수: 스케일러를 어느 데이터로 fit하는가"
-      caption="위: 전체 데이터로 평균·표준편차를 구한 뒤에 데이터를 나누면 테스트셋의 정보(빨강)가 훈련 과정에 섞여, 운영 환경에서는 재현되지 않는 부풀려진 점수가 나온다. 아래: 먼저 나누고 훈련 부분으로만 fit한 뒤, 그 통계로 테스트를 transform만 한다. 교차검증에서는 fold마다 이 일을 반복해야 하므로 make_pipeline(StandardScaler(), 모델)으로 묶어 cross_val_score에 넘긴다."
+      caption="위: 전체 데이터로 평균·표준편차를 구한 뒤에 나누면 테스트 데이터의 정보(빨강)가 학습 과정에 섞여, 운영 환경에서는 나오지 않는 높은 점수가 나온다. 아래: 먼저 나누고 학습 데이터로만 fit한 뒤, 그 통계로 테스트 데이터를 transform만 한다. make_pipeline(StandardScaler(), 모델)으로 묶으면 이 순서가 자동으로 지켜진다."
       viewBox="0 0 720 262"
       minWidth={560}
     >
@@ -1225,32 +1223,32 @@ export function LeakageScaler() {
       <text x={14} y={24} fontSize={12.5} fontWeight={700} fill={colors.red}>
         ✗ 누수가 생기는 순서
       </text>
-      <Tag x={14} y={36} w={150} h={50} lines={["전체 데이터", "훈련 + 테스트"]} color={inkMuted} tint={0.08} size={12} />
+      <Tag x={14} y={36} w={150} h={50} lines={["전체 데이터", "학습 + 테스트"]} color={inkMuted} tint={0.08} size={12} />
       <Arr x1={166} y1={61} x2={194} y2={61} color={colors.red} marker={`${P}-red`} />
       <Tag x={198} y={36} w={170} h={50} lines={["scaler.fit(전체)", "평균·표준편차에 테스트가 섞임"]} color={colors.red} tint={0.12} size={11.5} />
       <Arr x1={370} y1={61} x2={398} y2={61} color={colors.red} marker={`${P}-red`} />
       <Tag x={402} y={36} w={120} h={50} lines={["그다음 분할", "학습 → 평가"]} color={inkMuted} tint={0.08} size={12} />
       <Arr x1={524} y1={61} x2={552} y2={61} color={colors.red} marker={`${P}-red`} />
-      <Tag x={556} y={36} w={150} h={50} lines={["부풀려진 점수", "운영에서 재현 안 됨"]} color={colors.red} tint={0.18} size={12} />
+      <Tag x={556} y={36} w={150} h={50} lines={["실제보다 높은 점수", "운영에서 재현되지 않음"]} color={colors.red} tint={0.18} size={12} />
 
       <line x1={14} y1={106} x2={706} y2={106} stroke="var(--border-hairline)" />
       <text x={14} y={128} fontSize={12.5} fontWeight={700} fill={colors.green}>
         ✓ 올바른 순서
       </text>
-      <Tag x={14} y={150} w={110} h={86} lines={["먼저 분할", "훈련 / 테스트"]} color={inkMuted} tint={0.08} size={12} />
+      <Tag x={14} y={150} w={110} h={86} lines={["먼저 분할", "학습 / 테스트"]} color={inkMuted} tint={0.08} size={12} />
       <Arr x1={126} y1={170} x2={168} y2={164} color={colors.green} marker={`${P}-green`} />
       <Arr x1={126} y1={216} x2={168} y2={222} color={inkSecondary} marker={`${P}-ink`} />
-      <Tag x={172} y={142} w={170} h={44} lines={["훈련: scaler.fit", "훈련의 평균·표준편차만 기억"]} color={colors.green} tint={0.14} size={11.5} />
-      <Tag x={172} y={200} w={170} h={44} lines={["테스트: transform만", "훈련 통계로 변환"]} color={inkMuted} tint={0.08} size={11.5} />
+      <Tag x={172} y={142} w={170} h={44} lines={["학습 데이터: scaler.fit", "평균·표준편차를 저장"]} color={colors.green} tint={0.14} size={11.5} />
+      <Tag x={172} y={200} w={170} h={44} lines={["테스트: transform만", "학습 데이터 통계로 변환"]} color={inkMuted} tint={0.08} size={11.5} />
       <Arr x1={258} y1={188} x2={258} y2={198} color={colors.green} marker={`${P}-green`} />
       <Arr x1={344} y1={164} x2={386} y2={164} color={colors.green} marker={`${P}-green`} />
       <Arr x1={344} y1={222} x2={386} y2={222} color={inkSecondary} marker={`${P}-ink`} />
-      <Tag x={390} y={142} w={140} h={44} lines={["model.fit", "훈련으로 학습"]} color={colors.violet} tint={0.1} size={12} />
+      <Tag x={390} y={142} w={140} h={44} lines={["model.fit", "학습 데이터로 학습"]} color={colors.violet} tint={0.1} size={12} />
       <Tag x={390} y={200} w={140} h={44} lines={["model.score", "테스트로 한 번 평가"]} color={colors.violet} tint={0.1} size={12} />
       <Arr x1={532} y1={222} x2={552} y2={222} color={colors.green} marker={`${P}-green`} />
       <Tag x={556} y={196} w={150} h={52} lines={["믿을 수 있는 점수", "새 데이터 성능의 추정"]} color={colors.green} tint={0.18} size={12} />
       <text x={460} y={134} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        교차검증: fold마다 반복 → make_pipeline
+        make_pipeline으로 묶으면 이 순서가 지켜진다
       </text>
     </DiagramFrame>
   );
