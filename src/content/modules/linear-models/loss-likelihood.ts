@@ -57,7 +57,7 @@ Ridge는 닫힌 해가 있다. 목적함수 $\lVert y - Xw \rVert^2 + \lambda\lV
 
 $$w^{*}_{\text{ridge}} = (X^\top X + \lambda I)^{-1} X^\top y$$
 
-이다. $\lambda I$를 더하는 것은 수치적으로도 의미가 크다. 특징 두 개가 거의 같으면(다중공선성) $X^\top X$의 고유값 하나가 0에 가까워 역행렬이 불안정하고 계수가 크게 흔들린다. $\lambda I$는 모든 고유값을 $\lambda$만큼 올려 조건수 $\kappa = \frac{\lambda_{\max} + \lambda}{\lambda_{\min} + \lambda}$를 줄인다. [[lesson:gd-convergence]]의 조건수가 여기서는 해가 얼마나 안정한지를 정한다.
+이다. $\lambda I$를 더하는 것은 수치적으로도 의미가 크다. 특성 두 개가 거의 같으면(다중공선성) $X^\top X$의 고유값 하나가 0에 가까워 역행렬이 불안정하고 계수가 크게 흔들린다. $\lambda I$는 모든 고유값을 $\lambda$만큼 올려 조건수 $\kappa = \frac{\lambda_{\max} + \lambda}{\lambda_{\min} + \lambda}$를 줄인다. [[lesson:gd-convergence]]의 조건수가 여기서는 해가 얼마나 안정한지를 정한다.
 
 [[diagram:ridge-collinear]]
 

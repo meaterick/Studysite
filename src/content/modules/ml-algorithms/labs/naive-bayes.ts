@@ -3,23 +3,17 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "KNN 다수결과 나이브 베이즈를 직접 계산하기",
+    title: "나이브 베이즈의 사후확률, 스무딩, 로그 계산",
     prompt: md`
 
-「KNN과 나이브 베이즈」 단계의 두 예제를 라이브러리 없이 구현합니다.
+본문의 계산을 라이브러리 없이 구현합니다.
 
-1. \`knn_predict(X_train, y_train, x, k)\`: 유클리드 거리가 가장 가까운 $k$개의 다수결 클래스를 돌려줍니다(\`np.argsort\`, \`np.bincount\` 활용).
-2. \`naive_bayes(priors, likelihoods)\`: 클래스마다 사전확률과 단어별 조건부확률을 모두 곱한 값을 구한 뒤 합이 1이 되도록 정규화한 사후확률 딕셔너리를 돌려줍니다. 특징이 서로 조건부 독립이라는 "나이브" 가정이 곱셈 한 줄에 들어 있습니다.
+1. \`naive_bayes(priors, likelihoods)\`: 클래스마다 사전확률과 단어별 조건부확률을 모두 곱한 값을 구한 뒤, 합이 1이 되도록 나눈 사후확률 딕셔너리를 돌려줍니다.
+2. \`laplace(count, total, n_values=2, alpha=1.0)\`: 라플라스 스무딩을 적용한 확률 $\dfrac{\text{count} + \alpha}{\text{total} + \alpha \cdot \text{n\_values}}$
+3. \`predict_log(priors, likelihoods)\`: 곱 대신 $\log P(c) + \sum_i \log P(x_i \mid c)$가 가장 큰 클래스를 돌려줍니다. 확률이 수백 개여도 언더플로가 생기지 않아야 합니다.
 `,
     starter: py`
 import numpy as np
-
-def knn_predict(X_train, y_train, x, k=3):
-    X_train, x = np.asarray(X_train, dtype=float), np.asarray(x, dtype=float)
-    dists = np.zeros(len(X_train))   # TODO: x와 모든 훈련 샘플 사이의 유클리드 거리
-    nearest = []                     # TODO: 거리가 가까운 k개의 인덱스
-    votes = np.asarray(y_train)[nearest]
-    return 0                         # TODO: 다수결 (np.bincount(...).argmax())
 
 def naive_bayes(priors, likelihoods):
     """priors: {클래스: P(클래스)}, likelihoods: {클래스: [P(단어1|클래스), P(단어2|클래스), ...]}"""
@@ -29,30 +23,22 @@ def naive_bayes(priors, likelihoods):
     total = sum(scores.values())
     return scores  # TODO: 합이 1이 되도록 나눈 딕셔너리
 
-X_train = [[1, 1], [2, 1], [1, 2], [5, 5], [6, 5], [5, 6]]
-y_train = [0, 0, 0, 1, 1, 1]
-print("KNN(k=3) 예측:", knn_predict(X_train, y_train, [2, 2], k=3))
-print(naive_bayes({"스팸": 0.3, "정상": 0.7}, {"스팸": [0.6, 0.4], "정상": [0.05, 0.02]}))
+def laplace(count, total, n_values=2, alpha=1.0):
+    return count / total  # TODO
+
+def predict_log(priors, likelihoods):
+    best, best_score = None, -np.inf
+    for c in priors:
+        score = 0.0  # TODO: log P(c) + Σ log P(x_i | c)
+        if score > best_score:
+            best, best_score = c, score
+    return best
+
+print(naive_bayes({"스팸": 0.3, "정상": 0.7}, {"스팸": [0.6, 0.4], "정상": [0.05, 0.02]}))   # 기대: 스팸 약 0.990
+print(laplace(0, 70))                                                                      # 기대: 약 0.0139
 `,
     tests: py`
 import numpy as np
-X_train = [[1, 1], [2, 1], [1, 2], [5, 5], [6, 5], [5, 6]]
-y_train = [0, 0, 0, 1, 1, 1]
-
-@test("본문 예제: (2, 2)는 k=3에서 클래스 0")
-def _():
-    assert int(knn_predict(X_train, y_train, [2, 2], k=3)) == 0
-
-@test("(5.5, 5.2)는 클래스 1, k=1이면 가장 가까운 한 점의 클래스")
-def _():
-    assert int(knn_predict(X_train, y_train, [5.5, 5.2], k=3)) == 1
-    assert int(knn_predict([[0, 0], [10, 10]], [3, 7], [9, 9], k=1)) == 7
-
-@test("k를 키우면 먼 이웃까지 투표에 참여한다")
-def _():
-    Xt = [[0, 0], [0, 1], [4, 4], [4, 5], [5, 4]]
-    yt = [0, 0, 1, 1, 1]
-    assert int(knn_predict(Xt, yt, [1, 1], k=1)) == 0 and int(knn_predict(Xt, yt, [1, 1], k=5)) == 1
 
 @test("스팸 예제: P(스팸 | 무료, 당첨) ≈ 0.9904")
 def _():
@@ -64,17 +50,26 @@ def _():
 def _():
     post = naive_bayes({"a": 0.5, "b": 0.25, "c": 0.25}, {"a": [0.1], "b": [0.4], "c": [0.4]})
     assert approx([post["a"], post["b"], post["c"]], [0.2, 0.4, 0.4]), f"결과: {post}"
+
+@test("laplace: 한 번도 없던 단어도 0이 아니다")
+def _():
+    assert approx(laplace(0, 70), 1 / 72) and approx(laplace(5, 10, n_values=3, alpha=0.5), 5.5 / 11.5)
+
+@test("predict_log: 확률 400개를 곱해도 언더플로 없이 고른다")
+def _():
+    priors = {"A": 0.5, "B": 0.5}
+    likes = {"A": [0.01] * 400, "B": [0.02] * 400}
+    assert np.prod(likes["A"]) == 0.0, "이 예제에서는 곱이 0이 되어야 합니다."
+    assert predict_log(priors, likes) == "B"
+    assert predict_log({"스팸": 0.3, "정상": 0.7}, {"스팸": [0.6, 0.4], "정상": [0.05, 0.02]}) == "스팸"
 `,
-    hints: ["거리는 `np.sqrt(((X_train - x) ** 2).sum(axis=1))`로 한 번에 구합니다(브로드캐스팅).", "`nearest = np.argsort(dists)[:k]`, 다수결은 `np.bincount(votes).argmax()`입니다.", "곱은 `prior * np.prod(likelihoods[c])`로 구하고, 마지막에 `{c: s / total for c, s in scores.items()}`로 정규화합니다."],
+    hints: [
+      "곱은 `priors[c] * float(np.prod(likelihoods[c]))`로 구하고, 마지막에 `{c: s / total for c, s in scores.items()}`로 나눕니다.",
+      "`laplace`는 `(count + alpha) / (total + alpha * n_values)`입니다.",
+      "`score = np.log(priors[c]) + np.sum(np.log(likelihoods[c]))`입니다.",
+    ],
     solution: py`
 import numpy as np
-
-def knn_predict(X_train, y_train, x, k=3):
-    X_train, x = np.asarray(X_train, dtype=float), np.asarray(x, dtype=float)
-    dists = np.sqrt(((X_train - x) ** 2).sum(axis=1))
-    nearest = np.argsort(dists)[:k]
-    votes = np.asarray(y_train)[nearest]
-    return int(np.bincount(votes).argmax())
 
 def naive_bayes(priors, likelihoods):
     scores = {}
@@ -83,10 +78,19 @@ def naive_bayes(priors, likelihoods):
     total = sum(scores.values())
     return {c: s / total for c, s in scores.items()}
 
-X_train = [[1, 1], [2, 1], [1, 2], [5, 5], [6, 5], [5, 6]]
-y_train = [0, 0, 0, 1, 1, 1]
-print("KNN(k=3) 예측:", knn_predict(X_train, y_train, [2, 2], k=3))
+def laplace(count, total, n_values=2, alpha=1.0):
+    return (count + alpha) / (total + alpha * n_values)
+
+def predict_log(priors, likelihoods):
+    best, best_score = None, -np.inf
+    for c in priors:
+        score = np.log(priors[c]) + np.sum(np.log(likelihoods[c]))
+        if score > best_score:
+            best, best_score = c, score
+    return best
+
 print(naive_bayes({"스팸": 0.3, "정상": 0.7}, {"스팸": [0.6, 0.4], "정상": [0.05, 0.02]}))
+print(laplace(0, 70))
 `,
   },
 ]);

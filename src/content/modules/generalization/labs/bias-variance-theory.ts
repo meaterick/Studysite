@@ -10,7 +10,7 @@ export default defineExercises([
 
 1. \`ensemble_variance(rho, B, sigma2=1.0)\` $= \rho\sigma^2 + \dfrac{(1-\rho)\sigma^2}{B}$
 2. \`min_norm_fit(X, y)\`: 유사역행렬로 구한 최소제곱 해 $X^{+}y$. $p > n$이면 학습 데이터를 정확히 지나는 해 중 노름이 가장 작은 해입니다.
-3. \`test_mse(p, seed)\`: 본문 설정(샘플 $n=40$, 특징 $d=100$, $\beta \sim \mathcal{N}(0, 1/d)$, 잡음 표준편차 0.1, 테스트 500개)에서 **앞에서부터 $p$개 특징**만 쓴 \`min_norm_fit\`의 테스트 MSE(참값 $X_t\beta$ 기준)를 돌려줍니다. 난수는 \`np.random.default_rng(seed)\` 하나에서 $\beta$, $X$, $X_t$, 잡음 순서로 뽑습니다.
+3. \`test_mse(p, seed)\`: 본문 설정(샘플 $n=40$, 특성 $d=100$, $\beta \sim \mathcal{N}(0, 1/d)$, 잡음 표준편차 0.1, 테스트 500개)에서 **앞에서부터 $p$개 특성**만 쓴 \`min_norm_fit\`의 테스트 MSE(참값 $X_t\beta$ 기준)를 돌려줍니다. 난수는 \`np.random.default_rng(seed)\` 하나에서 $\beta$, $X$, $X_t$, 잡음 순서로 뽑습니다.
 `,
     starter: py`
 import numpy as np
@@ -26,7 +26,7 @@ def test_mse(p, seed, n=40, d=100, sigma=0.1):
     beta = rng.normal(0, 1, d) / np.sqrt(d)
     X, Xt = rng.normal(size=(n, d)), rng.normal(size=(500, d))
     y = X @ beta + rng.normal(0, sigma, n)
-    # TODO: 앞의 p개 특징으로 min_norm_fit 한 뒤, Xt의 앞 p개 특징으로 예측해 Xt @ beta와의 MSE를 돌려줍니다.
+    # TODO: 앞의 p개 특성으로 min_norm_fit 한 뒤, Xt의 앞 p개 특성으로 예측해 Xt @ beta와의 MSE를 돌려줍니다.
     return 0.0
 
 for p in (10, 30, 40, 50, 100):
