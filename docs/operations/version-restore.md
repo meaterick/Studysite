@@ -13,7 +13,7 @@
 
 두 커밋은 main의 기록에 남아 있으므로 언제든 꺼낼 수 있습니다. 원하면 `git tag site-topdown-v2 55064cc && git push origin site-topdown-v2`로 태그를 붙여 둡니다.
 
-지금의 main은 `site-weeks-v1`의 코드에 한 가지만 고친 상태입니다. `src/lib/learningStore.ts`가 자기가 관리하는 종류(section·worksheet·lab_exercise·lab_quiz·meta)의 학습 기록 행만 읽고 지웁니다. 원래 코드는 저장할 때 모르는 종류의 행을 지워서, 재개발 버전에서 쌓인 기록(lesson·exercise·recall)이 사라졌을 것입니다.
+지금의 main은 이전 버전(2959bf7)의 코드에 한 가지만 고친 상태입니다. `src/lib/learningStore.ts`가 자기가 관리하는 종류(section·worksheet·lab_exercise·lab_quiz·meta)의 학습 기록 행만 읽고 지웁니다. 원래 코드는 저장할 때 모르는 종류의 행을 지워서, 재개발 버전에서 쌓인 기록(lesson·exercise·recall)이 사라졌을 것입니다.
 
 ## 재개발 버전으로 돌아가는 방법
 
@@ -21,24 +21,17 @@ main에 병합하면 배포가 자동으로 시작됩니다. 아래 둘 중 하�
 
 **Claude Code에게 맡기기:** "`docs/operations/version-restore.md`대로 재개발 버전(커밋 55064cc)으로 되돌려서 main에 병합해"라고 요청합니다.
 
-**직접 하기:** 되돌린 뒤 main에 다른 변경이 없다면, 되돌림 커밋을 다시 되돌립니다. 되돌림 커밋은 `git log --grep "이전 8주 구성으로 되돌림"`으로 찾습니다.
+**직접 하기:** 재개발 버전(55064cc)의 파일 전체를 그대로 가져와 커밋합니다. 이 문서도 함께 사라지며, 되돌린 뒤 main에 생긴 다른 변경이 있다면 덮어쓰므로 그 변경은 다시 적용해야 합니다.
 
 ```bash
 git fetch origin
 git checkout -b restore-topdown origin/main
-git revert <되돌림 커밋>
+git read-tree -u --reset 55064cc
+git commit -m "재개발 버전(55064cc)으로 복원"
 git push -u origin restore-topdown
 ```
 
-그 뒤 GitHub에서 `restore-topdown` → `main` PR을 만들어 CI 통과를 확인하고 병합합니다.
-
-되돌린 뒤 main에 다른 변경이 생겨 `git revert`가 충돌하면, 재개발 버전의 파일 전체를 그대로 가져옵니다. 이 방법은 그 사이의 다른 변경을 덮어쓰므로, 필요한 변경은 다시 적용해야 합니다.
-
-```bash
-git checkout -b restore-topdown origin/main
-git read-tree -u --reset 55064cc
-git commit -m "재개발 버전(55064cc)으로 복원"
-```
+그 뒤 GitHub에서 `restore-topdown` → `main` PR을 만들어 CI 통과를 확인하고 병합합니다. 복원한 커밋의 파일이 55064cc와 같은지는 `git diff 55064cc HEAD --stat`의 출력이 비어 있는지로 확인합니다.
 
 ## 데이터에 대해 알아 둘 점
 
