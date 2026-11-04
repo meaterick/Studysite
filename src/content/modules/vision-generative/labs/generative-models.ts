@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "순확산 과정과 잡음 예측으로 원본 되찾기",
     prompt: md`
-
 Diffusion 모델의 순방향 과정을 식 그대로 구현합니다.
 
 1. \`alpha_bar(betas)\`: $\bar\alpha_t = \prod_{s \le t} (1 - \beta_s)$ (원본 신호가 남아 있는 비율)

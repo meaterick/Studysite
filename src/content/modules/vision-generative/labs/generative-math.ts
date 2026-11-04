@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "가우시안 KL·재매개변수화·확산의 닫힌 형태",
     prompt: md`
-
-「생성 모델의 수학」 단계의 식들을 구현합니다.
+본문의 식을 구현합니다.
 
 1. \`kl_gauss(mu, log_var)\`: 차원마다 독립인 $\mathcal{N}(\mu, \sigma^2)$와 $\mathcal{N}(0, I)$의 KL을 **모든 차원에 대해 합한** 값. $\log\sigma^2$(\`log_var\`)을 입력으로 받습니다(VAE 구현의 관례).
 2. \`reparam(mu, log_var, eps)\` $= \mu + \sigma\,\varepsilon$, $\sigma = e^{\log\sigma^2/2}$
