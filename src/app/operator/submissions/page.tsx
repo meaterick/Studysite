@@ -2,8 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { listSubmissionSummaries, type SubmissionStatus } from "@/lib/submissionStore";
 import { listUsers } from "@/lib/userStore";
-import { MODULES, moduleOfAssignment } from "@/content/course";
-import { dueDateEnd, getSettings } from "@/lib/settingsStore";
+import { WEEKS } from "@/content/weeks";
 import { listConversationSummaries } from "@/lib/chatStore";
 import { formatDateTime } from "@/lib/datetime";
 import PageHeader from "@/components/PageHeader";
@@ -26,27 +25,26 @@ const STATUS_COLOR: Record<SubmissionStatus, string> = {
 export default async function SubmissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ assignment?: string; status?: string }>;
+  searchParams: Promise<{ week?: string; status?: string }>;
 }) {
   await requireAdmin("/operator/submissions");
-  const { assignment, status } = await searchParams;
+  const { week, status } = await searchParams;
   const users = new Map(listUsers().map((u) => [u.id, u]));
-  const { dueDates } = getSettings();
-  // 새 과정의 과제 제출물만 다룬다(이전 8주 과정의 제출물은 DB에 남아 있지만 화면에 표시하지 않는다).
-  const assignments = MODULES.flatMap((m) => (m.assignment ? [{ module: m, spec: m.assignment }] : []));
-  const all = listSubmissionSummaries().filter((s) => !!moduleOfAssignment(s.assignmentKey));
-  const filtered = all.filter((s) => (!assignment || s.assignmentKey === assignment) && (!status || s.status === status));
+  const all = listSubmissionSummaries();
+  const filtered = all.filter(
+    (s) => (!week || s.weekSlug === week) && (!status || s.status === status)
+  );
   // 채점 대기 → 재제출 요청 → 채점 완료 순, 같은 상태에서는 오래 기다린 것부터
   const order: Record<SubmissionStatus, number> = { submitted: 0, revision: 1, graded: 2 };
   filtered.sort((a, b) => order[a.status] - order[b.status] || a.updatedAt.localeCompare(b.updatedAt));
   const pendingCount = all.filter((s) => s.status === "submitted").length;
   const unansweredThreads = listConversationSummaries().filter((c) => c.unreadForAdmin > 0);
 
-  const filterHref = (next: { assignment?: string; status?: string }) => {
+  const filterHref = (next: { week?: string; status?: string }) => {
     const params = new URLSearchParams();
-    const a = "assignment" in next ? next.assignment : assignment;
+    const w = "week" in next ? next.week : week;
     const st = "status" in next ? next.status : status;
-    if (a) params.set("assignment", a);
+    if (w) params.set("week", w);
     if (st) params.set("status", st);
     const qs = params.toString();
     return `/operator/submissions${qs ? `?${qs}` : ""}`;
@@ -91,9 +89,9 @@ export default async function SubmissionsPage({
       )}
 
       <div className="flex flex-wrap gap-1">
-        <FilterChip href={filterHref({ assignment: undefined })} active={!assignment} label="전체 과제" />
-        {assignments.map(({ module, spec }) => (
-          <FilterChip key={spec.key} href={filterHref({ assignment: spec.key })} active={assignment === spec.key} label={`${module.code} ${spec.title}`} />
+        <FilterChip href={filterHref({ week: undefined })} active={!week} label="전체 주차" />
+        {WEEKS.map((w) => (
+          <FilterChip key={w.slug} href={filterHref({ week: w.slug })} active={week === w.slug} label={`${w.number}주차`} />
         ))}
       </div>
       <div className="mt-1 flex flex-wrap gap-1">
@@ -107,7 +105,7 @@ export default async function SubmissionsPage({
         <table className="data-table">
           <thead>
             <tr>
-              {["상태", "과제", "스터디원", "최근 제출", "버전", "점수", ""].map((h) => (
+              {["상태", "주차", "스터디원", "최근 제출", "버전", "점수", ""].map((h) => (
                 <th key={h}>{h}</th>
               ))}
             </tr>
@@ -121,11 +119,9 @@ export default async function SubmissionsPage({
               </tr>
             )}
             {filtered.map((s) => {
-              const mod = moduleOfAssignment(s.assignmentKey)!;
+              const w = WEEKS.find((x) => x.slug === s.weekSlug);
               const user = users.get(s.userId);
               const grade = s.latestGrade;
-              const due = dueDates[s.assignmentKey];
-              const late = !!due && new Date(s.latestSubmittedAt) > dueDateEnd(due);
               return (
                 <tr key={s.id}>
                   <td>
@@ -134,17 +130,12 @@ export default async function SubmissionsPage({
                       {STATUS_LABEL[s.status]}
                     </span>
                   </td>
-                  <td className="min-w-[12rem] text-ink-secondary">
-                    <span className="font-mono text-xs text-ink-muted">{mod.code}</span> {mod.assignment?.title}
-                  </td>
+                  <td className="whitespace-nowrap text-ink-secondary">{w?.number ?? "?"}주차</td>
                   <td>
                     <span className="font-medium text-ink">{user?.name ?? "(탈퇴한 사용자)"}</span>
                     <span className="block text-xs text-ink-muted">{user?.email}</span>
                   </td>
-                  <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">
-                    {formatDateTime(s.latestSubmittedAt)}
-                    {late && <span className="block text-[var(--status-serious)]">마감 후 제출</span>}
-                  </td>
+                  <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">{formatDateTime(s.latestSubmittedAt)}</td>
                   <td className="tabular-nums text-ink-secondary">v{s.latestVersion}</td>
                   <td className="tabular-nums text-ink-secondary">{grade?.decision === "graded" ? `${grade.score}/${grade.maxScore}` : "-"}</td>
                   <td className="text-right">

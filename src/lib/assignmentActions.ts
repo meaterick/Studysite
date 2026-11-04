@@ -1,11 +1,10 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { moduleOfAssignment } from "@/content/course";
+import { getWeek } from "@/content/weeks";
 import { requireAdmin, requireUser } from "./dal";
 import { getLearningRecord } from "./learningStore";
-import { moduleStatus } from "./study";
-import { assignmentHref } from "./routes";
+import { weekStatus } from "./study";
 import { readDraft, writeDraft } from "./assignmentDraftStore";
 import { applyDraftPatch, mergeDraft, missingRequiredAnswers, sanitizeDraft } from "./notebook";
 import { consumeRate, RATE_LIMIT_MESSAGE, RATE_RULES } from "./rateLimit";
@@ -22,72 +21,71 @@ import {
 } from "./submissionStore";
 
 // 과제 작업 공간·제출·채점 액션. 모든 액션은 브라우저에서 임의로 호출될 수 있으므로
-// 로그인, 과제 열림 여부(lock 모드에서는 모듈의 핵심 레슨 완료), 입력값을 여기서 다시 검증한다.
-// key는 과제 저장 키(AssignmentSource.key)다.
+// 로그인, 과제 열림 여부(핵심 단계 완료), 입력값을 여기서 다시 검증한다.
 
-async function loadAssignmentContext(key: string) {
-  const mod = moduleOfAssignment(key);
-  if (!mod?.assignment) throw new Error("NOT_FOUND");
-  const user = await requireUser(assignmentHref(mod.slug));
-  const status = moduleStatus(mod, getLearningRecord(user.id));
-  if (!status.finaleOpen && user.role !== "admin") throw new Error("LESSONS_NOT_DONE");
-  return { user, spec: mod.assignment };
+async function loadAssignmentContext(slug: string) {
+  const user = await requireUser(`/weeks/${slug}/assignment`);
+  const week = getWeek(slug);
+  if (!week) throw new Error("NOT_FOUND");
+  const status = weekStatus(week, getLearningRecord(user.id));
+  if (!status.finaleOpen && user.role !== "admin") throw new Error("SECTIONS_NOT_DONE");
+  return { user, week };
 }
 
 /** stale: 변경분 저장에서 서버 초안이 기준과 달라 합칠 수 없음(클라이언트가 전체 저장으로 다시 보낸다) */
 export type ActionResult = { ok: true; savedAt?: string } | { ok: false; error: string; stale?: boolean };
 
 /** 초안을 명세 기준으로 정리해 저장한다(전체 저장·변경분 저장 공통). */
-async function persistDraft(userId: string, key: string, spec: Parameters<typeof sanitizeDraft>[0], raw: unknown): Promise<ActionResult> {
+async function persistDraft(userId: string, slug: string, spec: Parameters<typeof sanitizeDraft>[0], raw: unknown): Promise<ActionResult> {
   const clean = sanitizeDraft(spec, raw);
   if (!clean) {
     return { ok: false, error: "작업 내용이 너무 커서 저장하지 못했습니다. 그림이나 출력이 많은 셀을 정리해 주십시오." };
   }
   if (!hasDiskSpaceFor(JSON.stringify(clean).length)) return { ok: false, error: DISK_FULL_MESSAGE };
-  await writeDraft(userId, key, clean);
+  await writeDraft(userId, slug, clean);
   return { ok: true, savedAt: clean.updatedAt };
 }
 
 /** 작업 공간 전체 저장. 클라이언트가 보낸 초안은 명세 기준으로 정리한 뒤 저장한다. */
-export async function saveAssignmentDraft(key: string, draft: unknown): Promise<ActionResult> {
-  const { user, spec } = await loadAssignmentContext(key);
+export async function saveAssignmentDraft(slug: string, draft: unknown): Promise<ActionResult> {
+  const { user, week } = await loadAssignmentContext(slug);
   if (!consumeRate(`draft:${user.id}`, RATE_RULES.draftSave)) return { ok: false, error: RATE_LIMIT_MESSAGE };
-  return persistDraft(user.id, key, spec, draft);
+  return persistDraft(user.id, slug, week.assignment, draft);
 }
 
 /**
  * 작업 공간 자동 저장(변경분). 바뀐 셀만 받아 서버 초안에 합친 뒤 전체 저장과 똑같이 검증해 저장한다.
  * 서버 초안이 변경분의 기준(base)과 다르면(다른 탭에서 저장 등) 합치지 않고 stale을 돌려준다.
  */
-export async function saveAssignmentDraftPatch(key: string, patch: unknown): Promise<ActionResult> {
-  const { user, spec } = await loadAssignmentContext(key);
+export async function saveAssignmentDraftPatch(slug: string, patch: unknown): Promise<ActionResult> {
+  const { user, week } = await loadAssignmentContext(slug);
   if (!consumeRate(`draft:${user.id}`, RATE_RULES.draftSave)) return { ok: false, error: RATE_LIMIT_MESSAGE };
   const { base, tasks } = (patch && typeof patch === "object" ? patch : {}) as { base?: unknown; tasks?: unknown };
-  const stored = readDraft(user.id, key);
+  const stored = readDraft(user.id, slug);
   const merged = stored && typeof base === "string" && stored.updatedAt === base ? applyDraftPatch(stored, tasks) : null;
   if (!merged) return { ok: false, error: "초안을 다시 저장해야 합니다.", stale: true };
-  return persistDraft(user.id, key, spec, merged);
+  return persistDraft(user.id, slug, week.assignment, merged);
 }
 
 /**
  * 과제 제출. 학습자가 보낸 화면 상태가 아니라 서버에 저장된 최신 초안을 제출본으로 삼는다
  * (클라이언트는 제출 직전에 초안을 먼저 저장한다). 메모·링크·첨부 파일은 선택 사항이다.
  */
-export async function submitAssignmentWork(key: string, formData: FormData): Promise<ActionResult> {
-  const { user, spec } = await loadAssignmentContext(key);
+export async function submitAssignmentWork(slug: string, formData: FormData): Promise<ActionResult> {
+  const { user, week } = await loadAssignmentContext(slug);
   if (!consumeRate(`submit:${user.id}`, RATE_RULES.submission)) {
     return { ok: false, error: "제출이 너무 잦습니다. 1분쯤 뒤에 다시 제출해 주십시오." };
   }
-  const existing = findUserSubmission(user.id, key);
+  const existing = findUserSubmission(user.id, slug);
   if (existing && existing.versions.length >= SUBMISSION_LIMITS.versionsMax) {
     return {
       ok: false,
       error: `한 과제는 최대 ${SUBMISSION_LIMITS.versionsMax}번까지 제출할 수 있습니다. 더 제출해야 하면 운영자에게 문의해 주십시오.`,
     };
   }
-  const draft = mergeDraft(spec, readDraft(user.id, key));
+  const draft = mergeDraft(week.assignment, readDraft(user.id, slug));
 
-  const missing = missingRequiredAnswers(spec, draft);
+  const missing = missingRequiredAnswers(week.assignment, draft);
   if (missing.length > 0) {
     const first = missing[0];
     return {
@@ -155,7 +153,7 @@ export async function submitAssignmentWork(key: string, formData: FormData): Pro
   }
   if (!hasDiskSpaceFor(total + JSON.stringify(draft).length)) return { ok: false, error: DISK_FULL_MESSAGE };
 
-  await saveSubmission({ userId: user.id, assignmentKey: key, text, links, files, notebook: draft });
+  await saveSubmission({ userId: user.id, weekSlug: slug, text, links, files, notebook: draft });
   refresh();
   return { ok: true };
 }
@@ -175,14 +173,14 @@ export async function gradeAssignment(submissionId: string, input: GradeInput): 
   const admin = await requireAdmin("/operator/submissions");
   const submission = findSubmission(submissionId);
   if (!submission) return { ok: false, error: "제출물을 찾을 수 없습니다." };
-  const spec = moduleOfAssignment(submission.assignmentKey)?.assignment;
-  if (!spec) return { ok: false, error: "과제 정보를 찾을 수 없습니다." };
+  const week = getWeek(submission.weekSlug);
+  if (!week) return { ok: false, error: "주차 정보를 찾을 수 없습니다." };
 
   const decision = input.decision === "revision" ? "revision" : "graded";
   const feedback = String(input.feedback ?? "").trim().slice(0, FEEDBACK_MAX);
   const criteria: Record<string, number> = {};
   if (decision === "graded") {
-    for (const c of spec.rubric) {
+    for (const c of week.assignment.rubric) {
       const v = input.criteria?.[c.id];
       if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > c.points || Math.round(v * 2) !== v * 2) {
         return { ok: false, error: `"${c.label}" 점수는 0~${c.points}점 사이에서 0.5점 단위로 입력해 주십시오.` };
@@ -193,7 +191,7 @@ export async function gradeAssignment(submissionId: string, input: GradeInput): 
     return { ok: false, error: "재제출을 요청할 때는 보완할 내용을 피드백에 적어 주십시오." };
   }
 
-  const taskIds = new Set(spec.tasks.map((t) => t.id));
+  const taskIds = new Set(week.assignment.tasks.map((t) => t.id));
   const taskComments: Record<string, string> = {};
   for (const [taskId, comment] of Object.entries(input.taskComments ?? {})) {
     const clean = String(comment ?? "").trim().slice(0, TASK_COMMENT_MAX);
@@ -204,7 +202,7 @@ export async function gradeAssignment(submissionId: string, input: GradeInput): 
   await gradeSubmission(submissionId, {
     decision,
     score,
-    maxScore: spec.maxScore,
+    maxScore: week.assignmentMaxScore,
     criteria: decision === "graded" ? criteria : undefined,
     taskComments,
     feedback,

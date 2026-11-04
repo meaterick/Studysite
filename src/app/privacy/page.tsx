@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Aegis AI 스터디 개인정보처리방침",
 };
 
-const UPDATED_AT = "2026년 11월 2일";
+const UPDATED_AT = "2026년 10월 19일";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr className="border-t border-[var(--border-hairline)]">
                   <td className="px-4 py-3">학습 기록</td>
-                  <td className="px-4 py-3">레슨별 확인 문제·출력 예측 응답, 서술형 답안과 자기평가, 코딩 실습 채점 결과, 백지 복습 답안, 레슨 완료 시각</td>
+                  <td className="px-4 py-3">단계별 확인 문제 응답, 서술형 답안과 자기평가, 백지공부 답안, 단계 완료 시각</td>
                   <td className="px-4 py-3">학습 진도 관리, 복습 노트 제공, 스터디 운영</td>
                   <td className="px-4 py-3">회원 탈퇴 시까지</td>
                 </tr>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
                   <td className="px-4 py-3">보안 로그</td>
                   <td className="px-4 py-3">발생 시각, IP 주소(신뢰할 프록시 사용 시), 계정 ID, 요청 경로·메서드·상태, 이벤트 종류·반복 횟수, 탐지 근거와 대응 상태·메모, IP 차단·허용 사유와 만료 시각, SSH 인증 결과·방식·root 여부(계정명·키·로그 원문 제외), 호스트 방화벽의 IP 규칙</td>
                   <td className="px-4 py-3">인증·권한 공격과 과도한 요청 탐지·차단, 운영자 보안 점검</td>
-                  <td className="px-4 py-3">앱 기록 최대 30일·10,000개 묶음. IP 규칙 최대 30일·500개, 차단·허용 변경 이력 최대 30일·3,000건, 탐지 대응 최대 30일·1,000묶음 및 대응 이력 3,000건, 탐지 집계 10분(매시간 정리)·5,000개. 로그인 제한·응답 재사용 방지 최대 5·10분 및 각 5,000개, SSH 수집 파일 최근 15분·200건과 중복 방지 30분·5,000개. nginx 현재 로그 및 최대 7개 회전 파일(일별 또는 10MB 초과 시 회전, 매시간 검사)</td>
+                  <td className="px-4 py-3">앱 기록 최대 30일·10,000개 묶음. IP 규칙 최대 30일·500개, 차단·허용 변경 이력 최대 30일·3,000건, 탐지 대응 최대 30일·1,000묶음 및 대응 이력 3,000건, 탐지 집계 10분(매시간 정리)·5,000개. 로그인 제한·응답 재사용 방지 최대 5·10분 및 각 5,000개, SSH 수집 파일 최근 15분·200건과 중복 방지 30분·5,000개. nginx 현재 로그 및 최대 7개 회전 파일(일별 또는 10MB 초과 시 회전, 매시간 검사). DB 백업에 포함된 기록은 백업 보관 주기에 따라 함께 삭제</td>
                 </tr>
               </tbody>
             </table>
@@ -78,7 +78,7 @@ export default function PrivacyPage() {
 
         <Section title="2. 브라우저에만 저장되는 정보">
           <p>
-            레슨 실습 코드의 편집 내용, 저장하기 전의 서술형·백지 복습 초안, 화면 테마 설정은 이용 편의를 위해
+            학습 자료의 실습 코드 편집 내용, 저장하기 전의 서술형·백지공부 초안, 화면 테마 설정은 이용 편의를 위해
             브라우저에만 저장됩니다. 이 정보는 서버로 전송되지 않으며, 브라우저 데이터 삭제·기기 변경·브라우저
             초기화 시 사라질 수 있습니다.
           </p>
@@ -105,8 +105,9 @@ export default function PrivacyPage() {
           <p>
             이용자는 로그인 후 <Link className="font-semibold text-[var(--accent)] hover:underline" href="/account">내 계정</Link>에서
             자신의 계정 정보를 확인하고 회원 탈퇴를 요청할 수 있습니다. 탈퇴 시 서버에 보관된 계정 정보, 학습 기록,
-            과제(제출물·첨부 파일 포함)는 즉시 삭제됩니다. 서비스는 별도의 데이터베이스 백업 사본을 만들지 않습니다.
-            브라우저에 남은 정보는 각 브라우저의 사이트 데이터 삭제 기능으로 직접 지울 수 있습니다.
+            과제(제출물·첨부 파일 포함)는 즉시 삭제됩니다. 다만 장애 복구를 위해 만들어 두는 데이터베이스 백업에는 최대 6주 동안
+            남아 있다가 자동으로 지워집니다. 브라우저에 남은 정보는 각 브라우저의 사이트 데이터 삭제 기능으로 직접 지울 수
+            있습니다.
           </p>
         </Section>
 

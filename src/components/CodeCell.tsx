@@ -35,8 +35,7 @@ export default function CodeCell({
   const [loaded, setLoaded] = useState(false);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState<RunStatus | null>(null);
-  // 출력: 표준 출력·오류 글자와, matplotlib 그림(PNG base64). 그림은 셀 실행이 끝난 뒤 워커가 모아 보낸다.
-  const [output, setOutput] = useState<{ stream: "stdout" | "stderr" | "image"; text: string }[]>([]);
+  const [output, setOutput] = useState<{ stream: "stdout" | "stderr"; text: string }[]>([]);
   const [errored, setErrored] = useState(false);
   const theme = useEditorTheme();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,12 +94,10 @@ export default function CodeCell({
     });
     setStatus(null);
     setRunning(false);
-    const images = (result.images ?? []).map((png) => ({ stream: "image" as const, text: png }));
     if (!result.ok) {
       setErrored(true);
-      setOutput((prev) => [...prev, ...images, { stream: "stderr", text: result.error ?? "알 수 없는 오류" }]);
+      setOutput((prev) => [...prev, { stream: "stderr", text: result.error ?? "알 수 없는 오류" }]);
     } else {
-      if (images.length > 0) setOutput((prev) => [...prev, ...images]);
       if (result.result !== undefined) {
         setOutput((prev) => [...prev, { stream: "stdout", text: result.result! }]);
       }
@@ -195,16 +192,11 @@ export default function CodeCell({
       {(status || output.length > 0) && (
         <div className="border-t border-[var(--border-hairline)] bg-[var(--surface-card)] px-4 py-3 font-mono text-[12.5px] leading-relaxed">
           {status && <p className="text-ink-muted">{STATUS_LABEL[status]}</p>}
-          {output.map((line, i) =>
-            line.stream === "image" ? (
-              // eslint-disable-next-line @next/next/no-img-element -- 실행 결과로 만든 data: URL 그림이라 next/image로 최적화할 수 없다.
-              <img key={i} src={`data:image/png;base64,${line.text}`} alt={`실행 결과 그림 ${i + 1}`} className="my-2 h-auto max-w-full rounded-lg bg-white" />
-            ) : (
-              <pre key={i} className={`whitespace-pre-wrap break-words ${line.stream === "stderr" ? "text-[var(--status-critical)]" : "text-ink-body"}`}>
-                {line.text}
-              </pre>
-            )
-          )}
+          {output.map((line, i) => (
+            <pre key={i} className={`whitespace-pre-wrap break-words ${line.stream === "stderr" ? "text-[var(--status-critical)]" : "text-ink-body"}`}>
+              {line.text}
+            </pre>
+          ))}
           {errored && output.length === 0 && <p className="text-[var(--status-critical)]">실행 중에 오류가 발생했습니다.</p>}
         </div>
       )}

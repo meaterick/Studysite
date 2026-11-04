@@ -1,9 +1,14 @@
 import { headers } from "next/headers";
 import type { Metadata } from "next";
-// 글꼴은 npm 패키지(pretendard, @fontsource)에서 자체 호스팅한다. next/font/google은 빌드할 때마다 Google Fonts에서
+// 글꼴은 npm 패키지(@fontsource)에서 자체 호스팅한다. next/font/google은 빌드할 때마다 Google Fonts에서
 // CSS·글꼴 파일을 내려받는데, 그 응답 형식에 따라 빌드가 실패한 적이 있어(Turbopack "queries have exactly one entry")
 // 빌드가 외부 서비스에 의존하지 않게 했다. 글꼴 파일과 유니코드 구간 분할은 Google Fonts와 같다.
-// 화면 글꼴: Pretendard(가변 글꼴, 유니코드 구간별로 나뉘어 필요한 글자 파일만 내려받는다).
+import "@fontsource/noto-sans-kr/400.css";
+import "@fontsource/noto-sans-kr/500.css";
+import "@fontsource/noto-sans-kr/700.css";
+import "@fontsource/noto-sans-kr/800.css";
+import "@fontsource/noto-sans-kr/900.css";
+// 화면 글꼴: Pretendard(가변 글꼴, 유니코드 구간별로 나뉘어 필요한 글자 파일만 내려받는다). 메인 화면은 위의 Noto Sans KR을 쓴다.
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
@@ -21,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | Aegis AI 스터디",
   },
   description:
-    "Aegis 동아리의 AI 스터디. 파이썬과 수학 기초에서 시작해 데이터 처리, 머신러닝, 딥러닝, 대규모 언어 모델과 RAG·에이전트까지 레슨, 실습, 확인 문제, 과제로 학습합니다.",
+    "Aegis 동아리의 8주 AI 스터디. 수학 기초부터 LLM 에이전트까지 주차별 학습 자료, 실습, 확인 문제, 과제로 학습합니다.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -38,7 +43,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           nonce={nonce}
           // Avoid a flash of the wrong theme: read the stored preference before paint.
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}`,
+            // data-motion="full": JavaScript가 켜져 있고 "동작 줄이기"가 아닐 때만 메인 화면의 3D 여정 모드를 쓴다(그리기 전에 정해 깜빡임 방지).
+            __html: `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-motion','full');}}catch(e){}`,
           }}
         />
       </head>

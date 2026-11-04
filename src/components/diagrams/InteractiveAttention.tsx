@@ -6,9 +6,9 @@ import { ArrowDefs, Arrow, Box, Label } from "./primitives";
 
 const TOKENS = ["고양이가", "생선을", "맛있게", "먹었다"];
 
-// 토큰 4개짜리 예시의 attention 가중치(각 행의 합=1). "생선을" 행은
-// self-attention 레슨 본문의 숫자 예제(q=[1,1,0,1], dk=4)를 softmax로 계산한 값과 같고,
-// 나머지 행은 Query를 바꾸면 가중치가 달라지는 것을 보이도록 정한 예시 값이다.
+// 토큰 4개짜리 장난감 예시의 attention 가중치(각 행의 합=1). "생선을" 행은
+// 5주차 본문의 숫자 예제(q=[1,1,0,1], dk=4)를 softmax로 계산한 값과 같고,
+// 나머지 행은 "쿼리를 클릭하면 결과가 바뀐다"는 메커니즘을 체감하도록 손으로 정했다.
 const WEIGHTS = [
   [0.62, 0.13, 0.05, 0.2],
   [0.19, 0.51, 0.11, 0.19],
@@ -27,7 +27,7 @@ export default function InteractiveAttention() {
       title="Self-Attention: Query가 Key들과의 유사도로 Value를 가중합"
       viewBox="0 0 620 300"
       interactive
-      caption={`토큰을 선택하면 Query가 바뀐다. 현재 Query는 "${TOKENS[query]}"이다. 화살표가 굵을수록 그 토큰의 가중치가 크다. 실제 Transformer에서는 이 가중치를 softmax(Q·Kᵀ/√dk)로 계산한다.`}
+      caption={`토큰을 클릭해 Query를 바꿔 보십시오. 지금은 "${TOKENS[query]}"이(가) Query다. 화살표가 굵을수록 그 토큰에 더 주목(가중치가 크다)한다는 뜻이다. 실제 Transformer에서는 이 가중치를 softmax(Q·Kᵀ/√dk)로 계산한다.`}
     >
       <ArrowDefs />
       {TOKENS.map((t, i) => (
@@ -41,7 +41,7 @@ export default function InteractiveAttention() {
             fill={i === query ? colors.violet : card2Bg}
             labelColor={i === query ? "#fff" : ink}
           />
-          <Label x={tokX[i]} y={tokY + 56} text={i === query ? "Query (선택해 변경)" : "Key / Value"} color={i === query ? colors.violet : inkSecondary} size={10} />
+          <Label x={tokX[i]} y={tokY + 56} text={i === query ? "Query (클릭해서 변경)" : "Key / Value"} color={i === query ? colors.violet : inkSecondary} size={10} />
         </g>
       ))}
       {TOKENS.map((_, i) => (

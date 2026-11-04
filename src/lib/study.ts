@@ -1,187 +1,176 @@
 import "server-only";
-import type { Lesson, Module } from "@/content/types";
+import type { WeekMeta, WeekSection } from "@/content/types";
 import { TIER_ORDER, type Tier } from "@/content/tiers";
-import { CORE_PATH, MODULES, directPrerequisitesOf, getLesson, itemId } from "@/content/course";
-import { readLessonState, readRecallState, type LearningRecord, type LessonState } from "./learningStore";
+import { getWeekOutline } from "@/content/sections";
+import { readSectionState, readWorksheetState, type LearningRecord, type SectionState } from "./learningStore";
 import { latestGrade, type Submission } from "./submissionStore";
 import { getProgressionMode, type ProgressionMode } from "./settingsStore";
-import { lessonHref, moduleHref, recallHref } from "./routes";
 
-// 진행 규칙을 한곳에 모아 둔다. 페이지(표시), 서버 액션(검증), 운영자 화면(요약)이 같은 함수를 쓰므로
-// "화면에서는 완료인데 서버는 미완료" 같은 불일치가 생기지 않는다.
+// 단계 진행 규칙을 한곳에 모아둔다 — 페이지(표시), 서버 액션(검증), 운영자 화면(요약)이
+// 모두 같은 함수를 쓰므로 "화면에서는 완료인데 서버는 미완료" 같은 불일치가 생기지 않는다.
 //
-// - 레슨 완료: 확인 문제를 모두 맞힌 뒤 "레슨 완료"를 누른다(또는 진단 평가에서 확인 문제를 모두 맞혀 인정).
-//   서술형·출력 예측·코딩 실습은 권장 활동이며 완료 조건에 넣지 않는다.
-// - 모듈 완료: 핵심 레슨을 모두 완료. 보충 레슨은 선택 기록, 심화 레슨은 심화 달성 기록으로 따로 보여 준다.
-// - 진행 방식(운영 설정)
-//   warn(기본): 순서는 안내만 한다. 어떤 레슨이든 열 수 있고, 먼저 볼 레슨이 남아 있으면 경고를 보여 준다.
-//   lock: 모듈 안에서 앞 핵심 레슨을 끝내야 다음 핵심 레슨이 열리고, 핵심 레슨을 모두 끝내야 보충·심화 레슨과
-//         백지 복습·과제가 열린다.
+// 한 단계를 끝내려면 객관식 확인 문제를 전부 맞히면 된다. 주차 학습 완료는 핵심 단계만으로 판단하고,
+// 보충 단계는 선택 기록, 심화 단계는 별도의 심화 달성 기록(src/lib/achievement.ts)으로 보여 준다. 서술형 문항(작성 → 모범답안과 비교 →
+// 자기평가)과 실습은 권장 활동이며 완료 조건에는 넣지 않는다.
+//
+// 진행 방식(운영 설정, settingsStore)
+// - warn(기본): 순서는 안내만 한다. 끝내지 않은 앞 단계가 있어도 다음 단계·백지공부·과제로 갈 수 있고,
+//   화면에 미완료 경고를 보여 준다. 단계는 순서와 상관없이 완료할 수 있다.
+// - lock: 앞 핵심 단계를 끝내야 다음 핵심 단계가 열리고, 핵심 단계를 모두 끝내야 백지공부·과제와 보충·심화 단계가 열린다.
 
-export interface LessonProgress {
+export interface SectionProgress {
   checksDone: number;
   checksTotal: number;
-  /** 자기평가까지 마친 서술형 수 */
-  answersDone: number;
-  answersTotal: number;
-  exercisesPassed: number;
-  exercisesTotal: number;
-  /** 확인 문제를 모두 맞혔는가(완료 버튼을 누를 수 있음) */
+  quizDone: number;
+  quizTotal: number;
   ready: boolean;
   completed: boolean;
-  /** 진단 평가로 인정한 완료인가 */
-  credited: boolean;
 }
 
-export function lessonProgress(lesson: Lesson, state: LessonState, record: LearningRecord): LessonProgress {
-  const checksTotal = lesson.checks.length;
-  const checksDone = lesson.checks.filter((c) => state.checks[c.key]?.correct).length;
-  const answersTotal = lesson.descriptive?.length ?? 0;
-  const answersDone = (lesson.descriptive ?? []).filter((d) => !!state.answers[d.key]?.review).length;
-  const exercisesTotal = lesson.exercises?.length ?? 0;
-  const exercisesPassed = (lesson.exercises ?? []).filter((e) => !!record.exercises[itemId(lesson.id, e.key)]?.passedAt).length;
+export function sectionProgress(section: WeekSection, state: SectionState): SectionProgress {
+  const checksTotal = section.meta.checks.length;
+  const checksDone = section.meta.checks.filter((c) => state.checks[c.id]?.correct).length;
+  const quizTotal = section.meta.quizIds.length;
+  const quizDone = section.meta.quizIds.filter((id) => !!state.answers[id]?.review).length;
+  // 서술형은 선택 사항이라 완료 조건에 넣지 않는다(진행 표시에는 quizDone/quizTotal로 보여 준다).
+  const ready = checksDone === checksTotal;
   return {
     checksDone,
     checksTotal,
-    answersDone,
-    answersTotal,
-    exercisesPassed,
-    exercisesTotal,
-    ready: checksDone === checksTotal,
-    completed: !!state.completedAt || !!state.creditedAt,
-    credited: !state.completedAt && !!state.creditedAt,
+    quizDone,
+    quizTotal,
+    ready,
+    completed: !!state.completedAt,
   };
 }
 
-export function isLessonComplete(record: LearningRecord, lessonId: string): boolean {
-  const state = record.lessons[lessonId];
-  return !!state?.completedAt || !!state?.creditedAt;
-}
-
 /**
- * completed: 완료 / current: 지금 할 차례(모듈에서 끝내지 않은 첫 핵심 레슨) /
+ * completed: 완료 / current: 지금 할 차례(끝내지 않은 첫 핵심 단계) /
  * upcoming: 아직 끝내지 않았지만 열려 있음 / locked: 잠김(lock 모드)
  */
-export type LessonAccess = "completed" | "current" | "upcoming" | "locked";
+export type SectionAccess = "completed" | "current" | "upcoming" | "locked";
 
 export interface TierCount {
   done: number;
   total: number;
 }
 
-export type AssignmentState = "none" | Submission["status"];
-
-export interface ModuleStatus {
-  module: Module;
-  /** 모듈 안 순서(핵심 → 보충 → 심화) */
-  lessons: { lesson: Lesson; access: LessonAccess; progress: LessonProgress }[];
+export interface WeekStatus {
+  /** 본문 순서(핵심 → 보충 → 심화)대로 */
+  sections: { section: WeekSection; access: SectionAccess; progress: SectionProgress }[];
+  /** 핵심·보충·심화별 완료 수. 주차 완료는 핵심만으로 판단한다. */
   tiers: Record<Tier, TierCount>;
-  /** 다음에 학습할 핵심 레슨(핵심을 모두 끝냈으면 undefined) */
-  currentLesson?: Lesson;
-  /** 핵심 레슨을 모두 끝냈는가(= 모듈 완료) */
+  /** 다음에 학습할 핵심 단계 (핵심을 모두 끝냈으면 undefined) */
+  currentSection?: WeekSection;
+  /** 핵심 단계를 모두 끝냈는가(= 주차 학습 완료) */
   coreDone: boolean;
-  /** 백지 복습·과제를 열 수 있는가(lock 모드에서는 핵심 완료 후, warn 모드에서는 항상) */
+  /** 백지공부·과제를 열 수 있는지(lock 모드에서는 핵심 단계 완료 후, warn 모드에서는 항상) */
   finaleOpen: boolean;
   mode: ProgressionMode;
-  recallSubmitted: boolean;
-  assignment?: { key: string; status: AssignmentState; score: number | null; maxScore: number };
-  /** 핵심 레슨 완료 비율 */
+  worksheetSubmitted: boolean;
+  assignment: {
+    status: "none" | Submission["status"];
+    score: number | null;
+    maxScore: number;
+  };
+  /** 학습 자료의 핵심 단계 완료 비율(백지공부·과제 등 적용과 복습 활동은 넣지 않는다) */
   ratio: number;
 }
 
-export function moduleStatus(module: Module, record: LearningRecord, submission?: Submission, mode: ProgressionMode = getProgressionMode()): ModuleStatus {
-  const progressOf = (lesson: Lesson) => lessonProgress(lesson, readLessonState(record, lesson.id), record);
-  const core = module.lessons.filter((l) => l.tier === "core");
-  const coreDone = core.every((l) => progressOf(l).completed);
+// 단계 구분별 규칙
+// - 핵심: 주차 완료 조건. lock 모드에서는 핵심 단계끼리 순서대로 열린다.
+// - 보충·심화: 선택. lock 모드에서는 핵심 단계를 모두 끝내면 한꺼번에 열리고, 그 안에서는 순서를 강제하지 않는다.
+//   warn 모드에서는 언제든 열 수 있다(핵심을 먼저 하라는 안내만 보여 준다).
+export function weekStatus(
+  week: WeekMeta,
+  record: LearningRecord,
+  submission?: Submission,
+  mode: ProgressionMode = getProgressionMode()
+): WeekStatus {
+  const { sections } = getWeekOutline(week);
+  const progressOf = (section: WeekSection) => sectionProgress(section, readSectionState(record, week.slug, section.id));
+  const core = sections.filter((s) => s.tier === "core");
+  const coreDone = core.every((s) => progressOf(s).completed);
   let blocked = false;
-  const rows = module.lessons.map((lesson) => {
-    const progress = progressOf(lesson);
-    let access: LessonAccess;
-    if (lesson.tier !== "core") {
-      access = progress.completed ? "completed" : mode === "lock" && !coreDone ? "locked" : "upcoming";
-    } else if (progress.completed) {
-      access = "completed";
-    } else if (!blocked) {
+  const rows = sections.map((section) => {
+    const progress = progressOf(section);
+    let access: SectionAccess;
+    if (section.tier !== "core") {
+      if (progress.completed) access = "completed";
+      else access = mode === "lock" && !coreDone ? "locked" : "upcoming";
+    } else if (mode === "warn") {
+      // 순서와 상관없이 완료한 단계는 완료로, 끝내지 않은 첫 핵심 단계가 "지금 할 차례"다.
+      if (progress.completed) access = "completed";
+      else if (!blocked) {
+        access = "current";
+        blocked = true;
+      } else access = "upcoming";
+    } else if (progress.completed && !blocked) access = "completed";
+    else if (!blocked) {
       access = "current";
       blocked = true;
-    } else {
-      access = mode === "lock" ? "locked" : "upcoming";
-    }
-    return { lesson, access, progress };
+    } else access = "locked";
+    return { section, access, progress };
   });
   const tiers = Object.fromEntries(
     TIER_ORDER.map((t) => {
-      const inTier = rows.filter((r) => r.lesson.tier === t);
+      const inTier = rows.filter((r) => r.section.tier === t);
       return [t, { done: inTier.filter((r) => r.progress.completed).length, total: inTier.length }];
     })
   ) as Record<Tier, TierCount>;
+  const worksheetSubmitted = !!readWorksheetState(record, week.slug).submittedAt;
   const grade = submission ? latestGrade(submission) : undefined;
+  const assignmentStatus = submission ? submission.status : "none";
   return {
-    module,
-    lessons: rows,
+    sections: rows,
     tiers,
-    currentLesson: rows.find((r) => r.access === "current")?.lesson,
+    currentSection: rows.find((r) => r.access === "current")?.section,
     coreDone,
     finaleOpen: coreDone || mode === "warn",
     mode,
-    recallSubmitted: !!readRecallState(record, module.slug).submittedAt,
-    assignment: module.assignment
-      ? {
-          key: module.assignment.key,
-          status: submission ? submission.status : "none",
-          score: grade?.decision === "graded" ? grade.score : null,
-          maxScore: module.assignment.maxScore,
-        }
-      : undefined,
+    worksheetSubmitted,
+    assignment: {
+      status: assignmentStatus,
+      score: grade?.decision === "graded" ? grade.score : null,
+      maxScore: week.assignmentMaxScore,
+    },
     ratio: tiers.core.total === 0 ? 0 : tiers.core.done / tiers.core.total,
   };
 }
 
-/** 운영자는 콘텐츠 검수를 위해 잠금 없이 모든 레슨을 볼 수 있다. warn 모드에서는 잠긴 레슨이 없다. */
-export function canOpenLesson(status: ModuleStatus, lessonId: string, isAdmin: boolean): boolean {
+/** 운영자는 콘텐츠 검수를 위해 잠금 없이 모든 단계를 볼 수 있다. warn 모드에서는 잠긴 단계가 없다. */
+export function canOpenSection(status: WeekStatus, sectionId: string, isAdmin: boolean): boolean {
   if (isAdmin) return true;
-  const row = status.lessons.find((r) => r.lesson.id === lessonId);
+  const row = status.sections.find((r) => r.section.id === sectionId);
   return !!row && row.access !== "locked";
 }
 
-/** 레슨을 시작하기 전에 마쳐 두면 좋은 직접 선수 레슨 중 아직 끝내지 않은 것 */
-export function unfinishedPrerequisites(record: LearningRecord, lesson: Lesson): Lesson[] {
-  return directPrerequisitesOf(lesson).filter((p) => !isLessonComplete(record, p.id));
-}
-
-/** 모듈의 "이어서 학습" 주소: 지금 할 핵심 레슨, 핵심을 모두 끝냈으면 백지 복습(없으면 모듈 개요) */
-export function moduleContinueHref(status: ModuleStatus): string {
-  if (status.currentLesson) return lessonHref(status.module.slug, status.currentLesson.id);
-  return status.module.recall.length > 0 && !status.recallSubmitted ? recallHref(status.module.slug) : moduleHref(status.module.slug);
-}
-
-export interface CourseProgress {
-  coreDone: number;
-  coreTotal: number;
-  /** 필수 경로에서 아직 끝내지 않은 첫 핵심 레슨 */
-  next?: Lesson;
-  /** 모듈 slug → 핵심 레슨 완료 수 */
-  byModule: Map<string, TierCount>;
-}
-
-export function courseProgress(record: LearningRecord): CourseProgress {
-  const byModule = new Map<string, TierCount>();
-  for (const m of MODULES) {
-    const core = m.lessons.filter((l) => l.tier === "core");
-    byModule.set(m.slug, { done: core.filter((l) => isLessonComplete(record, l.id)).length, total: core.length });
+/**
+ * 미완료 경고용: 이 단계를 보기 전에 끝내 두면 좋은 핵심 단계들.
+ * 핵심 단계는 자기보다 앞의 핵심 단계, 보충·심화 단계는 끝내지 않은 모든 핵심 단계를 돌려준다.
+ */
+export function unfinishedBefore(status: WeekStatus, sectionId: string): WeekSection[] {
+  const target = status.sections.find((r) => r.section.id === sectionId)?.section;
+  if (!target) return [];
+  const out: WeekSection[] = [];
+  for (const row of status.sections) {
+    if (row.section.id === sectionId) break;
+    if (row.section.tier === "core" && row.access !== "completed") out.push(row.section);
   }
-  const done = CORE_PATH.filter((l) => isLessonComplete(record, l.id)).length;
-  return { coreDone: done, coreTotal: CORE_PATH.length, next: CORE_PATH.find((l) => !isLessonComplete(record, l.id)), byModule };
+  return out;
 }
 
-export const ASSIGNMENT_STATUS_LABEL: Record<AssignmentState, string> = {
+export const ASSIGNMENT_STATUS_LABEL: Record<WeekStatus["assignment"]["status"], string> = {
   none: "미제출",
   submitted: "제출됨 · 채점 대기",
   graded: "채점 완료",
   revision: "재제출 요청",
 };
 
-/** 레슨 id 목록을 레슨으로(없는 id는 버린다) */
-export function lessonsByIds(ids: string[]): Lesson[] {
-  return ids.map((id) => getLesson(id)).filter((l): l is Lesson => !!l);
+/**
+ * "학습 자료"로 들어가는 주소: 지금 학습할 차례인 단계, 핵심을 모두 끝냈으면 적용과 복습.
+ * 탭·버튼이 이 주소로 바로 가게 해서, 리다이렉트 페이지를 거치며 빈 화면이 잠깐 보이지 않게 한다.
+ */
+export function continueHref(slug: string, status: WeekStatus): string {
+  return status.currentSection ? `/weeks/${slug}/sections/${status.currentSection.id}` : `/weeks/${slug}/apply`;
 }

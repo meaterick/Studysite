@@ -7,7 +7,10 @@ import HeaderMobileMenu from "./HeaderMobileMenu";
 import NavLink from "./NavLink";
 import { NAV_STYLES } from "./navStyles";
 
-const NAV = [{ href: "/curriculum", label: "커리큘럼" }];
+const NAV = [
+  { href: "/curriculum", label: "커리큘럼" },
+  { href: "/weeks", label: "주차별 자료" },
+];
 // "내 진도"·"피드백함"·"채팅"은 로그인한 사용자에게만 의미가 있어 HeaderAuthSection에서 로그인 시에만 보여 준다.
 
 function AuthSkeleton() {

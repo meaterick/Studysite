@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const LINKS = [
   { href: "/curriculum", label: "커리큘럼" },
+  { href: "/weeks", label: "주차별 자료" },
   { href: "/privacy", label: "개인정보처리방침" },
 ];
 

@@ -1,8 +1,5 @@
-# 로컬 CPython으로 실습·과제를 검사할 때(npm run check:labs) 쓰는 패키지.
-# 학습자 브라우저의 Pyodide(public/pyodide-worker.js의 PYODIDE_VERSION = v0.29.5)와 같은 버전으로 맞춘다.
-# Pyodide 버전을 올리면 https://cdn.jsdelivr.net/pyodide/<버전>/full/pyodide-lock.json에서 버전을 확인해 함께 고친다.
-numpy==2.2.5
-pandas==2.3.3
-scikit-learn==1.7.0
-matplotlib==3.8.4
-scipy==1.14.1
+# Optional local CPython checks (npm run check:labs).
+numpy
+pandas
+scikit-learn
+matplotlib

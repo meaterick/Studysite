@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import CodeBlock from "@/components/CodeBlock";
 import CellOutputs from "@/components/assignment/CellOutputs";
 import { useUserScope } from "@/components/UserScope";
+import TierBadge from "@/components/TierBadge";
+import type { Tier } from "@/content/tiers";
 import { loadCellCode, resetCellCode, saveCellCode } from "@/lib/codeStore";
 import { forceStop, preloadPyodide, resetNamespace, runPython, type RunHandlers, type RunStatus } from "@/lib/pyRunner";
 import { buildGradeProgram, countTodos, parseGradeReport, type LabGradeReport } from "@/lib/labHarness";
@@ -18,17 +20,18 @@ const LabEditor = dynamic(() => import("./LabEditor"), {
 });
 
 export interface ExerciseView {
-  /** 실습 전역 id("레슨id/키" 또는 "과제키/키") */
+  slug: string;
   id: string;
   title: string;
-  /** 제목 위의 작은 표시(예: "실습 1", "심화 문제 2") */
-  label?: string;
+  tier: Tier;
   /** 서버에서 렌더링한 문제 설명 */
   prompt: ReactNode;
   starter: string;
   tests: string;
   /** 서버에서 렌더링한 단계별 힌트 */
   hints: ReactNode[];
+  /** 연결된 단계(단계 실습일 때) */
+  section?: { label: string; title: string; href: string };
   state: { attempts: number; bestPassed: number; hintsUsed: number; passed: boolean };
   /** 잠겨 있으면 그 이유 */
   locked?: string;
@@ -190,12 +193,12 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     setBest((b) => Math.max(b, ok));
     if (solved) setPassed(true);
     try {
-      const r = await recordExerciseGrade(view.id, ok, rep.tests.length || total);
+      const r = await recordExerciseGrade(view.slug, view.id, ok, rep.tests.length || total);
       if (r && !r.ok) setNotice(r.error);
     } catch {
       setNotice("채점 결과를 서버에 기록하지 못했습니다. 결과는 이 화면에서만 보입니다.");
     }
-  }, [busy, execute, total, view.id, view.tests]);
+  }, [busy, execute, total, view.id, view.slug, view.tests]);
 
   const handleStop = () => {
     forceStop();
@@ -216,14 +219,14 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
   const showHint = () => {
     const next = Math.min(hintsShown + 1, view.hints.length);
     setHintsShown(next);
-    recordExerciseHint(view.id, next).catch(() => undefined);
+    recordExerciseHint(view.slug, view.id, next).catch(() => undefined);
   };
 
   const canSeeSolution = passed || (attempts > 0 && hintsShown >= view.hints.length);
   const loadSolution = async () => {
     setSolutionError(null);
     try {
-      const r = await getExerciseSolution(view.id);
+      const r = await getExerciseSolution(view.slug, view.id);
       if (r.ok) setSolution(r.solution);
       else setSolutionError(r.error);
     } catch {
@@ -242,7 +245,14 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          {view.label && <p className="text-xs text-ink-muted">{view.label}</p>}
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+            <TierBadge tier={view.tier} compact />
+            {view.section && (
+              <a href={view.section.href} className="transition hover:text-ink">
+                {view.section.label} · {view.section.title}
+              </a>
+            )}
+          </p>
           <h3 className="mt-2 text-lg font-bold tracking-[-0.03em] text-ink">{view.title}</h3>
         </div>
         <p className={`flex shrink-0 items-center gap-1 text-xs ${passed ? "font-medium text-[var(--status-good)]" : "text-ink-muted"}`} aria-live="polite">
