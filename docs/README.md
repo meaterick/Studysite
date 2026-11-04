@@ -26,7 +26,7 @@
 
 - [배포](operations/deployment.md): GitHub Actions, OCI, Google OAuth, 환경 변수.
 - [데이터와 백업](operations/data-and-backups.md): SQLite, 마이그레이션, 보관, 복구.
-- [사이트 버전 되돌리기 기록](operations/version-restore.md): 트랙·모듈·레슨 재개발 버전(site-topdown-v2)으로 다시 돌아가는 방법과 데이터 주의 사항.
+- [사이트 버전 되돌리기 기록](operations/version-restore.md): 트랙·모듈·레슨 재개발 버전(커밋 55064cc)으로 다시 돌아가는 방법과 데이터 주의 사항.
 - [보안 운영 개요](operations/security.md), [IP 방어](operations/ip-defense.md), [보안 모니터링](operations/security-monitoring.md).
 
 ## 과거 검토·설계 이력

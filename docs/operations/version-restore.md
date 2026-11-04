@@ -6,10 +6,12 @@
 
 ## 버전
 
-| 버전 | 커밋 | 태그 | 내용 |
-| --- | --- | --- | --- |
-| 이전 버전(8주 구성) | `2959bf7` | `site-weeks-v1` | 4부·8주·104단계, 일일 백업 포함. 지금 운영 중인 버전 |
-| 재개발 버전 | `55064cc` | `site-topdown-v2` | 트랙·모듈·레슨 구조, 새 문항·과제·운영자 화면, 백업 기능 없음(PR #66) |
+| 버전 | 커밋 | 내용 |
+| --- | --- | --- |
+| 이전 버전(8주 구성) | `2959bf77b60f0b67b93ca4f9cd00913ddef203d2` | 4부·8주·104단계, 일일 백업 포함. 지금 운영 중인 버전 |
+| 재개발 버전 | `55064cce6b3b6624207206f74c5fd9dab6c70be3` | 트랙·모듈·레슨 구조, 새 문항·과제·운영자 화면, 백업 기능 없음(PR #66의 병합 커밋) |
+
+두 커밋은 main의 기록에 남아 있으므로 언제든 꺼낼 수 있습니다. 원하면 `git tag site-topdown-v2 55064cc && git push origin site-topdown-v2`로 태그를 붙여 둡니다.
 
 지금의 main은 `site-weeks-v1`의 코드에 한 가지만 고친 상태입니다. `src/lib/learningStore.ts`가 자기가 관리하는 종류(section·worksheet·lab_exercise·lab_quiz·meta)의 학습 기록 행만 읽고 지웁니다. 원래 코드는 저장할 때 모르는 종류의 행을 지워서, 재개발 버전에서 쌓인 기록(lesson·exercise·recall)이 사라졌을 것입니다.
 
@@ -17,12 +19,12 @@
 
 main에 병합하면 배포가 자동으로 시작됩니다. 아래 둘 중 하나를 고릅니다.
 
-**Claude Code에게 맡기기:** "`docs/operations/version-restore.md`대로 재개발 버전(site-topdown-v2)으로 되돌려서 main에 병합해"라고 요청합니다.
+**Claude Code에게 맡기기:** "`docs/operations/version-restore.md`대로 재개발 버전(커밋 55064cc)으로 되돌려서 main에 병합해"라고 요청합니다.
 
 **직접 하기:** 되돌린 뒤 main에 다른 변경이 없다면, 되돌림 커밋을 다시 되돌립니다. 되돌림 커밋은 `git log --grep "이전 8주 구성으로 되돌림"`으로 찾습니다.
 
 ```bash
-git fetch origin --tags
+git fetch origin
 git checkout -b restore-topdown origin/main
 git revert <되돌림 커밋>
 git push -u origin restore-topdown
@@ -34,8 +36,8 @@ git push -u origin restore-topdown
 
 ```bash
 git checkout -b restore-topdown origin/main
-git read-tree -u --reset site-topdown-v2
-git commit -m "재개발 버전(site-topdown-v2)으로 복원"
+git read-tree -u --reset 55064cc
+git commit -m "재개발 버전(55064cc)으로 복원"
 ```
 
 ## 데이터에 대해 알아 둘 점
