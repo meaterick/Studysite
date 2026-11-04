@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "Chouldechova 항등식, 보정이 강제하는 균형, 균등화된 오즈를 맞추는 무작위 혼합",
     prompt: md`
-
-「공정성 불가능성 정리」의 세 결과를 함수로 만들고, 보정된 점수 모델(\`sA, yA\`: 기저율 약 0.5, \`sB, yB\`: 약 0.2)에서 확인합니다.
+본문의 세 결과를 함수로 만들고, 보정된 점수 모델(\`sA, yA\`: 기저율 약 0.5, \`sB, yB\`: 약 0.2)에서 확인합니다.
 
 1. \`fpr_from(p, ppv, fnr)\`: Chouldechova 항등식 $\text{FPR} = \frac{p}{1-p}\cdot\frac{1-\text{PPV}}{\text{PPV}}\cdot(1-\text{FNR})$.
 2. \`balance_z(p, x)\`: 점수가 보정되어 있을 때, 기저율 $p$와 양성의 평균 점수 $x$가 강제하는 음성의 평균 점수 $z = \frac{p}{1-p}(1-x)$.

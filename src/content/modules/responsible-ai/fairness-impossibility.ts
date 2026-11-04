@@ -6,9 +6,9 @@ export default defineLesson({
   title: "공정성 불가능성 정리",
   tier: "advanced",
   goal: "Chouldechova 항등식으로 PPV·FNR을 맞추면 기저율이 다른 집단의 FPR이 달라짐을, 보정 아래의 등식 $p(1-x) = (1-p)z$로 보정과 균형이 완벽한 예측에서만 함께 성립함을 증명하고, 무작위 혼합으로 균등화된 오즈를 맞추는 확률과 그 정확도 비용을 계산할 수 있다.",
-  why: "",
+  why: "공정성 기준의 충돌이 특정 예제의 우연인지 항상 일어나는 일인지에 따라, 모델을 개선해 해결할 문제인지 기준을 선택해야 하는 문제인지가 달라진다. 충돌을 증명하고 균등화된 오즈를 맞추는 비용을 계산할 수 있어야 어떤 기준을 택할지와 그 대가를 근거와 함께 설명할 수 있다.",
   body: md`
-핵심 과정의 「공정성은 하나가 아니다」에서는 채용 AI 숫자 예제 하나로 공정성 기준끼리 충돌하는 모습을 봤다. 이 단계는 그 충돌이 특정 예제의 우연이 아니라 **항상** 일어난다는 것을 두 줄짜리 증명 두 개로 보이고, 그래도 균등화된 오즈를 맞춰야 한다면 무엇을 대가로 내야 하는지 계산한다. 기호는 핵심 과정과 같다. 기저율 $p = P(Y=1)$, 정밀도 $\text{PPV} = P(Y=1 \mid \hat Y=1)$, 위음성률 $\text{FNR} = 1 - \text{TPR}$이다.
+[[lesson:fairness]]에서는 채용 AI 숫자 예제 하나로 공정성 기준끼리 충돌하는 것을 확인했다. 이 레슨은 그 충돌이 특정 예제의 우연이 아니라 **항상** 일어난다는 것을 짧은 증명 두 개로 보이고, 그래도 균등화된 오즈를 맞춰야 한다면 무엇을 대가로 내야 하는지 계산한다. 기호는 [[lesson:fairness]]와 같다. 기저율 $p = P(Y=1)$, 정밀도 $\text{PPV} = P(Y=1 \mid \hat Y=1)$, 위음성률 $\text{FNR} = 1 - \text{TPR}$이다.
 
 ### 항등식 하나로 보는 판정 수준의 충돌 (Chouldechova, 2017)
 
@@ -18,13 +18,13 @@ export default defineLesson({
 \text{FPR} = \dfrac{p}{1-p} \cdot \dfrac{1 - \text{PPV}}{\text{PPV}} \cdot (1 - \text{FNR})
 \`\`\`
 
-이 식은 어떤 분류기, 어떤 집단에서나 성립하는 정의상의 등식이다. 이제 두 집단에서 PPV와 FNR을 같게 맞췄다고 하자. 그러면 오른쪽에서 달라질 수 있는 것은 $p/(1-p)$뿐이므로, **기저율이 다르면 FPR이 반드시 다르다.** 예외는 기저율이 같거나, PPV = 1(위양성이 없음)이거나, FNR = 1(아무도 합격시키지 않음)인 경우뿐이다. 핵심 과정의 예제에서 PPV 0.8, FNR 0.2를 맞추면 기저율 0.5인 A 집단의 FPR은 0.2, 기저율 0.2인 B 집단의 FPR은 $\frac{0.2}{0.8} \cdot \frac{0.2}{0.8} \cdot 0.8 = 0.05$로 정해져 버린다.
+이 식은 어떤 분류기, 어떤 집단에서나 성립하는 정의상의 등식이다. 이제 두 집단에서 PPV와 FNR을 같게 맞췄다고 하자. 그러면 오른쪽에서 달라질 수 있는 것은 $p/(1-p)$뿐이므로, **기저율이 다르면 FPR이 반드시 다르다.** 예외는 기저율이 같거나, PPV = 1(위양성이 없음)이거나, FNR = 1(아무도 합격시키지 않음)인 경우뿐이다. [[lesson:fairness]]의 예제에서 PPV 0.8, FNR 0.2를 맞추면 기저율 0.5인 A 집단의 FPR은 0.2, 기저율 0.2인 B 집단의 FPR은 $\frac{0.2}{0.8} \cdot \frac{0.2}{0.8} \cdot 0.8 = 0.05$로 정해진다.
 
 [[diagram:chouldechova-fpr]]
 
 ### 점수 수준의 충돌: 보정과 균형 (Kleinberg et al., 2016)
 
-이번에는 판정이 아니라 점수 $s$를 보자. 점수가 **보정**되어 있다는 것은 $E[Y \mid s] = s$, 즉 점수 0.7을 받은 사람들의 70%가 실제 양성이라는 뜻이다. 양성의 평균 점수를 $x = E[s \mid Y=1]$, 음성의 평균 점수를 $z = E[s \mid Y=0]$이라 하자. 두 집단에서 $x$가 같고 $z$가 같으면 "양성끼리, 음성끼리 점수가 균형 잡혔다"고 한다(오류율 균형의 점수 버전).
+이번에는 판정이 아니라 점수 $s$를 다룬다. 점수가 **보정**되어 있다는 것은 $E[Y \mid s] = s$, 즉 점수 0.7을 받은 사람들의 70%가 실제 양성이라는 뜻이다. 양성의 평균 점수를 $x = E[s \mid Y=1]$, 음성의 평균 점수를 $z = E[s \mid Y=0]$이라 한다. 두 집단에서 $x$가 같고 $z$가 같으면 "양성끼리, 음성끼리 점수가 균형 잡혔다"고 한다(오류율 균형의 점수 버전).
 
 보정으로부터 $E[Y(1-s)] = E[E[Y \mid s](1-s)] = E[s(1-s)]$이고, 마찬가지로 $E[s(1-Y)] = E[s(1-s)]$다. 두 기댓값을 각각 풀어 쓰면 다음 등식을 얻는다.
 
@@ -38,19 +38,19 @@ p\,(1 - x) = E[s(1-s)] = (1 - p)\,z \quad\Rightarrow\quad z = \dfrac{p}{1-p}\,(1
 
 ### 그래도 균등화된 오즈를 맞춰야 한다면: 무작위 혼합 (Hardt et al., 2016)
 
-두 판정 규칙을 확률로 섞을 수 있다고 하자. 확률 $\lambda$로 규칙 1을, $1-\lambda$로 규칙 2를 쓰면 TPR과 FPR도 각각 같은 비율로 섞이므로, 두 규칙의 (FPR, TPR) 점을 잇는 선분 위의 모든 점을 얻을 수 있다. "점수와 무관하게 확률 $f$로 합격"시키는 규칙은 대각선 위의 점 $(f, f)$에 해당한다. 그래서 같은 FPR $f$에서 TPR이 $t_\text{hi}$로 더 높은 집단은, 확률 $\lambda$로 자기 임계값 규칙을 쓰고 $1 - \lambda$로 무작위 합격을 쓰면 TPR을 다른 집단의 $t_\text{lo}$까지 낮출 수 있다.
+두 판정 규칙을 확률로 섞을 수 있다고 가정한다. 확률 $\lambda$로 규칙 1을, $1-\lambda$로 규칙 2를 쓰면 TPR과 FPR도 각각 같은 비율로 섞이므로, 두 규칙의 (FPR, TPR) 점을 잇는 선분 위의 모든 점을 얻을 수 있다. "점수와 무관하게 확률 $f$로 합격"시키는 규칙은 대각선 위의 점 $(f, f)$에 해당한다. 그래서 같은 FPR $f$에서 TPR이 $t_\text{hi}$로 더 높은 집단은, 확률 $\lambda$로 자기 임계값 규칙을 쓰고 $1 - \lambda$로 무작위 합격을 쓰면 TPR을 다른 집단의 $t_\text{lo}$까지 낮출 수 있다.
 
 \`\`\`math
 \lambda\, t_\text{hi} + (1-\lambda) f = t_\text{lo} \quad\Rightarrow\quad \lambda = \dfrac{t_\text{lo} - f}{t_\text{hi} - f}
 \`\`\`
 
-이렇게 하면 두 집단의 FPR과 TPR이 정확히 같아진다. 대가는 분명하다. 더 잘 맞히던 집단의 판정에 일부러 무작위성을 섞어 정확도를 깎는다. 같은 점수를 받은 두 사람이 동전 때문에 다른 판정을 받을 수 있다는 점도 "개인에 대한 공정성" 관점에서 논쟁거리다. 공정성 기준을 고르는 것은 수학이 대신해 줄 수 없는 가치 판단이고, 수학이 해 줄 수 있는 일은 그 선택의 비용을 정확히 계산해 보여 주는 것이다.
+이렇게 하면 두 집단의 FPR과 TPR이 정확히 같아진다. 대가는 더 잘 맞히던 집단의 판정에 일부러 무작위성을 섞어 정확도를 낮추는 것이다. 같은 점수를 받은 두 사람이 무작위 추첨 때문에 다른 판정을 받을 수 있다는 점도 개인에 대한 공정성(individual fairness)의 관점에서 문제가 된다. 공정성 기준을 고르는 것은 수학으로 정할 수 없는 가치 판단이며, 수학은 그 선택의 비용을 정확히 계산하는 데 쓰인다.
 
 [[diagram:randomized-mixing]]
 
 ### 코드로 확인하기
 
-Chouldechova 항등식으로 기저율에 따라 FPR이 어떻게 정해지는지, 그리고 무작위 혼합이 실제로 TPR을 원하는 값으로 낮추는지 시뮬레이션해 보자.
+다음 코드는 Chouldechova 항등식으로 기저율에 따라 FPR이 어떻게 정해지는지 계산하고, 무작위 혼합이 실제로 TPR을 원하는 값으로 낮추는지 시뮬레이션한다.
 
 \`\`\`python
 import numpy as np
@@ -119,7 +119,7 @@ PPV 0.8과 FNR 0.2를 고정하면 FPR은 기저율에 따라 0.2, 0.05, 0.0105�
       question: "기저율이 다른 두 집단에서 점수가 보정되어 있다. 양성의 평균 점수 $x$를 두 집단에서 같게 맞추면 음성의 평균 점수 $z$는?",
       choices: ["두 집단에서 자동으로 같아진다", "$z = \\frac{p}{1-p}(1-x)$이므로 기저율이 높은 집단의 $z$가 더 크다", "두 집단 모두 0이 된다", "기저율이 높은 집단의 $z$가 더 작다"],
       answer: 1,
-      explanation: "보정 아래에서 $p(1-x) = (1-p)z$이므로 $x$가 같으면 $z$는 $\\frac{p}{1-p}$에 비례합니다. 기저율이 높은 집단의 음성들이 더 높은 점수를 받게 되어 음성 쪽 균형이 깨집니다. 두 균형을 모두 지키려면 $x = 1$, $z = 0$(완벽한 예측)이어야 합니다.",
+      explanation: "보정 아래에서 $p(1-x) = (1-p)z$이므로 $x$가 같으면 $z$는 $\\frac{p}{1-p}$에 비례한다. 기저율이 높은 집단의 음성들이 더 높은 점수를 받게 되어 음성 쪽 균형이 깨진다. 두 균형을 모두 지키려면 $x = 1$, $z = 0$(완벽한 예측)이어야 한다.",
     },
   ],
   exercises,
@@ -132,7 +132,7 @@ def fpr_from(p, ppv, fnr):
 print(round(fpr_from(0.5, 0.75, 0.1), 3), round(fpr_from(0.1, 0.75, 0.1), 3))
 `,
       expected: "0.3 0.033",
-      explanation: "두 집단의 PPV(0.75)와 FNR(0.1)을 같게 맞추면, 기저율 0.5인 집단의 FPR은 $1 \\cdot \\frac{1}{3} \\cdot 0.9 = 0.3$, 기저율 0.1인 집단은 $\\frac{1}{9} \\cdot \\frac{1}{3} \\cdot 0.9 \\approx 0.033$으로 9배 차이가 납니다. 기저율의 오즈 비 $\\frac{0.5/0.5}{0.1/0.9} = 9$가 그대로 FPR의 비가 됩니다.",
+      explanation: "두 집단의 PPV(0.75)와 FNR(0.1)을 같게 맞추면, 기저율 0.5인 집단의 FPR은 $1 \\cdot \\frac{1}{3} \\cdot 0.9 = 0.3$, 기저율 0.1인 집단은 $\\frac{1}{9} \\cdot \\frac{1}{3} \\cdot 0.9 \\approx 0.033$으로 9배 차이가 난다. 기저율의 오즈 비 $\\frac{0.5/0.5}{0.1/0.9} = 9$가 그대로 FPR의 비가 된다.",
     },
   ],
   descriptive: [
@@ -142,12 +142,12 @@ print(round(fpr_from(0.5, 0.75, 0.1), 3), round(fpr_from(0.1, 0.75, 0.1), 3))
       answer: md`
 집단 인원을 $N$, 기저율을 $p$라 하면 $\text{TP} = \text{TPR}\cdot pN$, $\text{FP} = \text{FPR}\cdot(1-p)N$이다. $\text{PPV} = \text{TP}/(\text{TP} + \text{FP})$를 FPR에 대해 풀면 $\text{FPR} = \frac{p}{1-p}\cdot\frac{1-\text{PPV}}{\text{PPV}}\cdot\text{TPR}$이고 $\text{TPR} = 1 - \text{FNR}$이다. 이 등식은 어떤 분류기에서나 성립하므로, 두 집단의 PPV와 FNR을 같게 맞추면 남은 $\frac{p}{1-p}$의 차이가 그대로 FPR의 차이가 된다. 예를 들어 PPV 0.8, FNR 0.2에서 기저율 0.5인 집단의 FPR은 0.2, 기저율 0.2인 집단은 0.05가 되어야 한다. 기저율이 같거나 PPV = 1 또는 FNR = 1인 극단적인 경우가 아니면 예측 동등성과 오류율 균형은 함께 성립할 수 없다.
 `,
-      keyPoints: [],
+      keyPoints: ["$\\text{TP} = \\text{TPR} \\cdot pN$, $\\text{FP} = \\text{FPR} \\cdot (1 - p)N$을 PPV의 정의에 넣어 FPR에 대해 푼다", "항등식은 어떤 분류기와 집단에서나 성립한다", "PPV와 FNR을 같게 맞추면 $p/(1 - p)$의 차이가 그대로 FPR의 차이가 된다", "예외는 기저율이 같거나 PPV = 1 또는 FNR = 1인 경우뿐이다"],
     },
   ],
   references: [
-    { title: "Chouldechova (2017) — Fair prediction with disparate impact", url: "https://arxiv.org/abs/1703.00056", note: "PPV·FPR·FNR 사이의 항등식과 재범 예측 사례" },
-    { title: "Kleinberg, Mullainathan & Raghavan (2016) — Inherent Trade-Offs in the Fair Determination of Risk Scores", url: "https://arxiv.org/abs/1609.05807", note: "보정과 양·음성 균형이 함께 성립하는 조건의 증명" },
-    { title: "Hardt, Price & Srebro (2016) — Equality of Opportunity in Supervised Learning", url: "https://arxiv.org/abs/1610.02413", note: "ROC 위의 무작위 혼합으로 균등화된 오즈를 맞추는 후처리" },
+    { title: "Chouldechova (2017) — Fair prediction with disparate impact", url: "https://arxiv.org/abs/1703.00056", note: "PPV, FPR, FNR 사이의 항등식과 재범 예측 사례 (영문)" },
+    { title: "Kleinberg, Mullainathan & Raghavan (2016) — Inherent Trade-Offs in the Fair Determination of Risk Scores", url: "https://arxiv.org/abs/1609.05807", note: "보정과 양성·음성 균형이 함께 성립하는 조건의 증명 (영문)" },
+    { title: "Hardt, Price & Srebro (2016) — Equality of Opportunity in Supervised Learning", url: "https://arxiv.org/abs/1610.02413", note: "ROC 위의 무작위 혼합으로 균등화된 오즈를 맞추는 후처리 (영문)" },
   ],
 });

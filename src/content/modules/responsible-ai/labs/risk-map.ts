@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "FGSM으로 숫자 분류기 속이기와 같은 크기의 무작위 잡음 비교",
     prompt: md`
-
-「AI 위험 지도」 단계에서 다룬 FGSM을 직접 구현합니다. 숫자 3과 8을 구별하는 로지스틱 회귀 \`clf\`(가중치 \`w\`)가 주어져 있습니다.
+본문의 FGSM을 숫자 이미지 분류기에 적용합니다. 숫자 3과 8을 구별하는 로지스틱 회귀 \`clf\`(가중치 \`w\`)가 주어져 있습니다.
 
 1. \`input_grad(X, y)\`: 교차 엔트로피 손실을 **입력** $x$로 미분한 값. 로지스틱 회귀에서는 $\nabla_x J = (p - y)\,w$이고, \`p = clf.predict_proba(X)[:, 1]\`입니다. 결과 모양은 \`X\`와 같습니다.
 2. \`fgsm(X, y, eps)\`: $x' = \mathrm{clip}(x + \varepsilon \cdot \mathrm{sign}(\nabla_x J), 0, 1)$
@@ -105,8 +104,7 @@ for eps in [0.0, 0.05, 0.1, 0.2]:
     key: "ex2",
     title: "집단별 정확도로 평균이 숨긴 격차를 찾고, 재가중으로 줄이기",
     prompt: md`
-
-「AI 위험 지도」 단계에서 설명한 것처럼 다수 집단 A(90%)와 특징–정답 관계가 조금 다른 소수 집단 B(10%)로 모델을 학습합니다.
+본문의 실험처럼 다수 집단 A(90%)와, 특성과 정답의 관계가 조금 다른 소수 집단 B(10%)로 모델을 학습합니다.
 
 1. \`accuracy_by_group(y_true, y_pred, groups)\`: 집단 이름 → 정확도 딕셔너리.
 2. \`group_weights(groups)\`: 집단마다 가중치 합이 같아지도록 표본 가중치를 줍니다. 표본 $i$의 가중치는 $\dfrac{n}{K \cdot n_{g(i)}}$($n$은 전체 표본 수, $K$는 집단 수, $n_{g}$는 집단 크기)이고, 평균은 1입니다.
@@ -123,7 +121,7 @@ def make_group(n, shift):
     yg = (Xg[:, 0] + shift * Xg[:, 1] > 0).astype(int)
     return Xg, yg
 Xa, ya = make_group(1800, 0.0)     # 다수 집단 A (90%)
-Xb, yb = make_group(200, 1.5)      # 소수 집단 B (10%): 특징과 정답의 관계가 조금 다르다
+Xb, yb = make_group(200, 1.5)      # 소수 집단 B (10%): 특성과 정답의 관계가 조금 다르다
 X, y = np.vstack([Xa, Xb]), np.concatenate([ya, yb])
 g = np.array(["A"] * 1800 + ["B"] * 200)
 
@@ -149,7 +147,7 @@ def make_group(n, shift):
     yg = (Xg[:, 0] + shift * Xg[:, 1] > 0).astype(int)
     return Xg, yg
 Xa, ya = make_group(1800, 0.0)     # 다수 집단 A (90%)
-Xb, yb = make_group(200, 1.5)      # 소수 집단 B (10%): 특징과 정답의 관계가 조금 다르다
+Xb, yb = make_group(200, 1.5)      # 소수 집단 B (10%): 특성과 정답의 관계가 조금 다르다
 X, y = np.vstack([Xa, Xb]), np.concatenate([ya, yb])
 g = np.array(["A"] * 1800 + ["B"] * 200)
 
@@ -188,7 +186,7 @@ def make_group(n, shift):
     yg = (Xg[:, 0] + shift * Xg[:, 1] > 0).astype(int)
     return Xg, yg
 Xa, ya = make_group(1800, 0.0)     # 다수 집단 A (90%)
-Xb, yb = make_group(200, 1.5)      # 소수 집단 B (10%): 특징과 정답의 관계가 조금 다르다
+Xb, yb = make_group(200, 1.5)      # 소수 집단 B (10%): 특성과 정답의 관계가 조금 다르다
 X, y = np.vstack([Xa, Xb]), np.concatenate([ya, yb])
 g = np.array(["A"] * 1800 + ["B"] * 200)
 

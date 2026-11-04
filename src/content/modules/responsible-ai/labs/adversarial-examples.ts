@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "softmax 회귀를 FGSM으로 공격하기",
     prompt: md`
-
-「적대적 예제」 단계의 공격을 구현합니다. 모델은 이미 학습된 softmax 회귀 $p = \mathrm{softmax}(XW + b)$입니다.
+본문의 공격을 구현합니다. 모델은 이미 학습된 softmax 회귀 $p = \mathrm{softmax}(XW + b)$입니다.
 
 1. \`input_grad(X, y, W, b)\`: 샘플별 교차 엔트로피의 입력 기울기 $\nabla_X L = (P - Y)W^\top$ (\`Y\`는 원-핫, 결과는 \`X\`와 같은 모양)
 2. \`fgsm(X, y, W, b, eps)\`: $\mathrm{clip}_{[0,1]}(X + \varepsilon\,\mathrm{sign}(\nabla_X L))$

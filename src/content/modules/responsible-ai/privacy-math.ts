@@ -6,9 +6,9 @@ export default defineLesson({
   title: "차등 프라이버시의 수학과 DP-SGD",
   tier: "advanced",
   goal: "삼각부등식으로 라플라스 메커니즘의 $\\varepsilon$ 보장을 증명하고, 후처리 불변성과 합성을 설명하며, 가설 검정 관점에서 멤버십 추론 이득의 상한 $(e^\\varepsilon - 1)/(e^\\varepsilon + 1)$을 유도하고, DP-SGD의 표본별 자르기·잡음이 보장과 비용(큰 배치, 소수 집단)에 미치는 영향을 설명할 수 있다.",
-  why: "",
+  why: "차등 프라이버시로 학습했다는 주장은 $\\varepsilon$ 값을 함께 보고 그 의미를 해석할 수 있어야 검토할 수 있다. 라플라스 메커니즘의 증명, $\\varepsilon$이 멤버십 추론 공격에 주는 상한, DP-SGD의 절차와 대가를 알아야 프라이버시와 정확도 사이에서 학습 설정을 정할 수 있다.",
   body: md`
-보충 과정의 「프라이버시 공학」에서 차등 프라이버시의 정의와 라플라스 메커니즘을 소개했다. 이 단계는 세 가지를 증명하거나 계산한다. 라플라스 메커니즘이 왜 정확히 $\varepsilon$을 보장하는지, $\varepsilon$이라는 숫자가 공격자에게 실제로 무엇을 뜻하는지(멤버십 추론 공격의 성공률 상한), 그리고 신경망 학습 자체를 차등 프라이버시로 만드는 DP-SGD가 어떤 장치로 그 보장을 얻고 무엇을 대가로 치르는지다.
+[[lesson:privacy]]에서 차등 프라이버시의 정의와 라플라스 메커니즘을 소개했다. 이 레슨은 세 가지를 증명하거나 계산한다. 라플라스 메커니즘이 왜 정확히 $\varepsilon$을 보장하는지, $\varepsilon$이라는 숫자가 공격자에게 실제로 무엇을 뜻하는지(멤버십 추론 공격의 성공률 상한), 그리고 신경망 학습 자체를 차등 프라이버시로 만드는 DP-SGD가 어떤 장치로 그 보장을 얻고 무엇을 대가로 치르는지다.
 
 ### 라플라스 메커니즘의 증명
 
@@ -36,7 +36,7 @@ export default defineLesson({
 \max\,(\text{TPR} - \text{FPR}) = \dfrac{e^{\varepsilon} - 1}{e^{\varepsilon} + 1}
 \`\`\`
 
-$\varepsilon = 0.1$이면 0.05로 공격이 거의 동전 던지기 수준이지만, $\varepsilon = 1$이면 0.46, $\varepsilon = 8$이면 0.999로 사실상 아무것도 보장하지 않는다. 실제 DP 학습 연구와 서비스가 $\varepsilon$ = 1~8 정도를 보고하는 경우가 흔하다는 점을 생각하면, "차등 프라이버시로 학습했다"는 말만으로는 충분하지 않고 **$\varepsilon$과 $\delta$의 값**을 함께 봐야 한다. 다만 이것은 최악의 경우에 대한 상한이고, 실제 공격이 이만큼 성공한다는 뜻은 아니다.
+$\varepsilon = 0.1$이면 0.05로 공격이 무작위 추측과 거의 구별되지 않지만, $\varepsilon = 1$이면 0.46, $\varepsilon = 8$이면 0.999로 사실상 아무것도 보장하지 않는다. 실제 DP 학습 연구와 서비스가 $\varepsilon$ = 1~8 정도를 보고하는 경우가 흔하다는 점을 생각하면, "차등 프라이버시로 학습했다"는 말만으로는 충분하지 않고 **$\varepsilon$과 $\delta$의 값**을 함께 봐야 한다. 다만 이것은 최악의 경우에 대한 상한이고, 실제 공격이 이만큼 성공한다는 뜻은 아니다.
 
 [[diagram:mia-advantage]]
 
@@ -82,7 +82,7 @@ print("자른 뒤 길이  :", np.linalg.norm(clipped, axis=1).round(2))
 print("잡음 섞인 평균 기울기:", noisy_mean.round(3))
 \`\`\`
 
-$\varepsilon = \ln 3 \approx 1.10$에서 상한이 정확히 0.5다. 보충 과정의 무작위 응답이 바로 이 경우라, "예/아니오" 답 하나로 공격자가 얻을 수 있는 이득이 최대 0.5다. 라플라스 메커니즘의 밀도 비는 어디서 재든 최대 $e^1 \approx 2.718$을 넘지 않는다. DP-SGD에서는 길이 28짜리 넷째 표본의 기울기가 1로 잘려, 이 한 사람이 평균 기울기를 좌우하지 못한다. 이것이 민감도를 $C$로 제한한다는 말의 뜻이다.
+$\varepsilon = \ln 3 \approx 1.10$에서 상한이 정확히 0.5다. [[lesson:privacy]]의 무작위 응답이 바로 이 경우라, "예/아니오" 답 하나로 공격자가 얻을 수 있는 이득이 최대 0.5다. 라플라스 메커니즘의 밀도 비는 어디서 재든 최대 $e^1 \approx 2.718$을 넘지 않는다. DP-SGD에서는 길이 28짜리 넷째 표본의 기울기가 1로 잘려, 이 한 사람이 평균 기울기를 좌우하지 못한다. 이것이 민감도를 $C$로 제한한다는 말의 뜻이다.
 `,
   checks: [
     {
@@ -125,7 +125,7 @@ $\varepsilon = \ln 3 \approx 1.10$에서 상한이 정확히 0.5다. 보충 과�
       question: "DP-SGD에서 배치 크기를 10명에서 1,000명으로 늘리고 $\\sigma$, $C$는 그대로 두었다. 한 걸음의 기울기에서 잡음이 신호에 비해 어떻게 변하는가?",
       choices: ["그대로다", "약 100배 작아진다: 잡음의 크기 $\\sigma C\\sqrt{d}$를 배치 크기로 나누기 때문이다", "약 10배 커진다", "잡음이 사라진다"],
       answer: 1,
-      explanation: "잡음은 잘라 낸 기울기의 **합**에 한 번 더해지고 배치 크기로 나눠지므로 평균 기울기에 대한 잡음의 크기가 $1/B$로 줄어듭니다. 예를 들어 배치 10명에서 잡음/신호 약 11.4, 1,000명에서 약 0.11입니다. DP 학습에 큰 배치와 많은 데이터가 필요한 이유입니다(대신 배치가 커지면 한 번에 쓰는 프라이버시 예산 계산도 달라집니다).",
+      explanation: "잡음은 잘라 낸 기울기의 **합**에 한 번 더해지고 배치 크기로 나눠지므로 평균 기울기에 대한 잡음의 크기가 $1/B$로 줄어든다. 예를 들어 배치 10명에서 잡음/신호 약 11.4, 1,000명에서 약 0.11이다. DP 학습에 큰 배치와 많은 데이터가 필요한 이유다(대신 배치가 커지면 한 번에 쓰는 프라이버시 예산 계산도 달라진다).",
     },
   ],
   exercises,
@@ -138,7 +138,7 @@ for eps in (0.5, 2.0):
     print(eps, round((exp(eps) - 1) / (exp(eps) + 1), 3))
 `,
       expected: "0.5 0.245\n2.0 0.762",
-      explanation: "$\\varepsilon$-차등 프라이버시는 어떤 멤버십 추론 공격의 이득도 $(e^\\varepsilon - 1)/(e^\\varepsilon + 1)$ 이하로 묶습니다. $\\varepsilon = 0.5$면 0.245로 꽤 강한 보호지만, $\\varepsilon = 2$면 0.762까지 허용합니다. 이 값은 $\\tanh(\\varepsilon/2)$와 같아서 $\\varepsilon$이 커질수록 빠르게 1에 다가갑니다.",
+      explanation: "$\\varepsilon$-차등 프라이버시는 어떤 멤버십 추론 공격의 이득도 $(e^\\varepsilon - 1)/(e^\\varepsilon + 1)$ 이하로 제한한다. $\\varepsilon = 0.5$면 0.245로 강한 보호지만, $\\varepsilon = 2$면 0.762까지 허용한다. 이 값은 $\\tanh(\\varepsilon/2)$와 같아서 $\\varepsilon$이 커질수록 빠르게 1에 가까워진다.",
     },
   ],
   descriptive: [
@@ -148,13 +148,13 @@ for eps in (0.5, 2.0):
       answer: md`
 학습이 $(\varepsilon, \delta)$-차등 프라이버시면 '구성원인가'를 가리는 어떤 검정도 $\text{TPR} \le e^\varepsilon\text{FPR} + \delta$와 $1 - \text{FPR} \le e^\varepsilon(1 - \text{TPR}) + \delta$를 지킨다. 두 부등식이 등호로 만나는 점에서 이득이 가장 크고, $\delta = 0$이면 $\text{FPR} = 1/(e^\varepsilon + 1)$, $\text{TPR} = e^\varepsilon/(e^\varepsilon + 1)$이라 최대 이득은 $(e^\varepsilon - 1)/(e^\varepsilon + 1)$이다. $\varepsilon = 1$이면 약 0.46으로 상당한 공격 여지가 남고, $\varepsilon = 8$이면 0.999로 사실상 아무것도 보장하지 않는다(최악의 경우의 상한이라 실제 공격이 그만큼 성공한다는 뜻은 아니다). DP-SGD는 표본별 기울기를 길이 $C$로 잘라 한 사람의 영향(민감도)을 묶고, 기울기 합에 표준편차 $\sigma C$의 가우스 잡음을 더한 뒤, 여러 걸음의 손실을 회계로 합산해 전체 $\varepsilon$을 얻는다. 잡음 대 신호 비가 $\sigma\sqrt{d}/B$에 비례하므로 큰 배치와 많은 데이터가 필요하고, 소수 집단의 정확도가 더 떨어질 수 있다.
 `,
-      keyPoints: [],
+      keyPoints: ["두 부등식 $\\text{TPR} \\le e^\\varepsilon \\text{FPR} + \\delta$와 $1 - \\text{FPR} \\le e^\\varepsilon(1 - \\text{TPR}) + \\delta$가 공격의 (FPR, TPR)을 제한한다", "$\\delta = 0$일 때 최대 이득은 $(e^\\varepsilon - 1)/(e^\\varepsilon + 1)$이다", "$\\varepsilon = 1$이면 약 0.46, $\\varepsilon = 8$이면 0.999로 거의 보장하지 않는다", "DP-SGD는 표본별 기울기 자르기와 가우스 잡음, 프라이버시 회계로 보장을 얻는다", "대가는 큰 배치와 많은 데이터의 필요, 소수 집단의 정확도 하락이다"],
     },
   ],
   references: [
-    { title: "Abadi et al. (2016) — Deep Learning with Differential Privacy", url: "https://arxiv.org/abs/1607.00133", note: "DP-SGD와 모멘트 회계" },
-    { title: "Shokri et al. (2017) — Membership Inference Attacks against Machine Learning Models", url: "https://arxiv.org/abs/1610.05820", note: "멤버십 추론 공격의 원 논문" },
-    { title: "Yeom et al. (2018) — Privacy Risk in Machine Learning: Analyzing the Connection to Overfitting", url: "https://arxiv.org/abs/1709.01604", note: "과적합과 멤버십 추론, 차등 프라이버시 상한의 관계" },
-    { title: "Bagdasaryan et al. (2019) — Differential Privacy Has Disparate Impact on Model Accuracy", url: "https://arxiv.org/abs/1905.12101", note: "DP 학습이 소수 집단의 정확도를 더 떨어뜨리는 현상" },
+    { title: "Abadi et al. (2016) — Deep Learning with Differential Privacy", url: "https://arxiv.org/abs/1607.00133", note: "DP-SGD와 모멘트 회계 (영문)" },
+    { title: "Shokri et al. (2017) — Membership Inference Attacks against Machine Learning Models", url: "https://arxiv.org/abs/1610.05820", note: "멤버십 추론 공격의 원 논문 (영문)" },
+    { title: "Yeom et al. (2018) — Privacy Risk in Machine Learning: Analyzing the Connection to Overfitting", url: "https://arxiv.org/abs/1709.01604", note: "과적합과 멤버십 추론, 차등 프라이버시 상한의 관계 (영문)" },
+    { title: "Bagdasaryan et al. (2019) — Differential Privacy Has Disparate Impact on Model Accuracy", url: "https://arxiv.org/abs/1905.12101", note: "DP 학습이 소수 집단의 정확도를 더 떨어뜨리는 현상 (영문)" },
   ],
 });

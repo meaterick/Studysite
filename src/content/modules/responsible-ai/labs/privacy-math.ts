@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "멤버십 추론 공격의 이득, ε이 허용하는 상한, DP-SGD의 표본별 자르기",
     prompt: md`
-
-「프라이버시의 수학」의 계산을 직접 구현합니다.
+본문의 계산을 직접 구현합니다.
 
 1. \`max_advantage(eps, delta=0.0)\`: $(\varepsilon, \delta)$-차등 프라이버시 아래에서 멤버십 추론 이득(TPR − FPR)의 최댓값 $\frac{(e^\varepsilon - 1)(1-\delta)}{e^\varepsilon + 1} + \delta$.
 2. \`best_advantage(conf_members, conf_nonmembers)\`: "확신도가 문턱값 이상이면 구성원"이라고 추측하는 공격에서, 모든 관측값을 문턱값 후보로 시도했을 때 가장 큰 TPR − FPR.

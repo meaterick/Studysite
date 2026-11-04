@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "선택률·TPR·FPR·PPV로 세 공정성 기준 점검하기",
     prompt: md`
-
-「공정성은 하나가 아니다」의 채용 AI 숫자 예제를 함수로 확인합니다.
+본문의 채용 AI 숫자 예제를 함수로 확인합니다.
 
 1. \`group_rates(y_true, y_pred)\`: \`{"selection", "tpr", "fpr", "ppv"}\`. 선택률은 $P(\hat{Y}=1)$, TPR은 $P(\hat{Y}=1 \mid Y=1)$, FPR은 $P(\hat{Y}=1 \mid Y=0)$, PPV는 $P(Y=1 \mid \hat{Y}=1)$입니다.
 2. \`fairness_gaps(ra, rb)\`: 두 집단 지표 딕셔너리에서 \`{"dp", "tpr", "fpr", "ppv"}\` 격차(절댓값). \`dp\`는 선택률 격차입니다.

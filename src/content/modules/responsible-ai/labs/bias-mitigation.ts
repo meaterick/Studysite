@@ -5,12 +5,11 @@ export default defineExercises([
     key: "ex1",
     title: "재가중으로 집단과 정답의 연관 끊기, 대리 변수 찾기",
     prompt: md`
-
-「편향 완화」의 전처리를 직접 구현합니다. \`g\`는 표본마다의 집단(\`"A"\`/\`"B"\`), \`y\`는 정답(0/1)입니다.
+본문의 전처리(재가중)와 대리 변수 점검을 직접 구현합니다. \`g\`는 표본마다의 집단(\`"A"\`/\`"B"\`), \`y\`는 정답(0/1)입니다.
 
 1. \`kc_weights(g, y)\`: Kamiran–Calders 재가중. 집단 $g$, 정답 $y$인 표본의 가중치는 $P(G=g)P(Y=y)/P(G=g, Y=y)$입니다. 표본마다 가중치를 담은 배열을 돌려줍니다.
 2. \`weighted_rate(y, w, mask)\`: \`mask\`에 해당하는 표본들의 가중 양성 비율 $\sum w_i y_i / \sum w_i$.
-3. \`proxy_strength(feature, g)\`: 특징 하나로 집단을 얼마나 잘 알아낼 수 있는지. 특징과 "A 집단 여부"(1/0) 사이의 상관계수의 절댓값을 돌려줍니다. 1에 가까울수록 강한 대리 변수입니다.
+3. \`proxy_strength(feature, g)\`: 특성 하나로 집단을 얼마나 잘 알아낼 수 있는지. 특성과 "A 집단 여부"(1/0) 사이의 상관계수의 절댓값을 돌려줍니다. 1에 가까울수록 강한 대리 변수입니다.
 `,
     starter: py`
 import numpy as np
@@ -56,7 +55,7 @@ def _():
     for k in "ABC":
         assert approx(weighted_rate(y3, w3, g3 == k), y3.mean(), 1e-9), (k, weighted_rate(y3, w3, g3 == k), y3.mean())
 
-@test("대리 변수 찾기: 집단과 강하게 상관된 특징은 크게, 무관한 특징은 작게")
+@test("대리 변수 찾기: 집단과 강하게 상관된 특성은 크게, 무관한 특성은 작게")
 def _():
     rng = np.random.default_rng(0)
     grp = rng.choice(["A", "B"], size=2000)
@@ -64,7 +63,7 @@ def _():
     noise = rng.normal(size=2000)
     assert proxy_strength(zipcode, grp) > 0.8 and proxy_strength(noise, grp) < 0.1, (proxy_strength(zipcode, grp), proxy_strength(noise, grp))
 `,
-    hints: ["집단 값 `gv`와 정답 값 `yv`의 모든 조합에 대해 `m = (g == gv) & (y == yv)`를 만들고 `w[m] = np.mean(g == gv) * np.mean(y == yv) / np.mean(m)`. 조합이 하나도 없으면 건너뜁니다.", "`weighted_rate`는 `np.sum(w[mask] * y[mask]) / np.sum(w[mask])`. 가중치를 적용한 데이터에서는 $P_w(Y=1 \\mid G=g) = P(Y=1)$이 되어 집단과 정답이 독립이 됩니다.", "`abs(np.corrcoef(feature, (g == \"A\").astype(float))[0, 1])`. 보호 속성 열을 지워도 이 값이 큰 특징이 남아 있으면 모델이 집단을 다시 알아낼 수 있습니다."],
+    hints: ["집단 값 `gv`와 정답 값 `yv`의 모든 조합에 대해 `m = (g == gv) & (y == yv)`를 만들고 `w[m] = np.mean(g == gv) * np.mean(y == yv) / np.mean(m)`. 조합이 하나도 없으면 건너뜁니다.", "`weighted_rate`는 `np.sum(w[mask] * y[mask]) / np.sum(w[mask])`. 가중치를 적용한 데이터에서는 $P_w(Y=1 \\mid G=g) = P(Y=1)$이 되어 집단과 정답이 독립이 됩니다.", "`abs(np.corrcoef(feature, (g == \"A\").astype(float))[0, 1])`. 보호 속성 열을 지워도 이 값이 큰 특성이 남아 있으면 모델이 집단을 다시 알아낼 수 있습니다."],
     solution: py`
 import numpy as np
 
@@ -96,8 +95,7 @@ print(weighted_rate(y, w, g == "A"), weighted_rate(y, w, g == "B"))
     key: "ex2",
     title: "보정된 점수에서 세 가지 임계값 정책 비교하기",
     prompt: md`
-
-「편향 완화」의 후처리(집단별 임계값)를 직접 해 봅니다. 「공정성은 하나가 아니다」 단계에서처럼, 점수 $s$를 받은 사람이 정확히 확률 $s$로 우수 인재인 **보정된** 모델을 기저율이 다른 두 집단(약 50% vs 20%)에 적용합니다.
+본문의 후처리(집단별 임계값)를 직접 적용합니다. [[lesson:fairness]]에서처럼, 점수 $s$를 받은 사람이 정확히 확률 $s$로 우수 인재인 **보정된** 모델을 기저율이 다른 두 집단(약 50% vs 20%)에 적용합니다.
 
 1. \`rates(s, y, t)\`: 임계값 \`t\` 이상을 합격 추천했을 때의 \`{"sel", "tpr", "fpr", "ppv"}\`.
 2. \`threshold_for_rate(s, rate)\`: 점수가 임계값 이상인 비율이 \`rate\`가 되는 임계값(분위수).
