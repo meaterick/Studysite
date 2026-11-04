@@ -1,51 +1,44 @@
 import { Fragment } from "react";
 import DiagramFrame, { colors, ink, inkSecondary, inkMuted, card2Bg } from "./DiagramFrame";
-import { ArrowDefs, Arrow, Box } from "./primitives";
+import { Box } from "./primitives";
 import { Axes, Markers, Arr, ArrPath, Lines, Tag, linear, log10Scale, linePath, sample, seeded, gaussian, mono } from "./chart";
 
 export function NistFramework() {
+  const P = "nist";
   const cx = 280;
-  const cy = 150;
-  const r = 100;
-  const steps = [
-    { angle: -90, label: "GOVERN", sub: "조직 문화·책임" },
-    { angle: 0, label: "MAP", sub: "맥락·위험 식별" },
-    { angle: 90, label: "MEASURE", sub: "측정" },
-    { angle: 180, label: "MANAGE", sub: "대응" },
+  const cy = 158;
+  const r = 118;
+  const cycle = [
+    { angle: -90, label: "MAP", sub: "사용 맥락 · 피해 대상" },
+    { angle: 30, label: "MEASURE", sub: "지표로 측정 · 검증" },
+    { angle: 150, label: "MANAGE", sub: "대응 · 남은 위험 기록" },
   ];
-  const pos = (a: number) => {
-    const rad = (a * Math.PI) / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  const pos = (a: number) => ({ x: cx + r * Math.cos((a * Math.PI) / 180), y: cy + r * Math.sin((a * Math.PI) / 180) });
+  const arc = (a1: number, a2: number) => {
+    const p1 = pos(a1);
+    const p2 = pos(a2);
+    return `M${p1.x.toFixed(1)},${p1.y.toFixed(1)} A${r},${r} 0 0 1 ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
   };
+  const gov = { x: cx, y: 140 };
   return (
     <DiagramFrame
-      title="NIST AI 위험관리 프레임워크(RMF) 4단계"
+      title="NIST AI RMF의 네 기능: GOVERN은 나머지 셋 전체에 적용된다"
       viewBox="0 0 560 300"
-      caption="네 단계를 한 번만 도는 것이 아니라 지속적으로 순환한다. 새 위험이 발견되면 다시 MAP로 돌아간다."
+      caption="GOVERN은 위험 관리의 원칙, 책임자, 절차를 정하며 나머지 세 기능 전체에 적용된다(점선). MAP, MEASURE, MANAGE는 보통 이 순서로 진행하지만 한 번으로 끝나지 않는다(주황 화살표). 측정에서 예상하지 못한 위험이 드러나면 MAP으로 돌아가 사용 맥락과 피해 대상을 다시 정리한다."
     >
-      <ArrowDefs />
-      {steps.map((s, i) => {
+      <Markers prefix={P} colors={{ o: colors.orange }} />
+      {cycle.map((s) => {
         const p = pos(s.angle);
-        return <Box key={i} x={p.x - 60} y={p.y - 28} w={120} h={56} label={s.label} sub={s.sub} fill={i === 0 ? colors.violet : card2Bg} labelColor={i === 0 ? "#fff" : ink} subColor={i === 0 ? "#eee" : inkSecondary} />;
+        return <line key={s.label} x1={gov.x} y1={gov.y} x2={p.x} y2={p.y} stroke={colors.violet} strokeWidth={1.4} strokeDasharray="4 4" />;
       })}
-      {steps.map((s, i) => {
-        const a = pos(s.angle);
-        const b = pos(steps[(i + 1) % steps.length].angle);
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const len = Math.hypot(dx, dy);
-        const ux = dx / len;
-        const uy = dy / len;
-        return (
-          <Arrow
-            key={i}
-            x1={a.x + ux * 64}
-            y1={a.y + uy * 30}
-            x2={b.x - ux * 64}
-            y2={b.y - uy * 30}
-            color={colors.orange}
-          />
-        );
+      {cycle.map((s, i) => {
+        const next = cycle[(i + 1) % cycle.length].angle;
+        return <ArrPath key={s.label} d={arc(s.angle + 36, (next < s.angle ? next + 360 : next) - 36)} color={colors.orange} marker={`${P}-o`} width={2} />;
+      })}
+      <Box x={gov.x - 66} y={gov.y - 28} w={132} h={56} label="GOVERN" sub="원칙 · 책임 · 절차" fill={colors.violet} labelColor="#fff" subColor="#eee" />
+      {cycle.map((s) => {
+        const p = pos(s.angle);
+        return <Box key={s.label} x={p.x - 64} y={p.y - 27} w={128} h={54} label={s.label} sub={s.sub} />;
       })}
     </DiagramFrame>
   );
@@ -53,27 +46,38 @@ export function NistFramework() {
 
 export function CapstoneTimeline() {
   const stages = [
-    { d: "D-7", label: "주제·계획서 제출" },
-    { d: "D-5", label: "중간 체크 (15분)" },
-    { d: "D-2", label: "코드·리포트 초안" },
-    { d: "D-day", label: "발표 10분 + Q&A 5분" },
+    { when: "트랙 4를 마친 뒤", label: "주제 초안", sub: ["유형 · 문제 · 가설", "성공 기준 · 데이터"] },
+    { when: "트랙 5를 마친 뒤", label: "데이터와 기준 모델", sub: ["분할 고정", "기준 모델 점수(여러 시드)"] },
+    { when: "트랙 6을 마친 뒤", label: "평가와 위험 점검", sub: ["같은 조건에서 비교", "위험 점검표 · 모델카드 초안"] },
+    { when: "캡스톤 모듈", label: "제출과 발표", sub: ["초기화 후 전체 실행", "발표 10분 + 질의응답 5분"] },
   ];
-  const y = 70;
+  const y = 64;
+  const x0 = 86;
+  const x1 = 554;
   return (
-    <DiagramFrame title="캡스톤 일정" viewBox="0 0 640 160" caption="발표는 문제 3분 · 방법 3분 · 결과 3분 · 한계·교훈 1분 구성을 권장한다.">
-      <ArrowDefs />
-      <line x1={30} y1={y + 20} x2={610} y2={y + 20} stroke="var(--border-hairline)" strokeWidth={2} />
+    <DiagramFrame
+      title="캡스톤은 트랙을 마칠 때마다 한 단계씩 준비한다"
+      viewBox="0 0 640 170"
+      caption="네 단계의 실제 날짜는 기수 일정에서 정하며, 진도 화면의 이번 주 일정에 표시된다. 기준 모델의 점수를 앞 단계에서 재 두어야 성공 기준의 목표값이 현실적인지 확인하고, 제안 방법을 같은 분할과 시드로 비교할 수 있다."
+    >
+      <line x1={x0} y1={y} x2={x1} y2={y} stroke="var(--border-strong)" strokeWidth={2} />
       {stages.map((s, i) => {
-        const x = 30 + i * ((610 - 30) / (stages.length - 1));
+        const x = x0 + i * ((x1 - x0) / (stages.length - 1));
+        const last = i === stages.length - 1;
         return (
-          <g key={i}>
-            <circle cx={x} cy={y + 20} r={7} fill={colors.blue} />
-            <text x={x} y={y - 4} textAnchor="middle" fontSize={12} fontWeight={700} fill={ink}>
-              {s.d}
+          <g key={s.label}>
+            <text x={x} y={y - 18} textAnchor="middle" fontSize={11} fill={inkSecondary}>
+              {s.when}
             </text>
-            <text x={x} y={y + 46} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+            <circle cx={x} cy={y} r={7} fill={last ? colors.violet : colors.blue} />
+            <text x={x} y={y + 28} textAnchor="middle" fontSize={12.5} fontWeight={800} fill={ink}>
               {s.label}
             </text>
+            {s.sub.map((line, k) => (
+              <text key={line} x={x} y={y + 48 + k * 16} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+                {line}
+              </text>
+            ))}
           </g>
         );
       })}
@@ -194,7 +198,7 @@ export function DeployStrategies() {
   );
 }
 
-// ───────────────────────── 8주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 책임 있는 AI 그림 ─────────────────────────
 
 const chip8 = (x: number, y: number, text: string, color: string, w = 64, h = 24, tint = 0.14, size = 11, weight = 700) => (
   <g key={`${x}-${y}-${text}`}>
@@ -306,7 +310,7 @@ export function SubgroupBoundary() {
       {panel(24, maj, (a, b) => a + b > 0, colors.blue, "다수 집단 (900명)", "정확도 96.2%", [1, 1])}
       {panel(224, min, (a, b) => a - b > 0, colors.orange, "소수 집단 (100명)", "정확도 61.0%", [1, -1])}
       <Lines x={420} y={44} lines={["전체 정확도 92.7%"]} size={14} anchor="start" color={ink} weight={800} />
-      <Lines x={420} y={70} lines={["평균만 보면 훌륭한 모델이지만", "소수 집단은 동전 던지기(50%)를", "조금 넘는 수준이다."]} size={11} anchor="start" />
+      <Lines x={420} y={70} lines={["평균만 보면 좋은 모델이지만", "소수 집단에서는 무작위로 답하는", "수준(50%)을 조금 넘는다."]} size={11} anchor="start" />
       <line x1={420} y1={128} x2={440} y2={128} stroke={ink} strokeWidth={2.2} />
       <text x={446} y={132} fontSize={10.5} fill={inkSecondary}>
         학습된 경계 (평균 손실 최소화)
@@ -349,7 +353,7 @@ export function GenderShades() {
   return (
     <DiagramFrame
       title="Gender Shades: 같은 시스템이라도 집단별 오류율이 다르다"
-      caption="Buolamwini와 Gebru(2018)가 상용 얼굴 성별 분류 시스템 세 개를 피부색과 성별의 교차 집단별로 평가한 결과(논문 표 4의 오류율)를 다시 그렸다. 세 시스템 모두 밝은 피부 남성에서는 오류율이 1% 미만이지만, 어두운 피부 여성에서는 21~35%까지 치솟는다. 전체 정확도 하나로는 보이지 않던 격차가 집단별로 나눠 보자 드러났다."
+      caption="Buolamwini와 Gebru(2018)가 상용 얼굴 성별 분류 시스템 세 개를 피부색과 성별의 교차 집단별로 평가한 결과(논문 표 4의 오류율)를 다시 그렸다. 세 시스템 모두 밝은 피부 남성에서는 오류율이 1% 미만이지만, 어두운 피부 여성에서는 20.8~34.7%다. 전체 정확도 하나로는 보이지 않던 격차가 집단별로 나눠 평가하자 드러났다."
       viewBox="0 0 720 236"
       minWidth={560}
     >
@@ -682,72 +686,58 @@ export function EuAiActPyramid() {
 }
 
 export function ModelCardLabel() {
-  // 본문 코드의 model_card 딕셔너리를 식품 영양성분표처럼 그렸다.
+  // 본문 표의 이력서 스크리닝 모델(예시)을 모델카드 한 장으로 그렸다.
   const P = "mcl";
-  const rows: { k: string; v: string[]; strong?: boolean }[] = [
-    { k: "모델명", v: ["이력서 스크리닝 모델 (예시)"], strong: true },
-    { k: "의도된 용도", v: ["채용 담당자의 1차 서류 검토를 돕는 참고 자료"] },
-    { k: "비의도 용도", v: ["최종 합격/불합격 자동 결정", "성별·출신 학교 추정에 사용"] },
-    { k: "학습 데이터", v: ["과거 10년치 채용 이력서 10,000건", "알려진 불균형: 합격자 다수가 남성"] },
-    { k: "집단별 성능", v: ["A 집단: TPR 0.80 · FPR 0.20", "B 집단: TPR 0.80 · FPR 0.20"] },
-    { k: "한계", v: ["과거 데이터의 편향을 그대로 학습할 위험", "새로운 직무 유형에는 일반화가 어려움"] },
+  const rows: { k: string; v: string[]; q: string }[] = [
+    { k: "의도된 용도", v: ["채용 담당자의 1차 서류 검토를 돕는 참고 점수"], q: "어디에 써도 되는가" },
+    { k: "의도하지 않은 용도", v: ["합격·불합격의 자동 결정", "성별이나 출신 학교 추정"], q: "어디에 쓰면 안 되는가" },
+    { k: "데이터 출처", v: ["과거 10년의 채용 이력서 10,000건", "알려진 불균형: 합격자의 다수가 남성"], q: "무엇으로 학습했는가" },
+    { k: "집단별 성능", v: ["남성(6,200명): TPR 0.82 · FPR 0.18", "여성(3,800명): TPR 0.71 · FPR 0.12"], q: "누구에게서 더 많이 틀리는가" },
+    { k: "한계", v: ["과거 채용 결정의 편향을 학습했을 수 있음", "새 직무 유형은 평가하지 않음"], q: "무엇을 확인하지 않았는가" },
+    { k: "윤리적 고려 사항", v: ["점수만으로 탈락시키지 않고 담당자가 검토", "지원자에게 AI 사용 사실을 알림"], q: "누가 영향을 받는가" },
   ];
-  let y = 54;
+  let y = 60;
   const placed = rows.map((r) => {
     const top = y;
     y += 12 + r.v.length * 15;
-    return { ...r, top };
+    return { ...r, top, mid: top + 4 + (r.v.length * 15) / 2 };
   });
-  const mid = (k: string) => {
-    const r = placed.find((row) => row.k === k)!;
-    return r.top + 4 + (r.v.length * 15) / 2;
-  };
-  const analog = [
-    { food: "원재료", model: "학습 데이터", ty: mid("학습 데이터") },
-    { food: "영양 성분", model: "집단별 성능", ty: mid("집단별 성능") },
-    { food: "알레르기 주의", model: "비의도 용도 · 한계", ty: mid("한계") },
-  ];
   return (
     <DiagramFrame
-      title="모델카드: 모델의 영양성분표"
-      caption="본문 코드의 model_card 딕셔너리를 식품 포장의 영양성분표처럼 그렸다. 무엇으로 만들었는지(학습 데이터), 어떤 성분이 얼마나 들었는지(집단별 성능), 누가 피해야 하는지(비의도 용도와 한계)를 만든 사람이 스스로 밝힌다. 영양성분표가 식품을 건강하게 만들지 않듯 모델카드가 결함을 없애지는 않지만, 다음 사용자가 위험을 미리 알고 고를 수 있게 해 준다."
-      viewBox="0 0 720 300"
+      title="모델카드의 여섯 항목: 이력서 스크리닝 모델(예시)"
+      caption="본문 표의 예시를 모델카드 한 장으로 그렸다. 오른쪽은 모델을 가져다 쓰는 사람이 각 항목에서 확인하는 질문이다. 집단별 성능 항목에서는 전체 정확도에 가려진 격차(여성 지원자의 TPR이 0.11 낮다)가 표본 수와 함께 드러난다. 모델카드가 이 격차를 없애지는 않지만, 사용자가 담당자 검토를 거치는 용도로만 쓸지 판단할 근거가 된다."
+      viewBox="0 0 720 310"
       minWidth={580}
     >
       <Markers prefix={P} colors={{ ink: inkMuted }} />
-      <rect x={14} y={8} width={380} height={y + 6} rx={4} fill="var(--surface-card)" stroke={ink} strokeWidth={2} />
-      <text x={26} y={36} fontSize={22} fontWeight={900} fill={ink}>
+      <rect x={14} y={8} width={420} height={y - 2} rx={4} fill="var(--surface-card)" stroke={ink} strokeWidth={2} />
+      <text x={26} y={34} fontSize={19} fontWeight={900} fill={ink}>
         모델카드
       </text>
-      <text x={382} y={36} textAnchor="end" fontSize={10} fill={inkSecondary}>
-        Model Card
+      <text x={422} y={34} textAnchor="end" fontSize={11} fontWeight={700} fill={inkSecondary}>
+        이력서 스크리닝 모델 v1 (예시)
       </text>
-      <line x1={22} y1={44} x2={386} y2={44} stroke={ink} strokeWidth={6} />
+      <line x1={22} y1={46} x2={426} y2={46} stroke={ink} strokeWidth={5} />
       {placed.map((r, i) => (
         <g key={r.k}>
-          {i > 0 && <line x1={22} y1={r.top - 4} x2={386} y2={r.top - 4} stroke={ink} strokeWidth={i === 4 ? 3 : 1} />}
+          {i > 0 && <line x1={22} y1={r.top - 4} x2={426} y2={r.top - 4} stroke={ink} strokeWidth={1} />}
           <text x={26} y={r.top + 12} fontSize={11.5} fontWeight={800} fill={ink}>
             {r.k}
           </text>
           {r.v.map((line, k) => (
-            <text key={k} x={118} y={r.top + 12 + k * 15} fontSize={10.5} fontWeight={r.strong ? 700 : 400} fill={ink}>
+            <text key={k} x={146} y={r.top + 12 + k * 15} fontSize={10.5} fill={ink}>
               {line}
             </text>
           ))}
         </g>
       ))}
-      <rect x={470} y={20} width={236} height={34} rx={6} fill={card2Bg} stroke="var(--border-strong)" />
-      <text x={588} y={42} textAnchor="middle" fontSize={12} fontWeight={800} fill={ink}>
-        식품 영양성분표 ↔ 모델카드
+      <text x={578} y={34} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={inkSecondary}>
+        읽는 사람이 확인하는 질문
       </text>
-      {analog.map((a) => (
-        <g key={a.food}>
-          <Arr x1={466} y1={a.ty} x2={400} y2={a.ty} color={inkMuted} marker={`${P}-ink`} dashed />
-          {chip8(470, a.ty - 13, a.food, colors.orange, 96, 26, 0.12, 11)}
-          <text x={574} y={a.ty + 4} fontSize={11} fill={inkSecondary}>
-            ↔
-          </text>
-          {chip8(590, a.ty - 13, a.model, colors.blue, 116, 26, 0.12, 10.5)}
+      {placed.map((r) => (
+        <g key={r.q}>
+          <Arr x1={472} y1={r.mid} x2={440} y2={r.mid} color={inkMuted} marker={`${P}-ink`} dashed />
+          {chip8(476, r.mid - 13, r.q, colors.blue, 204, 26, 0.12, 11)}
         </g>
       ))}
     </DiagramFrame>
@@ -1175,7 +1165,7 @@ export function PaperTimeline() {
     { t: "CLIP", y: 2021.1, lane: 1, up: true },
     { t: "Word2Vec", y: 2013, lane: 2, up: false },
     { t: "Seq2Seq", y: 2014, lane: 2, up: true },
-    { t: "어텐션", y: 2014.75, lane: 2, up: false },
+    { t: "attention", y: 2014.75, lane: 2, up: false },
     { t: "Transformer", y: 2017, lane: 2, up: true },
     { t: "BERT", y: 2018, lane: 2, up: false },
     { t: "GPT-1~3", y: 2019.2, lane: 2, up: true },
@@ -1202,8 +1192,8 @@ export function PaperTimeline() {
   ];
   return (
     <DiagramFrame
-      title="8주 과정의 주요 논문: 계열별로 읽기"
-      caption="본문 표의 논문을 발표 연도(가로)와 계열(세로)로 배치하고, 앞선 연구를 바탕으로 한 관계를 선으로 이었다. 퍼셉트론과 역전파는 3주차, CNN 계열은 4주차, 단어 임베딩부터 Transformer까지는 5주차, BERT·GPT와 LoRA·DPO는 6주차, RAG와 CLIP은 7주차에서 다뤘다. 어텐션이 Transformer로, Transformer가 BERT·GPT와 ViT로, GPT 계열이 RAG·LoRA·DPO 같은 활용·정렬 기법으로 이어진다. 연도순보다 이런 계열을 따라 읽으면 흐름이 잘 보인다. 1958년과 1986년은 간격을 줄여 그렸다."
+      title="핵심 논문을 계열별로 읽기"
+      caption="본문 표의 논문을 발표 연도(가로)와 계열(세로)로 배치하고, 앞선 연구를 바탕으로 한 관계를 선으로 이었다. attention이 Transformer로, Transformer가 BERT·GPT와 ViT로, GPT 계열이 RAG·LoRA·DPO 같은 활용·정렬 기법으로 이어진다. 각 논문을 다룬 레슨은 본문 표의 오른쪽 열에 있다. 2012년 이전 구간(1958년, 1986년)은 간격을 줄여 그렸다."
       viewBox="0 0 720 262"
       minWidth={620}
     >
@@ -1524,7 +1514,7 @@ export function QuasiIdentifier() {
   return (
     <DiagramFrame
       title="이름을 지워도 사람은 특정된다: 준식별자의 조합"
-      caption="본문 코드의 가상 1,000명 데이터다. 나이(50가지)·성별·동네(30곳) 세 값의 조합은 3,000가지라 사람 수보다 많고, 그 결과 72%가 자기만의 조합을 가져 유일하게 특정된다. 나이를 10년 단위로 묶으면 조합이 300가지로 줄어 유일한 사람이 4%로 떨어지지만, 아직 혼자인 사람이 있어 k = 1이다. Sweeney(2000)는 미국 인구의 약 87%가 우편번호·성별·생년월일만으로 유일하게 특정된다고 추정했다. 특징이 많을수록 한 사람의 조합은 더 독특해진다."
+      caption="본문 코드의 가상 1,000명 데이터다. 나이(50가지)·성별·동네(30곳) 세 값의 조합은 3,000가지라 사람 수보다 많고, 그 결과 72%가 자기만의 조합을 가져 유일하게 특정된다. 나이를 10년 단위로 묶으면 조합이 300가지로 줄어 유일한 사람이 4%로 떨어지지만, 아직 혼자인 사람이 있어 k = 1이다. Sweeney(2000)는 미국 인구의 약 87%가 우편번호·성별·생년월일만으로 유일하게 특정된다고 추정했다. 특성(열)이 많을수록 한 사람의 조합은 더 독특해진다."
       viewBox="0 0 720 196"
       minWidth={580}
     >
@@ -1558,7 +1548,7 @@ export function QuasiIdentifier() {
 }
 
 export function KAnonymityTable() {
-  // 설명용 예시 기록 6개: 동네를 구로, 나이를 10년 단위로 뭉뚱그려 k = 3. 둘째 묶음은 병명이 모두 같아 동질성 공격에 노출된다.
+  // 설명용 예시 기록 6개: 동네를 구로, 나이를 10년 단위로 일반화해 k = 3. 둘째 묶음은 병명이 모두 같아 동질성 공격에 노출된다.
   const raw = [
     ["23", "여", "역삼동", "감기"],
     ["27", "여", "대치동", "위염"],
@@ -1696,7 +1686,7 @@ export function LaplaceNoise() {
   return (
     <DiagramFrame
       title="라플라스 메커니즘: ε이 작을수록 잡음이 커진다"
-      caption="참 개수 12에 척도 1/ε인 라플라스 잡음을 더해 공개할 때 나올 수 있는 값의 분포다(두 그래프의 세로 눈금은 다르다). 개수 질의는 한 사람이 들어가거나 빠져도 답이 최대 1만 바뀌므로(민감도 1), 이렇게 공개하면 ε-차등 프라이버시가 된다. ε = 1이면 잡음이 ±1~2 정도라 본문 코드의 공개값(점)도 12.1~14.4에 모였지만, ε = 0.1이면 잡음의 평균 크기가 10이라 공개값이 −1.9부터 39.7까지 흩어졌다. 같은 잡음이 큰 집단의 개수에는 거의 티가 나지 않고, 작은 집단의 개수는 크게 흔든다."
+      caption="참 개수 12에 척도 1/ε인 라플라스 잡음을 더해 공개할 때 나올 수 있는 값의 분포다(두 그래프의 세로 눈금은 다르다). 개수 질의는 한 사람이 들어가거나 빠져도 답이 최대 1만 바뀌므로(민감도 1), 이렇게 공개하면 ε-차등 프라이버시가 된다. ε = 1이면 잡음이 ±1~2 정도라 본문 코드의 공개값(점)도 12.1~14.4에 모였지만, ε = 0.1이면 잡음의 평균 크기가 10이라 공개값이 −1.9부터 39.7까지 흩어졌다. 같은 잡음이라도 큰 집단의 개수에서는 상대 오차가 작고, 작은 집단의 개수에서는 상대 오차가 크다."
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -1748,7 +1738,7 @@ export function MitigationStages() {
   return (
     <DiagramFrame
       title="편향 완화의 세 시점: 데이터 · 학습 · 판정"
-      caption="격차를 줄이는 개입은 세 시점에 할 수 있다. 학습 전에 데이터를 고치는 전처리(재가중, 재표집, 라벨 수정, 무엇보다 부족한 집단의 데이터를 더 모으기), 학습하면서 손실에 격차 벌점이나 제약을 거는 학습 중 처리, 학습이 끝난 점수에 집단별 임계값을 쓰는 후처리다. 어느 방법이든 장단점이 있다. 보호 속성을 입력에서 빼기만 하는 것('모르는 척')은 동네·학교 같은 대리 변수가 남아 있으면 모델이 집단을 다시 알아내므로 완화가 되지 않는다."
+      caption="격차를 줄이는 개입은 세 시점에 할 수 있다. 학습 전에 데이터를 고치는 전처리(재가중, 재표집, 라벨 수정, 무엇보다 부족한 집단의 데이터를 더 모으기), 학습하면서 손실에 격차 벌점이나 제약을 거는 학습 중 처리, 학습이 끝난 점수에 집단별 임계값을 쓰는 후처리다. 어느 방법이든 장단점이 있다. 보호 속성을 입력에서 빼기만 하는 것은 동네·학교 같은 대리 변수가 남아 있으면 모델이 집단을 다시 알아내므로 완화가 되지 않는다."
       viewBox="0 0 720 248"
       minWidth={620}
     >
@@ -2062,7 +2052,7 @@ export function RandomizedMixing() {
   return (
     <DiagramFrame
       title="균등화된 오즈를 맞추는 무작위 혼합: 선분 위의 점은 모두 만들 수 있다"
-      caption="ROC 평면에서 본 Hardt et al.(2016)의 후처리다. 두 판정 규칙을 확률로 섞으면 (FPR, TPR)도 같은 비율로 섞이므로 두 점을 잇는 선분 위의 어느 점이든 만들 수 있다. 점수와 무관하게 확률 f로 합격시키는 규칙은 대각선 위의 점 (f, f)다. 본문 코드처럼 두 집단의 FPR이 0.1로 같고 TPR이 0.9(파랑)와 0.7(주황)이라면, 파랑 집단이 확률 λ = (0.7 − 0.1)/(0.9 − 0.1) = 0.75로 자기 규칙을, 0.25로 무작위 합격을 쓰면 TPR이 정확히 0.7로 내려와 두 집단의 오즈가 같아진다(20만 명 시뮬레이션: TPR 0.70, FPR 0.10). 대가는 파랑 집단의 실제 우수 인재 중 20%p를 일부러 떨어뜨리는 것이고, 같은 점수의 두 사람이 동전 때문에 다른 판정을 받을 수 있다."
+      caption="ROC 평면에서 본 Hardt et al. (2016)의 후처리다. 두 판정 규칙을 확률로 섞으면 (FPR, TPR)도 같은 비율로 섞이므로 두 점을 잇는 선분 위의 어느 점이든 만들 수 있다. 점수와 무관하게 확률 f로 합격시키는 규칙은 대각선 위의 점 (f, f)다. 본문 코드처럼 두 집단의 FPR이 0.1로 같고 TPR이 0.9(파랑)와 0.7(주황)이라면, 파랑 집단이 확률 λ = (0.7 − 0.1)/(0.9 − 0.1) = 0.75로 자기 규칙을, 0.25로 무작위 합격을 쓰면 TPR이 정확히 0.7로 내려와 두 집단의 오즈가 같아진다(20만 명 시뮬레이션: TPR 0.70, FPR 0.10). 대가는 파랑 집단의 실제 우수 인재 중 20%p를 일부러 떨어뜨리는 것이고, 같은 점수의 두 사람이 무작위 추첨 때문에 다른 판정을 받을 수 있다."
       viewBox="0 0 720 258"
       minWidth={600}
     >
@@ -2168,7 +2158,7 @@ export function MiaAdvantage() {
   return (
     <DiagramFrame
       title="ε이 공격자에게 뜻하는 것: 멤버십 추론 이득의 상한 (e^ε − 1)/(e^ε + 1)"
-      caption="왼쪽: 학습이 ε-차등 프라이버시면 '이 기록이 학습에 쓰였는가'를 맞히는 어떤 공격이든 (FPR, TPR)이 두 부등식 TPR ≤ e^ε·FPR, 1 − FPR ≤ e^ε(1 − TPR)이 만드는 영역 안에 있어야 한다. ε = 0.1이면 대각선(무작위 추측)에 거의 붙은 가는 띠이고, ε = 3이면 거의 전체를 덮는다. 오른쪽: 이 영역에서 공격 이득 TPR − FPR의 최댓값이다. ε = 0.1이면 0.05로 동전 던지기 수준, ε = 1이면 0.46, 보충 과정의 무작위 응답에 해당하는 ε = ln 3에서 정확히 0.5, ε = 8이면 0.999로 사실상 아무것도 보장하지 않는다. 그래서 '차등 프라이버시로 학습했다'는 말과 함께 ε 값을 봐야 한다. 이것은 최악의 경우의 상한이고 실제 공격이 이만큼 성공한다는 뜻은 아니다."
+      caption="왼쪽: 학습이 ε-차등 프라이버시면 '이 기록이 학습에 쓰였는가'를 맞히는 어떤 공격이든 (FPR, TPR)이 두 부등식 TPR ≤ e^ε·FPR, 1 − FPR ≤ e^ε(1 − TPR)이 만드는 영역 안에 있어야 한다. ε = 0.1이면 대각선(무작위 추측)에 거의 붙은 가는 띠이고, ε = 3이면 거의 전체를 덮는다. 오른쪽: 이 영역에서 공격 이득 TPR − FPR의 최댓값이다. ε = 0.1이면 0.05로 무작위 추측과 거의 같고, ε = 1이면 0.46, 무작위 응답에 해당하는 ε = ln 3에서 정확히 0.5, ε = 8이면 0.999로 사실상 아무것도 보장하지 않는다. 그래서 '차등 프라이버시로 학습했다'는 말과 함께 ε 값을 봐야 한다. 이것은 최악의 경우의 상한이고 실제 공격이 이만큼 성공한다는 뜻은 아니다."
       viewBox="0 0 720 256"
       minWidth={600}
     >
@@ -2400,11 +2390,11 @@ export function MultipleTesting() {
   return (
     <DiagramFrame
       title="검사가 많으면 경보도 많다: 다중 비교와 본페로니 보정"
-      caption="아무것도 바뀌지 않았는데 특징 k개를 각각 유의수준 5%로 검사하면, 거짓 경보가 하나 이상 날 확률은 1 − 0.95^k로 빠르게 커진다(빨강). 특징 14개면 이미 50%를 넘고, 본문의 50개면 92%다. 유의수준을 검사 수로 나누는 본페로니 보정(0.05/k)을 하면 이 확률이 k와 상관없이 약 5%로 유지된다(초록). 거짓 발견의 비율을 통제하는 벤자미니–호크버그 방법도 같은 목적이다. 거짓 경보가 잦으면 사람들이 경보를 무시하게 되어(경보 피로) 진짜 경보까지 묻히므로, 이것은 통계의 문제이자 운영의 문제다."
+      caption="아무것도 바뀌지 않았는데 특성 k개를 각각 유의수준 5%로 검사하면, 거짓 경보가 하나 이상 날 확률은 1 − 0.95^k로 빠르게 커진다(빨강). 특성 14개면 이미 50%를 넘고, 본문의 50개면 92%다. 유의수준을 검사 수로 나누는 본페로니 보정(0.05/k)을 하면 이 확률이 k와 상관없이 약 5%로 유지된다(초록). 거짓 발견의 비율을 통제하는 벤자미니–호크버그 방법도 같은 목적이다. 거짓 경보가 잦으면 사람들이 경보를 무시하게 되어(경보 피로) 진짜 경보까지 묻히므로, 이것은 통계의 문제이자 운영의 문제다."
       viewBox="0 0 720 252"
       minWidth={600}
     >
-      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="검사하는 특징 수 k" yLabel="거짓 경보 ≥ 1번" />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]} yTicks={[0, 0.25, 0.5, 0.75, 1]} fmtY={(v) => `${Math.round(v * 100)}%`} xLabel="검사하는 특성 수 k" yLabel="거짓 경보 ≥ 1번" />
       <line x1={G.left} x2={G.left + G.width} y1={sy(0.05)} y2={sy(0.05)} stroke={colors.green} strokeDasharray="3 3" strokeOpacity={0.5} />
       <path d={linePath(sample(raw, 1, 100, 200).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={colors.red} strokeWidth={2.6} />
       <path d={linePath(sample(bon, 1, 100, 200).map(([a, b]) => [sx(a), sy(b)] as [number, number]))} fill="none" stroke={colors.green} strokeWidth={2.6} />
@@ -2444,7 +2434,7 @@ export function BbseCorrection() {
   return (
     <DiagramFrame
       title="라벨 드리프트를 라벨 없이: 예측 양성 비율에서 실제 양성 비율로"
-      caption="정답 비율 P(y)만 바뀌고 클래스 안의 모습 P(x | y)는 그대로라면, 운영에서 예측 양성 비율 μ와 실제 양성 비율 q 사이에 μ = TPR·q + FPR·(1 − q)라는 직선 관계가 생긴다(TPR, FPR은 검증 데이터에서 재 둔 값). 본문 코드의 분류기(TPR 0.8, FPR 0.1)라면 μ는 0.1~0.8 사이로 압축된다. 운영에서 예측 양성 비율 0.31을 세었다면 직선에서 거꾸로 계산해 실제 양성 비율 (0.31 − 0.1)/(0.8 − 0.1) = 0.30을 얻는다. 예측 비율을 그대로 믿으면 위양성만큼 부풀려진 값을 읽게 된다. 7주차 심화의 채점관 보정(Rogan–Gladen)과 똑같은 식이다. P(x | y)까지 바뀌는 개념 드리프트가 함께 오면 이 추정도 틀린다."
+      caption="정답 비율 P(y)만 바뀌고 클래스 안의 모습 P(x | y)는 그대로라면, 운영에서 예측 양성 비율 μ와 실제 양성 비율 q 사이에 μ = TPR·q + FPR·(1 − q)라는 직선 관계가 생긴다(TPR, FPR은 검증 데이터에서 재 둔 값). 본문 코드의 분류기(TPR 0.8, FPR 0.1)라면 μ는 0.1~0.8 사이로 압축된다. 운영에서 예측 양성 비율 0.31을 세었다면 직선에서 거꾸로 계산해 실제 양성 비율 (0.31 − 0.1)/(0.8 − 0.1) = 0.30을 얻는다. 예측 비율을 그대로 믿으면 위양성만큼 부풀려진 값을 읽게 된다. LLM 평가의 통계에서 다룬 채점관 보정(Rogan–Gladen)과 같은 식이다. P(x | y)까지 바뀌는 개념 드리프트가 함께 오면 이 추정도 틀린다."
       viewBox="0 0 720 256"
       minWidth={580}
     >
@@ -2465,7 +2455,7 @@ export function BbseCorrection() {
       <text x={386} y={64} fontSize={11.5} fontWeight={800} fill={ink}>
         같은 식이 쓰이는 두 장면
       </text>
-      <Lines x={386} y={90} lines={["드리프트(BBSE): 분류기의 예측 비율 → 실제 양성 비율", "채점관 보정(7주차): 채점관의 통과율 → 실제 정확도"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.6} />
+      <Lines x={386} y={90} lines={["드리프트(BBSE): 분류기의 예측 비율 → 실제 양성 비율", "채점관 보정(LLM 평가): 채점관의 통과율 → 실제 정확도"]} size={10.5} anchor="start" color={ink} weight={600} gap={1.6} />
       <text x={386} y={138} fontSize={11} fontWeight={800} fill={colors.green} fontFamily={mono}>
         q = (μ − FPR) / (TPR − FPR)
       </text>

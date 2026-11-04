@@ -158,10 +158,11 @@ NGINX
 
 TMP="$(mktemp)"
 render > "$TMP"
-BACKUP=""
+# 새 설정이 검사를 통과하지 못하면 되돌릴 수 있도록 지금 설정을 임시 파일에 잠시 둔다(검사 후 지운다).
+PREVIOUS_CONF=""
 if [ -f "$CONF" ]; then
-  BACKUP="$(mktemp)"
-  sudo cp "$CONF" "$BACKUP"
+  PREVIOUS_CONF="$(mktemp)"
+  sudo cp "$CONF" "$PREVIOUS_CONF"
 fi
 sudo install -m 644 "$TMP" "$CONF"
 rm -f "$TMP"
@@ -170,10 +171,10 @@ sudo rm -f /etc/nginx/sites-enabled/default
 
 if ! sudo nginx -t; then
   echo "::error::새 nginx 설정이 검사를 통과하지 못해 이전 설정으로 되돌립니다."
-  if [ -n "$BACKUP" ]; then sudo install -m 644 "$BACKUP" "$CONF"; else sudo rm -f "$CONF" /etc/nginx/sites-enabled/aegis-ai-study.conf; fi
+  if [ -n "$PREVIOUS_CONF" ]; then sudo install -m 644 "$PREVIOUS_CONF" "$CONF"; else sudo rm -f "$CONF" /etc/nginx/sites-enabled/aegis-ai-study.conf; fi
   exit 1
 fi
-[ -n "$BACKUP" ] && rm -f "$BACKUP"
+[ -n "$PREVIOUS_CONF" ] && rm -f "$PREVIOUS_CONF"
 sudo systemctl enable --now nginx >/dev/null 2>&1 || true
 # reload는 기존 연결을 끊지 않고 새 설정으로 넘어간다(무중단).
 sudo systemctl reload nginx

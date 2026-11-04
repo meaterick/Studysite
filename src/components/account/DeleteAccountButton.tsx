@@ -47,7 +47,7 @@ export default function DeleteAccountButton() {
             <p className="mt-2 text-sm text-ink-secondary">탈퇴하면 아래 내용이 즉시 삭제되며 되돌릴 수 없습니다.</p>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-secondary">
               <li>계정 정보(이름·이메일)</li>
-              <li>단계별 진도, 확인 문제·서술형 답, 백지공부</li>
+              <li>레슨 진도, 확인 문제·서술형·실습 기록, 백지 복습</li>
               <li>과제 작업 공간, 제출한 과제와 첨부 파일, 채점 결과</li>
               <li>운영자와 주고받은 채팅</li>
             </ul>

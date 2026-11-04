@@ -33,8 +33,14 @@ const nextConfig: NextConfig = {
     proxyClientMaxBodySize: "10mb",
   },
   async redirects() {
-    // 서술형 응답 화면은 스터디원 관리 안으로 옮겼다. 예전 주소(즐겨찾기)는 새 주소로 보낸다(쿼리는 그대로 따라간다).
-    return [{ source: "/operator/answers", destination: "/operator/members/answers", permanent: false }];
+    // 예전 화면 주소(즐겨찾기)를 새 주소로 보낸다. 예전 주차 주소(/weeks/...)는 src/app/weeks의 경로 처리기가 맡는다.
+    return [
+      { source: "/feedback/review/:path*", destination: "/feedback#review", permanent: false },
+      { source: "/operator/answers", destination: "/operator/members/answers", permanent: false },
+      { source: "/operator/quiz-answers", destination: "/operator/content", permanent: false },
+      { source: "/operator/quality-log", destination: "/operator/content", permanent: false },
+      { source: "/operator/threads/:userId/:rest*", destination: "/operator/chat/:userId", permanent: false },
+    ];
   },
   async headers() {
     return [

@@ -13,11 +13,8 @@ export default function NotFound() {
         <Link href="/" className="btn btn-primary">
           메인으로
         </Link>
-        <Link
-          href="/weeks"
-          className="btn btn-secondary"
-        >
-          주차별 자료
+        <Link href="/curriculum" className="btn btn-secondary">
+          커리큘럼
         </Link>
       </div>
     </div>

@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/dal";
 import { findSubmission, latestGrade, latestVersion, readNotebook } from "@/lib/submissionStore";
 import { findUserById } from "@/lib/userStore";
-import { getLearningRecord, readWorksheetState } from "@/lib/learningStore";
-import { weekStatus } from "@/lib/study";
+import { getLearningRecord } from "@/lib/learningStore";
+import { moduleStatus } from "@/lib/study";
 import { findConversation, unreadCount } from "@/lib/chatStore";
 import { courseDocFiles, notebookViewTasks } from "@/lib/assignmentView";
-import { getWeek } from "@/content/weeks";
-import { quizAnswers } from "@/content/quizAnswers";
-import { Inline } from "@/components/MarkdownBlocks";
+import { moduleOfAssignment } from "@/content/course";
+import { parseMarkdown } from "@/content/markdown";
+import { BlocksRenderer } from "@/components/MarkdownBlocks";
+import { dueDateEnd, getSettings } from "@/lib/settingsStore";
 import { GradeView, SubmissionVersionView } from "@/components/SubmissionView";
 import NotebookView from "@/components/assignment/NotebookView";
 import SubmissionVersionDetails from "@/components/assignment/SubmissionVersionDetails";
@@ -28,16 +29,17 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
   const { id } = await params;
   const submission = findSubmission(id);
   if (!submission) notFound();
-  const week = getWeek(submission.weekSlug);
-  if (!week) notFound();
-  const spec = week.assignment;
+  // 새 과정의 과제만 채점한다(이전 8주 과정의 제출물은 명세가 없어 열지 않는다).
+  const mod = moduleOfAssignment(submission.assignmentKey);
+  const spec = mod?.assignment;
+  if (!mod || !spec) notFound();
   const student = findUserById(submission.userId);
   const record = getLearningRecord(submission.userId);
-  const status = weekStatus(week, record, submission);
-  const worksheet = readWorksheetState(record, week.slug);
+  const status = moduleStatus(mod, record, submission);
   const latest = latestVersion(submission);
   const grade = latestGrade(submission);
-  const sampleDirection = quizAnswers.find((a) => a.week === week.number)?.sampleDirection;
+  const due = getSettings().dueDates[spec.key];
+  const late = !!due && new Date(latest.submittedAt) > dueDateEnd(due);
   const notebook = readNotebook(submission, latest);
   const conversation = findConversation(submission.userId);
   const unread = unreadCount(conversation, "admin");
@@ -51,11 +53,12 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
     <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
       <PageHeader
         back={{ href: "/operator/submissions", label: "과제 채점" }}
-        eyebrow={`${week.number}주차 · ${spec.title}`}
+        eyebrow={`${mod.code} ${mod.title} · ${spec.title}`}
         title={`${student?.name ?? "(탈퇴한 사용자)"}님의 과제`}
         description={
           <span className="tabular-nums">
-            {student?.email} · 핵심 {status.tiers.core.done}/{status.tiers.core.total} · 백지공부 {worksheet.submittedAt ? "제출" : "미제출"} · 제출 {submission.versions.length}회
+            {student?.email} · 핵심 레슨 {status.tiers.core.done}/{status.tiers.core.total} · 백지 복습 {status.recallSubmitted ? "제출" : "미제출"} · 제출{" "}
+            {submission.versions.length}회{late && " · 마감 후 제출"}
           </span>
         }
         actions={
@@ -88,7 +91,7 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
                   taskComments={currentGrade?.taskComments}
                   runKey={`${submission.id}:${latest.version}`}
                   courseDocs={courseDocs}
-                  autoTests={autoTestViews(week)}
+                  autoTests={autoTestViews(spec)}
                 />
               ) : (
                 <p className="text-sm text-ink-muted">이 제출본에는 작업 공간 기록이 없습니다(이전 방식으로 제출한 과제).</p>
@@ -138,10 +141,12 @@ export default async function SubmissionDetailPage({ params }: { params: Promise
             </section>
           )}
 
-          {sampleDirection && (
-            <section className="rounded-2xl bg-[var(--surface-card-2)] p-5 text-sm leading-relaxed text-ink-secondary sm:p-6">
-              <p className="mb-2 text-xs font-medium text-ink-muted">채점 참고 · 모범 답안 방향</p>
-              <Inline text={sampleDirection} />
+          {spec.gradingNotes && (
+            <section aria-labelledby="notes-heading" className="rounded-2xl bg-[var(--surface-card-2)] p-5 text-sm leading-relaxed text-ink-secondary sm:p-6">
+              <h2 id="notes-heading" className="mb-2 text-xs font-medium text-ink-muted">
+                채점 참고 · 운영자에게만 보입니다
+              </h2>
+              <BlocksRenderer blocks={parseMarkdown(spec.gradingNotes)} />
             </section>
           )}
 

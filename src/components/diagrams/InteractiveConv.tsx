@@ -4,7 +4,7 @@ import { useState } from "react";
 import DiagramFrame, { colors, inkSecondary, inkMuted, gridline, card2Bg, ink } from "./DiagramFrame";
 import { Arrow, Label, ArrowDefs } from "./primitives";
 
-// 세로 경계(밝음→어두움)를 검출하는 장난감 3x3 커널과 5x5 입력.
+// 세로 경계(밝음→어두움)를 검출하는 예시용 3x3 커널과 5x5 입력.
 const INPUT = [
   [1, 1, 0, 0, 0],
   [1, 1, 0, 0, 0],
@@ -49,7 +49,7 @@ export default function InteractiveConv() {
       title="합성곱 연산: 5×5 입력 · 3×3 커널 → 3×3 출력"
       viewBox="0 0 640 260"
       interactive
-      caption={`출력 칸을 클릭해 커널이 슬라이딩하는 위치를 바꿔 보십시오. 지금은 (${sel.r + 1}, ${sel.c + 1}) 위치: ${terms.join(" + ")} = ${sum}. 왼쪽(밝음)에서 오른쪽(어두움)으로 바뀌는 세로 경계에서 값이 커지는 것을 확인해 보십시오.`}
+      caption={`출력 칸을 선택하면 그 값을 계산한 커널의 위치가 입력에 표시된다. 현재 선택한 칸 (${sel.r + 1}, ${sel.c + 1}): ${terms.join(" + ")} = ${sum}. 왼쪽(밝음)에서 오른쪽(어두움)으로 바뀌는 세로 경계에서 값이 크다.`}
     >
       <ArrowDefs />
       {INPUT.map((row, r) =>
@@ -101,7 +101,7 @@ export default function InteractiveConv() {
           );
         })
       )}
-      <Label x={outX + (OUT_N * outCell) / 2} y={outY + OUT_N * outCell + 22} text="출력 3×3 (클릭해 보십시오)" color={colors.blue} weight={700} />
+      <Label x={outX + (OUT_N * outCell) / 2} y={outY + OUT_N * outCell + 22} text="출력 3×3 (칸을 선택)" color={colors.blue} weight={700} />
       <Arrow x1={inX + inN * cell + 10} y1={inY + sel.r * cell + 50} x2={outX - 14} y2={outY + sel.r * outCell + outCell / 2} color={colors.blue} />
     </DiagramFrame>
   );

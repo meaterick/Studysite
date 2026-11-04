@@ -38,7 +38,7 @@ export default function NotebookView({
   taskComments?: Record<string, string>;
   /** 다시 실행할 때 쓸 이름공간 식별자 (제출 id + 버전) */
   runKey: string;
-  /** 과제 코드가 읽는 학습 자료 파일(7주차) */
+  /** 과제 코드가 /course/<모듈 slug>.md로 읽는 학습 자료 파일(provideCourseDocs가 켜진 과제) */
   courseDocs?: { path: string; content: string }[];
   /** 다시 실행한 이름공간에서 돌릴 자동 테스트(운영자 화면) */
   autoTests?: AutoTestView[];
@@ -116,7 +116,7 @@ export default function NotebookView({
             <h4 className="font-semibold tracking-[-0.02em] text-ink">
               과제 {i + 1}. {task.title}
               <span className="ml-2 align-middle">
-                <TierBadge tier={task.tier} compact />
+                <TierBadge tier={task.tier} />
               </span>
               {task.optional && <span className="ml-1 text-xs font-semibold text-ink-muted">(선택)</span>}
             </h4>

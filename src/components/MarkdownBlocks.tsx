@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Block } from "@/content/types";
 import { parseMarkdown, renderInline } from "@/content/markdown";
 import { DIAGRAMS } from "@/components/diagrams";
@@ -16,6 +17,16 @@ export function Inline({ text }: { text: string }) {
         if (typeof p === "string") return <span key={i}>{p}</span>;
         if ("bold" in p) return <strong key={i} className="font-semibold text-ink"><Inline text={p.bold} /></strong>;
         if ("italic" in p) return <em key={i}>{p.italic}</em>;
+        if ("link" in p && p.href.startsWith("/"))
+          return (
+            <Link
+              key={i}
+              href={p.href}
+              className="font-medium text-[var(--accent)] underline decoration-[color-mix(in_srgb,var(--accent)_35%,transparent)] underline-offset-4 transition hover:decoration-[var(--accent)]"
+            >
+              {p.link}
+            </Link>
+          );
         if ("link" in p)
           return (
             <a
@@ -237,6 +248,11 @@ export function BlocksRenderer({
       })}
     </div>
   );
+}
+
+/** 문항·해설용: 한 줄 글은 Inline으로, 여러 줄 글(코드 블록·목록 포함)은 블록으로 렌더링한다. */
+export function RichText({ text }: { text: string }) {
+  return text.includes("\n") ? <BlocksRenderer blocks={parseMarkdown(text)} /> : <Inline text={text} />;
 }
 
 export default function Markdown({

@@ -3,15 +3,14 @@
 /* ─── 디자인 토큰 ─────────────────────────────────────────────
    흑백을 바탕으로 강조색 하나만 아껴 쓴다.
    - 화이트 모드: 흰 종이 위의 짙은 남색 글자, 얇은 선. 회색은 강조색(남보라)과 어울리도록 푸른 기가 도는
-     회색(slate)으로 통일하고, 스포트라이트·주 버튼도 순수한 검정 대신 메인 화면과 같은 깊은 남색을 쓴다.
+     회색(slate)으로 통일하고, 스포트라이트·주 버튼도 순수한 검정 대신 깊은 남색을 쓴다.
    - 블랙 모드: 깊은 검정 위의 밝은 회색 글자, 한 단계 밝은 면
    강조색(--accent)은 "지금 할 차례", 진행 막대, 링크, 초점 표시, 선택된 칩에만 쓴다.
    --series-*는 도표(diagrams)용 데이터 색이라 UI 강조색과 따로 둔다. */
 :root {
   color-scheme: light;
-  /* 글꼴: 화면 글꼴은 Pretendard, 메인 화면(.journey)은 기존 Noto Sans KR을 그대로 쓴다. */
+  /* 글꼴: 화면 글꼴은 Pretendard, 코드는 JetBrains Mono */
   --font-ui: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-  --font-sans-kr: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono-code: "JetBrains Mono", ui-monospace, monospace;
 
   --surface-page: #ffffff;
@@ -31,7 +30,7 @@
   --inverse-bg: #0f172a;
   --inverse-fg: #ffffff;
   --inverse-hover: #26324a;
-  /* 스포트라이트: 메인 화면(.journey-theme)과 같은 계열의 깊은 남색 면 */
+  /* 스포트라이트: 주 버튼과 같은 계열의 깊은 남색 면 */
   --spotlight-bg: #0c1326;
   --spotlight-ring: rgba(138, 184, 255, 0.14);
   /* 선택된 칩: 화이트 모드에서는 강조색을 옅게 깐 알약, 블랙 모드에서는 흰 알약 */
@@ -46,11 +45,16 @@
   --tier-supplement: #0e7f86;
   --tier-advanced: #b45309;
 
-  /* 4부 구성: 커리큘럼·주차 목록의 작은 표식에만 쓴다. */
-  --phase-1: #3451d1;
-  --phase-2: #0e7f86;
-  --phase-3: #6d4fd8;
-  --phase-4: #b45309;
+  /* 트랙 표식: 커리큘럼·트랙·진도 화면의 작은 점과 막대에만 쓴다(글자색으로 쓰지 않는다). */
+  --track-0: #64748b;
+  --track-1: #3451d1;
+  --track-2: #6d4fd8;
+  --track-3: #0e7f86;
+  --track-4: #15803d;
+  --track-5: #b45309;
+  --track-6: #be185d;
+  --track-7: #0f172a;
+  --track-x: #94a3b8;
 
   /* 코드 강조색: 밝은 바탕에서도 4.5:1 이상 */
   --syn-keyword: #7c3aed;
@@ -117,10 +121,15 @@
     --tier-supplement: #5fd0d6;
     --tier-advanced: #f2b35b;
 
-    --phase-1: #8ab4ff;
-    --phase-2: #5fd0d6;
-    --phase-3: #b4a2ff;
-    --phase-4: #f2b35b;
+    --track-0: #a3a3a3;
+    --track-1: #8ab4ff;
+    --track-2: #b4a2ff;
+    --track-3: #5fd0d6;
+    --track-4: #4ade80;
+    --track-5: #f2b35b;
+    --track-6: #f9a8d4;
+    --track-7: #f5f5f5;
+    --track-x: #6b6b6b;
 
     --syn-keyword: #c4b5fd;
     --syn-string: #5eead4;
@@ -176,10 +185,15 @@
   --tier-supplement: #5fd0d6;
   --tier-advanced: #f2b35b;
 
-  --phase-1: #8ab4ff;
-  --phase-2: #5fd0d6;
-  --phase-3: #b4a2ff;
-  --phase-4: #f2b35b;
+  --track-0: #a3a3a3;
+  --track-1: #8ab4ff;
+  --track-2: #b4a2ff;
+  --track-3: #5fd0d6;
+  --track-4: #4ade80;
+  --track-5: #f2b35b;
+  --track-6: #f9a8d4;
+  --track-7: #f5f5f5;
+  --track-x: #6b6b6b;
 
   --syn-keyword: #c4b5fd;
   --syn-string: #5eead4;
@@ -229,12 +243,6 @@ body {
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
-/* 메인 화면은 손대지 않는다: 기존 글꼴과 자간을 그대로 쓴다. */
-body:has(.journey) {
-  font-family: var(--font-sans-kr), system-ui, -apple-system, "Segoe UI", sans-serif;
-  letter-spacing: normal;
-}
-
 p,
 li,
 h1,
@@ -627,311 +635,6 @@ code {
     content-visibility: auto;
     contain-intrinsic-block-size: auto 420px;
   }
-}
-
-/* ─── 메인 화면 ────────────────────────────────────────────────
-   거의 검은 배경, 흰 글자의 밝기 차이, 강조색 하나, 얇은 선으로만 구성한다.
-   기본(자바스크립트 없음·동작 줄이기): 장면을 세로로 차례대로 보여 준다.
-   html[data-motion="full"]: 화면 한 장 크기의 덱에서 장면을 한 장씩 넘긴다(Journey.tsx).
-   덱은 스크롤되지 않으므로 휴대폰 브라우저의 주소창·도구 막대가 움직이지 않고, 장면 전환은 정해진 길이의 CSS 전환이다. */
-.journey-theme {
-  /* 회색빛을 피하려고 순수한 검정·회색 대신 아주 깊은 남색 바탕과 푸른 기가 도는 흰 글자를 쓴다. */
-  --journey-accent: #8ab8ff;
-  --j-1: #f4f7ff; /* 본문 강조 */
-  --j-2: rgba(222, 232, 255, 0.8); /* 본문 */
-  --j-3: rgba(170, 190, 235, 0.72); /* 보조 문구·라벨 */
-  --j-4: rgba(150, 175, 230, 0.45);
-  --j-line: rgba(138, 184, 255, 0.16);
-  --j-line-strong: rgba(138, 184, 255, 0.3);
-  background: #050814;
-  color: var(--j-1);
-}
-.j-gradient {
-  background: linear-gradient(100deg, #8ab8ff 0%, #b9a8ff 55%, #f0b8e0 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-/* 은은한 빛: 두 개의 큰 색 번짐이 진행도(--p, 0~1)에 따라 천천히 자리를 옮긴다.
-   번짐마다 층을 따로 두고 transform으로 옮겨, 장면을 넘길 때 배경을 다시 칠하지 않는다. */
-.journey-glow {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  background: radial-gradient(40vmax 30vmax at 50% 50%, rgba(40, 170, 220, 0.07), transparent 70%);
-}
-.journey-glow__blob {
-  position: absolute;
-  transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.journey-glow__blob--a {
-  left: 18%;
-  top: 12%;
-  width: 120vmax;
-  height: 90vmax;
-  margin: -45vmax 0 0 -60vmax;
-  background: radial-gradient(closest-side, rgba(64, 104, 255, 0.28), transparent 70%);
-  transform: translate3d(calc(var(--p, 0) * 55vw), calc(var(--p, 0) * 20vh), 0);
-}
-.journey-glow__blob--b {
-  left: 88%;
-  top: 95%;
-  width: 110vmax;
-  height: 80vmax;
-  margin: -40vmax 0 0 -55vmax;
-  background: radial-gradient(closest-side, rgba(150, 90, 255, 0.2), transparent 70%);
-  transform: translate3d(calc(var(--p, 0) * -50vw), calc(var(--p, 0) * -25vh), 0);
-}
-.journey-stage {
-  position: relative;
-}
-.journey-scene {
-  position: relative;
-  padding: 6rem 1.25rem;
-}
-.journey-scene + .journey-scene {
-  border-top: 1px solid var(--j-line);
-}
-.journey-scene__inner {
-  margin: 0 auto;
-  max-width: 72rem;
-}
-.journey-rail,
-.journey-next,
-.journey-progress {
-  display: none;
-}
-
-/* 덱: 화면 한 장(막대가 보일 때의 높이, svh). 머리글 높이(SiteHeader: h-16 + 아래 선 1px)만큼 위로 당겨
-   머리글이 덱 위에 겹쳐 보이게 한다(장면 위쪽 여백이 그 자리를 비워 둔다). */
-html[data-motion="full"] .journey {
-  position: relative;
-  height: 100vh;
-  height: 100svh;
-  margin-top: calc(-4rem - 1px);
-  /* clip: hidden과 달리 주소의 #장면이나 포커스 이동이 덱 안쪽을 스크롤시키지 못한다. */
-  overflow: hidden;
-  overflow: clip;
-}
-html[data-motion="full"] .journey-stage {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  overflow: clip;
-  perspective: 1400px;
-  perspective-origin: 50% 45%;
-}
-html[data-motion="full"] .journey-world {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-}
-/* 장면 상태: current(보이는 장면) · past(지나간 장면, 카메라 쪽으로 다가오며 사라짐) · future(다음 장면, 멀리 깊은 곳).
-   들어오는 장면은 current 규칙의 전환(천천히 멈추며 다가옴), 나가는 장면은 past·future 규칙의 전환(빠르게 흐려짐)을 쓴다.
-   멈춘 장면은 transform이 none이라 글자가 선명하다. 자바스크립트가 상태를 붙이기 전에는 첫 장면만 보인다. */
-html[data-motion="full"] .journey-scene {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5rem 1.25rem 4.5rem;
-  border: 0;
-  backface-visibility: hidden;
-  opacity: 0;
-  visibility: hidden;
-  transform: translate3d(0, 90px, -1200px) rotateX(-6deg);
-  transition:
-    transform 0.7s cubic-bezier(0.65, 0, 0.35, 1),
-    opacity 0.38s ease,
-    visibility 0s linear 0.7s;
-}
-html[data-motion="full"] .journey-scene[data-state="past"] {
-  transform: translate3d(0, -60px, 520px);
-}
-html[data-motion="full"] .journey-scene[data-state="current"],
-html[data-motion="full"] .journey-world:not([data-deck]) > .journey-scene:first-child {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition:
-    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.6s ease 0.12s,
-    visibility 0s;
-}
-/* 손가락으로 끄는 동안: 보이는 장면이 손가락을 따라 조금 움직인다(놓으면 위 전환으로 넘어가거나 제자리로 돌아온다). */
-html[data-motion="full"] .journey-world[data-dragging] > .journey-scene[data-state="current"] {
-  transform: translate3d(0, calc(var(--drag, 0) * 1px), 0);
-  opacity: calc(1 - var(--drag-abs, 0) / 400);
-  transition: none;
-}
-/* 주소(#장면)로 바로 들어왔을 때는 전환 없이 그 장면을 보여 준다. */
-html[data-motion="full"] .journey-world[data-instant] > .journey-scene {
-  transition: none;
-}
-/* 좁은 화면에는 오른쪽 아래 SCROLL 표시가 없고 진행 번호만 한 줄 있으므로 아래 여백을 줄여 장면을 덜 축소한다. */
-@media (max-width: 767px) {
-  html[data-motion="full"] .journey-scene {
-    padding-bottom: 3.25rem;
-  }
-}
-html[data-motion="full"] .journey-scene__inner {
-  width: 100%;
-  transform: scale(var(--fit, 1));
-  transform-origin: 50% 50%;
-}
-html[data-motion="full"] .journey-progress {
-  display: block;
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 1px;
-  width: 100%;
-  background: var(--journey-accent);
-  transform: scaleX(var(--p, 0));
-  transform-origin: left center;
-  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 3;
-}
-
-/* 진행 표시: 왼쪽 아래의 번호 목록 */
-html[data-motion="full"] .journey-rail {
-  display: block;
-  position: absolute;
-  left: 1.5rem;
-  bottom: 1.5rem;
-  z-index: 3;
-}
-.journey-rail ol {
-  display: flex;
-  gap: 1.1rem;
-}
-.journey-rail__item {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  color: var(--j-3);
-  font-size: 0.75rem;
-  transition: color 0.3s;
-}
-.journey-rail__item:hover,
-.journey-rail__item[aria-current] {
-  color: #fff;
-}
-.journey-rail__num {
-  font-family: var(--font-mono-code), ui-monospace, monospace;
-  font-size: 0.7rem;
-}
-.journey-rail__item[aria-current] .journey-rail__num {
-  color: var(--journey-accent);
-}
-.journey-rail__label {
-  display: none;
-}
-@media (min-width: 768px) {
-  .journey-rail__label {
-    display: inline;
-  }
-}
-
-/* 다음 장면으로: 오른쪽 아래의 얇은 선 */
-html[data-motion="full"] .journey-next {
-  display: none;
-  position: absolute;
-  right: 1.5rem;
-  bottom: 1.5rem;
-  z-index: 3;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--j-3);
-  transition: color 0.3s;
-}
-@media (min-width: 768px) {
-  html[data-motion="full"] .journey-next {
-    display: flex;
-  }
-}
-.journey-next:hover {
-  color: #fff;
-}
-.journey-next__line {
-  position: relative;
-  width: 1px;
-  height: 40px;
-  overflow: hidden;
-  background: var(--j-line);
-}
-.journey-next__line::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: -40%;
-  width: 1px;
-  height: 40%;
-  background: var(--journey-accent);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .journey-next__line::after {
-    animation: scroll-line 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-  }
-}
-@keyframes scroll-line {
-  to {
-    top: 100%;
-  }
-}
-
-@media print {
-  html[data-motion="full"] .journey {
-    height: auto !important;
-    margin-top: 0;
-    overflow: visible;
-  }
-  html[data-motion="full"] .journey-stage,
-  html[data-motion="full"] .journey-world,
-  html[data-motion="full"] .journey-scene {
-    position: static;
-    height: auto !important;
-    transform: none !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
-}
-
-/* 메인 화면에서는 머리글도 같은 어두운 색으로 맞춘다. */
-body:has(.journey) header {
-  --surface-page: #050814;
-  --surface-card: rgba(255, 255, 255, 0.05);
-  --surface-card-2: rgba(255, 255, 255, 0.08);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(222, 232, 255, 0.8);
-  --text-muted: rgba(170, 190, 235, 0.72);
-  --border-hairline: rgba(138, 184, 255, 0.14);
-  --border-strong: rgba(138, 184, 255, 0.28);
-  --accent: #8ab8ff;
-  --on-accent: #050814;
-  --inverse-bg: #ffffff;
-  --inverse-fg: #050814;
-  --inverse-hover: rgba(255, 255, 255, 0.85);
-  color: #fff;
-  /* 펼침 메뉴(좁은 화면)는 뒤의 장면이 비치지 않도록 불투명한 면을 쓴다. */
-  --menu-bg: #0b1124;
-  /* 다른 화면의 머리글보다 덜 투명하게: 뒤의 흰 바탕이 비쳐 회색으로 보이지 않도록 예전 값을 그대로 쓴다. */
-  background-color: color-mix(in oklab, #050814 90%, transparent);
-  backdrop-filter: blur(8px);
-}
-/* 덱(장면 넘기기)에서는 머리글 아래로 내용이 지나가지 않으므로 머리글을 따로 칠하지 않는다:
-   배경 빛이 화면 맨 위까지 끊기지 않고 이어지고, 글자가 또렷하도록 위쪽만 아주 살짝 어둡게 한다. 아래 선도 없앤다.
-   (세로로 스크롤하는 화면 — 동작 줄이기·자바스크립트 없음 — 에서는 위의 불투명한 머리글을 그대로 쓴다.) */
-html[data-motion="full"] body:has(.journey) header {
-  background: linear-gradient(to bottom, rgba(5, 8, 20, 0.55), rgba(5, 8, 20, 0));
-  /* 그라데이션이 투명해진 아래 선 자리까지 이어지게 한다(기본값이면 선 자리에 그라데이션 첫 줄이 반복되어 어두운 줄이 생긴다). */
-  background-origin: border-box;
-  border-bottom-color: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 
 /* 스크롤바는 모든 화면에서 숨긴다. 스크롤 자체(휠·터치·키보드·드래그)는 그대로 동작한다. */
