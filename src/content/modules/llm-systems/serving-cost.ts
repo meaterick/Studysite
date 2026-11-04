@@ -175,9 +175,9 @@ INT8은 눈금 간격이 약 0.01로 좁아 복원값이 원래 값과 거의 �
     },
   ],
   references: [
-    { title: "Kwon et al. (2023) — Efficient Memory Management for Large Language Model Serving with PagedAttention", url: "https://arxiv.org/abs/2309.06180", note: "KV 캐시를 블록 단위로 관리해 처리량을 높인 vLLM의 논문(영문)" },
-    { title: "Dettmers et al. (2022) — LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale", url: "https://arxiv.org/abs/2208.07339", note: "대형 모델을 INT8로 양자화할 때 생기는 문제와 해결 방법(영문)" },
-    { title: "Hinton et al. (2015) — Distilling the Knowledge in a Neural Network", url: "https://arxiv.org/abs/1503.02531", note: "지식 증류를 제안한 논문(영문)" },
-    { title: "Sanh et al. (2019) — DistilBERT, a distilled version of BERT", url: "https://arxiv.org/abs/1910.01108", note: "증류로 BERT를 줄인 결과(영문)" },
+    { title: "Kwon et al. (2023) — Efficient Memory Management for Large Language Model Serving with PagedAttention", url: "https://arxiv.org/abs/2309.06180", note: "KV 캐시를 블록 단위로 관리해 처리량을 높인 vLLM의 논문 (영문)" },
+    { title: "Dettmers et al. (2022) — LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale", url: "https://arxiv.org/abs/2208.07339", note: "대형 모델을 INT8로 양자화할 때 생기는 문제와 해결 방법 (영문)" },
+    { title: "Hinton et al. (2015) — Distilling the Knowledge in a Neural Network", url: "https://arxiv.org/abs/1503.02531", note: "지식 증류를 제안한 논문 (영문)" },
+    { title: "Sanh et al. (2019) — DistilBERT, a distilled version of BERT", url: "https://arxiv.org/abs/1910.01108", note: "증류로 BERT를 줄인 결과 (영문)" },
   ],
 });

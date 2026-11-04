@@ -171,7 +171,7 @@ export function LoraDiagram() {
   );
 }
 
-// ───────────────────────── 6주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 추가 그림 ─────────────────────────
 
 const chip6 = (x: number, y: number, text: string, color: string, w = 64, h = 24, tint = 0.14, size = 11, weight = 700) => (
   <g key={`${x}-${y}-${text}`}>
@@ -302,7 +302,7 @@ export function BertMasking() {
 }
 
 export function EmergenceMetric() {
-  // Schaeffer et al.(2023)의 논지를 단순화한 그림. 토큰 하나의 정답률 p가 log N에 따라 매끄럽게 오른다고 가정하면,
+  // Schaeffer et al. (2023)의 논지를 단순화한 그림. 토큰 하나의 정답률 p가 log N에 따라 매끄럽게 오른다고 가정하면,
   // 답의 토큰 5개를 모두 맞혀야 1점을 주는 지표(p⁵)는 어느 크기에서 갑자기 뛰는 것처럼 보인다. 수치는 설명용 가정이다.
   const G = { left: 64, top: 22, width: 360, height: 168 };
   const sx = linear(8, 12, G.left, G.left + G.width);
@@ -312,7 +312,7 @@ export function EmergenceMetric() {
   return (
     <DiagramFrame
       title="창발은 평가 지표의 선택에서 생길 수 있다"
-      caption="토큰 하나를 맞히는 정답률 p(파랑)가 모델 크기의 로그에 따라 꾸준히 오른다고 하자. 그런데 답이 토큰 5개로 이루어져 있고 전부 맞혀야만 1점을 준다면, 점수는 p⁵(빨강)다. 작은 모델에서는 거의 0에 머물다가 어느 크기를 넘으면 가파르게 올라, 능력이 '갑자기 생긴' 것처럼 보인다. 같은 모델을 부분 점수로 재면 매끄럽게 오른다는 것이 Schaeffer et al.(2023)의 반론이다. 값은 설명을 위한 가정이다."
+      caption="토큰 하나를 맞히는 정답률 p(파랑)가 모델 크기의 로그에 따라 꾸준히 오른다고 하자. 그런데 답이 토큰 5개로 이루어져 있고 전부 맞혀야만 1점을 준다면, 점수는 p⁵(빨강)다. 작은 모델에서는 거의 0에 머물다가 어느 크기를 넘으면 가파르게 올라, 능력이 '갑자기 생긴' 것처럼 보인다. 같은 모델을 부분 점수로 재면 매끄럽게 오른다는 것이 Schaeffer et al. (2023)의 반론이다. 값은 설명을 위한 가정이다."
       viewBox="0 0 720 236"
       minWidth={560}
     >

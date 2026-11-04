@@ -144,7 +144,7 @@ Self-Attention은 $Q,K,V$ 투영 $3d^2$와 출력 투영 $W^O$ $d^2$로 $4d^2$, 
     },
   ],
   references: [
-    { title: "Kaplan et al. (2020) — Scaling Laws for Neural Language Models, 2.1절", url: "https://arxiv.org/abs/2001.08361", note: "파라미터 수와 FLOPs 계산의 표준 근사(영문)" },
-    { title: "EleutherAI — Transformer Math 101", url: "https://blog.eleuther.ai/transformer-math/", note: "학습 메모리와 연산량 계산 정리(영문)" },
+    { title: "Kaplan et al. (2020) — Scaling Laws for Neural Language Models, 2.1절", url: "https://arxiv.org/abs/2001.08361", note: "파라미터 수와 FLOPs 계산의 표준 근사 (영문)" },
+    { title: "EleutherAI — Transformer Math 101", url: "https://blog.eleuther.ai/transformer-math/", note: "학습 메모리와 연산량 계산 정리 (영문)" },
   ],
 });

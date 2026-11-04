@@ -171,9 +171,9 @@ LLM에게는 시스템 프롬프트, 사용자 질문, 문서가 모두 하나�
     },
   ],
   references: [
-    { title: "Simon Willison (2025) — The lethal trifecta for AI agents", url: "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/", note: "개인 데이터, 신뢰하지 않는 콘텐츠, 외부 경로의 조합을 정리한 글(영문)" },
-    { title: "Debenedetti et al. (2025) — Defeating Prompt Injections by Design (CaMeL)", url: "https://arxiv.org/abs/2503.18813", note: "출처 꼬리표와 정책 검사로 인젝션을 설계 수준에서 막는 방법(영문)" },
-    { title: "Beurer-Kellner et al. (2025) — Design Patterns for Securing LLM Agents against Prompt Injections", url: "https://arxiv.org/abs/2506.08837", note: "계획 후 실행, 이중 LLM 등 여섯 가지 패턴과 그 대가(영문)" },
-    { title: "Debenedetti et al. (2024) — AgentDojo", url: "https://arxiv.org/abs/2406.13352", note: "도구를 쓰는 에이전트의 인젝션 공격과 방어를 측정하는 벤치마크(영문)" },
+    { title: "Simon Willison (2025) — The lethal trifecta for AI agents", url: "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/", note: "개인 데이터, 신뢰하지 않는 콘텐츠, 외부 경로의 조합을 정리한 글 (영문)" },
+    { title: "Debenedetti et al. (2025) — Defeating Prompt Injections by Design (CaMeL)", url: "https://arxiv.org/abs/2503.18813", note: "출처 꼬리표와 정책 검사로 인젝션을 설계 수준에서 막는 방법 (영문)" },
+    { title: "Beurer-Kellner et al. (2025) — Design Patterns for Securing LLM Agents against Prompt Injections", url: "https://arxiv.org/abs/2506.08837", note: "계획 후 실행, 이중 LLM 등 여섯 가지 패턴과 그 대가 (영문)" },
+    { title: "Debenedetti et al. (2024) — AgentDojo", url: "https://arxiv.org/abs/2406.13352", note: "도구를 쓰는 에이전트의 인젝션 공격과 방어를 측정하는 벤치마크 (영문)" },
   ],
 });

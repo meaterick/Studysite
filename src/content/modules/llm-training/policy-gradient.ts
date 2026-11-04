@@ -165,8 +165,8 @@ PPO의 $\min(\rho A, \text{clip}(\rho, 1-\varepsilon, 1+\varepsilon)A)$는 좋�
     },
   ],
   references: [
-    { title: "Schulman et al. (2017) — Proximal Policy Optimization Algorithms", url: "https://arxiv.org/abs/1707.06347", note: "PPO와 클리핑 목적함수를 제안한 논문(영문)" },
-    { title: "OpenAI Spinning Up — Intro to Policy Optimization", url: "https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html", note: "정책 경사 정리와 기준값의 유도(영문)" },
-    { title: "Shao et al. (2024) — DeepSeekMath (GRPO)", url: "https://arxiv.org/abs/2402.03300", note: "묶음 평균을 기준값으로 쓰는 GRPO를 제안한 논문(영문)" },
+    { title: "Schulman et al. (2017) — Proximal Policy Optimization Algorithms", url: "https://arxiv.org/abs/1707.06347", note: "PPO와 클리핑 목적함수를 제안한 논문 (영문)" },
+    { title: "OpenAI Spinning Up — Intro to Policy Optimization", url: "https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html", note: "정책 경사 정리와 기준값의 유도 (영문)" },
+    { title: "Shao et al. (2024) — DeepSeekMath (GRPO)", url: "https://arxiv.org/abs/2402.03300", note: "묶음 평균을 기준값으로 쓰는 GRPO를 제안한 논문 (영문)" },
   ],
 });

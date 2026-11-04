@@ -241,7 +241,7 @@ export function LearningCurves() {
   );
 }
 
-// ───────────────────────── 2주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 추가 그림 ─────────────────────────
 
 export function DataPrepPipeline() {
   const P = "dpp";
@@ -1521,76 +1521,6 @@ const classMark = (x: number, y: number, c: number, r = 5.5) =>
     <rect x={x - r} y={y - r} width={2 * r} height={2 * r} fill={colors.orange} stroke="var(--surface-card)" strokeWidth={1} />
   );
 
-export function KnnVote() {
-  // 본문 예제: 클래스 0 A(1,1)·B(2,1)·C(1,2), 클래스 1 D(5,5)·E(6,5)·F(5,6), 새 샘플 X(2,2), K = 3.
-  const G = { left: 46, top: 26, width: 210, height: 210 };
-  const sx = linear(0, 7, G.left, G.left + G.width);
-  const sy = linear(0, 7, G.top + G.height, G.top);
-  const X = [2, 2];
-  const pts = [
-    { n: "A", p: [1, 1], c: 0, dx: -9, dy: 4, a: "end" as const },
-    { n: "B", p: [2, 1], c: 0, dx: 9, dy: 4, a: "start" as const },
-    { n: "C", p: [1, 2], c: 0, dx: -9, dy: 4, a: "end" as const },
-    { n: "D", p: [5, 5], c: 1, dx: -9, dy: 4, a: "end" as const },
-    { n: "E", p: [6, 5], c: 1, dx: 9, dy: 4, a: "start" as const },
-    { n: "F", p: [5, 6], c: 1, dx: -9, dy: 4, a: "end" as const },
-  ].map((q) => ({ ...q, d: Math.hypot(q.p[0] - X[0], q.p[1] - X[1]) }));
-  const ranked = [...pts].sort((a, b) => a.d - b.d || a.n.localeCompare(b.n));
-  const r3 = ranked[2].d;
-  const bx = linear(0, 5, 432, 622);
-  return (
-    <DiagramFrame
-      title="KNN(K = 3): 가장 가까운 세 이웃의 다수결"
-      caption="본문 예제의 여섯 점과 새 샘플 X(2, 2)다. X에서 각 점까지 유클리드 거리를 재어 가까운 순으로 정렬하면 B(1.000), C(1.000), A(1.414)가 가장 가까운 세 점이다(점선 원 안). 셋 모두 클래스 0이므로 다수결로 X는 클래스 0이 된다. 학습 단계에서는 학습 데이터를 저장하기만 하고, 거리 계산은 예측할 때 한다."
-      viewBox="0 0 720 262"
-      minWidth={580}
-    >
-      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 1, 2, 3, 4, 5, 6, 7]} yTicks={[0, 1, 2, 3, 4, 5, 6, 7]} />
-      <circle cx={sx(X[0])} cy={sy(X[1])} r={sx(r3) - sx(0)} fill={colors.violet} fillOpacity={0.07} stroke={colors.violet} strokeWidth={1.4} strokeDasharray="5 3" />
-      {ranked.map((q, i) => (
-        <line key={q.n} x1={sx(X[0])} y1={sy(X[1])} x2={sx(q.p[0])} y2={sy(q.p[1])} stroke={i < 3 ? colors.violet : inkMuted} strokeWidth={i < 3 ? 1.6 : 1} strokeDasharray={i < 3 ? undefined : "3 3"} opacity={i < 3 ? 0.9 : 0.6} />
-      ))}
-      {pts.map((q) => (
-        <g key={q.n}>
-          {classMark(sx(q.p[0]), sy(q.p[1]), q.c)}
-          <text x={sx(q.p[0]) + q.dx} y={sy(q.p[1]) + q.dy} textAnchor={q.a} fontSize={11} fontWeight={800} fill={q.c === 0 ? colors.blue : colors.orange}>
-            {q.n}
-          </text>
-        </g>
-      ))}
-      <path d={starPath(sx(X[0]), sy(X[1]), 8)} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={1} />
-      <text x={sx(X[0]) + 10} y={sy(X[1]) - 9} fontSize={11} fontWeight={800} fill={colors.violet} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
-        X (2, 2)
-      </text>
-      <text x={310} y={26} fontSize={12} fontWeight={800} fill={ink}>
-        X까지의 거리 순위
-      </text>
-      <rect x={302} y={36} width={404} height={84} rx={8} fill={colors.violet} fillOpacity={0.07} stroke={colors.violet} strokeOpacity={0.5} />
-      {ranked.map((q, i) => {
-        const y = 56 + i * 27 + (i >= 3 ? 8 : 0);
-        return (
-          <g key={q.n}>
-            <text x={312} y={y + 4} fontSize={11} fontWeight={700} fill={inkSecondary}>
-              {i + 1}
-            </text>
-            <text x={330} y={y + 4} fontSize={11} fontWeight={800} fill={ink}>
-              {`${q.n} (${q.p[0]}, ${q.p[1]})`}
-            </text>
-            {classMark(406, y, q.c, 5)}
-            <rect x={bx(0)} y={y - 6} width={bx(q.d) - bx(0)} height={12} rx={3} fill={i < 3 ? colors.violet : inkMuted} fillOpacity={i < 3 ? 0.55 : 0.35} />
-            <text x={bx(q.d) + 6} y={y + 4} fontSize={10.5} fontWeight={700} fill={ink} fontFamily={mono}>
-              {q.d.toFixed(3)}
-            </text>
-          </g>
-        );
-      })}
-      <text x={504} y={248} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet}>
-        K = 3: B, C, A 모두 클래스 0 → X는 클래스 0
-      </text>
-    </DiagramFrame>
-  );
-}
-
 export function KnnKEffect() {
   // 겹치는 두 클래스(시드 고정, 클래스 0이 32개·클래스 1이 28개)에 K = 1, 9, 60을 적용한 결정 영역. 새 데이터 정확도는 같은 분포에서 뽑은 600개로 잰다.
   const rand = seeded(17);
@@ -2032,7 +1962,7 @@ export function PcaCumulative() {
   return (
     <DiagramFrame
       title="주성분 개수는 누적 설명 비율로 고른다 (유방암 데이터, 특성 30개)"
-      caption="본문 코드의 결과다. 막대는 표준화한 뒤 각 주성분이 설명하는 분산의 비율, 선은 앞에서부터 더한 누적 비율이다. PC1이 44%, PC2까지 63%를 설명하고, 처음 10개가 95% 선을 넘는다. 30차원을 10차원으로 줄여도 분산의 95%가 남는다는 뜻이다. 오른쪽: 표준화하지 않으면 값이 큰 몇 개 특성(면적 등)의 분산이 나머지를 압도해 PC1 하나가 98%를 설명하는 것처럼 보인다. 단위 때문에 생긴 착시이므로 PCA 앞에는 표준화를 둔다."
+      caption="본문 코드의 결과다. 막대는 표준화한 뒤 각 주성분이 설명하는 분산의 비율, 선은 앞에서부터 더한 누적 비율이다. PC1이 44%, PC2까지 63%를 설명하고, 처음 10개가 95% 선을 넘는다. 30차원을 10차원으로 줄여도 분산의 95%가 남는다는 뜻이다. 오른쪽: 표준화하지 않으면 값이 큰 몇 개 특성(면적 등)의 분산이 전체 분산의 대부분을 차지해 PC1 하나가 98%를 설명하는 것처럼 보인다. 이 결과는 특성의 단위에서 생긴 것이므로 PCA 앞에는 표준화를 둔다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -2078,7 +2008,7 @@ export function PcaCumulative() {
           </g>
         );
       })}
-      <Lines x={486} y={196} lines={["단위가 큰 특성 하나가", "첫 주성분을 독차지한다"]} size={10.5} anchor="start" color={inkSecondary} />
+      <Lines x={486} y={196} lines={["값이 큰 특성 몇 개가", "첫 주성분을 결정한다"]} size={10.5} anchor="start" color={inkSecondary} />
     </DiagramFrame>
   );
 }

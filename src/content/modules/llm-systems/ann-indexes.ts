@@ -233,9 +233,9 @@ bi-encoder(임베딩 검색)는 질문과 문서를 따로 벡터로 만들어 �
     },
   ],
   references: [
-    { title: "FAISS — Guidelines to choose an index", url: "https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index", note: "규모와 메모리에 따른 인덱스 선택, IVF 칸 수의 근거(영문)" },
-    { title: "Malkov & Yashunin (2016) — HNSW", url: "https://arxiv.org/abs/1603.09320", note: "HNSW를 제안한 논문(영문)" },
-    { title: "Pinecone — Hierarchical Navigable Small Worlds (HNSW)", url: "https://www.pinecone.io/learn/series/faiss/hnsw/", note: "HNSW의 층 구조를 그림으로 설명한 글(영문)" },
-    { title: "Nogueira & Cho (2019) — Passage Re-ranking with BERT", url: "https://arxiv.org/abs/1901.04085", note: "BERT cross-encoder로 재순위화 성능을 크게 높인 논문(영문)" },
+    { title: "FAISS — Guidelines to choose an index", url: "https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index", note: "규모와 메모리에 따른 인덱스 선택, IVF 칸 수의 근거 (영문)" },
+    { title: "Malkov & Yashunin (2016) — HNSW", url: "https://arxiv.org/abs/1603.09320", note: "HNSW를 제안한 논문 (영문)" },
+    { title: "Pinecone — Hierarchical Navigable Small Worlds (HNSW)", url: "https://www.pinecone.io/learn/series/faiss/hnsw/", note: "HNSW의 층 구조를 그림으로 설명한 글 (영문)" },
+    { title: "Nogueira & Cho (2019) — Passage Re-ranking with BERT", url: "https://arxiv.org/abs/1901.04085", note: "BERT cross-encoder로 재순위화 성능을 크게 높인 논문 (영문)" },
   ],
 });

@@ -171,7 +171,7 @@ Recall@k가 높다면 검색은 정답 조각을 가져온 것이므로 생성 �
     },
   ],
   references: [
-    { title: "Weaviate — Evaluation Metrics for Search and Recommendation Systems", url: "https://weaviate.io/blog/retrieval-evaluation-metrics", note: "Recall, MRR, nDCG를 예제로 비교한 글(영문)" },
-    { title: "Es et al. (2023) — RAGAS: Automated Evaluation of Retrieval Augmented Generation", url: "https://arxiv.org/abs/2309.15217", note: "검색과 생성을 나눠 평가하는 RAG 평가 지표(영문)" },
+    { title: "Weaviate — Evaluation Metrics for Search and Recommendation Systems", url: "https://weaviate.io/blog/retrieval-evaluation-metrics", note: "Recall, MRR, nDCG를 예제로 비교한 글 (영문)" },
+    { title: "Es et al. (2023) — RAGAS: Automated Evaluation of Retrieval Augmented Generation", url: "https://arxiv.org/abs/2309.15217", note: "검색과 생성을 나눠 평가하는 RAG 평가 지표 (영문)" },
   ],
 });

@@ -208,8 +208,8 @@ API 방식은 초기 인프라 비용이 없고 토큰 사용량에 비례해 �
     },
   ],
   references: [
-    { title: "vLLM 문서", url: "https://docs.vllm.ai/", note: "PagedAttention 기반 LLM 서빙 엔진의 문서(영문)" },
-    { title: "Ollama", url: "https://ollama.com/", note: "개인 컴퓨터에서 공개 LLM을 실행하는 도구(영문)" },
-    { title: "Chip Huyen — Building A Generative AI Platform", url: "https://huyenchip.com/2024/07/25/genai-platform.html", note: "가드레일, 캐시, 라우터, 관측 가능성 등 LLM 서비스의 구성 요소를 정리한 글(영문)" },
+    { title: "vLLM 문서", url: "https://docs.vllm.ai/", note: "PagedAttention 기반 LLM 서빙 엔진의 문서 (영문)" },
+    { title: "Ollama", url: "https://ollama.com/", note: "개인 컴퓨터에서 공개 LLM을 실행하는 도구 (영문)" },
+    { title: "Chip Huyen — Building A Generative AI Platform", url: "https://huyenchip.com/2024/07/25/genai-platform.html", note: "가드레일, 캐시, 라우터, 관측 가능성 등 LLM 서비스의 구성 요소를 정리한 글 (영문)" },
   ],
 });

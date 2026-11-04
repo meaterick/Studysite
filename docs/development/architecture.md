@@ -7,8 +7,8 @@
 - Next.js 16 (App Router, Server Actions, Turbopack)
 - TypeScript, Tailwind CSS 4
 - 데이터는 서버의 `DATA_DIR`(기본 `data/`)에 둡니다. 계정·학습 기록·과제 제출과 채점·채팅·운영 설정은 SQLite DB
-  `aegis.db`에, 과제 작업 공간 초안은 `drafts/<사용자 id>/<주차 slug>.json`에, 제출본(`notebook-v<N>.json`)과 첨부 파일은
-  `uploads/<제출 id>/`에 저장합니다. 자세한 내용은 [데이터 저장소와 백업](../operations/data-and-backups.md)을 참고하세요.
+  `aegis.db`에, 과제 작업 공간 초안은 `drafts/<사용자 id>/<과제 키>.json`에, 제출본(`notebook-v<N>.json`)과 첨부 파일은
+  `uploads/<제출 id>/`에 저장합니다. 자세한 내용은 [데이터 저장소](../operations/data.md)를 참고하세요.
   계정을 삭제하면 해당 사용자의 학습 기록, 초안, 대화, 제출물이 함께 삭제됩니다.
   첨부 파일은 최대 3개·각 5MB·합계 9MB이며, 제출자 본인과 관리자만 내려받을 수 있습니다.
 - 브라우저 실행 코드는 Pyodide(웹 워커)로 실행됩니다. 학습 자료의 코드 셀은 하나의 이름공간을, 과제 작업 공간은 과제마다 별도의 이름공간을 씁니다.
@@ -18,28 +18,32 @@
   사이트 전체 Content-Security-Policy(`next.config.ts`). 제출 기록(과제 화면·채점 화면)은 최신 제출본의 작업 공간만 바로 그리고,
   이전 제출본의 작업 공간은 펼칠 때 그 버전 하나만 받아 온다(`/api/submissions/[id]/notebooks/[version]`). 제출이 쌓여도 화면 하나의 비용이 늘지 않는다.
   운영자가 스터디원의 제출본을 다시 실행해도 그 코드가 운영자 권한으로 사이트에 요청하지 못하도록, 워커는 Pyodide CDN 외의 네트워크 요청·스크립트 로드·하위 워커 생성이 막혀 있습니다(`public/pyodide-worker.js`, `next.config.ts`의 워커 CSP).
-  서술형 답안의 작성 중 초안 같은 개인 편의 상태만 브라우저 localStorage에 남고, 진도·과제 초안·제출은 서버에 저장됩니다.
+  서술형 답안과 백지 복습의 작성 중 초안 같은 개인 편의 상태만 브라우저 localStorage에 남고, 진도·과제 초안·제출은 서버에 저장됩니다.
   코딩 실습에서 작성한 코드는 학습 자료 코드 셀처럼 브라우저 IndexedDB에만 저장되고, 서버에는 채점 결과(통과 항목 수)와 힌트 사용 기록만 남습니다.
 
+## 콘텐츠가 화면이 되는 과정
 
+1. 모듈 원본(`src/content/modules/<slug>/`)은 `defineModule`·`defineLesson`·`defineExercises`·`defineAssignment`(`src/content/kit.ts`)로 작성한 상수입니다. 본문은 `md` 태그, 파이썬 코드는 `py` 태그로 써서 백슬래시를 그대로 둡니다.
+2. `src/content/course.ts`가 빌드 때 원본을 화면용 구조로 바꿉니다. 모듈 번호("2-3", "X-1")를 붙이고, 본문을 블록으로 파싱하며(`src/content/markdown.ts`), `[[lesson:id]]` 참조를 "모듈 번호 + 레슨 제목" 링크로 바꾸고, 본문 분량과 문항 수로 예상 학습 시간을 계산합니다. 레슨 사이의 선수관계는 개념의 선수관계(`src/content/curriculum/concepts.ts`)에서 계산합니다.
+3. 진행 규칙(레슨 완료, 모듈 완료, 진행 방식)은 `src/lib/study.ts` 한곳에 있어 학습자 화면, 서버 액션, 운영자 통계가 같은 함수를 씁니다.
+4. 정답·해설·모범답안·모범 코드·채점 참고는 서버에만 있고, 학습자가 공개 조건을 만족했을 때만 내려보냅니다.
 
 ## 파일의 역할과 배치 기준
 
 | 위치 | 역할 | 편집 기준 |
 | --- | --- | --- |
 | `src/app/` | App Router 페이지·레이아웃·API·아이콘 | Next.js 파일 규약에 따라 유지 |
-| `src/components/` | 공통 UI와 assignment/chat/diagrams/lab/security 등 기능별 UI | 재사용 UI는 공통, 기능 전용 UI는 해당 하위 폴더 |
-| `src/content/weeks/` | 주차 메타·학습 본문·서술형 문항·백지공부 | 학습 목차의 원본 |
-| `src/content/sections/` | 단계 구분·목표·확인 문제·참고 자료 | 본문 단계 ID와 1:1 대응 |
-| `src/content/labs/` | TODO 실습·추가 퀴즈·과제 자동 테스트·심화 문제 | 주차와 단계 ID로 연결 |
-| `src/content/assignments/` | 제출 과제 항목·코드/답안 셀·루브릭 | 저장된 셀 ID 보존 |
-| `src/content/operator/` | 운영 가이드·품질 기록 | 관리자 화면에서 사용 |
+| `src/components/` | 공통 UI와 assignment/chat/diagrams/lab/lesson/module/progress/security 등 기능별 UI | 재사용 UI는 공통, 기능 전용 UI는 해당 하위 폴더 |
+| `src/content/modules/<slug>/` | 모듈 하나: `index.ts`(목표 문제·학습 목표·레슨 순서·백지 복습), 레슨 파일(본문·확인 문제·출력 예측·서술형·참고 자료), `labs/`(코딩 실습), `assignment.ts`(과제) | 레슨 id·문항 key·과제 키·셀 id는 저장된 기록과 연결되므로 바꾸지 않음 |
+| `src/content/curriculum/` | 트랙, 80개 개념과 선수관계, 기본 일정, 예전 주소 대응표 | 개념 id는 안정 키 |
+| `src/content/course.ts`, `markdown.ts`, `kit.ts`, `tiers.ts`, `types.ts` | 화면용 구조 생성·조회, 본문 파서, 작성 도우미, 레슨 구분, 타입 | 콘텐츠 원본과 화면 사이의 경계 |
+| `src/content/operator/` | 운영 가이드 | 관리자 화면에서 사용 |
 | `src/lib/` | 인증·DB·학습·과제·보안 등 서버/공용 로직 | 기존 import와 서버/클라이언트 경계를 지킴 |
 | `src/instrumentation.ts`, `src/proxy.ts` | 시작 시 계측과 요청 경계 | 프레임워크 진입점 |
-| `public/images/` | 브랜드·OAuth 로고·주차별 교육 이미지 | URL을 사용하는 외부 설정도 고려 |
+| `public/images/` | 브랜드·OAuth 로고와 레슨에 쓰는 교육 이미지(로그인한 사용자만 열람) | URL을 사용하는 외부 설정도 고려 |
 | `public/pyodide-worker.js` | 격리된 브라우저 Python 실행 | 실행 시간·네트워크 제한 유지 |
 | `scripts/content/` | 콘텐츠 검증·실습 검증·참조 과제 | npm 명령으로 실행 |
-| `scripts/docs/` | 커리큘럼 목차 생성·문서 링크 검사 | 원본과 문서의 동기화 보장 |
+| `scripts/docs/` | 커리큘럼 문서(`docs/curriculum/`) 생성·문서 링크 검사 | 원본과 문서의 동기화 보장 |
 | `scripts/security/` | 격리 벤치마크·HTTP 스모크 검사 | 운영 데이터와 분리 |
 | `scripts/deploy/` | 배포·nginx·로그 회전·호스트 수집기 | 배포 워크플로와 연결 |
 | `tests/security/` | TypeScript·Python 보안 회귀 검사 | 테스트 코드는 실행 스크립트와 분리 |

@@ -165,8 +165,8 @@ print(drops, max(drops, key=drops.get))
     },
   ],
   references: [
-    { title: "Papers with Code — Machine Learning Reproducibility Checklist", url: "https://github.com/paperswithcode/releasing-research-code", note: "재현 가능한 연구 코드를 공개하기 위한 점검표(영문)" },
-    { title: "Google Research — Deep Learning Tuning Playbook", url: "https://github.com/google-research/tuning_playbook", note: "실험을 체계적으로 설계하고 비교하는 방법(영문)" },
-    { title: "Karpathy — A Recipe for Training Neural Networks", url: "https://karpathy.github.io/2019/04/25/recipe/", note: "기준 모델에서 시작해 한 번에 하나씩 바꾸는 학습 절차(영문)" },
+    { title: "Papers with Code — Machine Learning Reproducibility Checklist", url: "https://github.com/paperswithcode/releasing-research-code", note: "재현 가능한 연구 코드를 공개하기 위한 점검표 (영문)" },
+    { title: "Google Research — Deep Learning Tuning Playbook", url: "https://github.com/google-research/tuning_playbook", note: "실험을 체계적으로 설계하고 비교하는 방법 (영문)" },
+    { title: "Karpathy — A Recipe for Training Neural Networks", url: "https://karpathy.github.io/2019/04/25/recipe/", note: "기준 모델에서 시작해 한 번에 하나씩 바꾸는 학습 절차 (영문)" },
   ],
 });

@@ -209,8 +209,8 @@ ANN은 벡터를 미리 클러스터로 묶거나(IVF) 그래프로 연결해 �
     },
   ],
   references: [
-    { title: "Reimers & Gurevych (2019) — Sentence-BERT", url: "https://arxiv.org/abs/1908.10084", note: "문장 하나를 벡터 하나로 바꿔 코사인 유사도로 비교하는 문장 임베딩 모델(영문)" },
-    { title: "Cormack et al. (2009) — Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods", url: "https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf", note: "RRF를 제안한 논문(영문)" },
-    { title: "Robertson & Zaragoza (2009) — The Probabilistic Relevance Framework: BM25 and Beyond", url: "https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf", note: "BM25 공식의 유도와 변형(영문)" },
+    { title: "Reimers & Gurevych (2019) — Sentence-BERT", url: "https://arxiv.org/abs/1908.10084", note: "문장 하나를 벡터 하나로 바꿔 코사인 유사도로 비교하는 문장 임베딩 모델 (영문)" },
+    { title: "Cormack et al. (2009) — Reciprocal Rank Fusion outperforms Condorcet and individual Rank Learning Methods", url: "https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf", note: "RRF를 제안한 논문 (영문)" },
+    { title: "Robertson & Zaragoza (2009) — The Probabilistic Relevance Framework: BM25 and Beyond", url: "https://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf", note: "BM25 공식의 유도와 변형 (영문)" },
   ],
 });

@@ -1,4 +1,4 @@
-import { defineLesson, md, py } from "../../kit";
+import { defineLesson, md } from "../../kit";
 import exercises from "./labs/modules-environments";
 
 export default defineLesson({

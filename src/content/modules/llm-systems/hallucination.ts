@@ -162,7 +162,7 @@ bigram 모델은 바로 앞 단어 하나만 보고 다음 단어를 고른다. 
     },
   ],
   references: [
-    { title: "Kalai et al. (2025) — Why Language Models Hallucinate", url: "https://arxiv.org/abs/2509.04664", note: "환각의 통계적 원인과 추측에 유리한 평가 방식을 분석한 논문(영문)" },
-    { title: "Huang et al. (2023) — A Survey on Hallucination in Large Language Models", url: "https://arxiv.org/abs/2311.05232", note: "환각의 유형과 완화책을 정리한 조사 논문(영문)" },
+    { title: "Kalai et al. (2025) — Why Language Models Hallucinate", url: "https://arxiv.org/abs/2509.04664", note: "환각의 통계적 원인과 추측에 유리한 평가 방식을 분석한 논문 (영문)" },
+    { title: "Huang et al. (2023) — A Survey on Hallucination in Large Language Models", url: "https://arxiv.org/abs/2311.05232", note: "환각의 유형과 완화책을 정리한 조사 논문 (영문)" },
   ],
 });

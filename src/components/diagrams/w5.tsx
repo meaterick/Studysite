@@ -275,7 +275,7 @@ export function PositionalWaves() {
   );
 }
 
-// ───────────────────────── 5주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 추가 그림 ─────────────────────────
 
 const chip = (x: number, y: number, text: string, color: string, w = 64, h = 26, tint = 0.14, size = 12) => (
   <g key={`${x}-${y}-${text}`}>

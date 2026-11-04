@@ -177,9 +177,9 @@ InfoNCE는 행 $i$마다 '이미지 $i$의 짝은 캡션 $N$개 중 무엇인가
     },
   ],
   references: [
-    { title: "Oord et al. (2018) — Representation Learning with Contrastive Predictive Coding", url: "https://arxiv.org/abs/1807.03748", note: "InfoNCE 손실과 상호정보량 하한을 제시한 논문(영문)" },
-    { title: "Karpukhin et al. (2020) — Dense Passage Retrieval", url: "https://arxiv.org/abs/2004.04906", note: "in-batch negatives와 BM25의 어려운 오답으로 검색 임베딩을 학습한 논문(영문)" },
-    { title: "Wang & Liu (2021) — Understanding the Behaviour of Contrastive Loss", url: "https://arxiv.org/abs/2012.09740", note: "온도가 어려운 오답에 대한 벌점을 조절한다는 분석(영문)" },
-    { title: "Poole et al. (2019) — On Variational Bounds of Mutual Information", url: "https://arxiv.org/abs/1905.06922", note: "InfoNCE 하한이 $\\ln N$을 넘지 못하는 이유와 다른 추정량의 비교(영문)" },
+    { title: "Oord et al. (2018) — Representation Learning with Contrastive Predictive Coding", url: "https://arxiv.org/abs/1807.03748", note: "InfoNCE 손실과 상호정보량 하한을 제시한 논문 (영문)" },
+    { title: "Karpukhin et al. (2020) — Dense Passage Retrieval", url: "https://arxiv.org/abs/2004.04906", note: "in-batch negatives와 BM25의 어려운 오답으로 검색 임베딩을 학습한 논문 (영문)" },
+    { title: "Wang & Liu (2021) — Understanding the Behaviour of Contrastive Loss", url: "https://arxiv.org/abs/2012.09740", note: "온도가 어려운 오답에 대한 벌점을 조절한다는 분석 (영문)" },
+    { title: "Poole et al. (2019) — On Variational Bounds of Mutual Information", url: "https://arxiv.org/abs/1905.06922", note: "InfoNCE 하한이 $\\ln N$을 넘지 못하는 이유와 다른 추정량의 비교 (영문)" },
   ],
 });

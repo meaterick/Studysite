@@ -177,8 +177,8 @@ print(hist[1:][-2:], hist[1:][-0:])
     },
   ],
   references: [
-    { title: "Model Context Protocol 공식 문서", url: "https://modelcontextprotocol.io/introduction", note: "MCP의 클라이언트·서버 구조와 예제(영문)" },
-    { title: "OWASP Top 10 for LLM Applications", url: "https://genai.owasp.org/llm-top-10/", note: "프롬프트 인젝션, 과도한 권한(Excessive Agency) 등 LLM 응용의 대표적인 보안 위험(영문)" },
-    { title: "Greshake et al. (2023) — Not what you've signed up for: Indirect Prompt Injection", url: "https://arxiv.org/abs/2302.12173", note: "간접 프롬프트 인젝션을 체계적으로 분석한 논문(영문)" },
+    { title: "Model Context Protocol 공식 문서", url: "https://modelcontextprotocol.io/introduction", note: "MCP의 클라이언트·서버 구조와 예제 (영문)" },
+    { title: "OWASP Top 10 for LLM Applications", url: "https://genai.owasp.org/llm-top-10/", note: "프롬프트 인젝션, 과도한 권한(Excessive Agency) 등 LLM 응용의 대표적인 보안 위험 (영문)" },
+    { title: "Greshake et al. (2023) — Not what you've signed up for: Indirect Prompt Injection", url: "https://arxiv.org/abs/2302.12173", note: "간접 프롬프트 인젝션을 체계적으로 분석한 논문 (영문)" },
   ],
 });

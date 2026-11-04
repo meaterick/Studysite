@@ -130,7 +130,7 @@ Transformer는 문장의 모든 토큰을 self-attention으로 한 번에 처리
 
 $$x_p = E[t_p] + PE(p)$$
 
-원 논문(Vaswani 외, 2017)의 **사인파 위치 인코딩**은 위치 $p$의 $2i$번째와 $2i+1$번째 성분을 다음과 같이 정한다.
+원 논문(Vaswani et al., 2017)의 **사인파 위치 인코딩**은 위치 $p$의 $2i$번째와 $2i+1$번째 성분을 다음과 같이 정한다.
 
 $$PE(p)_{2i} = \sin\!\left(\frac{p}{10000^{2i/d}}\right), \qquad PE(p)_{2i+1} = \cos\!\left(\frac{p}{10000^{2i/d}}\right)$$
 

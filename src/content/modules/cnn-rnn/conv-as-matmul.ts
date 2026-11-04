@@ -55,7 +55,7 @@ print("반복문 결과와 같은가?", np.allclose(out_matmul, out_loop))
 
 ### depthwise separable convolution
 
-표준 $3\times3$ 합성곱은 공간 방향의 결합($3\times3$ 이웃)과 채널 방향의 결합(모든 입력 채널)을 한 번에 계산한다. MobileNet(Howard 외, 2017)은 이것을 두 단계로 나눈다. ① **depthwise**: 채널마다 $3\times3$ 필터를 하나씩 따로 적용한다(채널끼리 결합하지 않는다). ② **pointwise**: $1\times1$ 합성곱으로 채널만 결합한다. 파라미터는 $K^2C_{in}C_{out}$에서 $K^2C_{in} + C_{in}C_{out}$으로 줄고, 비율은 대략 $\frac{1}{C_{out}} + \frac{1}{K^2}$이다. $K = 3$이면 8~9배 가까이 줄어든다. 표현력은 조금 줄지만 휴대폰에서 실시간으로 실행되는 모델(MobileNet, EfficientNet)의 기본 구성 요소가 되었다. 공간 방향과 채널 방향의 결합을 나누는 방식은 Transformer에서 attention이 토큰 사이의 정보를, MLP가 채널 사이의 정보를 결합하는 구조와도 같다.
+표준 $3\times3$ 합성곱은 공간 방향의 결합($3\times3$ 이웃)과 채널 방향의 결합(모든 입력 채널)을 한 번에 계산한다. MobileNet(Howard et al., 2017)은 이것을 두 단계로 나눈다. ① **depthwise**: 채널마다 $3\times3$ 필터를 하나씩 따로 적용한다(채널끼리 결합하지 않는다). ② **pointwise**: $1\times1$ 합성곱으로 채널만 결합한다. 파라미터는 $K^2C_{in}C_{out}$에서 $K^2C_{in} + C_{in}C_{out}$으로 줄고, 비율은 대략 $\frac{1}{C_{out}} + \frac{1}{K^2}$이다. $K = 3$이면 8~9배 가까이 줄어든다. 표현력은 조금 줄지만 휴대폰에서 실시간으로 실행되는 모델(MobileNet, EfficientNet)의 기본 구성 요소가 되었다. 공간 방향과 채널 방향의 결합을 나누는 방식은 Transformer에서 attention이 토큰 사이의 정보를, MLP가 채널 사이의 정보를 결합하는 구조와도 같다.
 
 [[diagram:depthwise-separable]]
 `,

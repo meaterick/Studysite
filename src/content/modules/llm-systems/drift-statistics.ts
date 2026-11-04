@@ -169,8 +169,8 @@ PSI는 표본에서 잰 구간 비율로 계산하므로 분포가 같아도 표
     },
   ],
   references: [
-    { title: "Lipton, Wang & Smola (2018) — Detecting and Correcting for Label Shift with Black Box Predictors", url: "https://arxiv.org/abs/1802.03916", note: "BBSE를 제안한 논문(영문)" },
-    { title: "Rabanser, Günnemann & Lipton (2019) — Failing Loudly: An Empirical Study of Methods for Detecting Dataset Shift", url: "https://arxiv.org/abs/1810.11953", note: "차원 축소, 두 표본 검정, 다중 검사 보정을 비교한 드리프트 감지 연구(영문)" },
-    { title: "Benjamini & Hochberg (1995) — Controlling the False Discovery Rate", url: "https://www.jstor.org/stable/2346101", note: "다중 검사에서 거짓 발견 비율을 통제하는 방법(영문)" },
+    { title: "Lipton, Wang & Smola (2018) — Detecting and Correcting for Label Shift with Black Box Predictors", url: "https://arxiv.org/abs/1802.03916", note: "BBSE를 제안한 논문 (영문)" },
+    { title: "Rabanser, Günnemann & Lipton (2019) — Failing Loudly: An Empirical Study of Methods for Detecting Dataset Shift", url: "https://arxiv.org/abs/1810.11953", note: "차원 축소, 두 표본 검정, 다중 검사 보정을 비교한 드리프트 감지 연구 (영문)" },
+    { title: "Benjamini & Hochberg (1995) — Controlling the False Discovery Rate", url: "https://www.jstor.org/stable/2346101", note: "다중 검사에서 거짓 발견 비율을 통제하는 방법 (영문)" },
   ],
 });

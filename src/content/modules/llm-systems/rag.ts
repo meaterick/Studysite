@@ -49,7 +49,7 @@ for i, c in enumerate(chunk(demo, size=30, overlap=10)):    # 결과를 확인�
 \`\`\`image
 src: /images/week7/lost-in-the-middle.png
 alt: 가로축은 정답이 든 문서의 위치(1번째~20번째), 세로축은 정확도인 꺾은선 그래프. 1번째에서 약 76%로 가장 높고 가운데(10번째 근처)에서 약 54%로 가장 낮다가 20번째에서 약 63%로 다시 오르는 U자 모양이며, 문서 없이 답한 경우의 정확도(약 56%)가 빨간 점선으로 표시되어 있다.
-caption: Liu et al.(2023)의 실험이다. 질문의 답이 든 문서 하나와 무관한 문서 19개를 함께 넣고, 답이 든 문서의 위치만 1번째부터 20번째까지 바꿨다. 맨 앞에 두면 정확도가 약 76%, 맨 뒤에 두면 약 63%지만, 가운데(10번째 근처)에 두면 약 54%로, 문서 없이 답하게 했을 때(빨간 점선, 약 56%)보다도 낮다. 입력이 길수록 가운데에 놓인 근거는 잘 활용되지 않으므로, 필요한 조각만 골라 앞쪽에 두는 것이 좋다.
+caption: Liu et al. (2023)의 실험이다. 질문의 답이 든 문서 하나와 무관한 문서 19개를 함께 넣고, 답이 든 문서의 위치만 1번째부터 20번째까지 바꿨다. 맨 앞에 두면 정확도가 약 76%, 맨 뒤에 두면 약 63%지만, 가운데(10번째 근처)에 두면 약 54%로, 문서 없이 답하게 했을 때(빨간 점선, 약 56%)보다도 낮다. 입력이 길수록 가운데에 놓인 근거는 잘 활용되지 않으므로, 필요한 조각만 골라 앞쪽에 두는 것이 좋다.
 credit: Liu et al., "Lost in the Middle: How Language Models Use Long Contexts" (TACL 2024), Figure 1, arXiv:2307.03172
 width: 900
 height: 845
@@ -211,7 +211,7 @@ RAG는 근거 조각을 프롬프트에 넣을 뿐 생성 과정 자체를 바�
     },
   ],
   references: [
-    { title: "Lewis et al. (2020) — Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", url: "https://arxiv.org/abs/2005.11401", note: "RAG를 제안한 논문(영문)" },
-    { title: "Liu et al. (2023) — Lost in the Middle: How Language Models Use Long Contexts", url: "https://arxiv.org/abs/2307.03172", note: "긴 입력의 가운데에 놓인 정보를 잘 활용하지 못하는 현상을 측정한 논문(영문)" },
+    { title: "Lewis et al. (2020) — Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", url: "https://arxiv.org/abs/2005.11401", note: "RAG를 제안한 논문 (영문)" },
+    { title: "Liu et al. (2023) — Lost in the Middle: How Language Models Use Long Contexts", url: "https://arxiv.org/abs/2307.03172", note: "긴 입력의 가운데에 놓인 정보를 잘 활용하지 못하는 현상을 측정한 논문 (영문)" },
   ],
 });

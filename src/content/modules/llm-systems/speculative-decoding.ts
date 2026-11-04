@@ -145,8 +145,8 @@ $$\frac{1 - 0.8^{5}}{(1 - 0.8)(4 \times 0.05 + 1)} = \frac{3.36}{1.2} = 2.8$$
     },
   ],
   references: [
-    { title: "Leviathan et al. (2023) — Fast Inference from Transformers via Speculative Decoding", url: "https://arxiv.org/abs/2211.17192", note: "투기적 디코딩을 제안한 논문(영문)" },
-    { title: "Chen et al. (2023) — Accelerating Large Language Model Decoding with Speculative Sampling", url: "https://arxiv.org/abs/2302.01318", note: "수락-거절 규칙의 증명(영문)" },
-    { title: "Cai et al. (2024) — Medusa", url: "https://arxiv.org/abs/2401.10774", note: "여러 토큰을 예측하는 출력층을 추가한 변형(영문)" },
+    { title: "Leviathan et al. (2023) — Fast Inference from Transformers via Speculative Decoding", url: "https://arxiv.org/abs/2211.17192", note: "투기적 디코딩을 제안한 논문 (영문)" },
+    { title: "Chen et al. (2023) — Accelerating Large Language Model Decoding with Speculative Sampling", url: "https://arxiv.org/abs/2302.01318", note: "수락-거절 규칙의 증명 (영문)" },
+    { title: "Cai et al. (2024) — Medusa", url: "https://arxiv.org/abs/2401.10774", note: "여러 토큰을 예측하는 출력층을 추가한 변형 (영문)" },
   ],
 });

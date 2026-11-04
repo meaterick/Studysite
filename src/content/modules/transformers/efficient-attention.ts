@@ -8,7 +8,7 @@ export default defineLesson({
   goal: "최댓값을 빼는 안전한 softmax와 온라인 softmax 갱신식을 유도하고 구현하며, FlashAttention이 GPU 메모리 계층에서 HBM 읽기·쓰기를 줄여 빨라지는 이유와 한계를 설명한다.",
   why: "LLM의 문맥 길이와 학습·추론 속도는 attention의 메모리 사용량에 크게 좌우된다. PyTorch의 `scaled_dot_product_attention`과 대부분의 LLM 서빙 엔진이 FlashAttention 계열의 방법을 쓰므로, 그 원리를 알아야 긴 문맥의 비용을 추정하고 서빙 비용([[lesson:serving-cost]])을 이해할 수 있다.",
   body: md`
-self-attention은 $n$개 토큰 사이의 $n \times n$ 점수 행렬을 만든다. 문맥이 두 배가 되면 이 행렬은 네 배가 되고, 13만 토큰 문맥이면 헤드 하나의 점수 행렬만 fp16으로 32GiB다. 그런데 현재의 LLM은 수십만 토큰의 문맥을 처리한다. 이를 가능하게 하는 방법 중 하나가 FlashAttention(Dao 외, 2022)이고, 그 바탕은 softmax를 블록 단위로 나눠 계산하는 **온라인 softmax**다. 이 레슨은 온라인 softmax를 유도하고, GPU에서 연산량보다 메모리 읽기·쓰기를 줄이는 것이 더 중요한 이유를 설명한다.
+self-attention은 $n$개 토큰 사이의 $n \times n$ 점수 행렬을 만든다. 문맥이 두 배가 되면 이 행렬은 네 배가 되고, 13만 토큰 문맥이면 헤드 하나의 점수 행렬만 fp16으로 32GiB다. 그런데 현재의 LLM은 수십만 토큰의 문맥을 처리한다. 이를 가능하게 하는 방법 중 하나가 FlashAttention(Dao et al., 2022)이고, 그 바탕은 softmax를 블록 단위로 나눠 계산하는 **온라인 softmax**다. 이 레슨은 온라인 softmax를 유도하고, GPU에서 연산량보다 메모리 읽기·쓰기를 줄이는 것이 더 중요한 이유를 설명한다.
 
 [[diagram:attention-memory-scaling]]
 

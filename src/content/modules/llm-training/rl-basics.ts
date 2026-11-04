@@ -195,7 +195,7 @@ for r in [1, 0, 1, 1]:
     },
   ],
   references: [
-    { title: "OpenAI Spinning Up — Key Concepts in RL", url: "https://spinningup.openai.com/en/latest/spinningup/rl_intro.html", note: "강화학습의 용어와 수식을 정리한 자료(영문)" },
-    { title: "Hugging Face Deep RL Course — Unit 1", url: "https://huggingface.co/learn/deep-rl-course/unit1/introduction", note: "강화학습의 기본 개념을 실습과 함께 다루는 코스. Unit 2가 Q-Learning이다(영문)" },
+    { title: "OpenAI Spinning Up — Key Concepts in RL", url: "https://spinningup.openai.com/en/latest/spinningup/rl_intro.html", note: "강화학습의 용어와 수식을 정리한 자료 (영문)" },
+    { title: "Hugging Face Deep RL Course — Unit 1", url: "https://huggingface.co/learn/deep-rl-course/unit1/introduction", note: "강화학습의 기본 개념을 실습과 함께 다루는 코스. Unit 2가 Q-Learning이다 (영문)" },
   ],
 });

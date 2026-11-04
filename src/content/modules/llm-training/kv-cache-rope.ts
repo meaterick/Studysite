@@ -207,8 +207,8 @@ RoPE는 위치 $m$의 Query를 각도 $m\theta$만큼, 위치 $n$의 Key를 각�
     },
   ],
   references: [
-    { title: "Hugging Face Transformers — Caching (KV cache)", url: "https://huggingface.co/docs/transformers/main/en/cache_explanation", note: "Transformers 라이브러리에서 KV 캐시가 동작하는 방식(영문)" },
-    { title: "EleutherAI — Rotary Embeddings: A Relative Revolution", url: "https://blog.eleuther.ai/rotary-embeddings/", note: "RoPE의 유도와 구현(영문)" },
-    { title: "Su et al. (2021) — RoFormer: Enhanced Transformer with Rotary Position Embedding", url: "https://arxiv.org/abs/2104.09864", note: "RoPE를 제안한 논문(영문)" },
+    { title: "Hugging Face Transformers — Caching (KV cache)", url: "https://huggingface.co/docs/transformers/main/en/cache_explanation", note: "Transformers 라이브러리에서 KV 캐시가 동작하는 방식 (영문)" },
+    { title: "EleutherAI — Rotary Embeddings: A Relative Revolution", url: "https://blog.eleuther.ai/rotary-embeddings/", note: "RoPE의 유도와 구현 (영문)" },
+    { title: "Su et al. (2021) — RoFormer: Enhanced Transformer with Rotary Position Embedding", url: "https://arxiv.org/abs/2104.09864", note: "RoPE를 제안한 논문 (영문)" },
   ],
 });

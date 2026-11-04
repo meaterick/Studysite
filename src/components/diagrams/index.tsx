@@ -1,3 +1,6 @@
+// 본문의 [[diagram:id]]가 가리키는 그림 레지스트리. 그림 컴포넌트는 주제별 파일에 있다
+// (w1~w8은 예전 8주 구성의 주제 묶음을 따른 파일 이름이며, 레슨의 위치와는 관계없다).
+// 새 그림은 해당 주제의 파일에 만들고 여기에 id로 등록한다. 쓰이지 않는 id는 validate:content가 알려 준다.
 import type { ComponentType } from "react";
 import {
   AiHierarchy,
@@ -21,7 +24,6 @@ import {
   ChainRuleChain,
   CriticalPoints,
   ClassObjects,
-  ExceptionFlow,
   RunningMeanTrace,
   VenvIsolation,
   GitFlow,
@@ -69,7 +71,6 @@ import {
   SpamWaffle,
   RocFiveSamples,
   R2Squares,
-  KnnVote,
   KnnKEffect,
   KnnScaling,
   NbEvidence,
@@ -323,7 +324,6 @@ import {
   MultipleTesting,
   BbseCorrection,
 } from "./w8";
-import { PhaseRoadmap, DifficultyCurve } from "./shared";
 import InteractiveGradientDescent from "./InteractiveGradientDescent";
 import InteractiveBiasVariance from "./InteractiveBiasVariance";
 import InteractiveConv from "./InteractiveConv";
@@ -333,7 +333,6 @@ import InteractiveThreshold from "./InteractiveThreshold";
 
 export const DIAGRAMS: Record<string, ComponentType> = {
   "class-objects": ClassObjects,
-  "exception-flow": ExceptionFlow,
   "running-mean-trace": RunningMeanTrace,
   "venv-isolation": VenvIsolation,
   "git-flow": GitFlow,
@@ -409,7 +408,6 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "threshold-roc": InteractiveThreshold,
   "roc-five-samples": RocFiveSamples,
   "r2-squares": R2Squares,
-  "knn-vote": KnnVote,
   "knn-k-effect": KnnKEffect,
   "knn-scaling": KnnScaling,
   "nb-evidence": NbEvidence,
@@ -653,6 +651,4 @@ export const DIAGRAMS: Record<string, ComponentType> = {
   "ablation-bars": AblationBars,
   "seed-paired": SeedPaired,
   "paper-timeline": PaperTimeline,
-  "phase-roadmap": PhaseRoadmap,
-  "difficulty-curve": DifficultyCurve,
 };

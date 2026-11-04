@@ -192,9 +192,9 @@ print({t: round(p / z, 2) for t, p in probs.items() if t in allowed})
     },
   ],
   references: [
-    { title: "Anthropic — Tool use with Claude", url: "https://docs.anthropic.com/en/docs/build-with-claude/tool-use", note: "도구 정의와 tool_use, tool_result 블록의 흐름(영문)" },
-    { title: "OpenAI — Function calling", url: "https://platform.openai.com/docs/guides/function-calling", note: "OpenAI API의 도구 호출과 구조화 출력(영문)" },
-    { title: "Tam et al. (2024) — Let Me Speak Freely? Format Restrictions and LLM Performance", url: "https://arxiv.org/abs/2408.02442", note: "엄격한 형식 강제가 추론 성능에 미치는 영향을 측정한 논문(영문)" },
-    { title: "JSON Schema — Understanding JSON Schema", url: "https://json-schema.org/understanding-json-schema", note: "type, required, enum, minimum 등 스키마 키워드 설명(영문)" },
+    { title: "Anthropic — Tool use with Claude", url: "https://docs.anthropic.com/en/docs/build-with-claude/tool-use", note: "도구 정의와 tool_use, tool_result 블록의 흐름 (영문)" },
+    { title: "OpenAI — Function calling", url: "https://platform.openai.com/docs/guides/function-calling", note: "OpenAI API의 도구 호출과 구조화 출력 (영문)" },
+    { title: "Tam et al. (2024) — Let Me Speak Freely? Format Restrictions and LLM Performance", url: "https://arxiv.org/abs/2408.02442", note: "엄격한 형식 강제가 추론 성능에 미치는 영향을 측정한 논문 (영문)" },
+    { title: "JSON Schema — Understanding JSON Schema", url: "https://json-schema.org/understanding-json-schema", note: "type, required, enum, minimum 등 스키마 키워드 설명 (영문)" },
   ],
 });

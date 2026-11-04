@@ -156,7 +156,7 @@ $\pi^*(y) = \pi_{ref}(y)e^{r(y)/\beta}/Z$, $Z = \sum_y \pi_{ref}(y)e^{r(y)/\beta
     },
   ],
   references: [
-    { title: "Rafailov et al. (2023) — Direct Preference Optimization: Your Language Model is Secretly a Reward Model", url: "https://arxiv.org/abs/2305.18290", note: "DPO를 제안한 논문. 4절과 부록 A에 유도가 있다(영문)" },
-    { title: "Azar et al. (2023) — A General Theoretical Paradigm to Understand Learning from Human Preferences", url: "https://arxiv.org/abs/2310.12036", note: "결정적 선호에서 DPO가 과적합하는 이유와 IPO를 제시한 논문(영문)" },
+    { title: "Rafailov et al. (2023) — Direct Preference Optimization: Your Language Model is Secretly a Reward Model", url: "https://arxiv.org/abs/2305.18290", note: "DPO를 제안한 논문. 4절과 부록 A에 유도가 있다 (영문)" },
+    { title: "Azar et al. (2023) — A General Theoretical Paradigm to Understand Learning from Human Preferences", url: "https://arxiv.org/abs/2310.12036", note: "결정적 선호에서 DPO가 과적합하는 이유와 IPO를 제시한 논문 (영문)" },
   ],
 });

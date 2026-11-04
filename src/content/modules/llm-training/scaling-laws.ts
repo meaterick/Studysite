@@ -10,7 +10,7 @@ export default defineLesson({
   body: md`
 ### 멱법칙
 
-모델 크기(파라미터 수 $N$), 학습 데이터 양(토큰 수 $D$), 학습 컴퓨트($C$, FLOPs)를 늘릴 때 검증 손실이 줄어드는 정도는 실험한 범위 안에서 **멱법칙**(power law)을 따른다. 로그-로그 그래프에서 거의 직선이 된다는 것이 Kaplan et al.(2020)과 Hoffmann et al.(2022, Chinchilla)의 대규모 실험에서 관찰되었다. 작은 모델 여러 개로 지수($\alpha$, $\beta$)와 상수($A$, $B$, $E$)를 추정해 두면, 큰 모델을 학습하기 전에 그 모델의 손실을 예측하고 예산을 배분할 수 있다.
+모델 크기(파라미터 수 $N$), 학습 데이터 양(토큰 수 $D$), 학습 컴퓨트($C$, FLOPs)를 늘릴 때 검증 손실이 줄어드는 정도는 실험한 범위 안에서 **멱법칙**(power law)을 따른다. 로그-로그 그래프에서 거의 직선이 된다는 것이 Kaplan et al. (2020)과 Hoffmann et al. (2022, Chinchilla)의 대규모 실험에서 관찰되었다. 작은 모델 여러 개로 지수($\alpha$, $\beta$)와 상수($A$, $B$, $E$)를 추정해 두면, 큰 모델을 학습하기 전에 그 모델의 손실을 예측하고 예산을 배분할 수 있다.
 
 [[diagram:scaling-law-plot]]
 
@@ -21,7 +21,7 @@ export default defineLesson({
 \`\`\`image
 src: /images/week6/kaplan-power-laws.png
 alt: 로그-로그 축의 그래프 세 개. 컴퓨트, 데이터셋 크기(토큰), 파라미터 수가 늘수록 테스트 손실이 직선을 따라 줄어들며, 각각 L = (C/2.3·10⁸)^−0.050, L = (D/5.4·10¹³)^−0.095, L = (N/8.8·10¹³)^−0.076 직선이 맞춰져 있다.
-caption: Kaplan et al.(2020)의 측정 결과다. 세 그래프 모두 가로축과 세로축이 로그 눈금이고, 컴퓨트(왼쪽), 데이터 토큰 수(가운데), 파라미터 수(오른쪽)를 늘릴 때 테스트 손실이 직선, 즉 멱법칙을 따라 줄어든다. 직선의 기울기가 지수다. 파라미터의 지수는 0.076이므로 파라미터가 10배가 될 때마다 손실이 10^−0.076 ≈ 0.84배가 된다. 왼쪽의 옅은 파란 선들은 크기가 다른 모델 각각의 학습 곡선이고, 검은 선은 주어진 컴퓨트에서 가장 낮은 손실을 이은 경계다. 각 직선은 나머지 두 요인이 성능을 제한하지 않을 때의 관계다.
+caption: Kaplan et al. (2020)의 측정 결과다. 세 그래프 모두 가로축과 세로축이 로그 눈금이고, 컴퓨트(왼쪽), 데이터 토큰 수(가운데), 파라미터 수(오른쪽)를 늘릴 때 테스트 손실이 직선, 즉 멱법칙을 따라 줄어든다. 직선의 기울기가 지수다. 파라미터의 지수는 0.076이므로 파라미터가 10배가 될 때마다 손실이 10^−0.076 ≈ 0.84배가 된다. 왼쪽의 옅은 파란 선들은 크기가 다른 모델 각각의 학습 곡선이고, 검은 선은 주어진 컴퓨트에서 가장 낮은 손실을 이은 경계다. 각 직선은 나머지 두 요인이 성능을 제한하지 않을 때의 관계다.
 credit: Kaplan et al., "Scaling Laws for Neural Language Models" (2020), Figure 1, arXiv:2001.08361
 width: 1200
 height: 365
@@ -206,8 +206,8 @@ $D = 20N$을 $C = 6ND$에 대입하면 $C = 120N^2$이므로 $N = \sqrt{C/120}$,
     },
   ],
   references: [
-    { title: "Hoffmann et al. (2022) — Training Compute-Optimal Large Language Models (Chinchilla)", url: "https://arxiv.org/abs/2203.15556", note: "컴퓨트 최적 배분 D ≈ 20N을 제시한 논문. 그림 1과 표 3이 근거다(영문)" },
-    { title: "Kaplan et al. (2020) — Scaling Laws for Neural Language Models", url: "https://arxiv.org/abs/2001.08361", note: "언어 모델의 멱법칙 관계를 처음 체계적으로 측정한 논문. 그림 1이 본문 그림이다(영문)" },
-    { title: "Besiroglu et al. (2024) — Chinchilla Scaling: A replication attempt", url: "https://arxiv.org/abs/2404.10102", note: "Chinchilla 식을 다시 추정한 논문. 실습의 상수 출처다(영문)" },
+    { title: "Hoffmann et al. (2022) — Training Compute-Optimal Large Language Models (Chinchilla)", url: "https://arxiv.org/abs/2203.15556", note: "컴퓨트 최적 배분 D ≈ 20N을 제시한 논문. 그림 1과 표 3이 근거다 (영문)" },
+    { title: "Kaplan et al. (2020) — Scaling Laws for Neural Language Models", url: "https://arxiv.org/abs/2001.08361", note: "언어 모델의 멱법칙 관계를 처음 체계적으로 측정한 논문. 그림 1이 본문 그림이다 (영문)" },
+    { title: "Besiroglu et al. (2024) — Chinchilla Scaling: A replication attempt", url: "https://arxiv.org/abs/2404.10102", note: "Chinchilla 식을 다시 추정한 논문. 실습의 상수 출처다 (영문)" },
   ],
 });

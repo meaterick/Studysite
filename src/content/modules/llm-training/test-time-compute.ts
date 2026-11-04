@@ -76,7 +76,7 @@ for tpr, fpr in [(1.0, 0.0), (0.9, 0.1), (0.9, 0.5)]:
 
 ### 비용과 문제 난이도
 
-후보 $n$개를 만들면 추론 비용이 $n$배가 되고, 긴 추론을 순차적으로 생성하면 지연시간도 늘어난다([[lesson:serving-cost]]). Snell et al.(2024)은 같은 총 컴퓨트에서 작은 모델에 추론 시간 계산을 더한 방식이 쉬운 문제와 중간 난이도 문제에서는 14배 큰 모델보다 높은 정답률을 보이기도 하지만, 가장 어려운 문제에서는 큰 모델을 대신하지 못한다고 보고했다. 위의 식이 그 이유를 보여 준다. 한 번 정답률 $p$가 0에 가까운 문제에서는 다수결도 best-of-n도 정답률을 높일 수 없다. 그래서 실무에서는 문제의 난이도에 따라 추론 시간에 쓸 계산량을 정한다.
+후보 $n$개를 만들면 추론 비용이 $n$배가 되고, 긴 추론을 순차적으로 생성하면 지연시간도 늘어난다([[lesson:serving-cost]]). Snell et al. (2024)은 같은 총 컴퓨트에서 작은 모델에 추론 시간 계산을 더한 방식이 쉬운 문제와 중간 난이도 문제에서는 14배 큰 모델보다 높은 정답률을 보이기도 하지만, 가장 어려운 문제에서는 큰 모델을 대신하지 못한다고 보고했다. 위의 식이 그 이유를 보여 준다. 한 번 정답률 $p$가 0에 가까운 문제에서는 다수결도 best-of-n도 정답률을 높일 수 없다. 그래서 실무에서는 문제의 난이도에 따라 추론 시간에 쓸 계산량을 정한다.
 `,
   checks: [
     {
@@ -155,8 +155,8 @@ best-of-n에서 후보 하나가 정답이면서 통과할 확률은 $a = p\cdot
     },
   ],
   references: [
-    { title: "Wang et al. (2022) — Self-Consistency Improves Chain of Thought Reasoning in Language Models", url: "https://arxiv.org/abs/2203.11171", note: "자기일관성(다수결)을 제안한 논문(영문)" },
-    { title: "Snell et al. (2024) — Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters", url: "https://arxiv.org/abs/2408.03314", note: "추론 시간 계산의 배분과 문제 난이도의 관계를 분석한 논문(영문)" },
-    { title: "Gao et al. (2023) — Scaling Laws for Reward Model Overoptimization", url: "https://arxiv.org/abs/2210.10760", note: "best-of-n과 강화학습에서 보상 모델을 과도하게 최적화할 때의 현상을 측정한 논문(영문)" },
+    { title: "Wang et al. (2022) — Self-Consistency Improves Chain of Thought Reasoning in Language Models", url: "https://arxiv.org/abs/2203.11171", note: "자기일관성(다수결)을 제안한 논문 (영문)" },
+    { title: "Snell et al. (2024) — Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters", url: "https://arxiv.org/abs/2408.03314", note: "추론 시간 계산의 배분과 문제 난이도의 관계를 분석한 논문 (영문)" },
+    { title: "Gao et al. (2023) — Scaling Laws for Reward Model Overoptimization", url: "https://arxiv.org/abs/2210.10760", note: "best-of-n과 강화학습에서 보상 모델을 과도하게 최적화할 때의 현상을 측정한 논문 (영문)" },
   ],
 });

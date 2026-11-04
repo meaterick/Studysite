@@ -192,7 +192,7 @@ export function LethalTrifecta() {
   );
 }
 
-// ───────────────────────── 7주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 추가 그림 ─────────────────────────
 
 const chip7 = (x: number, y: number, text: string, color: string, w = 64, h = 24, tint = 0.14, size = 11, weight = 700) => (
   <g key={`${x}-${y}-${text}`}>
@@ -337,7 +337,7 @@ export function PromptAnatomy() {
 }
 
 export function CotConditioning() {
-  // Wei et al.(2022)의 그림 1과 같은 문제: 사과 23개 중 20개를 쓰고 6개를 더 샀다. 정답 9.
+  // Wei et al. (2022)의 그림 1과 같은 문제: 사과 23개 중 20개를 쓰고 6개를 더 샀다. 정답 9.
   const P = "cot";
   const q = "사과 23개 중 20개를 쓰고 6개를 더 샀다. 몇 개?";
   const steps = [
@@ -2583,7 +2583,7 @@ export function CodeDataBoundary() {
 }
 
 export function InjectionPatterns() {
-  // Beurer-Kellner et al.(2025), Debenedetti et al.(2025, CaMeL)의 세 설계 패턴.
+  // Beurer-Kellner et al. (2025), Debenedetti et al. (2025, CaMeL)의 세 설계 패턴.
   const P = "inj";
   const col = (ox: number, title: string, color: string) => (
     <text x={ox} y={22} fontSize={11.5} fontWeight={800} fill={color}>

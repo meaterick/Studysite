@@ -126,7 +126,7 @@ BERT는 입력 토큰의 일부를 가리고 원래 토큰을 예측하는 MLM�
     },
     {
       key: "d2",
-      question: "창발 능력이 무엇인지 스케일링 법칙의 손실 곡선과 비교해 설명하고, Schaeffer et al.(2023)의 반론을 평가 지표의 관점에서 쓰라.",
+      question: "창발 능력이 무엇인지 스케일링 법칙의 손실 곡선과 비교해 설명하고, Schaeffer et al. (2023)의 반론을 평가 지표의 관점에서 쓰라.",
       answer: md`
 창발 능력은 작은 모델에서 거의 나타나지 않던 과제 성능이 모델 크기가 특정 규모를 넘으면 급격히 높아지는 현상이다. 스케일링 법칙에서 손실은 모델 크기에 따라 매끄럽게 줄어들지만, 개별 과제의 성능은 불연속적으로 나타날 수 있다는 점이 다르다.
 
@@ -141,10 +141,10 @@ Schaeffer et al.은 이 불연속성의 상당 부분이 평가 지표에서 생
     },
   ],
   references: [
-    { title: "Devlin et al. (2018) — BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", url: "https://arxiv.org/abs/1810.04805", note: "MLM과 BERT를 제안한 논문(영문)" },
-    { title: "Jay Alammar — The Illustrated BERT, ELMo, and co.", url: "https://jalammar.github.io/illustrated-bert/", note: "BERT의 사전학습과 미세조정을 그림으로 설명한다(영문)" },
-    { title: "Raffel et al. (2020) — Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer (T5)", url: "https://arxiv.org/abs/1910.10683", note: "T5와 text-to-text 형식을 제안한 논문. 그림 1이 본문 그림이다(영문)" },
-    { title: "Wei et al. (2022) — Emergent Abilities of Large Language Models", url: "https://arxiv.org/abs/2206.07682", note: "창발 능력을 정의하고 사례를 정리한 논문(영문)" },
-    { title: "Schaeffer et al. (2023) — Are Emergent Abilities of Large Language Models a Mirage?", url: "https://arxiv.org/abs/2304.15004", note: "창발 능력이 평가 지표의 선택에서 생길 수 있다는 반론(영문)" },
+    { title: "Devlin et al. (2018) — BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", url: "https://arxiv.org/abs/1810.04805", note: "MLM과 BERT를 제안한 논문 (영문)" },
+    { title: "Jay Alammar — The Illustrated BERT, ELMo, and co.", url: "https://jalammar.github.io/illustrated-bert/", note: "BERT의 사전학습과 미세조정을 그림으로 설명한다 (영문)" },
+    { title: "Raffel et al. (2020) — Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer (T5)", url: "https://arxiv.org/abs/1910.10683", note: "T5와 text-to-text 형식을 제안한 논문. 그림 1이 본문 그림이다 (영문)" },
+    { title: "Wei et al. (2022) — Emergent Abilities of Large Language Models", url: "https://arxiv.org/abs/2206.07682", note: "창발 능력을 정의하고 사례를 정리한 논문 (영문)" },
+    { title: "Schaeffer et al. (2023) — Are Emergent Abilities of Large Language Models a Mirage?", url: "https://arxiv.org/abs/2304.15004", note: "창발 능력이 평가 지표의 선택에서 생길 수 있다는 반론 (영문)" },
   ],
 });

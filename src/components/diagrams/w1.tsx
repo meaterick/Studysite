@@ -312,7 +312,7 @@ export function DotProductAngle() {
   );
 }
 
-// ───────────────────────── 1주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 추가 그림 ─────────────────────────
 
 export function RulesVsMl() {
   // 같은 재료(입력·규칙·출력)의 자리가 바뀐다는 것을 색으로 보여 준다: 규칙은 주황, 정답(출력)은 파랑.
@@ -1519,7 +1519,7 @@ export function CriticalPoints() {
   );
 }
 
-// ───────────────────────── 1주차 보충 과정 그림 ─────────────────────────
+// ───────────────────────── 보충 그림 ─────────────────────────
 
 const chip1 = (x: number, y: number, text: string, color: string, w = 64, h = 24, tint = 0.14, size = 11, weight = 700, font?: string) => (
   <g key={`${x}-${y}-${text}`}>
@@ -1594,62 +1594,6 @@ export function ClassObjects() {
       </text>
       <text x={124} y={196} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
         클래스 하나 → 속성 값이 다른 인스턴스 여러 개
-      </text>
-    </DiagramFrame>
-  );
-}
-
-export function ExceptionFlow() {
-  // 본문 코드의 safe_divide와 RunningMean.result()의 raise.
-  const P = "exf";
-  const box = (x: number, y: number, w: number, lines: string[], c: string, tint = 0.1) => (
-    <g>
-      <rect x={x} y={y} width={w} height={lines.length * 15 + 12} rx={6} fill={c} fillOpacity={tint} stroke={c} strokeWidth={1.2} />
-      {lines.map((l, i) => (
-        // 앞 공백 두 칸 = 들여쓰기 한 단계 (SVG는 공백을 합쳐 버리므로 x로 민다)
-        <text key={i} x={x + 10 + ((l.length - l.trimStart().length) / 2) * 12} y={y + 18 + i * 13.8} fontSize={10.2} fill={ink}>
-          {l.trimStart()}
-        </text>
-      ))}
-    </g>
-  );
-  return (
-    <DiagramFrame
-      title="예외 처리: 오류가 나면 except로 건너뛴다"
-      caption="왼쪽: safe_divide(10, 2)는 try 블록을 끝까지 실행해 5.0을 반환한다. 가운데: safe_divide(10, 0)은 a / b에서 ZeroDivisionError가 발생하는 순간 try의 나머지를 건너뛰고 except 블록으로 넘어가, 경고를 출력하고 None을 반환한다. 프로그램은 멈추지 않는다. 오른쪽: 함수 안에서 raise로 일으킨 예외는 그 함수를 빠져나와 호출한 쪽으로 올라가고, 호출한 쪽의 try/except가 받아서 처리한다. 끝까지 잡는 곳이 없으면 그때 프로그램이 멈춘다."
-      viewBox="0 0 720 252"
-      minWidth={600}
-    >
-      <Markers prefix={P} colors={{ green: colors.green, orange: colors.orange, red: colors.red }} />
-      <text x={110} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.green}>
-        safe_divide(10, 2)
-      </text>
-      {box(20, 30, 180, ["try:", "  return a / b   → 5.0"], colors.green)}
-      <Arr x1={110} y1={74} x2={110} y2={104} color={colors.green} marker={`${P}-green`} />
-      {chip1(40, 108, "5.0 반환", colors.green, 140, 28, 0.14, 11)}
-      <text x={355} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.orange}>
-        safe_divide(10, 0)
-      </text>
-      {box(260, 30, 190, ["try:", "  return a / b   ✗ 0으로 나눔"], colors.orange)}
-      <text x={355} y={96} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.red} stroke="var(--surface-card)" strokeWidth={4} paintOrder="stroke">
-        ZeroDivisionError 발생 → 나머지를 건너뜀
-      </text>
-      <Arr x1={355} y1={74} x2={355} y2={118} color={colors.red} marker={`${P}-red`} width={1.8} />
-      {box(260, 122, 190, ["except ZeroDivisionError:", "  print(\"0으로 나눌 수 없습니다.\")", "  return None"], colors.orange)}
-      <Arr x1={355} y1={181} x2={355} y2={198} color={colors.orange} marker={`${P}-orange`} />
-      {chip1(275, 202, "None 반환, 실행은 계속", colors.orange, 160, 28, 0.14, 11)}
-      <line x1={476} y1={14} x2={476} y2={240} stroke="var(--border-hairline)" />
-      <text x={596} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
-        raise: 호출한 쪽으로 알린다
-      </text>
-      {box(494, 30, 212, ["valid_loss.result()", "  count == 0 → raise ValueError(...)"], colors.violet)}
-      <ArrPath d="M600,74 C600,96 600,104 600,118" color={colors.red} marker={`${P}-red`} width={1.8} />
-      <text x={608} y={100} fontSize={9.5} fontWeight={700} fill={colors.red}>
-        함수를 빠져나와 위로
-      </text>
-      {box(494, 122, 212, ["호출한 쪽:", "try: valid_loss.result()", "except ValueError as e:", "  print(\"처리한 오류:\", e)"], colors.violet)}
-      <text x={600} y={214} textAnchor="middle" fontSize={10} fill={inkSecondary}>
-        잡는 except가 없으면 프로그램이 멈춘다
       </text>
     </DiagramFrame>
   );

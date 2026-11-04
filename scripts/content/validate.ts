@@ -123,8 +123,14 @@ function checkImage(block: Extract<Block, { type: "image" }>, context: string) {
   if (stat.size > 700 * 1024) warn(`${context}: 이미지 용량이 큼 (${(stat.size / 1024).toFixed(0)}KB) — ${block.src}`);
 }
 
+/** 본문에서 실제로 쓰는 그림 id와 이미지 경로(쓰이지 않는 자산을 찾는 데 쓴다) */
+const usedDiagrams = new Set<string>();
+const usedImages = new Set<string>();
+
 function checkBlocks(blocks: Block[], context: string) {
   for (const b of blocks) {
+    if (b.type === "diagram") usedDiagrams.add(b.id);
+    if (b.type === "image") usedImages.add(b.src);
     if (b.type === "math") checkTex(b.tex, context);
     else if (b.type === "callout") {
       if (b.title) checkInline(b.title, context);
@@ -402,6 +408,19 @@ for (const mod of MODULES) if (mod.track !== "extension" && !scheduled.has(mod.s
 for (const mod of MODULES) if (mod.assignment && !SCHEDULE.some((w) => w.due.includes(mod.assignment!.key))) warn(`일정표: 과제 "${mod.assignment.key}"의 제출 주가 없음`);
 for (const [stage, lesson] of Object.entries(LEGACY_STAGE_LESSON)) if (!getLesson(lesson)) fail(`예전 주소 대응표: 단계 "${stage}" → 없는 레슨 "${lesson}"`);
 for (const [week, slug] of Object.entries(LEGACY_WEEK_ASSIGNMENT_MODULE)) if (!getModule(slug)?.assignment) fail(`예전 주소 대응표: ${week} → 과제가 없는 모듈 "${slug}"`);
+
+// ─── 쓰이지 않는 그림과 이미지 ──────────────────────────────────────────────
+
+for (const id of Object.keys(DIAGRAMS)) if (!usedDiagrams.has(id)) warn(`그림 "${id}"이(가) 등록되어 있지만 어느 본문에서도 쓰지 않음 — 지우거나 본문에 넣으십시오`);
+// 레슨 이미지는 public/images/week<N>/ 아래에 있다. 그 밖의 파일(브랜드·OAuth 로고)은 사이트 밖 설정에서도 쓴다.
+function imageFiles(dir: string): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? imageFiles(path.join(dir, e.name)) : [path.join(dir, e.name)]));
+}
+const imageRoot = path.join(ROOT, "public", "images");
+for (const file of imageFiles(imageRoot)) {
+  const src = "/images/" + path.relative(imageRoot, file).split(path.sep).join("/");
+  if (/^\/images\/week\d+\//.test(src) && !usedImages.has(src)) warn(`이미지 ${src}이(가) 어느 본문에서도 쓰이지 않음 — 지우거나 본문에 넣으십시오`);
+}
 
 // ─── 결과 ──────────────────────────────────────────────────────────────────
 

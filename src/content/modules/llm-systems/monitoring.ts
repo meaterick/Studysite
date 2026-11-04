@@ -247,8 +247,8 @@ print(round(float(np.sum((p - q) * np.log(p / q))), 3))
     },
   ],
   references: [
-    { title: "Google Cloud — MLOps: Continuous delivery and automation pipelines in machine learning", url: "https://cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning", note: "MLOps의 성숙도 단계와 파이프라인 구조(영문)" },
-    { title: "Made With ML — MLOps 코스", url: "https://madewithml.com/", note: "실험 추적, 테스트, 서빙을 실습으로 다루는 코스(영문)" },
-    { title: "FastAPI 공식 튜토리얼", url: "https://fastapi.tiangolo.com/tutorial/", note: "FastAPI로 API 서버를 만드는 방법(영문)" },
+    { title: "Google Cloud — MLOps: Continuous delivery and automation pipelines in machine learning", url: "https://cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning", note: "MLOps의 성숙도 단계와 파이프라인 구조 (영문)" },
+    { title: "Made With ML — MLOps 코스", url: "https://madewithml.com/", note: "실험 추적, 테스트, 서빙을 실습으로 다루는 코스 (영문)" },
+    { title: "FastAPI 공식 튜토리얼", url: "https://fastapi.tiangolo.com/tutorial/", note: "FastAPI로 API 서버를 만드는 방법 (영문)" },
   ],
 });

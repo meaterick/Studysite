@@ -11,7 +11,7 @@ export default defineLesson({
   body: md`
 ### ReAct 루프
 
-RAG는 한 번 검색한 결과를 프롬프트에 넣고 한 번 생성한다. **에이전트**(agent)는 검색과 판단을 여러 스텝에 걸쳐 반복하며, 다음 행동을 모델이 정하는 시스템이다. Yao et al.(2022)은 이 반복 구조를 **ReAct**(Reasoning + Acting)로 정리했다. 모델은 스텝마다 지금까지 쌓인 관찰(observation)을 바탕으로 추론(reasoning)을 텍스트로 생성하고, 그 결과에 따라 계산기, 검색 함수, 코드 실행기처럼 미리 정의한 도구 중 무엇을 어떤 인자로 호출할지, 또는 최종 답을 출력하고 끝낼지를 행동(action)으로 정한다. 도구가 돌려준 결과는 새 관찰로 기록되어 다음 스텝의 입력에 들어가며, 이 과정은 모델이 종료를 선택하거나 정해진 최대 스텝 수에 도달할 때까지 반복된다.
+RAG는 한 번 검색한 결과를 프롬프트에 넣고 한 번 생성한다. **에이전트**(agent)는 검색과 판단을 여러 스텝에 걸쳐 반복하며, 다음 행동을 모델이 정하는 시스템이다. Yao et al. (2022)은 이 반복 구조를 **ReAct**(Reasoning + Acting)로 정리했다. 모델은 스텝마다 지금까지 쌓인 관찰(observation)을 바탕으로 추론(reasoning)을 텍스트로 생성하고, 그 결과에 따라 계산기, 검색 함수, 코드 실행기처럼 미리 정의한 도구 중 무엇을 어떤 인자로 호출할지, 또는 최종 답을 출력하고 끝낼지를 행동(action)으로 정한다. 도구가 돌려준 결과는 새 관찰로 기록되어 다음 스텝의 입력에 들어가며, 이 과정은 모델이 종료를 선택하거나 정해진 최대 스텝 수에 도달할 때까지 반복된다.
 
 [[diagram:agent-loop]]
 
@@ -194,8 +194,8 @@ ReAct 루프가 스텝마다 다음 행동을 정한다면, Reflection은 방금
     },
   ],
   references: [
-    { title: "Yao et al. (2022) — ReAct: Synergizing Reasoning and Acting in Language Models", url: "https://arxiv.org/abs/2210.03629", note: "ReAct를 제안한 논문. 그림 1에 추론·행동·관찰의 흐름이 있다(영문)" },
-    { title: "Shinn et al. (2023) — Reflexion: Language Agents with Verbal Reinforcement Learning", url: "https://arxiv.org/abs/2303.11366", note: "결과를 텍스트로 평가해 다음 시도에 반영하는 방법(영문)" },
-    { title: "Anthropic — Building effective agents", url: "https://www.anthropic.com/engineering/building-effective-agents", note: "워크플로와 에이전트의 차이와 설계 원칙(영문)" },
+    { title: "Yao et al. (2022) — ReAct: Synergizing Reasoning and Acting in Language Models", url: "https://arxiv.org/abs/2210.03629", note: "ReAct를 제안한 논문. 그림 1에 추론·행동·관찰의 흐름이 있다 (영문)" },
+    { title: "Shinn et al. (2023) — Reflexion: Language Agents with Verbal Reinforcement Learning", url: "https://arxiv.org/abs/2303.11366", note: "결과를 텍스트로 평가해 다음 시도에 반영하는 방법 (영문)" },
+    { title: "Anthropic — Building effective agents", url: "https://www.anthropic.com/engineering/building-effective-agents", note: "워크플로와 에이전트의 차이와 설계 원칙 (영문)" },
   ],
 });

@@ -8,7 +8,7 @@ export default defineLesson({
   goal: "attention을 커널 가중평균으로 쓰고 결합법칙으로 선형 attention을 유도하며, 인과적 선형 attention이 고정 크기 상태를 가진 RNN과 같음을 구현으로 확인하고 그 대가를 설명한다.",
   why: "Mamba 같은 상태공간 모델과 게이트 선형 attention처럼 문맥 길이에 대해 선형인 모델은 긴 문맥의 비용을 줄이려는 연구의 주요 방향이다. 이 모델들이 softmax attention과 무엇을 바꾸고 무엇을 잃는지 알아야 긴 문맥 모델을 비교하고 선택할 수 있다.",
   body: md`
-FlashAttention([[lesson:efficient-attention]])은 $O(n^2)$ 연산을 빠르게 계산할 뿐 연산량을 줄이지는 않는다. 연산량을 문맥 길이에 비례하도록 줄이는 방법 중 하나가 **선형 attention**(linear attention)이다. 이 레슨은 attention을 커널 가중평균으로 쓰고, 행렬 곱의 결합법칙으로 계산 순서를 바꾸면 attention이 고정 크기 상태를 가진 RNN([[lesson:rnn]])과 같아진다는 것을 보인다(Katharopoulos 외, 2020). Mamba 같은 상태공간 모델(SSM)을 포함한 최근의 Transformer 대안 연구들이 이 관계를 바탕으로 한다.
+FlashAttention([[lesson:efficient-attention]])은 $O(n^2)$ 연산을 빠르게 계산할 뿐 연산량을 줄이지는 않는다. 연산량을 문맥 길이에 비례하도록 줄이는 방법 중 하나가 **선형 attention**(linear attention)이다. 이 레슨은 attention을 커널 가중평균으로 쓰고, 행렬 곱의 결합법칙으로 계산 순서를 바꾸면 attention이 고정 크기 상태를 가진 RNN([[lesson:rnn]])과 같아진다는 것을 보인다(Katharopoulos et al., 2020). Mamba 같은 상태공간 모델(SSM)을 포함한 최근의 Transformer 대안 연구들이 이 관계를 바탕으로 한다.
 
 ### 유사도 커널의 가중평균으로 쓴 attention
 

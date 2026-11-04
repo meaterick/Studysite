@@ -176,8 +176,8 @@ print(round(p - half, 3), round(p + half, 3))
     },
   ],
   references: [
-    { title: "Miller (2024) — Adding Error Bars to Evals", url: "https://arxiv.org/abs/2411.00640", note: "LLM 평가에 표준오차, 짝지은 비교, 반복 샘플링을 적용하는 방법(영문)" },
-    { title: "Wikipedia — Binomial proportion confidence interval", url: "https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval", note: "정규 근사(Wald)와 윌슨 구간의 비교(영문)" },
+    { title: "Miller (2024) — Adding Error Bars to Evals", url: "https://arxiv.org/abs/2411.00640", note: "LLM 평가에 표준오차, 짝지은 비교, 반복 샘플링을 적용하는 방법 (영문)" },
+    { title: "Wikipedia — Binomial proportion confidence interval", url: "https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval", note: "정규 근사(Wald)와 윌슨 구간의 비교 (영문)" },
     { title: "Wikipedia — McNemar's test", url: "https://en.wikipedia.org/wiki/McNemar%27s_test", note: "짝지은 이진 결과의 검정과 정확 이항 버전 (영문)" },
   ],
 });

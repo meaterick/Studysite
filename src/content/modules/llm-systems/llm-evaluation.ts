@@ -195,8 +195,8 @@ print(round(v1.mean(), 2), round(v2.mean(), 2), np.where((v1 == 1) & (v2 == 0))[
     },
   ],
   references: [
-    { title: "Zheng et al. (2023) — Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", url: "https://arxiv.org/abs/2306.05685", note: "LLM 채점관의 위치·길이·자기 선호 편향과 완화책을 측정한 논문(영문)" },
-    { title: "Hamel Husain — Your AI Product Needs Evals", url: "https://hamel.dev/blog/posts/evals/", note: "실무에서 평가 체계를 만드는 방법(영문)" },
-    { title: "Mazeika et al. (2024) — HarmBench: A Standardized Evaluation Framework for Automated Red Teaming and Robust Refusal", url: "https://arxiv.org/abs/2402.04249", note: "탈옥 공격의 성공률을 표준화해 측정하는 평가 체계(영문)" },
+    { title: "Zheng et al. (2023) — Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena", url: "https://arxiv.org/abs/2306.05685", note: "LLM 채점관의 위치·길이·자기 선호 편향과 완화책을 측정한 논문 (영문)" },
+    { title: "Hamel Husain — Your AI Product Needs Evals", url: "https://hamel.dev/blog/posts/evals/", note: "실무에서 평가 체계를 만드는 방법 (영문)" },
+    { title: "Mazeika et al. (2024) — HarmBench: A Standardized Evaluation Framework for Automated Red Teaming and Robust Refusal", url: "https://arxiv.org/abs/2402.04249", note: "탈옥 공격의 성공률을 표준화해 측정하는 평가 체계 (영문)" },
   ],
 });

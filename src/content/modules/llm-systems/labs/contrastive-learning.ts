@@ -71,7 +71,7 @@ def _():
     assert np.abs(num).max() > 1e-3, "손실이 S에 따라 변하지 않습니다. 손실부터 구현하십시오."
     assert np.allclose(G, num, atol=1e-6), f"최대 차이 {np.abs(G - num).max():.2e}"
 
-@test("정답 짝 점수가 압도적이면 손실 ≈ 0")
+@test("정답 짝 점수가 다른 점수보다 훨씬 크면 손실 ≈ 0")
 def _():
     assert clip_loss_grad(20 * np.eye(4))[0] < 1e-6
 

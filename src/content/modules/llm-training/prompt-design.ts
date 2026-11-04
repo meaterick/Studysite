@@ -183,10 +183,10 @@ Self-Consistency는 temperature를 0보다 크게 두고 여러 풀이를 생성
     },
   ],
   references: [
-    { title: "Anthropic — Prompt engineering overview", url: "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview", note: "명확한 지시, 예시, XML 태그 구분자, CoT를 다루는 공식 가이드(영문)" },
-    { title: "OpenAI — Prompt engineering guide", url: "https://platform.openai.com/docs/guides/prompt-engineering", note: "같은 원칙을 정리한 OpenAI의 가이드(영문)" },
-    { title: "Wei et al. (2022) — Chain-of-Thought Prompting Elicits Reasoning in Large Language Models", url: "https://arxiv.org/abs/2201.11903", note: "CoT 프롬프트를 제안한 논문. 그림 1이 본문 그림의 사과 문제다(영문)" },
-    { title: "Wang et al. (2022) — Self-Consistency Improves Chain of Thought Reasoning in Language Models", url: "https://arxiv.org/abs/2203.11171", note: "여러 CoT 풀이의 다수결로 정답률을 높인 논문(영문)" },
-    { title: "Greshake et al. (2023) — Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection", url: "https://arxiv.org/abs/2302.12173", note: "간접 프롬프트 인젝션을 체계적으로 분석한 논문(영문)" },
+    { title: "Anthropic — Prompt engineering overview", url: "https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview", note: "명확한 지시, 예시, XML 태그 구분자, CoT를 다루는 공식 가이드 (영문)" },
+    { title: "OpenAI — Prompt engineering guide", url: "https://platform.openai.com/docs/guides/prompt-engineering", note: "같은 원칙을 정리한 OpenAI의 가이드 (영문)" },
+    { title: "Wei et al. (2022) — Chain-of-Thought Prompting Elicits Reasoning in Large Language Models", url: "https://arxiv.org/abs/2201.11903", note: "CoT 프롬프트를 제안한 논문. 그림 1이 본문 그림의 사과 문제다 (영문)" },
+    { title: "Wang et al. (2022) — Self-Consistency Improves Chain of Thought Reasoning in Language Models", url: "https://arxiv.org/abs/2203.11171", note: "여러 CoT 풀이의 다수결로 정답률을 높인 논문 (영문)" },
+    { title: "Greshake et al. (2023) — Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection", url: "https://arxiv.org/abs/2302.12173", note: "간접 프롬프트 인젝션을 체계적으로 분석한 논문 (영문)" },
   ],
 });

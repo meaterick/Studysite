@@ -119,7 +119,7 @@ export function ConvChannels() {
   );
 }
 
-// ───────────────────────── 4주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 추가 그림 ─────────────────────────
 
 export function ConvPaddingStride() {
   // 본문 예제: 5×5 입력, 3×3 커널. (P, S) = (0, 1) → 3×3, (1, 1) → 5×5, (0, 2) → 2×2.
@@ -614,7 +614,7 @@ export function SanityChecks() {
 
 export function CnnDepthTimeline() {
   // ILSVRC 분류 top-5 오류율(%). 2012 AlexNet 15.3(2위 26.2), 2013 ZFNet 11.7, 2014 GoogLeNet 6.7·VGG 7.3, 2015 ResNet 3.57.
-  // 사람(숙련된 주석자) 약 5.1%는 Russakovsky et al.(2015)의 보고.
+  // 사람(숙련된 주석자) 약 5.1%는 Russakovsky et al. (2015)의 보고.
   const bars = [
     { yr: "2010", name: "", err: 28.2, depth: "얕은 모델", c: inkMuted },
     { yr: "2011", name: "", err: 25.8, depth: "얕은 모델", c: inkMuted },
