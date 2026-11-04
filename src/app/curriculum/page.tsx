@@ -266,7 +266,7 @@ export default async function CurriculumPage() {
               <li key={w.week} className="grid gap-1 py-3 text-sm sm:grid-cols-[4rem_1fr_16rem] sm:gap-4">
                 <span className="font-mono text-xs text-ink-muted">{w.week}주</span>
                 <span className="text-ink-secondary">{w.modules.map(moduleTitle).join(" · ")}</span>
-                <span className="text-xs text-ink-muted">{w.due.map((d) => (MODULES.some((m) => m.assignment?.key === d) ? assignmentTitle(d) : d)).join(" · ")}</span>
+                <span className="text-xs text-ink-muted">{[...w.due.map(assignmentTitle), ...(w.milestone ? [`캡스톤 준비: ${w.milestone}`] : [])].join(" · ")}</span>
               </li>
             ))}
           </ol>

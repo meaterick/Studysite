@@ -396,10 +396,7 @@ for (const w of SCHEDULE) {
     if (scheduled.has(slug)) fail(`일정표: 모듈 "${slug}"이(가) ${scheduled.get(slug)}주 차와 ${w.week}주 차에 중복`);
     scheduled.set(slug, w.week);
   }
-  for (const due of w.due) {
-    // 과제 키이거나, 공백이 들어간 캡스톤 중간 산출물 설명이다.
-    if (ID.test(due) && !moduleOfAssignment(due)) fail(`일정표 ${w.week}주 차: 없는 과제 키 "${due}"`);
-  }
+  for (const due of w.due) if (!moduleOfAssignment(due)) fail(`일정표 ${w.week}주 차: 없는 과제 키 "${due}"`);
 }
 for (const mod of MODULES) if (mod.track !== "extension" && !scheduled.has(mod.slug)) fail(`일정표: 모듈 "${mod.slug}"이(가) 어느 주에도 없음`);
 for (const mod of MODULES) if (mod.assignment && !SCHEDULE.some((w) => w.due.includes(mod.assignment!.key))) warn(`일정표: 과제 "${mod.assignment.key}"의 제출 주가 없음`);

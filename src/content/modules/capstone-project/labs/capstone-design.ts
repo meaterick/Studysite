@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "캡스톤용 재현 가능한 실험 뼈대: 시드 분할과 다중 시드 요약",
     prompt: md`
-
-캡스톤 「구현과 실험」에 그대로 가져다 쓸 수 있는 실험 뼈대를 만듭니다.
+캡스톤 과제의 「구현과 실험」에 그대로 쓸 수 있는 실험 뼈대를 만듭니다.
 
 1. \`seeded_split(n, test_ratio, seed)\`: \`np.random.default_rng(seed).permutation(n)\`으로 섞은 인덱스에서 앞의 \`round(n × test_ratio)\`개를 테스트, 나머지를 학습으로 해 \`(train_idx, test_idx)\`를 돌려줍니다. 같은 시드면 항상 같은 분할입니다.
 2. \`run_seeds(fn, seeds)\`: 시드마다 \`fn(seed)\`를 실행해 \`{"scores", "mean", "std"}\`(표준편차는 \`ddof=1\`)를 돌려줍니다.

@@ -98,14 +98,14 @@ export default async function OperatorHome() {
                 제출:{" "}
                 {thisWeek.due
                   .map((key) => {
-                    const m = moduleOfAssignment(key);
-                    if (!m?.assignment) return key;
+                    const m = moduleOfAssignment(key)!;
                     const due = settings.dueDates[key];
-                    return `${m.code} ${m.assignment.title}${due ? ` (마감 ${formatDate(dueDateEnd(due).toISOString())})` : " (마감일 미정)"}`;
+                    return `${m.code} ${m.assignment!.title}${due ? ` (마감 ${formatDate(dueDateEnd(due).toISOString())})` : " (마감일 미정)"}`;
                   })
                   .join(", ")}
               </p>
             )}
+            {thisWeek.milestone && <p className="mt-1 text-ink-secondary">캡스톤 준비: {thisWeek.milestone}</p>}
           </div>
         )}
       </section>

@@ -222,7 +222,7 @@ export const ASSIGNMENT_FIXTURES: Record<string, Record<string, [string, string]
   "capstone": {
     "code-experiment": [
       [
-        "# baseline과 제안 방법을 같은 조건에서 비교합니다.",
+        "# 기준 모델(baseline)과 제안 방법을 같은 조건에서 비교합니다.",
         [
           "from sklearn.datasets import load_digits",
           "from sklearn.model_selection import train_test_split",

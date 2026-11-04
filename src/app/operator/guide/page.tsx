@@ -43,14 +43,15 @@ export default async function OperatorGuidePage() {
                       .join(", ")}
                   </td>
                   <td className="min-w-[10rem] text-ink-secondary">
-                    {w.due.length === 0
+                    {w.due.length === 0 && !w.milestone
                       ? "—"
-                      : w.due
-                          .map((key) => {
-                            const m = moduleOfAssignment(key);
-                            return m?.assignment ? `${m.code} ${m.assignment.title}` : key;
-                          })
-                          .join(", ")}
+                      : [
+                          ...w.due.map((key) => {
+                            const m = moduleOfAssignment(key)!;
+                            return `${m.code} ${m.assignment!.title}`;
+                          }),
+                          ...(w.milestone ? [`캡스톤 준비: ${w.milestone}`] : []),
+                        ].join(", ")}
                   </td>
                 </tr>
               ))}

@@ -150,6 +150,14 @@ export default async function ProgressPage() {
               })}
             </ul>
           )}
+          {thisWeek?.milestone && (
+            <p className="mt-3 text-sm text-ink-secondary">
+              캡스톤 준비: {thisWeek.milestone} ·{" "}
+              <Link href={lessonHref("capstone-project", "capstone-design")} className="underline decoration-[var(--border-strong)] underline-offset-4 hover:decoration-current">
+                단계별 할 일 보기
+              </Link>
+            </p>
+          )}
           {upcomingDue && (
             <p className="mt-3 text-sm text-ink-secondary">
               가장 가까운 마감: {upcomingDue.module.code} {upcomingDue.module.assignment!.title} · {upcomingDue.date.slice(5).replace("-", "/")} 23:59
