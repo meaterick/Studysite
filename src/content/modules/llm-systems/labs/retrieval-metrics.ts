@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "정답 순위로 Recall@k와 MRR 계산하기",
     prompt: md`
-
 「검색 품질 지표」의 두 지표를 정답 순위 리스트 하나로 계산합니다.
 
 1. \`rank_of(ranked, gold, top_n=None)\`: 검색 결과 순서 \`ranked\`(문서 번호 리스트)에서 정답 \`gold\`의 순위(1부터). 상위 \`top_n\`개 안에 없거나 아예 없으면 \`None\`.

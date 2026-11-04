@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "말투의 확신과 실제 정답률: ECE 계산",
     prompt: md`
-
 \`ece(conf, correct, n_bins, lo, hi)\`를 구현합니다. 확신도 구간 $[lo, hi)$을 \`n_bins\`개로 똑같이 나눈 뒤, 구간마다 $|\text{평균 확신도} - \text{실제 정답률}|$에 그 구간의 표본 비율을 곱해 더합니다(비어 있는 구간은 건너뜀). 마지막 구간은 $hi$를 포함합니다.
 
 \`novel_rate(samples, facts)\`: 생성한 문장 중 학습 문장(\`facts\`)에 없는 문장의 비율

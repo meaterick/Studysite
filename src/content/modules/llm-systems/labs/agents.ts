@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "실수를 관찰로 되돌려 주는 에이전트 루프",
     prompt: md`
-
-「에이전트 루프」의 스켈레톤은 모델이 JSON을 깨뜨리거나, 없는 도구를 부르거나, 도구가 예외를 던지면 그대로 멈춥니다. 오류를 **관찰로 되돌려 주는** \`robust_agent(goal, llm, max_steps=5)\`를 완성합니다. 반환값은 \`(최종 답 또는 "중단: 최대 스텝 초과", hist)\`입니다.
+본문의 에이전트 루프는 모델이 JSON을 깨뜨리거나, 없는 도구를 부르거나, 도구가 예외를 던지면 그대로 멈춥니다. 오류를 **관찰로 되돌려 주는** \`robust_agent(goal, llm, max_steps=5)\`를 완성합니다. 반환값은 \`(최종 답 또는 "중단: 최대 스텝 초과", hist)\`입니다.
 
 - JSON이 아니면 \`"오류: JSON 형식이 아님 …"\`
 - \`final\`이 \`null\`이 아니면 그 값을 돌려주고 끝냅니다(\`0\`이나 \`""\`도 답입니다).
@@ -45,7 +44,7 @@ def scripted(*replies):
     return lambda prompt: queue.pop(0)
 
 answer, hist = robust_agent("과제 마감 확인", scripted(
-    '과제 마감을 찾아볼게요',
+    '찾아보겠습니다',
     '{"tool": "browse", "args": "과제", "final": null}',
     '{"tool": "search", "args": "과제 마감", "final": null}',
     '{"tool": null, "args": null, "final": "일요일 23:59까지입니다."}'))
@@ -72,7 +71,7 @@ def scripted(*replies):
 @test("JSON 깨짐 → 없는 도구 → 검색 → 최종 답(4단계)")
 def _():
     ans, hist = robust_agent("과제 마감 확인", scripted(
-        '과제 마감을 찾아볼게요',
+        '찾아보겠습니다',
         '{"tool": "browse", "args": "과제", "final": null}',
         '{"tool": "search", "args": "과제 마감", "final": null}',
         '{"tool": null, "args": null, "final": "일요일 23:59까지입니다."}'))
@@ -145,7 +144,7 @@ def scripted(*replies):
     return lambda prompt: queue.pop(0)
 
 answer, hist = robust_agent("과제 마감 확인", scripted(
-    '과제 마감을 찾아볼게요',
+    '찾아보겠습니다',
     '{"tool": "browse", "args": "과제", "final": null}',
     '{"tool": "search", "args": "과제 마감", "final": null}',
     '{"tool": null, "args": null, "final": "일요일 23:59까지입니다."}'))

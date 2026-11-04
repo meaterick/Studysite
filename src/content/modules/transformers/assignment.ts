@@ -298,7 +298,7 @@ assert len(queries) >= 3, f"Query가 {len(queries)}개입니다. 직접 고른 Q
       key: "ch1",
       title: "GPT형 디코더 블록 전체 순전파",
       prompt: md`
-지금까지 만든 부품으로 **pre-norm GPT 디코더 블록**을 조립합니다.
+지금까지 만든 구성 요소로 **pre-norm GPT 디코더 블록**을 조립합니다.
 
 $$h = x + \mathrm{MHA}(\mathrm{LN}(x)),\qquad y = h + \mathrm{MLP}(\mathrm{LN}(h)),\quad \mathrm{MLP}(u) = \mathrm{ReLU}(uW_1 + b_1)W_2 + b_2$$
 

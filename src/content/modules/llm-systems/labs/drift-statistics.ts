@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "PSI = 양방향 KL, 드리프트 없을 때의 PSI, 다중 검사, BBSE",
     prompt: md`
-
 「드리프트 감지의 통계」의 계산을 직접 구현합니다.
 
 1. \`psi_parts(p, q)\`: 구간 비율 배열 \`p\`(학습), \`q\`(운영)로 \`(PSI, KL(p‖q), KL(q‖p))\`를 돌려줍니다. 비율은 모두 0보다 크다고 가정합니다.
@@ -62,7 +61,7 @@ def _():
     est = bbse_binary(pred.mean(), 0.85, 0.10)
     assert abs(est - y.mean()) < 0.01 and abs(pred.mean() - y.mean()) > 0.03, (est, y.mean(), pred.mean())
 `,
-    hints: ["`p, q = np.asarray(p, float), np.asarray(q, float)` 다음 `np.sum((p - q) * np.log(p / q))`, `np.sum(p * np.log(p / q))`, `np.sum(q * np.log(q / p))`. 첫째가 나머지 둘의 합이 되는지 확인하십시오.", "`null_psi`는 `(bins - 1) * (1 / n + 1 / m)`, `familywise`는 `1 - (1 - alpha) ** k`. 본페로니 보정(`alpha / k`)을 넣으면 경보 확률이 원래의 `alpha` 근처로 돌아옵니다.", "`min(1.0, max(0.0, (mu - fpr) / (tpr - fpr)))`. $\\mu = \\text{TPR}\\,q + \\text{FPR}(1-q)$를 $q$에 대해 푼 것으로, 7주차 심화의 채점관 보정과 같은 식입니다."],
+    hints: ["`p, q = np.asarray(p, float), np.asarray(q, float)` 다음 `np.sum((p - q) * np.log(p / q))`, `np.sum(p * np.log(p / q))`, `np.sum(q * np.log(q / p))`. 첫째가 나머지 둘의 합이 되는지 확인하십시오.", "`null_psi`는 `(bins - 1) * (1 / n + 1 / m)`, `familywise`는 `1 - (1 - alpha) ** k`. 본페로니 보정(`alpha / k`)을 넣으면 경보 확률이 원래의 `alpha` 근처로 돌아옵니다.", "`min(1.0, max(0.0, (mu - fpr) / (tpr - fpr)))`. $\\mu = \\text{TPR}\\,q + \\text{FPR}(1-q)$를 $q$에 대해 푼 것으로, [[lesson:eval-statistics]]의 채점관 보정과 같은 식입니다."],
     solution: py`
 import numpy as np
 

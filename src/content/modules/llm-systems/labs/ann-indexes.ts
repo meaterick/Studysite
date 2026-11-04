@@ -5,7 +5,6 @@ export default defineExercises([
     key: "ex1",
     title: "IVF 인덱스로 검색하고 nprobe에 따른 재현율·비용 재기",
     prompt: md`
-
 「실전 벡터 검색」의 IVF 인덱스를 직접 완성합니다. 문서 벡터 \`X\`(4,000개, 단위벡터), k-means로 만든 칸의 중심 \`C\`(32개), 문서마다 속한 칸 번호 \`assign\`, 질의 \`Q\`(50개)와 정답 \`exact\`(질의마다 전수 비교 상위 10개의 문서 번호)는 이미 주어져 있습니다.
 
 1. \`build_lists(assign, nlist)\`: 칸마다 그 칸에 속한 문서 번호 배열을 담은 리스트(역색인). \`lists[c]\`는 \`assign == c\`인 문서 번호들입니다.
@@ -74,7 +73,7 @@ def _():
     assert len(allids) == n and (allids == np.arange(n)).all(), "어떤 문서가 빠졌거나 두 번 들어갔습니다."
     assert all((assign[l] == c).all() for c, l in enumerate(lists))
 
-@test("칸을 모두 열면 전수 비교와 같다")
+@test("칸을 모두 탐색하면 전수 비교와 같다")
 def _():
     for q, ex in zip(Q[:10], exact[:10]):
         ids, m = ivf_search(q, 10, nlist)
@@ -86,7 +85,7 @@ def _():
     near = np.argsort(-(C @ q))[:3]
     ids, m = ivf_search(q, 10, 3)
     assert m == sum(len(lists[c]) for c in near), f"비교한 문서 {m}"
-    assert set(assign[ids]) <= set(near.tolist()), "열지 않은 칸의 문서가 결과에 들어 있습니다."
+    assert set(assign[ids]) <= set(near.tolist()), "탐색하지 않은 칸의 문서가 결과에 들어 있습니다."
     s = X[ids] @ q
     assert (np.diff(s) <= 1e-12).all(), "결과가 내적 내림차순이 아닙니다."
 

@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "GPT형 모델의 파라미터·연산량·메모리 계산기",
     prompt: md`
-
-「Transformer의 크기 계산」 단계의 셈을 함수로 만듭니다. 모든 층에 편향이 있고, MLP는 $d \to 4d \to d$, LayerNorm은 블록당 두 개($\gamma, \beta$), 마지막 LayerNorm 하나, 출력층은 토큰 임베딩과 공유(weight tying)합니다.
+본문의 파라미터 계산을 함수로 만듭니다. 모든 층에 편향이 있고, MLP는 $d \to 4d \to d$, LayerNorm은 블록당 두 개($\gamma, \beta$), 마지막 LayerNorm 하나, 출력층은 토큰 임베딩과 공유(weight tying)합니다.
 
 1. \`block_params(d)\`: 블록 하나의 파라미터 수 (attention: $Q,K,V$ 투영 + $W^O$, 편향 포함 / MLP 편향 포함 / LayerNorm 두 개)
 2. \`gpt_params(vocab, n_ctx, d, n_layers)\`: 토큰 임베딩 + 학습형 위치 임베딩 + 블록들 + 마지막 LayerNorm

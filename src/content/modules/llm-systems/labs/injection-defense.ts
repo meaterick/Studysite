@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "출처 꼬리표 전파와 정책 검사로 유출을 결정적으로 막기",
     prompt: md`
-
-「프롬프트 인젝션을 설계로 막기」의 정보 흐름 통제를 직접 구현합니다. 값은 \`Value(data, sources)\`이고, \`sources\`는 그 값을 만드는 데 쓰인 출처의 \`frozenset\`입니다.
+본문의 정보 흐름 통제를 구현합니다. 값은 \`Value(data, sources)\`이고, \`sources\`는 그 값을 만드는 데 쓰인 출처의 \`frozenset\`입니다.
 
 1. \`derive(data, *parents)\`: 부모 값들로 새 값을 만듭니다. 출처는 부모 출처의 **합집합**입니다(부모가 없으면 빈 집합).
 2. \`check_send_email(to, body)\`: 메일 발송 직전의 정책 검사로 \`"차단: …"\` 또는 \`"허용"\`을 돌려줍니다. ① 받는 사람 주소의 출처가 비어 있거나 \`TRUSTED\` 밖의 출처가 하나라도 있으면 차단합니다(출처를 모르면 막는다). ② 본문에 \`PRIVATE\` 출처가 섞여 있는데 받는 사람 주소가 \`ORG\`로 끝나지 않으면 차단합니다. 그 밖에는 허용합니다.
@@ -74,7 +73,7 @@ def _():
     outsider = Value("friend@gmail.com", frozenset({"user"}))
     assert check_send_email(outsider, leak).startswith("차단") and check_send_email(outsider, derive("안녕", bob)) == "허용"
 
-@test("guarded_send는 통과한 메일만 보내고, 치명적 삼박자를 찾는다")
+@test("guarded_send는 통과한 메일만 보내고, 치명적 3요소를 찾는다")
 def _():
     outbox = []
     r1 = guarded_send(bob, derive("요약", inbox), outbox)

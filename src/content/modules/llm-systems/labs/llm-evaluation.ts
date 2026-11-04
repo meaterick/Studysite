@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "회귀 문항 찾기, 순서 바꿔 채점하기, Cohen's κ",
     prompt: md`
-
-「평가」 단계의 회귀 확인과 채점관 점검을 함수로 만듭니다.
+본문의 회귀 확인과 채점관 점검을 함수로 만듭니다.
 
 1. \`regression_report(v1, v2)\`: 문항별 정답 여부(0/1) 두 배열에서 \`{"acc1", "acc2", "fixed", "broken"}\`. \`fixed\`는 v1에서 틀리고 v2에서 맞힌 문항 번호 리스트, \`broken\`은 그 반대(회귀)입니다.
 2. \`judge_both_orders(judge, a, b)\`: 같은 쌍을 \`judge(a, b)\`, \`judge(b, a)\` 순서로 두 번 채점합니다. \`judge\`는 먼저 제시된 답이 낫다고 보면 \`"A"\`, 아니면 \`"B"\`를 돌려줍니다. 두 판정이 같은 답을 가리키면 \`"a"\` 또는 \`"b"\`, 엇갈리면 \`None\`(판정 보류).

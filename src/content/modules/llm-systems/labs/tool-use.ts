@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "도구 인자를 JSON 스키마로 검증하고, 제약 디코딩으로 확률 재정규화하기",
     prompt: md`
-
-「도구 호출 실전」의 인자 검증과 제약 디코딩을 직접 구현합니다. 스키마는 JSON Schema의 일부(\`type\`, \`properties\`, \`required\`, \`additionalProperties\`, \`enum\`, \`minimum\`, \`maximum\`)만 씁니다.
+본문의 인자 검증과 제약 디코딩을 구현합니다. 스키마는 JSON Schema의 일부(\`type\`, \`properties\`, \`required\`, \`additionalProperties\`, \`enum\`, \`minimum\`, \`maximum\`)만 씁니다.
 
 \`validate_args(schema, args)\`는 오류 메시지 리스트를 돌려줍니다(문제가 없으면 빈 리스트). 메시지에는 문제가 된 인자 이름을 넣습니다.
 
@@ -142,8 +141,7 @@ print(constrain({"긍정": 0.30, "positive": 0.25, "부정": 0.05, "글쎄요": 
     key: "ex2",
     title: "eval 없는 계산기, 도구 허용 목록, 사람 승인",
     prompt: md`
-
-「도구 호출 실전」의 원칙대로, 「에이전트 설계와 안전」 단계에서 다룬 세 가지 보안 문제(\`eval\` 사용, 도구 결과를 통한 인젝션, 필요 이상의 권한)를 코드로 고칩니다.
+본문의 원칙대로, [[lesson:agent-design]]에서 다룬 세 가지 보안 문제(\`eval\` 사용, 도구 결과를 통한 인젝션, 필요 이상의 권한)를 코드로 고칩니다.
 
 1. \`safe_calc(expr)\`: \`eval\` 대신 \`ast.parse(expr, mode="eval")\`로 식을 파싱해 **숫자, \`+ - * / ** // %\`, 괄호, 단항 부호만** 계산합니다. 그 밖의 노드(이름, 함수 호출, 속성 접근 …), 문법 오류, 100을 넘는 지수는 모두 \`ValueError\`를 던집니다.
 2. \`call_tool(name, arg, allowed, approve)\`: 이 에이전트에 허용된 도구 집합 \`allowed\`에 없으면 \`"거부됨: 허용되지 않은 도구"\`. 위험한 도구는 \`approve(name, arg)\`가 참일 때만 실행하고, 아니면 \`"거부됨: 사람 승인 필요"\`.

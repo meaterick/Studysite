@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "작은 CLIP의 대칭 대조 손실과 기울기",
     prompt: md`
-
-「대조 학습의 수학」에서 유도한 대칭 InfoNCE 손실과 그 기울기를 직접 구현해, 보충 「멀티모달 AI」 단계에서 다룬 CLIP을 작은 규모로 학습시킵니다. \`S\`는 이미 온도로 나눈 $N \times N$ 유사도 행렬이고, 대각선 $S_{kk}$가 정답 짝입니다.
+본문에서 유도한 대칭 InfoNCE 손실과 그 기울기를 구현해, [[lesson:multimodal]]에서 다룬 CLIP을 작은 규모로 학습시킵니다. \`S\`는 이미 온도로 나눈 $N \times N$ 유사도 행렬이고, 대각선 $S_{kk}$가 정답 짝입니다.
 
 \`clip_loss_grad(S)\`는 \`(loss, G)\`를 돌려줍니다.
 - $P^{i}$: 행 방향 softmax(이미지 → 캡션), $P^{t}$: 열 방향 softmax(캡션 → 이미지)
@@ -81,7 +80,7 @@ def _():
     losses, acc = train(steps=300)
     assert losses[0] > 3.4 and losses[-1] < 0.5 and acc >= 0.8, f"손실 {losses[0]:.3f} → {losses[-1]:.3f}, 정확도 {acc:.2f}"
 `,
-    hints: ["`Pi, Pt = softmax(S, 1), softmax(S, 0)`, `idx = np.arange(N)`일 때 대각선은 `Pi[idx, idx]`입니다.", "`loss = -(np.log(Pi[idx, idx]).mean() + np.log(Pt[idx, idx]).mean()) / 2`, `G = ((Pi - np.eye(N)) + (Pt - np.eye(N))) / (2 * N)`", "cross-entropy를 logit으로 미분하면 '예측 확률 − 원핫'이 되는 3주차 결과를 두 방향에 각각 쓴 것입니다. 대각선은 $P - 1 < 0$이라 경사하강이 정답 짝 점수를 올리고, 나머지는 $P > 0$이라 내립니다."],
+    hints: ["`Pi, Pt = softmax(S, 1), softmax(S, 0)`, `idx = np.arange(N)`일 때 대각선은 `Pi[idx, idx]`입니다.", "`loss = -(np.log(Pi[idx, idx]).mean() + np.log(Pt[idx, idx]).mean()) / 2`, `G = ((Pi - np.eye(N)) + (Pt - np.eye(N))) / (2 * N)`", "cross-entropy를 logit으로 미분하면 '예측 확률 − 원핫'이 되는 softmax와 cross-entropy의 기울기(확률 − 원핫)를 두 방향에 각각 적용한 것입니다. 대각선은 $P - 1 < 0$이라 경사하강이 정답 짝 점수를 올리고, 나머지는 $P > 0$이라 내립니다."],
     solution: py`
 import numpy as np
 

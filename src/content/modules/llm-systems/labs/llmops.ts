@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "RAG 토큰 비용, 토큰 버킷 속도 제한, 개인정보 가드레일",
     prompt: md`
-
-「LLMOps」 단계의 세 가지 운영 장치를 직접 만듭니다.
+본문의 세 가지 운영 장치를 구현합니다.
 
 1. \`rag_daily_cost(k, calls=10000, system=400, question=50, chunk=500, answer=300)\`: 입력 토큰 = 시스템 프롬프트 + 질문 + 조각 $k$개, 출력 토큰 = 답변일 때 하루 비용(달러). 1회 비용은 $n_{\text{in}} p_{\text{in}} + n_{\text{out}} p_{\text{out}}$입니다.
 2. \`TokenBucket(rate, capacity)\`: 허용량이 1초에 \`rate\`개씩 \`capacity\`까지 채워지고, \`allow(now)\`는 허용량이 1 이상이면 1을 쓰고 \`True\`, 아니면 \`False\`. 처음에는 가득 차 있고 시각 0에서 시작합니다.

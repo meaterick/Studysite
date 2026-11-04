@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "투기적 디코딩의 출력 분포와 최적 초안 길이",
     prompt: md`
-
-「투기적 디코딩」 단계의 증명과 속도 계산을 코드로 확인합니다.
+본문의 증명과 속도 계산을 코드로 확인합니다.
 
 1. \`acceptance_rate(p, q)\`: $\alpha = \sum_y \min(p(y), q(y))$
 2. \`output_distribution(p, q)\`: 투기적 샘플링 한 스텝의 **정확한** 출력 분포 $q(x)\min(1, p(x)/q(x)) + (1 - \alpha)\cdot\text{잔여 분포}(x)$. 잔여 분포는 $(p - q)_+$를 정규화한 것이고, $\alpha = 1$이면(잔여가 모두 0) 둘째 항이 없습니다. $q$는 모든 토큰에 양수라고 가정합니다.

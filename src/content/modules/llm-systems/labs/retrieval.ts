@@ -5,8 +5,7 @@ export default defineExercises([
     key: "ex1",
     title: "BM25를 직접 구현하고 RRF로 Dense와 합치기",
     prompt: md`
-
-「임베딩과 벡터 검색」 단계의 Sparse 검색(BM25)과 하이브리드(RRF)를 직접 구현합니다. Dense 검색 \`dense(q)\`는 간단한 개념 벡터로 이미 주어져 있습니다.
+본문의 Sparse 검색(BM25)과 하이브리드 검색(RRF)을 구현합니다. Dense 검색 \`dense(q)\`는 간단한 개념 벡터로 이미 주어져 있습니다.
 
 1. \`idf(w)\`: $\log\left(\dfrac{N - df(w) + 0.5}{df(w) + 0.5} + 1\right)$. $df(w)$는 단어 $w$가 들어 있는 문서 수, $N$은 문서 수입니다.
 2. \`bm25(query, k1=1.5, b=0.75)\`: 문서마다 질의 단어 $w$에 대해 $\text{idf}(w) \cdot \dfrac{tf\,(k_1 + 1)}{tf + k_1\,(1 - b + b\,|d| / \text{avgdl})}$를 더한 점수 배열. $tf$는 문서 속 $w$의 등장 횟수, $|d|$는 문서 길이(토큰 수), avgdl은 평균 문서 길이입니다.
