@@ -1,14 +1,14 @@
 import "server-only";
-import { MODULES, moduleOfAssignment } from "@/content/course";
-import { lessonLabel } from "@/content/tiers";
-import { readLessonState, readRecallState, type LearningRecord } from "./learningStore";
+import { WEEKS } from "@/content/weeks";
+import { getWeekOutline } from "@/content/sections";
+import { readSectionState, readWorksheetState, type LearningRecord } from "./learningStore";
 import { listUserSubmissions } from "./submissionStore";
 import { findConversation, unreadCount } from "./chatStore";
-import { assignmentHref, reviewHref } from "./routes";
+import { sectionLabel } from "@/content/tiers";
 
-// 스터디원 한 명에게 온 피드백을 한곳에 모은다(피드백함·진도 화면·헤더 배지가 같이 쓴다).
+// 스터디원 한 명에게 온 피드백을 한곳에 모은다(피드백함·진도 대시보드·헤더 배지가 같이 쓴다).
 // - 운영자 피드백: 채점 결과, 재제출 요청, 과제별 코멘트, 운영자 채팅
-// - 복습할 것: 틀린 적 있는 확인 문제, 보완 필요로 표시한 서술형, 정답을 본 출력 예측, 보완 필요로 표시한 백지 복습 문항
+// - 복습 거리: 틀린 적 있는 확인 문제, "보완 필요"로 표시한 서술형·백지공부
 // "새 피드백"은 피드백함을 마지막으로 연 시각(record.feedbackSeenAt) 이후의 채점과 읽지 않은 채팅이다.
 
 export type FeedbackKind = "grade" | "revision" | "chat";
@@ -24,16 +24,10 @@ export function isGradeUnseen(record: LearningRecord, submissionId: string, grad
   return !(record.seenGrades ?? []).includes(gradeKey(submissionId, gradedAt));
 }
 
-/** 아직 확인하지 않은 채점 수(헤더의 피드백함 배지). 이 과정의 과제만 센다. */
-export function unseenGradeCount(userId: string, record: LearningRecord): number {
-  return listUserSubmissions(userId)
-    .filter((s) => !!moduleOfAssignment(s.assignmentKey))
-    .reduce((n, s) => n + s.grades.filter((g) => isGradeUnseen(record, s.id, g.gradedAt)).length, 0);
-}
-
 export interface FeedbackItem {
   id: string;
   kind: FeedbackKind;
+  weekNumber?: number;
   title: string;
   detail?: string;
   /** 과제별 코멘트 수(채점 결과) */
@@ -43,16 +37,17 @@ export interface FeedbackItem {
   isNew: boolean;
 }
 
-/** 모듈 하나의 복습 거리 */
-export interface ModuleReview {
-  moduleSlug: string;
-  moduleCode: string;
-  moduleTitle: string;
-  /** 다시 볼 레슨들 */
-  lessons: { lessonId: string; label: string; title: string; wrongChecks: number; recovered: number; weakAnswers: number; revealedPredicts: number }[];
-  weakRecall: number;
-  /** 아직 해결하지 않은 것의 수(정렬용) */
-  open: number;
+export interface ReviewItem {
+  weekNumber: number;
+  weekSlug: string;
+  sectionId: string;
+  /** "핵심 3" 같은 단계 이름표 */
+  sectionLabel: string;
+  sectionTitle: string;
+  wrongChecks: number;
+  /** 틀린 적 있지만 지금은 맞힌 문제 수 */
+  recovered: number;
+  weakAnswers: number;
   href: string;
 }
 
@@ -61,46 +56,22 @@ export interface MemberFeedback {
   /** 새 채점·재제출 요청 수 + 읽지 않은 채팅 메시지 수 */
   newCount: number;
   chatUnread: number;
-  review: ModuleReview[];
+  review: ReviewItem[];
+  weakWorksheet: { weekNumber: number; weekSlug: string; count: number }[];
+  /** 받은 채점 중 확인한(피드백함을 연 뒤의) 비율 계산용 */
   gradesTotal: number;
   gradesSeen: number;
 }
 
-export function moduleReview(slug: string, record: LearningRecord): ModuleReview | undefined {
-  const mod = MODULES.find((m) => m.slug === slug);
-  if (!mod) return undefined;
-  const lessons: ModuleReview["lessons"] = [];
-  for (const lesson of mod.lessons) {
-    const state = readLessonState(record, lesson.id);
-    let wrongChecks = 0;
-    let recovered = 0;
-    for (const c of lesson.checks) {
-      const s = state.checks[c.key];
-      if (s && s.wrong.length > 0) {
-        wrongChecks++;
-        if (s.correct) recovered++;
-      }
-    }
-    const weakAnswers = (lesson.descriptive ?? []).filter((d) => state.answers[d.key]?.review === "incorrect").length;
-    const revealedPredicts = (lesson.predicts ?? []).filter((p) => state.predicts[p.key]?.revealed && !state.predicts[p.key]?.correct).length;
-    if (wrongChecks + weakAnswers + revealedPredicts > 0) {
-      lessons.push({ lessonId: lesson.id, label: lessonLabel(lesson), title: lesson.title, wrongChecks, recovered, weakAnswers, revealedPredicts });
-    }
-  }
-  const weakRecall = Object.values(readRecallState(record, slug).marks).filter((m) => m === "weak").length;
-  const open = lessons.reduce((n, l) => n + l.wrongChecks - l.recovered + l.weakAnswers + l.revealedPredicts, 0) + weakRecall;
-  if (lessons.length === 0 && weakRecall === 0) return undefined;
-  return { moduleSlug: slug, moduleCode: mod.code, moduleTitle: mod.title, lessons, weakRecall, open, href: reviewHref(slug) };
-}
-
 export function memberFeedback(userId: string, record: LearningRecord): MemberFeedback {
   const items: FeedbackItem[] = [];
+  const weekBySlug = new Map(WEEKS.map((w) => [w.slug, w]));
+
   let gradesTotal = 0;
   let gradesSeen = 0;
   for (const sub of listUserSubmissions(userId)) {
-    const mod = moduleOfAssignment(sub.assignmentKey);
-    if (!mod?.assignment) continue;
-    const title = `${mod.code} ${mod.assignment.title}`;
+    const week = weekBySlug.get(sub.weekSlug);
+    if (!week) continue;
     for (const g of sub.grades) {
       gradesTotal++;
       const isNew = isGradeUnseen(record, sub.id, g.gradedAt);
@@ -109,10 +80,14 @@ export function memberFeedback(userId: string, record: LearningRecord): MemberFe
       items.push({
         id: `grade:${sub.id}:${g.gradedAt}`,
         kind: g.decision === "revision" ? "revision" : "grade",
-        title: g.decision === "revision" ? `${title} · 재제출 요청 (제출본 v${g.version})` : `${title} · ${g.score ?? "-"}/${g.maxScore}점 (제출본 v${g.version})`,
+        weekNumber: week.number,
+        title:
+          g.decision === "revision"
+            ? `${week.number}주차 과제 재제출 요청 (제출본 v${g.version})`
+            : `${week.number}주차 과제 채점 결과 ${g.score ?? "-"}/${g.maxScore}점 (제출본 v${g.version})`,
         detail: g.feedback ? g.feedback.slice(0, 240) : undefined,
         comments: comments || undefined,
-        href: assignmentHref(mod.slug),
+        href: `/weeks/${week.slug}/assignment`,
         at: g.gradedAt,
         isNew,
       });
@@ -135,9 +110,42 @@ export function memberFeedback(userId: string, record: LearningRecord): MemberFe
   }
   items.sort((a, b) => b.at.localeCompare(a.at));
 
-  const review = MODULES.map((m) => moduleReview(m.slug, record))
-    .filter((r): r is ModuleReview => !!r)
-    .sort((a, b) => b.open - a.open);
+  const review: ReviewItem[] = [];
+  const weakWorksheet: MemberFeedback["weakWorksheet"] = [];
+  for (const week of WEEKS) {
+    for (const section of getWeekOutline(week).sections) {
+      const state = readSectionState(record, week.slug, section.id);
+      let wrongChecks = 0;
+      let recovered = 0;
+      for (const c of section.meta.checks) {
+        const s = state.checks[c.id];
+        if (s && s.wrong.length > 0) {
+          wrongChecks++;
+          if (s.correct) recovered++;
+        }
+      }
+      const weakAnswers = section.meta.quizIds.filter((id) => state.answers[id]?.review === "incorrect").length;
+      if (wrongChecks > 0 || weakAnswers > 0) {
+        review.push({
+          weekNumber: week.number,
+          weekSlug: week.slug,
+          sectionId: section.id,
+          sectionLabel: sectionLabel(section),
+          sectionTitle: section.title,
+          wrongChecks,
+          recovered,
+          weakAnswers,
+          href: `/feedback/review/${week.slug}`,
+        });
+      }
+    }
+    const marks = readWorksheetState(record, week.slug).marks ?? {};
+    const weak = Object.values(marks).filter((m) => m === "weak").length;
+    if (weak > 0) weakWorksheet.push({ weekNumber: week.number, weekSlug: week.slug, count: weak });
+  }
+  // 아직 맞히지 못한 문제·보완 필요 서술형이 많은 단계부터
+  review.sort((a, b) => b.wrongChecks - b.recovered + b.weakAnswers - (a.wrongChecks - a.recovered + a.weakAnswers));
+
   const newGrades = items.filter((i) => i.kind !== "chat" && i.isNew).length;
-  return { items, newCount: newGrades + chatUnread, chatUnread, review, gradesTotal, gradesSeen };
+  return { items, newCount: newGrades + chatUnread, chatUnread, review, weakWorksheet, gradesTotal, gradesSeen };
 }

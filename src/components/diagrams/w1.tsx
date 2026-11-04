@@ -67,7 +67,7 @@ export function AiHierarchy() {
         다음 토큰 예측으로 사전학습
       </text>
       <text x={485} y={206} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-        n-gram 언어 모델 · HMM
+        n-gram 언어모델 · HMM
       </text>
       <text x={485} y={222} textAnchor="middle" fontSize={10} fill={inkSecondary}>
         (생성하지만 신경망 아님)
@@ -266,7 +266,7 @@ export function DotProductAngle() {
   return (
     <DiagramFrame
       title="내적과 각도: 방향이 얼마나 같은가"
-      caption="a·b = |a||b|cos θ. 길이가 같아도 각도에 따라 내적의 부호와 크기가 바뀐다. 첫 그림의 점선은 b를 a 방향으로 내린 정사영으로, 그 길이 |b|cos θ에 |a|를 곱한 것이 내적이다."
+      caption="a·b = |a||b|cos θ. 길이가 같아도 각도에 따라 내적의 부호와 크기가 바뀐다. 첫 그림의 점선은 b를 a 방향으로 내린 그림자(투영)로, 그 길이 |b|cos θ에 |a|를 곱한 것이 내적이다."
       viewBox="0 0 660 200"
       minWidth={480}
     >
@@ -312,7 +312,7 @@ export function DotProductAngle() {
   );
 }
 
-// ───────────────────────── 추가 그림 ─────────────────────────
+// ───────────────────────── 1주차 핵심 과정: 추가 그림 ─────────────────────────
 
 export function RulesVsMl() {
   // 같은 재료(입력·규칙·출력)의 자리가 바뀐다는 것을 색으로 보여 준다: 규칙은 주황, 정답(출력)은 파랑.
@@ -356,7 +356,7 @@ export function RulesVsMl() {
 }
 
 export function ThetaSearch() {
-  // 0-1 ai-landscape 본문 예제 그대로: 데이터 (1,2),(2,4),(3,7), 모델 fθ(x) = θx, 손실 MSE(θ) = (14θ² − 62θ + 69)/3.
+  // 「함수를 찾는 게임」 예제 그대로: 데이터 (1,2),(2,4),(3,7), 모델 fθ(x) = θx, 손실 MSE(θ) = (14θ² − 62θ + 69)/3.
   const data: [number, number][] = [
     [1, 2],
     [2, 4],
@@ -380,8 +380,8 @@ export function ThetaSearch() {
   const curve = sample(mse, 0.8, 3.4, 120).map(([t, v]) => [rx(t), ry(v)] as [number, number]);
   return (
     <DiagramFrame
-      title="후보 θ마다 손실을 계산하면 가장 잘 맞는 θ가 보인다"
-      caption="왼쪽은 데이터 세 점과 후보 직선 fθ(x) = θx이고, 오른쪽은 각 후보의 평균제곱오차(MSE)다. 보라색 점선은 최적 직선과 각 점 사이의 오차이며, 이 오차를 제곱해 평균한 값이 오른쪽 곡선의 높이다. 곡선이 가장 낮은 θ* = 31/14 ≈ 2.21이 '가장 잘 맞는 직선'의 기울기다. θ = 1에서는 곡선의 기울기가 음수이므로 θ를 키우면 손실이 줄어든다. 기울기의 반대 방향으로 θ를 반복해서 옮겨 손실이 가장 작은 곳을 찾는 방법이 경사하강법이다."
+      title="함수를 찾는 게임: 후보 θ마다 손실을 계산하면 골짜기가 보인다"
+      caption="왼쪽은 데이터 세 점과 후보 직선 fθ(x) = θx이고, 오른쪽은 각 후보의 평균제곱오차(MSE)다. 보라색 점선은 최적 직선과 각 점 사이의 오차이며, 이 오차를 제곱해 평균한 값이 오른쪽 곡선의 높이다. 곡선이 가장 낮은 θ* = 31/14 ≈ 2.21이 '가장 잘 맞는 직선'의 기울기다. θ = 1에서는 곡선의 기울기가 음수이므로 θ를 키우는 쪽이 내리막이다. 이 기울기를 따라 최저점으로 내려가는 방법이 경사하강법이다."
       viewBox="0 0 720 290"
       minWidth={540}
     >
@@ -736,7 +736,7 @@ export function LearningParadigms() {
 }
 
 export function PythonNameTags() {
-  // 변수는 객체를 가리키는 이름이다. b = a는 이름 b가 같은 리스트 객체를 가리키게 할 뿐이고, copy()는 새 리스트를 만든다.
+  // 변수 = 값(객체)에 붙인 이름표. b = a는 같은 리스트에 이름표를 하나 더 붙일 뿐이고, copy()는 새 리스트를 만든다.
   const P = "pnt";
   const cell = (x: number, y: number, v: string, isNew = false) => (
     <g key={`${x}-${y}`}>
@@ -766,8 +766,8 @@ export function PythonNameTags() {
   );
   return (
     <DiagramFrame
-      title="변수는 객체를 가리키는 이름이다: b = a는 복사가 아니다"
-      caption="위: b = a는 리스트를 복사하지 않고, 이름 b가 a와 같은 리스트 객체를 가리키게 한다. 그래서 b로 4를 추가하면 a로 보아도 바뀐 내용이 보인다. 아래: a.copy()는 내용이 같은 새 리스트 객체를 만들므로 c를 고쳐도 a는 그대로다."
+      title="변수는 상자가 아니라 이름표: b = a는 복사가 아니다"
+      caption="위: b = a는 리스트를 복사하지 않고, 같은 리스트에 b라는 이름표를 하나 더 붙인다. 그래서 b에 4를 추가하면 a에서도 바뀐 내용이 보인다. 아래: a.copy()는 내용이 같은 새 리스트를 만들므로 c를 고쳐도 a는 그대로다."
       viewBox="0 0 720 236"
       minWidth={560}
     >
@@ -1375,7 +1375,7 @@ export function ChainRuleChain() {
   return (
     <DiagramFrame
       title="연쇄법칙: 앞으로 계산하고, 뒤로 곱한다"
-      caption="위(파랑): w에서 시작해 ŷ = wx, 오차 e = ŷ − y, 손실 L = e²을 차례로 계산한다. 아래(주황): 끝에서부터 각 단계의 국소 미분(2e, 1, x)을 하나씩 곱해 나가면 ∂L/∂w = 2(wx − y)·x = −16이 된다. 기울기가 음수이므로 경사하강법은 w를 키우는 쪽으로 갱신한다. 역전파는 이 곱셈을 신경망의 모든 층에 대해 자동으로 반복한다."
+      caption="위(파랑): w에서 시작해 ŷ = wx, 오차 e = ŷ − y, 손실 L = e²을 차례로 계산한다. 아래(주황): 끝에서부터 각 단계의 국소 미분(2e, 1, x)을 하나씩 곱해 나가면 ∂L/∂w = 2(wx − y)·x = −16이 된다. 기울기가 음수이므로 w를 키우는 쪽으로 갱신한다. 3주차에 배울 역전파는 이 곱셈을 모든 층에 대해 자동으로 반복한다."
       viewBox="0 0 720 236"
       minWidth={560}
     >
@@ -1467,7 +1467,7 @@ export function CriticalPoints() {
   return (
     <DiagramFrame
       title="기울기가 0인 곳이 모두 최솟값은 아니다: 극소점과 안장점"
-      caption="왼쪽: 같은 경사하강법이라도 A에서 출발하면 주변보다만 낮은 극소점에, B에서 출발하면 전체에서 가장 낮은 최솟값에 멈춘다(화살표는 손실이 줄어드는 방향으로 이동한 경로). 오른쪽: 안장점에서는 한 방향(파랑)으로는 함수가 증가해 최솟값처럼 보이지만, 다른 방향(주황)으로는 감소한다. 두 곳 모두 기울기가 0이라 갱신이 느려지거나 멈춘다."
+      caption="왼쪽: 같은 경사하강법이라도 A에서 출발하면 주변보다만 낮은 극소점에, B에서 출발하면 전체에서 가장 낮은 최솟값에 멈춘다(화살표는 내리막을 따라간 경로). 오른쪽: 안장점에서는 한 방향(파랑)으로는 오르막이라 그릇 바닥처럼 보이지만 다른 방향(주황)으로는 내리막이다. 두 곳 모두 기울기가 0이라 갱신이 느려지거나 멈춘다."
       viewBox="0 0 720 262"
       minWidth={560}
     >
@@ -1510,16 +1510,16 @@ export function CriticalPoints() {
         기울기 0
       </text>
       <text x={proj(1, 0)[0] + 6} y={proj(1, 0)[1] - 4} fontSize={10.5} fontWeight={700} fill={colors.blue} {...halo}>
-        이 방향으로는 증가
+        이 방향은 오르막
       </text>
       <text x={proj(0, 1)[0] - 6} y={proj(0, 1)[1] + 16} textAnchor="end" fontSize={10.5} fontWeight={700} fill={colors.orange} {...halo}>
-        이 방향으로는 감소
+        이 방향은 내리막
       </text>
     </DiagramFrame>
   );
 }
 
-// ───────────────────────── 보충 그림 ─────────────────────────
+// ───────────────────────── 1주차 보충 과정 그림 ─────────────────────────
 
 const chip1 = (x: number, y: number, text: string, color: string, w = 64, h = 24, tint = 0.14, size = 11, weight = 700, font?: string) => (
   <g key={`${x}-${y}-${text}`}>
@@ -1531,12 +1531,12 @@ const chip1 = (x: number, y: number, text: string, color: string, w = 64, h = 24
 );
 
 export function ClassObjects() {
-  // 본문 코드의 Perceptron 클래스: 클래스 하나로 w, b가 다른 인스턴스를 여러 개 만든다.
+  // 본문 코드의 Perceptron 클래스: 틀(클래스) 하나로 w, b가 다른 객체를 여러 개 찍어 낸다.
   const P = "clo";
   return (
     <DiagramFrame
-      title="클래스는 속성과 메서드를 정의하고, 인스턴스는 각자의 속성 값을 가진다"
-      caption="왼쪽의 Perceptron 클래스는 인스턴스가 가질 속성(w, b)과 메서드(predict)를 정의한다. Perceptron(w=2, b=1)처럼 호출하면 __init__이 자동으로 실행되어 자기만의 w, b를 가진 인스턴스가 하나 생긴다. 같은 클래스로 만든 p와 q는 서로의 값에 영향을 주지 않는다. p.predict(3)을 호출하면 파이썬이 self 자리에 p를 넣으므로, 계산에는 p의 w와 b가 쓰인다."
+      title="클래스는 틀이고, 객체는 그 틀로 찍어 낸 것이다"
+      caption="왼쪽의 Perceptron 클래스는 '어떤 속성(w, b)을 갖고 어떤 동작(predict)을 하는가'를 적은 틀이다. Perceptron(w=2, b=1)처럼 호출하면 __init__이 자동으로 실행되어 자기만의 w, b를 가진 객체가 하나 생긴다. 같은 틀로 만든 p와 q는 서로의 값에 영향을 주지 않는다. p.predict(3)을 호출하면 파이썬이 self 자리에 p를 넣어 주므로, 계산에는 p의 w와 b가 쓰인다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -1546,7 +1546,7 @@ export function ClassObjects() {
         class Perceptron
       </text>
       <text x={224} y={42} textAnchor="end" fontSize={10} fill={inkSecondary}>
-        클래스 정의
+        틀 (설계도)
       </text>
       {[
         { y: 68, indent: 0, t: "def __init__(self, w, b):" },
@@ -1570,7 +1570,7 @@ export function ClassObjects() {
           </text>
           <rect x={292} y={o.y + 14} width={150} height={56} rx={10} fill={o.c} fillOpacity={0.12} stroke={o.c} strokeWidth={1.6} />
           <text x={304} y={o.y + 36} fontSize={11.5} fontWeight={800} fill={o.c}>
-            {o.name[0]} (인스턴스)
+            {o.name[0]} (객체)
           </text>
           <text x={304} y={o.y + 56} fontSize={11} fill={ink} fontFamily={mono}>
             {`w = ${o.w},  b = ${o.b}`}
@@ -1593,7 +1593,63 @@ export function ClassObjects() {
         self = 이 메서드를 호출한 객체 자신
       </text>
       <text x={124} y={196} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        클래스 하나 → 속성 값이 다른 인스턴스 여러 개
+        붕어빵 틀 하나로 속이 다른 붕어빵을 여러 개
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function ExceptionFlow() {
+  // 본문 코드의 safe_divide와 RunningMean.result()의 raise.
+  const P = "exf";
+  const box = (x: number, y: number, w: number, lines: string[], c: string, tint = 0.1) => (
+    <g>
+      <rect x={x} y={y} width={w} height={lines.length * 15 + 12} rx={6} fill={c} fillOpacity={tint} stroke={c} strokeWidth={1.2} />
+      {lines.map((l, i) => (
+        // 앞 공백 두 칸 = 들여쓰기 한 단계 (SVG는 공백을 합쳐 버리므로 x로 민다)
+        <text key={i} x={x + 10 + ((l.length - l.trimStart().length) / 2) * 12} y={y + 18 + i * 13.8} fontSize={10.2} fill={ink}>
+          {l.trimStart()}
+        </text>
+      ))}
+    </g>
+  );
+  return (
+    <DiagramFrame
+      title="예외 처리: 오류가 나면 except로 건너뛴다"
+      caption="왼쪽: safe_divide(10, 2)는 try 블록을 끝까지 실행해 5.0을 반환한다. 가운데: safe_divide(10, 0)은 a / b에서 ZeroDivisionError가 발생하는 순간 try의 나머지를 건너뛰고 except 블록으로 넘어가, 경고를 출력하고 None을 반환한다. 프로그램은 멈추지 않는다. 오른쪽: 함수 안에서 raise로 일으킨 예외는 그 함수를 빠져나와 호출한 쪽으로 올라가고, 호출한 쪽의 try/except가 받아서 처리한다. 끝까지 잡는 곳이 없으면 그때 프로그램이 멈춘다."
+      viewBox="0 0 720 252"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ green: colors.green, orange: colors.orange, red: colors.red }} />
+      <text x={110} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.green}>
+        safe_divide(10, 2)
+      </text>
+      {box(20, 30, 180, ["try:", "  return a / b   → 5.0"], colors.green)}
+      <Arr x1={110} y1={74} x2={110} y2={104} color={colors.green} marker={`${P}-green`} />
+      {chip1(40, 108, "5.0 반환", colors.green, 140, 28, 0.14, 11)}
+      <text x={355} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.orange}>
+        safe_divide(10, 0)
+      </text>
+      {box(260, 30, 190, ["try:", "  return a / b   ✗ 0으로 나눔"], colors.orange)}
+      <text x={355} y={96} textAnchor="middle" fontSize={10} fontWeight={700} fill={colors.red} stroke="var(--surface-card)" strokeWidth={4} paintOrder="stroke">
+        ZeroDivisionError 발생 → 나머지를 건너뜀
+      </text>
+      <Arr x1={355} y1={74} x2={355} y2={118} color={colors.red} marker={`${P}-red`} width={1.8} />
+      {box(260, 122, 190, ["except ZeroDivisionError:", "  print(\"0으로 나눌 수 없습니다.\")", "  return None"], colors.orange)}
+      <Arr x1={355} y1={181} x2={355} y2={198} color={colors.orange} marker={`${P}-orange`} />
+      {chip1(275, 202, "None 반환, 실행은 계속", colors.orange, 160, 28, 0.14, 11)}
+      <line x1={476} y1={14} x2={476} y2={240} stroke="var(--border-hairline)" />
+      <text x={596} y={18} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={colors.violet}>
+        raise: 호출한 쪽으로 알린다
+      </text>
+      {box(494, 30, 212, ["valid_loss.result()", "  count == 0 → raise ValueError(...)"], colors.violet)}
+      <ArrPath d="M600,74 C600,96 600,104 600,118" color={colors.red} marker={`${P}-red`} width={1.8} />
+      <text x={608} y={100} fontSize={9.5} fontWeight={700} fill={colors.red}>
+        함수를 빠져나와 위로
+      </text>
+      {box(494, 122, 212, ["호출한 쪽:", "try: valid_loss.result()", "except ValueError as e:", "  print(\"처리한 오류:\", e)"], colors.violet)}
+      <text x={600} y={214} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        잡는 except가 없으면 프로그램이 멈춘다
       </text>
     </DiagramFrame>
   );
@@ -1814,7 +1870,7 @@ export function BasisChange() {
   return (
     <DiagramFrame
       title="기저를 바꾸면 같은 벡터의 좌표가 바뀐다"
-      caption="빨간 화살표는 두 그림에서 똑같은 벡터 v = [3, 1]이다. 왼쪽은 표준기저 e₁ = [1, 0], e₂ = [0, 1]의 격자로 잰 것이라 v = 3e₁ + 1e₂, 좌표는 (3, 1)이다. 오른쪽은 b₁ = [1, 1], b₂ = [1, −1]로 만든 비스듬한 격자로 잰 것이라 v = 2b₁ + 1b₂, 좌표는 (2, 1)이다. 점선은 각 기저 방향으로 몇 칸 갔는지를 보여 준다. 벡터는 그대로이고 기준으로 삼는 기저만 바뀌었다. PCA와 고유벡터 분해는 데이터를 표현하기에 더 좋은 기저를 찾는 방법이다."
+      caption="빨간 화살표는 두 그림에서 똑같은 벡터 v = [3, 1]이다. 왼쪽은 표준기저 e₁ = [1, 0], e₂ = [0, 1]의 격자로 잰 것이라 v = 3e₁ + 1e₂, 좌표는 (3, 1)이다. 오른쪽은 b₁ = [1, 1], b₂ = [1, −1]로 만든 비스듬한 격자로 잰 것이라 v = 2b₁ + 1b₂, 좌표는 (2, 1)이다. 점선은 각 기저 방향으로 몇 칸 갔는지를 보여 준다. 벡터는 그대로이고 자(기저)만 바뀌었다. PCA와 고유벡터 분해는 데이터를 표현하기에 더 좋은 기저를 찾는 방법이다."
       viewBox="0 0 720 236"
       minWidth={580}
     >
@@ -1998,7 +2054,7 @@ export function InverseSingular() {
   return (
     <DiagramFrame
       title="역행렬은 변환을 되돌리고, 행렬식이 0이면 되돌릴 수 없다"
-      caption="왼쪽: A는 단위 정사각형(회색)을 오른쪽으로 민 평행사변형(파랑)으로 바꾼다. 넓이는 행렬식 1·1 − 2·0 = 1 그대로다. A⁻¹ = [[1, −2], [0, 1]]은 둘째 좌표의 2배를 다시 빼서 정확히 원래 정사각형으로 되돌린다(AA⁻¹ = I). 오른쪽: [[1, 2], [2, 4]]는 행렬식이 1·4 − 2·2 = 0이라, 정사각형 전체를 직선 y = 2x 위의 선분(빨강)으로 보낸다. 서로 다른 점이 같은 점으로 겹치므로 원래 위치를 되찾을 수 없고, 그래서 역행렬이 존재하지 않는다."
+      caption="왼쪽: A는 단위 정사각형(회색)을 오른쪽으로 민 평행사변형(파랑)으로 바꾼다. 넓이는 행렬식 1·1 − 2·0 = 1 그대로다. A⁻¹ = [[1, −2], [0, 1]]은 둘째 좌표의 2배를 다시 빼서 정확히 원래 정사각형으로 되돌린다(AA⁻¹ = I). 오른쪽: [[1, 2], [2, 4]]는 행렬식이 1·4 − 2·2 = 0이라, 정사각형 전체를 직선 y = 2x 위의 선분(빨강)으로 납작하게 만든다. 서로 다른 점이 같은 점으로 겹치므로 원래 위치를 되찾을 수 없고, 그래서 역행렬이 존재하지 않는다."
       viewBox="0 0 720 236"
       minWidth={560}
     >
@@ -2216,7 +2272,7 @@ export function NormBalls() {
   return (
     <DiagramFrame
       title="노름: L2는 직선 거리, L1은 축을 따라 간 거리"
-      caption="왼쪽: 본문 예제 a = [3, 4]다. L2 노름은 원점에서 끝점까지의 직선 거리 √(3² + 4²) = 5이고, L1 노름은 좌표축을 따라서만 움직인 거리 |3| + |4| = 7(맨해튼 거리)이다. 오른쪽: 노름이 정확히 1인 점들을 모으면 L2는 원, L1은 꼭짓점이 축 위에 있는 마름모가 된다. L2·L1 정규화는 파라미터의 노름이 커지지 않도록 제한한다. 마름모의 꼭짓점이 축 위에 있으므로 L1 정규화의 해는 일부 파라미터가 정확히 0이 되기 쉽다."
+      caption="왼쪽: 본문 예제 a = [3, 4]다. L2 노름은 원점에서 끝점까지의 직선 거리 √(3² + 4²) = 5이고, L1 노름은 좌표축을 따라서만 움직인 거리 |3| + |4| = 7(맨해튼 거리)이다. 오른쪽: 노름이 정확히 1인 점들을 모으면 L2는 원, L1은 꼭짓점이 축 위에 있는 마름모가 된다. 2주차의 L2·L1 정규화가 파라미터를 이 모양 안쪽으로 끌어당기며, 마름모의 뾰족한 꼭짓점 때문에 L1은 일부 파라미터를 정확히 0으로 만들기 쉽다."
       viewBox="0 0 720 232"
       minWidth={580}
     >
@@ -2387,7 +2443,7 @@ export function SvdSteps() {
   return (
     <DiagramFrame
       title="SVD: 어떤 행렬이든 회전 → 늘이기 → 회전"
-      caption={`전단 행렬 M = [[1, 1], [0, 1]](본문 모나리자 그림의 변환과 같은 종류)을 M = UΣVᵀ로 분해한 것이다. 단위원과 두 표준기저 벡터 e₁(파랑), e₂(주황)가 단계마다 바뀌는 모습을 보여 준다. ① Vᵀ는 원을 돌리기만 하고, ② Σ는 가로·세로 축 방향으로 특이값 ${s1.toFixed(3)}배와 ${s2.toFixed(3)}배로 늘이고 줄여 타원을 만들며, ③ U가 그 타원을 다시 돌린다. 마지막 결과는 M을 한 번에 곱한 것과 같다(e₁ → [1, 0], e₂ → [1, 1]). 특이값은 이 타원의 반축 길이이고, 큰 특이값의 방향에 데이터의 주요 구조가 담긴다.`}
+      caption={`전단 행렬 M = [[1, 1], [0, 1]](본문 모나리자 그림의 변환과 같은 종류)을 M = UΣVᵀ로 분해한 것이다. 단위원과 두 표준기저 벡터 e₁(파랑), e₂(주황)가 단계마다 어떻게 바뀌는지 따라가 보자. ① Vᵀ는 원을 돌리기만 하고, ② Σ는 가로·세로 축 방향으로 특이값 ${s1.toFixed(3)}배와 ${s2.toFixed(3)}배로 늘이고 줄여 타원을 만들며, ③ U가 그 타원을 다시 돌린다. 마지막 결과는 M을 한 번에 곱한 것과 같다(e₁ → [1, 0], e₂ → [1, 1]). 특이값은 이 타원의 반축 길이이고, 큰 특이값의 방향에 데이터의 주요 구조가 담긴다.`}
       viewBox="0 0 720 210"
       minWidth={600}
     >
@@ -2435,7 +2491,7 @@ export function LowRankApprox() {
   return (
     <DiagramFrame
       title="저랭크 근사: 큰 특이값 몇 개만 남긴다"
-      caption="본문 코드의 데이터(50 × 3, 셋째 열 = 앞 두 열의 합)다. 왼쪽은 앞 두 열을 점으로 찍은 것이고(세로를 크게 확대했다), 주황 점은 가장 큰 특이값 하나만 남긴 랭크 1 근사다. 랭크 1 근사 점들은 한 직선 위에 놓이는데, 데이터가 한 방향으로 길쭉하므로 원래 점과의 차이(회색 선)는 작다. 오른쪽: 특이값은 [28.11, 2.54, 0]이다. 셋째 값이 0이라 셋째 방향에는 정보가 없고(랭크 2), 첫째 특이값의 제곱이 특이값 제곱합의 99.2%를 차지해 랭크 1 근사의 상대 오차는 약 9%다. 이미지 압축, PCA, LoRA 모두 이 저랭크 근사를 바탕으로 한다."
+      caption="본문 코드의 데이터(50 × 3, 셋째 열 = 앞 두 열의 합)다. 왼쪽은 앞 두 열을 점으로 찍은 것이고(세로를 크게 확대했다), 주황 점은 가장 큰 특이값 하나만 남긴 rank-1 근사다. rank-1 근사 점들은 한 직선 위에 놓이는데, 데이터가 한 방향으로 길쭉하므로 원래 점과의 차이(회색 선)는 작다. 오른쪽: 특이값은 [28.11, 2.54, 0]이다. 셋째 값이 0이라 셋째 방향에는 정보가 없고(rank 2), 첫째 특이값이 '에너지'(특이값 제곱)의 99.2%를 담아 rank-1 근사의 상대 오차는 약 9%에 그친다. 이미지 압축, PCA, LoRA 모두 이 저랭크 근사를 바탕으로 한다."
       viewBox="0 0 720 222"
       minWidth={580}
     >
@@ -2695,7 +2751,7 @@ export function KlDirection() {
   return (
     <DiagramFrame
       title="KL 발산의 방향에 따라 근사 분포의 모양이 달라진다"
-      caption="봉우리가 둘인 분포 p(회색)에 정규분포 q 하나를 맞춘다고 하자(수치 최적화 결과). KL(p‖q)를 줄이면 p가 확률을 두는 곳에서 q가 작으면 큰 벌점을 받으므로, q가 두 봉우리를 모두 덮도록 넓게 퍼진다(평균은 0, 표준편차 2.09). 반대로 KL(q‖p)를 줄이면 q가 확률을 두는 곳에서 p가 작으면 벌점을 받으므로, q는 봉우리 하나에만 좁게 맞춰진다(평균 2, 표준편차 0.61). 언어 모델 정렬의 KL 벌점과 VAE에서도 어느 방향의 KL을 쓰느냐에 따라 결과의 성격이 달라진다."
+      caption="봉우리가 둘인 분포 p(회색)에 정규분포 q 하나를 맞춘다고 하자(수치 최적화 결과). KL(p‖q)를 줄이면 p가 확률을 두는 곳에서 q가 작으면 큰 벌점을 받으므로, q가 두 봉우리를 모두 덮도록 넓게 퍼진다(평균은 0, 표준편차 2.09). 반대로 KL(q‖p)를 줄이면 q가 확률을 두는 곳에서 p가 작으면 벌점을 받으므로, q는 봉우리 하나에만 좁게 맞춰진다(평균 2, 표준편차 0.61). 6주차 RLHF의 KL 벌점과 4주차 VAE에서도 어느 방향의 KL을 쓰느냐에 따라 결과의 성격이 달라진다."
       viewBox="0 0 720 210"
       minWidth={600}
     >
@@ -2755,7 +2811,7 @@ export function ConditionZigzag() {
   return (
     <DiagramFrame
       title="조건수가 크면 경사하강법이 지그재그로 느려진다"
-      caption={`왼쪽: 가로 방향 곡률 1, 세로 방향 곡률 10(κ = 10)인 이차 함수의 등고선(가로세로 같은 축척)과, 최선의 고정 학습률 2/(a_max + a_min)로 움직인 경사하강법의 경로다(원점이 최솟값). 가파른 세로 방향에서는 스텝마다 부호가 바뀌며 진동하고, 완만한 가로 방향으로는 스텝마다 오차가 ${((kappa - 1) / (kappa + 1)).toFixed(2)}배씩만 줄어 느리게 수렴한다. 오른쪽: 본문 코드로 오차를 10⁻⁶ 아래로 줄이는 데 걸린 스텝 수다. 조건수가 10배가 될 때마다 스텝 수도 약 10배(69 → 691 → 6908)가 되지만, 곡률을 반영해 갱신량을 정하는 뉴턴 방법은 κ와 상관없이 한 스텝에 끝난다.`}
+      caption={`왼쪽: 가로 방향 곡률 1, 세로 방향 곡률 10(κ = 10)인 이차 함수의 등고선(가로세로 같은 축척)과, 최선의 고정 학습률 2/(a_max + a_min)로 움직인 경사하강법의 경로다(원점이 최솟값). 가파른 세로 방향에서는 스텝마다 부호가 바뀌며 골짜기의 양쪽 벽 사이를 오가고, 완만한 가로 방향으로는 스텝마다 오차의 ${((kappa - 1) / (kappa + 1)).toFixed(2)}배씩만 줄어 계곡 바닥을 따라 느리게 내려간다. 오른쪽: 본문 코드로 오차를 10⁻⁶ 아래로 줄이는 데 걸린 스텝 수다. 조건수가 10배가 될 때마다 스텝 수도 약 10배(69 → 691 → 6908)가 되지만, 곡률을 반영해 보폭을 정하는 뉴턴 방법은 κ와 상관없이 한 스텝에 끝난다.`}
       viewBox="0 0 720 236"
       minWidth={600}
     >

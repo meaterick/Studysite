@@ -2,8 +2,8 @@ import Link from "next/link";
 import Icon from "./Icon";
 
 /**
- * warn 모드의 미완료 경고. 먼저 볼 레슨을 끝내지 않고 넘어왔을 때 보여 주되, 막지는 않는다.
- * items: 끝내지 않은 레슨 목록(이름표·제목·링크)
+ * warn 모드의 미완료 경고. 앞 단계를 끝내지 않고 넘어왔을 때 보여 주되, 막지는 않는다.
+ * items: 끝내지 않은 핵심 단계 목록(이름표·제목·링크)
  */
 export default function UnfinishedWarning({
   items,
@@ -20,7 +20,7 @@ export default function UnfinishedWarning({
       <Icon name="alert" size={18} className="mt-0.5 shrink-0 text-[var(--status-warning)]" />
       <div className="min-w-0">
         <p className="font-semibold text-ink">
-          {context} 아직 끝내지 않은 레슨이 {items.length}개 있습니다.
+          {context} 끝내지 않은 핵심 단계가 {items.length}개 있습니다.
         </p>
         <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
           {shown.map((it) => (

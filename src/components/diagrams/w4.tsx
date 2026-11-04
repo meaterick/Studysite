@@ -9,7 +9,7 @@ export function ResNetSkip() {
     <DiagramFrame
       title="ResNet 잔차 연결(Residual Connection)"
       viewBox="0 0 560 340"
-      caption="잔차 블록은 층들의 출력 F(x)에 입력 x를 더해 y = F(x) + x를 출력한다(주황 경로가 shortcut). 역전파에서 dL/dx = dL/dy · (F′(x) + 1)이므로, F′(x)가 작아도 shortcut 경로의 1만큼 기울기가 앞쪽 층으로 전달된다."
+      caption="y = F(x) + x. 역전파 시 dL/dx = dL/dy · (F′(x) + 1)이며, '+1' 항이 기울기가 사라지지 않도록 지름길을 만든다."
     >
       <ArrowDefs />
       <Box x={x} y={16} w={w} h={40} label="입력 x" fill={card2Bg} />
@@ -31,8 +31,7 @@ export function ResNetSkip() {
         strokeWidth={2}
         markerEnd="url(#arrowhead)"
       />
-      <Label x={186} y={138} text="shortcut" color={colors.orange} weight={700} anchor="middle" />
-      <Label x={186} y={156} text="(x를 그대로 더함)" color={colors.orange} anchor="middle" />
+      <Label x={100} y={150} text="skip connection" color={colors.orange} weight={700} anchor="middle" />
     </DiagramFrame>
   );
 }
@@ -46,7 +45,7 @@ export function TransferLearning() {
     <DiagramFrame
       title="전이학습: 사전학습된 백본 + 새 분류 헤드"
       viewBox="0 0 620 220"
-      caption="① 특성 추출: 사전학습한 층(백본)을 고정하고(freeze) 새 분류층만 학습한다(데이터가 매우 적을 때). ② 미세조정: 작은 학습률로 전체 층(또는 뒤쪽 층)까지 갱신한다."
+      caption="① 특징추출: 백본을 얼리고(freeze) 마지막 층만 학습(데이터가 매우 적을 때). ② 파인튜닝: 작은 학습률로 전체(또는 상위층)까지 갱신."
     >
       <ArrowDefs />
       {blocks.map((b, i) => {
@@ -74,7 +73,7 @@ export function TransferLearning() {
           </g>
         );
       })}
-      <Label x={20} y={y - 24} text="파란 막대 = 고정한 층(특성 추출)" color={colors.blue} anchor="start" />
+      <Label x={20} y={y - 24} text="파란 막대 = freeze(특징추출 모드)" color={colors.blue} anchor="start" />
     </DiagramFrame>
   );
 }
@@ -119,7 +118,7 @@ export function ConvChannels() {
   );
 }
 
-// ───────────────────────── 추가 그림 ─────────────────────────
+// ───────────────────────── 4주차 핵심 과정: 추가 그림 ─────────────────────────
 
 export function ConvPaddingStride() {
   // 본문 예제: 5×5 입력, 3×3 커널. (P, S) = (0, 1) → 3×3, (1, 1) → 5×5, (0, 2) → 2×2.
@@ -197,7 +196,7 @@ export function ConvPaddingStride() {
 }
 
 export function FcVsConv() {
-  // 연결 방식과 파라미터 수: 224×224×3 입력에서 출력 64개를 계산할 때 합성곱 1,792개 vs 완전연결 9,633,856개.
+  // 연결 방식과 파라미터 수: 224×224×3 입력에서 64개 특징을 뽑을 때 합성곱 1,792개 vs 완전연결 9,633,856개.
   const P = "fvc";
   const c = 18;
   const n = 6;
@@ -211,7 +210,7 @@ export function FcVsConv() {
   return (
     <DiagramFrame
       title="완전연결층과 합성곱층: 연결 수와 파라미터 수"
-      caption="왼쪽: 완전연결(FC)층은 출력 하나가 모든 픽셀과 각각 다른 가중치로 연결된다. 오른쪽: 합성곱층의 출력 하나는 3×3 창만 보고, 같은 커널(같은 색 가중치)을 모든 위치에서 재사용한다. 그래서 224×224×3 이미지에서 출력 64개를 계산하는 데 합성곱은 1,792개, 완전연결은 약 963만 개(약 5,400배)의 파라미터가 필요하다(아래 막대는 로그 눈금)."
+      caption="왼쪽: 완전연결(FC)층은 출력 하나가 모든 픽셀과 각각 다른 가중치로 연결된다. 오른쪽: 합성곱층의 출력 하나는 3×3 창만 보고, 같은 커널(같은 색 가중치)을 모든 위치에서 재사용한다. 그래서 224×224×3 사진에서 특징 64개를 뽑는 데 합성곱은 1,792개, 완전연결은 약 963만 개(약 5,400배)의 파라미터가 필요하다(아래 막대는 로그 눈금)."
       viewBox="0 0 720 280"
       minWidth={560}
     >
@@ -283,7 +282,7 @@ export function FcVsConv() {
 }
 
 export function PoolMaxVsAvg() {
-  // 본문 코드의 4×4 특성 맵 y. 왼쪽 위 블록에만 큰 값 9가 있다.
+  // 본문 코드의 4×4 특징 지도 y. 왼쪽 위 블록에만 강한 반응 9가 있다.
   const y = [
     [1, 1, 2, 1],
     [1, 9, 1, 1],
@@ -326,28 +325,28 @@ export function PoolMaxVsAvg() {
   return (
     <DiagramFrame
       title="Max Pooling과 Average Pooling의 차이"
-      caption="4×4 특성 맵을 2×2 블록(같은 색)마다 값 하나로 줄인다. 왼쪽 위 블록에 큰 값 9가 있을 때 Max Pooling은 9를 그대로 남겨 이 블록에 강한 반응이 있었다는 정보를 전달하고, Average Pooling은 (1 + 1 + 1 + 9)/4 = 3을 남겨 블록 전체의 평균 반응을 전달한다."
+      caption="4×4 특징 지도를 2×2 블록(같은 색)마다 하나의 값으로 줄인다. 왼쪽 위 블록에 강한 반응 9가 있을 때 Max Pooling은 9를 그대로 살려 '이 패턴이 여기 있었다'는 사실을 전달하고, Average Pooling은 (1 + 1 + 1 + 9)/4 = 3으로 희석해 '블록 전체가 얼마나 활성화됐나'를 전달한다."
       viewBox="0 0 720 240"
       minWidth={540}
     >
-      {grid(40, 50, y, c, "입력 특성 맵 4×4")}
+      {grid(40, 50, y, c, "입력 특징 지도 4×4")}
       <text x={240} y={136} textAnchor="middle" fontSize={20} fontWeight={700} fill={inkSecondary}>
         →
       </text>
       {grid(300, 70, maxP, 52, "Max Pooling 2×2", colors.red)}
       {grid(500, 70, avgP, 52, "Average Pooling 2×2", colors.blue)}
       <text x={352} y={208} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-        큰 값 9를 그대로 남김
+        강한 반응 9가 그대로
       </text>
       <text x={552} y={208} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-        평균하면 3
+        9가 3으로 희석
       </text>
     </DiagramFrame>
   );
 }
 
 export function ReceptiveField1d() {
-  // 본문 예제: conv 3×3(s1) → max pool 2×2(s2) → conv 3×3(s1). 맨 위 한 칸의 수용영역은 입력 8칸이다(1차원으로 그림).
+  // 본문 예제: conv 3×3(s1) → max pool 2×2(s2) → conv 3×3(s1). 맨 위 한 칸이 입력 8칸을 본다(1차원으로 그림).
   const u = 44;
   const left = 70;
   const X = (pos: number) => left + pos * u;
@@ -359,7 +358,7 @@ export function ReceptiveField1d() {
   ];
   const w = 30;
   const h = 24;
-  // 위층의 강조한 칸이 아래층의 어떤 칸으로 계산되는지
+  // 위층의 '뜨거운' 칸이 아래층의 어떤 칸을 보는지
   const links: [number, number, number, number][] = [];
   rows[3].units.forEach((t, n) => {
     if (!t.hot) return;
@@ -376,7 +375,7 @@ export function ReceptiveField1d() {
   return (
     <DiagramFrame
       title="수용영역이 넓어지는 과정: conv → pool(stride 2) → conv"
-      caption="맨 위 한 칸(진하게)이 아래층의 어떤 칸들을 거쳐 입력의 어느 범위로 계산되는지 나타낸 것이다(가로 방향만 그림). 첫 합성곱 뒤 수용영역은 3칸, 풀링 뒤 4칸이다. 풀링이 칸 사이 간격(점프 j)을 2로 늘렸기 때문에 마지막 3×3 합성곱은 수용영역을 2칸이 아니라 4칸 넓혀 8칸이 된다. 본문 표의 r = 3, 4, 8과 같다."
+      caption="맨 위 한 칸(진하게)이 아래층의 어떤 칸들을 거쳐 입력의 어디까지 보는지 따라간 것이다(가로 한 방향만 그림). 첫 conv 뒤 수용영역은 3칸, 풀링 뒤 4칸이고, 풀링이 칸 사이 간격(점프 j)을 2로 늘려 놓았기 때문에 마지막 3×3 conv는 2칸이 아니라 4칸을 더 넓혀 8칸을 본다. 본문 표의 r = 3, 4, 8과 같다."
       viewBox="0 0 720 292"
       minWidth={560}
     >
@@ -398,7 +397,7 @@ export function ReceptiveField1d() {
       ))}
       <path d={`M${X(0)},${258} L${X(0)},264 L${X(8)},264 L${X(8)},258`} fill="none" stroke={colors.violet} strokeWidth={1.6} />
       <text x={X(4)} y={282} textAnchor="middle" fontSize={11} fontWeight={700} fill={colors.violet}>
-        맨 위 한 칸의 수용영역: 입력 8칸
+        맨 위 한 칸이 보는 입력: 8칸
       </text>
     </DiagramFrame>
   );
@@ -413,12 +412,12 @@ export function ResidualGradientProduct() {
   const res = Array.from({ length: 51 }, (_, n) => [sx(n), sy(1.01 ** n)] as [number, number]);
   return (
     <DiagramFrame
-      title="역전파로 블록 50개를 지난 기울기: 잔차 연결이 있을 때와 없을 때"
-      caption="잔차 연결이 없으면 블록마다 국소 미분(여기서는 0.5)이 곱해져 50블록 뒤 기울기가 약 8.9×10⁻¹⁶, 사실상 0이 된다(세로축은 로그 눈금). 잔차 연결이 있으면 블록마다 1 + F′이 곱해지므로 F′ = 0.01처럼 작아도 1.01⁵⁰ ≈ 1.64로 유지된다. 앞쪽 층까지 기울기가 전달되는 것은 이 '+1' 항 때문이다."
+      title="블록 50개를 거슬러 온 기울기: 잔차 연결이 있을 때와 없을 때"
+      caption="잔차 연결이 없으면 블록마다 국소 미분(여기서는 0.5)이 곱해져 50블록 뒤 기울기가 약 8.9×10⁻¹⁶, 사실상 0이 된다(세로축은 로그 눈금). 잔차 연결이 있으면 블록마다 1 + F′이 곱해지므로 F′ = 0.01처럼 작아도 1.01⁵⁰ ≈ 1.64로 유지된다. 앞쪽 층까지 학습 신호가 전달되는 것은 이 '+1' 덕분이다."
       viewBox="0 0 720 270"
       minWidth={540}
     >
-      <Axes {...A} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-15, 1e-10, 1e-5, 1]} fmtY={pow10Label} xLabel="역전파로 지난 블록 수" yLabel="앞쪽 층의 기울기 크기" />
+      <Axes {...A} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-15, 1e-10, 1e-5, 1]} fmtY={pow10Label} xLabel="거슬러 올라간 블록 수" yLabel="앞쪽에 도착한 기울기 크기" />
       <path d={linePath(res)} fill="none" stroke={colors.green} strokeWidth={2.6} />
       <path d={linePath(plain)} fill="none" stroke={colors.red} strokeWidth={2.6} />
       <text x={sx(50) + 8} y={sy(1.64) + 4} fontSize={11.5} fontWeight={700} fill={colors.green}>
@@ -441,8 +440,8 @@ export function ProjectionShortcut() {
   const P = "prs";
   return (
     <DiagramFrame
-      title="모양이 바뀌는 블록의 shortcut: 1×1 합성곱(stride 2)으로 맞춘다"
-      caption="해상도가 바뀌는 블록에서 F(x) 경로는 stride 2로 해상도를 절반(56 → 28)으로 줄이고 채널을 두 배(64 → 128)로 늘린다. 그대로는 x와 더할 수 없으므로, shortcut에 1×1 합성곱(stride 2)을 두어 x도 128×28×28로 바꾼 뒤 더한다(projection shortcut). 모양이 같은 블록에서는 shortcut이 계산 없이 x를 그대로 전달한다."
+      title="모양이 바뀌는 블록의 지름길: 1×1 합성곱(stride 2)으로 맞춘다"
+      caption="단계가 바뀌는 블록에서 F(x) 경로는 stride 2로 해상도를 절반(56 → 28)으로 줄이고 채널을 두 배(64 → 128)로 늘린다. 그대로는 x와 더할 수 없으므로, 지름길에 1×1 합성곱(stride 2)을 두어 x도 같은 128×28×28로 바꾼 뒤 더한다(projection shortcut). 모양이 같은 블록에서는 지름길이 아무 계산 없이 x를 그대로 전달한다."
       viewBox="0 0 720 230"
       minWidth={560}
     >
@@ -456,7 +455,7 @@ export function ProjectionShortcut() {
         F(x)
       </text>
       <Arr x1={126} y1={124} x2={164} y2={162} color={colors.violet} marker={`${P}-violet`} />
-      <Tag x={168} y={140} w={332} h={52} lines={["shortcut: 1×1 conv, stride 2", "채널 64 → 128, 해상도 56 → 28"]} color={colors.violet} tint={0.12} size={11.5} />
+      <Tag x={168} y={140} w={332} h={52} lines={["지름길: 1×1 conv, stride 2", "채널만 섞어 64 → 128, 해상도 56 → 28"]} color={colors.violet} tint={0.12} size={11.5} />
       <Arr x1={502} y1={56} x2={556} y2={100} color={inkSecondary} marker={`${P}-ink`} />
       <Arr x1={502} y1={166} x2={556} y2={124} color={colors.violet} marker={`${P}-violet`} />
       <circle cx={576} cy={112} r={20} fill={card2Bg} stroke="var(--border-strong)" strokeWidth={1.6} />
@@ -466,7 +465,105 @@ export function ProjectionShortcut() {
       <Arr x1={598} y1={112} x2={622} y2={112} color={inkSecondary} marker={`${P}-ink`} />
       <Tag x={626} y={86} w={86} h={52} lines={["y", "128×28×28"]} color={colors.green} tint={0.14} size={12} />
       <text x={360} y={222} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
-        덧셈 y = F(x) + shortcut(x)은 두 텐서의 모양이 같아야 한다
+        덧셈 y = F(x) + 지름길(x)은 두 텐서의 모양이 같아야 한다
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function BatchnormDropout() {
+  // 본문 코드 그대로: BatchNorm 입력(배치 4 × 채널 3)과 Dropout(p = 0.5, np.random.seed(0)의 마스크 [1,1,1,1,0,1]).
+  const P = "bnd";
+  const raw = [
+    [10, 12, 8, 14],
+    [1, 3, -1, 5],
+    [100, 120, 90, 130],
+  ];
+  const norm = raw.map((ch) => {
+    const m = ch.reduce((a, b) => a + b, 0) / ch.length;
+    const sd = Math.sqrt(ch.reduce((a, b) => a + (b - m) ** 2, 0) / ch.length);
+    return ch.map((v) => (v - m) / sd);
+  });
+  const chColor = [colors.blue, colors.orange, colors.aqua];
+  const bx = linear(-10, 140, 70, 370);
+  const ax = linear(-2, 2, 70, 370);
+  const h = [1, 2, 3, 4, 5, 6];
+  const mask = [1, 1, 1, 1, 0, 1];
+  return (
+    <DiagramFrame
+      title="BatchNorm과 Dropout의 실제 출력: 위 두 코드 셀의 결과"
+      caption="왼쪽: 세 채널은 값의 범위가 크게 다르지만(세 번째 채널은 90~130), 채널마다 자기 평균을 빼고 표준편차로 나누면 모두 평균 0·표준편차 1 근처의 같은 눈금에 놓인다. 그 뒤 학습되는 γ·β로 채널마다 다시 크기와 위치를 정한다. 오른쪽: Dropout(p = 0.5)은 학습 때 뉴런을 무작위로 끄고(여기서는 5번째) 살아남은 값을 1/(1 − p) = 2배로 키워 평균 크기를 맞춘다. 평가 때는 아무것도 끄지 않는다."
+      viewBox="0 0 720 262"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ ink: inkSecondary }} />
+      <text x={220} y={20} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={ink}>
+        BatchNorm: 채널마다 (x − μ) / σ
+      </text>
+      <text x={14} y={48} fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        정규화 전
+      </text>
+      <line x1={70} y1={92} x2={370} y2={92} stroke={inkMuted} />
+      {[0, 50, 100].map((t) => (
+        <text key={t} x={bx(t)} y={106} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {t}
+        </text>
+      ))}
+      {raw.map((ch, i) =>
+        ch.map((v, j) => <circle key={`r${i}${j}`} cx={bx(v)} cy={62 + i * 11} r={4.2} fill={chColor[i]} fillOpacity={0.85} />),
+      )}
+      <Arr x1={220} y1={116} x2={220} y2={138} color={inkSecondary} marker={`${P}-ink`} />
+      <text x={14} y={160} fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+        정규화 후
+      </text>
+      <line x1={70} y1={206} x2={370} y2={206} stroke={inkMuted} />
+      {[-2, -1, 0, 1, 2].map((t) => (
+        <text key={t} x={ax(t)} y={220} textAnchor="middle" fontSize={9.5} fill={inkSecondary}>
+          {String(t).replace("-", "−")}
+        </text>
+      ))}
+      {norm.map((ch, i) =>
+        ch.map((v, j) => <circle key={`n${i}${j}`} cx={ax(v)} cy={174 + i * 11} r={4.2} fill={chColor[i]} fillOpacity={0.85} />),
+      )}
+      {["채널 1 (8~14)", "채널 2 (−1~5)", "채널 3 (90~130)"].map((t, i) => (
+        <g key={t}>
+          <rect x={70 + i * 102} y={238} width={10} height={10} rx={2} fill={chColor[i]} />
+          <text x={84 + i * 102} y={247} fontSize={10} fill={ink}>
+            {t}
+          </text>
+        </g>
+      ))}
+
+      <line x1={400} y1={14} x2={400} y2={252} stroke="var(--border-hairline)" />
+      <text x={560} y={20} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={ink}>
+        Dropout (p = 0.5): 끄고 2배로
+      </text>
+      {[
+        { y: 44, label: "출력 h", vals: h.map(String) },
+        { y: 112, label: "마스크", vals: mask.map(String) },
+        { y: 180, label: "h·mask / (1 − p)", vals: h.map((v, i) => String((v * mask[i]) / 0.5)) },
+      ].map((r) => (
+        <g key={r.label}>
+          <text x={560} y={r.y - 6} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={inkSecondary}>
+            {r.label}
+          </text>
+          {r.vals.map((v, i) => {
+            const off = mask[i] === 0;
+            return (
+              <g key={i}>
+                <rect x={428 + i * 44} y={r.y} width={38} height={32} rx={6} fill={off ? colors.red : r.y === 180 ? colors.green : colors.blue} fillOpacity={off ? 0.14 : 0.12} stroke={off ? colors.red : "var(--border-strong)"} />
+                <text x={447 + i * 44} y={r.y + 21} textAnchor="middle" fontSize={13} fontWeight={700} fill={ink} fontFamily={mono}>
+                  {v}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      ))}
+      <line x1={428 + 4 * 44} y1={44} x2={428 + 4 * 44 + 38} y2={76} stroke={colors.red} strokeWidth={1.6} />
+      <line x1={428 + 4 * 44 + 38} y1={44} x2={428 + 4 * 44} y2={76} stroke={colors.red} strokeWidth={1.6} />
+      <text x={560} y={236} textAnchor="middle" fontSize={10.5} fill={inkSecondary}>
+        학습: model.train() · 평가: model.eval()이면 모두 켜고 그대로
       </text>
     </DiagramFrame>
   );
@@ -500,7 +597,7 @@ export function AugmentationLabel() {
   return (
     <DiagramFrame
       title="데이터 증강의 기준: 변환해도 같은 라벨인가?"
-      caption="증강에는 변환한 뒤에도 사람이 같은 라벨을 붙이는 변환만 써야 한다. 자동차 사진은 좌우로 뒤집어도 자동차지만, 손글씨 6을 뒤집으면 9가 되고 좌회전 표지판을 좌우로 뒤집으면 우회전 표지판이 된다. 이런 변환을 쓰면 잘못된 라벨로 학습하게 된다. 같은 변환이라도 데이터에 따라 라벨을 보존하기도 하고 바꾸기도 한다."
+      caption="증강은 '사람이 봐도 같은 라벨'인 변환만 써야 한다. 자동차 사진은 좌우로 뒤집어도 자동차지만, 손글씨 6을 뒤집으면 9가 되고 좌회전 표지판을 좌우로 뒤집으면 우회전 표지판이 된다. 이런 변환은 모델에게 틀린 정답을 가르친다. 같은 변환이라도 데이터에 따라 안전할 수도, 위험할 수도 있다."
       viewBox="0 0 720 230"
       minWidth={560}
     >
@@ -549,14 +646,14 @@ export function AugmentationLabel() {
 }
 
 export function SanityChecks() {
-  // 학습 진단의 두 점검: ① 10클래스 초기 손실 ≈ ln 10 ≈ 2.30, ② 배치 하나에서는 손실이 거의 0까지 줄어야 한다.
+  // Karpathy 레시피의 두 검산: ① 10클래스 초기 손실 ≈ ln 10 ≈ 2.30, ② 배치 하나는 거의 0까지 외워야 한다.
   const panels = [
     {
       title: "② 초기 손실이 ln(클래스 수)인가",
       ok: (t: number) => 2.302 * Math.exp(-t / 120) + 0.6 * (1 - Math.exp(-t / 120)),
       bad: (t: number) => 6.5 * Math.exp(-t / 40) + 1.4,
-      okLabel: "정상: 2.30에서 시작",
-      badLabel: "의심: 6.5에서 시작 (초기화·손실 오류)",
+      okLabel: "정상: 2.30에서 출발",
+      badLabel: "의심: 6.5에서 출발 (초기화·손실 버그)",
       ref: Math.log(10),
       refLabel: "ln 10 ≈ 2.30",
     },
@@ -564,16 +661,16 @@ export function SanityChecks() {
       title: "③ 배치 하나에 과적합되는가",
       ok: (t: number) => 2.302 * Math.exp(-t / 18) + 0.01,
       bad: (t: number) => 2.302 - 0.05 * (1 - Math.exp(-t / 30)) + 0.04 * Math.sin(t / 3),
-      okLabel: "정상: 손실이 거의 0까지 감소",
-      badLabel: "오류: 2.3 근처에서 줄지 않음",
+      okLabel: "정상: 거의 0까지 외움",
+      badLabel: "버그: 2.3 근처에서 안 내려감",
       ref: 0,
       refLabel: "",
     },
   ];
   return (
     <DiagramFrame
-      title="학습 진단의 빠른 점검 두 가지"
-      caption="왼쪽: 10클래스 분류기가 처음에 모든 클래스에 1/10씩 확률을 준다면 손실은 −ln(1/10) = ln 10 ≈ 2.30에서 시작해야 한다. 이 값과 크게 다르면 손실 함수나 초기화에 오류가 있다. 오른쪽: 샘플 몇 개로 이루어진 배치 하나라면 용량이 충분한 모델은 손실을 거의 0까지 줄일 수 있어야 한다. 그렇지 않으면 데이터가 아니라 코드(기울기가 전달되지 않음, 라벨이 입력과 어긋남 등)에 오류가 있다."
+      title="학습 진단 레시피의 빠른 점검 두 가지"
+      caption="왼쪽: 10개 클래스 분류기가 처음에 모든 클래스에 1/10씩 확률을 준다면 손실은 −ln(1/10) = ln 10 ≈ 2.30에서 출발해야 한다. 크게 벗어나면 학습 전에 이미 손실 함수나 초기화에 버그가 있다는 뜻이다. 오른쪽: 데이터 몇 개짜리 배치 하나는 어떤 모델이든 거의 완벽히 외울 수 있어야 한다. 이것조차 안 되면 데이터가 아니라 파이프라인(기울기가 흐르지 않음, 레이블이 어긋남 등)의 버그다."
       viewBox="0 0 720 250"
       minWidth={560}
     >
@@ -614,7 +711,7 @@ export function SanityChecks() {
 
 export function CnnDepthTimeline() {
   // ILSVRC 분류 top-5 오류율(%). 2012 AlexNet 15.3(2위 26.2), 2013 ZFNet 11.7, 2014 GoogLeNet 6.7·VGG 7.3, 2015 ResNet 3.57.
-  // 사람(숙련된 주석자) 약 5.1%는 Russakovsky et al. (2015)의 보고.
+  // 사람(훈련된 주석자) 약 5.1%는 Russakovsky et al.(2015)의 보고.
   const bars = [
     { yr: "2010", name: "", err: 28.2, depth: "얕은 모델", c: inkMuted },
     { yr: "2011", name: "", err: 25.8, depth: "얕은 모델", c: inkMuted },
@@ -631,7 +728,7 @@ export function CnnDepthTimeline() {
   return (
     <DiagramFrame
       title="ImageNet(ILSVRC) top-5 오류율과 층 수의 변화"
-      caption="연도별 ILSVRC 분류 부문의 대표 결과다. CNN이 아닌 얕은 모델이 25~28%에 머물던 2012년, 8층의 AlexNet이 15.3%로 2위(26.2%)를 크게 앞섰다. 이후 3 × 3 커널을 19층까지 쌓은 VGG(7.3%, 2014년 2위), 22층의 GoogLeNet(6.7%, 2014년 우승)을 거쳐, 잔차 연결로 152층을 학습시킨 ResNet이 3.57%로 2015년에 우승했다. 점선은 숙련된 사람 주석자의 오류율(약 5.1%)이다. 층이 깊어질수록 오류가 줄었고, 그 깊이를 가능하게 한 것이 ReLU·GPU·작은 커널·잔차 연결이었다. 1998년의 LeNet은 32 × 32 흑백 손글씨용 모델이라 이 대회와는 관계가 없다."
+      caption="연도별 ILSVRC 분류 부문의 대표 결과다. CNN이 아닌 얕은 모델이 25~28%에 머물던 2012년, 8층의 AlexNet이 15.3%로 2위(26.2%)를 크게 앞섰다. 이후 3 × 3 커널을 19층까지 쌓은 VGG(7.3%, 2014년 2위), 22층의 GoogLeNet(6.7%, 2014년 우승)을 거쳐, 잔차 연결로 152층을 학습시킨 ResNet이 3.57%로 2015년에 우승했다. 점선은 훈련된 사람 주석자의 오류율(약 5.1%)이다. 층이 깊어질수록 오류가 줄었고, 그 깊이를 가능하게 한 것이 ReLU·GPU·작은 커널·잔차 연결이었다. 1998년의 LeNet은 32 × 32 흑백 손글씨용 모델이라 이 대회와는 관계가 없다."
       viewBox="0 0 720 240"
       minWidth={600}
     >
@@ -685,8 +782,8 @@ export function VggStack() {
   const bx = linear(0, 210000, 0, 250);
   return (
     <DiagramFrame
-      title="3 × 3 합성곱 세 층은 7 × 7 한 층과 수용영역이 같고 파라미터는 더 적다"
-      caption="왼쪽: 입력의 7 × 7 격자에서 가운데 출력 하나의 수용영역이다. 3 × 3 합성곱(stride 1)을 한 번 거치면 3 × 3, 두 번이면 5 × 5, 세 번이면 7 × 7로, 7 × 7 합성곱 한 층의 수용영역과 같다. 오른쪽: 입력·출력 채널이 64일 때 파라미터 수다. 7 × 7 한 층은 49 × 64 × 64 = 200,704개, 3 × 3 세 층은 3 × 9 × 64 × 64 = 110,592개로 약 45% 적다. 또 층마다 ReLU를 거치므로 비선형 함수를 세 번 적용한다."
+      title="3 × 3 합성곱 세 층은 7 × 7 한 층과 같은 범위를 더 적은 파라미터로 본다"
+      caption="왼쪽: 입력의 7 × 7 격자에서 가운데 출력 하나가 보는 범위다. 3 × 3 합성곱(stride 1)을 한 번 거치면 3 × 3, 두 번이면 5 × 5, 세 번이면 7 × 7을 본다. 7 × 7 합성곱 한 층과 같은 범위다. 오른쪽: 입력·출력 채널이 64일 때 파라미터 수다. 7 × 7 한 층은 49 × 64 × 64 = 200,704개, 3 × 3 세 층은 3 × 9 × 64 × 64 = 110,592개로 약 45% 적다. 게다가 층마다 ReLU를 거치므로 비선형 함수를 세 번 적용할 수 있다."
       viewBox="0 0 720 220"
       minWidth={580}
     >
@@ -930,7 +1027,7 @@ export function AeVsVaeLatent() {
   return (
     <DiagramFrame
       title="잠재공간 비교: 오토인코더는 점으로 흩어지고, VAE는 분포로 채운다"
-      caption="개념도다. 색은 서로 다른 종류의 입력(예: 숫자 0~3)이다. 왼쪽: 일반 오토인코더는 입력을 잠재공간의 점 하나로 보내고 복원만 배우므로, 점들이 군집별로 흩어지고 그 사이에 빈 틈이 크다. 빈 틈에서 z를 고르면(✗) 디코더가 무엇을 출력할지 알 수 없다. 오른쪽: VAE는 입력마다 평균 μ와 표준편차 σ를 가진 분포(타원)를 내고, KL 항이 이 분포들을 표준정규분포(점선 원)에 가깝게 만들어 서로 겹치게 한다. 그래서 N(0, I)에서 아무 z나 뽑아도(✓) 학습된 분포들이 덮고 있는 영역에 놓이므로 그럴듯한 데이터가 나온다."
+      caption="개념도다. 색은 서로 다른 종류의 입력(예: 숫자 0~3)이다. 왼쪽: 일반 오토인코더는 입력을 잠재공간의 점 하나로 보내고 복원만 배우므로, 점들이 군집별로 흩어지고 그 사이에 빈 틈이 크다. 빈 틈에서 z를 고르면(✗) 디코더가 무엇을 출력할지 알 수 없다. 오른쪽: VAE는 입력마다 평균 μ와 표준편차 σ를 가진 분포(타원)를 내고, KL 항이 이 분포들을 표준정규분포(점선 원) 쪽으로 끌어당겨 서로 겹치게 한다. 그래서 N(0, I)에서 아무 z나 뽑아도(✓) 학습된 분포들이 덮고 있는 영역에 놓이므로 그럴듯한 데이터가 나온다."
       viewBox="0 0 720 262"
       minWidth={580}
     >
@@ -989,7 +1086,7 @@ export function DiffusionChain() {
   return (
     <DiagramFrame
       title="확산 모델: 노이즈를 조금씩 더하고(고정), 조금씩 제거한다(학습)"
-      caption={`위쪽 화살표가 순확산이다. DDPM의 노이즈 스케줄(T = 1000 단계)로 원본 x₀에 노이즈를 섞으면 x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε이 되고, 원본이 남는 비율 √ᾱ_t는 t = 250에서 ${Math.sqrt(alphaBar[250]).toFixed(2)}, t = 500에서 ${Math.sqrt(alphaBar[500]).toFixed(2)}, t = 1000에서 ${Math.sqrt(alphaBar[1000]).toFixed(3)}로 줄어 결국 순수한 노이즈가 된다. 이 과정에는 학습할 것이 없다. 아래쪽 화살표가 학습하는 역확산이다. 신경망(보통 U-Net)이 x_t에 섞인 노이즈 ε을 예측하고, 그만큼 제거해 노이즈가 한 단계 줄어든 이미지로 되돌린다. 생성할 때는 순수한 노이즈에서 출발해 이 과정을 반복한다.`}
+      caption={`위쪽 화살표가 순확산이다. DDPM의 노이즈 스케줄(T = 1000 단계)로 원본 x₀에 노이즈를 섞으면 x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε이 되고, 원본이 남는 비율 √ᾱ_t는 t = 250에서 ${Math.sqrt(alphaBar[250]).toFixed(2)}, t = 500에서 ${Math.sqrt(alphaBar[500]).toFixed(2)}, t = 1000에서 ${Math.sqrt(alphaBar[1000]).toFixed(3)}로 줄어 결국 순수한 노이즈가 된다. 이 과정에는 학습할 것이 없다. 아래쪽 화살표가 학습하는 역확산이다. 신경망(보통 U-Net)이 x_t에 섞인 노이즈 ε을 예측하고, 그만큼 제거해 한 단계 덜 흐린 이미지로 되돌린다. 생성할 때는 순수한 노이즈에서 출발해 이 과정을 반복한다.`}
       viewBox="0 0 720 244"
       minWidth={620}
     >
@@ -1328,7 +1425,7 @@ export function Im2col() {
   return (
     <DiagramFrame
       title="im2col: 합성곱을 행렬 곱 한 번으로 바꾼다"
-      caption="본문 코드의 5 × 5 입력(0~24)과 3 × 3 커널이다. 왼쪽: 커널이 놓이는 3 × 3 창은 9개다(파랑은 첫 창, 주황은 둘째 줄 셋째 창). 가운데: 창 하나를 한 줄(원소 9개)로 펴서 9줄을 쌓으면 (9, 9) im2col 행렬이 된다. 같은 픽셀이 여러 줄에 중복해서 복사되므로 메모리가 더 든다. 오른쪽: 커널도 길이 9인 벡터로 펴서 행렬-벡터 곱을 한 번 하면 9개 값이 나오고, 3 × 3으로 접으면 이중 반복문의 결과와 같다. 입력이 연속된 숫자라 모든 창에서 '왼쪽 열 − 오른쪽 열'이 −6이다. 채널이 있으면 커널 벡터가 (K²C_in × C_out) 가중치 행렬이 되어, GPU가 가장 효율적으로 처리하는 큰 행렬 곱 하나가 된다."
+      caption="본문 코드의 5 × 5 입력(0~24)과 3 × 3 커널이다. 왼쪽: 커널이 지나가는 3 × 3 창은 9개다(파랑은 첫 창, 주황은 둘째 줄 셋째 창). 가운데: 창 하나를 한 줄(원소 9개)로 펴서 9줄을 쌓으면 (9, 9) im2col 행렬이 된다. 같은 픽셀이 여러 줄에 중복해서 복사되므로 메모리가 더 든다. 오른쪽: 커널도 길이 9인 벡터로 펴서 행렬-벡터 곱을 한 번 하면 9개 값이 나오고, 3 × 3으로 접으면 이중 반복문의 결과와 같다. 입력이 연속된 숫자라 모든 창에서 '왼쪽 열 − 오른쪽 열'이 −6이다. 채널이 있으면 커널 벡터가 (K²C_in × C_out) 가중치 행렬이 되어, GPU가 가장 효율적으로 처리하는 큰 행렬 곱 하나가 된다."
       viewBox="0 0 720 262"
       minWidth={640}
     >
@@ -1487,7 +1584,7 @@ export function ConvBackprop1d() {
   return (
     <DiagramFrame
       title="합성곱의 역전파도 합성곱이다: 뒤집은 커널과 전치 합성곱"
-      caption="1차원으로 그린 합성곱이다(색은 커널 가중치 k₁·k₂·k₃). 왼쪽: 순전파에서 출력 yᵢ는 입력 세 칸을 커널로 가중합한다. 가운데: 역전파에서는 같은 연결을 반대 방향으로 지나 기울기 G가 입력 쪽으로 전달된다. 가운데 입력 x₃은 y₁에는 k₃으로, y₂에는 k₂로, y₃에는 k₁로 기여했으므로 ∂L/∂x₃ = G₁k₃ + G₂k₂ + G₃k₁이다. 오른쪽: 이것은 G 양옆에 0을 K − 1 = 2칸씩 채우고 커널을 180° 뒤집은 (k₃, k₂, k₁)로 합성곱한 것(full 합성곱)과 같다. 3칸에서 5칸으로 커지는 이 연산을 층으로 쓴 것이 전치 합성곱이다. 커널의 기울기 ∂L/∂k는 입력 x와 G의 합성곱으로 계산된다."
+      caption="1차원으로 그린 합성곱이다(색은 커널 가중치 k₁·k₂·k₃). 왼쪽: 순전파에서 출력 yᵢ는 입력 세 칸을 커널로 가중합한다. 가운데: 역전파에서는 같은 연결을 거꾸로 지나 기울기 G가 입력으로 돌아간다. 가운데 입력 x₃은 y₁에는 k₃으로, y₂에는 k₂로, y₃에는 k₁로 기여했으므로 ∂L/∂x₃ = G₁k₃ + G₂k₂ + G₃k₁이다. 오른쪽: 이것은 G 양옆에 0을 K − 1 = 2칸씩 덧대고 커널을 180° 뒤집은 (k₃, k₂, k₁)로 합성곱한 것(full 합성곱)과 같다. 3칸에서 5칸으로 커지는 이 연산을 층으로 쓴 것이 전치 합성곱이다. 커널의 기울기 ∂L/∂k는 입력 x와 G의 합성곱으로 계산된다."
       viewBox="0 0 720 256"
       minWidth={640}
     >
@@ -1650,8 +1747,8 @@ export function VggParamsFlops() {
   };
   return (
     <DiagramFrame
-      title="VGG16: 파라미터는 FC층에, 연산은 해상도가 큰 앞쪽 합성곱층에 집중되어 있다"
-      caption="224 × 224 이미지를 넣은 VGG16의 블록별 비중을 직접 센 것이다(전체 1억 3,800만 파라미터, 곱셈-덧셈 155억 번). 위: 파라미터의 89%가 마지막 FC 3층에 있고, 합성곱 블록 1~2는 0.2%밖에 되지 않는다. 아래: 연산은 정반대다. 해상도가 큰 블록 1~4가 90% 가까이를 차지하고 FC층은 1%도 안 된다. 합성곱의 파라미터 수(K²·C_in·C_out)는 입력 크기와 무관하지만 연산량은 출력 해상도 H × W에 비례하기 때문이다. 그래서 모델을 가볍게 할 때 메모리를 줄이려면 FC층을, 속도를 높이려면 앞쪽 합성곱층을 줄인다."
+      title="VGG16: 파라미터는 FC층에, 연산은 해상도가 큰 앞쪽 합성곱층에 몰려 있다"
+      caption="224 × 224 이미지를 넣은 VGG16의 블록별 비중을 직접 센 것이다(전체 1억 3,800만 파라미터, 곱셈-덧셈 155억 번). 위: 파라미터의 89%가 마지막 FC 3층에 있고, 합성곱 블록 1~2는 0.2%밖에 되지 않는다. 아래: 연산은 정반대다. 해상도가 큰 블록 1~4가 90% 가까이를 차지하고 FC층은 1%도 안 된다. 합성곱의 파라미터 수(K²·C_in·C_out)는 입력 크기와 무관하지만 연산량은 출력 해상도 H × W에 비례하기 때문이다. 그래서 모델을 가볍게 할 때 메모리를 줄이려면 FC층을, 속도를 높이려면 앞쪽 합성곱층을 손본다."
       viewBox="0 0 720 220"
       minWidth={600}
     >
@@ -1790,8 +1887,8 @@ export function VaeKlCurves() {
   );
   return (
     <DiagramFrame
-      title="VAE의 KL 항: 평균이 원점에서, 분산이 1에서 멀어질수록 벌점이 커진다"
-      caption="인코더가 내놓은 N(μ, σ²)와 사전분포 N(0, 1) 사이의 KL 발산 ½(μ² + σ² − 1 − log σ²)를 한 변수씩 바꿔 그렸다. 점은 본문 표의 값이다. 왼쪽: σ = 1로 두면 KL = ½μ²라, 평균이 원점에서 멀어질수록 제곱으로 벌점이 커진다. 오른쪽: μ = 0으로 두면 σ = 1에서 0이고, 분산이 너무 커져도 벌점을 받지만 σ → 0 쪽은 −log σ² 때문에 끝없이 커진다. KL 항이 없다면 인코더는 분산을 0으로 줄여(점 하나로 인코딩) VAE를 일반 오토인코더로 되돌린다. σ → 0 쪽에서 KL이 빠르게 커져 이를 막는다."
+      title="VAE의 KL 항: 평균은 원점으로, 분산은 1로 끌어당긴다"
+      caption="인코더가 내놓은 N(μ, σ²)와 사전분포 N(0, 1) 사이의 KL 발산 ½(μ² + σ² − 1 − log σ²)를 한 변수씩 바꿔 그렸다. 점은 본문 표의 값이다. 왼쪽: σ = 1로 두면 KL = ½μ²라, 평균이 원점에서 멀어질수록 제곱으로 벌점이 커진다. 오른쪽: μ = 0으로 두면 σ = 1에서 0이고, 분산이 너무 커져도 벌점을 받지만 σ → 0 쪽은 −log σ² 때문에 끝없이 커진다. KL 항이 없다면 인코더는 분산을 0으로 줄여(점 하나로 인코딩) VAE를 일반 오토인코더로 되돌린다. σ → 0 쪽의 가파른 벽이 이를 막는다."
       viewBox="0 0 720 248"
       minWidth={600}
     >
@@ -1868,7 +1965,7 @@ export function Reparameterization() {
   );
   return (
     <DiagramFrame
-      title="재매개변수화 트릭: 무작위성을 입력으로 분리해 기울기를 전달한다"
+      title="재매개변수화 트릭: 무작위성을 따로 빼내 기울기가 흐르게 한다"
       caption="왼쪽 위: 인코더가 낸 μ, σ로 z를 바로 뽑으면 샘플링 노드(점선 타원)는 미분할 수 없는 무작위 연산이라, 손실의 기울기가 인코더까지 전달되지 않는다. 왼쪽 아래: z = μ + σ·ε으로 쓰고 무작위성은 학습과 무관한 입력 ε ~ N(0, 1)에만 두면, z는 μ와 σ의 평범한 미분 가능한 함수가 되어 역전파가 그대로 통한다(∂z/∂μ = 1, ∂z/∂σ = ε). 오른쪽: 같은 기울기 ∂/∂μ E[z²](z ~ N(μ, 1), μ = 1에서 참값 2)를 표본 하나로 추정한 값의 분포다(4,000번). 둘 다 평균은 2로 편향이 없지만, 재매개변수화 추정 2(μ + ε)는 표준편차가 2인 데 비해 점수 함수 추정(REINFORCE) z²(z − μ)는 √30 ≈ 5.5로 훨씬 넓게, 꼬리가 길게 흩어진다."
       viewBox="0 0 720 262"
       minWidth={640}

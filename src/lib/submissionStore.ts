@@ -64,7 +64,7 @@ export interface SubmissionGrade {
 export interface Submission {
   id: string;
   userId: string;
-  assignmentKey: string;
+  weekSlug: string;
   status: SubmissionStatus;
   versions: SubmissionVersion[];
   grades: SubmissionGrade[];
@@ -124,7 +124,7 @@ function loadSubmissions(where: string, ...params: Param[]): Submission[] {
   const byId = new Map<string, Submission>(
     subs.map((s) => [
       s.id,
-      { id: s.id, userId: s.user_id, assignmentKey: s.week_slug, status: s.status, versions: [], grades: [], createdAt: s.created_at, updatedAt: s.updated_at },
+      { id: s.id, userId: s.user_id, weekSlug: s.week_slug, status: s.status, versions: [], grades: [], createdAt: s.created_at, updatedAt: s.updated_at },
     ])
   );
   const versionOf = new Map<string, SubmissionVersion>();
@@ -161,8 +161,8 @@ export function findSubmission(id: string): Submission | undefined {
   return loadSubmissions("id = ?", id)[0];
 }
 
-export function findUserSubmission(userId: string, assignmentKey: string): Submission | undefined {
-  return loadSubmissions("user_id = ? AND week_slug = ?", userId, assignmentKey)[0];
+export function findUserSubmission(userId: string, weekSlug: string): Submission | undefined {
+  return loadSubmissions("user_id = ? AND week_slug = ?", userId, weekSlug)[0];
 }
 
 export function listUserSubmissions(userId: string): Submission[] {
@@ -173,7 +173,7 @@ export function listUserSubmissions(userId: string): Submission[] {
 export interface SubmissionSummary {
   id: string;
   userId: string;
-  assignmentKey: string;
+  weekSlug: string;
   status: SubmissionStatus;
   updatedAt: string;
   latestVersion: number;
@@ -205,7 +205,7 @@ export function listSubmissionSummaries(): SubmissionSummary[] {
   return rows.map((r) => ({
     id: r.id,
     userId: r.user_id,
-    assignmentKey: r.week_slug,
+    weekSlug: r.week_slug,
     status: r.status,
     updatedAt: r.updated_at,
     latestVersion: r.version,
@@ -215,26 +215,17 @@ export function listSubmissionSummaries(): SubmissionSummary[] {
 }
 
 /** 상태별 제출 수 */
-/** 과제 키 목록으로 거르는 WHERE 절(빈 목록이면 아무것도 고르지 않는다) */
-function keyFilter(keys: string[]): { where: string; params: string[] } {
-  return keys.length === 0 ? { where: "WHERE 0", params: [] } : { where: `WHERE week_slug IN (${keys.map(() => "?").join(", ")})`, params: keys };
-}
-
-/** 상태별 제출 수(주어진 과제 키의 제출물만) */
-export function countSubmissionsByStatus(keys: string[]): Record<SubmissionStatus, number> {
+export function countSubmissionsByStatus(): Record<SubmissionStatus, number> {
   const counts: Record<SubmissionStatus, number> = { submitted: 0, graded: 0, revision: 0 };
-  const f = keyFilter(keys);
-  for (const r of all<{ status: SubmissionStatus; n: number }>(`SELECT status, COUNT(*) AS n FROM submissions ${f.where} GROUP BY status`, ...f.params)) counts[r.status] = r.n;
+  for (const r of all<{ status: SubmissionStatus; n: number }>("SELECT status, COUNT(*) AS n FROM submissions GROUP BY status")) counts[r.status] = r.n;
   return counts;
 }
 
-/** 사용자별 상태별 제출 수(주어진 과제 키의 제출물만) */
-export function submissionCountsByUser(keys: string[]): Map<string, Record<SubmissionStatus, number>> {
+/** 사용자별 상태별 제출 수 */
+export function submissionCountsByUser(): Map<string, Record<SubmissionStatus, number>> {
   const map = new Map<string, Record<SubmissionStatus, number>>();
-  const f = keyFilter(keys);
   for (const r of all<{ user_id: string; status: SubmissionStatus; n: number }>(
-    `SELECT user_id, status, COUNT(*) AS n FROM submissions ${f.where} GROUP BY user_id, status`,
-    ...f.params
+    "SELECT user_id, status, COUNT(*) AS n FROM submissions GROUP BY user_id, status"
   )) {
     const c = map.get(r.user_id) ?? { submitted: 0, graded: 0, revision: 0 };
     c[r.status] = r.n;
@@ -324,7 +315,7 @@ export function replaceSubmission(s: Submission): void {
       "INSERT INTO submissions (id, user_id, week_slug, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
       s.id,
       s.userId,
-      s.assignmentKey,
+      s.weekSlug,
       s.status,
       s.createdAt,
       s.updatedAt
@@ -336,7 +327,7 @@ export function replaceSubmission(s: Submission): void {
 
 export async function saveSubmission(input: {
   userId: string;
-  assignmentKey: string;
+  weekSlug: string;
   text: string;
   links: string[];
   files: IncomingFile[];
@@ -347,14 +338,14 @@ export async function saveSubmission(input: {
   try {
     const id = tx(() => {
       const now = new Date().toISOString();
-      const existing = get<{ id: string }>("SELECT id FROM submissions WHERE user_id = ? AND week_slug = ?", input.userId, input.assignmentKey);
+      const existing = get<{ id: string }>("SELECT id FROM submissions WHERE user_id = ? AND week_slug = ?", input.userId, input.weekSlug);
       const id = existing?.id ?? crypto.randomUUID();
       if (!existing) {
         run(
           "INSERT INTO submissions (id, user_id, week_slug, status, created_at, updated_at) VALUES (?, ?, ?, 'submitted', ?, ?)",
           id,
           input.userId,
-          input.assignmentKey,
+          input.weekSlug,
           now,
           now
         );

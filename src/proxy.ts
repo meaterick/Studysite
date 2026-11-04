@@ -45,8 +45,8 @@ export async function proxy(req: NextRequest) {
   const isAccountArea = pathname === "/account" || pathname.startsWith("/account/");
   const isOperatorArea = (pathname === "/operator" || pathname.startsWith("/operator/"));
 
-  // 구체적인 학습 자료(모듈·레슨·과제·진도·레슨 이미지)는 로그인한 사용자만 볼 수 있습니다.
-  // 로그인하지 않은 방문자에게는 메인 화면, 커리큘럼, 트랙별 모듈·레슨 목록까지만 공개합니다.
+  // 구체적인 학습 자료(주차 페이지·단계·과제·진도·주차별 이미지)는 로그인한 사용자만 볼 수 있습니다.
+  // 로그인하지 않은 방문자에게는 메인 화면과 커리큘럼·주차별 자료 목록까지만 공개합니다.
   if (isLearningArea(pathname) && !session) {
     if (pathname.startsWith("/images/")) {
       return new NextResponse(null, { status: 401 });
@@ -91,7 +91,7 @@ function isLearningArea(pathname: string): boolean {
     pathname === "/progress" ||
     pathname === "/chat" ||
     pathname === "/feedback" ||
-    pathname.startsWith("/modules/") ||
+    pathname.startsWith("/weeks/") ||
     /^\/images\/week\d+\//.test(pathname)
   );
 }

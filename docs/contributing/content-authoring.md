@@ -1,68 +1,51 @@
 # 학습 콘텐츠 편집 안내
 
-[문서 홈](../README.md) · [커리큘럼 목차](../curriculum/README.md)
+[문서 홈](../README.md) · [전체 커리큘럼](../curriculum/README.md)
 
-경로와 명령은 저장소 루트 기준입니다. 콘텐츠 원본을 고친 뒤 `npm run docs:generate`로 커리큘럼 문서를 다시 만들고 `npm run docs:check`로 확인합니다. `docs/curriculum/`의 문서는 직접 고치지 않습니다.
+경로와 명령은 저장소 루트 기준입니다. 콘텐츠 원본을 고친 뒤 `npm run docs:generate`로 목차를 갱신하고 `npm run docs:check`로 확인합니다. 생성된 목차는 직접 수정하지 않습니다.
 
-## 파일 구성
+로컬 실습 검증에 필요한 Python 패키지는 `python -m pip install -r scripts/content/requirements.txt`로 준비합니다. `check:labs`는 Windows에서 `python`, 그 외 환경에서 `python3`를 사용하며, 환경 변수 `PYTHON`으로 가상환경의 실행 파일을 지정할 수 있습니다.
 
-모듈 하나가 폴더 하나입니다(`src/content/modules/<slug>/`). 새 모듈은 `src/content/modules/index.ts`의 `MODULE_SOURCES`에 등록합니다.
+## 콘텐츠 수정하기
 
-| 파일 | 작성 도우미 | 내용 |
-| --- | --- | --- |
-| `index.ts` | `defineModule` | `slug`, `track`, 트랙 안의 `order`, `title`, `summary`, `anchor`(목표 문제), `objectives`(학습 목표), `lessons`(핵심 → 보충 → 심화 순서), `recall`(백지 복습 3~5개), `assignment` |
-| `<레슨 id>.ts` | `defineLesson` | 레슨 하나: `id`, `title`, `tier`, `concepts`(핵심 레슨), `goal`, `why`, `body`, `checks`, `exercises`, `predicts`, `descriptive`, `references` |
-| `labs/<레슨 id>.ts` | `defineExercises` | 레슨의 코딩 실습 |
-| `assignment.ts` | `defineAssignment` | 과제: `key`, `kind`, `summary`, `requirements`, `tasks`(셀 포함), `rubric`, `maxScore`, `autoTests`, `challenges`, `gradingNotes` |
-
-트랙, 80개 개념과 선수관계, 16주 기본 일정, 예전 주소 대응표는 `src/content/curriculum/`에 있습니다. 개념을 다루는 레슨은 레슨의 `concepts`에 개념 id를 적어 연결합니다.
-
-**바꾸면 안 되는 값:** 레슨 `id`, 모듈 `slug`, 문항과 실습의 `key`, 과제 `key`, 과제 셀 `id`는 저장된 학습 기록·초안·제출본과 연결됩니다. 한 번 정하면 바꾸지 않습니다.
-
-## 레슨 작성
-
-- **`goal`**: 레슨을 마치면 할 수 있는 것을 측정 가능한 한 문장으로 씁니다.
-- **`why`**: 이 개념이 AI 시스템의 어디에 쓰이는지 한두 문장으로 씁니다. 레슨 맨 위에 표시됩니다.
-- **`body`**: 이 프로젝트 전용의 가벼운 마크다운(`src/content/markdown.ts`)을 `md` 태그로 씁니다. `###` 소제목, 목록, 표, ` ```python `(브라우저에서 실행되는 코드 셀), ` ```python-colab `(실행 버튼 없는 참고 코드, 예상 시간에 넣지 않음), ` ```math `(KaTeX), `$...$` 인라인 수식, ` ```image ` 이미지, `:::info|warn|example|quote|tip|task` 콜아웃, `[[diagram:id]]` 그림, `[[lesson:id]]` 다른 레슨 참조를 지원합니다.
-- **`checks`**: 객관식 확인 문제입니다. 핵심 레슨은 4개 이상, 보충·심화는 2개 이상 둡니다. `answer`는 0부터 시작하는 선택지 번호이고, `explanation`은 정답을 맞혔거나 두 번 틀린 뒤 보입니다.
-- **`exercises`**: 시작 코드(`starter`)에 `TODO`를 두고, 채점 코드(`tests`)는 `@test("항목 이름")`을 붙인 함수로 씁니다. 채점 코드에서는 `approx(a, b, tol)`(배열 가능)과 `output`(학습자 코드의 출력)을 쓸 수 있고, 학습자 코드의 전역 변수를 그대로 읽습니다. 힌트는 2개 이상이며 앞에서부터 하나씩 공개됩니다. 파이썬 코드는 `py` 태그로 써서 백슬래시를 그대로 둡니다.
-- **`predicts`**: 코드와 기대 출력입니다. 공백 차이는 무시하고, `alternatives`로 표기만 다른 정답을 둡니다.
-- **`descriptive`**: 모범답안(`answer`, 마크다운)과 핵심 요소(`keyPoints`, 2개 이상)를 둡니다.
-- **예상 학습 시간**은 본문 분량(450자/분), 코드 셀(3분), 그림(1.5분), 확인 문제(1분), 실습(8분), 출력 예측(2분), 서술형(4분)으로 계산합니다. 핵심 레슨은 45분 이하가 되도록 나눕니다.
-
-`md`·`py`는 `String.raw`처럼 동작하므로 본문의 LaTeX는 `\frac`처럼 백슬래시 하나로 쓰고, 일반 문자열(문항, 선택지, 해설, 힌트, 핵심 요소)에서는 `\\frac`처럼 두 번 씁니다. 템플릿 안의 백틱은 `` \` ``로 씁니다.
-
-## 문체와 용어
-
-- **문체**: 본문, 해설, 출력 예측 해설, 서술형 모범답안은 한다체로 씁니다. 실습 문제와 힌트, 과제 안내, 채점 메시지는 합니다체로 씁니다. 서술형 질문은 "~쓰라", "~설명하라"로 끝냅니다.
-- **비유와 은유를 쓰지 않습니다.** 개념은 정의, 수식, 계산 예, 실제 사례로 설명합니다. 의인화("모델이 속는다", "데이터가 산다")와 감각 표현("흐릿하다", "뭉개진다")도 정확한 동작으로 바꿉니다. 검증 스크립트가 흔한 비유·구어체(마치 ~처럼, ~해 보자, 떠올려 보자)를 경고합니다.
-- **다른 레슨은 `[[lesson:id]]`로 가리킵니다.** "N주차", "「…」 단계", "핵심 과정"처럼 예전 일정과 구분을 가리키는 표현은 쓰지 않습니다. 레슨이 다른 모듈로 옮겨 가도 참조는 그대로 맞게 표시됩니다.
-- **수치는 코드로 확인합니다.** 본문이나 해설에 적는 실행 결과는 그 레슨의 코드 셀이나 실습에서 실제로 나오는 값이어야 합니다. 사례와 연구 결과의 수치는 원 논문·보도와 대조합니다.
-- **인용**은 "Kaplan et al. (2020)", 두 저자는 "Buolamwini와 Gebru (2018)"처럼 씁니다. 참고 자료의 `note`가 영어 자료를 가리키면 끝에 "(영문)"을 붙입니다.
-- **용어**: 학습 데이터(훈련 데이터 아님), 특성(feature, 특징 아님), 특성 맵, 규제(regularization), 정규화(normalization), 기준 모델(ML baseline), 기준값(강화학습의 baseline $b$), 기울기 폭주, dead ReLU, 보상 모델, 언어 모델, 미세조정(전체 미세조정)을 씁니다. 본문에서는 attention, self-attention을 영어로 쓰고, 레슨 제목에서만 "어텐션"으로 씁니다.
-
-## 과제
-
-과제 항목(`tasks`)마다 설명(`instructions`, 마크다운)과 셀(`cells`: 시작 코드가 있는 `code` 셀, 안내 문구·최소 글자 수·답안 틀을 가진 `text` 셀), 구분(`tier`: 핵심은 필수이며 채점 대상, 보충·심화는 선택이며 피드백 대상)을 둡니다. 채점 기준(`rubric`)은 0.5점 단위로 배점하며 합계가 `maxScore`와 같아야 합니다. `autoTests`는 과제 작업 공간의 이름공간에서 실행하는 자기 점검이고, `challenges`는 자동 채점되는 선택 심화 문제입니다. `gradingNotes`는 운영자 채점 화면에만 보입니다.
-
-`provideCourseDocs: true`인 과제는 작업 공간에서 학습 자료를 `/course/<모듈 slug>.md`(확장 모듈 제외)로 읽을 수 있습니다. 파일마다 모듈 제목과 레슨 제목·본문이 들어 있습니다.
-
-## 그림
-
-그림은 `src/components/diagrams/*.tsx`에 React 컴포넌트로 만들고 `index.tsx`의 `DIAGRAMS`에 id로 등록한 뒤, 본문에서 `[[diagram:id]]` 한 줄로 넣습니다. 캡션에도 본문과 같은 문체·용어 규칙을 적용하고, 본문 코드의 수치를 그린 그림은 코드의 실제 출력과 맞춥니다. 이미지 파일은 `public/images/`에 두고 출처(`credit`)를 적습니다.
-
-## 검증
-
-```bash
-npm run validate:content
-```
-
-구조(id 형식·고유성, 모듈 순서, 일정표와 예전 주소 대응표), 개념(80개 개념의 연결, 선수 그래프의 순환, 기본 경로에서의 선수 순서), 레슨(목표·쓰이는 곳·본문, 문항 수와 형식, 실습·출력 예측·서술형의 형식, 참고 자료), 본문(수식, `$...$` 밖의 수식 기호, 이미지, 그림 id, 레슨 참조, 예전 일정 표현, 비유·구어체), 과제(키, 셀 id, 구분 순서, 배점 합)를 검사합니다. 오류가 있으면 빌드 전 단계에서 CI가 멈춥니다.
-
-```bash
-npm run check:labs
-```
-
-로컬 Python으로 모범 답안이 모든 채점 항목을 통과하는지, 시작 코드는 통과하지 못하는지, 채점이 너무 느리지 않은지(브라우저 시간 제한 대비), 출력 예측의 기대 출력이 실제와 같은지, 본문 코드 셀이 오류 없이 실행되는지, 과제 자동 테스트가 TODO를 채운 참조 노트북(`scripts/content/fixtures.ts`)에서는 통과하고 시작 코드에서는 실패하는지 확인합니다. 한 모듈만 검사하려면 `npx tsx scripts/content/check-labs.ts <모듈 slug>`를 씁니다.
-
-필요한 Python 패키지는 `python -m pip install -r scripts/content/requirements.txt`로 설치합니다. 버전은 학습자의 Pyodide 환경과 맞춰 고정되어 있으므로 가상환경을 따로 만들어 쓰는 것이 좋습니다. `check:labs`는 Windows에서 `python`, 그 밖의 환경에서 `python3`을 쓰며, 환경 변수 `PYTHON`으로 가상환경의 실행 파일을 지정할 수 있습니다(예: `PYTHON=.venv/bin/python npm run check:labs`).
+- 주차별 자료: `src/content/weeks/week{1..8}.ts`: 각 파일이 `WeekMeta` 객체
+  하나를 export합니다. `conceptsMd`(학습 자료)는 이 프로젝트 전용의 가벼운 마크다운으로 씁니다.
+  파서는 `src/content/markdown.ts`입니다.
+  - `## 제목 {#section-id}` 하나가 **단계 하나**입니다. 첫 `##` 앞의 글은 주차 소개(개요 페이지)로 쓰입니다.
+    단계 id는 진도 저장 키이므로 한 번 정하면 바꾸지 마십시오.
+  - 단계 안의 `[[practice]]` 한 줄이 학습과 실습의 경계입니다. 그 아래가 "실습"으로 표시됩니다.
+  - 그 밖에 `###` 소제목, 목록, 표, ` ```python `(브라우저에서 실행되는 코드 셀, Pyodide),
+    ` ```python-colab `(실행 버튼 없는 참고 코드, Colab 등 외부 환경용), ` ```math `(KaTeX), `$...$` 인라인 수식,
+    `:::info|warn|example|quote|tip|task` 콜아웃, `[[diagram:id]]` 다이어그램, ` ```image ` 이미지,
+    `**굵게**`, `*기울임*`, `` `코드` ``, `[링크](https://...)`를 지원합니다. `####` 제목과 콜아웃 안의 코드블록은 지원하지 않습니다.
+- 단계 메타데이터: `src/content/sections/week{1..8}.ts`: 단계 id마다 구분(`tier`: `core`·`supplement`·`advanced`), 학습 목표(`goal`),
+  객관식 확인 문제(`checks`, `answer`는 0부터 시작하는 선택지 번호), 이 단계에 배정할 서술형 문항 id
+  (`quizIds`, 주차의 `quiz` 배열에서 각 문항은 정확히 한 단계에만), 참고 자료(`references`, https)를 둡니다.
+- 서술형 모범답안과 과제 채점 모범 방향: `src/content/quizAnswers.ts` (모범답안은 단계에서 답을 저장한 뒤에 공개됩니다)
+- 과제 명세: `src/content/assignments/week{1..8}.ts`의 `AssignmentSpec`. 과제 항목(`tasks`)마다 설명(`instructions`, 마크다운)과
+  셀 목록(`cells`: 시작 코드가 있는 `code` 셀, 안내 문구·최소 글자 수·답안 틀을 가진 `text` 셀), 구분(`tier`: `core`는 필수,
+  `supplement`·`advanced`는 선택, 핵심 → 보충 → 심화 순서)을 두고, 채점 기준(`rubric`, 0.5점 단위 배점, 핵심 항목을 기준으로 작성)을 정의합니다. 배점 합계는 주차의 `assignmentMaxScore`와 같아야 합니다.
+  `provideCourseDocs: true`이면 작업 공간의 가상 파일 시스템에 학습 자료가 `/course/week1.md` … `/course/week8.md`로 제공됩니다.
+  셀 id는 저장된 초안·제출본과 연결되므로 한 번 정하면 바꾸지 마십시오. 시작 코드는 앞 셀에서 만든 변수를 이어서 쓸 수 있습니다.
+- 코딩 실습·퀴즈·과제 보조 자료: `src/content/labs/week{1..8}.ts`의 `WeekLab`(타입은 `src/content/types.ts`).
+  - `exercises`: TODO 실습. `id`(`w<주차>-` 접두사, 진도 저장 키라 바꾸지 마십시오), `sectionId`(표시할 단계), `tier`(핵심·보충·심화),
+    `prompt`(마크다운), `starter`(`TODO`가 들어 있어야 함), `tests`(채점 코드), `hints`(2개 이상, 순서대로 공개), `solution`.
+    채점 코드는 `@test("항목 이름")`을 붙인 함수를 정의하면 바로 실행되고, `assert` 실패 메시지가 화면에 표시됩니다.
+    `approx(a, b, tol)`(배열 가능)과 `output`(학습자 코드의 출력)을 쓸 수 있고, 학습자 코드의 전역 변수를 그대로 읽습니다.
+    Python 코드는 `py` 태그(`src/content/labs/util.ts`)로 써서 백슬래시를 그대로 둡니다.
+  - `quiz`: 문항마다 `tier`. `choice`(객관식), `predict`(코드와 기대 출력, 공백 차이는 `normalizeOutput`으로 무시, `alternatives`로 복수 정답), `descriptive`(모범답안·핵심 요소).
+  - `assignment`: `requirements`(과제 페이지 상단 요약), `autoTests`(과제 작업 공간의 이름공간에서 실행하는 자동 테스트, `taskId`로 과제 항목에 연결),
+    `challenges`(과제 페이지의 심화 문제, 실습과 같은 형식, `tier: "advanced"`).
+  - 채점 프로그램 생성은 `src/lib/labHarness.ts`, 기록은 `src/lib/labActions.ts`(서버 액션, 학습 기록의 `labs`)에 있습니다.
+- 커리큘럼 총괄: `src/content/syllabus.ts`, 운영자 전용 문서: `src/content/operator/*.ts`
+- 다이어그램: `src/components/diagrams/*.tsx` (주차별 파일 + `index.tsx`의
+  `DIAGRAMS` 레지스트리에 id로 등록). 새 다이어그램을 추가하면 콘텐츠에서
+  `[[diagram:my-id]]` 한 줄로 삽입할 수 있습니다.
+- 수정한 뒤에는 `npm run validate:content`를 실행하십시오. 단계 id와 메타데이터의 1:1 대응,
+  확인 문제의 정답 범위, 서술형 배정 누락·중복, 과제 명세(id 중복, 배점 합계, 답안 틀과 최소 글자 수), 수식 문법, 날것 유니코드 수식,
+  코딩 실습의 형식(id 형식·중복, 단계·과제 항목 연결, 시작 코드의 `TODO`, 채점 항목, 힌트 수), 단계 구분(모든 단계의 `tier`, 본문의
+  핵심 → 보충 → 심화 순서, 구분별 실습·퀴즈 유무, 과제 항목 순서) 등을 검사합니다.
+- 코딩 실습을 고쳤다면 `npm run check:labs`(한 주차만: `npx tsx scripts/content/check-labs.ts week-3`)도 실행하십시오. 로컬 `python3`
+  (numpy, pandas, scikit-learn, matplotlib 필요)로 모범 답안이 모든 항목을 통과하는지, 시작 코드는 통과하지 못하는지,
+  채점이 너무 느리지 않은지(브라우저 시간 제한 대비), 출력 예측 문항의 기대 출력이 실제와 같은지, 과제 자동 테스트가
+  TODO를 채운 참조 노트북(`scripts/content/fixtures.ts`)에서는 통과하고 시작 코드에서는 실패하는지 확인합니다.

@@ -161,13 +161,12 @@ export function parseMarkdownUncached(source: string): Block[] {
         tableLines.push(lines[i].trim());
         i++;
       }
-      // 칸 안의 글자 |는 \|로 쓴다(예: 집합의 합집합 연산자).
       const rows = tableLines.map((l) =>
         l
           .replace(/^\|/, "")
-          .replace(/(?<!\\)\|$/, "")
-          .split(/(?<!\\)\|/)
-          .map((c) => c.trim().replace(/\\\|/g, "|"))
+          .replace(/\|$/, "")
+          .split("|")
+          .map((c) => c.trim())
       );
       const headers = rows[0] ?? [];
       // rows[1] is the separator (---|---), skip it
@@ -215,14 +214,11 @@ export type InlineToken =
   | { math: string }
   | { link: string; href: string };
 
-/**
- * Render simple inline markdown (**bold**, *italic*, `code`, $math$, [text](https://…), [text](/site/path)) into tokens.
- * 사이트 안 주소(/로 시작)는 레슨 참조 [[lesson:id]]를 풀어 쓴 결과다(src/content/course.ts).
- */
+/** Render simple inline markdown (**bold**, *italic*, `code`, $math$, [text](https://…)) into tokens. */
 export function renderInline(text: string): InlineToken[] {
   const parts: InlineToken[] = [];
   const regex =
-    /(\*\*[^*]+\*\*|`[^`]+`|\$[^$\n]+\$|\[[^\]\n]+\]\((?:https?:\/\/|\/)[^)\s]*\)|\*(?=\S)[^*$\n]+?(?<=\S)\*)/g;
+    /(\*\*[^*]+\*\*|`[^`]+`|\$[^$\n]+\$|\[[^\]\n]+\]\(https?:\/\/[^)\s]+\)|\*(?=\S)[^*$\n]+?(?<=\S)\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {

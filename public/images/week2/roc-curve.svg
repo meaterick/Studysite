@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="-340 -1190 1440 1440">
+ <title>roc curve</title>
+ <desc>Receiver Operating Characteristic (ROC) curve with False Positive Rate and True Positive Rate. The diagonal shows the performance of a random classifier. Three example classifiers (blue, orange, green) are shown. Drawn by CMG Lee based on http://commons.wikimedia.org/wiki/File:roc-draft-xkcd-style.svg .</desc>
+ <pattern id="pattern_grid_1" patternUnits="userSpaceOnUse" width="100" height="100">
+  <rect width="100" height="100" stroke="#999999" fill="none"/>
+ </pattern>
+ <pattern id="pattern_grid_5" patternUnits="userSpaceOnUse" width="500" height="500">
+  <rect width="500" height="500" stroke="#666666" fill="url(#pattern_grid_1)"/>
+ </pattern>
+ <marker id="marker_end" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+  <path id="arrow" d="M 0,0 Q 4,4 8,4 Q 4,4 0,8 Q 4,4 0,0" fill="#000000"/>
+ </marker>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g font-family="Helvetica,Arial,sans-serif" font-size="80" text-anchor="middle" fill="#000000" stroke="none">
+  <rect id="frame" x="0" y="-1000" width="1000" height="1000" fill="url(#pattern_grid_5)" stroke="#cccccc"/>
+  <circle cx="0" cy="-1000" r="20" fill="#0000ff"/>
+  <g fill="none" stroke-width="10">
+   <path d="M 1000,-1000 C   0,-1000   0,-1000 0,0" stroke="#0099ff"/>
+   <path d="M 1000,-1000 C 200, -800 200, -800 0,0" stroke="#00cc00"/>
+   <path d="M 1000,-1000 C 400, -600 400, -600 0,0" stroke="#ff9900"/>
+   <path d="M 1000,-1000 C 500, -500 500, -500 0,0" stroke="#cc0000" stroke-dasharray="37,30"/>
+   <path d="M 740,-760 l -100,-100" stroke="#000000" marker-end="url(#marker_end)"/>
+   <path d="M 760,-740 l  100, 100" stroke="#000000" marker-end="url(#marker_end)"/>
+  </g>
+  <switch><text transform="translate( 550,-1100)" x="0" y="0.7ex" id="trsvg15-yue" systemLanguage="yue"><tspan id="trsvg1-yue">ROC 曲線</tspan></text><text transform="translate( 550,-1100)" x="0" y="0.7ex" id="trsvg15-cs" systemLanguage="cs"><tspan id="trsvg1-cs">ROC křivka</tspan></text><text transform="translate( 550,-1100)" x="0" y="0.7ex" id="trsvg15"><tspan id="trsvg1">ROC curve</tspan></text></switch>
+  <switch><text transform="translate(-100,-1000)" x="0" y="0.7ex" id="trsvg16-yue" systemLanguage="yue"><tspan id="trsvg2-yue">1.0</tspan></text><text transform="translate(-100,-1000)" x="0" y="0.7ex" id="trsvg16-cs" systemLanguage="cs"><tspan id="trsvg2-cs">1.0</tspan></text><text transform="translate(-100,-1000)" x="0" y="0.7ex" id="trsvg16"><tspan id="trsvg2">1.0</tspan></text></switch>
+  <switch><text transform="translate(-100, -500)" x="0" y="0.7ex" id="trsvg17-yue" systemLanguage="yue"><tspan id="trsvg3-yue">0.5</tspan></text><text transform="translate(-100, -500)" x="0" y="0.7ex" id="trsvg17-cs" systemLanguage="cs"><tspan id="trsvg3-cs">0.5</tspan></text><text transform="translate(-100, -500)" x="0" y="0.7ex" id="trsvg17"><tspan id="trsvg3">0.5</tspan></text></switch>
+  <switch><text transform="translate(-100,    0)" x="0" y="0.7ex" id="trsvg18-yue" systemLanguage="yue"><tspan id="trsvg4-yue">0.0</tspan></text><text transform="translate(-100,    0)" x="0" y="0.7ex" id="trsvg18-cs" systemLanguage="cs"><tspan id="trsvg4-cs">0.0</tspan></text><text transform="translate(-100,    0)" x="0" y="0.7ex" id="trsvg18"><tspan id="trsvg4">0.0</tspan></text></switch>
+  <switch><text transform="translate(-250, -500) rotate(-90)" x="0" y="0.7ex" id="trsvg19-yue" systemLanguage="yue"><tspan id="trsvg5-yue">真陽性率</tspan></text><text transform="translate(-250, -500) rotate(-90)" x="0" y="0.7ex" id="trsvg19-cs" systemLanguage="cs"><tspan id="trsvg5-cs">Citlivost (senzitivita)</tspan></text><text transform="translate(-250, -500) rotate(-90)" x="0" y="0.7ex" id="trsvg19"><tspan id="trsvg5">True positive rate</tspan></text></switch>
+  <switch><text transform="translate( 500,  180)" x="0" y="0.7ex" id="trsvg20-yue" systemLanguage="yue"><tspan id="trsvg6-yue">假陽性率</tspan></text><text transform="translate( 500,  180)" x="0" y="0.7ex" id="trsvg20-cs" systemLanguage="cs"><tspan id="trsvg6-cs">Podíl falešných poplachů</tspan></text><text transform="translate( 500,  180)" x="0" y="0.7ex" id="trsvg20"><tspan id="trsvg6">False positive rate</tspan></text></switch>
+  <switch><text transform="translate(1000,   80)" x="0" y="0.7ex" id="trsvg21-yue" systemLanguage="yue"><tspan id="trsvg7-yue">1.0</tspan></text><text transform="translate(1000,   80)" x="0" y="0.7ex" id="trsvg21-cs" systemLanguage="cs"><tspan id="trsvg7-cs">1.0</tspan></text><text transform="translate(1000,   80)" x="0" y="0.7ex" id="trsvg21"><tspan id="trsvg7">1.0</tspan></text></switch>
+  <switch><text transform="translate( 500,   80)" x="0" y="0.7ex" id="trsvg22-yue" systemLanguage="yue"><tspan id="trsvg8-yue">0.5</tspan></text><text transform="translate( 500,   80)" x="0" y="0.7ex" id="trsvg22-cs" systemLanguage="cs"><tspan id="trsvg8-cs">0.5</tspan></text><text transform="translate( 500,   80)" x="0" y="0.7ex" id="trsvg22"><tspan id="trsvg8">0.5</tspan></text></switch>
+  <switch><text transform="translate(   0,   80)" x="0" y="0.7ex" id="trsvg23-yue" systemLanguage="yue"><tspan id="trsvg9-yue">0.0</tspan></text><text transform="translate(   0,   80)" x="0" y="0.7ex" id="trsvg23-cs" systemLanguage="cs"><tspan id="trsvg9-cs">0.0</tspan></text><text transform="translate(   0,   80)" x="0" y="0.7ex" id="trsvg23"><tspan id="trsvg9">0.0</tspan></text></switch>
+  <switch><text transform="translate( 440, -360) rotate(-45)" x="0" y="0.7ex" fill="#cc0000" id="trsvg24-yue" systemLanguage="yue"><tspan id="trsvg10-yue">隨機嘅分類器</tspan></text><text transform="translate( 440, -360) rotate(-45)" x="0" y="0.7ex" fill="#cc0000" id="trsvg24-cs" systemLanguage="cs"><tspan id="trsvg10-cs">Náhodný klasifikátor</tspan></text><text transform="translate( 440, -360) rotate(-45)" x="0" y="0.7ex" fill="#cc0000" id="trsvg24"><tspan id="trsvg10">Random classifier</tspan></text></switch>
+  <switch><text transform="translate( 110,-1130)" x="0" y="0.7ex" fill="#0000ff" id="trsvg25-yue" systemLanguage="yue"><tspan id="trsvg11-yue">完美嘅</tspan><tspan x="0" dy="70" id="trsvg12-yue">分類器</tspan></text><text transform="translate( 110,-1130)" x="0" y="0.7ex" fill="#0000ff" id="trsvg25-cs" systemLanguage="cs"><tspan id="trsvg11-cs">Dokonalý</tspan><tspan x="0" dy="70" id="trsvg12-cs">klasifikátor</tspan></text><text transform="translate( 110,-1130)" x="0" y="0.7ex" fill="#0000ff" id="trsvg25"><tspan id="trsvg11">Perfect</tspan><tspan x="0" dy="70" id="trsvg12">classifier</tspan></text></switch>
+  <switch><text transform="translate( 580, -950)" x="0" y="0.7ex" id="trsvg26-yue" systemLanguage="yue"><tspan id="trsvg13-yue">好啲</tspan></text><text transform="translate( 580, -950)" x="0" y="0.7ex" id="trsvg26-cs" systemLanguage="cs"><tspan id="trsvg13-cs">Lepší</tspan></text><text transform="translate( 580, -950)" x="0" y="0.7ex" id="trsvg26"><tspan id="trsvg13">Better</tspan></text></switch>
+  <switch><text transform="translate( 880, -550)" x="0" y="0.7ex" id="trsvg27-yue" systemLanguage="yue"><tspan id="trsvg14-yue">差啲</tspan></text><text transform="translate( 880, -550)" x="0" y="0.7ex" id="trsvg27-cs" systemLanguage="cs"><tspan id="trsvg14-cs">Horší</tspan></text><text transform="translate( 880, -550)" x="0" y="0.7ex" id="trsvg27"><tspan id="trsvg14">Worse</tspan></text></switch>
+ </g>
+</svg>

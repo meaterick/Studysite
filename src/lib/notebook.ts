@@ -1,7 +1,4 @@
-import type { AssignmentSource, AssignmentTaskSpec } from "@/content/types";
-
-/** 작업 공간 계산에 필요한 과제 명세의 일부(과제 단계 목록). 브라우저로 보내도 되는 부분만 담는다. */
-export type AssignmentSpec = Pick<AssignmentSource, "tasks">;
+import type { AssignmentSpec, AssignmentTaskSpec } from "@/content/types";
 
 // 과제 작업 공간(노트북)의 데이터 모델. 브라우저(작업 공간 화면)와 서버(초안 저장·제출
 // 검증)가 같은 규칙을 쓰도록 이 파일은 React·Node 의존성 없이 순수 함수만 둔다.
