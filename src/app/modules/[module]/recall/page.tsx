@@ -87,7 +87,10 @@ export default async function RecallPage({ params, searchParams }: PageProps<"/m
         <p className="mb-10 mt-2 text-[15px] text-ink-secondary">학습 자료를 보지 않고 떠오르는 대로 적습니다. 제출하면 비교 자료가 열립니다.</p>
         <RecallSheet
           moduleSlug={slug}
-          fields={module.recall.map((r) => ({ label: r.prompt, hint: r.hint }))}
+          fields={module.recall.map(({ prompt, hint }) => ({
+            label: <Inline text={prompt} />,
+            hint: hint ? <Inline text={hint} /> : undefined,
+          }))}
           saved={sheet.answers}
           savedAt={sheet.savedAt}
           submittedAt={sheet.submittedAt}

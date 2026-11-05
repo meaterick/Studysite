@@ -75,6 +75,16 @@ try {
     await new Promise((r) => setTimeout(r, 100));
   }
   assert.equal(ready, true);
+  const recall = await request("/modules/linear-algebra/recall", { cookie: cookies.member });
+  assert.equal(recall.status, 200);
+  const recallHtml = await recall.text();
+  const tensorPrompt = [...recallHtml.matchAll(/<label\b[^>]*>([\s\S]*?)<\/label>/g)]
+    .find(([, label]) => label.includes("컬러 이미지 묶음 텐서"))?.[1];
+  assert.ok(tensorPrompt?.includes('class="katex"'), "recall prompt renders inline math");
+  assert.ok(tensorPrompt.includes("(16, 28, 28, 3)"), "recall prompt preserves the tensor shape");
+  assert.equal(tensorPrompt.includes("$(16, 28, 28, 3)$"), false, "recall prompt hides raw math delimiters");
+  assert.equal(recallHtml.includes("id=\"recall-review\""), false, "comparison material is hidden before submission");
+
   const initial = await request("/operator/security", { cookie: cookies.admin });
   assert.equal(initial.status, 200);
   const html = await initial.text();

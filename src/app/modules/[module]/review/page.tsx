@@ -190,7 +190,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
               <ul className="rows border-y border-[var(--border-hairline)]">
                 {sheetWeak.map(({ field, i, answer }) => (
                   <li key={i} className="py-4 text-sm">
-                    <p className="font-medium text-ink">{field.prompt}</p>
+                    <p className="font-medium text-ink"><Inline text={field.prompt} /></p>
                     {answer && <p className="mt-1.5 whitespace-pre-wrap leading-relaxed text-ink-secondary">{answer}</p>}
                   </li>
                 ))}
