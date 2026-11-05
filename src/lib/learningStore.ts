@@ -1,11 +1,18 @@
 import "server-only";
 import { all, get, run, tx } from "./db";
 
-// 스터디원 한 명의 학습 기록(단계 진행·확인 문제·서술형 답·백지공부·코딩 실습·퀴즈)을 DB에 저장한다.
-// 로그인한 사용자만 학습 구역에 들어올 수 있으므로 서버 기록을 진도의 "원본"으로 쓰고,
-// 덕분에 다른 기기에서 로그인해도 이어서 학습할 수 있다.
+// 스터디원 한 명의 학습 기록(레슨 진행·확인 문제·서술형·출력 예측·코딩 실습·백지 복습)을 DB에 저장한다.
+// 로그인한 사용자만 학습 구역에 들어오므로 서버 기록이 진도의 원본이다. 다른 기기에서도 이어서 학습할 수 있다.
+//
+// 저장 단위(learning_items 한 행):
+//   kind = 'lesson'   : week_slug = '',         item_id = 레슨 id         → 레슨 상태(확인 문제·서술형·예측·완료 시각)
+//   kind = 'exercise' : week_slug = '',         item_id = 실습 전역 id   → 코딩 실습 채점 기록
+//   kind = 'recall'   : week_slug = 모듈 slug,  item_id = ''              → 백지 복습
+//   kind = 'meta'     : week_slug = '',         item_id = ''              → 피드백 확인 시각 등
+// 레슨·실습 기록은 모듈과 무관하게 레슨 id로 저장하므로, 레슨을 다른 모듈로 옮겨도 진도가 그대로 남는다.
+// 이전 8주 과정의 기록(kind = section·worksheet·lab_exercise·lab_quiz)은 읽지도 고치지도 지우지도 않는다.
 
-export type QuizReviewStatus = "correct" | "incorrect";
+export type ReviewStatus = "correct" | "incorrect";
 
 export interface CheckState {
   correct: boolean;
@@ -15,87 +22,80 @@ export interface CheckState {
   wrong: number[];
 }
 
-export interface QuizAnswerState {
+export interface AnswerState {
   text: string;
   answeredAt: string;
-  review?: QuizReviewStatus;
+  /** 모범답안과 비교한 자기평가 */
+  review?: ReviewStatus;
+  /** 스스로 확인한 핵심 요소 번호 */
+  checkedPoints?: number[];
 }
 
-export interface SectionState {
+export interface PredictState {
+  attempts: number;
+  correct?: boolean;
+  lastAnswer?: string;
+  /** 정답을 공개했는가(두 번 틀렸거나 직접 공개) */
+  revealed?: boolean;
+}
+
+export interface LessonState {
+  /** 확인 문제 키 → 상태 */
   checks: Record<string, CheckState>;
-  answers: Record<string, QuizAnswerState>;
+  /** 서술형 키 → 답안 */
+  answers: Record<string, AnswerState>;
+  /** 출력 예측 키 → 상태 */
+  predicts: Record<string, PredictState>;
   startedAt?: string;
   completedAt?: string;
-}
-
-export type WorksheetMark = "ok" | "weak";
-
-export interface WorksheetState {
-  /** 필드 번호("0", "1", …) → 작성 내용 */
-  answers: Record<string, string>;
-  savedAt?: string;
-  submittedAt?: string;
-  /** 제출 후 참고 자료와 비교한 자기평가 */
-  marks: Record<string, WorksheetMark>;
-}
-
-export interface LearningRecord {
-  /** 주차 slug → 단계 id → 진행 상태 */
-  sections: Record<string, Record<string, SectionState>>;
-  /** 주차 slug → 백지공부 */
-  worksheets: Record<string, WorksheetState>;
-  /** (이전 버전) 수동 체크리스트·퀴즈 자기평가 — 읽기만 하고 더 이상 쓰지 않는다 */
-  progress?: Record<string, Partial<Record<string, boolean>>>;
-  quizReviews?: Record<string, Record<string, QuizReviewStatus>>;
-  /** 피드백함을 마지막으로 확인한 시각. 이보다 새 채점·코멘트를 "새 피드백"으로 표시한다. */
-  feedbackSeenAt?: string;
-  /** 피드백함 밖(과제 화면)에서 확인한 채점 키("<제출 id>:<채점 시각>") */
-  seenGrades?: string[];
-  /** 주차 slug → 코딩 실습·퀴즈 기록 (src/content/labs). 단계 완료 조건과는 무관하다. */
-  labs?: Record<string, LabWeekState>;
-  updatedAt?: string;
+  /** 진단 평가에서 확인 문제를 모두 맞혀 완료로 인정한 시각 */
+  creditedAt?: string;
 }
 
 /** 코딩 실습 하나의 기록. 채점은 브라우저에서 하므로 학습자가 보고한 결과다. */
-export interface LabExerciseState {
-  /** 채점 횟수 */
+export interface ExerciseState {
   attempts: number;
   /** 지금까지 가장 많이 통과한 채점 항목 수 / 전체 항목 수 */
   bestPassed: number;
   total: number;
-  /** 열어 본 힌트 수 */
   hintsUsed: number;
-  /** 처음으로 모든 항목을 통과한 시각 */
   passedAt?: string;
   solutionViewedAt?: string;
   lastGradedAt?: string;
 }
 
-export interface LabQuizState {
-  attempts: number;
-  correct?: boolean;
-  /** 객관식: 고른 오답 번호 */
-  wrong?: number[];
-  /** 출력 예측: 마지막으로 낸 답 / 정답 공개 여부 */
-  lastAnswer?: string;
-  revealed?: boolean;
-  /** 서술형: 답안과 자기평가, 스스로 확인한 핵심 요소 번호 */
-  text?: string;
-  answeredAt?: string;
-  review?: QuizReviewStatus;
-  checkedPoints?: number[];
+export type RecallMark = "ok" | "weak";
+
+export interface RecallState {
+  /** 문항 번호("0", "1", …) → 작성 내용 */
+  answers: Record<string, string>;
+  savedAt?: string;
+  submittedAt?: string;
+  /** 제출 후 학습 자료와 비교한 자기평가 */
+  marks: Record<string, RecallMark>;
 }
 
-export interface LabWeekState {
-  exercises: Record<string, LabExerciseState>;
-  quiz: Record<string, LabQuizState>;
+export interface LearningRecord {
+  /** 레슨 id → 상태 */
+  lessons: Record<string, LessonState>;
+  /** 실습 전역 id → 기록 */
+  exercises: Record<string, ExerciseState>;
+  /** 모듈 slug → 백지 복습 */
+  recalls: Record<string, RecallState>;
+  /** 피드백함을 마지막으로 확인한 시각. 이보다 새 채점·코멘트를 "새 피드백"으로 표시한다. */
+  feedbackSeenAt?: string;
+  /** 피드백함 밖(과제 화면)에서 확인한 채점 키("<제출 id>:<채점 시각>") */
+  seenGrades?: string[];
+  updatedAt?: string;
+  /** meta 행의 그 밖의 필드(이전 버전이 남긴 값). 그대로 보존한다. */
+  metaExtra?: Record<string, unknown>;
 }
 
 // ─── 기록 ↔ 행 ───────────────────────────────────────────────────────────
-// 학습 기록 하나를 항목별 행(learning_items)으로 나눠 저장한다. 화면 코드는 지금처럼 기록 전체를 객체로
-// 읽고 고치며, 저장할 때는 고치기 전과 비교해 바뀐 항목의 행만 쓴다.
 
-type ItemKind = "section" | "worksheet" | "lab_exercise" | "lab_quiz" | "meta";
+const KINDS = ["lesson", "exercise", "recall", "meta"] as const;
+type ItemKind = (typeof KINDS)[number];
+const KIND_SQL = KINDS.map((k) => `'${k}'`).join(", ");
 
 interface ItemRow {
   kind: ItemKind;
@@ -110,47 +110,43 @@ interface FlatItem extends ItemRow {
 
 const keyOf = (r: Pick<ItemRow, "kind" | "week_slug" | "item_id">) => `${r.kind}\u0001${r.week_slug}\u0001${r.item_id}`;
 
-/** 기록을 행으로 나눈다. sections·worksheets·labs 밖의 필드는 meta 행 하나에 모은다. */
-function flattenLearningRecord(record: Partial<LearningRecord>): FlatItem[] {
+export function emptyRecord(): LearningRecord {
+  return { lessons: {}, exercises: {}, recalls: {} };
+}
+
+function flatten(record: LearningRecord): FlatItem[] {
   const items: FlatItem[] = [];
-  const push = (kind: ItemKind, week: string, item: string, value: unknown, completedAt: string | null = null) =>
-    items.push({ kind, week_slug: week, item_id: item, data: JSON.stringify(value), completedAt });
-  for (const [slug, sections] of Object.entries(record.sections ?? {})) {
-    for (const [id, state] of Object.entries(sections ?? {})) push("section", slug, id, state, state?.completedAt ?? null);
-  }
-  for (const [slug, sheet] of Object.entries(record.worksheets ?? {})) push("worksheet", slug, "", sheet);
-  for (const [slug, lab] of Object.entries(record.labs ?? {})) {
-    for (const [id, ex] of Object.entries(lab?.exercises ?? {})) push("lab_exercise", slug, id, ex);
-    for (const [id, q] of Object.entries(lab?.quiz ?? {})) push("lab_quiz", slug, id, q);
-  }
-  const rest: Record<string, unknown> = { ...record };
-  delete rest.sections;
-  delete rest.worksheets;
-  delete rest.labs;
-  push("meta", "", "", rest);
+  const push = (kind: ItemKind, slug: string, id: string, value: unknown, completedAt: string | null = null) =>
+    items.push({ kind, week_slug: slug, item_id: id, data: JSON.stringify(value), completedAt });
+  // completed_at 열은 운영자 집계용이다. 진단 평가로 인정받은 레슨도 완료로 센다.
+  for (const [id, state] of Object.entries(record.lessons)) push("lesson", "", id, state, state.completedAt ?? state.creditedAt ?? null);
+  for (const [id, state] of Object.entries(record.exercises)) push("exercise", "", id, state, state.passedAt ?? null);
+  for (const [slug, state] of Object.entries(record.recalls)) push("recall", slug, "", state, state.submittedAt ?? null);
+  push("meta", "", "", { ...record.metaExtra, feedbackSeenAt: record.feedbackSeenAt, seenGrades: record.seenGrades });
   return items;
 }
 
 function assemble(rows: ItemRow[]): LearningRecord {
-  const record: LearningRecord = { sections: {}, worksheets: {} };
+  const record = emptyRecord();
   for (const row of rows) {
     const value = JSON.parse(row.data);
     switch (row.kind) {
-      case "meta":
-        Object.assign(record, value);
+      case "lesson":
+        record.lessons[row.item_id] = value;
         break;
-      case "section":
-        (record.sections[row.week_slug] ??= {})[row.item_id] = value;
+      case "exercise":
+        record.exercises[row.item_id] = value;
         break;
-      case "worksheet":
-        record.worksheets[row.week_slug] = value;
+      case "recall":
+        record.recalls[row.week_slug] = value;
         break;
-      case "lab_exercise":
-        ((record.labs ??= {})[row.week_slug] ??= { exercises: {}, quiz: {} }).exercises[row.item_id] = value;
+      case "meta": {
+        const { feedbackSeenAt, seenGrades, ...rest } = value ?? {};
+        record.feedbackSeenAt = feedbackSeenAt;
+        record.seenGrades = seenGrades;
+        record.metaExtra = rest;
         break;
-      case "lab_quiz":
-        ((record.labs ??= {})[row.week_slug] ??= { exercises: {}, quiz: {} }).quiz[row.item_id] = value;
-        break;
+      }
     }
   }
   return record;
@@ -161,12 +157,15 @@ const UPSERT_ITEM = `INSERT INTO learning_items (user_id, kind, week_slug, item_
   ON CONFLICT (user_id, kind, week_slug, item_id)
   DO UPDATE SET data = excluded.data, completed_at = excluded.completed_at, updated_at = excluded.updated_at`;
 
-/** 기록 전체를 행으로 써 넣는다(prev에 없거나 내용이 다른 행만 쓰고, record에 없는 행은 지운다). */
-function writeLearningItems(userId: string, record: Partial<LearningRecord>, updatedAt: string, prev: ItemRow[] = []): void {
+function readItems(userId: string): ItemRow[] {
+  return all<ItemRow>(`SELECT kind, week_slug, item_id, data FROM learning_items WHERE user_id = ? AND kind IN (${KIND_SQL})`, userId);
+}
+
+/** 바뀐 행만 쓰고, 기록에서 사라진 행(같은 kind 안에서)만 지운다. */
+function writeItems(userId: string, record: LearningRecord, updatedAt: string, prev: ItemRow[]): void {
   const before = new Map(prev.map((r) => [keyOf(r), r.data]));
-  const next = flattenLearningRecord(record);
   const nextKeys = new Set<string>();
-  for (const item of next) {
+  for (const item of flatten(record)) {
     const key = keyOf(item);
     nextKeys.add(key);
     if (before.get(key) === item.data) continue;
@@ -179,12 +178,8 @@ function writeLearningItems(userId: string, record: Partial<LearningRecord>, upd
   }
 }
 
-// 이 버전이 관리하는 행의 종류. 다른 종류(트랙·모듈·레슨 버전의 lesson·exercise·recall 행)는 읽지도 지우지도 않는다.
-// 그래야 이 버전으로 되돌렸다가 다시 새 버전으로 돌아가도 새 버전의 학습 기록이 남는다.
-const OWN_KINDS = "'section', 'worksheet', 'lab_exercise', 'lab_quiz', 'meta'";
-
-function readItems(userId: string): ItemRow[] {
-  return all<ItemRow>(`SELECT kind, week_slug, item_id, data FROM learning_items WHERE user_id = ? AND kind IN (${OWN_KINDS})`, userId);
+export function getLearningRecord(userId: string): LearningRecord {
+  return assemble(readItems(userId));
 }
 
 /** 기록을 읽고 고친 뒤 바뀐 부분만 저장한다. 읽기부터 쓰기까지 한 트랜잭션이라 동시 저장에도 안전하다. */
@@ -196,7 +191,7 @@ export function updateLearningRecord<T>(userId: string, mutate: (record: Learnin
         const record = assemble(prev);
         const result = mutate(record);
         record.updatedAt = new Date().toISOString();
-        writeLearningItems(userId, record, record.updatedAt, prev);
+        writeItems(userId, record, record.updatedAt, prev);
         return result;
       })
     );
@@ -205,144 +200,134 @@ export function updateLearningRecord<T>(userId: string, mutate: (record: Learnin
   }
 }
 
-export function getLearningRecord(userId: string): LearningRecord {
-  return assemble(readItems(userId));
+// ─── 기록 안의 항목 꺼내기 ─────────────────────────────────────────────────
+
+const emptyLessonState = (): LessonState => ({ checks: {}, answers: {}, predicts: {} });
+
+/** 레슨 상태를 꺼내되, 없으면 만들어 연결해 둔다(수정용). */
+export function ensureLessonState(record: LearningRecord, lessonId: string): LessonState {
+  const state = (record.lessons[lessonId] ??= emptyLessonState());
+  state.checks ??= {};
+  state.answers ??= {};
+  state.predicts ??= {};
+  return state;
 }
 
-/** 기록 전체를 주어진 내용으로 바꾼다(옛 JSON 가져오기용). */
-export function replaceLearningRecord(userId: string, record: Partial<LearningRecord>, updatedAt: string): void {
-  tx(() => writeLearningItems(userId, record, updatedAt, readItems(userId)));
+export function readLessonState(record: LearningRecord, lessonId: string): LessonState {
+  return { ...emptyLessonState(), ...record.lessons[lessonId] };
 }
 
-/** 사용자의 학습 기록이 마지막으로 바뀐 시각(기록이 없으면 undefined) */
-export function learningUpdatedAt(userId: string): string | undefined {
-  return get<{ at: string | null }>("SELECT MAX(updated_at) AS at FROM learning_items WHERE user_id = ?", userId)?.at ?? undefined;
+export function readRecallState(record: LearningRecord, moduleSlug: string): RecallState {
+  const saved = record.recalls[moduleSlug];
+  return { ...saved, answers: saved?.answers ?? {}, marks: saved?.marks ?? {} };
 }
 
-/** 사용자별로, 주어진 단계("주차 slug/단계 id") 가운데 완료한 단계 수 */
-export function countCompletedSections(sectionKeys: string[]): Map<string, number> {
-  const rows = all<{ user_id: string; n: number }>(
-    `SELECT user_id, COUNT(*) AS n FROM learning_items
-      WHERE kind = 'section' AND completed_at IS NOT NULL
-        AND (week_slug || '/' || item_id) IN (SELECT value FROM json_each(?))
-      GROUP BY user_id`,
-    JSON.stringify(sectionKeys)
-  );
-  return new Map(rows.map((r) => [r.user_id, r.n]));
-}
+// ─── 운영자 화면용 집계(모든 기록을 읽지 않고 필요한 숫자만 모은다) ─────────────────
 
-/** 사용자별 마지막 학습 기록 시각 */
+/** 사용자별 마지막 학습 기록 시각(새 과정 기록 기준) */
 export function lastLearningActivity(): Map<string, string> {
-  const rows = all<{ user_id: string; at: string }>("SELECT user_id, MAX(updated_at) AS at FROM learning_items GROUP BY user_id");
+  const rows = all<{ user_id: string; at: string }>(
+    `SELECT user_id, MAX(updated_at) AS at FROM learning_items WHERE kind IN ('lesson', 'exercise', 'recall') GROUP BY user_id`
+  );
   return new Map(rows.map((r) => [r.user_id, r.at]));
 }
 
-/** 한 사용자의 주차별 마지막 학습 기록 시각(주차 slug → 시각) */
-export function learningActivityByWeek(userId: string): Map<string, string> {
-  const rows = all<{ week_slug: string; at: string }>(
-    "SELECT week_slug, MAX(updated_at) AS at FROM learning_items WHERE user_id = ? AND week_slug != '' GROUP BY week_slug",
+/** 사용자의 학습 기록이 마지막으로 바뀐 시각 */
+export function learningUpdatedAt(userId: string): string | undefined {
+  return get<{ at: string | null }>(`SELECT MAX(updated_at) AS at FROM learning_items WHERE user_id = ? AND kind IN ('lesson', 'exercise', 'recall')`, userId)?.at ?? undefined;
+}
+
+/** 사용자별 완료한 레슨 id 목록 */
+export function completedLessonsByUser(): Map<string, Set<string>> {
+  const rows = all<{ user_id: string; item_id: string }>(`SELECT user_id, item_id FROM learning_items WHERE kind = 'lesson' AND completed_at IS NOT NULL`);
+  const map = new Map<string, Set<string>>();
+  for (const r of rows) {
+    const set = map.get(r.user_id) ?? new Set<string>();
+    set.add(r.item_id);
+    map.set(r.user_id, set);
+  }
+  return map;
+}
+
+export interface CheckStat {
+  lessonId: string;
+  key: string;
+  /** 한 번 이상 답한 사람 수 */
+  answered: number;
+  /** 첫 시도에 맞힌 사람 수 */
+  firstTry: number;
+}
+
+// 콘텐츠 통계는 스터디원의 기록만 센다(운영자가 검수하며 남긴 기록은 뺀다).
+const MEMBERS_ONLY = "JOIN users u ON u.id = li.user_id AND u.role = 'member'";
+
+/** 확인 문제별 응답 수와 첫 시도 정답 수(스터디원 기준) */
+export function checkStats(): CheckStat[] {
+  return all<{ lesson_id: string; k: string; answered: number; first_try: number }>(
+    `SELECT li.item_id AS lesson_id, c.key AS k, COUNT(*) AS answered,
+            SUM(json_extract(c.value, '$.correct') = 1 AND json_extract(c.value, '$.attempts') = 1) AS first_try
+       FROM learning_items li ${MEMBERS_ONLY}, json_each(li.data, '$.checks') c
+      WHERE li.kind = 'lesson'
+      GROUP BY li.item_id, c.key`
+  ).map((r) => ({ lessonId: r.lesson_id, key: r.k, answered: r.answered, firstTry: r.first_try ?? 0 }));
+}
+
+/** 레슨별 완료한 스터디원 수 */
+export function lessonCompletionCounts(): Map<string, number> {
+  const rows = all<{ item_id: string; n: number }>(
+    `SELECT li.item_id, COUNT(*) AS n FROM learning_items li ${MEMBERS_ONLY} WHERE li.kind = 'lesson' AND li.completed_at IS NOT NULL GROUP BY li.item_id`
+  );
+  return new Map(rows.map((r) => [r.item_id, r.n]));
+}
+
+/** 한 레슨의 서술형 답안(사용자 id → 서술형 키 → 답안) */
+export function readLessonAnswers(lessonId: string): Map<string, Record<string, AnswerState>> {
+  const rows = all<{ user_id: string; data: string }>(
+    `SELECT user_id, data FROM learning_items WHERE kind = 'lesson' AND item_id = ? AND json_extract(data, '$.answers') != '{}'`,
+    lessonId
+  );
+  return new Map(rows.map((r) => [r.user_id, (JSON.parse(r.data) as LessonState).answers ?? {}]));
+}
+
+/** 서술형 답안 수(레슨별, 스터디원 기준): 전체·보완 필요로 자기평가한 수 */
+export function descriptiveCountsByLesson(): Map<string, { total: number; weak: number }> {
+  const rows = all<{ item_id: string; n: number; weak: number }>(
+    `SELECT li.item_id, COUNT(*) AS n, SUM(json_extract(a.value, '$.review') = 'incorrect') AS weak
+       FROM learning_items li ${MEMBERS_ONLY}, json_each(li.data, '$.answers') a
+      WHERE li.kind = 'lesson' AND json_extract(a.value, '$.text') != ''
+      GROUP BY li.item_id`
+  );
+  return new Map(rows.map((r) => [r.item_id, { total: r.n, weak: r.weak ?? 0 }]));
+}
+
+/** 한 모듈의 백지 복습(사용자 id → 상태) */
+export function readModuleRecalls(moduleSlug: string): Map<string, RecallState> {
+  const rows = all<{ user_id: string; data: string }>(`SELECT user_id, data FROM learning_items WHERE kind = 'recall' AND week_slug = ?`, moduleSlug);
+  return new Map(rows.map((r) => [r.user_id, JSON.parse(r.data) as RecallState]));
+}
+
+/** 서술형 답안 수(사용자별): 전체·보완 필요로 자기평가한 수 */
+export function descriptiveCountsByUser(): Map<string, { total: number; weak: number }> {
+  const rows = all<{ user_id: string; n: number; weak: number }>(
+    `SELECT li.user_id, COUNT(*) AS n, SUM(json_extract(a.value, '$.review') = 'incorrect') AS weak
+       FROM learning_items li, json_each(li.data, '$.answers') a
+      WHERE li.kind = 'lesson' AND json_extract(a.value, '$.text') != ''
+      GROUP BY li.user_id`
+  );
+  return new Map(rows.map((r) => [r.user_id, { total: r.n, weak: r.weak ?? 0 }]));
+}
+
+/** 한 사용자의 항목별 마지막 기록 시각: 레슨 id·실습 전역 id·백지 복습 모듈 slug → 시각 */
+export function learningActivityByItem(userId: string): { lessons: Map<string, string>; exercises: Map<string, string>; recalls: Map<string, string> } {
+  const rows = all<{ kind: ItemKind; week_slug: string; item_id: string; updated_at: string }>(
+    `SELECT kind, week_slug, item_id, updated_at FROM learning_items WHERE user_id = ? AND kind IN ('lesson', 'exercise', 'recall')`,
     userId
   );
-  return new Map(rows.map((r) => [r.week_slug, r.at]));
-}
-
-export interface AnswerCount {
-  total: number;
-  /** 스터디원이 보완 필요로 자기평가한 답(백지공부는 보완 필요로 표시한 칸) */
-  weak: number;
-}
-
-/**
- * 서술형 답안 수를 주차별(week_slug) 또는 사용자별(user_id)로 센다: 단계 서술형·실습 서술형 답과
- * 제출한 백지공부의 칸. 운영자 화면이 모든 기록을 읽지 않고 숫자만 얻는 데 쓴다.
- */
-export function countDescriptiveAnswers(by: "week_slug" | "user_id"): Map<string, AnswerCount> {
-  const rows = all<{ k: string; n: number; weak: number }>(
-    `SELECT k, SUM(n) AS n, SUM(weak) AS weak FROM (
-        SELECT li.${by} AS k, COUNT(*) AS n, SUM(json_extract(a.value, '$.review') = 'incorrect') AS weak
-          FROM learning_items li, json_each(li.data, '$.answers') a
-          WHERE li.kind = 'section' AND json_extract(a.value, '$.text') != '' GROUP BY li.${by}
-        UNION ALL
-        SELECT ${by}, COUNT(*), SUM(json_extract(data, '$.review') = 'incorrect') FROM learning_items
-          WHERE kind = 'lab_quiz' AND json_extract(data, '$.text') != '' GROUP BY ${by}
-        UNION ALL
-        SELECT li.${by}, COUNT(*), SUM(json_extract(li.data, '$.marks."' || a.key || '"') = 'weak')
-          FROM learning_items li, json_each(li.data, '$.answers') a
-          WHERE li.kind = 'worksheet' AND json_extract(li.data, '$.submittedAt') IS NOT NULL AND trim(a.value) != '' GROUP BY li.${by}
-      ) GROUP BY k`
-  );
-  return new Map(rows.map((r) => [r.k, { total: r.n, weak: r.weak ?? 0 }]));
-}
-
-/** 한 주차에서 모든 사용자가 쓴 서술형 기록. 키는 모두 사용자 id다. */
-export interface WeekAnswerRecords {
-  /** 단계 id → 단계 상태(서술형 답은 answers) */
-  sections: Map<string, Record<string, SectionState>>;
-  /** 퀴즈 문항 id → 기록. 답을 저장한 문항(서술형)만 담는다. */
-  labQuiz: Map<string, Record<string, LabQuizState>>;
-  worksheets: Map<string, WorksheetState>;
-}
-
-/** 운영자 화면용: 한 주차의 서술형 답안이 들어 있는 행만 모든 사용자에 대해 읽는다. */
-export function readWeekAnswerRecords(weekSlug: string): WeekAnswerRecords {
-  const rows = all<{ user_id: string; kind: ItemKind; item_id: string; data: string }>(
-    `SELECT user_id, kind, item_id, data FROM learning_items
-      WHERE week_slug = ?
-        AND (kind = 'worksheet'
-          OR (kind = 'section' AND json_extract(data, '$.answers') IS NOT NULL AND json_extract(data, '$.answers') != '{}')
-          OR (kind = 'lab_quiz' AND json_extract(data, '$.text') IS NOT NULL))`,
-    weekSlug
-  );
-  const result: WeekAnswerRecords = { sections: new Map(), labQuiz: new Map(), worksheets: new Map() };
-  for (const row of rows) {
-    const value = JSON.parse(row.data);
-    if (row.kind === "section") {
-      const byUser = result.sections.get(row.user_id) ?? {};
-      byUser[row.item_id] = value;
-      result.sections.set(row.user_id, byUser);
-    } else if (row.kind === "lab_quiz") {
-      const byUser = result.labQuiz.get(row.user_id) ?? {};
-      byUser[row.item_id] = value;
-      result.labQuiz.set(row.user_id, byUser);
-    } else if (row.kind === "worksheet") {
-      result.worksheets.set(row.user_id, value);
-    }
+  const out = { lessons: new Map<string, string>(), exercises: new Map<string, string>(), recalls: new Map<string, string>() };
+  for (const r of rows) {
+    if (r.kind === "lesson") out.lessons.set(r.item_id, r.updated_at);
+    else if (r.kind === "exercise") out.exercises.set(r.item_id, r.updated_at);
+    else out.recalls.set(r.week_slug, r.updated_at);
   }
-  return result;
-}
-
-function emptySectionState(): SectionState {
-  return { checks: {}, answers: {} };
-}
-
-/** 기록에서 단계 상태를 꺼내되, 없으면 만들어서 연결해 둔다(수정용). */
-export function ensureSectionState(record: LearningRecord, slug: string, sectionId: string): SectionState {
-  const week = (record.sections[slug] ??= {});
-  const state = (week[sectionId] ??= emptySectionState());
-  state.checks ??= {};
-  state.answers ??= {};
-  return state;
-}
-
-export function readSectionState(record: LearningRecord, slug: string, sectionId: string): SectionState {
-  return { ...emptySectionState(), ...record.sections[slug]?.[sectionId] };
-}
-
-/** 코딩 실습·퀴즈 기록을 꺼내되, 없으면 만들어서 연결해 둔다(수정용). */
-export function ensureLabState(record: LearningRecord, slug: string): LabWeekState {
-  const labs = (record.labs ??= {});
-  const state = (labs[slug] ??= { exercises: {}, quiz: {} });
-  state.exercises ??= {};
-  state.quiz ??= {};
-  return state;
-}
-
-export function readLabState(record: LearningRecord, slug: string): LabWeekState {
-  const saved = record.labs?.[slug];
-  return { exercises: saved?.exercises ?? {}, quiz: saved?.quiz ?? {} };
-}
-
-export function readWorksheetState(record: LearningRecord, slug: string): WorksheetState {
-  const saved = record.worksheets[slug];
-  return { ...saved, answers: saved?.answers ?? {}, marks: saved?.marks ?? {} };
+  return out;
 }

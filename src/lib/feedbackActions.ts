@@ -20,10 +20,10 @@ export async function markFeedbackSeen(): Promise<void> {
   refresh();
 }
 
-/** 과제 화면에서 그 주차의 채점 결과를 확인했음을 기록한다. */
-export async function markAssignmentGradesSeen(slug: string): Promise<void> {
-  const user = await requireUser(`/weeks/${slug}/assignment`);
-  const submission = findUserSubmission(user.id, slug);
+/** 과제 화면에서 그 과제의 채점 결과를 확인했음을 기록한다. key는 과제 저장 키다. */
+export async function markAssignmentGradesSeen(key: string): Promise<void> {
+  const user = await requireUser("/feedback");
+  const submission = findUserSubmission(user.id, key);
   if (!submission || submission.grades.length === 0) return;
   await updateLearningRecord(user.id, (record) => {
     const seenAt = record.feedbackSeenAt ?? "";

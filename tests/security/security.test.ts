@@ -64,7 +64,7 @@ test("security regression", async (t) => {
 
   await t.test("probes and cross-site mutations are denied, including forged forwarding headers", async () => {
     for (const probe of ["/.env", "/.env.local", "/.git/config", "/wp-login.php", "/%2eenv"]) assert.equal(isProbePath(probe), true);
-    assert.equal(isProbePath("/weeks/week1"), false);
+    assert.equal(isProbePath("/modules/neural-networks/lessons/backprop"), false);
     assert.equal((await proxy(request("/.env?token=secret"))).status, 404);
     assert.equal((await proxy(request("/logout", undefined, { method: "POST", headers: { origin: "https://evil.example", "x-forwarded-host": "evil.example" } }))).status, 403);
     assert.equal((await proxy(request("/operator/security"))).status, 307);
@@ -76,11 +76,8 @@ test("security regression", async (t) => {
 
   await t.test("download authorization is checked against the database even for stale admin tokens", async () => {
     const member = get<{ id: string }>("SELECT id FROM users WHERE google_subject = 'visitor'")!;
-    const cookie = await encryptSession({ uid: member.id, role: "admin" });
-    const { GET: backup } = await import("../../src/app/api/operator/backups/[name]/route");
-    assert.equal((await backup(request("/api/operator/backups/missing.db", cookie), { params: Promise.resolve({ name: "missing.db" }) })).status, 404);
     const { saveSubmission } = await import("../../src/lib/submissionStore");
-    const sub = await saveSubmission({ userId: member.id, weekSlug: "week1", text: "", links: [], files: [{ name: "answer.txt", type: "text/plain", bytes: Buffer.from("private answer") }] });
+    const sub = await saveSubmission({ userId: member.id, assignmentKey: "autograd-mlp", text: "", links: [], files: [{ name: "answer.txt", type: "text/plain", bytes: Buffer.from("private answer") }] });
     const owner = get<{ id: string }>("SELECT id FROM users WHERE google_subject = 'owner'")!;
     const second = await findOrCreateGoogleUser({ email: "other@example.com", subject: "other", name: "Other" });
     const otherCookie = await encryptSession({ uid: second.id, role: "member" });
@@ -88,6 +85,9 @@ test("security regression", async (t) => {
     const params = { params: Promise.resolve({ id: sub.id, fileId: sub.versions[0].files[0].id }) };
     assert.equal((await download(request("/api/submissions/x/files/y"), params)).status, 401);
     assert.equal((await download(request("/api/submissions/x/files/y", otherCookie), params)).status, 404);
+    // 토큰에 admin이 적혀 있어도 DB의 권한이 member면 다른 사람의 파일을 받을 수 없다.
+    const staleAdminCookie = await encryptSession({ uid: second.id, role: "admin" });
+    assert.equal((await download(request("/api/submissions/x/files/y", staleAdminCookie), params)).status, 404);
     const ownCookie = await encryptSession({ uid: member.id, role: "member" });
     const own = await download(request("/api/submissions/x/files/y", ownCookie), params);
     assert.equal(await own.text(), "private answer");

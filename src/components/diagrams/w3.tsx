@@ -120,8 +120,8 @@ export function XorHidden() {
   };
   return (
     <DiagramFrame
-      title="XOR: 은닉층이 공간을 바꿔 직선 하나로 나눌 수 있게 만든다"
-      caption="왼쪽 입력 공간에서는 주황(출력 1)과 파랑(출력 0)을 직선 하나로 나눌 수 없다. ReLU 은닉층을 지나면 (0,1)과 (1,0)이 한 점으로 모이고 (1,1)이 멀리 밀려나, 오른쪽처럼 직선 h1 − 2h2 = 0.5(점선) 하나로 나뉜다."
+      title="XOR: 은닉층이 입력을 새 좌표로 바꿔 직선 하나로 나뉘게 한다"
+      caption="왼쪽 입력 공간에서는 주황(출력 1)과 파랑(출력 0)을 직선 하나로 나눌 수 없다. ReLU 은닉층을 지나면 (0,1)과 (1,0)이 한 점 (1,0)이 되고 (1,1)은 (2,1)이 되어, 오른쪽처럼 직선 h1 − 2h2 = 0.5(점선) 하나로 나뉜다."
       viewBox="0 0 560 270"
       minWidth={440}
     >
@@ -136,7 +136,7 @@ export function XorHidden() {
   );
 }
 
-// ───────────────────────── 3주차 핵심 과정: 추가 그림 ─────────────────────────
+// ───────────────────────── 추가 그림 ─────────────────────────
 
 export function NeuronAnatomy() {
   // 본문 예: x = (2, 1), w = (0.5, −1), b = 0.1 → z = 0.1 → ReLU → 0.1
@@ -145,7 +145,7 @@ export function NeuronAnatomy() {
   return (
     <DiagramFrame
       title="뉴런 하나가 하는 일: 곱하고, 더하고, 활성화 함수에 통과시킨다"
-      caption="각 입력에 해당 가중치를 곱해(0.5×2 = 1, −1×1 = −1) 모두 더하고 편향 0.1을 더하면 활성화 전 값 z = 0.1이다. ReLU는 z가 양수라 그대로 통과시켜 출력도 0.1이다. 편향이 −0.5였다면 z = −0.5가 되어 ReLU의 출력은 0이 된다(뉴런이 꺼진다). MLP의 한 층은 이런 뉴런을 여러 개 나란히 둔 것이다."
+      caption="각 입력에 해당 가중치를 곱해(0.5×2 = 1, −1×1 = −1) 모두 더하고 편향 0.1을 더하면 활성화 전 값 z = 0.1이다. ReLU는 z가 양수라 그대로 통과시켜 출력도 0.1이다. 편향이 −0.5였다면 z = −0.5가 되어 ReLU의 출력은 0이 된다. MLP의 한 층은 이런 뉴런을 여러 개 나란히 둔 것이다."
       viewBox="0 0 720 250"
       minWidth={560}
     >
@@ -200,7 +200,7 @@ export function NeuronAnatomy() {
         b = −0.5였다면:
       </text>
       <text x={452} y={218} fontSize={11} fill={inkSecondary}>
-        z = −0.5 → ReLU → 0 (뉴런이 꺼진다)
+        z = −0.5 → ReLU → 0 (뉴런의 출력이 0)
       </text>
     </DiagramFrame>
   );
@@ -240,7 +240,7 @@ export function ReluPieces() {
   return (
     <DiagramFrame
       title="ReLU 하나가 꺾임 하나를 만든다: 뉴런이 많을수록 어떤 곡선이든 근사할 수 있다"
-      caption="회색 점선이 근사하려는 곡선이다. 활성화 없이 선형 층만 쌓으면 결과는 언제나 직선 하나다(왼쪽). ReLU는 입력이 0을 넘는 곳에서 한 번 꺾이므로, ReLU 뉴런의 출력을 가중합하면 꺾임이 여러 개인 선(구간별 선형 함수)을 만들 수 있다. 꺾임(점)이 많아질수록 목표 곡선에 가까워진다. 보편 근사 정리를 직관적으로 설명하면 이렇다."
+      caption="회색 점선이 근사하려는 곡선이다. 활성화 없이 선형 층만 쌓으면 결과는 언제나 직선 하나다(왼쪽). ReLU는 입력이 0을 넘는 곳에서 한 번 꺾이므로, ReLU 뉴런의 출력을 가중합하면 꺾임이 여러 개인 선(구간별 선형 함수)을 만들 수 있다. 꺾임(점)이 많아질수록 목표 곡선에 가까워진다. 은닉 뉴런이 충분히 많으면 연속 함수를 원하는 정확도로 근사할 수 있다는 보편 근사 정리(universal approximation theorem)를 그림으로 나타낸 것이다."
       viewBox="0 0 720 240"
       minWidth={560}
     >
@@ -263,7 +263,7 @@ export function ReluPieces() {
               <circle key={k} cx={sx(k)} cy={sy(p.f(k))} r={4} fill={p.color} stroke="var(--surface-card)" strokeWidth={1.4} />
             ))}
             <text x={x0 + pw / 2} y={top + ph + 22} textAnchor="middle" fontSize={11} fill={inkSecondary}>
-              {i === 0 ? "W₂(W₁x) = (W₂W₁)x: 한 층과 같다" : `점 = ReLU가 켜지기 시작하는 꺾임`}
+              {i === 0 ? "W₂(W₁x) = (W₂W₁)x: 한 층과 같다" : `점 = ReLU의 입력이 0이 되는 꺾임점`}
             </text>
           </g>
         );
@@ -462,13 +462,13 @@ export function ClosureRecursion() {
   return (
     <DiagramFrame
       title="클로저와 재귀: 자동미분 엔진 구현에 쓰이는 두 문법"
-      caption="왼쪽: make_adder(5)는 실행이 끝났지만, 반환된 함수 add는 바깥 변수 n = 5를 계속 기억한다. 그래서 나중에 add5(10)을 부르면 15가 나온다. Value의 _backward도 이렇게 '지금은 정의만 하고, 필요한 값(out.grad)이 준비된 뒤에 실행'된다. 오른쪽: countdown(3)은 더 작은 문제로 자기 자신을 부르며 호출이 쌓이고, 멈추는 조건(n == 0)에 이르면 차례로 돌아온다. backward()의 build()도 이런 방식으로 그래프를 훑는다."
+      caption="왼쪽: make_adder(5)는 실행이 끝났지만, 반환된 함수 add는 바깥 변수 n = 5를 계속 참조한다. 그래서 나중에 add5(10)을 부르면 15가 나온다. Value의 _backward도 이렇게 '지금은 정의만 하고, 필요한 값(out.grad)이 준비된 뒤에 실행'된다. 오른쪽: countdown(3)은 더 작은 문제로 자기 자신을 부르며 호출이 쌓이고, 멈추는 조건(n == 0)에 이르면 차례로 돌아온다. backward()의 build()도 이런 방식으로 그래프를 훑는다."
       viewBox="0 0 720 262"
       minWidth={560}
     >
       <Markers prefix={P} colors={{ ink: inkSecondary, violet: colors.violet, orange: colors.orange }} />
       <text x={14} y={22} fontSize={12.5} fontWeight={700} fill={colors.violet}>
-        클로저: 함수가 바깥 변수를 기억한다
+        클로저: 함수가 바깥 변수를 참조한다
       </text>
       <rect x={14} y={38} width={190} height={92} rx={10} fill="none" stroke={inkMuted} strokeDasharray="5 4" />
       <text x={24} y={56} fontSize={11} fill={inkSecondary} fontFamily={mono}>
@@ -484,12 +484,12 @@ export function ClosureRecursion() {
       <Tag x={236} y={52} w={112} h={58} lines={["함수 add", "x + n 을 계산"]} color={colors.violet} tint={0.12} size={12} />
       <ArrPath d="M262,112 C262,140 120,140 66,98" color={colors.orange} marker={`${P}-orange`} dashed />
       <text x={190} y={152} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.orange}>
-        끝난 뒤에도 n = 5를 기억한다
+        끝난 뒤에도 n = 5를 참조한다
       </text>
       <Tag x={268} y={168} w={80} h={30} lines={["add5"]} color={inkMuted} tint={0.08} size={12} />
       <Arr x1={308} y1={166} x2={308} y2={114} color={colors.violet} marker={`${P}-violet`} />
       <text x={314} y={146} fontSize={10} fill={inkSecondary}>
-        이름표
+        참조
       </text>
       <text x={30} y={232} fontSize={12} fill={ink} fontFamily={mono}>
         add5(10) → 10 + 5 = 15
@@ -657,7 +657,7 @@ export function GradAccumulate() {
 }
 
 export function OptimizerPaths() {
-  // f(x, y) = ½(x² + 25y²): 세로가 25배 가파른 협곡. 같은 출발점에서 25스텝씩.
+  // f(x, y) = ½(x² + 25y²): 세로가 25배 가파른 손실. 같은 출발점에서 25스텝씩.
   const start = [-4.5, 1.2];
   const grad = (x: number, y: number) => [x, 25 * y];
   const N = 25;
@@ -711,15 +711,15 @@ export function OptimizerPaths() {
   const panels = [
     { title: "SGD (η = 0.07)", pts: sgd(), color: colors.red, note: "세로로 진동, 가로로 느림" },
     { title: "Momentum (β = 0.8)", pts: momentum(), color: colors.orange, note: "일정한 가로 방향으로 가속" },
-    { title: "Adam (η = 0.25)", pts: adam(), color: colors.blue, note: "축마다 보폭을 맞춰 대각선으로" },
+    { title: "Adam (η = 0.25)", pts: adam(), color: colors.blue, note: "축마다 갱신량을 맞춰 대각선으로" },
   ];
   const pw = 214;
   const ph = 150;
   const top = 38;
   return (
     <DiagramFrame
-      title="좁은 골짜기에서 SGD, Momentum, Adam이 25스텝 동안 움직인 경로"
-      caption="세로 방향이 가로보다 25배 가파른 손실 f = ½(x² + 25y²)에서 같은 점(큰 점)에서 출발해 25번 갱신한 경로다. SGD는 가파른 세로축 때문에 학습률을 키울 수 없어 가로 방향으로는 아직 최솟값에서 멀다. Momentum은 매번 같은 가로 방향의 기울기가 누적돼 빨라지고(조금 지나쳤다 돌아온다), 진동하는 세로 성분은 상쇄된다. Adam은 축마다 기울기 크기로 나눠 보폭을 비슷하게 만들므로 처음부터 대각선으로 내려간다."
+      title="등고선이 길쭉한 손실에서 SGD, Momentum, Adam이 25스텝 동안 움직인 경로"
+      caption="세로 방향이 가로보다 25배 가파른 손실 f = ½(x² + 25y²)에서 같은 점(큰 점)에서 출발해 25번 갱신한 경로다. SGD는 가파른 세로축 때문에 학습률을 키울 수 없어 가로 방향으로는 아직 최솟값에서 멀다. Momentum은 매번 같은 가로 방향의 기울기가 누적돼 빨라지고(최솟값을 조금 지나쳤다 돌아온다), 진동하는 세로 성분은 상쇄된다. Adam은 축마다 기울기 크기로 나눠 갱신량을 비슷하게 만들므로 처음부터 대각선 방향으로 움직인다."
       viewBox="0 0 720 240"
       minWidth={560}
     >
@@ -769,12 +769,12 @@ export function MomentumVelocity() {
   const alt = [1, -0.1, 0.91, -0.181, 0.837];
   const panels = [
     { title: "같은 방향 기울기: 계속 쌓인다", v: same, color: colors.blue, note: "한계는 1/(1 − β) = 10배" },
-    { title: "부호가 바뀌는 기울기: 서로 상쇄된다", v: alt, color: colors.orange, note: "1 안팎에서 맴돈다" },
+    { title: "부호가 바뀌는 기울기: 서로 상쇄된다", v: alt, color: colors.orange, note: "크기가 1을 넘지 않는다" },
   ];
   return (
     <DiagramFrame
       title="Momentum의 속도 v: 일관된 방향은 가속, 진동은 상쇄"
-      caption="v ← 0.9v + g를 다섯 번 반복한 값(본문 코드의 출력)이다. 기울기가 매번 같은 방향이면 v가 1, 1.9, 2.71, …로 커져 최대 10배까지 가속된다. 부호가 번갈아 바뀌면 앞의 기여가 반대 부호와 상쇄되어 v가 1 근처에 머문다. 그래서 골짜기의 긴 축 방향으로는 빨라지고 좁은 축 방향의 진동은 줄어든다."
+      caption="v ← 0.9v + g를 다섯 번 반복한 값(본문 코드의 출력)이다. 기울기가 매번 같은 방향이면 v가 1, 1.9, 2.71, …로 커져 최대 10배까지 가속된다. 부호가 번갈아 바뀌면 앞의 값이 반대 부호의 기울기와 상쇄되어 v의 크기가 1을 넘지 않는다. 그래서 등고선이 길쭉한 손실에서 완만한 방향으로는 빨라지고 가파른 방향의 진동은 줄어든다."
       viewBox="0 0 720 230"
       minWidth={540}
     >
@@ -827,7 +827,7 @@ export function InitSignalPropagation() {
   const stdAt = (sigma: number, l: number) => 0.584 * Math.sqrt(256 * sigma * sigma) * Math.sqrt((256 * sigma * sigma) / 2) ** (l - 1);
   return (
     <DiagramFrame
-      title="초기화에 따라 신호가 폭발하거나 사라진다: ReLU 10층의 활성화 크기"
+      title="초기화에 따라 활성화가 지나치게 커지거나 0에 가까워진다: ReLU 10층의 활성화 크기"
       caption="세로축은 로그 눈금이다. 가중치를 표준정규분포로 뽑으면 층마다 활성화가 약 11배씩 커져 10층 뒤 10¹⁰을 넘고, 0.01로 너무 작게 뽑으면 층마다 약 0.11배로 줄어 10⁻¹⁰ 아래로 사라진다. 분산을 2/fan_in으로 맞춘 He 초기화만 10층 내내 같은 크기를 유지한다. 본문 코드가 출력하는 숫자를 그대로 그린 것이며, 역전파되는 기울기에도 같은 일이 일어난다."
       viewBox="0 0 720 270"
       minWidth={560}
@@ -871,10 +871,10 @@ export function InitSignalPropagation() {
 export function TrainingLoop() {
   const P = "trl";
   const steps = [
-    { x: 150, y: 54, t: "① 미니배치 꺼내기", c: "for xb, yb in loader" },
+    { x: 150, y: 54, t: "① 미니배치 가져오기", c: "for xb, yb in loader" },
     { x: 330, y: 54, t: "② 순전파", c: "pred = model(xb)" },
     { x: 510, y: 54, t: "③ 손실 계산", c: "loss = loss_fn(pred, yb)" },
-    { x: 510, y: 170, t: "④ 기울기 비우기", c: "optimizer.zero_grad()" },
+    { x: 510, y: 170, t: "④ 기울기 초기화", c: "optimizer.zero_grad()" },
     { x: 330, y: 170, t: "⑤ 역전파", c: "loss.backward()" },
     { x: 150, y: 170, t: "⑥ 파라미터 갱신", c: "optimizer.step()" },
   ];
@@ -882,8 +882,8 @@ export function TrainingLoop() {
   const h = 56;
   return (
     <DiagramFrame
-      title="PyTorch 학습 루프 한 바퀴: 여섯 단계의 반복"
-      caption="배치마다 ①~⑥을 반복한다. ④ zero_grad를 빠뜨리면 .grad가 +=로 누적되어 갱신 폭이 점점 커진다(micrograd에서 grad = 0으로 초기화하던 줄과 같은 역할). 한 에폭이 끝나면 오른쪽처럼 평가 모드(model.eval)와 torch.no_grad()로 검증 손실을 재고, 가장 좋았던 시점의 파라미터를 체크포인트로 저장한다."
+      title="PyTorch 학습 루프: 미니배치마다 반복하는 여섯 단계"
+      caption="미니배치마다 ①~⑥을 반복한다. ④ zero_grad를 빠뜨리면 .grad가 +=로 누적되어 갱신량이 점점 커진다(자동미분 엔진에서 grad를 0으로 초기화하던 줄과 같은 역할). 한 에폭이 끝나면 오른쪽처럼 평가 모드(model.eval)와 torch.no_grad()로 검증 손실을 계산하고, 검증 성능이 가장 좋았던 시점의 파라미터를 체크포인트로 저장한다."
       viewBox="0 0 720 260"
       minWidth={560}
     >
@@ -927,8 +927,8 @@ export function BroadcastBug() {
   const oy = 76;
   return (
     <DiagramFrame
-      title="에러 없이 틀리는 버그: (N, 1) − (N,) = (N, N)"
-      caption="예측 pred의 모양이 (4, 1)이고 정답 y가 (4,)이면, 브로드캐스팅 규칙에 따라 pred는 오른쪽으로, y는 아래로 복제되어 4×4 표가 만들어진다. 원하는 오차는 대각선(초록) 4개뿐인데, 나머지 12칸(빨강)은 서로 다른 샘플끼리의 엉뚱한 차이다. 아무 오류 없이 이 16칸의 평균이 손실이 되어 잘못된 방향으로 학습된다. pred.squeeze(1)로 (4,)를 만들면 대각선만 남는다."
+      title="오류 없이 잘못 계산되는 손실: (N, 1) − (N,) = (N, N)"
+      caption="예측 pred의 모양이 (4, 1)이고 정답 y가 (4,)이면, 브로드캐스팅 규칙에 따라 pred는 오른쪽으로, y는 아래로 복제되어 4×4 표가 만들어진다. 필요한 오차는 대각선(초록) 4칸뿐이고, 나머지 12칸(빨강)은 서로 다른 샘플의 예측과 정답 사이의 차이다. 오류 메시지 없이 16칸의 평균이 손실이 되어 잘못된 방향으로 학습된다. pred.squeeze(1)로 (4,)를 만들면 대각선만 남는다."
       viewBox="0 0 720 300"
       minWidth={560}
     >
@@ -1041,7 +1041,7 @@ const MOONS_PTS =
   "-0.47,1.15,0 -0.69,0.52,0";
 
 export function BnLnExample() {
-  // 본문 예제: z = [[2, 4], [6, 8]] (행 = 샘플, 열 = 특징). BN은 열마다, LN은 행마다 평균·분산을 낸다.
+  // 본문 예제: z = [[2, 4], [6, 8]] (행 = 샘플, 열 = 특성). BN은 열마다, LN은 행마다 평균과 분산을 계산한다.
   const P = "bnl";
   const z = [
     [2, 4],
@@ -1062,7 +1062,7 @@ export function BnLnExample() {
     );
   const heads = (x0: number, y0: number) => (
     <g>
-      {["특징1", "특징2"].map((h, j) => (
+      {["특성1", "특성2"].map((h, j) => (
         <text key={h} x={x0 + j * cw + cw / 2} y={y0 - 7} textAnchor="middle" fontSize={10} fill={inkSecondary}>
           {h}
         </text>
@@ -1077,8 +1077,8 @@ export function BnLnExample() {
   const tokens = ["나는", "오늘", "학교에", "간다"];
   return (
     <DiagramFrame
-      title="BatchNorm은 열(특징)마다, LayerNorm은 행(샘플)마다 정규화한다"
-      caption="본문의 2 × 2 예제다(행 = 샘플, 열 = 특징). BatchNorm은 같은 특징을 여러 샘플에 걸쳐 모아(axis=0) 평균·분산을 내므로 특징1은 평균 4·분산 4, 특징2는 평균 6·분산 4가 되고, 결과는 '각 특징 안에서 샘플1이 작고 샘플2가 크다'로 정규화된다. LayerNorm은 한 샘플의 특징들을 모아(axis=1) 샘플1은 평균 3·분산 1, 샘플2는 평균 7·분산 1이 되고, 결과는 '각 샘플 안에서 특징1이 작고 특징2가 크다'가 된다. Transformer에서는 토큰 하나가 샘플 하나라서, 토큰마다 자기 d_model개 값만으로 정규화하고 다른 토큰이나 다른 문장은 보지 않는다."
+      title="BatchNorm은 열(특성)마다, LayerNorm은 행(샘플)마다 정규화한다"
+      caption="본문의 2 × 2 예제다(행 = 샘플, 열 = 특성). BatchNorm은 같은 특성의 여러 샘플 값으로(axis=0) 평균과 분산을 계산하므로 특성1은 평균 4·분산 4, 특성2는 평균 6·분산 4이고, 결과는 각 특성 안에서 샘플1이 작고 샘플2가 큰 값이 된다. LayerNorm은 한 샘플의 특성 값으로(axis=1) 계산하므로 샘플1은 평균 3·분산 1, 샘플2는 평균 7·분산 1이고, 결과는 각 샘플 안에서 특성1이 작고 특성2가 큰 값이 된다. Transformer에서는 토큰 하나가 샘플 하나에 해당하므로, 토큰마다 그 토큰의 d_model개 값만으로 정규화하고 다른 토큰이나 다른 문장의 값은 쓰지 않는다."
       viewBox="0 0 720 262"
       minWidth={620}
     >
@@ -1218,7 +1218,7 @@ export function FloatFormats() {
 }
 
 export function Fp16Range() {
-  // 본문 코드: FP16에서 1e-8은 0이 되고, 1024배 하면 1.025e-5(비정규수)로 살아남아 ÷1024로 1.0012e-8이 복원된다. 70000은 inf.
+  // 본문 코드: FP16에서 1e-8은 0이 되고, 1024배 하면 1.025e-5(비정규수)로 표현되어 ÷1024로 1.0012e-8이 복원된다. 70000은 inf.
   const P = "f16";
   const sx = log10Scale(1e-10, 1e6, 40, 690);
   const y = 112;
@@ -1274,7 +1274,7 @@ export function Fp16Range() {
       <text x={(sx(1e-8) + sx(1.025e-5)) / 2} y={y + 80} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.green}>
         × 1024 (loss scaling)
       </text>
-      <Lines x={sx(1.025e-5) + 10} y={y + 34} lines={["1.025×10⁻⁵로 살아남음 ✓", "갱신 직전 ÷ 1024 → 1.0012×10⁻⁸"]} size={10.5} anchor="start" color={colors.green} weight={700} />
+      <Lines x={sx(1.025e-5) + 10} y={y + 34} lines={["1.025×10⁻⁵로 표현됨 ✓", "갱신 직전 ÷ 1024 → 1.0012×10⁻⁸"]} size={10.5} anchor="start" color={colors.green} weight={700} />
       <circle cx={sx(70000)} cy={y} r={5.5} fill={colors.red} />
       <text x={sx(70000)} y={y + 36} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.red}>
         70,000 → inf ✗
@@ -1288,7 +1288,7 @@ export function Fp16Range() {
 }
 
 export function MoonsCapacity() {
-  // MOONS_GRID 참조. 유닛 1개는 같은 설정으로 시드 6개 중 5개가 모든 ReLU가 꺼져 한 클래스만 답했다(그림은 살아남은 시드).
+  // MOONS_GRID 참조. 유닛 1개는 같은 설정으로 시드 6개 중 5개에서 모든 ReLU 출력이 0이 되어 한 클래스만 답했다(그림은 그렇지 않은 시드).
   const NX = 84;
   const NY = 54;
   const pts = MOONS_PTS.split(" ").map((t) => t.split(",").map(Number));
@@ -1297,7 +1297,7 @@ export function MoonsCapacity() {
   return (
     <DiagramFrame
       title="은닉 유닛 수에 따른 결정 경계 (make_moons)"
-      caption="본문 코드와 같은 구조(2 → h → h → 2, ReLU)와 설정(Adam, 학습률 0.01, 300 epoch)으로 은닉 유닛 수 h만 바꿔 학습한 결정 영역이다(NumPy로 다시 학습한 결과). 유닛이 1개면 경계가 직선 하나뿐이고, 2개·4개면 꺾인 직선 몇 조각으로 초승달 모양을 근사한다. 64개면 경계가 두 초승달 사이의 곡선을 따라간다. 숫자는 훈련 데이터 1,000개의 정확도다. 같은 설정이라도 초기값에 따라 결과가 달라지며, 유닛이 1개일 때는 시드 6개 중 5개에서 ReLU가 모두 꺼져 한 클래스로만 예측했다."
+      caption="본문 코드와 같은 구조(2 → h → h → 2, ReLU)와 설정(Adam, 학습률 0.01, 300 epoch)으로 은닉 유닛 수 h만 바꿔 학습한 결정 영역이다(NumPy로 다시 학습한 결과). 유닛이 1개면 경계가 직선 하나뿐이고, 2개·4개면 꺾인 직선 몇 조각으로 초승달 모양을 근사한다. 64개면 경계가 두 초승달 사이의 곡선을 따라간다. 숫자는 학습 데이터 1,000개에 대한 정확도다. 같은 설정이라도 초기값에 따라 결과가 달라지며, 유닛이 1개일 때는 시드 6개 중 5개에서 ReLU의 출력이 모두 0이 되어 한 클래스로만 예측했다."
       viewBox="0 0 720 176"
       minWidth={600}
     >
@@ -1325,7 +1325,7 @@ export function MoonsCapacity() {
             })}
             <rect x={x0} y={y0} width={pw} height={ph} fill="none" stroke="var(--border-strong)" />
             <text x={x0 + pw / 2} y={y0 + ph + 18} textAnchor="middle" fontSize={11} fontWeight={700} fill={m.h === 64 ? colors.green : inkSecondary}>
-              {`훈련 정확도 ${m.acc.toFixed(1)}%`}
+              {`학습 정확도 ${m.acc.toFixed(1)}%`}
             </text>
           </g>
         );
@@ -1363,8 +1363,8 @@ export function NumpyVsTorchLoop() {
   };
   return (
     <DiagramFrame
-      title="NumPy 루프와 PyTorch 루프: 미분과 갱신은 누가 맡는가"
-      caption="왼쪽은 본문의 NumPy 루프, 오른쪽은 PyTorch 루프다. 같은 색끼리 같은 일을 한다. NumPy에서 빨간 두 줄(grad_w, grad_b)은 '선형회귀 + MSE'에만 맞는, 손으로 유도한 미분 공식이라 모델을 바꾸면 다시 유도해야 한다. PyTorch에서는 그 자리를 loss.backward()가, 갱신 두 줄을 opt.step()이 맡고, 루프 안에 w나 b가 한 번도 등장하지 않는다. 그래서 model을 더 복잡한 신경망으로 바꿔도 루프는 한 글자도 고칠 필요가 없다."
+      title="NumPy 루프와 PyTorch 루프: 미분과 갱신을 계산하는 코드의 위치"
+      caption="왼쪽은 본문의 NumPy 루프, 오른쪽은 PyTorch 루프다. 같은 색의 줄은 같은 계산을 한다. NumPy의 빨간 두 줄(grad_w, grad_b)은 선형회귀와 MSE에만 맞는 미분 공식을 손으로 유도한 것이라 모델을 바꾸면 다시 유도해야 한다. PyTorch에서는 그 계산을 loss.backward()가, 갱신 두 줄을 opt.step()이 수행하고, 루프 안에 w나 b가 나오지 않는다. 그래서 model을 더 복잡한 신경망으로 바꿔도 루프를 고칠 필요가 없다."
       viewBox="0 0 720 262"
       minWidth={620}
     >
@@ -1409,7 +1409,7 @@ export function NumpyVsTorchLoop() {
 }
 
 export function DropoutSubnets() {
-  // 학습 중 매 스텝 다른 뉴런을 끈다(그림은 설명용 마스크). 평가 때는 전부 켜고 아무것도 하지 않는다(역드롭아웃).
+  // 학습 중 스텝마다 다른 뉴런의 출력을 0으로 만든다(그림은 설명용 마스크). 평가할 때는 모든 뉴런을 쓰고 보정하지 않는다(역드롭아웃).
   const P = "dsn";
   const layers = [3, 5, 5, 2];
   const masks: number[][][] = [
@@ -1448,8 +1448,8 @@ export function DropoutSubnets() {
   const bx = linear(0, 1.1, 0, 120);
   return (
     <DiagramFrame
-      title="드롭아웃: 매 스텝 다른 부분망을 학습하고, 평가 때는 전체를 쓴다"
-      caption="학습 중에는 스텝마다 은닉 뉴런 일부를 확률 p로 끈다(✗, 그림은 설명용 예시). 어떤 뉴런도 특정 뉴런이 항상 함께 켜져 있다고 기대할 수 없으므로 각자 혼자서도 쓸모 있는 특징을 배우게 되고, 스텝마다 다른 부분망을 학습하는 셈이 된다. 평가 때는 전부 켠다. 그때 다음 층에 들어가는 평균이 학습 때와 같도록, 학습 중 살아남은 값을 1/(1 − p)배 해 두는 것이 역드롭아웃이다. 오른쪽은 본문 코드(p = 0.2)의 결과로, 끄기만 하면 평균이 0.8로 줄지만 역드롭아웃은 1을 유지한다."
+      title="드롭아웃: 스텝마다 다른 부분망을 학습하고, 평가할 때는 전체 망을 쓴다"
+      caption="학습 중에는 스텝마다 은닉 뉴런 일부의 출력을 확률 p로 0으로 만든다(✗ 표시, 그림의 위치는 예시). 0이 되는 뉴런이 스텝마다 달라지므로 각 뉴런의 가중치는 특정 뉴런의 출력에 의존하지 않도록 학습되고, 스텝마다 서로 다른 부분망이 학습된다. 평가할 때는 모든 뉴런을 쓴다. 다음 층에 들어가는 평균이 학습과 평가에서 같도록 학습 중에 남은 값을 1/(1 − p)배 하는 것이 역드롭아웃이다. 오른쪽은 본문 코드(p = 0.2)의 결과로, 0으로 만들기만 하면 평균이 약 0.8로 줄고 역드롭아웃은 약 1을 유지한다."
       viewBox="0 0 720 236"
       minWidth={620}
     >
@@ -1464,7 +1464,7 @@ export function DropoutSubnets() {
             <rect x={x0} y={28} width={pw} height={164} rx={8} fill="none" stroke="var(--border-hairline)" />
             {net(x0, masks[j], j === 3)}
             <text x={x0 + pw / 2} y={210} textAnchor="middle" fontSize={10} fill={j === 3 ? colors.green : inkSecondary} fontWeight={700}>
-              {j === 3 ? "전부 켜고 그대로" : "살아남은 값 × 1/(1 − p)"}
+              {j === 3 ? "모든 뉴런, 보정 없음" : "남은 값 × 1/(1 − p)"}
             </text>
           </g>
         );
@@ -1473,9 +1473,9 @@ export function DropoutSubnets() {
         평균 (p = 0.2, 값이 모두 1)
       </text>
       {[
-        { t: "끄기만", v: 0.8, c: colors.red },
+        { t: "0으로만", v: 0.8, c: colors.red },
         { t: "역드롭아웃", v: 1.0, c: colors.blue },
-        { t: "평가 (전부 켬)", v: 1.0, c: colors.green },
+        { t: "평가 (모든 뉴런)", v: 1.0, c: colors.green },
       ].map((b, i) => {
         const y = 48 + i * 48;
         return (
@@ -1496,7 +1496,7 @@ export function DropoutSubnets() {
 }
 
 export function EarlyStopping() {
-  // 개념도: 훈련 손실은 계속 줄고 검증 손실은 U자. patience = 10 epoch 동안 개선이 없으면 멈추고 최저점 체크포인트로 돌아간다.
+  // 개념도: 학습 손실은 계속 줄고 검증 손실은 U자. patience = 10 epoch 동안 개선이 없으면 멈추고 검증 손실이 가장 낮았던 체크포인트를 쓴다.
   const P = "ers";
   const train = (t: number) => 0.12 + 0.9 * Math.exp(-t / 9);
   const val = (t: number) => 0.3 + 0.75 * Math.exp(-t / 7) + 0.00055 * t * t;
@@ -1513,8 +1513,8 @@ export function EarlyStopping() {
   const sy2 = linear(0.4, 1, G2.top + G2.height, G2.top);
   return (
     <DiagramFrame
-      title="조기 종료: 검증 손실이 가장 낮았던 시점으로 돌아간다"
-      caption={`개념도다. 왼쪽: 훈련 손실(파랑)은 학습할수록 계속 줄지만 검증 손실(주황)은 ${best} epoch 부근에서 최저점에 이른 뒤 다시 오른다. 조기 종료는 검증 손실을 기록하다가 patience(여기서는 10 epoch) 동안 최저값을 갱신하지 못하면 ${stop} epoch에서 멈추고, 최저였던 ${best} epoch의 체크포인트를 최종 모델로 쓴다. 오른쪽: 같은 구간에서 검증 정확도는 거의 그대로다. 모델이 틀리는 샘플에 대해 점점 더 확신을 갖고 틀리기 시작하면 교차 엔트로피가 먼저 오르므로, 과적합은 정확도보다 손실에서 먼저 보인다.`}
+      title="조기 종료: 검증 손실이 가장 낮았던 시점의 체크포인트를 쓴다"
+      caption={`개념도다. 왼쪽: 학습 손실(파랑)은 학습할수록 계속 줄지만 검증 손실(주황)은 ${best} epoch 부근에서 가장 낮아진 뒤 다시 오른다. 조기 종료는 검증 손실을 기록하다가 patience(여기서는 10 epoch) 동안 최솟값이 갱신되지 않으면 ${stop} epoch에서 멈추고, 검증 손실이 가장 낮았던 ${best} epoch의 체크포인트를 최종 모델로 쓴다. 오른쪽: 같은 구간에서 검증 정확도는 거의 그대로다. 모델이 틀리는 샘플에서 오답 클래스에 점점 높은 확률을 주면 교차 엔트로피가 먼저 오르므로, 과적합은 정확도보다 손실에서 먼저 드러난다.`}
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -1539,10 +1539,10 @@ export function EarlyStopping() {
       </text>
       <ArrPath d={`M${sx(stop) - 2},${sy(val(stop)) - 8} C${sx(stop) - 10},${sy(val(stop)) - 40} ${sx(best) + 10},${sy(val(best)) - 44} ${sx(best) + 2},${sy(val(best)) - 9}`} color={colors.green} marker={`${P}-green`} width={1.6} />
       <text x={(sx(best) + sx(stop)) / 2} y={sy(val(best)) - 46} textAnchor="middle" fontSize={10} fontWeight={800} fill={colors.green} stroke="var(--surface-card)" strokeWidth={3} paintOrder="stroke">
-        {`${best} epoch 체크포인트로`}
+        {`${best} epoch 체크포인트 사용`}
       </text>
       <text x={sx(52)} y={sy(train(52)) - 8} textAnchor="middle" fontSize={10.5} fontWeight={800} fill={colors.blue}>
-        훈련
+        학습
       </text>
       <text x={sx(33)} y={sy(val(33)) + 4} fontSize={10.5} fontWeight={800} fill={colors.orange}>
         검증
@@ -1553,7 +1553,7 @@ export function EarlyStopping() {
       <text x={G2.left + G2.width / 2} y={12} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
         검증 정확도
       </text>
-      <Lines x={sx2(best) + 8} y={sy2(0.62)} lines={["이 구간에서 정확도는 그대로,", "손실만 오른다 = 과신"]} size={10} anchor="start" color={colors.orange} weight={700} />
+      <Lines x={sx2(best) + 8} y={sy2(0.62)} lines={["이 구간에서 정확도는 그대로,", "손실만 오른다(과신)"]} size={10} anchor="start" color={colors.orange} weight={700} />
     </DiagramFrame>
   );
 }
@@ -1571,7 +1571,7 @@ export function WarmupCosine() {
   return (
     <DiagramFrame
       title="선형 워밍업 + 코사인 감쇠 학습률 스케줄"
-      caption="예시 설정(전체 10,000 스텝, 워밍업 500 스텝, 최대 3 × 10⁻⁴, 최소 3 × 10⁻⁵)으로 본문의 식을 그대로 그렸다. 처음 500 스텝은 0 근처에서 최댓값까지 선형으로 올려, 파라미터와 Adam의 통계가 아직 불안정할 때 큰 폭의 갱신을 피한다. 그 뒤에는 코사인 곡선을 따라 처음에는 천천히, 중간에는 빠르게, 끝에서는 다시 천천히 줄여 최솟값에 이른다. 앞부분의 큰 학습률로는 넓게 탐색하고, 끝부분의 작은 학습률로는 최솟값 근처에서 진동하지 않고 수렴한다."
+      caption="예시 설정(전체 10,000 스텝, 워밍업 500 스텝, 최대 3 × 10⁻⁴, 최소 3 × 10⁻⁵)으로 본문의 식을 그렸다. 처음 500 스텝은 0 근처에서 최댓값까지 선형으로 올려, 파라미터와 Adam의 모멘트 추정이 불안정한 초기에 큰 갱신을 피한다. 그 뒤에는 코사인 곡선을 따라 처음에는 천천히, 중간에는 빠르게, 끝에서는 다시 천천히 줄여 최솟값에 이른다. 학습률이 큰 앞부분에는 파라미터가 크게 바뀌고, 학습률이 작은 끝부분에는 최솟값 근처에서 진동하지 않고 수렴한다."
       viewBox="0 0 720 236"
       minWidth={600}
     >
@@ -2081,11 +2081,11 @@ export function GradNormDepth() {
   return (
     <DiagramFrame
       title="기울기는 층마다 야코비안을 곱하며 전달된다: 50층 뒤에는 10⁻⁵배 또는 9000배"
-      caption="폭 256인 선형 층 50개를 무작위 가중치로 만들고, 출력 쪽에서 크기 1인 기울기를 역전파했을 때 각 층에 도착하는 기울기의 크기다(세로축은 로그 눈금, 10회 반복의 기하평균). 가중치 스케일이 벡터를 층마다 평균 0.8배로 줄이면 50층 뒤 0.8⁵⁰ ≈ 10⁻⁵로 사라지고, 1.2배로 늘리면 1.2⁵⁰ ≈ 9000배로 폭발한다. 정확히 1배일 때만 유지되지만 이 균형은 매우 불안정하다. 초록: 잔차 연결 h + F(h)는 야코비안이 I + ∂F/∂h라 원래 기울기가 그대로 더해지는 경로가 있어, F를 작게 초기화하면 50층을 지나도 약 1.6배에 머문다."
+      caption="폭 256인 선형 층 50개를 무작위 가중치로 만들고, 출력 쪽에서 크기 1인 기울기를 역전파했을 때 각 층에 도착하는 기울기의 크기다(세로축은 로그 눈금, 10회 반복의 기하평균). 가중치 스케일이 벡터를 층마다 평균 0.8배로 줄이면 50층 뒤 0.8⁵⁰ ≈ 10⁻⁵로 줄고, 1.2배로 늘리면 1.2⁵⁰ ≈ 9000배로 커진다. 정확히 1배일 때만 크기가 유지되지만, 이 균형은 가중치가 조금만 바뀌어도 유지되지 않는다. 초록: 잔차 연결 h + F(h)는 야코비안이 I + ∂F/∂h라 원래 기울기가 그대로 더해지는 경로가 있으므로, F를 작게 초기화하면 50층을 지나도 약 1.6배로 유지된다."
       viewBox="0 0 720 256"
       minWidth={600}
     >
-      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-6, 1e-4, 1e-2, 1, 1e2, 1e4]} fmtY={pow10Label} xLabel="출력에서 거꾸로 지나온 층 수" yLabel="기울기 크기" />
+      <Axes {...G} sx={sx} sy={sy} xTicks={[0, 10, 20, 30, 40, 50]} yTicks={[1e-6, 1e-4, 1e-2, 1, 1e2, 1e4]} fmtY={pow10Label} xLabel="역전파로 지난 층 수" yLabel="기울기 크기" />
       {series.map((s) => (
         <g key={s.k}>
           <path d={linePath(GRAD_NORMS[s.k].map((v, i) => [sx(i), sy(v)] as [number, number]))} fill="none" stroke={s.c} strokeWidth={s.k === "g1_0" ? 1.8 : 2.4} />
@@ -2101,7 +2101,7 @@ export function GradNormDepth() {
 
 export function ClipNormVsValue() {
   // 왼쪽: 2차원 예 g = (6, 8), 임계값 c = 5. 노름 클리핑 → (3, 4)(방향 유지), 원소별 클리핑 → (5, 5)(방향 53.1° → 45°).
-  // 오른쪽: 본문 코드 g = (30, 40, 120), 노름 130 → 5로 클리핑하면 (1.154, 1.538, 4.615), 원소별 [−5, 5]면 (5, 5, 5)(방향이 약 32° 틀어짐).
+  // 오른쪽: 본문 코드 g = (30, 40, 120), 노름 130 → 5로 클리핑하면 (1.154, 1.538, 4.615), 원소별 [−5, 5]면 (5, 5, 5)(방향이 약 32° 바뀜).
   const P = "cnv";
   const S = 17;
   const ox = 60;
@@ -2117,7 +2117,7 @@ export function ClipNormVsValue() {
   return (
     <DiagramFrame
       title="기울기 클리핑: 노름 기준은 길이만, 원소별은 방향까지 바꾼다"
-      caption="왼쪽: 2차원으로 그린 원리다. 기울기 g = (6, 8)(길이 10)을 임계값 5로 자를 때, 노름 기준 클리핑은 반지름 5인 원 위로 길이만 줄여 (3, 4)가 되고 방향은 그대로다. 원소마다 [−5, 5]로 자르면 상자 모서리 (5, 5)가 되어 방향이 53°에서 45°로 바뀐다. 오른쪽: 본문 코드의 세 성분 기울기 (30, 40, 120)이다. 노름 클리핑 후 (1.154, 1.538, 4.615)는 원래 비율 30 : 40 : 120을 그대로 유지하지만(회색 막대는 원래 값을 26으로 나눠 같은 비율로 그린 것), 원소별 클리핑은 (5, 5, 5)가 되어 방향이 약 32° 틀어진다."
+      caption="왼쪽: 2차원으로 그린 원리다. 기울기 g = (6, 8)(길이 10)을 임계값 5로 자를 때, 노름 기준 클리핑은 반지름 5인 원 위로 길이만 줄여 (3, 4)가 되고 방향은 그대로다. 원소마다 [−5, 5]로 자르면 상자 모서리 (5, 5)가 되어 방향이 53°에서 45°로 바뀐다. 오른쪽: 본문 코드의 세 성분 기울기 (30, 40, 120)이다. 노름 클리핑 후 (1.154, 1.538, 4.615)는 원래 비율 30 : 40 : 120을 그대로 유지하지만(회색 막대는 원래 값을 26으로 나눠 같은 비율로 그린 것), 원소별 클리핑은 (5, 5, 5)가 되어 방향이 약 32° 바뀐다."
       viewBox="0 0 720 256"
       minWidth={600}
     >

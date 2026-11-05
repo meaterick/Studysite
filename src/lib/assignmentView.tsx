@@ -1,6 +1,6 @@
 import "server-only";
-import type { AssignmentSpec } from "@/content/types";
-import { WEEKS } from "@/content/weeks";
+import type { AssignmentSource as AssignmentSpec } from "@/content/types";
+import { courseDocuments } from "@/content/course";
 import { parseMarkdown } from "@/content/markdown";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import type { WorkspaceTaskView } from "@/components/assignment/Workspace";
@@ -47,11 +47,7 @@ export function notebookViewTasks(spec: AssignmentSpec, withIntro = true): Noteb
   }));
 }
 
-/** 7주차 RAG 과제에서 코드가 읽는 학습 자료 파일: /course/week1.md … /course/week8.md */
+/** RAG 과제에서 코드가 읽는 학습 자료 파일(provideCourseDocs가 있는 과제만) */
 export function courseDocFiles(spec: AssignmentSpec): { path: string; content: string }[] | undefined {
-  if (!spec.provideCourseDocs) return undefined;
-  return WEEKS.map((w) => ({
-    path: `/course/week${w.number}.md`,
-    content: `# ${w.number}주차 · ${w.title}\n\n${w.conceptsMd}`,
-  }));
+  return spec.provideCourseDocs ? courseDocuments() : undefined;
 }

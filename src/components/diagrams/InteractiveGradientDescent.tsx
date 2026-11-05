@@ -58,7 +58,7 @@ export default function InteractiveGradientDescent() {
       interactive
       caption={
         diverged
-          ? `η(학습률)=${lr}처럼 너무 크면 한 걸음이 최솟값을 지나쳐 점점 더 멀어진다. 이것이 "발산"이다.`
+          ? `η(학습률)=${lr}처럼 너무 크면 한 번의 갱신이 최솟값을 지나쳐 점점 더 멀어진다. 이것을 발산이라고 한다.`
           : converged
             ? `η=${lr}일 때 w=0에서 시작해 ${steps.length - 1}번 만에 최솟값 w=3 근처로 수렴했다. 점 사이 간격이 점점 좁아진다.`
             : `η=${lr}은 너무 작아서 ${MAX_STEPS}번을 움직여도 아직 w=3에 도달하지 못했다. 더 많은 스텝이 필요하다.`

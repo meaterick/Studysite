@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import type { AssignmentSpec } from "@/content/types";
 import {
+  type AssignmentSpec,
   checkTasks,
   diffDraft,
   newCellId,
@@ -86,7 +86,7 @@ function clampOutputs(outputs: NotebookOutput[]): NotebookOutput[] {
 }
 
 export default function Workspace({
-  slug,
+  assignmentKey,
   spec,
   tasks,
   initialDraft,
@@ -95,7 +95,8 @@ export default function Workspace({
   resubmit,
   autoTests,
 }: {
-  slug: string;
+  assignmentKey: string;
+  /** 과제 단계 목록만 받는다(채점 기준·심화 문제 정답·채점 참고는 브라우저로 보내지 않는다). */
   spec: AssignmentSpec;
   tasks: WorkspaceTaskView[];
   initialDraft: AssignmentDraft;
@@ -105,7 +106,7 @@ export default function Workspace({
   /** 작업 공간 이름공간에서 실행하는 자동 테스트(src/content/labs) */
   autoTests?: AutoTestView[];
 }) {
-  const ns = `assignment:${slug}`;
+  const ns = `assignment:${assignmentKey}`;
   const [draft, setDraft] = useState<AssignmentDraft>(initialDraft);
   const draftRef = useRef(draft);
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -151,11 +152,11 @@ export default function Workspace({
         if (base && tasks && Object.keys(tasks).length === 0) {
           result = { ok: true, savedAt: base.savedAt };
         } else if (base && tasks) {
-          result = await saveAssignmentDraftPatch(slug, { base: base.savedAt, tasks });
+          result = await saveAssignmentDraftPatch(assignmentKey, { base: base.savedAt, tasks });
           // 다른 탭에서 저장하는 등 서버 초안이 기준과 다르면 전체를 보낸다.
-          if (!result.ok && result.stale) result = await saveAssignmentDraft(slug, snapshot);
+          if (!result.ok && result.stale) result = await saveAssignmentDraft(assignmentKey, snapshot);
         } else {
-          result = await saveAssignmentDraft(slug, snapshot);
+          result = await saveAssignmentDraft(assignmentKey, snapshot);
         }
         if (result.ok && result.savedAt) confirmed.current = { draft: snapshot, savedAt: result.savedAt };
         if (!result.ok) {
@@ -178,7 +179,7 @@ export default function Workspace({
     const ok = await task;
     saving.current = null;
     return ok;
-  }, [slug]);
+  }, [assignmentKey]);
 
   const scheduleSave = useCallback(() => {
     dirtySince.current = Date.now();
@@ -380,7 +381,7 @@ export default function Workspace({
         return;
       }
       try {
-        const result = await submitAssignmentWork(slug, formData);
+        const result = await submitAssignmentWork(assignmentKey, formData);
         if (!result.ok) {
           setSubmitMessage({ tone: "error", text: result.error });
           return;
@@ -513,7 +514,7 @@ export default function Workspace({
                   <span className="font-mono text-xs font-normal text-ink-muted">{String(i + 1).padStart(2, "0")}</span>
                   {task.title}
                   <span className="text-sm font-normal tracking-normal">
-                    <TierBadge tier={task.tier} compact />
+                    <TierBadge tier={task.tier} />
                   </span>
                   {task.optional && <span className="pill">선택</span>}
                 </h3>
