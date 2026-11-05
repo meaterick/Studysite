@@ -39,8 +39,7 @@
 
 아래 자료는 당시의 제안·관측 기록입니다. 현재 구현 안내와 구분해서 읽습니다.
 
-- [콘텐츠 저장 구조 변경 제안](archive/design/content-system-redesign.md).
-- [학습 콘텐츠 교육 설계 검토](archive/design/learning-content-educational-review.md).
+- [커리큘럼 구조 검토 (2026-11-05)](archive/design/curriculum-structure-review-2026-11-05.md).
 - [2026-10-19 보안 점검](archive/security/security-review-2026-10-19.md).
 - [2026-10-19 외부 Nmap 위험 검토](archive/security/nmap-risk-review-2026-10-19.md).
 - [2026-10-19 보안 구조·효율 점검](archive/security/security-architecture-review-2026-10-19.md).
