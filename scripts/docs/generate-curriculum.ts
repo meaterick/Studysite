@@ -150,7 +150,7 @@ for (const m of MODULES) {
 
   const a = src.assignment;
   if (a) {
-    lines.push(`## 과제: ${a.title}`, "", `저장 키 \`${a.key}\` · 만점 ${a.maxScore}점 · [과제 원본](${repoLink(`src/content/modules/${m.slug}/assignment.ts`)})`, "", docText(a.summary, m), "");
+    lines.push(`## 과제: ${a.title}`, "", `저장 키 \`${a.key}\` · 자기 점검 · [과제 원본](${repoLink(`src/content/modules/${m.slug}/assignment.ts`)})`, "", docText(a.summary, m), "");
     lines.push("### 요구사항", "", ...a.requirements.map((v) => `- ${oneLine(docText(v, m))}`), "");
     lines.push("### 항목", "", "| 항목 | 구분 | 셀 |", "| --- | --- | --- |");
     for (const t of a.tasks) {
@@ -201,7 +201,7 @@ readme.push(
   "",
   "기수 일정은 운영 설정에서 정하며, 아래는 주당 4~7시간을 기준으로 한 기본값이다.",
   "",
-  "| 주 | 모듈 | 제출 | 캡스톤 준비 |",
+  "| 주 | 모듈 | 권장 과제 | 캡스톤 준비 |",
   "| ---: | --- | --- | --- |",
   ...SCHEDULE.map((w) => {
     const mods = w.modules.map((slug) => MODULES.find((m) => m.slug === slug)!).map((m) => `[${m.code}](${docFile(m)})`).join(", ");

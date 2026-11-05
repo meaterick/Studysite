@@ -108,7 +108,7 @@ export default function AutoTestPanel({
       </div>
       <p className="mt-1 text-sm text-ink-muted">
         {note ??
-          "실행한 코드의 변수와 함수를 검사합니다. 통과는 최소 조건이며, 점수는 운영자가 채점 기준에 따라 매깁니다."}
+          "실행한 코드의 변수와 함수를 검사합니다. 해석과 설명은 과제의 자기 점검 기준과 비교하세요."}
       </p>
       {status && <p className="mt-2 text-xs text-ink-muted">{status}</p>}
       {error && <p className="mt-2 text-sm text-[var(--status-critical)]">{error}</p>}

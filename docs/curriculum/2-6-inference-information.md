@@ -174,7 +174,7 @@
 
 ## 과제: 경사하강법과 베이즈 정리 직접 계산하기
 
-저장 키 `math-gd-bayes` · 만점 10점 · [과제 원본](../../src/content/modules/inference-information/assignment.ts)
+저장 키 `math-gd-bayes` · 자기 점검 · [과제 원본](../../src/content/modules/inference-information/assignment.ts)
 
 NumPy만으로 선형회귀를 경사하강법으로 학습하고, 학습률에 따른 수렴 양상을 비교합니다. 이어서 베이즈 정리 예제의 조건을 바꿔 사후확률이 어떻게 달라지는지 확인합니다. 모든 작업은 이 페이지의 코드 셀과 답안 칸에서 진행하며, 코드는 브라우저에서 실행됩니다.
 

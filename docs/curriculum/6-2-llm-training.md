@@ -395,7 +395,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 ## 과제: LLM 해부 실험 노트
 
-저장 키 `llm-anatomy` · 만점 10점 · [과제 원본](../../src/content/modules/llm-training/assignment.ts)
+저장 키 `llm-anatomy` · 자기 점검 · [과제 원본](../../src/content/modules/llm-training/assignment.ts)
 
 같은 logit이 temperature와 top-k·top-p 필터를 거치며 어떻게 바뀌는지 표로 정리하고, 이 과정의 학습 자료로 직접 학습한 작은 언어 모델로 디코딩 설정별 생성 결과를 비교합니다. Chinchilla 스케일링 법칙으로 최적 모델 크기를 계산해 공개 모델과 비교하고, 환각 사례의 유형과 원인을 학습 과정과 연결해 분석한 뒤 InstructGPT의 학습 과정을 정리합니다.
 

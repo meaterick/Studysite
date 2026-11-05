@@ -60,8 +60,8 @@ export default function PrivacyPage() {
                 </tr>
                 <tr className="border-t border-[var(--border-hairline)]">
                   <td className="px-4 py-3">과제</td>
-                  <td className="px-4 py-3">작성 중인 과제(코드·실행 결과·답안, 자동 저장), 제출 버전, 첨부 파일, 채점 결과와 피드백, 과제 메시지</td>
-                  <td className="px-4 py-3">과제 작성 지원, 채점과 피드백</td>
+                  <td className="px-4 py-3">과제 작업(코드·실행 결과·답안, 자동 저장). 이전 방식으로 작성한 제출본·첨부 파일·채점 기록이 보관될 수 있습니다.</td>
+                  <td className="px-4 py-3">과제 작업 저장과 이어서 작성</td>
                   <td className="px-4 py-3">회원 탈퇴 시까지</td>
                 </tr>
                 <tr className="border-t border-[var(--border-hairline)]">
@@ -112,8 +112,7 @@ export default function PrivacyPage() {
 
         <Section title="6. 안전성 확보 조치">
           <p>
-            서비스는 전송 구간 암호화(HTTPS), 서명된 httpOnly 세션 쿠키, 인증 시도 횟수 제한, 접근 권한 분리
-            (과제 첨부 파일은 제출자 본인과 운영자만 열람)를 적용해 개인정보를 보호합니다. 다만 인터넷 환경의 특성상 모든 위험을 완전히 제거할 수는
+            서비스는 전송 구간 암호화(HTTPS), 서명된 httpOnly 세션 쿠키, 인증 시도 횟수 제한, 접근 권한 분리를 적용해 개인정보를 보호합니다. 다만 인터넷 환경의 특성상 모든 위험을 완전히 제거할 수는
             없습니다.
           </p>
         </Section>

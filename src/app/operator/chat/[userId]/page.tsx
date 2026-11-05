@@ -2,9 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/dal";
 import { findUserById } from "@/lib/userStore";
-import { listUserSubmissions } from "@/lib/submissionStore";
 import { conversationView } from "@/lib/chatView";
-import { MODULES, moduleOfAssignment } from "@/content/course";
 import ChatPanel from "@/components/chat/ChatPanel";
 import ClearChatButton from "@/components/chat/ClearChatButton";
 import Icon from "@/components/Icon";
@@ -16,14 +14,6 @@ export default async function OperatorChatPage({ params }: { params: Promise<{ u
   const { userId } = await params;
   const student = findUserById(userId);
   if (!student) notFound();
-  // 새 과정의 과제 제출물만, 모듈 순서대로
-  const submissions = listUserSubmissions(userId)
-    .flatMap((s) => {
-      const mod = moduleOfAssignment(s.assignmentKey);
-      return mod ? [{ id: s.id, code: mod.code, order: MODULES.indexOf(mod) }] : [];
-    })
-    .sort((a, b) => a.order - b.order);
-
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -38,11 +28,6 @@ export default async function OperatorChatPage({ params }: { params: Promise<{ u
           <Link href={`/operator/members/${student.id}`} className="btn btn-ghost btn-sm">
             학습 현황
           </Link>
-          {submissions.map((s) => (
-            <Link key={s.id} href={`/operator/submissions/${s.id}`} className="btn btn-ghost btn-sm">
-              {s.code} 과제
-            </Link>
-          ))}
           <ClearChatButton targetUserId={student.id} targetName={student.name} />
         </div>
       </div>

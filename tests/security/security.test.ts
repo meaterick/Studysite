@@ -74,26 +74,9 @@ test("security regression", async (t) => {
     assert.equal(logPath("/x?code=secret#fragment"), "/x");
   });
 
-  await t.test("download authorization is checked against the database even for stale admin tokens", async () => {
+  await t.test("chat inbox streaming rejects member sessions", async () => {
     const member = get<{ id: string }>("SELECT id FROM users WHERE google_subject = 'visitor'")!;
-    const { saveSubmission } = await import("../../src/lib/submissionStore");
-    const sub = await saveSubmission({ userId: member.id, assignmentKey: "autograd-mlp", text: "", links: [], files: [{ name: "answer.txt", type: "text/plain", bytes: Buffer.from("private answer") }] });
-    const owner = get<{ id: string }>("SELECT id FROM users WHERE google_subject = 'owner'")!;
-    const second = await findOrCreateGoogleUser({ email: "other@example.com", subject: "other", name: "Other" });
-    const otherCookie = await encryptSession({ uid: second.id, role: "member" });
-    const { GET: download } = await import("../../src/app/api/submissions/[id]/files/[fileId]/route");
-    const params = { params: Promise.resolve({ id: sub.id, fileId: sub.versions[0].files[0].id }) };
-    assert.equal((await download(request("/api/submissions/x/files/y"), params)).status, 401);
-    assert.equal((await download(request("/api/submissions/x/files/y", otherCookie), params)).status, 404);
-    // 토큰에 admin이 적혀 있어도 DB의 권한이 member면 다른 사람의 파일을 받을 수 없다.
-    const staleAdminCookie = await encryptSession({ uid: second.id, role: "admin" });
-    assert.equal((await download(request("/api/submissions/x/files/y", staleAdminCookie), params)).status, 404);
     const ownCookie = await encryptSession({ uid: member.id, role: "member" });
-    const own = await download(request("/api/submissions/x/files/y", ownCookie), params);
-    assert.equal(await own.text(), "private answer");
-    assert.match(own.headers.get("cache-control")!, /no-store/);
-    const adminCookie = await encryptSession({ uid: owner.id, role: "admin" });
-    assert.equal((await download(request("/api/submissions/x/files/y", adminCookie), params)).status, 200);
     const { GET: stream } = await import("../../src/app/api/chat/stream/route");
     assert.equal((await stream(request("/api/chat/stream?inbox=1", ownCookie))).status, 403);
   });
@@ -113,6 +96,7 @@ test("security regression", async (t) => {
   });
 
   await t.test("retention, migration and storage cap work with existing schema data", () => {
+    const usersBefore = get<{ n: number }>("SELECT COUNT(*) AS n FROM users")?.n;
     assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM schema_migrations")?.n, SCHEMA_VERSION);
     tx(() => {
       const old = new Date(Date.now() - 31 * 86400_000).toISOString();
@@ -129,7 +113,7 @@ test("security regression", async (t) => {
     assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM security_events")?.n, 10000);
     assert.equal(get("SELECT id FROM security_events WHERE bucket = 'cap' AND path = '/cap/1'"), undefined);
     assert.ok(get("SELECT id FROM security_events WHERE path = '/cap/10005'"));
-    assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM users")?.n, 3);
+    assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM users")?.n, usersBefore);
   });
 
   await t.test("edge reader tolerates missing, malformed, large and rotated log files", () => {

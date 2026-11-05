@@ -3,7 +3,6 @@ import type { Lesson, Module } from "@/content/types";
 import { TIER_ORDER, type Tier } from "@/content/tiers";
 import { CORE_PATH, MODULES, directPrerequisitesOf, getLesson, itemId } from "@/content/course";
 import { readLessonState, readRecallState, type LearningRecord, type LessonState } from "./learningStore";
-import { latestGrade, type Submission } from "./submissionStore";
 import { getProgressionMode, type ProgressionMode } from "./settingsStore";
 import { lessonHref, moduleHref, recallHref } from "./routes";
 
@@ -69,7 +68,6 @@ export interface TierCount {
   total: number;
 }
 
-export type AssignmentState = "none" | Submission["status"];
 
 export interface ModuleStatus {
   module: Module;
@@ -84,12 +82,11 @@ export interface ModuleStatus {
   finaleOpen: boolean;
   mode: ProgressionMode;
   recallSubmitted: boolean;
-  assignment?: { key: string; status: AssignmentState; score: number | null; maxScore: number };
   /** 핵심 레슨 완료 비율 */
   ratio: number;
 }
 
-export function moduleStatus(module: Module, record: LearningRecord, submission?: Submission, mode: ProgressionMode = getProgressionMode()): ModuleStatus {
+export function moduleStatus(module: Module, record: LearningRecord, mode: ProgressionMode = getProgressionMode()): ModuleStatus {
   const progressOf = (lesson: Lesson) => lessonProgress(lesson, readLessonState(record, lesson.id), record);
   const core = module.lessons.filter((l) => l.tier === "core");
   const coreDone = core.every((l) => progressOf(l).completed);
@@ -115,7 +112,6 @@ export function moduleStatus(module: Module, record: LearningRecord, submission?
       return [t, { done: inTier.filter((r) => r.progress.completed).length, total: inTier.length }];
     })
   ) as Record<Tier, TierCount>;
-  const grade = submission ? latestGrade(submission) : undefined;
   return {
     module,
     lessons: rows,
@@ -125,14 +121,6 @@ export function moduleStatus(module: Module, record: LearningRecord, submission?
     finaleOpen: coreDone || mode === "warn",
     mode,
     recallSubmitted: !!readRecallState(record, module.slug).submittedAt,
-    assignment: module.assignment
-      ? {
-          key: module.assignment.key,
-          status: submission ? submission.status : "none",
-          score: grade?.decision === "graded" ? grade.score : null,
-          maxScore: module.assignment.maxScore,
-        }
-      : undefined,
     ratio: tiers.core.total === 0 ? 0 : tiers.core.done / tiers.core.total,
   };
 }
@@ -173,13 +161,6 @@ export function courseProgress(record: LearningRecord): CourseProgress {
   const done = CORE_PATH.filter((l) => isLessonComplete(record, l.id)).length;
   return { coreDone: done, coreTotal: CORE_PATH.length, next: CORE_PATH.find((l) => !isLessonComplete(record, l.id)), byModule };
 }
-
-export const ASSIGNMENT_STATUS_LABEL: Record<AssignmentState, string> = {
-  none: "미제출",
-  submitted: "제출됨 · 채점 대기",
-  graded: "채점 완료",
-  revision: "재제출 요청",
-};
 
 /** 레슨 id 목록을 레슨으로(없는 id는 버린다) */
 export function lessonsByIds(ids: string[]): Lesson[] {

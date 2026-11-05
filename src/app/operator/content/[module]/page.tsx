@@ -236,9 +236,6 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
                 과제 · {mod.assignment.title}
               </h2>
               <span className="flex gap-3 text-xs font-medium text-ink-muted">
-                <Link href={`/operator/submissions?assignment=${mod.assignment.key}`} className="transition hover:text-ink">
-                  제출물
-                </Link>
                 <Link href={assignmentHref(mod.slug)} className="transition hover:text-ink">
                   화면 열기
                 </Link>
@@ -248,8 +245,7 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
               <table className="data-table text-sm">
                 <thead>
                   <tr>
-                    <th>채점 기준</th>
-                    <th>배점</th>
+                    <th>자기 점검 항목</th>
                     <th>설명</th>
                   </tr>
                 </thead>
@@ -257,7 +253,6 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
                   {mod.assignment.rubric.map((c) => (
                     <tr key={c.id}>
                       <td className="whitespace-nowrap font-medium text-ink">{c.label}</td>
-                      <td className="tabular-nums text-ink-secondary">{c.points}</td>
                       <td className="min-w-[16rem] text-ink-secondary">
                         <Inline text={c.guide} />
                       </td>
@@ -268,7 +263,7 @@ export default async function OperatorModuleContentPage({ params }: PageProps<"/
             </div>
             {mod.assignment.gradingNotes && (
               <div className="mt-4 rounded-2xl bg-[var(--surface-card-2)] p-5 text-sm leading-relaxed text-ink-secondary">
-                <p className="mb-2 text-xs font-medium text-ink-muted">채점 참고</p>
+                <p className="mb-2 text-xs font-medium text-ink-muted">풀이 참고</p>
                 <BlocksRenderer blocks={parseMarkdown(mod.assignment.gradingNotes)} />
               </div>
             )}

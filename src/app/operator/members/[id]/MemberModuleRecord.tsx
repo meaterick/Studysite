@@ -7,8 +7,7 @@ import { Inline, RichText } from "@/components/MarkdownBlocks";
 import ReviewPill from "@/components/ReviewPill";
 import Icon from "@/components/Icon";
 import { readLessonState, readRecallState, type CheckState, type ExerciseState, type LearningRecord, type PredictState, type ReviewStatus } from "@/lib/learningStore";
-import { ASSIGNMENT_STATUS_LABEL, type ModuleStatus } from "@/lib/study";
-import { latestGrade, latestVersion, type Submission } from "@/lib/submissionStore";
+import { type ModuleStatus } from "@/lib/study";
 import { formatDateTime } from "@/lib/datetime";
 
 // 운영자 화면: 스터디원 한 명이 한 모듈에 남긴 기록 전부
@@ -21,18 +20,11 @@ const TONE_COLOR: Record<Tone, string> = { good: "var(--status-good)", warn: "va
 const pillColor = (tone: Tone) => ({ "--pill": TONE_COLOR[tone] }) as CSSProperties;
 
 export default function MemberModuleRecord({
-  memberId,
   status,
   learning,
-  submission,
-  draftSavedAt,
 }: {
-  memberId: string;
   status: ModuleStatus;
   learning: LearningRecord;
-  submission?: Submission;
-  /** 작성 중인 과제 초안이 있으면 마지막 자동 저장 시각(시각이 없는 초안은 빈 문자열) */
-  draftSavedAt?: string;
 }) {
   const { module } = status;
   const lessons = status.lessons.map((r) => r.lesson);
@@ -75,9 +67,6 @@ export default function MemberModuleRecord({
     ...(predictsTotal > 0 ? [{ id: "predict", label: "출력 예측", count: `${predicts.length}/${predictsTotal}` }] : []),
     ...(exercises.length > 0 ? [{ id: "lab", label: "코딩 실습", count: `${exercisesPassed}/${exercises.length}` }] : []),
     ...(module.recall.length > 0 ? [{ id: "recall", label: "백지 복습", count: recallState }] : []),
-    ...(module.assignment
-      ? [{ id: "assignment", label: "과제", count: submission ? ASSIGNMENT_STATUS_LABEL[status.assignment!.status] : draftSavedAt !== undefined ? "작성 중" : "미제출" }]
-      : []),
   ];
 
   return (
@@ -260,26 +249,6 @@ export default function MemberModuleRecord({
           </Part>
         )}
 
-        {module.assignment && (
-          <Part id="assignment" title="과제" note={module.assignment.title}>
-            <div className="space-y-2">
-              {submission ? <SubmissionSummary submission={submission} label={ASSIGNMENT_STATUS_LABEL[status.assignment!.status]} /> : <Empty>아직 제출하지 않았습니다.</Empty>}
-              {draftSavedAt !== undefined && (
-                <Link href={`/operator/members/${memberId}/assignment/${module.assignment.key}`} className="surface surface-link flex items-center gap-3 px-4 py-3.5 text-[13px]">
-                  <span className="min-w-0 flex-1">
-                    <span className="font-medium text-ink">작업 공간 초안</span>
-                    <span className="mt-0.5 block text-xs text-ink-muted">
-                      {draftSavedAt ? `마지막 자동 저장 ${formatDateTime(draftSavedAt)}` : "자동 저장된 초안"}
-                      {submission ? " · 제출 뒤에 고친 내용이 있을 수 있습니다" : " · 아직 제출 전"}
-                    </span>
-                  </span>
-                  <span className="shrink-0 font-medium text-ink">초안 보기</span>
-                  <Icon name="chevronRight" size={16} className="shrink-0 text-ink-muted" />
-                </Link>
-              )}
-            </div>
-          </Part>
-        )}
       </div>
     </div>
   );
@@ -395,25 +364,5 @@ function ExerciseRow({ ex, owner, state }: { ex: Exercise; owner: string; state?
       <td className="whitespace-nowrap">{state?.solutionViewedAt ? "봄" : "—"}</td>
       <td className="whitespace-nowrap tabular-nums text-ink-muted">{state?.lastGradedAt ? formatDateTime(state.lastGradedAt) : "—"}</td>
     </tr>
-  );
-}
-
-function SubmissionSummary({ submission, label }: { submission: Submission; label: string }) {
-  const latest = latestVersion(submission);
-  const grade = latestGrade(submission);
-  return (
-    <Link href={`/operator/submissions/${submission.id}`} className="surface surface-link flex items-center gap-3 px-4 py-3.5 text-[13px]">
-      <span className="min-w-0 flex-1">
-        <span className="font-medium text-ink">
-          제출본 v{latest.version} · {label}
-          {grade?.decision === "graded" && grade.score !== null && ` · ${grade.score}/${grade.maxScore}점`}
-        </span>
-        <span className="mt-0.5 block text-xs tabular-nums text-ink-muted">
-          {formatDateTime(latest.submittedAt)} 제출 · 제출 {submission.versions.length}회
-        </span>
-      </span>
-      <span className="shrink-0 font-medium text-ink">{submission.status === "submitted" ? "채점하기" : "제출본 보기"}</span>
-      <Icon name="chevronRight" size={16} className="shrink-0 text-ink-muted" />
-    </Link>
   );
 }

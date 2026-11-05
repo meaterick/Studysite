@@ -182,7 +182,7 @@ k최근접 이웃과 트리 앙상블, 그래디언트 부스팅과 특성 중�
 
 ## 과제: 믿을 수 있는 모델 비교 리포트
 
-저장 키 `ml-model-comparison` · 만점 12점 · [과제 원본](../../src/content/modules/ml-algorithms/assignment.ts)
+저장 키 `ml-model-comparison` · 자기 점검 · [과제 원본](../../src/content/modules/ml-algorithms/assignment.ts)
 
 scikit-learn의 유방암 진단 데이터(`load_breast_cancer`)로 세 모델을 공정하게 비교하고, 지표 선택의 근거를 세우고, 데이터 누수가 점수를 얼마나 높이는지 직접 확인합니다. 마지막으로 결정트리의 깊이를 바꿔 가며 편향과 분산을 숫자로 관찰합니다. 모든 실험은 `random_state=0`으로 고정합니다.
 

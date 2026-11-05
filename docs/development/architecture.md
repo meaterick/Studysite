@@ -6,19 +6,17 @@
 
 - Next.js 16 (App Router, Server Actions, Turbopack)
 - TypeScript, Tailwind CSS 4
-- 데이터는 서버의 `DATA_DIR`(기본 `data/`)에 둡니다. 계정·학습 기록·과제 제출과 채점·채팅·운영 설정은 SQLite DB
+- 데이터는 서버의 `DATA_DIR`(기본 `data/`)에 둡니다. 계정·학습 기록·이전 과제 제출 기록·채팅·운영 설정은 SQLite DB
   `aegis.db`에, 과제 작업 공간 초안은 `drafts/<사용자 id>/<과제 키>.json`에, 제출본(`notebook-v<N>.json`)과 첨부 파일은
   `uploads/<제출 id>/`에 저장합니다. 자세한 내용은 [데이터 저장소](../operations/data.md)를 참고하세요.
   계정을 삭제하면 해당 사용자의 학습 기록, 초안, 대화, 제출물이 함께 삭제됩니다.
-  첨부 파일은 최대 3개·각 5MB·합계 9MB이며, 제출자 본인과 관리자만 내려받을 수 있습니다.
 - 브라우저 실행 코드는 Pyodide(웹 워커)로 실행됩니다. 학습 자료의 코드 셀은 하나의 이름공간을, 과제 작업 공간은 과제마다 별도의 이름공간을 씁니다.
   코드 편집기(Monaco)는 외부 CDN이 아니라 빌드 때 `node_modules`에서 복사한 `/vendor/monaco`에서 불러옵니다(`scripts/copy-monaco.mjs`).
-- 남용 방지: 계정별 요청 빈도 제한(채팅·작업 공간 저장·제출·확인 문제, `src/lib/rateLimit.ts`), 채팅 실시간 연결 수 제한
-  (계정당 6·전체 300), 과제당 제출 30회·계정당 첨부 합계 100MB, 디스크 여유 512MB 미만이면 큰 쓰기 거절(`src/lib/diskGuard.ts`),
-  사이트 전체 Content-Security-Policy(`next.config.ts`). 제출 기록(과제 화면·채점 화면)은 최신 제출본의 작업 공간만 바로 그리고,
-  이전 제출본의 작업 공간은 펼칠 때 그 버전 하나만 받아 온다(`/api/submissions/[id]/notebooks/[version]`). 제출이 쌓여도 화면 하나의 비용이 늘지 않는다.
-  운영자가 스터디원의 제출본을 다시 실행해도 그 코드가 운영자 권한으로 사이트에 요청하지 못하도록, 워커는 Pyodide CDN 외의 네트워크 요청·스크립트 로드·하위 워커 생성이 막혀 있습니다(`public/pyodide-worker.js`, `next.config.ts`의 워커 CSP).
-  서술형 답안과 백지 복습의 작성 중 초안 같은 개인 편의 상태만 브라우저 localStorage에 남고, 진도·과제 초안·제출은 서버에 저장됩니다.
+- 남용 방지: 계정별 요청 빈도 제한(채팅·작업 공간 저장·확인 문제, `src/lib/rateLimit.ts`), 채팅 실시간 연결 수 제한
+  (계정당 6·전체 300), 디스크 여유 512MB 미만이면 큰 쓰기 거절(`src/lib/diskGuard.ts`),
+  사이트 전체 Content-Security-Policy(`next.config.ts`).
+  학습 코드의 실행 환경을 제한하기 위해, 워커는 Pyodide CDN 외의 네트워크 요청·스크립트 로드·하위 워커 생성이 막혀 있습니다(`public/pyodide-worker.js`, `next.config.ts`의 워커 CSP).
+  서술형 답안과 백지 복습의 작성 중 초안 같은 개인 편의 상태만 브라우저 localStorage에 남고, 진도와 과제 작업은 서버에 저장됩니다.
   코딩 실습에서 작성한 코드는 학습 자료 코드 셀처럼 브라우저 IndexedDB에만 저장되고, 서버에는 채점 결과(통과 항목 수)와 힌트 사용 기록만 남습니다.
 
 ## 콘텐츠가 화면이 되는 과정
@@ -37,7 +35,6 @@
 | `src/content/modules/<slug>/` | 모듈 하나: `index.ts`(목표 문제·학습 목표·레슨 순서·백지 복습), 레슨 파일(본문·확인 문제·출력 예측·서술형·참고 자료), `labs/`(코딩 실습), `assignment.ts`(과제) | 레슨 id·문항 key·과제 키·셀 id는 저장된 기록과 연결되므로 바꾸지 않음 |
 | `src/content/curriculum/` | 트랙, 80개 개념과 선수관계, 기본 일정, 예전 주소 대응표 | 개념 id는 안정 키 |
 | `src/content/course.ts`, `markdown.ts`, `kit.ts`, `tiers.ts`, `types.ts` | 화면용 구조 생성·조회, 본문 파서, 작성 도우미, 레슨 구분, 타입 | 콘텐츠 원본과 화면 사이의 경계 |
-| `src/content/operator/` | 운영 가이드 | 관리자 화면에서 사용 |
 | `src/lib/` | 인증·DB·학습·과제·보안 등 서버/공용 로직 | 기존 import와 서버/클라이언트 경계를 지킴 |
 | `src/instrumentation.ts`, `src/proxy.ts` | 시작 시 계측과 요청 경계 | 프레임워크 진입점 |
 | `public/images/` | 브랜드·OAuth 로고와 레슨에 쓰는 교육 이미지(로그인한 사용자만 열람) | URL을 사용하는 외부 설정도 고려 |

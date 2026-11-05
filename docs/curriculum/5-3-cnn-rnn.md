@@ -274,7 +274,7 @@ CIFAR-10은 $32 \times 32$ 컬러 이미지로 10개 클래스를 분류하는 �
 
 ## 과제: 합성곱 구현과 정규화·규제 기법의 Ablation 실험 노트
 
-저장 키 `cnn-ablation` · 만점 12점 · [과제 원본](../../src/content/modules/cnn-rnn/assignment.ts)
+저장 키 `cnn-ablation` · 자기 점검 · [과제 원본](../../src/content/modules/cnn-rnn/assignment.ts)
 
 두 부분으로 이루어집니다. ① BatchNorm, Dropout, 데이터 증강, weight decay 같은 기법이 실제로 얼마나 도움이 되는지, 기준 모델에서 **한 번에 하나씩만** 바꾸는 ablation 실험으로 확인합니다. ② 합성곱 층을 NumPy로 직접 구현해 출력 크기 공식, 파라미터 공유, 평행이동 등변성을 확인합니다.
 

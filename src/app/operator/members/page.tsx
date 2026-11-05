@@ -4,9 +4,8 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { deleteUser, listUsers } from "@/lib/userStore";
 import { completedLessonsByUser, descriptiveCountsByUser, lastLearningActivity } from "@/lib/learningStore";
-import { submissionCountsByUser, type SubmissionStatus } from "@/lib/submissionStore";
 import { CORE_PATH, getModule } from "@/content/course";
-import { COURSE_ASSIGNMENT_KEYS, nextCoreLesson } from "@/lib/operatorStats";
+import { nextCoreLesson } from "@/lib/operatorStats";
 import { formatDateTime, formatDate } from "@/lib/datetime";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import MembersTabs from "./MembersTabs";
@@ -25,7 +24,6 @@ export default async function MembersPage({ searchParams }: PageProps<"/operator
   // 모든 학습 기록을 읽지 않고 DB에서 사용자별 숫자만 모아 온다.
   const completed = completedLessonsByUser();
   const lastActivity = lastLearningActivity();
-  const submissionCounts = submissionCountsByUser(COURSE_ASSIGNMENT_KEYS);
   const answerCounts = descriptiveCountsByUser();
 
   async function removeMember(formData: FormData) {
@@ -63,7 +61,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/operator
         <table className="data-table">
           <thead>
             <tr>
-              {["이름", "역할", "가입일", "필수 경로", "지금 학습 중", "서술형 답", "과제", "마지막 기록", ""].map((h) => (
+              {["이름", "역할", "가입일", "필수 경로", "지금 학습 중", "서술형 답", "마지막 기록", ""].map((h) => (
                 <th key={h}>{h}</th>
               ))}
             </tr>
@@ -76,7 +74,6 @@ export default async function MembersPage({ searchParams }: PageProps<"/operator
                 adminId={admin.id}
                 done={completed.get(m.id)}
                 lastActivity={lastActivity.get(m.id)}
-                submissions={submissionCounts.get(m.id) ?? { submitted: 0, graded: 0, revision: 0 }}
                 answers={answerCounts.get(m.id) ?? { total: 0, weak: 0 }}
                 removeMember={removeMember}
               />
@@ -93,7 +90,6 @@ function MemberRow({
   adminId,
   done,
   lastActivity,
-  submissions,
   answers,
   removeMember,
 }: {
@@ -101,13 +97,9 @@ function MemberRow({
   adminId: string;
   done: Set<string> | undefined;
   lastActivity: string | undefined;
-  submissions: Record<SubmissionStatus, number>;
   answers: AnswerCount;
   removeMember: (formData: FormData) => Promise<void>;
 }) {
-  const pending = submissions.submitted;
-  const graded = submissions.graded;
-  const total = submissions.submitted + submissions.graded + submissions.revision;
   const coreDone = done ? CORE_PATH.filter((l) => done.has(l.id)).length : 0;
   const next = nextCoreLesson(done);
   const nextModule = next ? getModule(next.module) : undefined;
@@ -138,10 +130,6 @@ function MemberRow({
         ) : (
           <span className="text-ink-muted">없음</span>
         )}
-      </td>
-      <td className="whitespace-nowrap text-ink-secondary">
-        제출 {total} · 채점 {graded}
-        {pending > 0 && <span className="ml-1 text-[var(--accent)]">· 대기 {pending}</span>}
       </td>
       <td className="whitespace-nowrap text-xs tabular-nums text-ink-muted">{lastActivity ? formatDateTime(lastActivity) : "기록 없음"}</td>
       <td>

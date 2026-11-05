@@ -4,10 +4,8 @@ import PageHeader from "@/components/PageHeader";
 import { requireAdmin } from "@/lib/dal";
 import { getLearningRecord, learningActivityByItem, learningUpdatedAt } from "@/lib/learningStore";
 import { findUserById } from "@/lib/userStore";
-import { listUserSubmissions } from "@/lib/submissionStore";
-import { readDraft } from "@/lib/assignmentDraftStore";
-import { ASSIGNMENT_STATUS_LABEL, courseProgress, moduleStatus } from "@/lib/study";
-import { ASSIGNMENT_KEYS, MODULES, findExercise } from "@/content/course";
+import { courseProgress, moduleStatus } from "@/lib/study";
+import { MODULES, findExercise } from "@/content/course";
 import type { Tier } from "@/content/tiers";
 import { tierRecord } from "@/lib/achievement";
 import ProgressRing from "@/components/ProgressRing";
@@ -18,7 +16,7 @@ import MemberModuleRecord from "./MemberModuleRecord";
 export const metadata = { title: "스터디원 학습 기록" };
 
 // 스터디원 한 명의 학습 기록 전체. 위에는 모듈별 요약, 아래에는 고른 모듈의 기록을 모두 펼쳐 보여 준다
-// (레슨 진행·확인 문제 오답·서술형·출력 예측·코딩 실습·백지 복습·과제 제출본과 작성 중인 초안).
+// (레슨 진행·확인 문제 오답·서술형·출력 예측·코딩 실습·백지 복습).
 export default async function MemberLearningPage({ params, searchParams }: PageProps<"/operator/members/[id]">) {
   await requireAdmin("/operator/members");
   const { id } = await params;
@@ -26,13 +24,9 @@ export default async function MemberLearningPage({ params, searchParams }: PageP
   const member = findUserById(id);
   if (!member) notFound();
   const learning = getLearningRecord(id);
-  const submissions = listUserSubmissions(id).filter((s) => ASSIGNMENT_KEYS.includes(s.assignmentKey));
   const lastActivity = learningUpdatedAt(id);
   const course = courseProgress(learning);
-  const rows = MODULES.map((module) => {
-    const submission = module.assignment ? submissions.find((s) => s.assignmentKey === module.assignment!.key) : undefined;
-    return { module, submission, status: moduleStatus(module, learning, submission) };
-  });
+  const rows = MODULES.map((module) => ({ module, status: moduleStatus(module, learning) }));
   const sum = (tier: Tier, key: "done" | "total") => rows.reduce((acc, r) => acc + r.status.tiers[tier][key], 0);
   const advancedModules = rows.filter((r) => r.status.tiers.advanced.total > 0 && tierRecord(r.status, learning, "advanced").complete).length;
 
@@ -52,7 +46,6 @@ export default async function MemberLearningPage({ params, searchParams }: PageP
   // 모듈을 고르지 않았으면 가장 최근에 학습한 모듈을 펼친다.
   const recent = [...moduleActivity].sort((a, b) => b[1].localeCompare(a[1]))[0]?.[0];
   const selected = rows.find((r) => r.module.slug === moduleParam) ?? rows.find((r) => r.module.slug === recent) ?? rows[0];
-  const draft = selected.module.assignment ? readDraftSafe(id, selected.module.assignment.key) : undefined;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
@@ -73,7 +66,6 @@ export default async function MemberLearningPage({ params, searchParams }: PageP
           label="보충 · 심화 레슨"
           value={`보충 ${sum("supplement", "done")}/${sum("supplement", "total")} · 심화 ${sum("advanced", "done")}/${sum("advanced", "total")}${advancedModules > 0 ? ` · 심화 달성 ${advancedModules}개 모듈` : ""}`}
         />
-        <Stat label="과제 제출" value={`${submissions.length} / ${ASSIGNMENT_KEYS.length}`} />
         <Stat label="마지막 학습 기록" value={lastActivity ? formatDateTime(lastActivity) : "아직 없음"} />
       </div>
 
@@ -88,8 +80,6 @@ export default async function MemberLearningPage({ params, searchParams }: PageP
             t.supplement.total > 0 && `보충 ${t.supplement.done}/${t.supplement.total}`,
             t.advanced.total > 0 && `심화 ${t.advanced.done}/${t.advanced.total}`,
             module.recall.length > 0 && `백지 복습 ${status.recallSubmitted ? "제출" : "미제출"}`,
-            status.assignment &&
-              `과제 ${ASSIGNMENT_STATUS_LABEL[status.assignment.status]}${status.assignment.status === "graded" ? ` ${status.assignment.score}/${status.assignment.maxScore}점` : ""}`,
           ].filter(Boolean);
           return (
             <li key={module.slug}>
@@ -121,25 +111,13 @@ export default async function MemberLearningPage({ params, searchParams }: PageP
         </h2>
         <div className="mt-5">
           <MemberModuleRecord
-            memberId={member.id}
             status={selected.status}
             learning={learning}
-            submission={selected.submission}
-            draftSavedAt={draft ? (draft.updatedAt ?? "") : undefined}
           />
         </div>
       </section>
     </div>
   );
-}
-
-/** 초안 파일을 읽지 못해도(손상·권한) 화면은 그대로 보여 준다. */
-function readDraftSafe(userId: string, key: string) {
-  try {
-    return readDraft(userId, key);
-  } catch {
-    return undefined;
-  }
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
