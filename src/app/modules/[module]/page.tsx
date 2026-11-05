@@ -9,7 +9,7 @@ import StepMarker, { type StepState } from "@/components/StepMarker";
 import Icon from "@/components/Icon";
 import { loadModulePage } from "@/lib/modulePage";
 import { tierRecord, type TierRecord } from "@/lib/achievement";
-import { ASSIGNMENT_STATUS_LABEL, moduleContinueHref, type ModuleStatus } from "@/lib/study";
+import { moduleContinueHref, type ModuleStatus } from "@/lib/study";
 import { assignmentHref, diagnosticHref, lessonHref, moduleHref, recallHref } from "@/lib/routes";
 
 export function generateStaticParams() {
@@ -49,7 +49,7 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
       return { title: status.currentLesson.title, cta: first ? "첫 레슨 시작하기" : "이어서 학습하기", detail: `핵심 레슨 ${status.tiers.core.total - status.tiers.core.done}개 남음`, href: lessonHref(slug, status.currentLesson.id) };
     }
     if (module.recall.length > 0 && !status.recallSubmitted) return { title: "백지 복습", cta: "작성하기", detail: "자료를 보지 않고 이 모듈의 핵심 내용을 적어 봅니다.", href: recallHref(slug) };
-    if (status.assignment && status.assignment.status === "none") return { title: module.assignment!.title, cta: "과제 하기", detail: "핵심 레슨과 백지 복습을 마쳤습니다.", href: assignmentHref(slug) };
+    if (module.assignment) return { title: module.assignment.title, cta: "과제 하기", detail: "핵심 레슨과 백지 복습을 마쳤습니다.", href: assignmentHref(slug) };
     return undefined;
   })();
 
@@ -125,13 +125,13 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
                   locked={!status.finaleOpen && !isAdmin}
                 />
               )}
-              {module.assignment && status.assignment && (
+              {module.assignment && (
                 <FinaleRow
                   href={assignmentHref(slug)}
                   title={module.assignment.title}
-                  detail={`${module.assignment.kind === "track" ? "분야 프로젝트" : module.assignment.kind === "capstone" ? "캡스톤" : "모듈 과제"} · 만점 ${module.assignment.maxScore}점`}
-                  state={status.assignment.status === "graded" ? `채점 완료 · ${status.assignment.score ?? "-"}/${status.assignment.maxScore}점` : ASSIGNMENT_STATUS_LABEL[status.assignment.status]}
-                  done={status.assignment.status === "graded"}
+                  detail={`${module.assignment.kind === "track" ? "분야 프로젝트" : module.assignment.kind === "capstone" ? "캡스톤" : "모듈 과제"} · 자기 점검`}
+                  state="자기 점검"
+                  done={false}
                   locked={!status.finaleOpen && !isAdmin}
                 />
               )}

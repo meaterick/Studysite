@@ -48,7 +48,7 @@ export default function ModuleFrame({
       alsoActiveOn: module.recall.length > 0 ? recallHref(slug) : undefined,
     });
   }
-  if (status.assignment) tabs.push({ href: assignmentHref(slug), label: "과제", done: status.assignment.status === "graded" });
+  if (module.assignment) tabs.push({ href: assignmentHref(slug), label: "과제" });
   tabs.push({ href: reviewHref(slug), label: "복습 노트" });
 
   const crumbs = (

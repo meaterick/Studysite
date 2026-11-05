@@ -81,10 +81,9 @@ export default async function OperatorSystemPage() {
           items={[
             { label: "계정", value: counts.users.toLocaleString() },
             { label: "학습 기록 항목", value: counts.learning_items.toLocaleString() },
-            { label: "과제 제출 (버전)", value: `${counts.submissions.toLocaleString()} (${counts.submission_versions.toLocaleString()})` },
             { label: "채팅 메시지", value: counts.chat_messages.toLocaleString() },
             { label: "DB 크기", value: bytes(size.db + size.wal) },
-            { label: "첨부 파일", value: bytes(uploads) },
+            { label: "보관 중인 첨부 파일", value: bytes(uploads) },
             { label: "디스크 남은 공간", value: disk ? `${bytes(disk.free)} / ${bytes(disk.total)}` : "확인 불가", warn: lowDisk },
             { label: "스키마 버전", value: `v${schemaVersion()}` },
           ]}

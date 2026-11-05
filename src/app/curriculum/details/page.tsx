@@ -198,7 +198,7 @@ export default async function CurriculumDetailsPage() {
                 <li>목표 문제를 읽고 이 모듈에서 무엇을 할 수 있게 되는지 확인합니다.</li>
                 <li>핵심 레슨을 순서대로 마칩니다. 이미 아는 내용은 진단 평가로 인정받습니다.</li>
                 <li>백지 복습으로 자료를 보지 않고 핵심 내용을 적은 뒤 비교합니다.</li>
-                <li>과제가 있는 모듈은 과제를 제출하고 운영자의 채점을 받습니다.</li>
+                <li>과제가 있는 모듈은 작업을 마친 뒤 자동 테스트와 자기 점검 기준으로 결과를 확인합니다.</li>
               </ol>
             </div>
           </div>
@@ -259,7 +259,7 @@ export default async function CurriculumDetailsPage() {
 
         <Section id="schedule" title={`추천 일정 (${SCHEDULE.length}주)`}>
           <p className="mb-5 max-w-3xl text-sm leading-relaxed text-ink-muted">
-            여러 분야를 순서대로 공부할 때 참고할 수 있는 주당 4~7시간 일정입니다. 기수 일정과 과제 마감일은 운영자가 정하며, 진도 화면에서 이번 주 범위를 확인할 수 있습니다.
+            여러 분야를 순서대로 공부할 때 참고할 수 있는 주당 4~7시간 일정입니다. 기수 시작일을 정하면 진도 화면에서 이번 주 학습 범위를 확인할 수 있습니다.
           </p>
           <ol className="rows border-y border-[var(--border-hairline)]">
             {SCHEDULE.map((w) => (

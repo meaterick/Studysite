@@ -209,7 +209,7 @@
 
 ## 과제: 미니 자동미분 엔진으로 MLP 학습하기
 
-저장 키 `autograd-mlp` · 만점 10점 · [과제 원본](../../src/content/modules/neural-networks/assignment.ts)
+저장 키 `autograd-mlp` · 자기 점검 · [과제 원본](../../src/content/modules/neural-networks/assignment.ts)
 
 [5-1 자동미분 엔진 구현](#lesson-micrograd)의 `Value` 클래스에 나눗셈과 지수 함수를 추가하고, 이 엔진만으로 MLP를 만들어 make_moons 데이터를 분류합니다. gradient check로 구현을 검증하고, 같은 모델을 NumPy 행렬 연산으로 구현한 버전과 속도·정확도를 비교합니다.
 

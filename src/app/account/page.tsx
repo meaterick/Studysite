@@ -46,7 +46,7 @@ export default async function AccountPage() {
         <h2 id="danger-heading" className="text-sm font-semibold text-ink">
           회원 탈퇴
         </h2>
-        <p className="mb-5 mt-1 text-sm text-ink-muted">계정 정보와 학습 기록, 제출한 과제가 즉시 삭제되며 되돌릴 수 없습니다.</p>
+        <p className="mb-5 mt-1 text-sm text-ink-muted">계정 정보, 학습 기록, 과제 작업이 즉시 삭제되며 되돌릴 수 없습니다.</p>
         <DeleteAccountButton />
       </section>
     </div>

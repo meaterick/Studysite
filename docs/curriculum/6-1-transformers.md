@@ -272,7 +272,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 ## 과제: 나만의 미니 GPT 블록
 
-저장 키 `mini-gpt-block` · 만점 10점 · [과제 원본](../../src/content/modules/transformers/assignment.ts)
+저장 키 `mini-gpt-block` · 자기 점검 · [과제 원본](../../src/content/modules/transformers/assignment.ts)
 
 GPT 블록의 핵심인 멀티헤드 causal self-attention을 NumPy로 직접 구현하고, 세 가지 독립적인 방법으로 정확성을 검증합니다. [6-1 셀프 어텐션: 쿼리·키·값](#lesson-self-attention)의 숫자 예제를 코드로 재현하고 Query를 바꿔 비교하며, 마스크와 $\sqrt{d_k}$ 스케일링이 attention 가중치에 어떤 영향을 주는지 히트맵으로 관찰합니다. 마지막으로 "Attention Is All You Need" 논문을 읽고 리포트를 작성합니다.
 

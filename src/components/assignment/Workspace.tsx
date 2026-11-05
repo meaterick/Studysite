@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   type AssignmentSpec,
   checkTasks,
@@ -12,7 +12,7 @@ import {
   type NotebookCell,
   type NotebookOutput,
 } from "@/lib/notebook";
-import { saveAssignmentDraft, saveAssignmentDraftPatch, submitAssignmentWork, type ActionResult } from "@/lib/assignmentActions";
+import { saveAssignmentDraft, saveAssignmentDraftPatch, type ActionResult } from "@/lib/assignmentActions";
 import { forceStop, onRuntimeReset, preloadPyodide, resetNamespace, runPython, writeRuntimeFiles, type RunStatus } from "@/lib/pyRunner";
 import AnswerCell from "./AnswerCell";
 import AutoTestPanel, { type AutoTestView } from "@/components/lab/AutoTestPanel";
@@ -92,17 +92,17 @@ export default function Workspace({
   initialDraft,
   savedAt,
   courseDocs,
-  resubmit,
+  selfCheck,
   autoTests,
 }: {
   assignmentKey: string;
-  /** 과제 단계 목록만 받는다(채점 기준·심화 문제 정답·채점 참고는 브라우저로 보내지 않는다). */
+  /** 과제 단계 목록을 받는다. */
   spec: AssignmentSpec;
   tasks: WorkspaceTaskView[];
   initialDraft: AssignmentDraft;
   savedAt?: string;
   courseDocs?: { path: string; content: string }[];
-  resubmit: boolean;
+  selfCheck: ReactNode;
   /** 작업 공간 이름공간에서 실행하는 자동 테스트(src/content/labs) */
   autoTests?: AutoTestView[];
 }) {
@@ -356,44 +356,6 @@ export default function Workspace({
 
   const busy = runningCell !== null || runningAll;
 
-  // ── 제출 ──────────────────────────────────────────────────────────────
-  const [submitting, startSubmit] = useTransition();
-  const [submitMessage, setSubmitMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const requiredChecks = checks.filter((c) => !c.optional);
-  const missingCount = requiredChecks.reduce((n, c) => n + c.missingAnswers.length, 0);
-  const codeIssues = checks.reduce((n, c) => n + c.unrunCode + c.failedCode, 0);
-
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSubmitMessage(null);
-    if (missingCount > 0) return;
-    if (
-      codeIssues > 0 &&
-      !confirm(`실행하지 않았거나 오류가 난 코드 셀이 ${codeIssues}개 있습니다. 운영자는 셀에 저장된 실행 결과를 보고 채점합니다. 그대로 제출하시겠습니까?`)
-    )
-      return;
-    const formData = new FormData(e.currentTarget);
-    startSubmit(async () => {
-      const saved = await saveNow();
-      if (!saved) {
-        setSubmitMessage({ tone: "error", text: "작업 내용을 저장하지 못해 제출을 중단했습니다. 잠시 후 다시 시도해 주십시오." });
-        return;
-      }
-      try {
-        const result = await submitAssignmentWork(assignmentKey, formData);
-        if (!result.ok) {
-          setSubmitMessage({ tone: "error", text: result.error });
-          return;
-        }
-        formRef.current?.reset();
-        setSubmitMessage({ tone: "ok", text: "제출했습니다. 운영자가 채점하면 이 페이지 위쪽에 점수와 피드백이 표시됩니다." });
-      } catch {
-        setSubmitMessage({ tone: "error", text: "제출하지 못했습니다. 첨부 파일 크기를 확인하고 다시 시도해 주십시오." });
-      }
-    });
-  };
-
   const saveLabel =
     saveState === "saving"
       ? "저장 중…"
@@ -437,8 +399,8 @@ export default function Workspace({
                 </li>
               )}
               <li className={autoTests && autoTests.length > 0 ? "" : "mt-2 border-t border-[var(--border-hairline)] pt-2"}>
-                <a href="#submit" className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-[13px] font-medium text-ink transition hover:bg-[var(--surface-card-2)]">
-                  제출하기
+                <a href="#self-check" className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-[13px] font-medium text-ink transition hover:bg-[var(--surface-card-2)]">
+                  자기 점검
                   <Icon name="arrowRight" size={14} className="text-ink-muted transition group-hover:translate-x-0.5" />
                 </a>
               </li>
@@ -600,11 +562,11 @@ export default function Workspace({
           </div>
         )}
 
-        <section id="submit" aria-labelledby="submit-heading" className="scroll-mt-32 rounded-2xl border border-[var(--border-hairline)] p-6 sm:p-8">
-          <h3 id="submit-heading" className="text-xl font-bold tracking-[-0.03em] text-ink">
-            {resubmit ? "다시 제출하기" : "제출하기"}
+        <section id="self-check" aria-labelledby="self-check-heading" className="scroll-mt-32 rounded-2xl border border-[var(--border-hairline)] p-6 sm:p-8">
+          <h3 id="self-check-heading" className="text-xl font-bold tracking-[-0.03em] text-ink">
+            자기 점검
           </h3>
-          <p className="mt-1 text-sm text-ink-muted">지금의 코드·실행 결과·답안이 제출본으로 저장됩니다. 제출 후에도 고쳐서 다시 낼 수 있습니다.</p>
+          <p className="mt-1 text-sm text-ink-muted">빠진 답안이나 실행 오류를 확인한 뒤 아래 기준과 자신의 결과를 비교하세요.</p>
           <ul className="mt-5 space-y-2 text-sm">
             {checks.map((c) => (
               <li key={c.taskId} className={`flex flex-wrap items-center gap-x-2 ${c.complete ? "text-ink" : c.optional ? "text-ink-muted" : "text-ink-secondary"}`}>
@@ -627,72 +589,7 @@ export default function Workspace({
             ))}
           </ul>
 
-          <form ref={formRef} onSubmit={onSubmit} className="mt-5 space-y-4">
-            <div>
-              <label htmlFor="submit-text" className="text-sm font-medium text-ink">
-                운영자에게 남길 메모 <span className="font-normal text-ink-muted">(선택)</span>
-              </label>
-              <textarea
-                id="submit-text"
-                name="text"
-                rows={3}
-                maxLength={20000}
-                placeholder="특히 봐 주었으면 하는 부분이나 막혔던 점을 적어 주십시오."
-                className="mt-2 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-ink-muted"
-              />
-            </div>
-            <details className="group">
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink [&::-webkit-details-marker]:hidden">
-                참고 링크·첨부 파일 (선택)
-                <Icon name="chevronDown" size={14} className="transition group-open:rotate-180" />
-              </summary>
-              <div className="mt-3 space-y-3">
-                <div>
-                  <label htmlFor="submit-links" className="text-xs font-medium text-ink-secondary">
-                    참고 링크 (한 줄에 하나, 최대 5개)
-                  </label>
-                  <textarea
-                    id="submit-links"
-                    name="links"
-                    rows={2}
-                    className="mt-2 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-sm text-ink"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="submit-files" className="text-xs font-medium text-ink-secondary">
-                    첨부 파일 (pdf, png, jpg, csv, json, txt, md, py, ipynb, zip · 최대 3개, 각 5MB)
-                  </label>
-                  <input
-                    id="submit-files"
-                    name="files"
-                    type="file"
-                    multiple
-                    className="mt-2 block text-sm text-ink-secondary file:mr-3 file:rounded-full file:border file:border-[var(--border-strong)] file:bg-transparent file:px-4 file:py-1.5 file:text-[13px] file:font-medium file:text-ink"
-                  />
-                </div>
-              </div>
-            </details>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="submit"
-                disabled={submitting || missingCount > 0 || busy}
-                className="btn btn-primary"
-              >
-                {submitting ? "제출 중…" : resubmit ? "새 버전으로 다시 제출" : "과제 제출"}
-              </button>
-              {missingCount > 0 && (
-                <p className="text-xs text-ink-muted">핵심 과제 항목의 답안 {missingCount}개를 작성하면 제출할 수 있습니다.</p>
-              )}
-              {submitMessage && (
-                <p
-                  className={`text-sm font-medium ${submitMessage.tone === "ok" ? "text-[var(--status-good)]" : "text-[var(--status-critical)]"}`}
-                  role="status"
-                >
-                  {submitMessage.text}
-                </p>
-              )}
-            </div>
-          </form>
+          {selfCheck}
         </section>
       </div>
     </div>

@@ -6,14 +6,12 @@ import NavLink from "@/components/NavLink";
 // 접근 권한은 각 페이지의 requireAdmin이 확인하고, 이 메뉴는 관리자에게만 그린다.
 const OPERATOR_NAV = [
   { href: "/operator", label: "대시보드", exact: true },
-  { href: "/operator/submissions", label: "과제 채점" },
   { href: "/operator/chat", label: "채팅" },
   { href: "/operator/members", label: "스터디원" },
   { href: "/operator/content", label: "콘텐츠" },
   { href: "/operator/settings", label: "운영 설정" },
   { href: "/operator/security", label: "보안 기록" },
   { href: "/operator/system", label: "시스템" },
-  { href: "/operator/guide", label: "운영 가이드" },
 ];
 
 export default async function OperatorLayout({ children }: { children: ReactNode }) {

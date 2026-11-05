@@ -75,6 +75,15 @@ try {
     await new Promise((r) => setTimeout(r, 100));
   }
   assert.equal(ready, true);
+  const assignment = await request("/modules/python-objects-tools/assignment", { cookie: cookies.member });
+  assert.equal(assignment.status, 200);
+  const assignmentHtml = await assignment.text();
+  assert.ok(assignmentHtml.includes('id="self-check"'), "assignments have a self-check");
+  assert.equal(assignmentHtml.includes('id="submit-files"'), false, "assignments cannot upload submissions");
+  for (const path of ["/operator/guide", "/operator/submissions", "/api/submissions/old/files/old"]) {
+    assert.equal((await request(path, { cookie: cookies.admin })).status, 404, `removed route: ${path}`);
+  }
+
   const lessonPath = "/modules/numpy/lessons/numpy-arrays";
   const practicePath = "/modules/numpy/practice/numpy-arrays";
   const lesson = await request(lessonPath, { cookie: cookies.member });

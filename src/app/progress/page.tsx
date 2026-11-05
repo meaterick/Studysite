@@ -5,12 +5,10 @@ import { LEARNING_FIELDS } from "@/content/fields";
 import { SCHEDULE } from "@/content/curriculum/schedule";
 import { requireUser } from "@/lib/dal";
 import { getLearningRecord, learningActivityByItem } from "@/lib/learningStore";
-import { findUserSubmission } from "@/lib/submissionStore";
-import { ASSIGNMENT_STATUS_LABEL, isLessonComplete, moduleStatus } from "@/lib/study";
-import { memberFeedback } from "@/lib/feedback";
-import { cohortWeek, getSettings, isBeforeDue } from "@/lib/settingsStore";
+import { isLessonComplete, moduleStatus } from "@/lib/study";
+import { cohortWeek, getSettings } from "@/lib/settingsStore";
 import { tierRecord } from "@/lib/achievement";
-import { assignmentHref, lessonHref, moduleHref, recallHref, trackHref } from "@/lib/routes";
+import { lessonHref, moduleHref, recallHref, trackHref } from "@/lib/routes";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
 import NextStep from "@/components/NextStep";
@@ -20,14 +18,12 @@ export const metadata: Metadata = { title: "내 학습 진도" };
 // 진도 화면: 최근 학습한 모듈과 분야별 진행 상태를 표시한다.
 
 const RECALL_MINUTES = 20;
-const ASSIGNMENT_MINUTES = 150;
 
 interface Todo {
   label: string;
   detail: string;
   href: string;
   minutes?: number;
-  revision?: boolean;
 }
 
 function hoursLabel(minutes: number): string {
@@ -41,22 +37,17 @@ export default async function ProgressPage() {
   const settings = getSettings();
   const activity = learningActivityByItem(user.id);
   const rows = MODULES.map((module) => {
-    const submission = module.assignment ? findUserSubmission(user.id, module.assignment.key) : undefined;
-    const status = moduleStatus(module, record, submission, settings.progressionMode);
+    const status = moduleStatus(module, record, settings.progressionMode);
     const recent = module.lessons.reduce((latest, lesson) => {
       const at = activity.lessons.get(lesson.id) ?? "";
       return at > latest ? at : latest;
     }, activity.recalls.get(module.slug) ?? "");
     return { module, status, recent, advanced: tierRecord(status, record, "advanced") };
   });
-  const fb = memberFeedback(user.id, record);
 
   const focus = rows.filter((row) => row.recent).sort((a, b) => b.recent.localeCompare(a.recent))[0];
 
   const todos: Todo[] = [];
-  for (const r of rows.filter((x) => x.status.assignment?.status === "revision")) {
-    todos.push({ label: `${r.module.code} ${r.module.assignment!.title} 다시 제출`, detail: "재제출 요청", href: assignmentHref(r.module.slug), minutes: 60, revision: true });
-  }
   if (focus) {
     const { module, status } = focus;
     const open = status.lessons.filter((row) => row.access !== "locked" && !row.progress.completed);
@@ -70,10 +61,7 @@ export default async function ProgressPage() {
     if (status.coreDone && module.recall.length > 0 && !status.recallSubmitted) {
       todos.push({ label: `${module.code} 백지 복습`, detail: module.title, href: recallHref(module.slug), minutes: RECALL_MINUTES });
     }
-    if (status.coreDone && status.assignment?.status === "none") {
-      todos.push({ label: `${module.code} ${module.assignment!.title}`, detail: "과제", href: assignmentHref(module.slug), minutes: ASSIGNMENT_MINUTES });
-    }
-    if (!next && open.length > 0 && !todos.some((todo) => todo.href === recallHref(module.slug) || todo.href === assignmentHref(module.slug))) {
+    if (!next && open.length > 0 && !todos.some((todo) => todo.href === recallHref(module.slug))) {
       todos.push({ label: module.title, detail: "최근 학습한 모듈", href: moduleHref(module.slug) });
     }
   }
@@ -82,26 +70,14 @@ export default async function ProgressPage() {
   // 이번 주 일정(기수 시작일이 설정된 경우)
   const week = cohortWeek();
   const thisWeek = week ? SCHEDULE.find((w) => w.week === week) : undefined;
-  const upcomingDue = rows
-    .filter((r) => r.module.assignment && settings.dueDates[r.module.assignment.key] && r.status.assignment?.status !== "graded")
-    .map((r) => ({ module: r.module, date: settings.dueDates[r.module.assignment!.key] }))
-    .filter((d) => isBeforeDue(d.date))
-    .sort((a, b) => a.date.localeCompare(b.date))[0];
-
   // 숫자
   const lessonsDone = rows.reduce((sum, row) => sum + row.status.lessons.filter((lesson) => lesson.progress.completed).length, 0);
   const modulesDone = rows.filter((r) => r.status.tiers.core.total > 0 && r.status.coreDone).length;
-  const withAssignment = rows.filter((r) => r.module.assignment);
-  const submitted = withAssignment.filter((r) => r.status.assignment!.status !== "none").length;
-  const graded = withAssignment.filter((r) => r.status.assignment!.status === "graded");
-  const scoreSum = graded.reduce((sum, r) => sum + (r.status.assignment!.score ?? 0), 0);
-  const scoreMax = graded.reduce((sum, r) => sum + r.status.assignment!.maxScore, 0);
   const conceptsDone = CONCEPTS.filter((c) => lessonsOfConcept(c.id).every((l) => isLessonComplete(record, l.id))).length;
   const stats = [
     { label: "완료한 레슨", value: `${lessonsDone}개`, sub: "모든 분야의 핵심·선택 레슨" },
     { label: "개념", value: `${conceptsDone}/${CONCEPTS.length}`, sub: "모든 레슨을 마친 개념" },
     { label: "모듈", value: `${modulesDone}/${rows.filter((r) => r.status.tiers.core.total > 0).length}`, sub: "핵심 레슨을 마친 모듈" },
-    { label: "과제", value: `${submitted}/${withAssignment.length}`, sub: graded.length ? `채점 ${graded.length} · ${scoreSum}/${scoreMax}점` : "제출한 과제" },
   ];
 
   return (
@@ -112,11 +88,11 @@ export default async function ProgressPage() {
         <NextStep eyebrow="학습 분야 선택" title={focus ? "다음에 배울 분야를 골라 보세요" : "관심 있는 분야에서 첫 학습을 시작하세요"} href="/curriculum" cta="분야 둘러보기" />
       ) : (
         <NextStep
-          eyebrow={today[0].revision ? "과제 피드백" : "최근 학습 분야"}
+          eyebrow="최근 학습 분야"
           title={today[0].label}
           detail={today[0].detail}
           href={today[0].href}
-          cta={today[0].revision ? "다시 제출하기" : "이어서 학습"}
+          cta="이어서 학습"
           meta={today[0].minutes ? `예상 ${hoursLabel(today[0].minutes)}` : undefined}
         />
       )}
@@ -143,16 +119,7 @@ export default async function ProgressPage() {
         </section>
       )}
 
-      {fb.newCount > 0 && (
-        <Link href="/feedback" className="group callout mt-6 flex items-center justify-between gap-3 text-ink">
-          <span>
-            새 운영자 피드백 <strong className="font-semibold">{fb.newCount}개</strong>
-          </span>
-          <Icon name="arrowRight" size={15} className="transition group-hover:translate-x-0.5" />
-        </Link>
-      )}
-
-      <dl className="mt-16 grid grid-cols-2 border-y border-[var(--border-hairline)] lg:grid-cols-4">
+      <dl className="mt-16 grid grid-cols-2 border-y border-[var(--border-hairline)] lg:grid-cols-3">
         {stats.map((st, i) => (
           <div
             key={st.label}
@@ -184,11 +151,6 @@ export default async function ProgressPage() {
                 const total = status.lessons.length;
                 const done = status.lessons.filter((lesson) => lesson.progress.completed).length;
                 const isFocus = m.slug === focus?.module.slug;
-                const assignment = status.assignment
-                  ? status.assignment.status === "graded"
-                    ? `${status.assignment.score ?? "-"}/${status.assignment.maxScore}점`
-                    : ASSIGNMENT_STATUS_LABEL[status.assignment.status]
-                  : "";
                 return (
                   <li key={m.slug}>
                     <Link href={moduleHref(m.slug)} className="group row-hover -mx-3 grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 rounded-xl px-3 py-3.5 md:grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_9rem_1rem]">
@@ -215,7 +177,6 @@ export default async function ProgressPage() {
                       </span>
                       <span className="hidden truncate text-xs text-ink-muted md:block">
                         {m.recall.length > 0 && `백지 복습 ${status.recallSubmitted ? "✓" : "–"}`}
-                        {assignment && ` · 과제 ${assignment}`}
                       </span>
                       <Icon name="chevronRight" size={16} className="col-start-3 row-start-1 justify-self-end text-ink-muted transition group-hover:translate-x-0.5 group-hover:text-ink md:col-start-auto md:row-start-auto" />
                     </Link>
@@ -227,10 +188,10 @@ export default async function ProgressPage() {
         ))}
       </section>
 
-      {(thisWeek || upcomingDue) && (
+      {thisWeek && (
         <section aria-labelledby="week-heading" className="mt-16 rounded-2xl border border-[var(--border-hairline)] p-5 sm:p-6">
           <h2 id="week-heading" className="text-[13px] font-medium text-ink-muted">
-            {thisWeek ? `이번 주 (${thisWeek.week}주차) 학습 범위` : "다가오는 마감"}
+            {`이번 주 (${thisWeek.week}주차) 학습 범위`}
           </h2>
           {thisWeek && (
             <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[15px]">
@@ -252,11 +213,6 @@ export default async function ProgressPage() {
               <Link href={lessonHref("capstone-project", "capstone-design")} className="underline decoration-[var(--border-strong)] underline-offset-4 hover:decoration-current">
                 단계별 할 일 보기
               </Link>
-            </p>
-          )}
-          {upcomingDue && (
-            <p className="mt-3 text-sm text-ink-secondary">
-              가장 가까운 마감: {upcomingDue.module.code} {upcomingDue.module.assignment!.title} · {upcomingDue.date.slice(5).replace("-", "/")} 23:59
             </p>
           )}
         </section>
