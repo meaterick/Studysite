@@ -96,6 +96,7 @@ test("security regression", async (t) => {
   });
 
   await t.test("retention, migration and storage cap work with existing schema data", () => {
+    const usersBefore = get<{ n: number }>("SELECT COUNT(*) AS n FROM users")?.n;
     assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM schema_migrations")?.n, SCHEMA_VERSION);
     tx(() => {
       const old = new Date(Date.now() - 31 * 86400_000).toISOString();
@@ -112,7 +113,7 @@ test("security regression", async (t) => {
     assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM security_events")?.n, 10000);
     assert.equal(get("SELECT id FROM security_events WHERE bucket = 'cap' AND path = '/cap/1'"), undefined);
     assert.ok(get("SELECT id FROM security_events WHERE path = '/cap/10005'"));
-    assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM users")?.n, 3);
+    assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM users")?.n, usersBefore);
   });
 
   await t.test("edge reader tolerates missing, malformed, large and rotated log files", () => {
