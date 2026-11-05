@@ -266,13 +266,6 @@ export function checkTasks(spec: AssignmentSpec, draft: AssignmentDraft): TaskCh
   });
 }
 
-/** 필수 과제의 답안 셀이 모두 채워졌는지 — 서버가 제출을 받아들이는 최소 조건 */
-export function missingRequiredAnswers(spec: AssignmentSpec, draft: AssignmentDraft): { task: string; prompt: string }[] {
-  return checkTasks(spec, draft)
-    .filter((t) => !t.optional)
-    .flatMap((t) => t.missingAnswers.map((prompt) => ({ task: t.title, prompt })));
-}
-
 export function newCellId(): string {
   return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }

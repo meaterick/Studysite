@@ -4,7 +4,7 @@ import { get, run } from "./db";
 // 운영 설정(settings 테이블의 'site' 행, JSON). 운영자 화면(/operator/settings)에서 바꾼다.
 // - progressionMode: 레슨 진행 방식. "warn"(기본) = 순서는 안내만 하고 미완료 경고를 보여 준다.
 //   "lock" = 모듈 안에서 앞 핵심 레슨을 끝내야 다음 핵심 레슨이 열린다.
-// - dueDates: 과제 저장 키 → 마감일(YYYY-MM-DD, 한국 시간 그날 23:59까지).
+// - dueDates: 이전 운영 방식의 마감일 설정을 호환용으로 보관한다.
 // - cohortStart: 기수 시작일(YYYY-MM-DD, 1주차 월요일 권장). 정하면 기본 일정표로 "이번 주 학습 범위"를 보여 준다.
 
 export type ProgressionMode = "warn" | "lock";
@@ -54,16 +54,6 @@ export function saveSettings(next: Omit<SiteSettings, "updatedAt">): SiteSetting
     clean.updatedAt!
   );
   return clean;
-}
-
-/** 마감일(YYYY-MM-DD)의 끝(한국 시간 23:59:59) */
-export function dueDateEnd(date: string): Date {
-  return new Date(`${date}T23:59:59+09:00`);
-}
-
-/** 마감이 아직 지나지 않았는가 */
-export function isBeforeDue(date: string, now = new Date()): boolean {
-  return dueDateEnd(date).getTime() >= now.getTime();
 }
 
 /** 기수 시작일 기준 오늘이 몇째 주인지(시작 전이면 0). 시작일이 없으면 undefined */
