@@ -2,22 +2,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import CountUp from "@/components/home/CountUp";
 import Journey, { type JourneyScene } from "@/components/journey/Journey";
-import { CORE_PATH, MODULES, TRACKS, modulesOfTrack } from "@/content/course";
+import { MODULES, modulesOfTrack } from "@/content/course";
+import { LEARNING_FIELDS, learningField } from "@/content/fields";
 import { getCurrentUser } from "@/lib/dal";
 import { getLearningRecord } from "@/lib/learningStore";
-import { courseProgress } from "@/lib/study";
+import { isLessonComplete } from "@/lib/study";
 import { trackHref } from "@/lib/routes";
-
-const fieldTitles: Partial<Record<(typeof TRACKS)[number]["id"], string>> = {
-  programming: "Python",
-  math: "수학과 통계",
-  data: "데이터 처리",
-  ml: "머신러닝",
-  dl: "딥러닝",
-  genai: "생성형 AI와 언어 모델",
-  capstone: "프로젝트",
-  extension: "확장 주제",
-};
 
 const fieldGroups = [
   { key: "Part 1", name: "프로그래밍과 수학", ids: ["programming", "math"] },
@@ -67,10 +57,10 @@ const FLOW = [
 ];
 
 const OUTCOMES = [
-  "AI, 머신러닝, 딥러닝, LLM의 작동 원리를 백지에 그려 가며 설명할 수 있습니다.",
-  "선형 회귀, MLP, CNN, Self-Attention을 라이브러리 없이 직접 구현할 수 있습니다.",
-  "LLM이 사전학습, SFT, 정렬을 거쳐 만들어지는 과정과 환각이 생기는 이유를 설명할 수 있습니다.",
-  "프롬프트, RAG, 에이전트로 문제를 해결하고, 평가 데이터셋으로 성능을 측정할 수 있습니다.",
+  "Python으로 파일을 읽고 반복 작업을 자동화합니다.",
+  "수학과 통계로 데이터를 해석하고 NumPy와 pandas로 정리합니다.",
+  "머신러닝 모델과 신경망을 학습시키고 결과를 평가합니다.",
+  "언어 모델로 검색·도구를 활용하는 시스템을 만들거나 관심 주제로 프로젝트를 진행합니다."
 ];
 
 function Label({ children }: { children: ReactNode }) {
@@ -79,8 +69,8 @@ function Label({ children }: { children: ReactNode }) {
 
 export default async function Home() {
   const user = await getCurrentUser();
-  const progress = user ? courseProgress(getLearningRecord(user.id)) : undefined;
-  const fields = TRACKS.filter((track) => track.id !== "intro");
+  const record = user ? getLearningRecord(user.id) : undefined;
+  const lessonCount = MODULES.reduce((sum, module) => sum + module.lessons.length, 0);
   const assignmentCount = MODULES.filter((module) => module.assignment).length;
 
   const scenes: JourneyScene[] = [
@@ -116,9 +106,9 @@ export default async function Home() {
           </div>
           <dl className="mx-auto mt-14 grid max-w-2xl grid-cols-4 border-t border-[var(--j-line)] pt-6">
             {[
-              { v: fields.length, u: "", l: "학습 분야" },
+              { v: LEARNING_FIELDS.length, u: "", l: "학습 분야" },
               { v: MODULES.length, u: "", l: "모듈" },
-              { v: CORE_PATH.length, u: "", l: "핵심 레슨" },
+              { v: lessonCount, u: "", l: "레슨" },
               { v: assignmentCount, u: "", l: "과제" },
             ].map((s) => (
               <div key={s.l} className="flex flex-col-reverse gap-1">
@@ -250,7 +240,7 @@ export default async function Home() {
               <h2 className="mt-4 text-3xl font-bold tracking-[-0.02em] text-white sm:text-5xl">학습 분야</h2>
             </div>
             <Link href="/curriculum" className="text-sm text-[var(--j-2)] underline-offset-4 transition hover:text-white hover:underline">
-              추천 커리큘럼 보기 →
+              전체 분야 보기 →
             </Link>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-x-10 border-t border-[var(--j-line)] sm:mt-10 md:grid-cols-2">
@@ -262,11 +252,11 @@ export default async function Home() {
                 </p>
                 <ul>
                   {phase.ids.map((id) => {
-                    const track = fields.find((field) => field.id === id)!;
+                    const track = learningField(id);
                     const modules = modulesOfTrack(id);
-                    const total = modules.reduce((sum, module) => sum + module.lessons.filter((lesson) => lesson.tier === "core").length, 0);
-                    const done = progress ? modules.reduce((sum, module) => sum + (progress.byModule.get(module.slug)?.done ?? 0), 0) : 0;
-                    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                    const lessons = modules.flatMap((module) => module.lessons);
+                    const done = record ? lessons.filter((lesson) => isLessonComplete(record, lesson.id)).length : 0;
+                    const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
                     return (
                       <li key={id}>
                         <Link href={trackHref(id)} className="journey-week group flex items-center gap-3 py-2 sm:gap-4 sm:py-2.5">
@@ -276,14 +266,14 @@ export default async function Home() {
                           {/* 좁은 화면에서는 오른쪽 표시를 빼고 제목을 잘라내지 않고 줄바꿈한다(진행률은 제목 아래 선으로 보인다). */}
                           <span className="min-w-0 flex-1">
                             <span className="block text-[15px] font-medium leading-snug text-[var(--j-1)] transition group-hover:text-white sm:truncate sm:text-base">
-                              {fieldTitles[id] ?? track.title}
+                              {track.title}
                             </span>
                             <span className="mt-1 block h-px w-full bg-[var(--j-line)]">
                               <span className="block h-px bg-[var(--journey-accent)] transition-all" style={{ width: `${pct}%` }} />
                             </span>
                           </span>
                           <span className="hidden w-16 shrink-0 text-right text-xs tabular-nums text-[var(--j-3)] sm:block">
-                            {progress && total > 0 ? `${pct}%` : `모듈 ${modules.length}개`}
+                            {record && lessons.length > 0 ? `${pct}%` : `모듈 ${modules.length}개`}
                           </span>
                           <span aria-hidden="true" className="hidden text-[var(--j-4)] transition group-hover:translate-x-0.5 group-hover:text-white sm:inline">
                             →

@@ -8,7 +8,6 @@ import NavLink from "./NavLink";
 import { NAV_STYLES } from "./navStyles";
 
 const NAV = [
-  { href: "/", label: "학습 분야" },
   { href: "/curriculum", label: "커리큘럼" },
 ];
 // "내 진도"·"피드백함"·"채팅"은 로그인한 사용자에게만 의미가 있어 HeaderAuthSection에서 로그인 시에만 보여 준다.
@@ -23,7 +22,7 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--border-hairline)] bg-page/80 backdrop-blur-xl backdrop-saturate-150">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+        <Link href="/" aria-label="Aegis 스터디 홈" className="flex shrink-0 items-center gap-2.5">
           <Image src="/images/aegis-mark.svg" alt="" width={26} height={26} className="h-[26px] w-[26px]" priority />
           <span className="text-[15px] font-semibold tracking-[-0.02em] text-ink">Aegis 스터디</span>
         </Link>

@@ -67,7 +67,7 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
         {next && <NextStep title={next.title} detail={next.detail} href={next.href} cta={next.cta} />}
 
         <section aria-labelledby="anchor-heading">
-          <SectionHead id="anchor-heading" title="목표 문제" />
+          <SectionHead id="anchor-heading" title="이 모듈에서 다룰 문제" />
           <div className="border-t border-[var(--border-hairline)] pt-6">
             <BlocksRenderer blocks={parseMarkdown(module.anchor)} docKey={`${slug}:anchor`} />
           </div>
@@ -113,7 +113,7 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
 
         {(module.recall.length > 0 || module.assignment) && (
           <section aria-labelledby="finale-heading">
-            <SectionHead id="finale-heading" title="모듈 마무리" />
+            <SectionHead id="finale-heading" title="복습과 과제" />
             <div className="rows border-y border-[var(--border-hairline)]">
               {module.recall.length > 0 && (
                 <FinaleRow
@@ -129,7 +129,7 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
                 <FinaleRow
                   href={assignmentHref(slug)}
                   title={module.assignment.title}
-                  detail={`${module.assignment.kind === "track" ? "트랙 프로젝트" : module.assignment.kind === "capstone" ? "캡스톤" : "모듈 과제"} · 만점 ${module.assignment.maxScore}점`}
+                  detail={`${module.assignment.kind === "track" ? "분야 프로젝트" : module.assignment.kind === "capstone" ? "캡스톤" : "모듈 과제"} · 만점 ${module.assignment.maxScore}점`}
                   state={status.assignment.status === "graded" ? `채점 완료 · ${status.assignment.score ?? "-"}/${status.assignment.maxScore}점` : ASSIGNMENT_STATUS_LABEL[status.assignment.status]}
                   done={status.assignment.status === "graded"}
                   locked={!status.finaleOpen && !isAdmin}
@@ -200,7 +200,7 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
 
         {!next && status.coreDone && (
           <p className="text-sm text-ink-muted">
-            이 모듈의 필수 활동을 모두 마쳤습니다. <Link href={moduleContinueHref(status)} className="font-medium text-ink underline underline-offset-4">모듈 개요</Link>에서 선택 레슨을 이어 볼 수 있습니다.
+            이 모듈의 핵심 활동을 마쳤습니다. <Link href={moduleContinueHref(status)} className="font-medium text-ink underline underline-offset-4">모듈 개요</Link>에서 선택 레슨을 이어 볼 수 있습니다.
           </p>
         )}
       </div>
