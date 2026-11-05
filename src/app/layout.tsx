@@ -4,6 +4,11 @@ import type { Metadata } from "next";
 // CSS·글꼴 파일을 내려받는데, 그 응답 형식에 따라 빌드가 실패한 적이 있어(Turbopack "queries have exactly one entry")
 // 빌드가 외부 서비스에 의존하지 않게 했다. 글꼴 파일과 유니코드 구간 분할은 Google Fonts와 같다.
 // 화면 글꼴: Pretendard(가변 글꼴, 유니코드 구간별로 나뉘어 필요한 글자 파일만 내려받는다).
+import "@fontsource/noto-sans-kr/400.css";
+import "@fontsource/noto-sans-kr/500.css";
+import "@fontsource/noto-sans-kr/700.css";
+import "@fontsource/noto-sans-kr/800.css";
+import "@fontsource/noto-sans-kr/900.css";
 import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
@@ -38,7 +43,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           nonce={nonce}
           // Avoid a flash of the wrong theme: read the stored preference before paint.
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}`,
+            __html: `try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-motion','full');}}catch(e){}`,
           }}
         />
       </head>
