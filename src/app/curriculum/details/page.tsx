@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CONCEPTS, CORE_PATH, COURSE, MODULES, TRACKS, getConcept, getModule, lessonsOfConcept, modulesOfTrack } from "@/content/course";
+import { LEARNING_FIELDS, learningField } from "@/content/fields";
 import { SCHEDULE } from "@/content/curriculum/schedule";
 import { TIER_INFO, TIER_ORDER } from "@/content/tiers";
 import PageHeader from "@/components/PageHeader";
@@ -13,8 +14,7 @@ import { lessonHref, moduleHref, trackHref } from "@/lib/routes";
 
 export const metadata: Metadata = { title: "커리큘럼 상세" };
 
-// 커리큘럼은 과정 전체를 위에서 아래로 보여 주는 화면이다: 수료 목표 → 트랙 → 모듈 → 레슨,
-// 그리고 80개 개념과 선수관계, 기본 일정. 목록은 누구나 볼 수 있고, 레슨을 열려면 로그인한다.
+// 분야별 레슨 목록과 선수관계, 추천 일정은 누구나 볼 수 있다. 레슨을 열려면 로그인한다.
 
 function Section({ id, title, children, ruled = true }: { id: string; title: string; children: React.ReactNode; ruled?: boolean }) {
   return (
@@ -32,7 +32,6 @@ export default async function CurriculumDetailsPage() {
   const record = user ? getLearningRecord(user.id) : emptyRecord();
   const href = (path: string) => gatedHref(!!user, path);
   const coreMinutes = CORE_PATH.reduce((sum, l) => sum + l.minutes, 0);
-  const moduleCount = MODULES.filter((m) => m.track !== "extension").length;
   const mainTracks = TRACKS.filter((t) => t.id !== "extension");
   const extension = TRACKS.find((t) => t.id === "extension")!;
   const moduleTitle = (slug: string) => {
@@ -47,14 +46,14 @@ export default async function CurriculumDetailsPage() {
         back={{ href: "/curriculum", label: "커리큘럼" }}
         eyebrow="Aegis 스터디"
         title="커리큘럼 상세"
-        description="프로그래밍과 수학에서 시작해 머신러닝, 딥러닝, 대규모 언어 모델과 그 활용까지 이어지는 과정입니다."
+        description="분야별 학습 목표와 전체 모듈·레슨 목록을 살펴보세요. 개념별 선수관계와 추천 일정도 확인할 수 있습니다."
         actions={
           user ? (
             <Link href="/progress" className="btn btn-primary">
               내 진도
             </Link>
           ) : (
-            <Link href={loginHref("/curriculum")} className="btn btn-primary">
+            <Link href={loginHref("/curriculum/details")} className="btn btn-primary">
               로그인하고 시작하기
             </Link>
           )
@@ -63,10 +62,10 @@ export default async function CurriculumDetailsPage() {
 
       <dl className="mb-16 grid grid-cols-2 divide-[var(--border-hairline)] border-y border-[var(--border-hairline)] sm:grid-cols-4 sm:divide-x">
         {[
-          { k: "구성", v: `트랙 6개 · 모듈 ${moduleCount}개` },
+          { k: "구성", v: `분야 ${LEARNING_FIELDS.length}개 · 모듈 ${MODULES.length}개` },
           { k: "핵심 레슨", v: `${CORE_PATH.length}개 · 개념 ${CONCEPTS.length}개` },
           { k: "핵심 학습 시간", v: `약 ${Math.round(coreMinutes / 60)}시간` },
-          { k: "기본 일정", v: `${SCHEDULE.length}주` },
+          { k: "추천 일정", v: `${SCHEDULE.length}주` },
         ].map((f) => (
           <div key={f.k} className="px-4 py-5 first:pl-0 sm:px-6">
             <dt className="text-xs text-ink-muted">{f.k}</dt>
@@ -76,33 +75,17 @@ export default async function CurriculumDetailsPage() {
       </dl>
 
       <div className="space-y-16">
-        <Section id="goals" title="수료하면 할 수 있는 것" ruled={false}>
-          <ol className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
-            {COURSE.goals.map((g, i) => (
-              <li key={i} className="flex gap-4">
-                <span aria-hidden="true" className="w-6 shrink-0 pt-0.5 font-mono text-xs text-ink-muted">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[15px] leading-relaxed text-ink-body">{g.text}</span>
-                  <span className="mt-1 block text-xs text-ink-muted">{g.tracks.map((t) => TRACKS.find((x) => x.id === t)?.title).join(" · ")}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Section>
-
-        <Section id="structure" title="과정 구성">
+        <Section id="structure" title="분야별 모듈과 레슨" ruled={false}>
           <ol className="space-y-12">
             {mainTracks.map((track) => (
               <li key={track.id}>
                 <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
                   <Link href={trackHref(track.id)} className="group flex items-baseline gap-3">
                     <span aria-hidden="true" className="h-2 w-2 shrink-0 translate-y-[-2px] rounded-full" style={{ background: track.color }} />
-                    <span className="kicker">Track {track.code}</span>
-                    <span className="text-lg font-semibold tracking-[-0.02em] text-ink group-hover:underline group-hover:underline-offset-4">{track.title}</span>
+                    <span className="kicker">분야 {track.code}</span>
+                    <span className="text-lg font-semibold tracking-[-0.02em] text-ink group-hover:underline group-hover:underline-offset-4">{learningField(track.id).title}</span>
                   </Link>
-                  <span className="text-[13px] text-ink-muted">{track.summary}</span>
+                  <span className="text-[13px] text-ink-muted">{learningField(track.id).description}</span>
                 </div>
                 <div className="rows border-y border-[var(--border-hairline)]">
                   {modulesOfTrack(track.id).map((m) => {
@@ -157,10 +140,10 @@ export default async function CurriculumDetailsPage() {
               <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
                 <Link href={trackHref(extension.id)} className="group flex items-baseline gap-3">
                   <span aria-hidden="true" className="h-2 w-2 shrink-0 translate-y-[-2px] rounded-full" style={{ background: extension.color }} />
-                  <span className="kicker">Track {extension.code}</span>
-                  <span className="text-lg font-semibold tracking-[-0.02em] text-ink group-hover:underline group-hover:underline-offset-4">{extension.title}</span>
+                  <span className="kicker">분야 {extension.code}</span>
+                  <span className="text-lg font-semibold tracking-[-0.02em] text-ink group-hover:underline group-hover:underline-offset-4">{learningField(extension.id).title}</span>
                 </Link>
-                <span className="text-[13px] text-ink-muted">{extension.summary}</span>
+                <span className="text-[13px] text-ink-muted">{learningField(extension.id).description}</span>
               </div>
               <ul className="rows border-y border-[var(--border-hairline)]">
                 {modulesOfTrack("extension").map((m) => (
@@ -181,12 +164,28 @@ export default async function CurriculumDetailsPage() {
           </ol>
         </Section>
 
+        <Section id="goals" title="분야별 학습 목표">
+          <ol className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
+            {COURSE.goals.map((g, i) => (
+              <li key={i} className="flex gap-4">
+                <span aria-hidden="true" className="w-6 shrink-0 pt-0.5 font-mono text-xs text-ink-muted">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[15px] leading-relaxed text-ink-body">{g.text}</span>
+                  <span className="mt-1 block text-xs text-ink-muted">{g.tracks.map((t) => learningField(t).title).join(" · ")}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Section>
+
         <Section id="method" title="학습 방식">
           <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2">
             <div>
               <h3 className="text-[15px] font-semibold text-ink">레슨 하나의 순서</h3>
               <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-ink-secondary marker:text-ink-muted">
-                <li>이 개념이 AI 시스템의 어디에 쓰이는지 확인합니다.</li>
+                <li>이 개념이 실제 문제나 다음 레슨에서 어떻게 쓰이는지 확인합니다.</li>
                 <li>본문의 설명·손계산·실행 코드로 개념을 익힙니다.</li>
                 <li>TODO 코딩 실습과 출력 예측으로 직접 확인합니다.</li>
                 <li>확인 문제를 모두 맞히면 레슨을 완료합니다.</li>
@@ -231,7 +230,7 @@ export default async function CurriculumDetailsPage() {
                 <summary className="row-hover -mx-3 flex cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-3.5 [&::-webkit-details-marker]:hidden">
                   <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: track.color }} />
                   <span className="flex-1 text-[15px] font-medium text-ink">
-                    {track.code}. {track.title}
+                    {track.code}. {learningField(track.id).title}
                   </span>
                   <span className="text-[13px] text-ink-muted">{CONCEPTS.filter((c) => c.track === track.id).length}개</span>
                   <Icon name="chevronDown" size={16} className="text-ink-muted transition group-open:rotate-180" />
@@ -258,9 +257,9 @@ export default async function CurriculumDetailsPage() {
             ))}
         </Section>
 
-        <Section id="schedule" title={`기본 일정 (${SCHEDULE.length}주)`}>
+        <Section id="schedule" title={`추천 일정 (${SCHEDULE.length}주)`}>
           <p className="mb-5 max-w-3xl text-sm leading-relaxed text-ink-muted">
-            주당 4~7시간을 기준으로 한 기본 일정입니다. 기수 일정과 과제 마감일은 운영자가 정하며, 진도 화면에서 이번 주 범위를 확인할 수 있습니다.
+            여러 분야를 순서대로 공부할 때 참고할 수 있는 주당 4~7시간 일정입니다. 기수 일정과 과제 마감일은 운영자가 정하며, 진도 화면에서 이번 주 범위를 확인할 수 있습니다.
           </p>
           <ol className="rows border-y border-[var(--border-hairline)]">
             {SCHEDULE.map((w) => (

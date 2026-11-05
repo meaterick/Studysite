@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CONCEPTS, TRACKS, lessonsOfConcept, modulesOfTrack } from "@/content/course";
-import type { TrackId } from "@/content/types";
+import { LEARNING_FIELDS, learningField } from "@/content/fields";
 import PageHeader from "@/components/PageHeader";
 import Icon from "@/components/Icon";
 import { getCurrentUser } from "@/lib/dal";
 import { emptyRecord, getLearningRecord } from "@/lib/learningStore";
 import { isLessonComplete } from "@/lib/study";
 import { gatedHref } from "@/lib/returnPath";
-import { lessonHref, moduleHref } from "@/lib/routes";
+import { lessonHref, moduleHref, trackHref } from "@/lib/routes";
 
 export function generateStaticParams() {
   return TRACKS.map((t) => ({ track: t.id }));
@@ -18,33 +18,30 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/tracks/[track]">): Promise<Metadata> {
   const { track } = await params;
   const info = TRACKS.find((t) => t.id === track);
-  return info ? { title: `트랙 ${info.code} · ${info.title}` } : {};
+  return info ? { title: learningField(info.id).title } : {};
 }
 
-/** 트랙 개요: 이 트랙이 AI 시스템의 어디에 쓰이는지, 모듈과 레슨, 다루는 개념. 목록은 누구나 볼 수 있다. */
+/** 분야별 모듈과 레슨 목록. 목록은 누구나 볼 수 있다. */
 export default async function TrackPage({ params }: PageProps<"/tracks/[track]">) {
   const { track: id } = await params;
   const track = TRACKS.find((t) => t.id === id);
   if (!track) notFound();
   const user = await getCurrentUser();
   const record = user ? getLearningRecord(user.id) : emptyRecord();
-  const modules = modulesOfTrack(track.id as TrackId);
+  const field = learningField(track.id);
+  const modules = modulesOfTrack(track.id);
   const concepts = CONCEPTS.filter((c) => c.track === track.id);
-  const index = TRACKS.findIndex((t) => t.id === track.id);
-  const prev = TRACKS[index - 1];
-  const next = TRACKS[index + 1];
   const href = (path: string) => gatedHref(!!user, path);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
-      <PageHeader back={{ href: "/#fields", label: "학습 분야" }} eyebrow={`Track ${track.code}`} title={track.title} description={track.summary} />
+      <PageHeader back={{ href: "/curriculum", label: "커리큘럼" }} eyebrow="학습 분야" title={field.title} description={field.description} />
 
-      <section aria-labelledby="why-heading" className="mb-16 max-w-3xl">
-        <h2 id="why-heading" className="section-title mb-3">
-          이 트랙이 필요한 이유
-        </h2>
-        <p className="text-[15px] leading-relaxed text-ink-body">{track.why}</p>
-      </section>
+      {field.topics.length > 0 && (
+        <ul aria-label="주요 주제" className="mb-8 flex flex-wrap gap-2">
+          {field.topics.map((topic) => <li key={topic} className="pill">{topic}</li>)}
+        </ul>
+      )}
 
       <section aria-labelledby="modules-heading" className="mb-16">
         <h2 id="modules-heading" className="section-title mb-4">
@@ -52,9 +49,8 @@ export default async function TrackPage({ params }: PageProps<"/tracks/[track]">
         </h2>
         <ol className="space-y-8">
           {modules.map((m) => {
-            const core = m.lessons.filter((l) => l.tier === "core");
             const optional = m.lessons.length - core.length;
-            const done = core.filter((l) => isLessonComplete(record, l.id)).length;
+            const done = m.lessons.filter((l) => isLessonComplete(record, l.id)).length;
             return (
               <li key={m.slug} className="border-t border-[var(--border-hairline)] pt-6">
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -63,7 +59,7 @@ export default async function TrackPage({ params }: PageProps<"/tracks/[track]">
                     <span className="ml-3 text-lg font-semibold tracking-[-0.02em] text-ink group-hover:underline group-hover:underline-offset-4">{m.title}</span>
                   </Link>
                   <span className="text-[13px] tabular-nums text-ink-muted">
-                    {core.length > 0 ? `핵심 ${user ? `${done}/` : ""}${core.length}` : "선택 모듈"}
+                    {user ? `레슨 ${done}/${m.lessons.length} 완료` : `레슨 ${m.lessons.length}개`}
                     {optional > 0 && ` · 선택 ${optional}`}
                     {m.assignment && " · 과제"}
                   </span>
@@ -77,7 +73,7 @@ export default async function TrackPage({ params }: PageProps<"/tracks/[track]">
                       ) : (
                         <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${l.tier === "core" ? "bg-[var(--border-strong)]" : "border border-[var(--border-strong)]"}`} />
                       )}
-                      <Link href={href(lessonHref(m.slug, l.id))} prefetch={user ? undefined : false} className="min-w-0 truncate text-ink-secondary transition hover:text-ink">
+                      <Link href={href(lessonHref(m.slug, l.id))} prefetch={user ? undefined : false} className="min-w-0 text-ink-secondary transition hover:text-ink">
                         {l.title}
                       </Link>
                       {l.tier !== "core" && <span className="shrink-0 text-xs text-ink-muted">선택</span>}
@@ -116,25 +112,15 @@ export default async function TrackPage({ params }: PageProps<"/tracks/[track]">
         </section>
       )}
 
-      <nav aria-label="다른 트랙" className="grid grid-cols-2 gap-8 border-t border-[var(--border-hairline)] pt-8">
-        {prev ? (
-          <Link href={`/tracks/${prev.id}`} className="group min-w-0">
-            <span className="kicker block">이전 트랙</span>
-            <span className="mt-2 block truncate text-[15px] font-semibold text-ink-secondary transition group-hover:text-ink">
-              {prev.code} · {prev.title}
-            </span>
-          </Link>
-        ) : (
-          <span />
-        )}
-        {next && (
-          <Link href={`/tracks/${next.id}`} className="group min-w-0 text-right">
-            <span className="kicker block">다음 트랙</span>
-            <span className="mt-2 block truncate text-[15px] font-semibold text-ink-secondary transition group-hover:text-ink">
-              {next.code} · {next.title}
-            </span>
-          </Link>
-        )}
+      <nav aria-labelledby="other-fields" className="border-t border-[var(--border-hairline)] pt-8">
+        <h2 id="other-fields" className="section-title mb-4">다른 학습 분야</h2>
+        <ul className="flex flex-wrap gap-2">
+          {LEARNING_FIELDS.filter((other) => other.id !== track.id).map((other) => (
+            <li key={other.id}>
+              <Link href={trackHref(other.id)} className="btn btn-secondary">{other.title}</Link>
+            </li>
+          ))}
+        </ul>
       </nav>
     </div>
   );

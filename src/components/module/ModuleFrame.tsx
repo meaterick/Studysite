@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { learningField } from "@/content/fields";
 import type { ModuleStatus } from "@/lib/study";
 import { assignmentHref, lessonHref, moduleHref, recallHref, reviewHref, trackHref } from "@/lib/routes";
 import HashTarget from "@/components/HashTarget";
@@ -20,6 +21,7 @@ export default function ModuleFrame({
   children: ReactNode;
 }) {
   const { module } = status;
+  const field = learningField(module.track);
   const slug = module.slug;
   const minutes = module.lessons.filter((l) => l.tier === "core").reduce((sum, l) => sum + l.minutes, 0);
   const hours = Math.round((minutes / 60) * 2) / 2;
@@ -41,13 +43,13 @@ export default function ModuleFrame({
   tabs.push({ href: reviewHref(slug), label: "복습 노트" });
 
   const crumbs = (
-    <nav aria-label="현재 위치" className="flex min-w-0 items-center gap-1.5 text-[13px] text-ink-muted print:hidden">
+    <nav aria-label="현재 위치" className="flex min-w-0 flex-wrap items-center gap-1.5 text-[13px] text-ink-muted print:hidden">
       <Link href="/curriculum" className="shrink-0 transition hover:text-ink">
         커리큘럼
       </Link>
       <Icon name="chevronRight" size={12} className="shrink-0" />
       <Link href={trackHref(module.track)} className="shrink-0 transition hover:text-ink">
-        {module.trackInfo.title}
+        {field.title}
       </Link>
       {compact && (
         <>
@@ -72,7 +74,7 @@ export default function ModuleFrame({
       ) : (
         <header className="mb-8 sm:mb-10">
           <div className="mb-7">{crumbs}</div>
-          <p className="kicker mb-3">Module {module.code}</p>
+          <p className="kicker mb-3">모듈 {module.code}</p>
           <h1 className="page-title">{module.title}</h1>
           <p className="page-lead mt-3">{module.summary}</p>
           <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-ink-muted">
@@ -87,7 +89,7 @@ export default function ModuleFrame({
                 </span>
               </span>
             )}
-            {module.track === "extension" && <span>선택 모듈 · 완료 조건 없음</span>}
+            {module.track === "extension" && <span>자유 학습 · 레슨 {module.lessons.length}개</span>}
           </div>
         </header>
       )}

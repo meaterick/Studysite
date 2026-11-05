@@ -131,10 +131,13 @@ export default async function LessonPage({ params }: PageProps<"/modules/[module
                   <Inline text={lesson.goal} />
                 </p>
               )}
-              <a href="#check" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-muted transition hover:text-ink">
-                확인 문제 <ProgressCount ids={checkIds} />/{progress.checksTotal}
-                <Icon name="chevronDown" size={14} />
-              </a>
+              <nav aria-label="레슨 바로가기" className="mt-5 flex flex-wrap items-center gap-2">
+                <a href="#learn" className="btn btn-secondary">본문</a>
+                {lesson.exercises && lesson.exercises.length > 0 && <a href="#practice-heading" className="btn btn-secondary">코딩 실습</a>}
+                <a href="#check" className="btn btn-secondary">
+                  확인 문제 <ProgressCount ids={checkIds} />/{progress.checksTotal}
+                </a>
+              </nav>
             </header>
 
             {(lesson.why || dependents.length > 0) && (
@@ -192,7 +195,7 @@ export default async function LessonPage({ params }: PageProps<"/modules/[module
 
             {(lesson.exercises?.length ?? 0) > 0 && (
               <section id="practice" aria-labelledby="practice-heading" className="mt-16 scroll-mt-24 border-t border-[var(--border-hairline)] pt-10">
-                <h3 id="practice-heading" className="mb-2 text-xl font-bold tracking-[-0.03em] text-ink">
+                <h3 id="practice-heading" className="mb-2 scroll-mt-24 text-xl font-bold tracking-[-0.03em] text-ink">
                   코딩 실습
                 </h3>
                 <p className="mb-6 text-sm text-ink-muted">TODO를 채우고 채점합니다. 코드는 브라우저에서만 실행되며, 완료 조건에는 들어가지 않는 권장 활동입니다.</p>
