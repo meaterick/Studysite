@@ -282,7 +282,6 @@ const holder = globalThis as unknown as { __aegisDb?: DbState };
 
 function open(): DbState {
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  const existed = fs.existsSync(DB_FILE);
   // 잠금 대기 시간은 가장 먼저 정한다. 두 프로세스(무중단 배포 중 겹친 이전 버전)가 동시에 열 때 WAL 전환 등이
   // 곧바로 "database is locked"로 실패하지 않고 기다리게 한다.
   const conn = new DatabaseSync(DB_FILE, { timeout: 5000 });
@@ -290,8 +289,8 @@ function open(): DbState {
   conn.exec("PRAGMA journal_mode = WAL");
   conn.exec("PRAGMA synchronous = NORMAL");
   conn.exec("PRAGMA foreign_keys = ON");
-  migrate(conn, existed);
-  // 프로세스가 끝날 때 WAL을 본 파일에 합쳐 둔다(다음 시작과 백업이 가벼워진다).
+  migrate(conn);
+  // 프로세스가 끝날 때 WAL을 본 파일에 합쳐 둔다(다음 시작이 가벼워진다).
   process.once("exit", () => {
     try {
       conn.close();
@@ -302,19 +301,13 @@ function open(): DbState {
   return { conn, statements: new Map(), txDepth: 0 };
 }
 
-function migrate(conn: DatabaseSync, existed: boolean) {
+function migrate(conn: DatabaseSync) {
   conn.exec("CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL)");
   const applied = new Set(
     (conn.prepare("SELECT version FROM schema_migrations").all() as { version: number }[]).map((r) => r.version)
   );
   const pending = MIGRATIONS.filter((m) => !applied.has(m.version));
   if (pending.length === 0) return;
-  // 이미 쓰던 DB의 구조를 바꾸기 전에는 그대로 되돌릴 수 있도록 스냅숏을 남긴다.
-  if (existed && applied.size > 0) {
-    const dir = path.join(DATA_DIR, "backups");
-    fs.mkdirSync(dir, { recursive: true });
-    snapshotTo(conn, path.join(dir, `aegis-${fileStamp()}-pre-migration-v${pending[0].version}.db`));
-  }
   for (const m of pending) {
     conn.exec("BEGIN IMMEDIATE");
     try {
@@ -404,27 +397,12 @@ export function tx<T>(fn: () => T): T {
   }
 }
 
-function snapshotTo(conn: DatabaseSync, file: string) {
-  // VACUUM INTO: 쓰기를 막지 않고 그 순간의 일관된 사본을 빈 공간 없이 만든다.
-  conn.prepare("VACUUM INTO ?").run(file);
-}
-
-/** 지금 상태의 일관된 DB 사본을 file에 만든다(file이 없어야 한다). */
-export function snapshot(file: string): void {
-  snapshotTo(state().conn, file);
-}
-
 export function getMeta(key: string): string | undefined {
   return get<{ value: string }>("SELECT value FROM meta WHERE key = ?", key)?.value;
 }
 
 export function setMeta(key: string, value: string): void {
   run("INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value", key, value);
-}
-
-/** 파일 이름에 쓰는 시각(UTC): 20260102T030405Z */
-export function fileStamp(date = new Date()): string {
-  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
 }
 
 const COUNTED_TABLES = ["users", "learning_items", "submissions", "submission_versions", "chat_messages", "server_errors"] as const;
@@ -435,4 +413,15 @@ export function tableCounts(): Record<(typeof COUNTED_TABLES)[number], number> {
     (typeof COUNTED_TABLES)[number],
     number
   >;
+}
+
+/** 운영자 시스템 화면용 DB 파일 크기(본 파일과 WAL) */
+export function databaseSize(): { db: number; wal: number } {
+  const size = (f: string) => (fs.existsSync(f) ? fs.statSync(f).size : 0);
+  return { db: size(DB_FILE), wal: size(`${DB_FILE}-wal`) };
+}
+
+/** 적용된 마지막 마이그레이션 번호 */
+export function schemaVersion(): number {
+  return get<{ v: number }>("SELECT MAX(version) AS v FROM schema_migrations")?.v ?? 0;
 }

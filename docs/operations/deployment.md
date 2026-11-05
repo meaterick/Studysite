@@ -1,6 +1,6 @@
 # 배포 안내
 
-[문서 홈](../README.md) · [데이터와 백업](data-and-backups.md)
+[문서 홈](../README.md) · [데이터 저장소](data.md)
 
 ## 배포 (OCI + self-hosted GitHub Actions runner) — 서버에서 할 일 없음
 

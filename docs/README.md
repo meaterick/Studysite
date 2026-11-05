@@ -2,32 +2,38 @@
 
 [저장소 소개](../README.md)
 
-## 개편 기획: Python·AI 학습 플랫폼
-
-- [Python·AI 탑다운 커리큘럼 기획안](product/learning-platform-plan.md): 각 6모듈·24레슨의 기본 경로, 목적별 선택 심화, 레슨·화면·진도·단계별 공개 기준.
-
-이 문서는 향후 개편안입니다. Python은 작은 프로그램을 실행·수정·검증하며 학습하고, AI는 개념·원리·해설 예시를 전달하는 지식형 과정으로 설계합니다. AI의 캡스톤·프로젝트·필수 구현·제출·채점은 제외합니다. 현재 사이트의 이용 방법과 기존 커리큘럼은 아래 문서를 참고합니다.
-
 ## 학습자: AI 과정 전체 보기
 
-- [AI 커리큘럼 상세 목차](curriculum/README.md): 4부·8주 전체 구성, 모든 핵심·보충·심화 단계와 학습 목표.
-- [개념 색인](curriculum/concept-index.md): 본문의 개념·비교 항목에서 관련 단계 찾기.
-- [누락 검증표](curriculum/coverage.md): 원본 대비 단계·소제목·실습·문항·과제 집계.
-- [사이트와 학습 흐름](development/site-guide.md): 페이지, 단계 완료 조건, 과제·피드백 이용 방식.
+- [커리큘럼 목차](curriculum/README.md): 트랙·모듈·레슨 전체 구성, 수료 목표, 16주 기본 일정. 모듈마다 목표 문제, 학습 목표, 레슨, 백지 복습, 과제를 정리한 문서가 있습니다.
+- [개념 색인](curriculum/concept-index.md): 80개 개념과 그 개념을 다루는 레슨, 선수 개념.
+- [집계표](curriculum/coverage.md): 모듈별 레슨·문항·실습·그림 수와 예상 시간.
+- [사이트와 학습 흐름](development/site-guide.md): 페이지, 레슨 완료 조건, 진단 평가, 과제·피드백 이용 방식.
 
 ## 개발자·콘텐츠 기여자
 
 - [기술 구조와 저장소 지도](development/architecture.md): 폴더 역할, 데이터 흐름, 생성물, 검증 명령.
-- [학습 콘텐츠 편집 안내](contributing/content-authoring.md): 본문 문법, 단계·실습·과제 스키마, ID 보존.
+- [학습 콘텐츠 편집 안내](contributing/content-authoring.md): 모듈·레슨·실습·과제의 작성 방법, 문체와 용어, ID 보존, 검증 명령.
 - [학습자료 생성 프롬프트](contributing/prompts/learning-content-generator-prompt.md): 초안 작성용 보조 도구. 실제 스키마와 검증 명령은 편집 안내를 우선합니다.
 - [저장소 정리 기록](maintenance/repository-cleanup.md): 이동·삭제 이유와 유지 기준.
 
 ## 운영자
 
 - [배포](operations/deployment.md): GitHub Actions, OCI, Google OAuth, 환경 변수.
-- [데이터와 백업](operations/data-and-backups.md): SQLite, 마이그레이션, 보관, 복구.
-- [사이트 버전 되돌리기 기록](operations/version-restore.md): 트랙·모듈·레슨 재개발 버전(커밋 55064cc)으로 다시 돌아가는 방법과 데이터 주의 사항.
+- [데이터 저장소](operations/data.md): SQLite, 저장 위치, 학습 기록의 형식, 마이그레이션.
 - [보안 운영 개요](operations/security.md), [IP 방어](operations/ip-defense.md), [보안 모니터링](operations/security-monitoring.md).
+
+## 계획 문서
+
+현재 동작은 위의 문서를 기준으로 합니다.
+
+**구현 완료.** 현재 사이트의 트랙·모듈·레슨 구조를 만든 설계 기록입니다.
+
+- [AI 커리큘럼 탑다운 재구성 플랜](plans/top-down-curriculum.md): 80개 AI 개념 기준의 트랙·모듈·레슨 구조, 사이트 정보 구조와 진도 이전, 실행 순서.
+- [부록: 기존 104단계 재배치표](plans/top-down-curriculum-mapping.md): 예전 8주 구성의 모든 단계가 옮겨 간 레슨과 처리.
+
+**검토용(구현하지 않음).** 현재 사이트와 구조가 다른 개편안입니다.
+
+- [Python·AI 탑다운 커리큘럼 기획안](product/learning-platform-plan.md): Python과 AI 각 6모듈·24레슨의 기본 경로, 목적별 선택 심화, 레슨·화면·진도·단계별 공개 기준. Python은 작은 프로그램을 실행·수정·검증하며 학습하고, AI는 캡스톤·프로젝트·필수 구현·제출·채점 없이 개념·원리·해설 예시를 전달하는 지식형 과정으로 설계한 안입니다.
 
 ## 과거 검토·설계 이력
 
@@ -41,4 +47,4 @@
 
 ## 문서 유지 방법
 
-커리큘럼 원본은 `src/content/`입니다. `npm run docs:generate`가 `curriculum/`의 목차·색인·검증표를 생성합니다. `npm run docs:check`는 원본과의 동기화, 생성 파일 목록, 저장소 내부 문서 링크를 검사합니다. 새 문서는 목적에 맞는 폴더에 넣고 이 홈에서 연결합니다.
+커리큘럼 원본은 `src/content/`입니다. `npm run docs:generate`가 `curriculum/`의 목차·모듈 문서·개념 색인·집계표를 생성합니다. `npm run docs:check`는 원본과의 동기화, 생성 파일 목록, 저장소 내부 문서 링크를 검사합니다. 새 문서는 목적에 맞는 폴더에 넣고 이 홈에서 연결합니다.

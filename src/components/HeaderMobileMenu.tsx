@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Icon from "./Icon";
 
-// 좁은 화면에서 상단 네비게이션(커리큘럼/주차별 자료/내 진도/로그인 등)을
+// 좁은 화면에서 상단 네비게이션(커리큘럼/내 진도/피드백함/로그인 등)을
 // 한 줄에 다 넣으면 넘치는 부분이 잘려 보이는 문제가 있었다 — 특히
 // 오른쪽 정렬(justify-end) + 가로 스크롤 조합에서는 스크롤이 가능하다는
 // 표시(스크롤바)조차 없어 사용자가 잘렸다고 느끼기 쉽다. 이 컴포넌트는

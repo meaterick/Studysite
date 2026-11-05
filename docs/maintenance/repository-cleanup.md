@@ -50,3 +50,18 @@ CI의 운영 의존성 감사에서 기존 Next.js 16.3.8이 보안 권고의 �
 ## 이후 유지 기준
 
 콘텐츠를 수정하면 원본 검증과 목차 재생성을 함께 수행합니다. 과거 보고서는 삭제 대신 archive에 보존하고, 실제 운영법은 operations에서 관리합니다. 새 검사 코드는 tests에, 실행 도구는 scripts의 해당 영역에 둡니다. 폴더를 옮길 때는 package.json·워크플로·상대 import·문서 링크를 한 변경에서 갱신합니다.
+
+## 2026-11 트랙·모듈·레슨 재구성
+
+[재구성 플랜](../plans/top-down-curriculum.md)에 따라 사이트를 다시 만들면서 다음을 옮기거나 지웠습니다.
+
+| 이전 | 현재·이유 |
+| --- | --- |
+| `src/content/weeks/`, `sections/`, `labs/`, `assignments/`, `syllabus.ts`, `quizAnswers.ts` | `src/content/modules/<slug>/`(모듈·레슨·실습·과제를 한 폴더에)와 `src/content/curriculum/`(트랙·개념·일정·예전 주소 대응표). 레슨 파일 하나에 본문·문항·모범답안을 함께 둡니다 |
+| 주차별 커리큘럼 문서 8개(`docs/curriculum/week-0N.md`) | 모듈별 문서 27개와 목차·개념 색인·집계표. `scripts/docs/generate-curriculum.ts`가 새 원본에서 생성합니다 |
+| 일일 백업, 마이그레이션 전 스냅숏, 백업 내려받기, 시스템 화면의 백업 기능, `BACKUP_MIRROR_DIR` | 삭제. 사이트는 DB 백업 사본을 만들지 않으며 개인정보처리방침도 같게 고쳤습니다([데이터 저장소](../operations/data.md)) |
+| 예전 JSON 저장소 가져오기(`legacyImport.ts`) | 삭제. 모든 운영 데이터가 이미 SQLite로 옮겨졌습니다 |
+| `docs/operations/data-and-backups.md` | `docs/operations/data.md` |
+| 본문에서 빠진 교육 이미지 13개, 쓰이지 않는 그림 4개(`exception-flow`, `knn-vote`, `phase-roadmap`, `difficulty-curve`) | 삭제. `validate:content`가 쓰이지 않는 그림과 레슨 이미지를 경고합니다 |
+
+예전 8주 구성의 주소(`/weeks/...`)는 `src/content/curriculum/legacy.ts`의 대응표로 새 레슨과 과제에 연결합니다. 예전 단계 기준의 학습 기록은 DB에 남아 있지만 새 사이트는 읽지 않습니다. 그림 파일 이름(`w1.tsx`~`w8.tsx`)은 예전 주제 묶음을 따른 것으로 레슨의 위치와는 관계없습니다.

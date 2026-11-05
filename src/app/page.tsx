@@ -1,343 +1,146 @@
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
-import { WEEKS } from "@/content/weeks";
-import { getWeekOutline } from "@/content/sections";
+import { Suspense } from "react";
+import { CONCEPTS, CORE_PATH, COURSE, MODULES, TRACKS, getModule, modulesOfTrack } from "@/content/course";
+import { SCHEDULE } from "@/content/curriculum/schedule";
 import HomeCta from "@/components/HomeCta";
-import CountUp from "@/components/home/CountUp";
-import Journey, { type JourneyScene } from "@/components/journey/Journey";
+import NextStep from "@/components/NextStep";
+import Icon from "@/components/Icon";
 import { getCurrentUser } from "@/lib/dal";
-import { gatedHref } from "@/lib/returnPath";
 import { getLearningRecord } from "@/lib/learningStore";
-import { findUserSubmission } from "@/lib/submissionStore";
-import { weekStatus } from "@/lib/study";
-import { difficultyInfo } from "@/lib/difficulty";
+import { courseProgress } from "@/lib/study";
+import { lessonHref, trackHref } from "@/lib/routes";
 
-// 메인 화면: 다섯 장면(소개 → 대상 → 학습 방법 → 8주 커리큘럼 → 수료)이 하나의 3D 공간 안에서 이어진다.
-// 첫 화면에는 과정을 고를 때 필요한 정보(비용·대상, 주당 시간, 선수 지식)를 요약해 둔다.
-// 색은 거의 흑백으로 두고 강조색 하나만 쓰며, 여백과 얇은 선, 글자 크기 차이로 위계를 만든다.
-
-const PHASES = [
-  { key: "Part 1", name: "기초", weeks: [1, 2] },
-  { key: "Part 2", name: "딥러닝", weeks: [3, 4] },
-  { key: "Part 3", name: "현대 AI", weeks: [5, 6] },
-  { key: "Part 4", name: "활용", weeks: [7, 8] },
-];
-
-// 위쪽 네 단계가 필수 흐름이고, 각 영역에서 고를 수 있는 선택 과정을 그 아래에 붙인다.
-const FLOW = [
-  {
-    area: "학습 자료",
-    when: "핵심 단계부터",
-    steps: [
-      { name: "개념 학습", desc: "글과 그림, 직접 실행하는 코드로 원리를 익힙니다." },
-      { name: "확인 문제", desc: "단계마다 문제를 풀며 이해했는지 짚어 봅니다." },
-    ],
-    extras: [
-      { name: "보충", desc: "실무 도구와 다른 방법으로 폭을 넓힙니다." },
-      { name: "심화", desc: "수식 유도와 최신 기법까지 다룹니다." },
-    ],
-  },
-  {
-    area: "적용과 복습",
-    when: "핵심 단계를 마친 뒤",
-    steps: [
-      { name: "백지공부", desc: "자료를 덮고 떠올려 적으며 스스로 점검합니다." },
-      { name: "과제", desc: "실제 문제에 적용하고 운영자의 채점을 받습니다." },
-    ],
-    extras: [
-      { name: "서술형", desc: "직접 설명해 보고 스스로 평가합니다." },
-      { name: "추가 퀴즈", desc: "객관식과 코드 출력 예측 문제를 풉니다." },
-      { name: "코딩 실습", desc: "빈칸 코드를 채우면 바로 채점됩니다." },
-    ],
-  },
-];
-
-const OUTCOMES = [
-  "AI, 머신러닝, 딥러닝, LLM의 작동 원리를 백지에 그려 가며 설명할 수 있습니다.",
-  "선형 회귀, MLP, CNN, Self-Attention을 라이브러리 없이 직접 구현할 수 있습니다.",
-  "LLM이 사전학습, SFT, 정렬을 거쳐 만들어지는 과정과 환각이 생기는 이유를 설명할 수 있습니다.",
-  "프롬프트, RAG, 에이전트로 문제를 해결하고, 평가 데이터셋으로 성능을 측정할 수 있습니다.",
-];
-
-// 과제·백지공부에 드는 시간(예상). 학습 자료 시간은 콘텐츠 분량으로 계산한다.
-const ASSIGNMENT_HOURS = { min: 2, max: 3 };
-const WORKSHEET_HOURS = 0.5;
-
-function Label({ children }: { children: ReactNode }) {
-  return <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[var(--j-3)]">{children}</p>;
-}
+// 메인 화면: 과정 전체를 위에서 아래로 보여 준다(수료 목표 → 트랙 → 레슨의 학습 방식).
+// 로그인한 사용자에게는 필수 경로에서 다음에 할 레슨을 가장 먼저 보여 준다.
 
 export default async function Home() {
   const user = await getCurrentUser();
-  const record = user ? getLearningRecord(user.id) : { sections: {}, worksheets: {} };
-  const statusOf = (slug: string) => {
-    const week = WEEKS.find((w) => w.slug === slug)!;
-    return weekStatus(week, record, user ? findUserSubmission(user.id, slug) : undefined);
-  };
-  const totalStages = WEEKS.reduce((n, w) => n + getWeekOutline(w).sections.length, 0);
-  const codeCells = WEEKS.reduce((n, w) => n + (w.conceptsMd.match(/^```python\s*$/gm)?.length ?? 0), 0);
-  // 주당 예상 시간 = 핵심 학습 자료(콘텐츠 분량으로 계산) + 백지공부 + 과제. 보충·심화는 선택이라 넣지 않는다.
-  const studyHours = WEEKS.map((w) => getWeekOutline(w).sections.filter((s) => s.tier === "core").reduce((sum, s) => sum + s.minutes, 0) / 60);
-  const weeklyMin = Math.floor(Math.min(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.min);
-  const weeklyMax = Math.ceil(Math.max(...studyHours) + WORKSHEET_HOURS + ASSIGNMENT_HOURS.max);
-  const studyMin = Math.floor(Math.min(...studyHours));
-  const studyMax = Math.ceil(Math.max(...studyHours));
-
-  const scenes: JourneyScene[] = [
-    // ── 01 소개 ───────────────────────────────────────────────
-    {
-      id: "start",
-      label: "소개",
-      content: (
-        <div className="mx-auto max-w-4xl text-center">
-          <Label>Aegis AI Study · 8 Weeks</Label>
-          <h1 className="mt-6 text-[2.6rem] font-extrabold leading-[1.08] tracking-[-0.03em] text-white sm:text-7xl">
-            AI 기초부터
-            <br />
-            <span className="j-gradient">활용까지</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[var(--j-2)] sm:text-lg">
-            수학 기초부터 LLM 에이전트까지, 8주 동안 직접 코드를 작성하며 배웁니다.
-          </p>
-          <ul className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2 text-[13px] text-[var(--j-1)] sm:text-sm">
-            {[
-              "무료 · 누구나 이용 가능",
-              `주 ${weeklyMin}~${weeklyMax}시간`,
-              "Python 기초 + 벡터·확률·미분",
-              "설치 없이 브라우저에서 실습",
-            ].map((t) => (
-              <li key={t} className="rounded-full border border-[var(--j-line)] bg-white/5 px-3 py-1">
-                {t}
-              </li>
-            ))}
-          </ul>
-          <div className="mx-auto mt-10 max-w-sm">
-            <Suspense fallback={<div className="h-14 w-full rounded-full bg-white/5" />}>
-              <HomeCta tone="minimal" />
-            </Suspense>
-          </div>
-          <dl className="mx-auto mt-14 grid max-w-2xl grid-cols-4 border-t border-[var(--j-line)] pt-6">
-            {[
-              { v: WEEKS.length, u: "주", l: "과정" },
-              { v: totalStages, u: "", l: "학습 단계" },
-              { v: codeCells, u: "", l: "실행 코드" },
-              { v: WEEKS.length, u: "", l: "과제" },
-            ].map((s) => (
-              <div key={s.l} className="flex flex-col-reverse gap-1">
-                <dt className="text-[11px] text-[var(--j-3)] sm:text-xs">{s.l}</dt>
-                <dd className="text-xl font-semibold tabular-nums text-white sm:text-3xl">
-                  <CountUp value={s.v} scene={0} />
-                  {s.u}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      ),
-    },
-
-    // ── 02 이런 분께(선택에 필요한 정보) ─────────────────────
-    {
-      id: "fit",
-      label: "대상",
-      content: (
-        <div className="mx-auto max-w-5xl">
-          <Label>02 — Is it for me?</Label>
-          <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
-            시작하기 전에
-            <br />
-            <span className="j-gradient">확인할 것.</span>
-          </h2>
-          <dl className="mt-6 grid border-t border-[var(--j-line)] sm:mt-10 sm:grid-cols-2">
-            {[
-              {
-                q: "누구를 위한 과정인가요?",
-                a: "AI를 ‘쓰는 것’을 넘어 원리부터 이해하고 활용하고 싶은 분을 위한 과정입니다. 대학생과 개발자는 물론, AI를 처음 공부하는 분도 따라올 수 있습니다.",
-              },
-              {
-                q: "무엇을 알고 시작해야 하나요?",
-                a: "Python 기초 문법(변수·함수·리스트·반복문)과 고등학교 수준의 수학이면 충분합니다. 필요한 수학은 1주차에서 벡터·확률·미분부터 다시 정리합니다.",
-              },
-              {
-                q: "일주일에 얼마나 걸리나요?",
-                a: `핵심 학습 자료 ${studyMin}~${studyMax}시간, 백지공부 30분, 과제 ${ASSIGNMENT_HOURS.min}~${ASSIGNMENT_HOURS.max}시간을 더해 주 ${weeklyMin}~${weeklyMax}시간 정도 걸립니다. (보충·심화 단계는 포함되지 않았습니다.)`,
-              },
-              {
-                q: "비용이 드나요? 누가 이용할 수 있나요?",
-                a: "무료이며, 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 바로 실행되므로 따로 설치할 것이 없습니다.",
-              },
-            ].map((item) => (
-              <div key={item.q} className="border-b border-[var(--j-line)] py-3 sm:py-5 sm:pr-10">
-                <dt className="text-base font-semibold text-white sm:text-lg">{item.q}</dt>
-                <dd className="mt-1.5 text-sm leading-relaxed text-pretty text-[var(--j-2)] sm:text-[15px]">{item.a}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      ),
-    },
-
-    // ── 03 학습 방법 ──────────────────────────────────────────
-    {
-      id: "cycle",
-      label: "학습 방법",
-      content: (
-        <div className="mx-auto max-w-5xl">
-          <Label>03 — Method</Label>
-          <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
-            한 주는 네 단계로
-            <br />
-            <span className="j-gradient">진행됩니다.</span>
-          </h2>
-          <div className="mt-6 grid gap-y-5 sm:mt-11 sm:gap-y-8 lg:grid-cols-2">
-            {FLOW.map((part, p) => {
-              const first = FLOW.slice(0, p).reduce((sum, f) => sum + f.steps.length, 0) + 1;
-              return (
-                <section key={part.area} aria-label={part.area} className="flex flex-col">
-                  <p className="flex items-baseline gap-2.5 text-[13px]">
-                    <span className="font-semibold text-white">{part.area}</span>
-                    <span className="text-[var(--j-3)]">{part.when}</span>
-                  </p>
-                  <ol start={first} className="mt-2.5 grid grid-cols-2 sm:mt-4">
-                    {part.steps.map((step, s) => {
-                      const lastInArea = s === part.steps.length - 1;
-                      const lastOverall = lastInArea && p === FLOW.length - 1;
-                      return (
-                        <li key={step.name}>
-                          <div aria-hidden="true" className="flex items-center">
-                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border sm:h-7 sm:w-7 border-[color-mix(in_srgb,var(--journey-accent)_55%,transparent)] bg-[color-mix(in_srgb,var(--journey-accent)_10%,transparent)] font-mono text-[11px] text-[var(--journey-accent)]">
-                              {String(first + s).padStart(2, "0")}
-                            </span>
-                            {/* 영역의 마지막 단계에서 나가는 선은 두 영역이 나란히 놓이는 넓은 화면에서만 다음 영역으로 이어진다. */}
-                            {!lastOverall && <span className={`h-px flex-1 bg-[var(--j-line-strong)] ${lastInArea ? "hidden lg:block" : ""}`} />}
-                          </div>
-                          <div className="pr-4 sm:pr-6">
-                            <p className="mt-2 text-base font-semibold text-white sm:mt-3 sm:text-lg">{step.name}</p>
-                            <p className="mt-1 text-[13px] leading-relaxed text-[var(--j-2)] sm:text-sm">{step.desc}</p>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                  <div
-                    className={`mt-3 flex-1 rounded-2xl border border-dashed border-[var(--j-line-strong)] bg-white/[0.02] px-3.5 py-2.5 sm:mt-5 sm:px-5 sm:py-3.5 ${p === 0 ? "lg:mr-6" : ""}`}
-                  >
-                    <p className="text-[11px] font-medium tracking-[0.06em] text-[var(--j-3)]">선택 과정</p>
-                    <dl className="mt-1.5 space-y-1 text-[13px] leading-relaxed sm:mt-2 sm:text-sm">
-                      {part.extras.map((x) => (
-                        <div key={x.name} className="flex gap-2 sm:gap-3">
-                          <dt className="w-14 shrink-0 font-semibold text-white sm:w-[4.25rem]">{x.name}</dt>
-                          <dd className="text-[var(--j-2)]">{x.desc}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-        </div>
-      ),
-    },
-
-    // ── 03 8주 커리큘럼(한 화면) ──────────────────────────────
-    {
-      id: "weeks",
-      label: "커리큘럼",
-      content: (
-        <div className="mx-auto max-w-5xl">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <Label>04 — Curriculum</Label>
-              <h2 className="mt-4 text-3xl font-bold tracking-[-0.02em] text-white sm:text-5xl">8주 커리큘럼</h2>
-            </div>
-            <Link href="/curriculum" className="text-sm text-[var(--j-2)] underline-offset-4 transition hover:text-white hover:underline">
-              전체 커리큘럼 보기 →
-            </Link>
-          </div>
-          <div className="mt-6 grid grid-cols-1 gap-x-10 border-t border-[var(--j-line)] sm:mt-10 md:grid-cols-2">
-            {PHASES.map((phase) => (
-              <section key={phase.key} aria-label={`${phase.key} ${phase.name}`} className="border-b border-[var(--j-line)] py-3 sm:py-4">
-                <p className="mb-1 flex items-baseline gap-3 text-[11px] uppercase tracking-[0.2em] text-[var(--j-3)]">
-                  <span className="font-mono">{phase.key}</span>
-                  <span className="normal-case tracking-normal">{phase.name}</span>
-                </p>
-                <ul>
-                  {phase.weeks.map((n) => {
-                    const w = WEEKS.find((x) => x.number === n)!;
-                    const st = statusOf(w.slug);
-                    const pct = Math.round(st.ratio * 100);
-                    return (
-                      <li key={w.slug}>
-                        <Link href={gatedHref(!!user, `/weeks/${w.slug}`)} prefetch={user ? undefined : false} className="journey-week group flex items-center gap-3 py-2 sm:gap-4 sm:py-2.5">
-                          <span className="w-6 shrink-0 font-mono text-xs text-[var(--j-3)] group-hover:text-[var(--journey-accent)] sm:w-7">
-                            {String(n).padStart(2, "0")}
-                          </span>
-                          {/* 좁은 화면에서는 오른쪽 표시를 빼고 제목을 잘라내지 않고 줄바꿈한다(진행률은 제목 아래 선으로 보인다). */}
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-[15px] font-medium leading-snug text-[var(--j-1)] transition group-hover:text-white sm:truncate sm:text-base">
-                              {/* 줄바꿈된 줄이 가운뎃점으로 시작하지 않도록 점 앞 공백을 붙는 공백으로 바꾼다. */}
-                              {w.title.replaceAll(" · ", " · ")}
-                            </span>
-                            <span className="mt-1 block h-px w-full bg-[var(--j-line)]">
-                              <span className="block h-px bg-[var(--journey-accent)] transition-all" style={{ width: `${pct}%` }} />
-                            </span>
-                          </span>
-                          {/* 로그인한 사용자는 진행률, 방문자는 난이도를 보여 준다(방문자에게 "—"는 의미가 없다). */}
-                          <span className="hidden w-16 shrink-0 text-right text-xs tabular-nums text-[var(--j-3)] sm:block">
-                            {user ? (pct > 0 ? `${pct}%` : "—") : difficultyInfo(w.difficulty).label}
-                          </span>
-                          <span aria-hidden="true" className="hidden text-[var(--j-4)] transition group-hover:translate-x-0.5 group-hover:text-white sm:inline">
-                            →
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-
-    // ── 04 수료 ───────────────────────────────────────────────
-    {
-      id: "outcomes",
-      label: "수료",
-      content: (
-        <div className="mx-auto max-w-5xl">
-          <Label>05 — Outcomes</Label>
-          <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
-            8주 뒤,
-            <br />
-            <span className="j-gradient">할 수 있게 되는 것.</span>
-          </h2>
-          <ol className="mt-7 grid border-t border-[var(--j-line)] sm:mt-9 sm:grid-cols-2">
-            {OUTCOMES.map((g, i) => (
-              <li key={i} className="flex gap-4 border-b border-[var(--j-line)] py-3 sm:pr-8">
-                <span className="w-6 shrink-0 pt-0.5 font-mono text-xs text-[var(--journey-accent)]">0{i + 1}</span>
-                <p className="text-sm leading-relaxed text-[var(--j-2)] sm:text-[15px]">{g}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-8 grid items-center gap-4 sm:mt-10 sm:grid-cols-[minmax(0,22rem)_1fr] sm:gap-6">
-            <Suspense fallback={<div className="h-14 w-full rounded-full bg-white/5" />}>
-              <HomeCta tone="minimal" />
-            </Suspense>
-            <p className="text-xs leading-relaxed text-[var(--j-3)]">
-              Stanford CS229·CS231n·CS224n·CS336, MIT 6.S191, Berkeley CS188, CMU 10-601의 강의 구성을 참고해 설계했습니다.
-            </p>
-          </div>
-        </div>
-      ),
-    },
-  ];
+  const progress = user ? courseProgress(getLearningRecord(user.id)) : undefined;
+  const coreHours = Math.round(CORE_PATH.reduce((sum, l) => sum + l.minutes, 0) / 60);
+  const next = progress?.next;
+  const nextModule = next ? getModule(next.module) : undefined;
 
   return (
-    <div className="journey-theme">
-      <Journey scenes={scenes} />
+    <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
+      <section aria-labelledby="hero-heading" className="max-w-3xl">
+        <p className="kicker">Aegis AI 스터디</p>
+        <h1 id="hero-heading" className="mt-4 text-[2.5rem] font-extrabold leading-[1.1] tracking-[-0.04em] text-ink sm:text-6xl">
+          {COURSE.title}
+        </h1>
+        <p className="mt-5 text-[17px] leading-relaxed text-ink-secondary">
+          파이썬과 수학 기초에서 시작해 데이터 처리, 머신러닝, 딥러닝, 대규모 언어 모델과 RAG·에이전트까지 하나의 경로로 학습합니다. 모든 실습은 설치 없이 브라우저에서 실행합니다.
+        </p>
+        <div className="mt-8">
+          <Suspense fallback={<div className="h-11 w-64 rounded-full bg-[var(--surface-card-2)]" />}>
+            <HomeCta />
+          </Suspense>
+        </div>
+        <dl className="mt-12 grid grid-cols-2 gap-y-6 border-t border-[var(--border-hairline)] pt-6 sm:grid-cols-4">
+          {[
+            { v: `${CONCEPTS.length}개`, l: "개념" },
+            { v: `${CORE_PATH.length}개`, l: "핵심 레슨" },
+            { v: `약 ${coreHours}시간`, l: "핵심 학습 시간" },
+            { v: `${SCHEDULE.length}주`, l: "기본 일정" },
+          ].map((s) => (
+            <div key={s.l} className="flex flex-col-reverse gap-1">
+              <dt className="text-xs text-ink-muted">{s.l}</dt>
+              <dd className="text-2xl font-semibold tabular-nums tracking-[-0.03em] text-ink">{s.v}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      {user && progress && (
+        <div className="mt-16">
+          {next && nextModule ? (
+            <NextStep
+              eyebrow={progress.coreDone === 0 ? "첫 레슨" : "이어서 학습"}
+              title={next.title}
+              detail={`${nextModule.code} ${nextModule.title}`}
+              href={lessonHref(next.module, next.id)}
+              cta={progress.coreDone === 0 ? "시작하기" : "이어서 학습"}
+              meta={`필수 경로 ${progress.coreDone}/${progress.coreTotal} 레슨 완료`}
+            />
+          ) : (
+            <NextStep eyebrow="필수 경로 완료" title="핵심 레슨을 모두 마쳤습니다" detail="확장 모듈과 선택 레슨을 이어서 볼 수 있습니다." href="/curriculum" cta="커리큘럼" />
+          )}
+        </div>
+      )}
+
+      <section aria-labelledby="tracks-heading" className="mt-20">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="tracks-heading" className="section-title">
+            과정 구성
+          </h2>
+          <Link href="/curriculum" className="text-[13px] font-medium text-ink-muted transition hover:text-ink">
+            전체 커리큘럼 보기
+          </Link>
+        </div>
+        <ol className="grid gap-px overflow-hidden rounded-2xl border border-[var(--border-hairline)] bg-[var(--border-hairline)] sm:grid-cols-3">
+          {TRACKS.map((t) => {
+            const modules = modulesOfTrack(t.id);
+            const done = progress ? modules.reduce((n, m) => n + (progress.byModule.get(m.slug)?.done ?? 0), 0) : 0;
+            const total = modules.reduce((n, m) => n + m.lessons.filter((l) => l.tier === "core").length, 0);
+            return (
+              <li key={t.id} className="bg-page">
+                <Link href={trackHref(t.id)} className="group flex h-full flex-col p-5 transition hover:bg-[var(--surface-card-2)] sm:p-6">
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: t.color }} />
+                    <span className="kicker">Track {t.code}</span>
+                  </span>
+                  <span className="mt-3 text-lg font-semibold tracking-[-0.02em] text-ink">{t.title}</span>
+                  <span className="mt-2 flex-1 text-sm leading-relaxed text-ink-muted">{t.summary}</span>
+                  <span className="mt-4 flex items-center justify-between text-xs tabular-nums text-ink-muted">
+                    <span>
+                      모듈 {modules.length}개{total > 0 && ` · 핵심 레슨 ${progress ? `${done}/` : ""}${total}`}
+                    </span>
+                    <Icon name="arrowRight" size={14} className="transition group-hover:translate-x-0.5 group-hover:text-ink" />
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <section aria-labelledby="goals-heading" className="mt-20">
+        <h2 id="goals-heading" className="section-title mb-6">
+          수료하면 할 수 있는 것
+        </h2>
+        <ol className="grid gap-x-10 gap-y-5 border-t border-[var(--border-hairline)] pt-6 sm:grid-cols-2">
+          {COURSE.goals.map((g, i) => (
+            <li key={i} className="flex gap-4 text-[15px] leading-relaxed text-ink-body">
+              <span aria-hidden="true" className="w-6 shrink-0 pt-0.5 font-mono text-xs text-ink-muted">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span>{g.text}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section aria-labelledby="method-heading" className="mt-20">
+        <h2 id="method-heading" className="section-title mb-6">
+          학습 방식
+        </h2>
+        <ol className="grid gap-x-6 gap-y-8 border-t border-[var(--border-hairline)] pt-6 sm:grid-cols-4">
+          {[
+            { t: "쓰이는 곳 확인", d: "레슨마다 그 개념이 AI 시스템의 어디에 쓰이는지 먼저 봅니다." },
+            { t: "개념 학습과 실습", d: "설명, 손계산, 브라우저에서 실행하는 코드와 자동 채점 실습으로 익힙니다." },
+            { t: "확인 문제", d: "확인 문제를 모두 맞히면 레슨을 완료합니다. 아는 내용은 진단 평가로 인정받습니다." },
+            { t: "백지 복습과 과제", d: "모듈을 마치면 자료 없이 핵심을 적어 보고, 과제를 제출해 채점을 받습니다." },
+          ].map((s, i) => (
+            <li key={s.t}>
+              <span className="grid h-7 w-7 place-items-center rounded-full border border-[var(--border-strong)] text-xs font-semibold text-ink">{i + 1}</span>
+              <p className="mt-3 text-[15px] font-semibold text-ink">{s.t}</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{s.d}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-10 text-xs text-ink-muted">
+          모듈 {MODULES.length}개 중 {MODULES.filter((m) => m.track === "extension").length}개는 완료 조건이 없는 확장 모듈입니다.
+        </p>
+      </section>
     </div>
   );
 }

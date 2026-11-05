@@ -6,9 +6,6 @@ import { getLearningRecord } from "@/lib/learningStore";
 import { memberFeedback, type FeedbackKind } from "@/lib/feedback";
 import { formatDateTime } from "@/lib/datetime";
 import MarkFeedbackSeen from "@/components/feedback/MarkFeedbackSeen";
-import { WEEKS } from "@/content/weeks";
-import { weekStatus } from "@/lib/study";
-import { applySummary } from "@/lib/applyView";
 import PageHeader from "@/components/PageHeader";
 import NextStep from "@/components/NextStep";
 import Icon from "@/components/Icon";
@@ -21,21 +18,15 @@ const KIND: Record<FeedbackKind, { label: string; color: string }> = {
   chat: { label: "운영자 채팅", color: "var(--accent)" },
 };
 
+/** 피드백함: 운영자가 남긴 채점·재제출 요청·채팅과, 모듈별로 다시 볼 문항을 한곳에서 보여 준다. */
 export default async function FeedbackPage() {
   const user = await requireUser("/feedback");
   if (user.role === "admin") redirect("/operator");
   const record = getLearningRecord(user.id);
   const fb = memberFeedback(user.id, record);
   const openRevisions = fb.items.filter((i) => i.kind === "revision");
-  // 복습: 주차별 복습 노트(다시 볼 문항 수)와 그 주의 단계·백지공부 목록
-  const reviewWeeks = WEEKS.map((week) => ({
-    week,
-    weak: applySummary(week, record, weekStatus(week, record)).reviewWeak,
-    sections: fb.review.filter((r) => r.weekSlug === week.slug),
-    sheet: fb.weakWorksheet.find((w) => w.weekSlug === week.slug)?.count ?? 0,
-  }));
-  const reviewTotal = reviewWeeks.reduce((sum, w) => sum + w.weak, 0);
-  const firstWeak = reviewWeeks.find((w) => w.weak > 0);
+  const reviewTotal = fb.review.reduce((sum, r) => sum + r.open, 0);
+  const firstWeak = fb.review.find((r) => r.open > 0);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
@@ -60,9 +51,10 @@ export default async function FeedbackPage() {
         />
       ) : firstWeak ? (
         <NextStep
-          eyebrow="복습할 차례"
-          title={`${firstWeak.week.number}주차 다시 볼 문항 ${firstWeak.weak}개`}
-          href={`/feedback/review/${firstWeak.week.slug}`}
+          eyebrow="복습할 문항"
+          title={`${firstWeak.moduleCode} ${firstWeak.moduleTitle}`}
+          detail={`다시 볼 문항 ${firstWeak.open}개`}
+          href={firstWeak.href}
           cta="복습 노트 열기"
         />
       ) : null}
@@ -112,55 +104,53 @@ export default async function FeedbackPage() {
           </h2>
           {reviewTotal > 0 && <p className="text-[13px] tabular-nums text-[var(--status-critical)]">다시 볼 문항 {reviewTotal}</p>}
         </div>
-        <nav aria-label="주차별 복습 노트" className="mb-6 flex flex-wrap gap-1">
-          {reviewWeeks.map(({ week, weak }) => (
-            <Link key={week.slug} href={`/feedback/review/${week.slug}`} className="chip border border-[var(--border-hairline)]">
-              {week.number}주차
-              {weak > 0 && <span className="tabular-nums text-[var(--status-critical)]">{weak}</span>}
-            </Link>
-          ))}
-        </nav>
-        {reviewTotal === 0 ? (
+        <p className="mb-5 text-sm leading-relaxed text-ink-muted">
+          틀린 적 있는 확인 문제, 보완 필요로 표시한 서술형과 백지 복습 문항, 정답을 먼저 확인한 출력 예측을 모듈별로 모았습니다.
+        </p>
+        {fb.review.length === 0 ? (
           <p className="border-y border-[var(--border-hairline)] py-10 text-center text-sm text-ink-muted">다시 볼 문항이 없습니다.</p>
         ) : (
           <ul className="rows border-y border-[var(--border-hairline)]">
-            {reviewWeeks
-              .filter((w) => w.weak > 0)
-              .map(({ week, weak, sections, sheet }) => (
-                <li key={week.slug}>
-                  <Link href={`/feedback/review/${week.slug}`} className="group row-hover -mx-3 block rounded-xl px-3 py-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="min-w-0 truncate text-[15px] font-medium text-ink">
-                        {week.number}주차 · {week.title}
-                      </p>
-                      <span className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-[var(--status-critical)]">
-                        {weak}
-                        <Icon name="chevronRight" size={16} className="text-ink-muted transition group-hover:translate-x-0.5 group-hover:text-ink" />
-                      </span>
-                    </div>
-                    {(sections.length > 0 || sheet > 0) && (
-                      <ul className="mt-2 space-y-1 text-[13px] text-ink-muted">
-                        {sections.map((r) => (
-                          <li key={r.sectionId} className="flex flex-wrap justify-between gap-x-3">
-                            <span className="min-w-0">
-                              {r.sectionLabel}. {r.sectionTitle}
-                            </span>
-                            <span className="tabular-nums">
-                              {[r.wrongChecks > 0 && `확인 문제 ${r.wrongChecks}`, r.weakAnswers > 0 && `서술형 ${r.weakAnswers}`].filter(Boolean).join(" · ")}
-                            </span>
-                          </li>
-                        ))}
-                        {sheet > 0 && (
-                          <li className="flex justify-between gap-x-3">
-                            <span>백지공부</span>
-                            <span className="tabular-nums">보완 필요 {sheet}칸</span>
-                          </li>
-                        )}
-                      </ul>
+            {fb.review.map((r) => (
+              <li key={r.moduleSlug}>
+                <Link href={r.href} className="group row-hover -mx-3 block rounded-xl px-3 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="min-w-0 truncate text-[15px] font-medium text-ink">
+                      <span className="mr-2 font-mono text-xs text-ink-muted">{r.moduleCode}</span>
+                      {r.moduleTitle}
+                    </p>
+                    <span className={`flex shrink-0 items-center gap-2 text-xs tabular-nums ${r.open > 0 ? "text-[var(--status-critical)]" : "text-ink-muted"}`}>
+                      {r.open > 0 ? `남은 문항 ${r.open}` : "모두 해결"}
+                      <Icon name="chevronRight" size={16} className="text-ink-muted transition group-hover:translate-x-0.5 group-hover:text-ink" />
+                    </span>
+                  </div>
+                  <ul className="mt-2 space-y-1 text-[13px] text-ink-muted">
+                    {r.lessons.map((l) => (
+                      <li key={l.lessonId} className="flex flex-wrap justify-between gap-x-3">
+                        <span className="min-w-0">
+                          {l.label} · {l.title}
+                        </span>
+                        <span className="tabular-nums">
+                          {[
+                            l.wrongChecks > 0 && `확인 문제 ${l.wrongChecks}${l.recovered > 0 ? `(정답 ${l.recovered})` : ""}`,
+                            l.weakAnswers > 0 && `서술형 ${l.weakAnswers}`,
+                            l.revealedPredicts > 0 && `출력 예측 ${l.revealedPredicts}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      </li>
+                    ))}
+                    {r.weakRecall > 0 && (
+                      <li className="flex justify-between gap-x-3">
+                        <span>백지 복습</span>
+                        <span className="tabular-nums">보완 필요 {r.weakRecall}문항</span>
+                      </li>
                     )}
-                  </Link>
-                </li>
-              ))}
+                  </ul>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </section>

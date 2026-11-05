@@ -3,10 +3,10 @@ import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { deleteUser, listUsers } from "@/lib/userStore";
-import { countCompletedSections, countDescriptiveAnswers, lastLearningActivity, type AnswerCount } from "@/lib/learningStore";
+import { completedLessonsByUser, descriptiveCountsByUser, lastLearningActivity } from "@/lib/learningStore";
 import { submissionCountsByUser, type SubmissionStatus } from "@/lib/submissionStore";
-import { WEEKS } from "@/content/weeks";
-import { getWeekOutline } from "@/content/sections";
+import { CORE_PATH, getModule } from "@/content/course";
+import { COURSE_ASSIGNMENT_KEYS, nextCoreLesson } from "@/lib/operatorStats";
 import { formatDateTime, formatDate } from "@/lib/datetime";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import MembersTabs from "./MembersTabs";
@@ -15,21 +15,18 @@ export const metadata = { title: "스터디원 관리" };
 
 const ROLE_LABEL: Record<string, string> = { admin: "관리자", member: "스터디원" };
 
-export default async function MembersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+type AnswerCount = { total: number; weak: number };
+
+export default async function MembersPage({ searchParams }: PageProps<"/operator/members">) {
   const admin = await requireAdmin("/operator/members");
   const { error } = await searchParams;
   const members = listUsers();
   const adminCount = members.filter((m) => m.role === "admin").length;
   // 모든 학습 기록을 읽지 않고 DB에서 사용자별 숫자만 모아 온다.
-  const coreKeys = WEEKS.flatMap((w) => getWeekOutline(w).sections.filter((s) => s.tier === "core").map((s) => `${w.slug}/${s.id}`));
-  const coreDone = countCompletedSections(coreKeys);
+  const completed = completedLessonsByUser();
   const lastActivity = lastLearningActivity();
-  const submissionCounts = submissionCountsByUser();
-  const answerCounts = countDescriptiveAnswers("user_id");
+  const submissionCounts = submissionCountsByUser(COURSE_ASSIGNMENT_KEYS);
+  const answerCounts = descriptiveCountsByUser();
 
   async function removeMember(formData: FormData) {
     "use server";
@@ -66,7 +63,7 @@ export default async function MembersPage({
         <table className="data-table">
           <thead>
             <tr>
-              {["이름", "역할", "가입일", "핵심 단계", "서술형 답", "과제", "마지막 기록", ""].map((h) => (
+              {["이름", "역할", "가입일", "필수 경로", "지금 학습 중", "서술형 답", "과제", "마지막 기록", ""].map((h) => (
                 <th key={h}>{h}</th>
               ))}
             </tr>
@@ -77,8 +74,7 @@ export default async function MembersPage({
                 key={m.id}
                 member={m}
                 adminId={admin.id}
-                completed={coreDone.get(m.id) ?? 0}
-                totalItems={coreKeys.length}
+                done={completed.get(m.id)}
                 lastActivity={lastActivity.get(m.id)}
                 submissions={submissionCounts.get(m.id) ?? { submitted: 0, graded: 0, revision: 0 }}
                 answers={answerCounts.get(m.id) ?? { total: 0, weak: 0 }}
@@ -95,8 +91,7 @@ export default async function MembersPage({
 function MemberRow({
   member,
   adminId,
-  completed,
-  totalItems,
+  done,
   lastActivity,
   submissions,
   answers,
@@ -104,8 +99,7 @@ function MemberRow({
 }: {
   member: ReturnType<typeof listUsers>[number];
   adminId: string;
-  completed: number;
-  totalItems: number;
+  done: Set<string> | undefined;
   lastActivity: string | undefined;
   submissions: Record<SubmissionStatus, number>;
   answers: AnswerCount;
@@ -114,6 +108,9 @@ function MemberRow({
   const pending = submissions.submitted;
   const graded = submissions.graded;
   const total = submissions.submitted + submissions.graded + submissions.revision;
+  const coreDone = done ? CORE_PATH.filter((l) => done.has(l.id)).length : 0;
+  const next = nextCoreLesson(done);
+  const nextModule = next ? getModule(next.module) : undefined;
 
   return (
     <tr>
@@ -127,7 +124,10 @@ function MemberRow({
       <td className="whitespace-nowrap text-ink-secondary">{ROLE_LABEL[member.role]}</td>
       <td className="whitespace-nowrap tabular-nums text-ink-secondary">{formatDate(member.createdAt)}</td>
       <td className="whitespace-nowrap tabular-nums text-ink-secondary">
-        {completed} / {totalItems}
+        {coreDone} / {CORE_PATH.length}
+      </td>
+      <td className="min-w-[10rem] text-xs text-ink-secondary">
+        {member.role === "admin" ? "—" : nextModule ? `${nextModule.code} ${next!.title}` : "필수 경로 완료"}
       </td>
       <td className="whitespace-nowrap tabular-nums text-ink-secondary">
         {answers.total > 0 ? (
