@@ -21,7 +21,7 @@ export default function RecallSheet({
   review,
 }: {
   moduleSlug: string;
-  fields: { label: string; hint?: string }[];
+  fields: { label: ReactNode; hint?: ReactNode }[];
   saved: Record<string, string>;
   savedAt?: string;
   submittedAt?: string;
@@ -104,7 +104,7 @@ export default function RecallSheet({
         {fields.map((f, i) => {
           const key = String(i);
           return (
-            <li key={f.label}>
+            <li key={key}>
               <div className="min-w-0">
                 <label htmlFor={`ws-${key}`} className="block text-base font-semibold tracking-[-0.02em] text-ink">
                   {f.label}
