@@ -66,3 +66,9 @@ npm run check:labs
 로컬 Python으로 모범 답안이 모든 채점 항목을 통과하는지, 시작 코드는 통과하지 못하는지, 채점이 너무 느리지 않은지(브라우저 시간 제한 대비), 출력 예측의 기대 출력이 실제와 같은지, 본문 코드 셀이 오류 없이 실행되는지, 과제 자동 테스트가 TODO를 채운 참조 노트북(`scripts/content/fixtures.ts`)에서는 통과하고 시작 코드에서는 실패하는지 확인합니다. 한 모듈만 검사하려면 `npx tsx scripts/content/check-labs.ts <모듈 slug>`를 씁니다.
 
 필요한 Python 패키지는 `python -m pip install -r scripts/content/requirements.txt`로 설치합니다. 버전은 학습자의 Pyodide 환경과 맞춰 고정되어 있으므로 가상환경을 따로 만들어 쓰는 것이 좋습니다. `check:labs`는 Windows에서 `python`, 그 밖의 환경에서 `python3`을 쓰며, 환경 변수 `PYTHON`으로 가상환경의 실행 파일을 지정할 수 있습니다(예: `PYTHON=.venv/bin/python npm run check:labs`).
+
+## 용어와 입문 코드 안내
+
+- likelihood의 기본 표기는 **가능도**, 첫 정의에는 **가능도(우도, likelihood)**를 병기합니다.
+- 후속 레슨 문법을 사용하는 입문 예제는 미리보기임을 밝히고, 지금 확인할 출력과 TODO 범위를 구분합니다.
+- 선택 레슨의 `requires`는 필요한 선수 레슨을 명시합니다. 생략할 때만 같은 모듈의 핵심 레슨 전체가 선수로 안내됩니다. 접근 잠금은 별도의 모듈 진행 규칙을 따릅니다.

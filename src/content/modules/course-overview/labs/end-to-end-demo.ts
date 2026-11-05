@@ -5,6 +5,10 @@ export default defineExercises([
     key: "ex1",
     title: "평균절대오차와 다음 글자 확률",
     prompt: md`
+:::info 실습 뼈대 안내
+함수(def·return)와 컴프리헨션은 [[lesson:functions-scope]]·[[lesson:comprehensions-iterators]], 반복문과 zip은 [[lesson:loops]]에서 차례로 배웁니다. 지금은 제공된 뼈대를 유지하고 표시된 TODO만 채웁니다. 실행이 어려우면 완성 예제의 입력과 출력부터 확인하고 Python 기초 뒤 다시 풀어도 됩니다.
+:::
+
 
 레슨의 두 시스템에서 쓴 계산 두 가지를 직접 완성합니다.
 

@@ -5,6 +5,10 @@ export default defineExercises([
     key: "ex1",
     title: "몫·나머지와 결과 서식",
     prompt: md`
+:::info 실습 뼈대 안내
+함수(def·return)는 [[lesson:functions-scope]]에서 배웁니다. 지금은 함수 뼈대를 유지하고 TODO 안에 이 레슨의 문법을 적용합니다. split·strip·lower 같은 문자열 메서드는 [[lesson:operators]]의 문자열 부분을 참고합니다.
+:::
+
 
 세 함수를 완성합니다.
 

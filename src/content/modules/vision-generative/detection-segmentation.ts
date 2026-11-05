@@ -5,6 +5,7 @@ export default defineLesson({
   id: "detection-segmentation",
   title: "탐지·분할의 평가: IoU, NMS, AP, Dice",
   tier: "supplement",
+  requires: ["cnn-architectures", "classification-metrics"],
   goal: "상자와 마스크의 IoU·Dice를 계산하고, NMS로 중복 상자를 정리하며, 점수순 탐지 결과로 Precision·Recall과 AP를 구할 수 있다.",
   why: "탐지와 분할 모델의 논문과 벤치마크는 결과를 IoU, AP, mAP, Dice로 보고한다. 이 지표가 무엇을 재는지 알아야 결과표를 해석하고 모델을 비교할 수 있으며, 탐지 모델을 직접 쓸 때는 NMS 임계값을 데이터에 맞게 정해야 한다.",
   body: md`

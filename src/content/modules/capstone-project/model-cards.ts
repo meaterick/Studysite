@@ -5,6 +5,7 @@ export default defineLesson({
   id: "model-cards",
   title: "모델카드와 위험 점검",
   tier: "core",
+  requires: ["research-methods"],
   goal: "NIST AI RMF의 네 기능과 위험 점검표로 프로젝트의 위험을 점검하고, EU AI Act의 위험 기반 4등급을 용도에 따라 판단하며, 모델카드의 여섯 항목을 작성할 수 있다.",
   why: "캡스톤 모델을 다른 사람이 쓰려면 그 모델을 어디에 써도 되는지, 어떤 집단에서 성능이 낮은지, 어떤 위험이 남아 있는지를 알아야 한다. 이 레슨의 위험 점검 절차와 모델카드는 캡스톤 과제의 모델카드와 리포트의 책임 있는 AI 항목에 그대로 쓰인다.",
   body: md`

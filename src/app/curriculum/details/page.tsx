@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CONCEPTS, CORE_PATH, COURSE, MODULES, TRACKS, getConcept, getModule, lessonsOfConcept, modulesOfTrack } from "@/content/course";
 import { LEARNING_FIELDS, learningField } from "@/content/fields";
+import { CAPSTONE_PLAN } from "@/content/curriculum/capstone-plan";
 import { SCHEDULE } from "@/content/curriculum/schedule";
 import { TIER_INFO, TIER_ORDER } from "@/content/tiers";
 import PageHeader from "@/components/PageHeader";
@@ -221,7 +222,7 @@ export default async function CurriculumDetailsPage() {
 
         <Section id="concepts" title="80개 개념과 선수관계">
           <p className="mb-5 max-w-3xl text-sm leading-relaxed text-ink-muted">
-            레슨마다 다루는 개념 번호가 붙어 있습니다. 선수 개념은 그 개념을 배우기 전에 알아야 하는 개념이며, 기본 순서대로 학습하면 항상 먼저 나옵니다.
+            개념을 다루는 핵심 레슨에는 개념 번호가 붙으며, 하나의 개념이 여러 레슨으로 나뉠 수 있습니다. 선수 개념은 그 개념을 배우기 전에 알아야 하는 개념이며, 기본 순서대로 학습하면 항상 먼저 나옵니다.
           </p>
           {mainTracks
             .filter((t) => CONCEPTS.some((c) => c.track === t.id))
@@ -255,6 +256,18 @@ export default async function CurriculumDetailsPage() {
                 </ol>
               </details>
             ))}
+        </Section>
+
+        <Section id="capstone-plan" title="캡스톤 단계별 준비">
+          <p className="mb-5 text-sm text-ink-muted">추천 일정에 맞춰 조금씩 준비하세요. 레슨의 잠금 여부와 관계없이 이 안내를 볼 수 있습니다.</p>
+          <ol className="rows border-y border-[var(--border-hairline)]">
+            {CAPSTONE_PLAN.map((step) => (
+              <li key={step.week} className="grid gap-2 py-4 text-sm sm:grid-cols-[12rem_1fr] sm:gap-4">
+                <span><strong className="block text-ink">{step.title}</strong><span className="text-xs text-ink-muted">{step.timing}</span></span>
+                <span className="text-ink-secondary">{step.task}</span>
+              </li>
+            ))}
+          </ol>
         </Section>
 
         <Section id="schedule" title={`추천 일정 (${SCHEDULE.length}주)`}>

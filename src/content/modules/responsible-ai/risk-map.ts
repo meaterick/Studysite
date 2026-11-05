@@ -5,6 +5,7 @@ export default defineLesson({
   id: "risk-map",
   title: "AI 위험의 유형: 편향, 적대적 공격, 프라이버시",
   tier: "supplement",
+  requires: ["classification-metrics", "data-splits"],
   goal: "AI 위험의 일곱 영역과 사례를 연결하고, 서브그룹 불균형이 집단별 성능 격차로 이어지는 원리, 적대적 공격(FGSM)·자동화 편향·학습 데이터 암기가 왜 위험한지 설명할 수 있다.",
   why: "모델카드와 위험 점검표([[lesson:model-cards]])의 점검 항목은 실제로 보고된 사고에서 나왔다. 위험의 영역별 대표 사례와 원인을 알아야 자신의 프로젝트에서 어떤 위험을 어떤 방법으로 점검할지 판단할 수 있다.",
   body: md`

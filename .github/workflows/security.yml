@@ -22,6 +22,7 @@ jobs:
       - run: python3 tests/security/security-inventory.test.py
       - run: python3 tests/security/security-collector.test.py
       - run: npm run lint
+      - run: npm run test:curriculum
       - run: npm run validate:content
       - run: npm run docs:check
       - run: npm run build

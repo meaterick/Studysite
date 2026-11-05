@@ -5,6 +5,7 @@ export default defineLesson({
   id: "loss-likelihood",
   title: "손실함수의 확률적 기원",
   tier: "advanced",
+  requires: ["loss-functions", "likelihood-entropy", "regularization"],
   goal: "가우시안·베르누이 가능도에서 MSE와 교차 엔트로피를 유도하고, L2·L1 정규화를 가우시안·라플라스 사전분포의 MAP로 설명하며, 로지스틱 손실의 볼록성과 선형분리 데이터에서의 발산을 분석할 수 있다.",
   why: "손실함수와 규제를 확률 모델의 가정으로 이해하면, 이상치가 많은 데이터나 새로운 형태의 출력처럼 정해진 규칙이 없는 상황에서도 손실을 직접 정할 수 있다. 언어 모델의 학습 목표인 다음 토큰의 음의 로그가능도와 그 평가에 쓰는 퍼플렉시티도 같은 원리에서 나온다([[lesson:pretraining]]).",
   body: md`

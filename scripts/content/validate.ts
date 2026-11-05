@@ -351,6 +351,10 @@ const conceptIds = new Set<string>();
 for (const c of CONCEPTS) {
   if (!ID.test(c.id) || conceptIds.has(c.id)) fail(`개념 #${c.order}: id "${c.id}"가 잘못되었거나 중복`);
   conceptIds.add(c.id);
+  for (const r of c.requires) {
+    const prerequisite = getConcept(r);
+    if (prerequisite && prerequisite.order >= c.order) fail(`개념 #${c.order} ${c.id}: 선수 개념 #${prerequisite.order} ${r}의 표시 번호가 앞서지 않음`);
+  }
   for (const r of c.requires) if (!CONCEPTS.some((x) => x.id === r)) fail(`개념 ${c.id}: 없는 선수 개념 "${r}"`);
 }
 if (new Set(CONCEPTS.map((c) => c.order)).size !== CONCEPTS.length) fail("개념 표시 번호(order) 중복");
@@ -405,7 +409,7 @@ for (const w of SCHEDULE) {
   for (const due of w.due) if (!moduleOfAssignment(due)) fail(`일정표 ${w.week}주 차: 없는 과제 키 "${due}"`);
 }
 for (const mod of MODULES) if (mod.track !== "extension" && !scheduled.has(mod.slug)) fail(`일정표: 모듈 "${mod.slug}"이(가) 어느 주에도 없음`);
-for (const mod of MODULES) if (mod.assignment && !SCHEDULE.some((w) => w.due.includes(mod.assignment!.key))) warn(`일정표: 과제 "${mod.assignment.key}"의 제출 주가 없음`);
+for (const mod of MODULES) if (mod.assignment && !SCHEDULE.some((w) => w.due.includes(mod.assignment!.key))) warn(`일정표: 과제 "${mod.assignment.key}"의 권장 주가 없음`);
 for (const [stage, lesson] of Object.entries(LEGACY_STAGE_LESSON)) if (!getLesson(lesson)) fail(`예전 주소 대응표: 단계 "${stage}" → 없는 레슨 "${lesson}"`);
 for (const [week, slug] of Object.entries(LEGACY_WEEK_ASSIGNMENT_MODULE)) if (!getModule(slug)?.assignment) fail(`예전 주소 대응표: ${week} → 과제가 없는 모듈 "${slug}"`);
 

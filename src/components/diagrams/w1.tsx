@@ -117,7 +117,7 @@ export function MlLoop() {
       <Label
         x={20 + 2.5 * (w + gap)}
         y={y + h + 78}
-        text="θ ← θ − η · ∇θL  (기울기 반대 방향으로 학습률 η만큼 이동)"
+        text="파라미터 갱신: θ ← θ − η · ∇θL  (학습률 η만큼 이동)"
         color={colors.orange}
         weight={700}
         size={12}

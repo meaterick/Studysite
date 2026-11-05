@@ -5,6 +5,7 @@ export default defineLesson({
   id: "privacy-math",
   title: "차등 프라이버시의 수학과 DP-SGD",
   tier: "advanced",
+  requires: ["privacy", "likelihood-entropy"],
   goal: "삼각부등식으로 라플라스 메커니즘의 $\\varepsilon$ 보장을 증명하고, 후처리 불변성과 합성을 설명하며, 가설 검정 관점에서 멤버십 추론 이득의 상한 $(e^\\varepsilon - 1)/(e^\\varepsilon + 1)$을 유도하고, DP-SGD의 표본별 자르기·잡음이 보장과 비용(큰 배치, 소수 집단)에 미치는 영향을 설명할 수 있다.",
   why: "차등 프라이버시로 학습했다는 주장은 $\\varepsilon$ 값을 함께 보고 그 의미를 해석할 수 있어야 검토할 수 있다. 라플라스 메커니즘의 증명, $\\varepsilon$이 멤버십 추론 공격에 주는 상한, DP-SGD의 절차와 대가를 알아야 프라이버시와 정확도 사이에서 학습 설정을 정할 수 있다.",
   body: md`

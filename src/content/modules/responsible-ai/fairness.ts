@@ -5,6 +5,7 @@ export default defineLesson({
   id: "fairness",
   title: "공정성 기준",
   tier: "supplement",
+  requires: ["classification-metrics", "data-splits"],
   goal: "인구통계 동등성·균등화된 오즈·보정을 수식과 채용 예시로 구분하고, 기저율이 다를 때 어떤 기준끼리 충돌하는지(보정·PPV ↔ 오류율, 선택률 ↔ 오류율)를 TP·FP 계산과 임계값 실험으로 보이며, 정답 레이블 자체의 편향이라는 한계를 말할 수 있다.",
   why: "채용, 대출, 의료처럼 사람에 대한 결정에 쓰는 모델은 집단별로 성능과 판정을 점검해야 한다. 공정성 기준마다 비교하는 값이 다르고 기저율이 다르면 기준끼리 충돌하므로, 어떤 기준을 택했는지와 그 대가를 밝혀야 점검 결과를 해석할 수 있다.",
   body: md`

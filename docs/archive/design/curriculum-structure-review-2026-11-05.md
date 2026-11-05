@@ -1,5 +1,7 @@
 # 커리큘럼 구조 검토 — 2026-11-05 (HEAD `f5ca0c7`)
 
+> 이 검토의 승인된 수정·조정·보류 사항은 [후속 반영 기록](../../development/review-followups-2026-11-05.md)에 정리했습니다.
+
 > 과거 검토 기록입니다. 당시 관측·제안과 현재 구현은 다를 수 있습니다. 현재 구조는 [기술 구조](../../development/architecture.md), 학습 범위는 [전체 커리큘럼](../../curriculum/README.md), 운영 절차는 [문서 홈](../../README.md)에서 확인합니다.
 
 > 검토 범위: `src/content/curriculum/*`, `src/content/modules/*/index.ts`, `src/content/course.ts`, `src/lib/study.ts`, `src/app/{curriculum,progress,modules}`, `docs/curriculum`, `docs/development/site-guide.md`, `scripts/docs/generate-curriculum.ts`, `scripts/content/validate.ts`.

@@ -5,6 +5,10 @@ export default defineExercises([
     key: "ex1",
     title: "점수 등급과 확률 임계값",
     prompt: md`
+:::info 실습 뼈대 안내
+함수(def·return)는 [[lesson:functions-scope]]에서 배웁니다. 지금은 함수 뼈대를 유지하고 TODO 안에 이 레슨의 문법을 적용합니다. split·strip·lower 같은 문자열 메서드는 [[lesson:operators]]의 문자열 부분을 참고합니다.
+:::
+
 
 두 함수의 TODO를 채웁니다. 함수(\`def\`)를 만드는 방법은 [[lesson:functions-scope]]에서 자세히 다룹니다. 여기서는 함수 안의 조건문만 완성합니다.
 

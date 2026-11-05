@@ -5,6 +5,7 @@ export default defineLesson({
   id: "svm",
   title: "서포트 벡터 머신",
   tier: "supplement",
+  requires: ["linear-maps-basis", "gradient-descent", "regularization"],
   goal: "SVM이 마진을 최대화하는 경계를 찾는 원리와 서포트 벡터를 설명하고 마진 폭을 계산하며, 소프트 마진의 C와 커널(RBF)이 경계의 모양과 복잡도를 어떻게 바꾸는지 설명한다.",
   why: "SVM은 샘플 수가 많지 않고 특성이 많은 데이터에서 성능이 좋아 텍스트 분류 등에 오래 쓰였다. 마진을 넓히는 것이 규제와 같은 역할을 한다는 관점은 로지스틱 회귀의 규제([[lesson:regularization]])와 연결되고, 커널은 입력을 다른 공간으로 옮겨 선형 모델을 쓰는 방법으로 신경망의 특성 학습([[lesson:perceptron-mlp]])과 비교된다.",
   body: md`

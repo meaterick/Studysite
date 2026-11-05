@@ -5,6 +5,7 @@ export default defineLesson({
   id: "generative-models",
   title: "생성 모델: 오토인코더, VAE, GAN, 확산 모델",
   tier: "supplement",
+  requires: ["optimizers", "cnn-training"],
   goal: "판별 모델과 생성 모델의 차이를 설명하고, Autoencoder·VAE·GAN·Diffusion이 각각 \"생성\"을 가능하게 하는 메커니즘을 정확한 용어로 설명할 수 있다.",
   why: "이미지 생성 서비스, 데이터 증강, 이상 탐지, 이미지 복원은 데이터의 분포를 학습한 생성 모델로 만든다. 오토인코더, VAE, GAN, 확산 모델이 각각 어떤 원리로 새 데이터를 만드는지 알아야 품질, 다양성, 생성 속도, 학습 안정성을 기준으로 용도에 맞는 모델을 고를 수 있다.",
   body: md`

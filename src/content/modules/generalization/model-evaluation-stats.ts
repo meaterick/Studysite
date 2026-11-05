@@ -5,6 +5,7 @@ export default defineLesson({
   id: "model-evaluation-stats",
   title: "모델 평가의 통계: 선택 편향과 짝지은 비교",
   tier: "advanced",
+  requires: ["cross-validation", "statistical-inference"],
   goal: "fold 표준편차의 의미와 한계를 설명하고, 튜닝 점수의 선택 편향을 중첩 교차검증으로 바로잡으며, 반복 교차검증의 짝지은 차이에 보정된 t 검정을 적용할 수 있다.",
   why: "교차검증 점수로 하이퍼파라미터를 고르고 두 모델을 비교할 때, 점수의 잡음과 고르는 과정의 편향을 고려하지 않으면 우연한 차이를 개선으로 보고하게 된다. 논문과 벤치마크의 비교 결과를 읽을 때와 언어 모델 평가 결과의 차이를 해석할 때([[lesson:eval-statistics]])도 같은 원칙을 쓴다.",
   body: md`

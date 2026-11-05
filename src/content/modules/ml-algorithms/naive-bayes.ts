@@ -5,6 +5,7 @@ export default defineLesson({
   id: "naive-bayes",
   title: "나이브 베이즈 분류기",
   tier: "supplement",
+  requires: ["bayes", "baselines"],
   goal: "베이즈 정리와 조건부 독립 가정으로 나이브 베이즈의 사후확률을 계산하고, 라플라스 스무딩과 로그 확률이 필요한 이유를 설명하며, 단어 빈도로 텍스트를 분류하는 MultinomialNB를 쓴다.",
   why: "나이브 베이즈는 학습과 예측이 매우 빠르고 데이터가 적어도 동작해, 스팸 필터나 문서 분류의 기준 모델로 자주 쓰인다([[lesson:baselines]]). 사전확률과 증거를 곱해 판단하는 계산은 베이즈 정리([[lesson:bayes]])와 MAP 추정([[lesson:mle-map]])을 그대로 적용한 것이다.",
   body: md`

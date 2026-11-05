@@ -5,6 +5,7 @@ export default defineLesson({
   id: "multimodal",
   title: "멀티모달 모델: CLIP과 VLM",
   tier: "supplement",
+  requires: ["cnn-training", "embeddings", "attention-motivation"],
   goal: "Joint Embedding이 필요한 이유와 CLIP의 대조 학습($N \\times N$ 유사도 행렬의 대각선은 올리고 나머지는 내림)을 설명하고, 문장 템플릿과 프롬프트 앙상블로 zero-shot 분류를 하며, VLM이 비전 인코더를 LLM에 잇는 구조와 Image Captioning·VQA·Multimodal LLM을 구분할 수 있다.",
   why: "이미지 검색, 이미지 질의응답, 스크린샷을 읽는 LLM 도우미는 이미지와 텍스트를 같은 공간에서 비교하거나 함께 입력받는 멀티모달 모델로 만든다. CLIP의 대조 학습과 VLM의 구조를 알아야 zero-shot 분류의 문장을 설계하고, 이미지 입력이 늘리는 토큰 비용과 보안 위험을 판단할 수 있다.",
   body: md`

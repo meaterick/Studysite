@@ -5,6 +5,7 @@ export default defineLesson({
   id: "research-methods",
   title: "신뢰할 수 있는 실험 절차",
   tier: "core",
+  requires: ["cross-validation", "statistical-inference"],
   goal: "검증 가능한 연구 질문을 세우고, 기준 모델, 절제 연구, 여러 시드, 통계적 검정으로 주장을 뒷받침하며, 한계와 인용을 갖춘 결과 보고를 설계한다.",
   why: "캡스톤의 결과가 좋아 보여도, 그 결과를 왜 신뢰할 수 있는지 설명하지 못하면 주장으로 인정받기 어렵다. 이 레슨의 절차는 캡스톤 리포트의 실험 설계와 결과 해석에 그대로 쓰이며, 과제 루브릭의 실험 엄밀성과 재현성 항목이 이 절차를 확인한다([[lesson:capstone-design]]).",
   body: md`
