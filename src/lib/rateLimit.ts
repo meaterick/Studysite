@@ -21,7 +21,6 @@ export interface RateRule {
 export const RATE_RULES = {
   chatMessage: { burst: 8, perSecond: 1 / 3 },
   draftSave: { burst: 10, perSecond: 1 },
-  submission: { burst: 3, perSecond: 1 / 60 },
   checkAnswer: { burst: 20, perSecond: 1 / 2 },
   learningWrite: { burst: 20, perSecond: 1 / 2 },
   /** 제출 기록에서 이전 제출본의 작업 공간을 펼쳐 볼 때 */

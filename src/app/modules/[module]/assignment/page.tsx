@@ -5,7 +5,7 @@ import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import ModuleFrame from "@/components/module/ModuleFrame";
 import Workspace from "@/components/assignment/Workspace";
 import { loadModulePage } from "@/lib/modulePage";
-import { findUserSubmission, latestVersion, readNotebook } from "@/lib/submissionStore";
+import { readLegacyAssignmentDraft } from "@/lib/submissionStore";
 import { readDraft } from "@/lib/assignmentDraftStore";
 import { mergeDraft } from "@/lib/notebook";
 import { courseDocFiles, workspaceTasks } from "@/lib/assignmentView";
@@ -30,9 +30,7 @@ export default async function AssignmentPage({ params }: PageProps<"/modules/[mo
   if (!status.finaleOpen && !isAdmin) redirect(`${moduleHref(slug)}?locked=finale`);
   const key = spec.key;
   const savedDraft = readDraft(user.id, key);
-  const previous = savedDraft ? undefined : findUserSubmission(user.id, key);
-  const latest = previous ? latestVersion(previous) : undefined;
-  const draft = mergeDraft(spec, savedDraft ?? (previous && latest ? readNotebook(previous, latest) : undefined));
+  const draft = mergeDraft(spec, savedDraft ?? readLegacyAssignmentDraft(user.id, key));
   const courseDocs = courseDocFiles(spec);
   const challengesPassed = spec.challenges.filter((c) => record.exercises[itemId(key, c.key)]?.passedAt).length;
 

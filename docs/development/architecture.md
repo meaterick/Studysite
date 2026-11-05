@@ -9,7 +9,7 @@
 - 데이터는 서버의 `DATA_DIR`(기본 `data/`)에 둡니다. 계정·학습 기록·이전 과제 제출 기록·채팅·운영 설정은 SQLite DB
   `aegis.db`에, 과제 작업 공간 초안은 `drafts/<사용자 id>/<과제 키>.json`에, 제출본(`notebook-v<N>.json`)과 첨부 파일은
   `uploads/<제출 id>/`에 저장합니다. 자세한 내용은 [데이터 저장소](../operations/data.md)를 참고하세요.
-  계정을 삭제하면 해당 사용자의 학습 기록, 초안, 대화, 제출물이 함께 삭제됩니다.
+  초안이 없으면 `src/lib/submissionStore.ts`가 이전 제출본의 마지막 노트북을 읽습니다. 계정을 삭제하면 학습 기록, 초안, 대화, 이전 제출물도 함께 삭제됩니다.
 - 브라우저 실행 코드는 Pyodide(웹 워커)로 실행됩니다. 학습 자료의 코드 셀은 하나의 이름공간을, 과제 작업 공간은 과제마다 별도의 이름공간을 씁니다.
   코드 편집기(Monaco)는 외부 CDN이 아니라 빌드 때 `node_modules`에서 복사한 `/vendor/monaco`에서 불러옵니다(`scripts/copy-monaco.mjs`).
 - 남용 방지: 계정별 요청 빈도 제한(채팅·작업 공간 저장·확인 문제, `src/lib/rateLimit.ts`), 채팅 실시간 연결 수 제한
@@ -23,8 +23,9 @@
 
 1. 모듈 원본(`src/content/modules/<slug>/`)은 `defineModule`·`defineLesson`·`defineExercises`·`defineAssignment`(`src/content/kit.ts`)로 작성한 상수입니다. 본문은 `md` 태그, 파이썬 코드는 `py` 태그로 써서 백슬래시를 그대로 둡니다.
 2. `src/content/course.ts`가 빌드 때 원본을 화면용 구조로 바꿉니다. 모듈 번호("2-3", "X-1")를 붙이고, 본문을 블록으로 파싱하며(`src/content/markdown.ts`), `[[lesson:id]]` 참조를 "모듈 번호 + 레슨 제목" 링크로 바꾸고, 본문 분량과 문항 수로 예상 학습 시간을 계산합니다. 레슨 사이의 선수관계는 개념의 선수관계(`src/content/curriculum/concepts.ts`)에서 계산합니다.
-3. 진행 규칙(레슨 완료, 모듈 완료, 진행 방식)은 `src/lib/study.ts` 한곳에 있어 학습자 화면, 서버 액션, 운영자 통계가 같은 함수를 씁니다.
-4. 정답·해설·모범답안·모범 코드·채점 참고는 서버에만 있고, 학습자가 공개 조건을 만족했을 때만 내려보냅니다.
+3. 레슨 본문(`/lessons/[lesson]`)과 실습(`/practice/[lesson]`)은 `src/components/lesson/LessonScreen.tsx`를 공유합니다. 모듈 백지복습은 실습 탭에서 연결되는 별도 화면입니다.
+4. 진행 규칙(레슨 완료, 모듈 완료, 진행 방식)은 `src/lib/study.ts` 한곳에 있어 학습자 화면, 서버 액션, 운영자 통계가 같은 함수를 씁니다.
+5. 정답·해설·모범답안·모범 코드는 활동별 공개 조건에 따라 내려보냅니다. 과제의 자기 점검 기준은 작업 공간에 표시합니다.
 
 ## 파일의 역할과 배치 기준
 
