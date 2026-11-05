@@ -60,7 +60,7 @@
 | `/operator/members/answers` | 서술형 답안과 백지 복습을 문항별로 모아 비교 |
 | `/operator/content`, `/operator/content/[module]` | 모듈별 레슨 수·문항 수·완료 수, 레슨별 정답·해설·모범답안과 정답률이 낮은 문항 |
 | `/operator/chat`, `/operator/chat/[userId]` | 스터디원별 채팅(실시간). 확인 창을 거쳐 한 명과의 대화 전체 또는 모든 채팅을 지울 수 있습니다(되돌릴 수 없음) |
-| `/operator/settings` | 진행 방식(미완료 경고·잠금), 기수 시작일, 과제 마감일 |
+| `/operator/settings` | 진행 방식(미완료 경고·잠금), 기수 시작일 |
 | `/operator/system` | DB·디스크·메모리 상태와 최근 서버 오류 |
 | `/operator/security` | 보안 사건·이벤트·IP 규칙([보안 운영 개요](../operations/security.md)) |
 

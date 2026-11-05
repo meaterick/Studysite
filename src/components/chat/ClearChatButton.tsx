@@ -63,7 +63,7 @@ export default function ClearChatButton({ targetUserId, targetName }: { targetUs
             {all
               ? "지금까지 모든 스터디원과 주고받은 메시지가 즉시 삭제되며 되돌릴 수 없습니다."
               : "지금까지 주고받은 메시지가 모두 즉시 삭제되며 되돌릴 수 없습니다."}{" "}
-            스터디원의 채팅 화면과 피드백함에서도 사라집니다.
+            스터디원의 채팅 화면에서도 사라집니다.
           </p>
           {error && <p className="mt-3 text-sm font-semibold text-[var(--status-critical)]">{error}</p>}
         </div>
