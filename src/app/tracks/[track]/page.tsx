@@ -49,7 +49,7 @@ export default async function TrackPage({ params }: PageProps<"/tracks/[track]">
         </h2>
         <ol className="space-y-8">
           {modules.map((m) => {
-            const optional = m.lessons.length - core.length;
+            const optional = m.lessons.filter((lesson) => lesson.tier !== "core").length;
             const done = m.lessons.filter((l) => isLessonComplete(record, l.id)).length;
             return (
               <li key={m.slug} className="border-t border-[var(--border-hairline)] pt-6">
