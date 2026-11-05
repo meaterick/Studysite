@@ -2,22 +2,24 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { learningField } from "@/content/fields";
 import type { ModuleStatus } from "@/lib/study";
-import { assignmentHref, lessonHref, moduleHref, recallHref, reviewHref, trackHref } from "@/lib/routes";
+import { assignmentHref, lessonHref, moduleHref, practiceHref, recallHref, reviewHref, trackHref } from "@/lib/routes";
 import HashTarget from "@/components/HashTarget";
 import Icon from "@/components/Icon";
 import ModuleTabs, { type ModuleTab } from "./ModuleTabs";
 
 /**
- * 모듈 머리글 + 모듈 메뉴(개요 · 레슨 · 백지 복습 · 과제 · 복습 노트). 진행 상태가 화면마다 최신이어야 해서
+ * 모듈 머리글 + 모듈 메뉴(개요 · 레슨 · 실습 · 과제 · 복습 노트). 진행 상태가 화면마다 최신이어야 해서
  * 레이아웃이 아니라 각 화면이 렌더링한다. compact면 큰 머리글 대신 한 줄짜리 위치 표시만 둔다(레슨 화면).
  */
 export default function ModuleFrame({
   status,
   compact = false,
+  lessonId,
   children,
 }: {
   status: ModuleStatus;
   compact?: boolean;
+  lessonId?: string;
   children: ReactNode;
 }) {
   const { module } = status;
@@ -27,18 +29,25 @@ export default function ModuleFrame({
   const hours = Math.round((minutes / 60) * 2) / 2;
   const { done, total } = status.tiers.core;
   // "레슨" 탭은 지금 할 레슨으로 바로 간다(모두 마쳤으면 첫 레슨).
-  const lessonTarget = status.currentLesson ?? module.lessons[0];
+  const lessonTarget = lessonId ?? status.currentLesson?.id ?? module.lessons[0]?.id;
   const tabs: ModuleTab[] = [
     { href: moduleHref(slug), label: "개요" },
     {
-      href: lessonTarget ? lessonHref(slug, lessonTarget.id) : moduleHref(slug),
+      href: lessonTarget ? lessonHref(slug, lessonTarget) : moduleHref(slug),
       label: "레슨",
       sub: total > 0 ? `${done}/${total}` : undefined,
       done: total > 0 && status.coreDone,
       prefix: `${moduleHref(slug)}/lessons/`,
     },
   ];
-  if (module.recall.length > 0) tabs.push({ href: recallHref(slug), label: "백지 복습", done: status.recallSubmitted });
+  if (lessonTarget) {
+    tabs.push({
+      href: practiceHref(slug, lessonTarget),
+      label: "실습",
+      prefix: `${moduleHref(slug)}/practice/`,
+      alsoActiveOn: module.recall.length > 0 ? recallHref(slug) : undefined,
+    });
+  }
   if (status.assignment) tabs.push({ href: assignmentHref(slug), label: "과제", done: status.assignment.status === "graded" });
   tabs.push({ href: reviewHref(slug), label: "복습 노트" });
 

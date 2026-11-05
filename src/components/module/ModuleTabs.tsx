@@ -12,15 +12,16 @@ export interface ModuleTab {
   done?: boolean;
   /** 이 탭이 활성인지 판단할 경로 접두사(없으면 href와 정확히 같을 때) */
   prefix?: string;
+  alsoActiveOn?: string;
 }
 
-/** 모듈 메뉴: 개요 · 레슨 · 백지 복습 · 과제 · 복습 노트. 밑줄 탭으로 지금 위치만 표시한다. */
+/** 모듈 메뉴: 개요 · 레슨 · 실습 · 과제 · 복습 노트. 밑줄 탭으로 지금 위치만 표시한다. */
 export default function ModuleTabs({ tabs }: { tabs: ModuleTab[] }) {
   const pathname = usePathname();
   return (
     <nav aria-label="모듈 메뉴" className="tabs print:hidden">
       {tabs.map((tab) => {
-        const active = tab.prefix ? pathname.startsWith(tab.prefix) : pathname === tab.href;
+        const active = pathname === tab.href || pathname === tab.alsoActiveOn || (tab.prefix && pathname.startsWith(tab.prefix));
         return (
           <Link key={tab.label} href={tab.href} aria-current={active ? "page" : undefined} className="tab">
             {tab.label}
