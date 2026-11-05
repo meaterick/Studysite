@@ -9,7 +9,7 @@ import UnfinishedWarning from "@/components/UnfinishedWarning";
 import Icon from "@/components/Icon";
 import { loadModulePage } from "@/lib/modulePage";
 import { readLessonState, readRecallState } from "@/lib/learningStore";
-import { assignmentHref, lessonHref, moduleHref, recallHref } from "@/lib/routes";
+import { assignmentHref, lessonHref, moduleHref, practiceHref, recallHref } from "@/lib/routes";
 
 export function generateStaticParams() {
   return MODULES.filter((m) => m.recall.length > 0).map((m) => ({ module: m.slug }));
@@ -22,6 +22,7 @@ export default async function RecallPage({ params, searchParams }: PageProps<"/m
   if (module.recall.length === 0) notFound();
   if (!status.finaleOpen && !isAdmin) redirect(`${moduleHref(slug)}?locked=finale`);
   const sheet = readRecallState(record, slug);
+  const practiceLesson = status.currentLesson ?? module.lessons[0];
   const core = status.lessons.filter((r) => r.lesson.tier === "core");
 
   // 제출 전에는 비교 자료를 내려보내지 않는다. 자료를 보면서 쓰면 인출 연습이 되지 않는다.
@@ -79,6 +80,11 @@ export default async function RecallPage({ params, searchParams }: PageProps<"/m
           context="백지 복습은 핵심 레슨을 모두 마친 뒤에 하는 것을 권장합니다."
           items={core.filter((r) => r.access !== "completed").map((r) => ({ label: lessonLabel(r.lesson), title: r.lesson.title, href: lessonHref(slug, r.lesson.id) }))}
         />
+      )}
+      {practiceLesson && (
+        <Link href={practiceHref(slug, practiceLesson.id)} className="btn btn-secondary mb-6">
+          레슨 실습으로
+        </Link>
       )}
       <section aria-labelledby="recall-heading" className="max-w-3xl">
         <h2 id="recall-heading" className="text-[1.75rem] font-bold tracking-[-0.035em] text-ink">

@@ -8,7 +8,7 @@ import ModuleFrame from "@/components/module/ModuleFrame";
 import Icon from "@/components/Icon";
 import { loadModulePage } from "@/lib/modulePage";
 import { readLessonState, readRecallState } from "@/lib/learningStore";
-import { lessonHref, recallHref, reviewHref } from "@/lib/routes";
+import { practiceHref, recallHref, reviewHref } from "@/lib/routes";
 
 export function generateStaticParams() {
   return MODULES.map((m) => ({ module: m.slug }));
@@ -42,7 +42,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
 
   const groups = status.lessons.map(({ lesson, access }) => {
     const st = readLessonState(record, lesson.id);
-    const href = lessonHref(slug, lesson.id);
+    const href = practiceHref(slug, lesson.id);
     const notes: Note[] = [];
     for (const check of lesson.checks) {
       const s = st.checks[check.key];

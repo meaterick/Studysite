@@ -75,6 +75,23 @@ try {
     await new Promise((r) => setTimeout(r, 100));
   }
   assert.equal(ready, true);
+  const lessonPath = "/modules/numpy/lessons/numpy-arrays";
+  const practicePath = "/modules/numpy/practice/numpy-arrays";
+  const lesson = await request(lessonPath, { cookie: cookies.member });
+  assert.equal(lesson.status, 200);
+  const lessonHtml = await lesson.text();
+  assert.ok(lessonHtml.includes('id="learn"'), "lesson renders the reading");
+  assert.ok(lessonHtml.includes(`href="${practicePath}#check"`), "lesson links to practice");
+  assert.equal(lessonHtml.includes('id="check-heading"'), false, "questions stay off the reading page");
+  const practice = await request(practicePath, { cookie: cookies.member });
+  assert.equal(practice.status, 200);
+  const practiceHtml = await practice.text();
+  assert.ok(practiceHtml.includes('id="check-heading"'), "practice renders the check questions");
+  assert.ok(practiceHtml.includes('id="practice-heading"'), "practice renders the coding exercises");
+  assert.ok(practiceHtml.includes('id="predict-heading"'), "practice renders the output predictions");
+  assert.ok(practiceHtml.includes('href="/modules/numpy/recall"'), "practice links to module recall");
+  assert.equal(practiceHtml.includes('id="learn"'), false, "reading stays off the practice page");
+
   const recall = await request("/modules/linear-algebra/recall", { cookie: cookies.member });
   assert.equal(recall.status, 200);
   const recallHtml = await recall.text();

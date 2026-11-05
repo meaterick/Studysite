@@ -3,6 +3,7 @@
 export const trackHref = (track: string) => `/tracks/${track}`;
 export const moduleHref = (module: string) => `/modules/${module}`;
 export const lessonHref = (module: string, lesson: string) => `/modules/${module}/lessons/${lesson}`;
+export const practiceHref = (module: string, lesson: string) => `/modules/${module}/practice/${lesson}`;
 export const recallHref = (module: string) => `/modules/${module}/recall`;
 export const assignmentHref = (module: string) => `/modules/${module}/assignment`;
 export const reviewHref = (module: string) => `/modules/${module}/review`;
