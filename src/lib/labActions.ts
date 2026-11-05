@@ -75,7 +75,7 @@ export async function getExerciseSolution(exerciseId: string) {
   if (!consumeRate(`learn:${userId}`, RATE_RULES.learningWrite)) throw new RateLimitError();
   const state = getLearningRecord(userId).exercises[exerciseId];
   const allowed = !!state?.passedAt || (!!state && state.attempts > 0 && state.hintsUsed >= exercise.hints.length);
-  if (!allowed) return { ok: false as const, error: "한 번 이상 채점해 보고 힌트를 모두 확인한 뒤에 모범 답안을 볼 수 있습니다." };
+  if (!allowed) return { ok: false as const, error: "한 번 이상 채점하고 힌트를 모두 확인한 뒤에 모범 답안을 볼 수 있습니다." };
   await updateLearningRecord(userId, (r) => {
     const prev = r.exercises[exerciseId];
     if (prev) prev.solutionViewedAt ??= new Date().toISOString();

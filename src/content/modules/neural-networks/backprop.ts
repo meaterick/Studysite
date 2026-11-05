@@ -181,7 +181,7 @@ $u = wx = -4$, $v = u + c = -2$, $L = v^2 = 4$다. 역전파는 제곱 노드에
     },
   ],
   references: [
-    { title: "CS231n — Backpropagation, Intuitions", url: "https://cs231n.github.io/optimization-2/", note: "노드별 기울기 흐름과 계산 예 (영문)" },
+    { title: "CS231n — Backpropagation, Intuitions", url: "https://cs231n.github.io/optimization-2/", note: "노드별 기울기 전달과 계산 예 (영문)" },
     { title: "3Blue1Brown — Backpropagation calculus", url: "https://www.3blue1brown.com/lessons/backpropagation-calculus", note: "연쇄법칙이 층을 따라 이어지는 과정 (영문)" },
   ],
 });

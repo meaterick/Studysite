@@ -22,7 +22,7 @@ function BrowseFields() {
       href="#fields"
       className="flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/85"
     >
-      학습 분야 둘러보기
+      학습 분야 확인하기
     </a>
   );
 }
@@ -34,24 +34,24 @@ const FLOW = [
     when: "핵심 레슨부터",
     steps: [
       { name: "개념 학습", desc: "글과 그림, 직접 실행하는 코드로 원리를 익힙니다." },
-      { name: "확인 문제", desc: "레슨마다 문제를 풀며 이해했는지 짚어 봅니다." },
+      { name: "확인 문제", desc: "레슨별 확인 문제로 이해도를 점검합니다." },
     ],
     extras: [
-      { name: "보충", desc: "실무 도구와 다른 방법으로 폭을 넓힙니다." },
+      { name: "보충", desc: "실무 도구와 추가 기법으로 학습 범위를 확장합니다." },
       { name: "심화", desc: "수식 유도와 최신 기법까지 다룹니다." },
     ],
   },
   {
     area: "적용과 복습",
-    when: "핵심 레슨를 마친 뒤",
+    when: "핵심 레슨을 마친 뒤",
     steps: [
-      { name: "백지공부", desc: "자료를 덮고 떠올려 적으며 스스로 점검합니다." },
+      { name: "백지 복습", desc: "학습 자료를 보지 않고 핵심 내용을 작성해 이해도를 점검합니다." },
       { name: "과제", desc: "실제 문제에 적용하고 자동 테스트와 점검 기준으로 결과를 확인합니다." },
     ],
     extras: [
-      { name: "서술형", desc: "직접 설명해 보고 스스로 평가합니다." },
+      { name: "서술형", desc: "개념을 직접 설명하고 답안을 스스로 평가합니다." },
       { name: "추가 퀴즈", desc: "객관식과 코드 출력 예측 문제를 풉니다." },
-      { name: "코딩 실습", desc: "빈칸 코드를 채우면 바로 채점됩니다." },
+      { name: "코딩 실습", desc: "시작 코드의 미완성 부분을 작성하고 자동 테스트로 검증합니다." },
     ],
   },
 ];
@@ -84,7 +84,7 @@ export default async function Home() {
           <h1 className="mt-6 text-[2.6rem] font-extrabold leading-[1.08] tracking-[-0.03em] text-white sm:text-7xl">
             관심 있는 분야부터
             <br />
-            <span className="j-gradient">직접 실습하며 배워요</span>
+            <span className="j-gradient">직접 실습하며 학습합니다</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[var(--j-2)] sm:text-lg">
             Python, 데이터 처리, 머신러닝, 딥러닝 등 원하는 분야를 선택하고 직접 코드를 작성하며 배웁니다.
@@ -134,25 +134,25 @@ export default async function Home() {
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             시작하기 전에
             <br />
-            <span className="j-gradient">확인할 것.</span>
+            <span className="j-gradient">확인할 사항</span>
           </h2>
           <dl className="mt-6 grid border-t border-[var(--j-line)] sm:mt-10 sm:grid-cols-2">
             {[
               {
                 q: "누구를 위한 과정인가요?",
-                a: "Python을 처음 배우는 분부터 데이터 분석이나 모델링을 더 깊게 공부하고 싶은 분까지, 필요한 분야를 골라 학습할 수 있습니다.",
+                a: "Python을 처음 배우는 분부터 데이터 분석이나 모델링을 심화하여 학습하려는 분까지, 필요한 분야를 골라 학습할 수 있습니다.",
               },
               {
                 q: "무엇을 알고 시작해야 하나요?",
-                a: "Python이 처음이면 프로그래밍 분야부터 시작하세요. 다른 분야를 선택했다면 모듈과 레슨에 표시된 선수 지식을 먼저 확인하세요.",
+                a: "Python이 처음이면 프로그래밍 분야부터 시작하십시오. 다른 분야를 선택했다면 모듈과 레슨에 표시된 선수 지식을 먼저 확인하십시오.",
               },
               {
                 q: "얼마나 걸리나요?",
-                a: "레슨마다 예상 학습 시간이 표시됩니다. 여러 분야를 순서대로 공부하고 싶다면 커리큘럼의 기본 일정을 참고하세요.",
+                a: "레슨마다 예상 학습 시간이 표시됩니다. 여러 분야를 순서대로 공부하고 싶다면 커리큘럼의 기본 일정을 참고하십시오.",
               },
               {
                 q: "비용이 드나요? 누가 이용할 수 있나요?",
-                a: "무료이며, 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 바로 실행되므로 따로 설치할 것이 없습니다.",
+                a: "무료이며, 동아리원이 아니어도 누구나 이용할 수 있습니다. 코드는 브라우저에서 바로 실행되므로 별도의 프로그램을 설치할 필요가 없습니다.",
               },
             ].map((item) => (
               <div key={item.q} className="border-b border-[var(--j-line)] py-3 sm:py-5 sm:pr-10">
@@ -300,7 +300,7 @@ export default async function Home() {
           <h2 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-[-0.02em] text-white sm:text-5xl">
             분야별 실습으로
             <br />
-            <span className="j-gradient">해 볼 수 있는 것</span>
+            <span className="j-gradient">학습 후 수행할 수 있는 작업</span>
           </h2>
           <ol className="mt-7 grid border-t border-[var(--j-line)] sm:mt-9 sm:grid-cols-2">
             {OUTCOMES.map((g, i) => (

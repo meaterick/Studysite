@@ -3,7 +3,7 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "공짜 라벨 만들기와 bigram 모델의 perplexity",
+    title: "학습용 정답 자동 생성과 바이그램 모델의 퍼플렉시티",
     prompt: md`
 1. \`make_pairs(tokens, k)\`: 원문을 한 칸 밀어 \`(직전 최대 k개 토큰 리스트, 다음 토큰)\` 쌍을 위치 1부터 끝까지 만듭니다. 사람이 붙인 라벨이 필요 없습니다.
 2. \`bigram_prob(tokens, alpha)\`: 바로 앞 토큰을 보고 다음 토큰 확률을 주는 함수 \`prob(prev, nxt)\`를 돌려줍니다. 가산 스무딩: $\dfrac{\text{count}(prev, nxt) + \alpha}{\text{count}(prev) + \alpha|V|}$

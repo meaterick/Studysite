@@ -27,10 +27,10 @@ export default function InteractiveDecodingTemperature() {
   const barColor = temp < 0.6 ? colors.blue : temp < 1.4 ? colors.aqua : colors.orange;
   const mood =
     temp < 0.5
-      ? "낮은 온도: 거의 항상 1등 토큰만 고른다 (결정적, 지루하지만 안전)"
+      ? "낮은 온도: 확률이 가장 높은 토큰에 선택이 집중된다(다양성 감소)"
       : temp < 1.3
-        ? "적당한 온도: 그럴듯한 후보들 사이에서 적당히 다양하게 고른다"
-        : "높은 온도: 분포가 평평해져 낮은 확률의 토큰도 자주 뽑힌다 (다양하지만 엉뚱해질 위험)";
+        ? "중간 온도: 확률이 높은 후보를 중심으로 선택의 다양성을 유지한다"
+        : "높은 온도: 낮은 확률의 토큰도 자주 선택된다(다양성 증가, 관련성 저하 위험)";
 
   return (
     <DiagramFrame

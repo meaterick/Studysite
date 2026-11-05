@@ -7,7 +7,7 @@ export default defineLesson({
   tier: "core",
   concepts: ["finetuning-alignment-prompting"],
   goal: "역할, 출력 형식, Few-shot 예시, 불확실성 허용, 구분자 원칙으로 프롬프트를 작성하고, CoT·Self-Consistency·구조화 출력의 원리와 탈옥·프롬프트 인젝션의 차이를 설명한다.",
-  why: "LLM 응용의 동작은 모델의 가중치를 바꾸지 않고 프롬프트만으로 정하는 경우가 많다. 같은 모델이라도 프롬프트가 조건을 얼마나 명시하는지에 따라 출력의 형식과 정확도가 달라지며, 이 레슨의 원칙은 RAG의 프롬프트 조립([[lesson:rag]])과 에이전트의 도구 호출([[lesson:agents]])에 그대로 쓰인다.",
+  why: "LLM 응용의 동작은 모델의 가중치를 바꾸지 않고 프롬프트만으로 정하는 경우가 많다. 같은 모델이라도 프롬프트가 조건을 얼마나 명시하는지에 따라 출력의 형식과 정확도가 달라지며, 이 레슨의 원칙은 RAG의 프롬프트 구성([[lesson:rag]])과 에이전트의 도구 호출([[lesson:agents]])에 그대로 쓰인다.",
   body: md`
 ### 프롬프트와 출력 분포
 

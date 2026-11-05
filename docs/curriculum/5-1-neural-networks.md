@@ -83,7 +83,7 @@
 
 **참고 자료**
 
-- [CS231n — Backpropagation, Intuitions](https://cs231n.github.io/optimization-2/) — 노드별 기울기 흐름과 계산 예 (영문)
+- [CS231n — Backpropagation, Intuitions](https://cs231n.github.io/optimization-2/) — 노드별 기울기 전달과 계산 예 (영문)
 - [3Blue1Brown — Backpropagation calculus](https://www.3blue1brown.com/lessons/backpropagation-calculus) — 연쇄법칙이 층을 따라 이어지는 과정 (영문)
 
 <a id="lesson-micrograd"></a>
@@ -232,7 +232,7 @@
 | MLP 전체에 대한 gradient check | 핵심 | 코드 `gradcheck-code`, 답안 `gradcheck-answer`(최소 60자) |
 | 나만의 계산 그래프 손으로 풀기 | 핵심 | 답안 `graph-hand`(최소 140자), 코드 `graph-code` |
 | 보충: NumPy 벡터화 구현과 비교하기 | 보충 | 코드 `numpy-code`, 답안 `numpy-answer`(최소 150자) |
-| 심화: 최적화기·기울기 흐름·자동미분 실험 | 심화 | 코드 `advanced-code`, 답안 `advanced-answer` |
+| 심화: 최적화기·기울기 전달·자동미분 실험 | 심화 | 코드 `advanced-code`, 답안 `advanced-answer` |
 
 ### 자기 점검 기준
 

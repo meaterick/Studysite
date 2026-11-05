@@ -90,7 +90,7 @@ export default function MemberModuleRecord({
                   <th>상태</th>
                   <th>완료</th>
                   <th>확인 문제 (오답 시도)</th>
-                  <th>서술형 자기평가</th>
+                  <th>서술형 자기 평가</th>
                   <th>코딩 실습</th>
                 </tr>
               </thead>
@@ -132,7 +132,7 @@ export default function MemberModuleRecord({
           </div>
         </Part>
 
-        <Part id="checks" title="확인 문제 오답" note="한 번이라도 틀린 확인 문제와 고른 오답">
+        <Part id="checks" title="확인 문제 오답" note="한 번이라도 틀린 확인 문제와 선택한 오답">
           {wrongChecks.length === 0 ? (
             <Empty>틀린 확인 문제가 없습니다.</Empty>
           ) : (
@@ -156,7 +156,7 @@ export default function MemberModuleRecord({
           }
         >
           {answers.length === 0 ? (
-            <Empty>쓴 서술형 답안이 없습니다.</Empty>
+            <Empty>작성한 서술형 답안이 없습니다.</Empty>
           ) : (
             <ul className="space-y-2">
               {answers.map(({ lesson, item, answer }) => (
@@ -282,7 +282,7 @@ function WrongCheck({ lesson, check, state }: { lesson: Lesson; check: Check; st
         </span>
         <span className="tabular-nums">· 제출 {state.attempts}회</span>
         <span className="pill" style={pillColor(state.correct ? "good" : "bad")}>
-          {state.correct ? "이후 정답" : "아직 못 맞힘"}
+          {state.correct ? "이후 정답" : "아직 오답"}
         </span>
       </p>
       <div className="mt-1 text-[13px] font-medium text-ink">
@@ -291,7 +291,7 @@ function WrongCheck({ lesson, check, state }: { lesson: Lesson; check: Check; st
       <ul className="mt-1.5 space-y-0.5 text-xs">
         {state.wrong.map((i) => (
           <li key={i} className="text-[var(--status-critical)]">
-            고른 오답 {choiceLetter(i)}. <Inline text={check.choices[i] ?? ""} />
+            선택한 오답 {choiceLetter(i)}. <Inline text={check.choices[i] ?? ""} />
           </li>
         ))}
         <li className="text-[var(--status-good)]">
@@ -309,7 +309,7 @@ function PredictRow({ lesson, item, state }: { lesson: Lesson; item: Predict; st
       : { label: `${state.attempts}번째에 정답`, tone: "warn" }
     : state.revealed
       ? { label: "정답 공개", tone: "bad" }
-      : { label: `${state.attempts}회 시도 · 아직 못 맞힘`, tone: "bad" };
+      : { label: `${state.attempts}회 시도 · 아직 오답`, tone: "bad" };
   return (
     <li className="py-3.5">
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-muted">
@@ -328,7 +328,7 @@ function PredictRow({ lesson, item, state }: { lesson: Lesson; item: Predict; st
       <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--code-bg)] px-3 py-2 font-mono text-xs leading-relaxed text-ink">{item.code}</pre>
       <div className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
         <div>
-          <p className="text-ink-muted">마지막으로 낸 답</p>
+          <p className="text-ink-muted">마지막 제출 답안</p>
           <pre className="mt-1 overflow-x-auto rounded-lg bg-[var(--code-bg)] px-3 py-2 font-mono text-ink">{state.lastAnswer ?? "—"}</pre>
         </div>
         <div>

@@ -10,7 +10,7 @@ export default defineExercises([
 
 1. \`Dual\` 클래스: 값 \`val\`과 미분 \`dot\`을 함께 저장하며 \`+\`, \`*\`(숫자와의 연산 포함)를 지원합니다. 곱은 $(a + b\varepsilon)(c + d\varepsilon) = ac + (ad + bc)\varepsilon$입니다. \`dsin\`, \`dexp\`는 연쇄법칙으로 \`dot\`에 $\cos$, $\exp$를 곱합니다.
 2. \`derivative(f, x)\`: \`f(Dual(x, 1.0)).dot\`
-3. 행렬 사슬 $y = W_3 W_2 W_1 x$(선형, 출력 벡터)에 대해 \`jvp(Ws, v)\` $= W_3 W_2 W_1 v$와 \`vjp(Ws, u)\` $= u^\top W_3 W_2 W_1$(결과는 입력 차원의 1차원 배열)을 **행렬을 미리 곱하지 않고** 벡터를 한 층씩 통과시켜 계산합니다.
+3. 연속 행렬곱 $y = W_3 W_2 W_1 x$(선형, 출력 벡터)에 대해 \`jvp(Ws, v)\` $= W_3 W_2 W_1 v$와 \`vjp(Ws, u)\` $= u^\top W_3 W_2 W_1$(결과는 입력 차원의 1차원 배열)을 **행렬을 미리 곱하지 않고** 벡터를 한 층씩 통과시켜 계산합니다.
 `,
     starter: py`
 import math

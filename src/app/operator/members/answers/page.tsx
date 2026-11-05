@@ -24,7 +24,7 @@ type Filter = "all" | "weak" | "unreviewed";
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "전체 답안" },
   { key: "weak", label: "보완 필요" },
-  { key: "unreviewed", label: "자기평가 전" },
+  { key: "unreviewed", label: "자기 평가 전" },
 ];
 
 interface Answer {
@@ -125,7 +125,7 @@ export default async function OperatorAnswersPage({ searchParams }: PageProps<"/
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
       <PageHeader
         title="스터디원 관리"
-        description="스터디원이 쓴 서술형 답안과 백지 복습을 문항별로 모아 봅니다. 자기평가 결과를 함께 보여 주므로 보완이 필요한 개념을 먼저 짚을 수 있습니다."
+        description="스터디원이 작성한 서술형 답안과 백지 복습을 문항별로 모아 봅니다. 자기 평가 결과를 함께 보여 주므로 보완이 필요한 개념을 확인할 수 있습니다."
       />
       <MembersTabs current="answers" />
 
@@ -138,7 +138,7 @@ export default async function OperatorAnswersPage({ searchParams }: PageProps<"/
         ))}
       </nav>
       <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <nav aria-label="자기평가" className="flex flex-wrap gap-1">
+        <nav aria-label="자기 평가" className="flex flex-wrap gap-1">
           {FILTERS.map((f) => (
             <Link key={f.key} href={href({ filter: f.key })} aria-current={f.key === filter ? "true" : undefined} className="chip">
               {f.label}
@@ -168,7 +168,7 @@ export default async function OperatorAnswersPage({ searchParams }: PageProps<"/
       <dl className="mt-10 grid grid-cols-2 border-y border-[var(--border-hairline)] sm:grid-cols-4">
         <SummaryStat label={member ? `${member.name}님의 답안` : "답안"} value={summary.total} />
         <SummaryStat label="보완 필요" value={summary.weak} tone={summary.weak > 0 ? "var(--status-critical)" : undefined} />
-        <SummaryStat label="자기평가 전" value={summary.unreviewed} />
+        <SummaryStat label="자기 평가 전" value={summary.unreviewed} />
         <SummaryStat label="답한 스터디원" value={`${summary.writers}명`} />
       </dl>
 
@@ -214,7 +214,7 @@ export default async function OperatorAnswersPage({ searchParams }: PageProps<"/
                   </div>
                   <details className="group mt-3">
                     <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-[13px] font-medium text-ink-muted transition hover:text-ink [&::-webkit-details-marker]:hidden">
-                      모범답안 · 핵심 요소
+                      모범 답안 · 핵심 요소
                       <Icon name="chevronDown" size={14} className="transition group-open:rotate-180" />
                     </summary>
                     <div className="callout callout-good mt-2 text-ink-body">

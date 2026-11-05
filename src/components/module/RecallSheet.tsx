@@ -135,7 +135,7 @@ export default function RecallSheet({
                           }`}
                           style={on ? { color: tone, borderColor: `color-mix(in srgb, ${tone} 45%, transparent)`, background: `color-mix(in srgb, ${tone} 8%, transparent)` } : undefined}
                         >
-                          {m === "ok" ? "충분히 떠올림" : "보완 필요"}
+                          {m === "ok" ? "핵심 내용 작성 완료" : "보완 필요"}
                         </button>
                       );
                     })}

@@ -131,7 +131,7 @@ export default function DescriptiveItem({
         onChange={(e) => onChange(e.target.value)}
         rows={5}
         maxLength={4000}
-        placeholder="자료를 다시 보지 말고 자신의 말로 먼저 적어 보십시오. 코드의 어느 줄이 근거인지도 함께 적으면 좋습니다."
+        placeholder="학습 자료를 보지 않고 개념을 직접 설명하십시오. 코드가 근거인 경우 해당 줄도 함께 제시하십시오."
         className="w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 text-[15px] leading-relaxed text-ink placeholder:text-ink-muted"
       />
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -142,7 +142,7 @@ export default function DescriptiveItem({
             disabled={!text.trim() || pending}
             className="btn btn-primary"
           >
-            {pending ? "저장 중…" : answered ? "수정한 답안 저장" : "답안 저장 후 모범답안 보기"}
+            {pending ? "저장 중…" : answered ? "수정한 답안 저장" : "답안 저장 후 모범 답안 보기"}
           </button>
         )}
         {error && <p className="text-sm text-[var(--status-critical)]">{error}</p>}
@@ -151,12 +151,12 @@ export default function DescriptiveItem({
       {answered && modelAnswer && (
         <div className="mt-5 space-y-4">
           <div className="callout callout-good">
-            <p className="mb-1 text-xs font-medium text-[var(--status-good)]">모범답안</p>
+            <p className="mb-1 text-xs font-medium text-[var(--status-good)]">모범 답안</p>
             <div className="text-ink-body">{modelAnswer}</div>
           </div>
           {keyPoints && keyPoints.length > 0 && (
             <div className="rounded-lg border border-[var(--border-hairline)] px-3 py-2.5 text-sm">
-              <p className="mb-1.5 text-xs font-semibold text-ink-muted">내 답에 들어 있는 핵심 요소를 체크해 보십시오</p>
+              <p className="mb-1.5 text-xs font-semibold text-ink-muted">답안에 포함한 핵심 요소를 선택하십시오</p>
               <ul className="space-y-1">
                 {keyPoints.map((point, i) => (
                   <li key={i}>
@@ -173,7 +173,7 @@ export default function DescriptiveItem({
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-ink-muted">자기평가</span>
+            <span className="text-xs text-ink-muted">자기 평가</span>
             <button
               type="button"
               onClick={() => mark("correct")}
@@ -183,7 +183,7 @@ export default function DescriptiveItem({
                 review === "correct" ? "bg-[var(--status-good)] text-white" : "border border-[var(--border-hairline)] text-ink-secondary hover:bg-[var(--surface-card-2)]"
               }`}
             >
-              핵심을 제대로 썼습니다
+              핵심 요소를 포함했습니다
             </button>
             <button
               type="button"

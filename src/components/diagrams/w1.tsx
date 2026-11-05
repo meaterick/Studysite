@@ -571,7 +571,7 @@ export function DiscriminativeGenerative() {
   return (
     <DiagramFrame
       title="판별 모델과 생성 모델: 무엇을 학습하는가"
-      caption="왼쪽: 판별 모델은 'x가 어느 클래스인가'만 알면 되므로 두 클래스를 가르는 경계(P(스팸|x) = 0.5인 선)만 학습한다. 오른쪽: 생성 모델은 클래스마다 데이터가 어떻게 분포하는지(점선 등고선)를 학습한다. 분포를 알면 그럴듯한 새 x(별)를 뽑을 수 있고, 베이즈 정리로 분류도 할 수 있다."
+      caption="왼쪽: 판별 모델은 'x가 어느 클래스인가'만 알면 되므로 두 클래스를 가르는 경계(P(스팸|x) = 0.5인 선)만 학습한다. 오른쪽: 생성 모델은 클래스마다 데이터가 어떻게 분포하는지(점선 등고선)를 학습한다. 분포를 알면 학습한 분포를 따르는 새 x(별)를 뽑을 수 있고, 베이즈 정리로 분류도 할 수 있다."
       viewBox="0 0 720 290"
       minWidth={540}
     >
@@ -1230,7 +1230,7 @@ export function BaseRateCurve() {
   return (
     <DiagramFrame
       title="같은 검사라도 기저율에 따라 달라지는 P(병 | 양성)"
-      caption="민감도 99%, 위양성률 5%인 같은 검사라도 유병률(가로축, 로그 눈금)이 낮을수록 양성 판정을 받은 사람이 실제 환자일 확률(세로축)은 급격히 떨어진다. 직관적으로는 위쪽 점선(99%) 정도라고 생각하기 쉽지만, 유병률 1%에서는 16.7%밖에 되지 않는다. 이 차이가 기저율을 무시해서 생기는 오류의 크기다."
+      caption="민감도 99%, 위양성률 5%인 같은 검사라도 유병률(가로축, 로그 눈금)이 낮을수록 양성 판정을 받은 사람이 실제 환자일 확률(세로축)은 급격히 떨어진다. 민감도인 위쪽 점선(99%)과 구분해야 하며, 유병률 1%에서는 16.7%다. 이 차이가 기저율을 무시해서 생기는 오류의 크기다."
       viewBox="0 0 720 284"
       minWidth={540}
     >
@@ -1248,7 +1248,7 @@ export function BaseRateCurve() {
       />
       <line x1={A.left} y1={sy(0.99)} x2={A.left + A.width} y2={sy(0.99)} stroke={colors.red} strokeDasharray="6 4" />
       <text x={A.left + 8} y={sy(0.99) - 6} fontSize={10.5} fontWeight={700} fill={colors.red}>
-        직관적으로 떠올리는 값: 민감도 99%
+        비교 기준: 민감도 99%
       </text>
       <path d={linePath(pts)} fill="none" stroke={colors.blue} strokeWidth={2.6} />
       <Arr x1={sx(0.01)} y1={sy(0.99) + 4} x2={sx(0.01)} y2={sy(post(0.01)) - 8} color={colors.red} marker={`${P}-red`} width={1.4} dashed />
@@ -1467,7 +1467,7 @@ export function CriticalPoints() {
   return (
     <DiagramFrame
       title="기울기가 0인 곳이 모두 최솟값은 아니다: 극소점과 안장점"
-      caption="왼쪽: 같은 경사하강법이라도 A에서 출발하면 주변보다만 낮은 극소점에, B에서 출발하면 전체에서 가장 낮은 최솟값에 멈춘다(화살표는 손실이 줄어드는 방향으로 이동한 경로). 오른쪽: 안장점에서는 한 방향(파랑)으로는 함수가 증가해 최솟값처럼 보이지만, 다른 방향(주황)으로는 감소한다. 두 곳 모두 기울기가 0이라 갱신이 느려지거나 멈춘다."
+      caption="왼쪽: 같은 경사하강법이라도 A에서 출발하면 주변에서는 가장 낮지만 전역 최솟값은 아닌 극소점에, B에서 출발하면 전체에서 가장 낮은 최솟값에 멈춘다(화살표는 손실이 줄어드는 방향으로 이동한 경로). 오른쪽: 안장점에서는 한 방향(파랑)으로는 함수가 증가해 최솟값처럼 보이지만, 다른 방향(주황)으로는 감소한다. 두 곳 모두 기울기가 0이라 갱신이 느려지거나 멈춘다."
       viewBox="0 0 720 262"
       minWidth={560}
     >
@@ -1957,7 +1957,7 @@ export function MatmulOrder() {
       {dot(pts.BAx, colors.orange, "B(Ax) = [3, 10]", 9, 4)}
       <Lines x={390} y={44} lines={["A = [[1, 2], [0, 1]]", "B = [[1, 0], [3, 1]]"]} size={11.5} anchor="start" color={ink} weight={700} gap={1.5} />
       <Lines x={390} y={100} lines={["AB = [[7, 2], [3, 1]]  (B 먼저)", "BA = [[1, 2], [3, 7]]  (A 먼저)"]} size={11} anchor="start" color={inkSecondary} gap={1.5} />
-      <Lines x={390} y={156} lines={["역전파에서는 이 순서를 거꾸로,", "전치해서 되짚어 간다: (AB)ᵀ = BᵀAᵀ"]} size={10.5} anchor="start" color={colors.violet} weight={700} gap={1.5} />
+      <Lines x={390} y={156} lines={["역전파에서는 이 순서를 거꾸로,", "전치 행렬을 역순으로 곱한다: (AB)ᵀ = BᵀAᵀ"]} size={10.5} anchor="start" color={colors.violet} weight={700} gap={1.5} />
     </DiagramFrame>
   );
 }

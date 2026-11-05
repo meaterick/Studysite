@@ -3,7 +3,7 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "출처 꼬리표 전파와 정책 검사로 유출을 결정적으로 막기",
+    title: "출처 표지 전파와 정책 검사로 유출을 결정적으로 막기",
     prompt: md`
 본문의 정보 흐름 통제를 구현합니다. 값은 \`Value(data, sources)\`이고, \`sources\`는 그 값을 만드는 데 쓰인 출처의 \`frozenset\`입니다.
 
@@ -56,7 +56,7 @@ def _():
     v = derive("요약", inbox, bob)
     assert isinstance(v, Value) and v.data == "요약" and v.sources == frozenset({"inbox", "user"}), v
     assert derive("상수").sources == frozenset()
-    assert derive("두 번 요약", derive("요약", inbox)).sources == frozenset({"inbox"}), "요약의 요약도 꼬리표를 물려받아야 합니다."
+    assert derive("두 번 요약", derive("요약", inbox)).sources == frozenset({"inbox"}), "다시 요약한 값에도 원본의 출처 표지가 유지되어야 합니다."
 
 @test("받는 사람 주소: 신뢰하지 않는 출처나 출처 없음은 차단")
 def _():

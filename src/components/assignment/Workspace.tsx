@@ -56,7 +56,7 @@ export interface WorkspaceTaskView {
 type SaveState = "saved" | "dirty" | "saving" | "error";
 
 const STATUS_TEXT: Record<RunStatus, string> = {
-  "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 처음 한 번은 몇 초 정도 걸립니다.",
+  "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 최초 실행 시 준비 시간이 필요합니다.",
   "loading-packages": "필요한 패키지를 불러오고 있습니다…",
   running: "실행 중…",
 };
@@ -334,7 +334,7 @@ export default function Workspace({
           if (cell.kind !== "code") continue;
           const ok = await runCell(task.id, cell.id);
           if (!ok) {
-            setNotice(`"${task.title}"의 코드 셀에서 오류가 발생해 전체 실행을 멈췄습니다.`);
+            setNotice(`"${task.title}"의 코드 셀에서 오류가 발생해 전체 실행을 중단했습니다.`);
             return false;
           }
         }
@@ -566,7 +566,7 @@ export default function Workspace({
           <h3 id="self-check-heading" className="text-xl font-bold tracking-[-0.03em] text-ink">
             자기 점검
           </h3>
-          <p className="mt-1 text-sm text-ink-muted">빠진 답안이나 실행 오류를 확인한 뒤 아래 기준과 자신의 결과를 비교하세요.</p>
+          <p className="mt-1 text-sm text-ink-muted">미작성 답안과 실행 오류를 확인한 뒤 아래 기준과 자신의 결과를 비교하십시오.</p>
           <ul className="mt-5 space-y-2 text-sm">
             {checks.map((c) => (
               <li key={c.taskId} className={`flex flex-wrap items-center gap-x-2 ${c.complete ? "text-ink" : c.optional ? "text-ink-muted" : "text-ink-secondary"}`}>

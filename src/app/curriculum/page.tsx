@@ -20,7 +20,7 @@ export default async function CurriculumPage() {
       <PageHeader
         eyebrow="Aegis 스터디"
         title="커리큘럼"
-        description="배우고 싶은 분야를 선택하세요. 분야별 모듈에서 다루는 주제와 레슨을 살펴본 뒤 원하는 곳에서 시작할 수 있습니다."
+        description="배우고 싶은 분야를 선택하십시오. 분야별 모듈에서 다루는 주제와 레슨을 살펴본 뒤 필요한 모듈부터 학습할 수 있습니다."
         actions={user ? <Link href="/progress" className="btn btn-secondary">내 학습 진도</Link> : undefined}
       />
 
@@ -57,7 +57,7 @@ export default async function CurriculumPage() {
       <section aria-labelledby="guides-heading" className="mt-14 border-t border-[var(--border-hairline)] pt-8">
         <h2 id="guides-heading" className="section-title">학습을 계획할 때</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
-          처음 방문했다면 과정 개요를, 여러 분야를 차례로 공부하고 싶다면 추천 일정을 살펴보세요.
+          처음 방문했다면 과정 개요를, 여러 분야를 차례로 공부하고 싶다면 추천 일정을 확인하십시오.
         </p>
         <nav aria-label="학습 안내" className="mt-5 flex flex-wrap gap-3">
           <Link href={trackHref("intro")} className="btn btn-secondary">과정 개요</Link>

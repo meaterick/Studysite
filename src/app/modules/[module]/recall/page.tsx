@@ -31,7 +31,7 @@ export default async function RecallPage({ params, searchParams }: PageProps<"/m
       <h3 id="recall-review" className="text-lg font-semibold tracking-[-0.02em] text-ink">
         내 답안과 비교하기
       </h3>
-      <p className="mt-1 text-sm text-ink-muted">아래 레슨 목표와 비교해 빠뜨린 내용이 있으면 해당 문항에 보완 필요를 표시하십시오.</p>
+      <p className="mt-1 text-sm text-ink-muted">아래 레슨 목표와 비교해 누락된 내용이 있으면 해당 문항에 보완 필요를 표시하십시오.</p>
       <p className="mt-6 text-xs font-medium text-ink-muted">핵심 레슨의 목표</p>
       <ol className="mt-2 space-y-2.5 text-sm leading-relaxed">
         {core.map(({ lesson }) => {
@@ -90,7 +90,7 @@ export default async function RecallPage({ params, searchParams }: PageProps<"/m
         <h2 id="recall-heading" className="text-[1.75rem] font-bold tracking-[-0.035em] text-ink">
           백지 복습
         </h2>
-        <p className="mb-10 mt-2 text-[15px] text-ink-secondary">학습 자료를 보지 않고 떠오르는 대로 적습니다. 제출하면 비교 자료가 열립니다.</p>
+        <p className="mb-10 mt-2 text-[15px] text-ink-secondary">학습 자료를 보지 않고 기억하는 핵심 내용을 작성합니다. 제출하면 비교 자료가 열립니다.</p>
         <RecallSheet
           moduleSlug={slug}
           fields={module.recall.map(({ prompt, hint }) => ({

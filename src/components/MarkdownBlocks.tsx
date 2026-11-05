@@ -67,8 +67,8 @@ const CALLOUT_STYLE: Record<string, { tone: string; icon: string }> = {
   warn: { tone: "var(--status-serious)", icon: "주의" },
   example: { tone: "var(--tier-supplement)", icon: "예제" },
   quote: { tone: "var(--border-strong)", icon: "" },
-  tip: { tone: "var(--status-good)", icon: "팁" },
-  task: { tone: "var(--tier-advanced)", icon: "직접 해보기" },
+  tip: { tone: "var(--status-good)", icon: "참고 사항" },
+  task: { tone: "var(--tier-advanced)", icon: "실습 안내" },
 };
 
 export function BlocksRenderer({

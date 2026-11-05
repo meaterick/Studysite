@@ -72,7 +72,7 @@ def _():
     groups = sorted(sorted(np.where(np.asarray(labels) == j)[0].tolist()) for j in range(2))
     assert groups == [[0, 1, 4], [2, 3, 5]], f"군집: {groups}"
 `,
-    hints: ["`d = np.linalg.norm(points[:, None, :] - centroids[None, :, :], axis=2)`는 (점 수, 중심 수) 거리 행렬입니다. `d.argmin(axis=1)`이 배정입니다.", "`np.array([points[labels == j].mean(axis=0) for j in range(k)])`", "반복문 안에서 `if np.allclose(new, centroids): break`를 갱신 전에 검사합니다. 멈춘 뒤의 labels가 최종 배정과 일치하는지도 생각해 보십시오."],
+    hints: ["`d = np.linalg.norm(points[:, None, :] - centroids[None, :, :], axis=2)`는 (점 수, 중심 수) 거리 행렬입니다. `d.argmin(axis=1)`이 배정입니다.", "`np.array([points[labels == j].mean(axis=0) for j in range(k)])`", "반복문 안에서 `if np.allclose(new, centroids): break`를 갱신 전에 검사합니다. 멈춘 뒤의 labels가 최종 배정과 일치하는지도 확인하십시오."],
     solution: py`
 import numpy as np
 
