@@ -19,7 +19,6 @@ nginx 로그는 매시간 회전 조건을 검사해 일별 또는 10MB 초과 �
 
 OCI 네트워크에서 차단된 패킷·포트 스캔이나 SSH 접속은 이 웹앱에서 볼 수 없습니다.
 OCI VCN Flow Logs 및 호스트 인증 로그를 따로 확인해야 합니다. 배포 이전 요청은 소급 수집되지 않습니다.
-코드 점검 결과와 남은 조치는 [보안 점검 보고서](../archive/security/security-review-2026-10-19.md)에 정리했습니다.
 
 검증: `npm run test:security`, `npm run lint`, `npm run build`, `npm audit --omit=dev`.
 
@@ -32,8 +31,6 @@ OCI VCN Flow Logs 및 호스트 인증 로그를 따로 확인해야 합니다. 
 공유 IP는 여러 이용자에게 영향을 줄 수 있으므로 필요한 주소는 허용 목록으로 관리해 주십시오.
 상세 정책·수집 범위·복구 방법은 [IP 방어 운영 안내](ip-defense.md)를 참고하세요.
 
-서버 노출과 침해 영향 검토: [2026-10-19 Nmap 위험 검토](../archive/security/nmap-risk-review-2026-10-19.md).
-
 보안 센터의 탐지·대응 흐름, 로그인/CSP 추가 방어, SSH·방화벽 읽기 전용 수집기의 범위는 [보안 모니터링 운영 안내](security-monitoring.md)에 정리했습니다.
 
-운영자 작업 흐름에 따른 화면 구성, 수집·저장의 효율 측정과 남은 위험은 [보안 구조·효율 점검](../archive/security/security-architecture-review-2026-10-19.md)에서 확인할 수 있습니다. `npm run bench:security`는 운영 데이터 없이 임시 DB로 비용을 측정합니다.
+격리된 성능 측정은 `npm run bench:security`로 실행합니다.
