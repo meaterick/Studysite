@@ -6,7 +6,7 @@ import { lessonHref } from "@/lib/routes";
 import { CORE_PATH } from "@/content/course";
 import { loginHref } from "@/lib/returnPath";
 
-/** 메인 화면의 "지금 할 수 있는 일": 로그인 전에는 시작하기, 로그인 후에는 필수 경로의 다음 레슨으로 이어 가기 */
+/** 커리큘럼의 "지금 할 수 있는 일": 로그인 전에는 시작하기, 로그인 후에는 필수 경로의 다음 레슨으로 이어 가기 */
 export default async function HomeCta() {
   const user = await getCurrentUser();
   const first = CORE_PATH[0];
@@ -16,8 +16,8 @@ export default async function HomeCta() {
         <Link href={loginHref(lessonHref(first.module, first.id))} className="btn btn-primary">
           Google 계정으로 시작하기
         </Link>
-        <Link href="/curriculum" className="btn btn-secondary">
-          커리큘럼 보기
+        <Link href="/#fields" className="btn btn-secondary">
+          분야별로 둘러보기
         </Link>
       </div>
     );
@@ -28,8 +28,8 @@ export default async function HomeCta() {
       <Link href={next ? lessonHref(next.module, next.id) : "/progress"} className="btn btn-primary">
         {next ? "이어서 학습하기" : "내 진도 보기"}
       </Link>
-      <Link href="/curriculum" className="btn btn-secondary">
-        커리큘럼 보기
+      <Link href="/#fields" className="btn btn-secondary">
+        분야별로 둘러보기
       </Link>
     </div>
   );

@@ -37,7 +37,7 @@ export default async function TrackPage({ params }: PageProps<"/tracks/[track]">
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
-      <PageHeader back={{ href: "/curriculum", label: "커리큘럼" }} eyebrow={`Track ${track.code}`} title={track.title} description={track.summary} />
+      <PageHeader back={{ href: "/#fields", label: "학습 분야" }} eyebrow={`Track ${track.code}`} title={track.title} description={track.summary} />
 
       <section aria-labelledby="why-heading" className="mb-16 max-w-3xl">
         <h2 id="why-heading" className="section-title mb-3">

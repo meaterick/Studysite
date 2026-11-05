@@ -17,11 +17,11 @@ import { getCurrentUser } from "@/lib/dal";
 
 export const metadata: Metadata = {
   title: {
-    default: "AI 기초부터 활용까지 | Aegis 스터디",
-    template: "%s | Aegis AI 스터디",
+    default: "Aegis 스터디 | 분야별 학습",
+    template: "%s | Aegis 스터디",
   },
   description:
-    "Aegis 동아리의 AI 스터디. 파이썬과 수학 기초에서 시작해 데이터 처리, 머신러닝, 딥러닝, 대규모 언어 모델과 RAG·에이전트까지 레슨, 실습, 확인 문제, 과제로 학습합니다.",
+    "Python, 수학과 통계, 데이터 처리, 머신러닝, 딥러닝, 생성형 AI를 분야별로 학습하고 브라우저에서 실습하는 Aegis 스터디입니다.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
