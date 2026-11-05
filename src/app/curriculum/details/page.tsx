@@ -47,7 +47,7 @@ export default async function CurriculumDetailsPage() {
         back={{ href: "/curriculum", label: "커리큘럼" }}
         eyebrow="Aegis 스터디"
         title="커리큘럼 상세"
-        description="분야별 학습 목표와 전체 모듈·레슨 목록을 살펴보세요. 개념별 선수관계와 추천 일정도 확인할 수 있습니다."
+        description="분야별 학습 목표와 전체 모듈·레슨 목록을 확인하십시오. 개념별 선수관계와 추천 일정도 확인할 수 있습니다."
         actions={
           user ? (
             <Link href="/progress" className="btn btn-primary">
@@ -184,21 +184,21 @@ export default async function CurriculumDetailsPage() {
         <Section id="method" title="학습 방식">
           <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2">
             <div>
-              <h3 className="text-[15px] font-semibold text-ink">레슨 하나의 순서</h3>
+              <h3 className="text-[15px] font-semibold text-ink">레슨 학습 절차</h3>
               <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-ink-secondary marker:text-ink-muted">
                 <li>이 개념이 실제 문제나 다음 레슨에서 어떻게 쓰이는지 확인합니다.</li>
                 <li>본문의 설명·손계산·실행 코드로 개념을 익힙니다.</li>
                 <li>TODO 코딩 실습과 출력 예측으로 직접 확인합니다.</li>
                 <li>확인 문제를 모두 맞히면 레슨을 완료합니다.</li>
-                <li>서술형으로 개념을 설명해 보고 모범답안과 비교합니다(선택).</li>
+                <li>서술형 답안으로 개념을 설명하고 모범 답안과 비교합니다(선택).</li>
               </ol>
             </div>
             <div>
-              <h3 className="text-[15px] font-semibold text-ink">모듈 하나의 순서</h3>
+              <h3 className="text-[15px] font-semibold text-ink">모듈 학습 절차</h3>
               <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-ink-secondary marker:text-ink-muted">
                 <li>목표 문제를 읽고 이 모듈에서 무엇을 할 수 있게 되는지 확인합니다.</li>
                 <li>핵심 레슨을 순서대로 마칩니다. 이미 아는 내용은 진단 평가로 인정받습니다.</li>
-                <li>백지 복습으로 자료를 보지 않고 핵심 내용을 적은 뒤 비교합니다.</li>
+                <li>학습 자료를 보지 않고 백지 복습 답안을 작성한 뒤 학습 자료와 비교합니다.</li>
                 <li>과제가 있는 모듈은 작업을 마친 뒤 자동 테스트와 자기 점검 기준으로 결과를 확인합니다.</li>
               </ol>
             </div>
@@ -222,7 +222,7 @@ export default async function CurriculumDetailsPage() {
 
         <Section id="concepts" title="80개 개념과 선수관계">
           <p className="mb-5 max-w-3xl text-sm leading-relaxed text-ink-muted">
-            개념을 다루는 핵심 레슨에는 개념 번호가 붙으며, 하나의 개념이 여러 레슨으로 나뉠 수 있습니다. 선수 개념은 그 개념을 배우기 전에 알아야 하는 개념이며, 기본 순서대로 학습하면 항상 먼저 나옵니다.
+            개념을 다루는 핵심 레슨에는 개념 번호가 붙으며, 하나의 개념이 여러 레슨으로 나뉠 수 있습니다. 선수 개념은 그 개념을 배우기 전에 알아야 하는 개념이며, 기본 학습 순서는 선수 개념을 먼저 학습하도록 구성되어 있습니다.
           </p>
           {mainTracks
             .filter((t) => CONCEPTS.some((c) => c.track === t.id))
@@ -259,7 +259,7 @@ export default async function CurriculumDetailsPage() {
         </Section>
 
         <Section id="capstone-plan" title="캡스톤 단계별 준비">
-          <p className="mb-5 text-sm text-ink-muted">추천 일정에 맞춰 조금씩 준비하세요. 레슨의 잠금 여부와 관계없이 이 안내를 볼 수 있습니다.</p>
+          <p className="mb-5 text-sm text-ink-muted">추천 일정의 단계에 따라 준비하십시오. 레슨의 잠금 여부와 관계없이 이 안내를 볼 수 있습니다.</p>
           <ol className="rows border-y border-[var(--border-hairline)]">
             {CAPSTONE_PLAN.map((step) => (
               <li key={step.week} className="grid gap-2 py-4 text-sm sm:grid-cols-[12rem_1fr] sm:gap-4">

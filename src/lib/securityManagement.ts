@@ -28,7 +28,7 @@ export function applySecurityChange(actorId: string, ownIp: string, data: FormDa
         if (!/^[a-f0-9]{24}$/.test(id) || !Object.hasOwn(CASE_STATUS, status)) return { ok: false, message: "올바른 탐지 건과 상태를 선택해 주십시오." };
         if (!reviewSecurityCase(id, status, value("note"), actorId)) return { ok: false, message: "탐지 건을 찾지 못했습니다. 새로고침해 주십시오." };
         recordSecurityEvent("case_reviewed", { userId: actorId, detail: `탐지 ${id} · ${CASE_STATUS[status as CaseStatus]} · ${value("note").slice(0, 300)}` });
-        return { ok: true, message: "대응 상태를 저장했습니다. 새 집계창에서 재발하면 다시 미확인으로 표시합니다." };
+        return { ok: true, message: "대응 상태를 저장했습니다. 새 집계 구간에서 재발하면 미확인 상태로 다시 표시합니다." };
       }
       if (op === "policy") {
         const enabled = value("enabled");

@@ -12,7 +12,7 @@ export default defineExercises([
 - $\text{loss} = -\dfrac{1}{2}\left(\dfrac{1}{N}\sum_k \log P^{i}_{kk} + \dfrac{1}{N}\sum_k \log P^{t}_{kk}\right)$
 - $G = \dfrac{\partial\,\text{loss}}{\partial S} = \dfrac{(P^{i} - I) + (P^{t} - I)}{2N}$
 
-\`train\`은 이 함수로 두 선형 인코더를 함께 학습시키고 손실 기록과 학습 배치의 검색 정확도를 돌려줍니다. 학습 전 손실이 $\ln 32 \approx 3.47$ 근처인 이유도 생각해 보십시오.
+\`train\`은 이 함수로 두 선형 인코더를 함께 학습시키고 손실 기록과 학습 배치의 검색 정확도를 돌려줍니다. 학습 전 손실이 $\ln 32 \approx 3.47$ 근처인 이유도 분석하십시오.
 `,
     starter: py`
 import numpy as np

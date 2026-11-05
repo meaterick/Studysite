@@ -68,7 +68,7 @@ def _():
         h, c = lstm_step(x, h, c, P)
     assert np.all(np.abs(h) < 1)
 `,
-    hints: ["`f, i, o = sigmoid(gate(\"f\")), sigmoid(gate(\"i\")), sigmoid(gate(\"o\"))`, `g = np.tanh(gate(\"g\"))`", "`c_new = f * c + i * g`(원소별 곱), `h_new = o * np.tanh(c_new)`", "c 경로에는 행렬곱이 없고 f를 곱한 뒤 더하기만 합니다. f가 1에 가까우면 기울기도 거의 그대로 흘러갑니다."],
+    hints: ["`f, i, o = sigmoid(gate(\"f\")), sigmoid(gate(\"i\")), sigmoid(gate(\"o\"))`, `g = np.tanh(gate(\"g\"))`", "`c_new = f * c + i * g`(원소별 곱), `h_new = o * np.tanh(c_new)`", "c 경로에는 행렬곱이 없고 f를 곱한 뒤 더하기만 합니다. f가 1에 가까우면 기울기의 크기도 거의 유지됩니다."],
     solution: py`
 import numpy as np
 

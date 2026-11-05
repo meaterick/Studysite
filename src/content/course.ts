@@ -14,7 +14,7 @@ export const COURSE = {
   /** 수료하면 할 수 있는 것(맨 윗단위 목표). 각 목표가 어느 트랙에서 다뤄지는지 함께 둔다. */
   goals: [
     { text: "파이썬으로 데이터를 읽고 정리하고 분석하는 코드를 재현 가능하게 작성한다.", tracks: ["programming", "data"] as TrackId[] },
-    { text: "모델·손실·학습을 함수·벡터·미분·확률·통계의 언어로 설명하고 손으로 계산한다.", tracks: ["math"] as TrackId[] },
+    { text: "모델·손실·학습을 함수·벡터·미분·확률·통계 개념으로 설명하고 손으로 계산한다.", tracks: ["math"] as TrackId[] },
     { text: "머신러닝 문제를 데이터 누수 없이 설계하고, 기준 모델과 알맞은 지표로 결과를 판단한다.", tracks: ["ml"] as TrackId[] },
     { text: "신경망·역전파·셀프 어텐션을 직접 구현하고, 학습이 실패하는 원인을 진단한다.", tracks: ["dl", "genai"] as TrackId[] },
     { text: "LLM의 학습·생성 과정과 한계를 설명하고, RAG·도구·에이전트 시스템을 만들어 평가·운영 지표로 검증한다.", tracks: ["genai"] as TrackId[] },

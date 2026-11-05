@@ -35,7 +35,7 @@ export default function SettingsForm({
             <span>
               <span className="font-medium text-ink">미완료 경고 (기본)</span>
               <span className="mt-1 block text-sm leading-relaxed text-ink-secondary">
-                순서는 안내만 합니다. 앞 레슨을 끝내지 않아도 다음 레슨·백지 복습·과제로 넘어갈 수 있고, 먼저 마쳐야 할 레슨이 남아 있으면 경고를 보여 줍니다. 보충·심화 레슨은 언제든 열 수 있습니다.
+                학습 순서는 권장 사항으로 안내합니다. 앞 레슨을 끝내지 않아도 다음 레슨·백지 복습·과제로 넘어갈 수 있고, 먼저 마쳐야 할 레슨이 남아 있으면 경고를 보여 줍니다. 보충·심화 레슨은 언제든 열 수 있습니다.
               </span>
             </span>
           </label>
@@ -44,7 +44,7 @@ export default function SettingsForm({
             <span>
               <span className="font-medium text-ink">잠금</span>
               <span className="mt-1 block text-sm leading-relaxed text-ink-secondary">
-                모듈 안에서 앞 핵심 레슨을 완료해야 다음 핵심 레슨이 열리고, 핵심 레슨을 모두 마치면 백지 복습·과제와 보충·심화 레슨이 열립니다. 진단 평가로 인정받은 레슨도 완료로 칩니다.
+                모듈 안에서 앞 핵심 레슨을 완료해야 다음 핵심 레슨이 열리고, 핵심 레슨을 모두 마치면 백지 복습·과제와 보충·심화 레슨이 열립니다. 진단 평가로 인정받은 레슨도 완료로 처리합니다.
               </span>
             </span>
           </label>

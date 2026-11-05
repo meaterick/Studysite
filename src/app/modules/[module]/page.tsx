@@ -48,7 +48,7 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
       const first = status.tiers.core.done === 0;
       return { title: status.currentLesson.title, cta: first ? "첫 레슨 시작하기" : "이어서 학습하기", detail: `핵심 레슨 ${status.tiers.core.total - status.tiers.core.done}개 남음`, href: lessonHref(slug, status.currentLesson.id) };
     }
-    if (module.recall.length > 0 && !status.recallSubmitted) return { title: "백지 복습", cta: "작성하기", detail: "자료를 보지 않고 이 모듈의 핵심 내용을 적어 봅니다.", href: recallHref(slug) };
+    if (module.recall.length > 0 && !status.recallSubmitted) return { title: "백지 복습", cta: "작성하기", detail: "자료를 보지 않고 이 모듈의 핵심 내용을 작성합니다.", href: recallHref(slug) };
     if (module.assignment) return { title: module.assignment.title, cta: "과제 하기", detail: "핵심 레슨과 백지 복습을 마쳤습니다.", href: assignmentHref(slug) };
     return undefined;
   })();
@@ -184,7 +184,7 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
 
         {module.references && module.references.length > 0 && (
           <section aria-labelledby="refs-heading">
-            <SectionHead id="refs-heading" title="함께 보면 좋은 자료" />
+            <SectionHead id="refs-heading" title="관련 참고 자료" />
             <ul className="rows border-y border-[var(--border-hairline)]">
               {module.references.map((ref) => (
                 <li key={ref.url}>

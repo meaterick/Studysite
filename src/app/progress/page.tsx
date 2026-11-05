@@ -83,10 +83,10 @@ export default async function ProgressPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
-      <PageHeader title={`${user.name}님의 학습 진도`} description="최근 학습을 이어가거나 분야별 완료 기록을 확인하세요." />
+      <PageHeader title={`${user.name}님의 학습 진도`} description="최근 학습을 이어가거나 분야별 완료 기록을 확인하십시오." />
 
       {today.length === 0 ? (
-        <NextStep eyebrow="학습 분야 선택" title={focus ? "다음에 배울 분야를 골라 보세요" : "관심 있는 분야에서 첫 학습을 시작하세요"} href="/curriculum" cta="분야 둘러보기" />
+        <NextStep eyebrow="학습 분야 선택" title={focus ? "다음 학습 분야를 선택하십시오" : "관심 있는 분야에서 첫 학습을 시작하십시오"} href="/curriculum" cta="분야 목록 보기" />
       ) : (
         <NextStep
           eyebrow="최근 학습 분야"
@@ -223,7 +223,7 @@ export default async function ProgressPage() {
         <h2 id="concepts-heading" className="section-title mb-2">
           개념별 완료
         </h2>
-        <p className="mb-4 text-sm text-ink-muted">개념을 다루는 핵심 레슨을 모두 마치면 채워집니다.</p>
+        <p className="mb-4 text-sm text-ink-muted">개념에 연결된 핵심 레슨을 모두 마치면 완료로 표시됩니다.</p>
         <ol className="grid grid-cols-8 gap-1.5 sm:grid-cols-[repeat(16,minmax(0,1fr))]" aria-label="80개 개념">
           {CONCEPTS.map((c) => {
             const lessons = lessonsOfConcept(c.id);

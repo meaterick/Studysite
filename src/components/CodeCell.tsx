@@ -10,7 +10,7 @@ import { defineEditorThemes, useEditorTheme } from "./assignment/useEditorTheme"
 import Icon from "./Icon";
 
 const STATUS_LABEL: Record<RunStatus, string> = {
-  "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 처음 한 번은 몇 초 정도 걸립니다.",
+  "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 최초 실행 시 준비 시간이 필요합니다.",
   "loading-packages": "필요한 패키지를 불러오고 있습니다…",
   running: "실행 중…",
 };

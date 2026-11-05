@@ -52,7 +52,7 @@ export default async function AssignmentPage({ params }: PageProps<"/modules/[mo
           <h2 id="overview-heading" className="mt-2 text-[1.75rem] font-bold leading-tight tracking-[-0.035em] text-ink sm:text-[2rem]">
             {spec.title}
           </h2>
-          <p className="mt-3 text-sm text-ink-secondary">작업을 마친 뒤 자동 테스트와 자기 점검 기준으로 직접 확인하세요.</p>
+          <p className="mt-3 text-sm text-ink-secondary">작업을 마친 뒤 자동 테스트와 자기 점검 기준으로 직접 확인하십시오.</p>
         </header>
 
         <section aria-label="과제 설명" className="max-w-3xl">
@@ -81,10 +81,10 @@ export default async function AssignmentPage({ params }: PageProps<"/modules/[mo
             </summary>
             <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-ink-secondary marker:text-ink-muted">
               <li>코드는 브라우저에서 실행되며 설치가 필요하지 않습니다.</li>
-              <li>셀끼리 변수를 공유하므로 위에서부터 차례로 실행합니다. 실행: Shift+Enter</li>
+              <li>코드 셀은 변수를 공유하므로 위에서부터 차례로 실행합니다. 실행: Shift+Enter</li>
               <li>작성 내용은 서버에 자동 저장됩니다. 즉시 저장: Ctrl+S</li>
               <li>답안은 마크다운(표·목록·수식 $…$)으로 작성하고 미리보기로 확인합니다.</li>
-              <li>matplotlib 그래프는 실행 결과에 그림으로 작업 공간에 저장됩니다.</li>
+              <li>matplotlib 그래프는 이미지 형태의 실행 결과로 작업 공간에 저장됩니다.</li>
             </ul>
           </details>
         </section>

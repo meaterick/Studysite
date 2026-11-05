@@ -85,7 +85,7 @@ plt.show()
 
 ### 상자그림: 범주마다 분포 비교
 
-상자그림은 사분위수와 이상치 후보로 분포를 요약한다([[lesson:summary-statistics]]). 범주마다 상자그림을 나란히 그리면 범주에 따라 분포가 어떻게 다른지 한눈에 비교된다.
+상자그림은 사분위수와 이상치 후보로 분포를 요약한다([[lesson:summary-statistics]]). 범주마다 상자그림을 나란히 그리면 범주에 따라 분포가 어떻게 다른지 비교된다.
 
 \`\`\`python
 fig, ax = plt.subplots(figsize=(5, 3.5))

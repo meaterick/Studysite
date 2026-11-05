@@ -43,12 +43,12 @@ export default async function MembersPage({ searchParams }: PageProps<"/operator
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 sm:py-20">
-      <PageHeader title="스터디원 관리" description={`가입 ${members.length}명 · 관리자 ${adminCount}명. 이름을 누르면 그 스터디원의 학습 기록 전체를 봅니다.`} />
+      <PageHeader title="스터디원 관리" description={`가입 ${members.length}명 · 관리자 ${adminCount}명. 이름을 누르면 해당 스터디원의 전체 학습 기록을 확인할 수 있습니다.`} />
       <MembersTabs current="list" />
 
       {error === "lastadmin" && (
         <p role="alert" className="callout callout-danger mb-6 text-[var(--status-critical)]">
-          마지막 관리자 계정은 강등하거나 삭제할 수 없습니다.
+          마지막 관리자 계정은 스터디원으로 변경하거나 삭제할 수 없습니다.
         </p>
       )}
       {error === "self" && (

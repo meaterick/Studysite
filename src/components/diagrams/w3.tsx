@@ -286,7 +286,7 @@ export function ReluVsGelu() {
   return (
     <DiagramFrame
       title="ReLU와 GELU: 함수와 기울기"
-      caption="왼쪽: GELU(주황)는 큰 양수에서는 ReLU(파랑)처럼 거의 그대로 통과시키고, 0 근처와 음수 쪽은 확률 Φ(x)를 곱해 부드럽게 줄인다(음수 쪽에 살짝 내려가는 구간도 있다). 오른쪽: ReLU의 기울기는 x = 0에서 0에서 1로 불연속적으로 바뀌고 음수 쪽은 정확히 0이라, 음수로 넘어간 뉴런은 기울기를 받지 못한다. GELU의 기울기는 어디서나 매끄럽게 이어져 깊은 Transformer에서 기울기가 더 안정적으로 흐른다."
+      caption="왼쪽: GELU(주황)는 큰 양수에서는 ReLU(파랑)처럼 거의 그대로 통과시키고, 0 근처와 음수 쪽은 확률 Φ(x)를 곱해 부드럽게 줄인다(음수 구간에서 출력이 감소하는 부분도 있다). 오른쪽: ReLU의 기울기는 x = 0에서 0에서 1로 불연속적으로 바뀌고 음수 쪽은 정확히 0이라, 음수로 넘어간 뉴런은 기울기를 받지 못한다. GELU의 기울기는 어디서나 매끄럽게 이어져 깊은 Transformer에서 기울기를 더 안정적으로 계산할 수 있다."
       viewBox="0 0 720 250"
       minWidth={560}
     >
@@ -974,7 +974,7 @@ export function BroadcastBug() {
         결과: (4, 4) — 16칸의 평균이 손실이 된다
       </text>
       <Tag x={480} y={96} w={226} h={64} lines={["원하는 것: 대각선 4칸", "pred.squeeze(1) − y → (4,)"]} color={colors.green} tint={0.12} size={12} />
-      <Tag x={480} y={176} w={226} h={64} lines={["실제로 계산된 것: 16칸", "빨강 12칸은 엉뚱한 쌍의 차이"]} color={colors.red} tint={0.1} size={12} />
+      <Tag x={480} y={176} w={226} h={64} lines={["실제로 계산된 것: 16칸", "빨강 12칸은 서로 대응하지 않는 쌍의 차이"]} color={colors.red} tint={0.1} size={12} />
     </DiagramFrame>
   );
 }
@@ -1756,7 +1756,7 @@ export function DualNumberTrace() {
     >
       <Markers prefix={P} colors={{ blue: colors.blue, ink: inkMuted }} />
       <text x={16} y={16} fontSize={11} fontWeight={800} fill={colors.blue}>
-        순방향 모드: (값 + 미분ε) 한 쌍이 앞으로 흐른다 →
+        순방향 모드: (값 + 미분ε) 한 쌍을 순방향으로 계산한다 →
       </text>
       {edges(T, colors.blue, `${P}-blue`)}
       {node(T.x, "x", "2 + 1ε", null, colors.blue)}
@@ -1766,7 +1766,7 @@ export function DualNumberTrace() {
       {node(T.y, "y = b + c", "14 + 15ε", null, colors.blue)}
       <line x1={10} x2={506} y1={138} y2={138} stroke="var(--border-hairline)" />
       <text x={16} y={152} fontSize={11} fontWeight={800} fill={colors.orange}>
-        역방향 모드: 값을 저장한 뒤, 기울기(grad)가 거꾸로 흐른다 ←
+        역방향 모드: 값을 저장한 뒤, 기울기(grad)를 역방향으로 계산한다 ←
       </text>
       {edges(B, inkMuted, `${P}-ink`)}
       {node(B.x, "x", "2", "grad 15", colors.orange)}

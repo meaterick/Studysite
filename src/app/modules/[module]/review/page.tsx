@@ -83,7 +83,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
               <span className="font-semibold">내 답안</span> {a.text}
             </p>
             <div>
-              <p className="font-semibold text-[var(--status-good)]">모범답안</p>
+              <p className="font-semibold text-[var(--status-good)]">모범 답안</p>
               <BlocksRenderer blocks={parseMarkdown(d.answer)} />
             </div>
           </>

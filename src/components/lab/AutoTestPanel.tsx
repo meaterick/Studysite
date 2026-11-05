@@ -55,7 +55,7 @@ export default function AutoTestPanel({
         const ok = await beforeRun();
         if (!ok) {
           setStatus(null);
-          setError("코드 셀 실행이 오류로 멈춰 자동 테스트를 하지 않았습니다. 오류가 난 셀을 먼저 고쳐 주십시오.");
+          setError("코드 셀 실행 중 오류가 발생해 자동 테스트를 실행하지 않았습니다. 해당 셀을 수정한 뒤 다시 실행하십시오.");
           return;
         }
       }
@@ -108,7 +108,7 @@ export default function AutoTestPanel({
       </div>
       <p className="mt-1 text-sm text-ink-muted">
         {note ??
-          "실행한 코드의 변수와 함수를 검사합니다. 해석과 설명은 과제의 자기 점검 기준과 비교하세요."}
+          "실행한 코드의 변수와 함수를 검사합니다. 해석과 설명은 과제의 자기 점검 기준과 비교하십시오."}
       </p>
       {status && <p className="mt-2 text-xs text-ink-muted">{status}</p>}
       {error && <p className="mt-2 text-sm text-[var(--status-critical)]">{error}</p>}

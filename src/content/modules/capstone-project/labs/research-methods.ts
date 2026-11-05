@@ -11,7 +11,7 @@ export default defineExercises([
 2. \`paired_permutation_p(a, b)\`: 짝지은 차이 $d = b - a$의 부호를 바꿀 수 있는 $2^n$가지 경우를 **모두** 따져, $|\overline{d'}| \ge |\bar{d}|$인 비율(양측 정확 p값)을 돌려줍니다.
 3. \`two_proportion_z(sa, na, sb, nb)\`: 합동 비율 $\hat{p}$로 $z = \dfrac{\hat{p}_b - \hat{p}_a}{\sqrt{\hat{p}(1-\hat{p})(1/n_a + 1/n_b)}}$와 양측 p값 $2\,(1 - \Phi(|z|))$를 \`(z, p)\`로. $\Phi(z) = \frac{1}{2}\left(1 + \mathrm{erf}(z/\sqrt{2})\right)$입니다.
 
-시드 5개로는 모든 시드에서 이겨도 p값이 0.05 아래로 내려가지 않는 이유를 생각해 보십시오.
+시드 5개로는 모든 시드에서 이겨도 p값이 0.05 아래로 내려가지 않는 이유를 분석하십시오.
 `,
     starter: py`
 import numpy as np

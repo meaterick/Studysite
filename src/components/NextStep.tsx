@@ -7,7 +7,7 @@ import Icon from "./Icon";
  * 제목과 흰 버튼 하나만 두어, 화면을 열자마자 무엇을 하면 되는지가 가장 먼저 눈에 들어오게 한다.
  */
 export default function NextStep({
-  eyebrow = "지금 할 일",
+  eyebrow = "다음 학습 활동",
   title,
   detail,
   href,

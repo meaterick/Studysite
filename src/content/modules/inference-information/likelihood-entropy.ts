@@ -30,7 +30,7 @@ export default defineLesson({
 \ell(p) = \log L(p) = 7\log p + 3\log(1 - p), \qquad \frac{d\ell}{dp} = \frac{7}{p} - \frac{3}{1 - p} = 0
 \`\`\`
 
-$7(1 - p) = 3p$에서 $\hat p = 0.7$이다. 일반적으로 $n$번 중 $k$번 성공하면 $\hat p_{\text{MLE}} = k/n$이다. 직관적으로 쓰는 "성공 비율"이 가능도를 최대화하는 값이라는 것이 이 계산으로 확인된다.
+$7(1 - p) = 3p$에서 $\hat p = 0.7$이다. 일반적으로 $n$번 중 $k$번 성공하면 $\hat p_{\text{MLE}} = k/n$이다. 관측된 "성공 비율"이 가능도를 최대화하는 값이라는 것이 이 계산으로 확인된다.
 
 \`\`\`python
 import numpy as np

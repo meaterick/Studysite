@@ -72,7 +72,7 @@ $$\mathcal{L}_{\text{simple}} = \mathbb{E}_{t,\,x_0,\,\varepsilon}\big\lVert \va
       question: "재매개변수화 $z = \\mu + \\sigma\\varepsilon$, $\\varepsilon \\sim \\mathcal{N}(0,1)$이 하는 일은?",
       choices: ["무작위성을 학습과 무관한 $\\varepsilon$으로 옮겨 $\\mu, \\sigma$로 역전파가 가능하게 한다", "샘플링을 없앤다", "KL 항을 없앤다", "분산을 0으로 만든다"],
       answer: 0,
-      explanation: "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기가 인코더까지 흐른다. 점수 함수 추정보다 분산도 훨씬 작다(예: 같은 문제에서 표준편차 약 0.20 대 0.54).",
+      explanation: "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기를 인코더 파라미터에 대해서도 계산할 수 있다. 점수 함수 추정보다 분산도 훨씬 작다(예: 같은 문제에서 표준편차 약 0.20 대 0.54).",
     },
     {
       key: "c3",

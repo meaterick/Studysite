@@ -117,7 +117,7 @@ export default function PredictItem({
       </div>
       <CodeBlock lang="python" code={code} />
       <label htmlFor={`predict-${lessonId}-${itemKey}`} className="mt-4 block text-xs font-medium text-ink-muted">
-        예상 출력 (화면에 찍힐 그대로, 줄바꿈 포함)
+        예상 출력(실제 출력 형식과 줄바꿈 포함)
       </label>
       <textarea
         id={`predict-${lessonId}-${itemKey}`}
@@ -127,7 +127,7 @@ export default function PredictItem({
         rows={Math.max(2, code.split("\n").filter((l) => l.includes("print")).length)}
         maxLength={4000}
         spellCheck={false}
-        placeholder="코드를 실행하지 말고 머릿속으로 따라가 출력을 적어 보십시오."
+        placeholder="코드를 실행하지 않고 각 연산의 결과를 확인해 예상 출력을 작성하십시오."
         className="mt-1 w-full rounded-xl border border-[var(--border-strong)] bg-card px-4 py-3 font-mono text-[15px] leading-relaxed text-ink placeholder:text-ink-muted"
       />
       {!solved && !revealed && (
@@ -145,7 +145,7 @@ export default function PredictItem({
           </button>
           {state && state.attempts > 0 && !state.correct && (
             <p className="text-sm font-medium text-[var(--status-critical)]" aria-live="polite">
-              예상과 실제 출력이 다릅니다. 한 줄씩 다시 따라가 보십시오.
+              예상과 실제 출력이 다릅니다. 코드의 각 줄에서 값이 어떻게 변하는지 확인하십시오.
             </p>
           )}
           {error && <p className="text-sm text-[var(--status-critical)]">{error}</p>}
@@ -181,7 +181,7 @@ export default function PredictItem({
                 {running ? "실행 중…" : "실행"}
               </button>
             </div>
-            <CellOutputs outputs={outputs} status={running && outputs.length === 0 ? "실행 중… (처음에는 실행 환경을 준비하느라 몇 초 걸립니다)" : null} />
+            <CellOutputs outputs={outputs} status={running && outputs.length === 0 ? "실행 중… (최초 실행 시 환경 준비 시간이 필요합니다)" : null} />
           </div>
         </div>
       )}

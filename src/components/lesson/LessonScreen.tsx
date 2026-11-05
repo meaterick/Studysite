@@ -139,7 +139,7 @@ export default async function LessonScreen({
               </nav>
               {practice && (
                 <nav aria-label="실습 바로가기" className="mt-3 flex flex-wrap items-center gap-2">
-                  {(lesson.exercises?.length ?? 0) > 0 && <a href="#practice" className="btn btn-secondary">코딩테스트</a>}
+                  {(lesson.exercises?.length ?? 0) > 0 && <a href="#practice" className="btn btn-secondary">코딩 실습</a>}
                   {(lesson.predicts?.length ?? 0) > 0 && <a href="#predict" className="btn btn-secondary">출력 예측</a>}
                   <a href="#check" className="btn btn-secondary">
                     확인 문제 <ProgressCount ids={checkIds} />/{progress.checksTotal}
@@ -147,7 +147,7 @@ export default async function LessonScreen({
                   {(lesson.descriptive?.length ?? 0) > 0 && <a href="#descriptive" className="btn btn-secondary">서술형</a>}
                   {module.recall.length > 0 && (
                     <Link href={recallHref(slug)} className="btn btn-secondary">
-                      모듈 백지복습{!status.finaleOpen && !isAdmin && " · 잠김"}
+                      모듈 백지 복습{!status.finaleOpen && !isAdmin && " · 잠김"}
                     </Link>
                   )}
                 </nav>
@@ -161,7 +161,7 @@ export default async function LessonScreen({
                     <h3 id="warmup-heading" className="text-base font-semibold tracking-[-0.02em] text-ink">
                       준비 점검
                     </h3>
-                    <p className="mb-4 mt-1 text-sm text-ink-muted">이 레슨의 선수 레슨에서 틀린 적 있는 문제입니다. 다시 풀어 보고 시작하십시오.</p>
+                    <p className="mb-4 mt-1 text-sm text-ink-muted">이 레슨의 선수 레슨에서 이전에 오답을 제출한 문제입니다. 다시 풀어 보고 시작하십시오.</p>
                     <div className="space-y-4">
                       {warmUp.map((w, i) => {
                         const check = w.lesson.checks.find((c) => c.key === w.key)!;
@@ -194,9 +194,9 @@ export default async function LessonScreen({
                 {(lesson.exercises?.length ?? 0) > 0 && (
                   <section id="practice" aria-labelledby="practice-heading" className="mt-16 scroll-mt-24 border-t border-[var(--border-hairline)] pt-10">
                     <h3 id="practice-heading" className="mb-2 scroll-mt-24 text-xl font-bold tracking-[-0.03em] text-ink">
-                      코딩테스트
+                      코딩 실습
                     </h3>
-                    <p className="mb-6 text-sm text-ink-muted">TODO를 채우고 채점합니다. 코드는 브라우저에서만 실행되며, 완료 조건에는 들어가지 않는 권장 활동입니다.</p>
+                    <p className="mb-6 text-sm text-ink-muted">TODO를 채우고 채점합니다. 코드는 브라우저에서만 실행되며, 레슨 완료 조건에 포함되지 않는 권장 활동입니다.</p>
                     <div className="space-y-6">
                       {lesson.exercises!.map((ex, i) => (
                         <CodingExercise key={ex.key} view={exerciseView(itemId(lesson.id, ex.key), ex, record, `실습 ${i + 1}`)} />
@@ -261,7 +261,7 @@ export default async function LessonScreen({
                     <h3 id="desc-heading" className="mb-2 text-xl font-bold tracking-[-0.03em] text-ink">
                       서술형
                     </h3>
-                    <p className="mb-6 text-sm text-ink-muted">직접 설명을 쓰고 저장하면 모범답안과 핵심 요소가 열립니다. 비교한 뒤 스스로 평가합니다(선택).</p>
+                    <p className="mb-6 text-sm text-ink-muted">직접 설명을 쓰고 저장하면 모범 답안과 핵심 요소가 열립니다. 비교한 뒤 스스로 평가합니다(선택).</p>
                     <div className="space-y-6">
                       {lesson.descriptive!.map((d, i) => {
                         const a = state.answers[d.key];
@@ -301,7 +301,7 @@ export default async function LessonScreen({
                 {(lesson.why || dependents.length > 0) && (
                   <aside aria-labelledby="why-heading" className="mt-8 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-card-2)] px-5 py-4">
                     <h3 id="why-heading" className="text-[13px] font-semibold text-ink">
-                      이 개념이 쓰이는 곳
+                      개념 활용
                     </h3>
                     {lesson.why && (
                       <p className="mt-1.5 text-[15px] leading-relaxed text-ink-body">
@@ -317,9 +317,9 @@ export default async function LessonScreen({
 
                 <section aria-label="레슨 실습" className="mt-14 rounded-2xl border border-[var(--border-hairline)] p-5 sm:p-6">
                   <h3 className="text-lg font-semibold text-ink">이 레슨 실습하기</h3>
-                  <p className="mt-2 text-sm text-ink-secondary">확인 문제를 풀고 레슨을 완료하세요. 제공되는 코딩테스트와 출력 예측도 실습에서 풀 수 있습니다.</p>
+                  <p className="mt-2 text-sm text-ink-secondary">확인 문제를 풀고 레슨을 완료하십시오. 코딩 실습과 출력 예측도 실습 페이지에서 수행할 수 있습니다.</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {(lesson.exercises?.length ?? 0) > 0 && <Link id="practice" href={`${practicePath}#practice`} className="btn btn-secondary scroll-mt-24">코딩테스트</Link>}
+                    {(lesson.exercises?.length ?? 0) > 0 && <Link id="practice" href={`${practicePath}#practice`} className="btn btn-secondary scroll-mt-24">코딩 실습</Link>}
                     {(lesson.predicts?.length ?? 0) > 0 && <Link id="predict" href={`${practicePath}#predict`} className="btn btn-secondary scroll-mt-24">출력 예측</Link>}
                     <Link id="check" href={`${practicePath}#check`} className="btn btn-primary scroll-mt-24">확인 문제</Link>
                     {(lesson.descriptive?.length ?? 0) > 0 && <Link id="descriptive" href={`${practicePath}#descriptive`} className="btn btn-secondary scroll-mt-24">서술형</Link>}
@@ -328,9 +328,9 @@ export default async function LessonScreen({
                 {dependents.length > 0 && (
                   <section aria-labelledby="next-use-heading" className="mt-14">
                     <h3 id="next-use-heading" className="mb-1 text-[13px] font-medium text-ink-muted">
-                      다시 만나는 곳
+                      관련 후속 레슨
                     </h3>
-                    <p className="mb-2 text-sm text-ink-muted">이 레슨의 내용을 선수 개념으로 사용하는 뒤쪽 레슨입니다.</p>
+                    <p className="mb-2 text-sm text-ink-muted">이 레슨의 내용을 선수 개념으로 사용하는 후속 레슨입니다.</p>
                     <LessonLinks lessons={dependents} record={record} />
                   </section>
                 )}
@@ -338,7 +338,7 @@ export default async function LessonScreen({
                 {lesson.references && lesson.references.length > 0 && (
                   <section aria-labelledby="refs-heading" className="mt-14">
                     <h3 id="refs-heading" className="mb-3 text-[13px] font-medium text-ink-muted">
-                      더 알아보기
+                      참고 자료
                     </h3>
                     <ul className="rows border-y border-[var(--border-hairline)]">
                       {lesson.references.map((ref) => (

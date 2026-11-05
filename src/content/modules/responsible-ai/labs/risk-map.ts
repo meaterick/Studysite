@@ -3,7 +3,7 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "FGSM으로 숫자 분류기 속이기와 같은 크기의 무작위 잡음 비교",
+    title: "FGSM으로 숫자 분류기의 오분류 유도와 같은 크기의 무작위 잡음 비교",
     prompt: md`
 본문의 FGSM을 숫자 이미지 분류기에 적용합니다. 숫자 3과 8을 구별하는 로지스틱 회귀 \`clf\`(가중치 \`w\`)가 주어져 있습니다.
 
@@ -11,7 +11,7 @@ export default defineExercises([
 2. \`fgsm(X, y, eps)\`: $x' = \mathrm{clip}(x + \varepsilon \cdot \mathrm{sign}(\nabla_x J), 0, 1)$
 3. \`random_noise(X, eps, seed)\`: 픽셀마다 $\pm\varepsilon$를 무작위로 더하고 0~1로 자릅니다(크기는 FGSM과 같고 방향만 무작위).
 
-픽셀당 최대 0.1만 바꿔도 정확도가 크게 떨어지는데, 같은 크기의 무작위 잡음으로는 거의 그대로인 이유를 생각해 보십시오.
+픽셀당 최대 0.1만 바꿔도 정확도가 크게 떨어지는데, 같은 크기의 무작위 잡음으로는 거의 그대로인 이유를 분석하십시오.
 `,
     starter: py`
 import numpy as np

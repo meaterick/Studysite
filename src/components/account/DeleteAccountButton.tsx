@@ -42,7 +42,7 @@ export default function DeleteAccountButton() {
         <form action={formAction}>
           <div className="p-5">
             <h2 id={titleId} className="text-lg font-semibold text-ink">
-              정말 탈퇴하시겠습니까?
+              회원 탈퇴를 진행하시겠습니까?
             </h2>
             <p className="mt-2 text-sm text-ink-secondary">탈퇴하면 아래 내용이 즉시 삭제되며 되돌릴 수 없습니다.</p>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-secondary">

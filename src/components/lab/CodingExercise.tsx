@@ -35,7 +35,7 @@ export interface ExerciseView {
 }
 
 const STATUS_TEXT: Record<RunStatus, string> = {
-  "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 처음 한 번은 몇 초 정도 걸립니다.",
+  "loading-runtime": "Python 실행 환경을 준비하고 있습니다. 최초 실행 시 준비 시간이 필요합니다.",
   "loading-packages": "필요한 패키지를 불러오고 있습니다…",
   running: "실행 중…",
 };
@@ -158,7 +158,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     if (!res.ok) collected.push({ type: "error", text: res.error ?? "알 수 없는 오류가 발생했습니다." });
     for (const img of res.images ?? []) collected.push({ type: "image", data: img });
     setOutputs([...collected]);
-    if (timedOut) setNotice(`실행 시간이 ${TIME_LIMIT_MS / 1000}초를 넘어 중단했습니다. 끝나지 않는 반복문이 없는지 확인하십시오.`);
+    if (timedOut) setNotice(`실행 시간이 ${TIME_LIMIT_MS / 1000}초를 넘어 중단했습니다. 반복문의 종료 조건을 확인하십시오.`);
     setBusy(null);
   }, [busy, execute, view.id]);
 
@@ -174,7 +174,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
     if (!rep) {
       setNotice(
         timedOut
-          ? `채점 시간이 ${TIME_LIMIT_MS / 1000}초를 넘어 중단했습니다. 끝나지 않는 반복문이 없는지 확인하십시오.`
+          ? `채점 시간이 ${TIME_LIMIT_MS / 1000}초를 넘어 중단했습니다. 반복문의 종료 조건을 확인하십시오.`
           : `채점을 마치지 못했습니다. ${res.error ?? ""}`
       );
       return;
@@ -316,7 +316,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
             <div className="mt-4 rounded-xl border border-[var(--border-hairline)] px-4 py-3.5 text-sm" aria-live="polite">
               {report.error ? (
                 <>
-                  <p className="font-medium text-[var(--status-critical)]">실행 중 오류가 나서 채점 항목을 검사하지 못했습니다.</p>
+                  <p className="font-medium text-[var(--status-critical)]">실행 중 오류가 발생해 채점 항목을 검사하지 못했습니다.</p>
                   <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-xs text-[var(--status-critical)]">{report.error}</pre>
                 </>
               ) : (
@@ -363,7 +363,7 @@ export default function CodingExercise({ view }: { view: ExerciseView }) {
                     {passed ? "모범 답안과 비교" : "모범 답안 보기"}
                   </button>
                 ) : (
-                  <span className="text-ink-muted">모범 답안은 통과하거나 힌트를 모두 본 뒤 열립니다.</span>
+                  <span className="text-ink-muted">모범 답안은 모든 테스트를 통과하거나, 한 번 이상 채점한 뒤 모든 힌트를 확인하면 열립니다.</span>
                 ))}
               {solutionError && <span className="text-[var(--status-critical)]">{solutionError}</span>}
             </div>

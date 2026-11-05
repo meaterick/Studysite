@@ -54,7 +54,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr className="border-t border-[var(--border-hairline)]">
                   <td className="px-4 py-3">학습 기록</td>
-                  <td className="px-4 py-3">레슨별 확인 문제·출력 예측 응답, 서술형 답안과 자기평가, 코딩 실습 채점 결과, 백지 복습 답안, 레슨 완료 시각</td>
+                  <td className="px-4 py-3">레슨별 확인 문제·출력 예측 응답, 서술형 답안과 자기 평가, 코딩 실습 채점 결과, 백지 복습 답안, 레슨 완료 시각</td>
                   <td className="px-4 py-3">학습 진도 관리, 복습 노트 제공, 스터디 운영</td>
                   <td className="px-4 py-3">회원 탈퇴 시까지</td>
                 </tr>

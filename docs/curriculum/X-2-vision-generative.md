@@ -52,7 +52,7 @@
 - `d2` GAN의 minimax 목적함수 $\min_{G}\max_{D}\;\mathbb{E}_{x\sim p_{data}}[\log D(x)] + \mathbb{E}_{z\sim p_z}[\log(1-D(G(z)))]$에서 Discriminator와 Generator는 각각 이 값을 최대화·최소화하기 위해 무엇을 하는가?
 - `d3` Diffusion Model의 Forward Diffusion과 Reverse Diffusion을 각각 정의하고, Reverse Diffusion에서 신경망이 실제로 예측하도록 학습되는 대상(Noise Prediction)이 무엇인지 설명하라.
 - `d4` U-Net의 스킵 연결이 [5-2 드롭아웃과 잔차 연결](5-2-deep-training.md#lesson-dropout-residual)의 잔차 연결과 어떤 점에서 같은 역할을 하는지 설명하고, Latent Diffusion이 픽셀 공간 대신 잠재공간에서 확산을 수행해 무엇을 얻는지 설명하라.
-- `d5` PCA(선형 오토인코더)로 2차원까지 줄인 잠재공간에서 아무 점이나 골라 복원하면 그럴듯한 숫자가 잘 나오지 않는 이유와, VAE의 KL 항이 이 문제를 어떻게 완화하는지 설명하라.
+- `d5` PCA(선형 오토인코더)로 2차원까지 줄인 잠재공간에서 아무 점이나 골라 복원하면 실제 숫자와 유사한 이미지가 잘 나오지 않는 이유와, VAE의 KL 항이 이 문제를 어떻게 완화하는지 설명하라.
 
 **참고 자료**
 

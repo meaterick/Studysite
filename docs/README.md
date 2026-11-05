@@ -17,6 +17,8 @@
 
 ## 검토 기록
 
+- [사이트 한국어 문장 검토 (2026-11-05)](development/korean-style-review-2026-11-05.md): 화면·콘텐츠·도표의 문체, 조사·띄어쓰기, 비유적 표현 정리.
+
 - [구조·콘텐츠 검토 후속 반영 (2026-11-05)](development/review-followups-2026-11-05.md): 승인한 수정, 제안의 정정 사항, 보류 범위와 검증.
 
 - [커리큘럼 구조 검토 (2026-11-05)](archive/design/curriculum-structure-review-2026-11-05.md): 트랙·모듈·레슨·개념·일정·선수관계 검토.

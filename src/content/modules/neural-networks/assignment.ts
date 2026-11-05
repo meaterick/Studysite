@@ -327,7 +327,7 @@ print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
     },
     {
       id: "advanced",
-      title: "심화: 최적화기·기울기 흐름·자동미분 실험",
+      title: "심화: 최적화기·기울기 전달·자동미분 실험",
       tier: "advanced",
       instructions: md`
 

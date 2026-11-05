@@ -3,13 +3,13 @@ import { defineExercises, md, py } from "../../../kit";
 export default defineExercises([
   {
     key: "ex1",
-    title: "청킹, 검색, 근거 인용 프롬프트 조립",
+    title: "청킹, 검색, 근거 인용 프롬프트 구성",
     prompt: md`
 :::info 가상 예제 데이터
 이 레슨의 동아리 공지·마감·점수·출석 규칙은 검색과 도구 호출을 설명하기 위한 가상 데이터이며, 이 사이트의 운영 규칙이 아니다. 실제 학습은 자기 점검과 추천 일정에 따른다.
 :::
 
-본문의 청킹, 검색, 프롬프트 조립을 구현합니다. 색인(\`vectorizer\`, \`X\`)은 시작 코드에서 만듭니다.
+본문의 청킹, 검색, 프롬프트 구성을 구현합니다. 색인(\`vectorizer\`, \`X\`)은 시작 코드에서 만듭니다.
 
 1. \`chunk(text, size, overlap)\`: \`size\`글자씩 자르되 다음 조각은 \`size - overlap\`글자 뒤에서 시작합니다(슬라이딩 윈도우). 시작 위치는 \`len(text) - overlap\`보다 작아야 하고, 텍스트가 짧아도 조각 하나는 만듭니다.
 2. \`retrieve(q, k=2)\`: 질문을 같은 TF-IDF 공간으로 바꿔(\`vectorizer.transform\`) 코사인 유사도 상위 \`k\`개를 \`[(조각, 유사도), ...]\`로, 유사도 내림차순으로 돌려줍니다.
