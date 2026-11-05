@@ -13,8 +13,12 @@
 
 - [기술 구조와 저장소 지도](development/architecture.md): 폴더 역할, 데이터 흐름, 생성물, 검증 명령.
 - [학습 콘텐츠 편집 안내](contributing/content-authoring.md): 모듈·레슨·실습·과제의 작성 방법, 문체와 용어, ID 보존, 검증 명령.
-- [콘텐츠 품질 검토 1차 (2026-11-05)](development/content-review-2026-11-05.md): 0-1·1-1의 문장·문항·실습·다이어그램 검토와 수정 제안.
 - [학습자료 생성 프롬프트](contributing/prompts/learning-content-generator-prompt.md): 초안 작성용 보조 도구. 실제 스키마와 검증 명령은 편집 안내를 우선합니다.
+
+## 검토 기록
+
+- [커리큘럼 구조 검토 (2026-11-05)](archive/design/curriculum-structure-review-2026-11-05.md): 트랙·모듈·레슨·개념·일정·선수관계 검토.
+- [콘텐츠 품질 검토 1차 (2026-11-05)](development/content-review-2026-11-05.md): 0-1·1-1의 문장·문항·실습·다이어그램 검토.
 
 ## 운영자
 
