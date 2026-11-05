@@ -18,7 +18,8 @@
     "test:security:http": "node scripts/security/http-smoke.mjs",
     "test:security:python": "python tests/security/security-inventory.test.py && python tests/security/security-collector.test.py",
     "docs:generate": "tsx scripts/docs/generate-curriculum.ts",
-    "docs:check": "tsx scripts/docs/generate-curriculum.ts --check && tsx scripts/docs/check-links.ts"
+    "docs:check": "tsx scripts/docs/generate-curriculum.ts --check && tsx scripts/docs/check-links.ts",
+    "test:curriculum": "node --conditions=react-server --import tsx --test tests/content/curriculum.test.ts"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",

@@ -5,8 +5,9 @@ export default defineLesson({
   id: "rl-basics",
   title: "강화학습 기초",
   tier: "supplement",
+  requires: ["pretraining", "gradient-descent"],
   goal: "에이전트, 환경, 상태, 행동, 보상, 정책, 이득과 MDP, 벨만 방정식, 탐색과 활용의 균형을 설명하고, 가치 기반 방법(Q-Learning, DQN)과 정책 기반 방법(정책 경사, Actor-Critic, PPO)을 구분한다.",
-  why: "RLHF([[lesson:preference-learning]])는 LLM을 강화학습의 정책으로 보고 보상 모델의 점수를 최대화하도록 학습한다. 추론 모델의 학습과 에이전트의 행동 최적화도 같은 틀을 쓰므로, 이 레슨의 용어와 방법을 알아야 PPO나 GRPO 같은 알고리즘이 무엇을 최적화하는지 이해할 수 있다.",
+  why: "RLHF([[lesson:preference-learning]])는 LLM을 강화학습의 정책으로 보고 보상 모델의 점수를 최대화하도록 학습한다. 추론 모델의 학습과 에이전트의 행동 최적화도 같은 틀을 쓰므로, 선호도 학습에서 소개한 정책과 보상을 더 깊이 다룬다. PPO나 GRPO의 최적화 원리를 확장해서 공부하려는 학습자를 위한 선택 레슨이다.",
   body: md`
 ### 강화학습의 구성 요소
 

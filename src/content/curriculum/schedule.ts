@@ -5,9 +5,9 @@ export interface ScheduleWeek {
   week: number;
   /** 이번 주에 학습할 모듈 slug */
   modules: string[];
-  /** 이번 주에 제출할 과제의 저장 키 */
+  /** 이번 주에 자기 점검을 권장하는 과제의 저장 키(기존 필드명 due는 호환 유지) */
   due: string[];
-  /** 이번 주까지 마칠 캡스톤 준비 단계. 단계별 할 일은 캡스톤 설계 레슨(capstone-design)의 일정 표에 있다. */
+  /** 이번 주까지 마칠 캡스톤 준비 단계. 단계별 할 일은 /curriculum/details#capstone-plan 에서 잠금 없이 볼 수 있다. */
   milestone?: string;
 }
 

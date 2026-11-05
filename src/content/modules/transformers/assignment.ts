@@ -7,7 +7,7 @@ export default defineAssignment({
   summary: md`
 GPT 블록의 핵심인 멀티헤드 causal self-attention을 NumPy로 직접 구현하고, 세 가지 독립적인 방법으로 정확성을 검증합니다. [[lesson:self-attention]]의 숫자 예제를 코드로 재현하고 Query를 바꿔 비교하며, 마스크와 $\sqrt{d_k}$ 스케일링이 attention 가중치에 어떤 영향을 주는지 히트맵으로 관찰합니다. 마지막으로 "Attention Is All You Need" 논문을 읽고 리포트를 작성합니다.
 
-**핵심** 항목은 모두 핵심 레슨만으로 풀 수 있고 채점 기준도 핵심 항목만 봅니다. **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
+**핵심** 항목은 모두 핵심 레슨만으로 풀 수 있고 자기 점검 기준도 핵심 항목을 확인합니다. **심화** 항목은 선택이며 과제 점수는 매기지 않습니다.
 `,
   requirements: [
     "`multi_head_attention`의 점수 계산 TODO를 채우고, 모든 중간 텐서 옆에 shape 주석을 적는다($W^O$ 출력 투영 포함).",

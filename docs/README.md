@@ -17,6 +17,8 @@
 
 ## 검토 기록
 
+- [구조·콘텐츠 검토 후속 반영 (2026-11-05)](development/review-followups-2026-11-05.md): 승인한 수정, 제안의 정정 사항, 보류 범위와 검증.
+
 - [커리큘럼 구조 검토 (2026-11-05)](archive/design/curriculum-structure-review-2026-11-05.md): 트랙·모듈·레슨·개념·일정·선수관계 검토.
 - [콘텐츠 품질 검토 1차 (2026-11-05)](development/content-review-2026-11-05.md): 0-1·1-1의 문장·문항·실습·다이어그램 검토.
 

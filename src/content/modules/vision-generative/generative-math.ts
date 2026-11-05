@@ -5,6 +5,7 @@ export default defineLesson({
   id: "generative-math",
   title: "생성 모델의 수학: ELBO, 재매개변수화, 확산",
   tier: "advanced",
+  requires: ["generative-models", "entropy-kl"],
   goal: "옌센 부등식으로 ELBO를 유도하고 가우시안 KL의 닫힌 형태를 쓰며, 재매개변수화 트릭의 필요성과 확산 모델의 순방향 닫힌 형태·노이즈 예측 손실을 설명할 수 있다.",
   why: "VAE와 확산 모델의 손실 함수는 직접 계산할 수 없는 로그가능도의 하한에서 나온다. 손실의 각 항이 어디서 나오는지 알아야 KL 항의 가중치나 노이즈 일정 같은 설정을 바꿀 때 결과를 예측하고, 생성 모델 논문의 수식을 읽을 수 있다.",
   body: md`

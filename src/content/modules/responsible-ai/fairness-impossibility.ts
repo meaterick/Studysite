@@ -5,6 +5,7 @@ export default defineLesson({
   id: "fairness-impossibility",
   title: "공정성 불가능성 정리",
   tier: "advanced",
+  requires: ["fairness", "bayes"],
   goal: "Chouldechova 항등식으로 PPV·FNR을 맞추면 기저율이 다른 집단의 FPR이 달라짐을, 보정 아래의 등식 $p(1-x) = (1-p)z$로 보정과 균형이 완벽한 예측에서만 함께 성립함을 증명하고, 무작위 혼합으로 균등화된 오즈를 맞추는 확률과 그 정확도 비용을 계산할 수 있다.",
   why: "공정성 기준의 충돌이 특정 예제의 우연인지 항상 일어나는 일인지에 따라, 모델을 개선해 해결할 문제인지 기준을 선택해야 하는 문제인지가 달라진다. 충돌을 증명하고 균등화된 오즈를 맞추는 비용을 계산할 수 있어야 어떤 기준을 택할지와 그 대가를 근거와 함께 설명할 수 있다.",
   body: md`

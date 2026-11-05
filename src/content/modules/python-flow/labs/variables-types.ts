@@ -5,8 +5,12 @@ export default defineExercises([
     key: "ex1",
     title: "문자열 기록을 자료형에 맞게 변환하기",
     prompt: md`
+:::info 실습 뼈대 안내
+함수(def·return)는 [[lesson:functions-scope]]에서 배웁니다. 지금은 함수 뼈대를 유지하고 TODO 안에 이 레슨의 문법을 적용합니다. split·strip·lower 같은 문자열 메서드는 [[lesson:operators]]의 문자열 부분을 참고합니다.
+:::
 
-파일에서 읽은 한 줄 \`"김민준,23,175.5,yes"\`를 \`("김민준", 23, 175.5, True)\`로 바꾸는 \`parse_record(line)\`을 완성합니다.
+
+주어진 문자열 한 줄 \`"김민준,23,175.5,yes"\`를 \`("김민준", 23, 175.5, True)\`로 바꾸는 \`parse_record(line)\`을 완성합니다.
 
 - 이름은 앞뒤 공백을 없앤 문자열, 나이는 정수, 키는 실수로 바꿉니다.
 - 회원 여부는 \`"yes"\`면 \`True\`, \`"no"\`면 \`False\`입니다. 대소문자와 앞뒤 공백은 구분하지 않습니다. \`bool()\`로 변환하면 \`"no"\`도 \`True\`가 되므로 쓰지 않습니다.

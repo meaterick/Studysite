@@ -57,10 +57,10 @@ export default async function CurriculumPage() {
       <section aria-labelledby="guides-heading" className="mt-14 border-t border-[var(--border-hairline)] pt-8">
         <h2 id="guides-heading" className="section-title">학습을 계획할 때</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-muted">
-          처음 방문했다면 학습 안내를, 여러 분야를 차례로 공부하고 싶다면 추천 일정을 살펴보세요.
+          처음 방문했다면 과정 개요를, 여러 분야를 차례로 공부하고 싶다면 추천 일정을 살펴보세요.
         </p>
         <nav aria-label="학습 안내" className="mt-5 flex flex-wrap gap-3">
-          <Link href={trackHref("intro")} className="btn btn-secondary">학습 안내</Link>
+          <Link href={trackHref("intro")} className="btn btn-secondary">과정 개요</Link>
           <Link href="/curriculum/details#structure" className="btn btn-secondary">전체 모듈·레슨 목록</Link>
           <Link id="goals" href="/curriculum/details#goals" className="btn btn-secondary scroll-mt-24">분야별 학습 목표</Link>
           <Link id="method" href="/curriculum/details#method" className="btn btn-secondary scroll-mt-24">학습 방법</Link>

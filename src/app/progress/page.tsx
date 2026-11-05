@@ -8,6 +8,7 @@ import { getLearningRecord, learningActivityByItem } from "@/lib/learningStore";
 import { isLessonComplete, moduleStatus } from "@/lib/study";
 import { cohortWeek, getSettings } from "@/lib/settingsStore";
 import { tierRecord } from "@/lib/achievement";
+import { CAPSTONE_PLAN_HREF } from "@/content/curriculum/capstone-plan";
 import { lessonHref, moduleHref, recallHref, trackHref } from "@/lib/routes";
 import Icon from "@/components/Icon";
 import PageHeader from "@/components/PageHeader";
@@ -210,7 +211,7 @@ export default async function ProgressPage() {
           {thisWeek?.milestone && (
             <p className="mt-3 text-sm text-ink-secondary">
               캡스톤 준비: {thisWeek.milestone} ·{" "}
-              <Link href={lessonHref("capstone-project", "capstone-design")} className="underline decoration-[var(--border-strong)] underline-offset-4 hover:decoration-current">
+              <Link href={CAPSTONE_PLAN_HREF} className="underline decoration-[var(--border-strong)] underline-offset-4 hover:decoration-current">
                 단계별 할 일 보기
               </Link>
             </p>

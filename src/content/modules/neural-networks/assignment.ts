@@ -8,7 +8,7 @@ export default defineAssignment({
 
 [[lesson:micrograd]]의 \`Value\` 클래스에 나눗셈과 지수 함수를 추가하고, 이 엔진만으로 MLP를 만들어 make_moons 데이터를 분류합니다. gradient check로 구현을 검증하고, 같은 모델을 NumPy 행렬 연산으로 구현한 버전과 속도·정확도를 비교합니다.
 
-**핵심** 항목 네 개(Value 확장·MLP 학습·gradient check·계산 그래프)는 핵심 레슨만으로 풀 수 있고, 채점 기준은 이 네 항목만 봅니다. **보충**(NumPy 벡터화 비교)과 **심화** 항목은 선택이며 점수 대신 피드백을 받습니다.
+**핵심** 항목 네 개(Value 확장·MLP 학습·gradient check·계산 그래프)는 핵심 레슨만으로 풀 수 있고, 자기 점검 기준은 이 네 항목을 확인합니다. **보충**(NumPy 벡터화 비교)과 **심화** 항목은 선택이며 과제 점수는 매기지 않습니다.
 `,
   requirements: [
     "`Value`의 `__truediv__`와 `exp`의 `_backward`를 완성해, 두 검증 식 모두 상대오차 $10^{-5}$ 미만(✓)을 받는다.",

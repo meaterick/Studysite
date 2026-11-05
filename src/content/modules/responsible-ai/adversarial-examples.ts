@@ -5,6 +5,7 @@ export default defineLesson({
   id: "adversarial-examples",
   title: "적대적 예제와 FGSM",
   tier: "advanced",
+  requires: ["backprop", "optimizers"],
   goal: "선형성 가설로 고차원에서 적대적 예제가 생기는 이유를 $\\varepsilon\\lVert w\\rVert_1$로 설명하고, FGSM을 구현해 무작위 노이즈와 비교하며, PGD·적대적 학습의 역할을 설명할 수 있다.",
   why: "테스트 정확도가 높은 모델도 손실을 키우는 방향으로 조작한 입력에는 쉽게 틀릴 수 있다. 자율주행, 의료, 보안처럼 입력을 조작하려는 사람이 있는 환경에 모델을 배포하려면, 이 취약성이 생기는 이유와 공격을 기준으로 강건성을 평가하는 방법을 알아야 한다.",
   body: md`

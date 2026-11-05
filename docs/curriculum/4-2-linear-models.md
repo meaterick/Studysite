@@ -21,8 +21,8 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [선형회귀, 잔차, 평균제곱오차](#lesson-linear-regression) | 핵심 | 45분 | #57 선형회귀, 잔차, 평균제곱오차 |
-| 2 | [로지스틱 회귀, 시그모이드, 분류 임계값](#lesson-logistic-regression) | 핵심 | 40분 | #58 로지스틱 회귀, 시그모이드, 분류 임계값 |
+| 1 | [선형회귀, 잔차, 평균제곱오차](#lesson-linear-regression) | 핵심 | 45분 | #57 선형회귀, 잔차, MSE·MAE·RMSE·R² |
+| 2 | [로지스틱 회귀, 시그모이드, 분류 임계값](#lesson-logistic-regression) | 핵심 | 40분 | #58 로지스틱·소프트맥스 회귀, 시그모이드, 분류 임계값 |
 | 3 | [혼동행렬, 정확도, 정밀도, 재현율, F1](#lesson-classification-metrics) | 핵심 | 35분 | #59 혼동행렬, 정확도, 정밀도, 재현율, F1 |
 | 4 | [ROC-AUC, PR-AUC, 클래스 불균형](#lesson-roc-pr) | 핵심 | 40분 | #60 ROC-AUC, PR-AUC, 클래스 불균형 |
 | 5 | [비용 기반 임계값과 확률 보정](#lesson-cost-threshold) | 보충 | 25분 | — |

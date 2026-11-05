@@ -34,7 +34,7 @@ AI·머신러닝·딥러닝·생성형 AI의 관계와, 데이터에서 예측·
 
 **쓰이는 곳:** 이 과정에서 다루는 모든 모델(선형회귀, 신경망, 트랜스포머, LLM)이 어느 범주에 속하는지 정하고, 이들을 학습시키는 공통 원리인 "손실을 줄이는 파라미터 찾기"를 정의한다. 이후 트랙의 레슨은 모두 이 정의에서 출발한다.
 
-**본문 절:** AI ⊃ 머신러닝 ⊃ 딥러닝, 그리고 생성형 AI · 머신러닝의 정의: 손실을 줄이는 함수 찾기
+**본문 절:** 먼저 만나는 용어 · AI ⊃ 머신러닝 ⊃ 딥러닝, 그리고 생성형 AI · 머신러닝의 정의: 손실을 줄이는 함수 찾기
 
 **구성:** 확인 문제 6 · 서술형 3 · 실습 1 · 그림 4
 
@@ -50,6 +50,8 @@ AI·머신러닝·딥러닝·생성형 AI의 관계와, 데이터에서 예측·
 
 **참고 자료**
 
+- [McCarthy et al. — Dartmouth proposal (1955)](https://www-formal.stanford.edu/jmc/history/dartmouth/dartmouth.html) — 1956년 연구 모임을 제안한 1955년 원문
+- [Rumelhart, Hinton & Williams — Learning representations by back-propagating errors (1986)](https://doi.org/10.1038/323533a0) — 역전파로 다층 신경망을 학습한 원 논문
 - [Google Machine Learning Crash Course — Intro to Machine Learning](https://developers.google.com/machine-learning/intro-to-ml) — 머신러닝이 무엇이고 어떤 문제에 쓰는지 짧은 읽기 자료로 정리 (영문)
 - [3Blue1Brown — But what is a neural network?](https://www.3blue1brown.com/lessons/neural-networks) — "파라미터를 가진 함수"로서의 신경망을 시각적으로 보여주는 20분 영상
 

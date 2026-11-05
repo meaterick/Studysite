@@ -75,6 +75,30 @@ try {
     await new Promise((r) => setTimeout(r, 100));
   }
   assert.equal(ready, true);
+  // A week-10 member must be able to read capstone preparation even when
+  // the actual capstone lesson is still locked. The public page needs no session.
+  const cohortStart = new Date(Date.now() - 64 * 86_400_000).toISOString().slice(0, 10);
+  const setProgression = (mode) => {
+    const result = spawnSync(process.execPath, ["--conditions=react-server", "--import", "tsx", "-e",
+      `require('./src/lib/settingsStore.ts').saveSettings(${JSON.stringify({ progressionMode: mode, dueDates: {}, cohortStart })})`], { env, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+  };
+  setProgression("lock");
+  try {
+    const locked = await request("/modules/capstone-project/lessons/capstone-design", { cookie: cookies.member });
+    assert.equal(locked.status, 307);
+    assert.ok(locked.headers.get("location")?.includes("locked=lesson"));
+    const progress = await request("/progress", { cookie: cookies.member });
+    assert.equal(progress.status, 200);
+    assert.ok((await progress.text()).includes('href="/curriculum/details#capstone-plan"'));
+    const plan = await request("/curriculum/details");
+    assert.equal(plan.status, 200);
+    const html = await plan.text();
+    assert.ok(html.includes('id="capstone-plan"'));
+    for (const title of ["주제 초안", "데이터와 기준 모델", "평가와 위험 점검", "최종 자기 점검"]) assert.ok(html.includes(title), title);
+  } finally {
+    setProgression("warn");
+  }
   const assignment = await request("/modules/python-objects-tools/assignment", { cookie: cookies.member });
   assert.equal(assignment.status, 200);
   const assignmentHtml = await assignment.text();

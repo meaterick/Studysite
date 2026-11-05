@@ -139,6 +139,10 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
           </section>
         )}
 
+        {status.tiers.advanced.total === 0 && (
+          <p className="text-sm text-ink-muted">이 모듈에는 선택 심화 레슨이 없습니다.</p>
+        )}
+
         {optionalTiers.length > 0 && (
           <section aria-labelledby="optional-heading" id="optional" className="scroll-mt-24">
             <SectionHead id="optional-heading" title={module.track === "extension" ? "레슨" : "선택 레슨"} />

@@ -13,17 +13,17 @@
 | 4 | 반복문과 반복 제어 | 프로그래밍 기초 | [1-1 반복문과 반복 제어](1-1-python-flow.md#lesson-loops) | #3 |
 | 5 | 리스트, 튜플, 딕셔너리, 집합 | 프로그래밍 기초 | [1-2 리스트, 튜플, 딕셔너리, 집합](1-2-python-collections-functions.md#lesson-collections) | #4 |
 | 6 | 인덱싱과 슬라이싱 | 프로그래밍 기초 | [1-2 인덱싱과 슬라이싱](1-2-python-collections-functions.md#lesson-indexing-slicing) | #5 |
-| 7 | 가변·불변 객체, 참조와 복사 | 프로그래밍 기초 | [1-2 가변·불변 객체와 참조·복사](1-2-python-collections-functions.md#lesson-mutability-copy) | #5, #8 |
-| 8 | 함수, 매개변수, 반환값, 변수의 범위 | 프로그래밍 기초 | [1-2 함수, 매개변수, 반환값, 변수의 범위](1-2-python-collections-functions.md#lesson-functions-scope) | #4 |
-| 9 | 리스트 컴프리헨션과 반복자 | 프로그래밍 기초 | [1-2 컴프리헨션과 반복자](1-2-python-collections-functions.md#lesson-comprehensions-iterators) | #5, #8 |
-| 10 | 파일 입출력: 텍스트, CSV, JSON | 프로그래밍 기초 | [1-3 파일 입출력: 텍스트, CSV, JSON](1-3-python-files-errors.md#lesson-file-io) | #5, #8 |
-| 11 | 오류 메시지 읽기, 예외 처리, 디버깅 | 프로그래밍 기초 | [1-3 오류 메시지 읽기, 예외 처리, 디버깅](1-3-python-files-errors.md#lesson-errors-debugging) | #8 |
-| 12 | 모듈, 패키지, 가상환경, 의존성 | 프로그래밍 기초 | [1-3 모듈, 패키지, 가상환경, 의존성](1-3-python-files-errors.md#lesson-modules-environments) | #8 |
-| 13 | 클래스와 객체의 기초 | 프로그래밍 기초 | [1-4 클래스와 객체](1-4-python-objects-tools.md#lesson-classes-objects) | #8, #5 |
-| 14 | 기본 자료구조와 시간복잡도 | 프로그래밍 기초 | [1-4 기본 자료구조와 시간복잡도](1-4-python-objects-tools.md#lesson-complexity) | #5, #8 |
+| 7 | 함수, 매개변수, 반환값, 변수의 범위 | 프로그래밍 기초 | [1-2 함수, 매개변수, 반환값, 변수의 범위](1-2-python-collections-functions.md#lesson-functions-scope) | #4 |
+| 8 | 가변·불변 객체, 참조와 복사 | 프로그래밍 기초 | [1-2 가변·불변 객체와 참조·복사](1-2-python-collections-functions.md#lesson-mutability-copy) | #5, #7 |
+| 9 | 리스트 컴프리헨션과 반복자 | 프로그래밍 기초 | [1-2 컴프리헨션과 반복자](1-2-python-collections-functions.md#lesson-comprehensions-iterators) | #5, #7 |
+| 10 | 파일 입출력: 텍스트, CSV, JSON | 프로그래밍 기초 | [1-3 파일 입출력: 텍스트, CSV, JSON](1-3-python-files-errors.md#lesson-file-io) | #5, #7 |
+| 11 | 오류 메시지 읽기, 예외 처리, 디버깅 | 프로그래밍 기초 | [1-3 오류 메시지 읽기, 예외 처리, 디버깅](1-3-python-files-errors.md#lesson-errors-debugging) | #7 |
+| 12 | 모듈, 패키지, 가상환경, 의존성 | 프로그래밍 기초 | [1-3 모듈, 패키지, 가상환경, 의존성](1-3-python-files-errors.md#lesson-modules-environments) | #7 |
+| 13 | 클래스와 객체의 기초 | 프로그래밍 기초 | [1-4 클래스와 객체](1-4-python-objects-tools.md#lesson-classes-objects) | #7, #5 |
+| 14 | 기본 자료구조와 시간복잡도 | 프로그래밍 기초 | [1-4 기본 자료구조와 시간복잡도](1-4-python-objects-tools.md#lesson-complexity) | #5, #7 |
 | 15 | Git 기초와 코드 버전 관리 | 프로그래밍 기초 | [1-4 Git과 버전 관리](1-4-python-objects-tools.md#lesson-git-basics) | #12 |
 | 16 | Jupyter Notebook과 재현 가능한 실행 | 프로그래밍 기초 | [1-4 Jupyter Notebook과 재현 가능한 실행](1-4-python-objects-tools.md#lesson-notebooks-reproducibility) | #12 |
-| 17 | 함수, 정의역·치역, 함수의 합성 | 수학 기초 | [2-1 함수, 정의역·치역, 함수의 합성](2-1-math-functions.md#lesson-functions-composition) | #8 |
+| 17 | 함수, 정의역·치역, 함수의 합성 | 수학 기초 | [2-1 함수, 정의역·치역, 함수의 합성](2-1-math-functions.md#lesson-functions-composition) | #7 |
 | 18 | 일차함수, 이차함수, 지수함수, 로그함수 | 수학 기초 | [2-1 일차함수, 이차함수, 지수함수, 로그함수](2-1-math-functions.md#lesson-elementary-functions) | #17 |
 | 19 | 시그마 표기와 수열의 기초 | 수학 기초 | [2-1 시그마 표기와 수열의 기초](2-1-math-functions.md#lesson-sigma-sequences) | #4, #18 |
 | 20 | 스칼라, 벡터, 행렬, 텐서 | 수학 기초 | [2-2 스칼라, 벡터, 행렬, 텐서](2-2-linear-algebra.md#lesson-scalars-tensors) | #5 |
@@ -42,9 +42,9 @@
 | 33 | 표본과 모집단, 표본추출, 표본편향 | 수학 기초 | [2-5 표본과 모집단, 표본추출, 표본편향](2-5-descriptive-statistics.md#lesson-sampling) | #29 |
 | 34 | 평균, 중앙값, 분위수, 표준편차 | 수학 기초 | [2-5 평균, 중앙값, 분위수, 표준편차](2-5-descriptive-statistics.md#lesson-summary-statistics) | #31, #19 |
 | 35 | 공분산, 상관계수, 상관관계와 인과관계 | 수학 기초 | [2-5 공분산, 상관계수, 상관관계와 인과관계](2-5-descriptive-statistics.md#lesson-correlation) | #34, #22 |
-| 36 | 큰 수의 법칙과 중심극한정리 | 수학 기초 | [2-6 큰 수의 법칙과 중심극한정리](2-6-inference-information.md#lesson-lln-clt) | #32, #34 |
+| 36 | 큰 수의 법칙과 중심극한정리 | 수학 기초 | [2-6 큰 수의 법칙과 중심극한정리](2-6-inference-information.md#lesson-lln-clt) | #32, #34, #33 |
 | 37 | 추정, 신뢰구간, 가설검정, p값 | 수학 기초 | [2-6 추정, 신뢰구간, 가설검정, p값](2-6-inference-information.md#lesson-statistical-inference) | #36, #33 |
-| 38 | 우도, 최대우도추정, 엔트로피, 교차엔트로피 | 수학 기초 | [2-6 가능도, 최대가능도추정, 엔트로피, 교차엔트로피](2-6-inference-information.md#lesson-likelihood-entropy) | #32, #18 |
+| 38 | 가능도(우도), 최대가능도추정, 엔트로피, 교차엔트로피 | 수학 기초 | [2-6 가능도, 최대가능도추정, 엔트로피, 교차엔트로피](2-6-inference-information.md#lesson-likelihood-entropy) | #32, #18 |
 | 39 | NumPy 배열, 축, 형태, 자료형 | 데이터 처리 기초 | [3-1 NumPy 배열, 축, 형태, 자료형](3-1-numpy.md#lesson-numpy-arrays) | #20, #5 |
 | 40 | 배열 인덱싱, 불리언 마스킹, 브로드캐스팅 | 데이터 처리 기초 | [3-1 인덱싱, 불리언 마스킹, 브로드캐스팅](3-1-numpy.md#lesson-array-indexing) | #39, #6 |
 | 41 | 벡터화 연산과 난수 시드 | 데이터 처리 기초 | [3-1 벡터화 연산과 난수 시드](3-1-numpy.md#lesson-vectorization) | #40, #14 |
@@ -63,15 +63,15 @@
 | 54 | 학습·검증·테스트 데이터와 데이터 누수 | 머신러닝 기초 | [4-1 학습·검증·테스트 데이터와 데이터 누수](4-1-ml-framing.md#lesson-data-splits) | #51, #49 |
 | 55 | 기준 모델과 단순한 예측 기준 | 머신러닝 기초 | [4-1 기준 모델과 단순한 예측 기준](4-1-ml-framing.md#lesson-baselines) | #53, #34 |
 | 56 | 손실함수, 목적함수, 학습과 추론 | 머신러닝 기초 | [4-1 손실함수, 목적함수, 학습과 추론](4-1-ml-framing.md#lesson-loss-functions) | #51, #28 |
-| 57 | 선형회귀, 잔차, 평균제곱오차 | 머신러닝 기초 | [4-2 선형회귀, 잔차, 평균제곱오차](4-2-linear-models.md#lesson-linear-regression) | #56, #23 |
-| 58 | 로지스틱 회귀, 시그모이드, 분류 임계값 | 머신러닝 기초 | [4-2 로지스틱 회귀, 시그모이드, 분류 임계값](4-2-linear-models.md#lesson-logistic-regression) | #57, #38 |
+| 57 | 선형회귀, 잔차, MSE·MAE·RMSE·R² | 머신러닝 기초 | [4-2 선형회귀, 잔차, 평균제곱오차](4-2-linear-models.md#lesson-linear-regression) | #56, #23 |
+| 58 | 로지스틱·소프트맥스 회귀, 시그모이드, 분류 임계값 | 머신러닝 기초 | [4-2 로지스틱 회귀, 시그모이드, 분류 임계값](4-2-linear-models.md#lesson-logistic-regression) | #57, #38 |
 | 59 | 혼동행렬, 정확도, 정밀도, 재현율, F1 | 머신러닝 기초 | [4-2 혼동행렬, 정확도, 정밀도, 재현율, F1](4-2-linear-models.md#lesson-classification-metrics) | #58 |
 | 60 | ROC-AUC, PR-AUC, 클래스 불균형 | 머신러닝 기초 | [4-2 ROC-AUC, PR-AUC, 클래스 불균형](4-2-linear-models.md#lesson-roc-pr) | #59 |
 | 61 | 일반화, 과적합, 과소적합, 편향·분산 | 머신러닝 기초 | [4-3 일반화, 과적합, 과소적합, 편향과 분산](4-3-generalization.md#lesson-bias-variance) | #54, #57 |
 | 62 | L1·L2 규제, 조기 종료, 학습 곡선 | 머신러닝 기초 | [4-3 L1·L2 규제, 조기 종료, 학습 곡선](4-3-generalization.md#lesson-regularization) | #61 |
 | 63 | 교차검증, 시계열 검증, 하이퍼파라미터 탐색 | 머신러닝 기초 | [4-3 교차검증, 시계열 검증, 하이퍼파라미터 탐색](4-3-generalization.md#lesson-cross-validation) | #61, #54 |
 | 64 | k최근접 이웃, 결정트리, 랜덤 포레스트 | 머신러닝 기초 | [4-4 k최근접 이웃, 결정트리, 랜덤 포레스트](4-4-ml-algorithms.md#lesson-knn-trees) | #22, #61 |
-| 65 | 그래디언트 부스팅, 특성 중요도 | 머신러닝 기초 | [4-4 그래디언트 부스팅, 특성 중요도](4-4-ml-algorithms.md#lesson-boosting) | #64 |
+| 65 | 그래디언트 부스팅, 특성 중요도 | 머신러닝 기초 | [4-4 그래디언트 부스팅, 특성 중요도](4-4-ml-algorithms.md#lesson-boosting) | #64, #56 |
 | 66 | K-means, PCA, 머신러닝 파이프라인 | 머신러닝 기초 | [4-4 K-means, PCA, 머신러닝 파이프라인](4-4-ml-algorithms.md#lesson-kmeans-pca-pipeline) | #35, #24, #63 |
 | 67 | 퍼셉트론, 다층 신경망, 활성화 함수 | 딥러닝 기초 | [5-1 퍼셉트론, 다층 신경망, 활성화 함수](5-1-neural-networks.md#lesson-perceptron-mlp) | #58, #23 |
 | 68 | 순전파, 역전파, 계산 그래프, 자동미분 | 딥러닝 기초 | [5-1 순전파, 역전파, 계산 그래프](5-1-neural-networks.md#lesson-backprop) · [5-1 자동미분 엔진 구현](5-1-neural-networks.md#lesson-micrograd) | #67, #27, #13 |

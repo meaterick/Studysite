@@ -1,10 +1,12 @@
 import { defineLesson, md } from "../../kit";
+import { CAPSTONE_PLAN, CAPSTONE_PLAN_HREF } from "../../curriculum/capstone-plan";
 import exercises from "./labs/capstone-design";
 
 export default defineLesson({
   id: "capstone-design",
   title: "핵심 논문과 캡스톤 설계",
   tier: "core",
+  requires: ["research-methods", "model-cards"],
   goal: "퍼셉트론부터 DPO까지 핵심 논문이 각각 처음으로 해낸 일을 설명하고, 앞선 트랙의 내용을 엮어 숫자로 확인할 수 있는 성공 기준과 단계별 일정을 갖춘 캡스톤 계획을 세울 수 있다.",
   why: "캡스톤은 주제를 정하고 데이터를 모으고 기준 모델과 비교하는 데 시간이 많이 들어, 마지막 모듈에서 시작하면 평가와 위험 점검까지 마치기 어렵다. 이 레슨의 유형, 성공 기준, 단계별 일정은 트랙 4를 마칠 때부터 캡스톤을 준비하는 기준이 되고, 핵심 논문 표는 주제와 재현 대상을 고르는 출발점이 된다.",
   body: md`
@@ -12,24 +14,24 @@ export default defineLesson({
 
 다음 표는 이 과정에서 다룬 기법의 출발점이 된 논문을 발표 연도순으로 정리하고, 각 논문이 처음으로 해낸 일과 그 내용을 다룬 레슨을 함께 적은 것이다. 논문 재현을 캡스톤 주제로 고려한다면 이 표에서 후보를 고른다([[lesson:research-methods]]).
 
-| 논문 | 처음으로 해낸 일 | 다룬 레슨 |
-| --- | --- | --- |
-| Rosenblatt (1958), 퍼셉트론 | 오차에 따라 가중치를 고치는 학습 규칙을 가진 선형 분류기를 제시했다 | [[lesson:perceptron-mlp]] |
-| Rumelhart, Hinton & Williams (1986), 역전파 | 다층 신경망을 오차 역전파로 학습하는 방법을 정리해 널리 쓰이게 했다 | [[lesson:backprop]] |
-| Krizhevsky et al. (2012), AlexNet | GPU로 학습한 대규모 CNN으로 ImageNet 분류 오류율을 크게 낮췄다 | [[lesson:cnn-architectures]] |
-| Mikolov et al. (2013), Word2Vec | 단어를 저차원 밀집 벡터로 학습하는 효율적인 방법을 제시했다 | [[lesson:embeddings]] |
-| Sutskever et al. (2014), Seq2Seq | 인코더-디코더 구조로 길이가 다른 시퀀스 사이의 변환을 학습했다 | [[lesson:attention-motivation]] |
-| Bahdanau et al. (2014), attention | 디코더가 출력할 때마다 인코더의 모든 위치를 가중합해 참조하는 attention을 도입했다 | [[lesson:attention-motivation]] |
-| He et al. (2015), ResNet | 잔차 연결로 100층이 넘는 신경망을 학습할 수 있게 했다 | [[lesson:cnn-architectures]] |
-| Vaswani et al. (2017), Transformer | 순환 구조 없이 attention만으로 시퀀스를 처리하는 구조를 제시했다 | [[lesson:transformer-block]] |
-| Devlin et al. (2018), BERT | 가려진 토큰을 맞히는 양방향 사전학습으로 여러 자연어 처리 과제의 성능을 높였다 | [[lesson:llm-architectures]] |
-| Radford et al. (2018), Brown et al. (2020), GPT 계열 | 다음 토큰 예측으로 사전학습한 Transformer를 키우면 few-shot 능력이 나타남을 보였다 | [[lesson:llm-architectures]] |
-| Dosovitskiy et al. (2020), ViT | 이미지를 패치 시퀀스로 다루는 Transformer로, 대규모 사전학습을 거치면 CNN과 대등한 분류 성능을 냈다 | [[lesson:cnn-architectures]] |
-| Lewis et al. (2020), RAG | 생성 모델과 문서 검색을 결합하는 방법을 정식화하고 RAG라는 이름을 붙였다 | [[lesson:rag]] |
-| Ho et al. (2020), DDPM | 잡음을 예측하도록 학습하는 확산 모델로 고품질 이미지 생성을 실용 수준으로 만들었다 | [[lesson:generative-models]] |
-| Radford et al. (2021), CLIP | 이미지와 텍스트 쌍을 대조 학습해 하나의 임베딩 공간에 정렬했다 | [[lesson:multimodal]] |
-| Hu et al. (2021), LoRA | 저랭크 행렬만 학습해 큰 모델을 적은 파라미터로 미세조정하는 방법을 제시했다 | [[lesson:instruction-tuning]] |
-| Rafailov et al. (2023), DPO | 별도의 보상 모델 없이 선호 데이터로 정책을 직접 최적화하는 방법을 제시했다 | [[lesson:preference-learning]] |
+| 논문 | 처음으로 해낸 일 | 다룬 레슨 | 학습 범위 |
+| --- | --- | --- | --- |
+| Rosenblatt (1958), 퍼셉트론 | 오차에 따라 가중치를 고치는 학습 규칙을 가진 선형 분류기를 제시했다 | [[lesson:perceptron-mlp]] | 핵심 |
+| Rumelhart, Hinton & Williams (1986), 역전파 | 다층 신경망을 오차 역전파로 학습하는 방법을 정리해 널리 쓰이게 했다 | [[lesson:backprop]] | 핵심 |
+| Krizhevsky et al. (2012), AlexNet | GPU로 학습한 대규모 CNN으로 ImageNet 분류 오류율을 크게 낮췄다 | [[lesson:cnn-architectures]] | 보충(선택) |
+| Mikolov et al. (2013), Word2Vec | 단어를 저차원 밀집 벡터로 학습하는 효율적인 방법을 제시했다 | [[lesson:embeddings]] | 핵심 |
+| Sutskever et al. (2014), Seq2Seq | 인코더-디코더 구조로 길이가 다른 시퀀스 사이의 변환을 학습했다 | [[lesson:attention-motivation]] | 핵심 |
+| Bahdanau et al. (2014), attention | 디코더가 출력할 때마다 인코더의 모든 위치를 가중합해 참조하는 attention을 도입했다 | [[lesson:attention-motivation]] | 핵심 |
+| He et al. (2015), ResNet | 잔차 연결로 100층이 넘는 신경망을 학습할 수 있게 했다 | [[lesson:cnn-architectures]] | 보충(선택) |
+| Vaswani et al. (2017), Transformer | 순환 구조 없이 attention만으로 시퀀스를 처리하는 구조를 제시했다 | [[lesson:transformer-block]] | 핵심 |
+| Devlin et al. (2018), BERT | 가려진 토큰을 맞히는 양방향 사전학습으로 여러 자연어 처리 과제의 성능을 높였다 | [[lesson:llm-architectures]] | 보충(선택) |
+| Radford et al. (2018), Brown et al. (2020), GPT 계열 | 다음 토큰 예측으로 사전학습한 Transformer를 키우면 few-shot 능력이 나타남을 보였다 | [[lesson:llm-architectures]] | 보충(선택) |
+| Dosovitskiy et al. (2020), ViT | 이미지를 패치 시퀀스로 다루는 Transformer로, 대규모 사전학습을 거치면 CNN과 대등한 분류 성능을 냈다 | [[lesson:cnn-architectures]] | 보충(선택) |
+| Lewis et al. (2020), RAG | 생성 모델과 문서 검색을 결합하는 방법을 정식화하고 RAG라는 이름을 붙였다 | [[lesson:rag]] | 핵심 |
+| Ho et al. (2020), DDPM | 잡음을 예측하도록 학습하는 확산 모델로 고품질 이미지 생성을 실용 수준으로 만들었다 | [[lesson:generative-models]] | 확장 선행(선택) |
+| Radford et al. (2021), CLIP | 이미지와 텍스트 쌍을 대조 학습해 하나의 임베딩 공간에 정렬했다 | [[lesson:multimodal]] | 확장 선행(선택) |
+| Hu et al. (2021), LoRA | 저랭크 행렬만 학습해 큰 모델을 적은 파라미터로 미세조정하는 방법을 제시했다 | [[lesson:instruction-tuning]] | 핵심 |
+| Rafailov et al. (2023), DPO | 별도의 보상 모델 없이 선호 데이터로 정책을 직접 최적화하는 방법을 제시했다 | [[lesson:preference-learning]] | 핵심 |
 
 표는 발표 연도순이지만, 논문을 읽을 때는 계열을 따라가는 편이 흐름을 파악하기 쉽다. 예를 들어 attention, Transformer, BERT와 GPT 순서로 읽거나, 사전학습, LoRA, DPO 순서로 읽는다.
 
@@ -37,7 +39,7 @@ export default defineLesson({
 
 ### 캡스톤 유형
 
-캡스톤은 앞선 트랙에서 배운 개념과 도구를 하나의 문제에 적용해 문제 정의, 데이터, 모델, 평가, 모델카드, 발표까지 수행하는 프로젝트다. 개인 또는 2인 팀으로 다음 네 유형 중 하나를 고른다.
+캡스톤은 앞선 트랙에서 배운 개념과 도구를 하나의 문제에 적용해 문제 정의, 데이터, 모델, 평가, 모델카드, 발표까지 수행하는 프로젝트다. 혼자 진행할 수 있으며, 협업한다면 2인 팀으로 다음 네 유형 중 하나를 고른다. 공유와 발표는 선택이다.
 
 | 유형 | 예시 | 필수 요소 |
 | --- | --- | --- |
@@ -48,23 +50,23 @@ export default defineLesson({
 
 어느 유형이든 리포트에 "한계와 실패 사례" 항목을 넣는다. 잘된 결과만 보고하면 그 결과가 어떤 조건에서 성립하지 않는지 알 수 없으므로, 실패한 입력과 그 원인을 실제 출력이나 그래프를 근거로 적는다.
 
-다음은 유형별 주제의 예와 출발점이 되는 레슨이다.
+다음은 유형별 주제의 예와 출발점이 되는 레슨이다. 핵심 경로만으로 진행하려면 학습 범위가 핵심인 주제를 고른다. 확장 의존 주제는 표시된 선택 레슨을 추가로 학습하며, 논문 재현도 선택한 논문의 학습 범위를 확인한다.
 
-| 주제 | 유형 | 출발점 |
-| --- | --- | --- |
-| 공개 데이터나 동아리 활동 기록을 탐색해 가설을 세우고 검증 | C | [[lesson:eda]] |
-| 정형 데이터의 분류·회귀(대출 심사, 이탈 예측)와 특성 중요도 분석 | A 또는 C | [[lesson:boosting]] |
-| NumPy로 구현한 MLP로 손글씨 숫자를 분류하고 활성화 함수와 규제의 영향을 비교 | A | [[lesson:micrograd]] |
-| CNN 학습이나 사전학습 모델의 미세조정으로 이미지 분류 | A | [[lesson:cnn-training]] |
-| 감성 분석이나 텍스트 분류를 임베딩과 작은 Transformer로 해결 | A | [[lesson:embeddings]] |
-| 미니 GPT를 구현하고 attention 가중치가 어느 토큰에 집중하는지 분석 | A | [[lesson:transformer-block]] |
-| LLM API와 프롬프트 설계로 특정 영역(스터디 질의응답, 코드 리뷰)의 도우미 구축 | B | [[lesson:prompt-design]] |
-| 문서 모음에서 근거를 인용하는 RAG QA 봇과 골든셋 평가 | B | [[lesson:rag]] |
-| 계산기, 검색, 코드 실행 도구를 호출해 여러 단계의 작업을 수행하는 에이전트 | B | [[lesson:agents]] |
-| 이미지 캡셔닝, 시각 질의응답, CLIP 기반 이미지 검색 | B | [[lesson:multimodal]] |
-| 위 논문 표의 논문 하나를 축소된 규모로 재현 | A | [[lesson:research-methods]] |
-| 모델 학습부터 API 서빙, Docker, 모니터링까지 연결한 서비스 | B | [[lesson:monitoring]] |
-| 공개 AI 서비스의 집단별 성능 감사와 모델카드 작성 | D | [[lesson:fairness]] |
+| 주제 | 유형 | 출발점 | 학습 범위 |
+| --- | --- | --- | --- |
+| 공개 데이터나 동아리 활동 기록을 탐색해 가설을 세우고 검증 | C | [[lesson:eda]] | 핵심 |
+| 정형 데이터의 분류·회귀(대출 심사, 이탈 예측)와 특성 중요도 분석 | A 또는 C | [[lesson:boosting]] | 핵심 |
+| NumPy로 구현한 MLP로 손글씨 숫자를 분류하고 활성화 함수와 규제의 영향을 비교 | A | [[lesson:micrograd]] | 핵심 |
+| CNN 학습이나 사전학습 모델의 미세조정으로 이미지 분류 | A | [[lesson:cnn-training]] | 핵심 |
+| 감성 분석이나 텍스트 분류를 임베딩과 작은 Transformer로 해결 | A | [[lesson:embeddings]] | 핵심 |
+| 미니 GPT를 구현하고 attention 가중치가 어느 토큰에 집중하는지 분석 | A | [[lesson:transformer-block]] | 핵심 |
+| LLM API와 프롬프트 설계로 특정 영역(스터디 질의응답, 코드 리뷰)의 도우미 구축 | B | [[lesson:prompt-design]] | 핵심 |
+| 문서 모음에서 근거를 인용하는 RAG QA 봇과 골든셋 평가 | B | [[lesson:rag]] | 핵심 |
+| 계산기, 검색, 코드 실행 도구를 호출해 여러 단계의 작업을 수행하는 에이전트 | B | [[lesson:agents]] | 핵심 |
+| 이미지 캡셔닝, 시각 질의응답, CLIP 기반 이미지 검색 | B | [[lesson:multimodal]] | 확장 선행(선택) |
+| 위 논문 표의 논문 하나를 축소된 규모로 재현 | A | [[lesson:research-methods]] | 핵심 |
+| 모델 학습부터 API 서빙, Docker, 모니터링까지 연결한 서비스 | B | [[lesson:monitoring]] | 핵심 |
+| 공개 AI 서비스의 집단별 성능 감사와 모델카드 작성 | D | [[lesson:fairness]] | 확장 선행(선택) |
 
 ### 성공 기준
 
@@ -82,14 +84,13 @@ export default defineLesson({
 
 [[diagram:capstone-timeline]]
 
+[캡스톤 단계별 준비 안내](${CAPSTONE_PLAN_HREF})는 레슨이 잠겨 있어도 볼 수 있다.
+
 | 단계 | 시점 | 할 일 |
 | --- | --- | --- |
-| 주제 초안 | 트랙 4(머신러닝 기초)를 마친 뒤 | 유형과 주제를 정하고 문제, 가설, 성공 기준, 사용할 데이터를 한 문단 계획서로 써서 공유한다 |
-| 데이터와 기준 모델 | 트랙 5(딥러닝 기초)를 마친 뒤 | 데이터를 확보해 학습·평가 분할을 고정하고, 기준 모델의 점수를 여러 시드로 잰다 |
-| 평가와 위험 점검 | 트랙 6(생성형 AI와 언어 모델)을 마친 뒤 | 제안 방법을 기준 모델과 같은 조건에서 비교하고, 위험 점검표와 모델카드 초안을 작성한다 |
-| 제출과 발표 | 캡스톤 모듈 | 실행 환경을 초기화한 뒤 전체 실행으로 재현을 확인하고, 리포트·모델카드·발표 개요·성찰문을 제출한 뒤 발표한다 |
+${CAPSTONE_PLAN.map((step) => `| ${step.title} | ${step.timing} | ${step.task} |`).join("\n")}
 
-기준 모델의 점수를 일찍 재 두면 성공 기준의 목표값이 현실적인지 확인할 수 있고, 제안 방법을 같은 분할과 시드로 비교할 준비가 된다([[lesson:research-methods]]). 발표는 문제 3분, 방법 3분, 결과 3분, 한계와 교훈 1분으로 구성하고 질의응답 5분이 이어진다.
+기준 모델의 점수를 일찍 재 두면 성공 기준의 목표값이 현실적인지 확인할 수 있고, 제안 방법을 같은 분할과 시드로 비교할 준비가 된다([[lesson:research-methods]]). 선택 발표를 한다면 문제 3분, 방법 3분, 결과 3분, 한계와 교훈 1분, 질의응답 5분 구성을 참고한다.
 `,
   checks: [
     {

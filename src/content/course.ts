@@ -183,9 +183,9 @@ function computePrerequisites(lesson: Lesson): Lesson[] {
 
 const PREREQS = new Map(MODULES.flatMap((m) => m.lessons.map((l) => [l.id, computePrerequisites(l)] as const)));
 
-/** 선수 레슨(기본 순서). 보충·심화 레슨은 같은 모듈의 핵심 레슨을 선수로 갖는다. */
+/** 선수 레슨(기본 순서). 보충·심화는 명시한 requires를 쓰고, 없을 때만 모듈 핵심 레슨을 선수로 갖는다. */
 export function prerequisitesOf(lesson: Lesson): Lesson[] {
-  if (lesson.tier !== "core" && !lesson.concepts?.length) {
+  if (lesson.tier !== "core" && !lesson.concepts?.length && lesson.requires === undefined) {
     return getModule(lesson.module)!.lessons.filter((l) => l.tier === "core");
   }
   return PREREQS.get(lesson.id) ?? [];

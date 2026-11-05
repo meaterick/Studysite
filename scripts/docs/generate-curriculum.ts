@@ -157,7 +157,7 @@ for (const m of MODULES) {
       const cells = t.cells.map((c) => (c.kind === "code" ? `코드 \`${c.id}\`` : `답안 \`${c.id}\`${c.minChars ? `(최소 ${c.minChars}자)` : ""}`)).join(", ");
       lines.push(`| ${cell(t.title)} | ${TIER_INFO[t.tier].label} | ${cells} |`);
     }
-    lines.push("", "### 채점 기준", "", "| 기준 | 배점 | 확인 내용 |", "| --- | ---: | --- |", ...a.rubric.map((r) => `| ${cell(r.label)} | ${r.points} | ${cell(r.guide)} |`), "");
+    lines.push("", "### 자기 점검 기준", "", "| 기준 | 확인 내용 |", "| --- | --- |", ...a.rubric.map((r) => `| ${cell(r.label)} | ${cell(r.guide)} |`), "");
     if (a.autoTests.length) lines.push("### 자동 테스트", "", ...a.autoTests.map((t) => `- \`${t.taskId}\`: ${oneLine(t.title)}`), "");
     if (a.challenges.length) lines.push("### 선택 심화 문제", "", ...a.challenges.map((e) => `- \`${e.key}\` ${oneLine(e.title)}`), "");
   }
