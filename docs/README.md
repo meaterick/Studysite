@@ -14,35 +14,12 @@
 - [기술 구조와 저장소 지도](development/architecture.md): 폴더 역할, 데이터 흐름, 생성물, 검증 명령.
 - [학습 콘텐츠 편집 안내](contributing/content-authoring.md): 모듈·레슨·실습·과제의 작성 방법, 문체와 용어, ID 보존, 검증 명령.
 - [학습자료 생성 프롬프트](contributing/prompts/learning-content-generator-prompt.md): 초안 작성용 보조 도구. 실제 스키마와 검증 명령은 편집 안내를 우선합니다.
-- [저장소 정리 기록](maintenance/repository-cleanup.md): 이동·삭제 이유와 유지 기준.
 
 ## 운영자
 
 - [배포](operations/deployment.md): GitHub Actions, OCI, Google OAuth, 환경 변수.
 - [데이터 저장소](operations/data.md): SQLite, 저장 위치, 학습 기록의 형식, 마이그레이션.
 - [보안 운영 개요](operations/security.md), [IP 방어](operations/ip-defense.md), [보안 모니터링](operations/security-monitoring.md).
-
-## 설계와 계획 이력
-
-현재 동작은 위의 문서를 기준으로 합니다.
-
-**초기 구조 개편 기록.** 현재 분야·모듈·레슨 구조의 출발점을 정리한 문서입니다. 당시 화면과 운영 방식은 달라졌습니다.
-
-- [AI 커리큘럼 탑다운 재구성 플랜](plans/top-down-curriculum.md): 80개 AI 개념 기준의 트랙·모듈·레슨 구조, 사이트 정보 구조와 진도 이전, 실행 순서.
-- [부록: 기존 104단계 재배치표](plans/top-down-curriculum-mapping.md): 예전 8주 구성의 모든 단계가 옮겨 간 레슨과 처리.
-
-**검토용(구현하지 않음).** 현재 사이트와 구조가 다른 개편안입니다.
-
-- [Python·AI 탑다운 커리큘럼 기획안](product/learning-platform-plan.md): Python과 AI 각 6모듈·24레슨의 기본 경로, 목적별 선택 심화, 레슨·화면·진도·단계별 공개 기준. Python은 작은 프로그램을 실행·수정·검증하며 학습하고, AI는 캡스톤·프로젝트·필수 구현·제출·채점 없이 개념·원리·해설 예시를 전달하는 지식형 과정으로 설계한 안입니다.
-
-## 과거 검토·설계 이력
-
-아래 자료는 당시의 제안·관측 기록입니다. 현재 구현 안내와 구분해서 읽습니다.
-
-- [커리큘럼 구조 검토 (2026-11-05)](archive/design/curriculum-structure-review-2026-11-05.md).
-- [2026-10-19 보안 점검](archive/security/security-review-2026-10-19.md).
-- [2026-10-19 외부 Nmap 위험 검토](archive/security/nmap-risk-review-2026-10-19.md).
-- [2026-10-19 보안 구조·효율 점검](archive/security/security-architecture-review-2026-10-19.md).
 
 ## 문서 유지 방법
 
