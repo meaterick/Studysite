@@ -2268,3 +2268,335 @@ export function RopeLongDecay() {
     </DiagramFrame>
   );
 }
+
+/** 원 안에 연산 기호(×, +)를 그린다. */
+const opNode = (x: number, y: number, sym: string, color: string, r = 14) => (
+  <g key={`op-${x}-${y}`}>
+    <circle cx={x} cy={y} r={r} fill="var(--surface-card)" stroke={color} strokeWidth={2} />
+    <text x={x} y={y + 5.5} textAnchor="middle" fontSize={16} fontWeight={800} fill={color}>
+      {sym}
+    </text>
+  </g>
+);
+
+/** 게이트 상자: 위 줄은 활성화 함수(σ, tanh), 아래 줄은 이름 */
+const gateBox = (cx: number, y: number, fn: string, name: string, color: string, w = 66, h = 36) => (
+  <g key={`gate-${cx}-${y}`}>
+    <rect x={cx - w / 2} y={y} width={w} height={h} rx={7} fill={color} fillOpacity={0.16} stroke={color} strokeWidth={1.5} />
+    <text x={cx} y={y + 15} textAnchor="middle" fontSize={12.5} fontWeight={800} fill={ink}>
+      {fn}
+    </text>
+    <text x={cx} y={y + 29} textAnchor="middle" fontSize={9.5} fontWeight={700} fill={color}>
+      {name}
+    </text>
+  </g>
+);
+
+const dot = (x: number, y: number, color: string) => <circle key={`dot-${x}-${y}`} cx={x} cy={y} r={3.6} fill={color} />;
+
+export function LstmCellStructure() {
+  // 본문의 식: f, i, o = σ(W x_t + U h_{t−1} + b), c̃ = tanh(…), c_t = f ⊙ c_{t−1} + i ⊙ c̃, h_t = o ⊙ tanh(c_t).
+  const P = "lcst";
+  const cY = 82; // 셀 상태 경로
+  const busY = 296; // [h_{t−1}, x_t] 경로
+  const gY = 198; // 게이트 상자 윗변
+  const gx = { f: 250, i: 324, c: 412, o: 486 };
+  const outX = 560;
+  const hc = inkSecondary;
+  return (
+    <DiagramFrame
+      title="LSTM 셀의 내부 구조: 셀 상태 경로와 게이트 4개"
+      caption="위쪽을 가로지르는 보라색 선이 셀 상태 c의 경로다. 이 경로에는 성분별 곱(×)과 덧셈(+)만 있고 행렬 곱이 없다. 아래쪽에서 이전 은닉 상태 h_{t−1}과 현재 입력 x_t를 이어 붙인 벡터가 네 상자에 똑같이 들어간다. forget gate f는 이전 셀 상태에서 지울 비율, input gate i는 후보 c̃를 더할 비율, output gate o는 tanh(c_t) 중 은닉 상태 h_t로 내보낼 비율을 정한다. 세 게이트는 시그모이드(σ)라 0과 1 사이 값이고, 후보 c̃는 tanh라 −1과 1 사이 값이다. 새 셀 상태 c_t와 은닉 상태 h_t는 다음 시점으로 전달되고, h_t는 다음 층의 입력으로도 쓰인다."
+      viewBox="0 0 720 372"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: hc, violet: colors.violet, orange: colors.orange, green: colors.green, aqua: colors.aqua, blue: colors.blue }} />
+      {/* 셀 경계 */}
+      <rect x={146} y={44} width={444} height={276} rx={14} fill={colors.violet} fillOpacity={0.04} stroke="var(--border-strong)" strokeWidth={1.2} strokeDasharray="6 4" />
+      <text x={156} y={62} fontSize={10.5} fontWeight={700} fill={inkMuted}>
+        LSTM 셀 (시점 t)
+      </text>
+      <text x={368} y={30} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={colors.violet}>
+        셀 상태 경로: 성분별 곱(×)과 덧셈(+)만 있다
+      </text>
+
+      {/* 셀 상태 c */}
+      <Arr x1={20} y1={cY} x2={gx.f - 15} y2={cY} color={colors.violet} marker={`${P}-violet`} width={3} />
+      <Arr x1={gx.f + 14} y1={cY} x2={368 - 15} y2={cY} color={colors.violet} marker={`${P}-violet`} width={3} />
+      <Arr x1={368 + 14} y1={cY} x2={704} y2={cY} color={colors.violet} marker={`${P}-violet`} width={3} />
+      <text x={22} y={cY - 10} fontSize={12} fontWeight={800} fill={colors.violet}>
+        {withSub("c", "t−1", "", 12)}
+      </text>
+      <text x={702} y={cY - 10} textAnchor="end" fontSize={12} fontWeight={800} fill={colors.violet}>
+        {withSub("c", "t", "", 12)}
+      </text>
+      {opNode(gx.f, cY, "×", colors.orange)}
+      {opNode(368, cY, "+", colors.green)}
+
+      {/* 입력 경로: h_{t−1}과 x_t를 이어 붙임 */}
+      <line x1={20} y1={busY} x2={200} y2={busY} stroke={hc} strokeWidth={2} />
+      <Arr x1={200} y1={358} x2={200} y2={busY + 2} color={hc} marker={`${P}-ink`} width={2} />
+      <line x1={200} y1={busY} x2={gx.o} y2={busY} stroke={hc} strokeWidth={2} />
+      {dot(200, busY, hc)}
+      <text x={22} y={busY - 9} fontSize={12} fontWeight={800} fill={ink}>
+        {withSub("h", "t−1", "", 12)}
+      </text>
+      <text x={210} y={356} fontSize={12} fontWeight={800} fill={ink}>
+        {withSub("x", "t", "", 12)}
+      </text>
+      <text x={368} y={busY + 16} textAnchor="middle" fontSize={10} fill={inkSecondary}>
+        {withSub("[h", "t−1", ", x", 10)}
+        <tspan dy={3} fontSize={7.2}>
+          t
+        </tspan>
+        <tspan dy={-3}>]를 이어 붙여 네 상자에 똑같이 입력</tspan>
+      </text>
+      {[gx.f, gx.i, gx.c, gx.o].map((x) => (
+        <g key={x}>
+          {dot(x, busY, hc)}
+          <Arr x1={x} y1={busY} x2={x} y2={gY + 38} color={hc} marker={`${P}-ink`} width={1.6} />
+        </g>
+      ))}
+
+      {/* 게이트 4개 */}
+      {gateBox(gx.f, gY, "σ", "forget f", colors.orange)}
+      {gateBox(gx.i, gY, "σ", "input i", colors.green)}
+      {gateBox(gx.c, gY, "tanh", "후보 c̃", colors.aqua)}
+      {gateBox(gx.o, gY, "σ", "output o", colors.blue)}
+
+      {/* forget: f ⊙ c_{t−1} */}
+      <Arr x1={gx.f} y1={gY} x2={gx.f} y2={cY + 16} color={colors.orange} marker={`${P}-orange`} width={2} />
+      <text x={gx.f - 8} y={140} textAnchor="end" fontSize={11} fontWeight={800} fill={colors.orange}>
+        {withSub("f", "t", "", 11)}
+      </text>
+
+      {/* input: i ⊙ c̃ → + */}
+      {opNode(368, 148, "×", colors.green)}
+      <ArrPath d={`M${gx.i},${gY} V148 H${368 - 16}`} color={colors.green} marker={`${P}-green`} width={2} />
+      <ArrPath d={`M${gx.c},${gY} V148 H${368 + 16}`} color={colors.aqua} marker={`${P}-aqua`} width={2} />
+      <Arr x1={368} y1={148 - 14} x2={368} y2={cY + 16} color={colors.green} marker={`${P}-green`} width={2} />
+      <text x={gx.i - 8} y={178} textAnchor="end" fontSize={11} fontWeight={800} fill={colors.green}>
+        {withSub("i", "t", "", 11)}
+      </text>
+      <text x={gx.c + 8} y={178} fontSize={11} fontWeight={800} fill={colors.aqua}>
+        {withSub("c̃", "t", "", 11)}
+      </text>
+      <text x={376} y={118} fontSize={10} fill={inkSecondary}>
+        {withSub("i", "t", " ⊙ c̃", 10)}
+        <tspan dy={3} fontSize={7.2}>
+          t
+        </tspan>
+      </text>
+
+      {/* output: h_t = o ⊙ tanh(c_t) */}
+      {dot(outX, cY, colors.violet)}
+      <Arr x1={outX} y1={cY} x2={outX} y2={108} color={colors.violet} marker={`${P}-violet`} width={2} />
+      <rect x={outX - 26} y={110} width={52} height={24} rx={6} fill={colors.violet} fillOpacity={0.14} stroke={colors.violet} strokeWidth={1.3} />
+      <text x={outX} y={126} textAnchor="middle" fontSize={11.5} fontWeight={800} fill={ink}>
+        tanh
+      </text>
+      <Arr x1={outX} y1={134} x2={outX} y2={170 - 15} color={colors.violet} marker={`${P}-violet`} width={2} />
+      {opNode(outX, 170, "×", colors.blue)}
+      <ArrPath d={`M${gx.o},${gY} V170 H${outX - 16}`} color={colors.blue} marker={`${P}-blue`} width={2} />
+      <text x={gx.o + 8} y={190} fontSize={11} fontWeight={800} fill={colors.blue}>
+        {withSub("o", "t", "", 11)}
+      </text>
+      <ArrPath d={`M${outX},${170 + 14} V${busY} H704`} color={hc} marker={`${P}-ink`} width={2.4} />
+      <text x={702} y={busY - 9} textAnchor="end" fontSize={12} fontWeight={800} fill={ink}>
+        {withSub("h", "t", "", 12)}
+      </text>
+      <Lines x={702} y={busY + 18} lines={["다음 시점과", "다음 층으로"]} size={9.5} anchor="end" color={inkSecondary} />
+      <text x={outX + 22} y={232} fontSize={10} fill={inkSecondary}>
+        {withSub("h", "t", " = o", 10)}
+        <tspan dy={3} fontSize={7.2}>
+          t
+        </tspan>
+        <tspan dy={-3}> ⊙ tanh(c</tspan>
+        <tspan dy={3} fontSize={7.2}>
+          t
+        </tspan>
+        <tspan dy={-3}>)</tspan>
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function LstmUnrolled() {
+  // 같은 LSTM 셀(같은 가중치)을 시점마다 반복 적용한다. 셀 상태 c와 은닉 상태 h, 두 경로가 다음 시점으로 전달된다.
+  const P = "lunr";
+  const cY = 78;
+  const hY = 160;
+  const cells = [
+    { cx: 120, t: "t−1" },
+    { cx: 360, t: "t" },
+    { cx: 600, t: "t+1" },
+  ];
+  const half = 82;
+  const hc = inkSecondary;
+  const sub = (base: string, t: string, size: number) => withSub(base, t, "", size);
+  return (
+    <DiagramFrame
+      title="LSTM을 시간축으로 펼치기: 셀 상태와 은닉 상태, 두 경로"
+      caption="같은 LSTM 셀(같은 가중치)을 시점마다 반복해 적용한다. 기본 RNN은 은닉 상태 h 하나만 다음 시점으로 넘기지만, LSTM은 셀 상태 c(보라색, 위)와 은닉 상태 h(회색, 아래)를 함께 넘긴다. 셀 상태는 시점마다 forget gate만큼 곱해지고(×) 새 후보가 더해질(+) 뿐이어서, 이 경로를 따라 정보와 기울기가 먼 시점까지 전달된다. 은닉 상태 h_t는 그 시점의 출력으로 다음 층에도 전달된다. 각 셀 안의 네 상자는 위 그림의 게이트 f, i, o와 후보 c̃다."
+      viewBox="0 0 720 262"
+      minWidth={600}
+    >
+      <Markers prefix={P} colors={{ ink: hc, violet: colors.violet }} />
+      {/* 셀 사이의 c, h 경로 */}
+      {[
+        [8, cells[0].cx - half],
+        [cells[0].cx + half, cells[1].cx - half],
+        [cells[1].cx + half, cells[2].cx - half],
+        [cells[2].cx + half, 712],
+      ].map(([a, b], k) => (
+        <g key={k}>
+          <Arr x1={a} y1={cY} x2={b} y2={cY} color={colors.violet} marker={`${P}-violet`} width={3} />
+          <Arr x1={a} y1={hY} x2={b} y2={hY} color={hc} marker={`${P}-ink`} width={2} />
+        </g>
+      ))}
+      <text x={8} y={cY - 9} fontSize={11} fontWeight={800} fill={colors.violet}>
+        {sub("c", "t−2", 11)}
+      </text>
+      <text x={8} y={hY - 9} fontSize={11} fontWeight={800} fill={ink}>
+        {sub("h", "t−2", 11)}
+      </text>
+      {cells.slice(0, 2).map((c, k) => {
+        const mid = (c.cx + half + cells[k + 1].cx - half) / 2;
+        return (
+          <g key={c.t}>
+            <text x={mid} y={cY - 9} textAnchor="middle" fontSize={11} fontWeight={800} fill={colors.violet}>
+              {sub("c", c.t, 11)}
+            </text>
+            <text x={mid} y={hY - 9} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+              {sub("h", c.t, 11)}
+            </text>
+          </g>
+        );
+      })}
+      {cells.map((c) => (
+        <g key={c.t}>
+          <rect x={c.cx - half} y={42} width={half * 2} height={150} rx={12} fill="var(--surface-card)" stroke="var(--border-strong)" strokeWidth={1.3} />
+          {/* 셀 상태 경로 */}
+          <line x1={c.cx - half} y1={cY} x2={c.cx + half} y2={cY} stroke={colors.violet} strokeWidth={3} />
+          {opNode(c.cx - 34, cY, "×", colors.orange, 12)}
+          {opNode(c.cx + 26, cY, "+", colors.green, 12)}
+          {/* 게이트 4개 */}
+          {[
+            { t: "f", col: colors.orange },
+            { t: "i", col: colors.green },
+            { t: "c̃", col: colors.aqua },
+            { t: "o", col: colors.blue },
+          ].map((g, k) => (
+            <g key={g.t}>
+              <rect x={c.cx - 70 + k * 36} y={112} width={30} height={22} rx={5} fill={g.col} fillOpacity={0.18} stroke={g.col} strokeWidth={1.2} />
+              <text x={c.cx - 55 + k * 36} y={127} textAnchor="middle" fontSize={11} fontWeight={800} fill={ink}>
+                {g.t}
+              </text>
+            </g>
+          ))}
+          <line x1={c.cx - 34} y1={112} x2={c.cx - 34} y2={cY + 12} stroke={colors.orange} strokeWidth={1.4} />
+          <line x1={c.cx + 26} y1={112} x2={c.cx + 26} y2={cY + 12} stroke={colors.green} strokeWidth={1.4} />
+          {/* 은닉 상태 경로: 게이트로 들어가고 새 h가 나온다 */}
+          <line x1={c.cx - half} y1={hY} x2={c.cx + half} y2={hY} stroke={hc} strokeWidth={2} />
+          <text x={c.cx} y={184} textAnchor="middle" fontSize={10} fontWeight={700} fill={inkMuted}>
+            {`LSTM 셀 (시점 ${c.t})`}
+          </text>
+          {/* 입력 x와 출력 h */}
+          <Arr x1={c.cx} y1={244} x2={c.cx} y2={194} color={hc} marker={`${P}-ink`} width={1.8} />
+          <text x={c.cx + 8} y={240} fontSize={11.5} fontWeight={800} fill={ink}>
+            {sub("x", c.t, 11.5)}
+          </text>
+          <Arr x1={c.cx + 56} y1={42} x2={c.cx + 56} y2={10} color={hc} marker={`${P}-ink`} width={1.8} />
+          <text x={c.cx + 62} y={22} fontSize={11.5} fontWeight={800} fill={ink}>
+            {sub("h", c.t, 11.5)}
+          </text>
+        </g>
+      ))}
+      <text x={712} y={cY - 9} textAnchor="end" fontSize={11} fontWeight={800} fill={colors.violet}>
+        {sub("c", "t+1", 11)}
+      </text>
+      <text x={712} y={hY - 9} textAnchor="end" fontSize={11} fontWeight={800} fill={ink}>
+        {sub("h", "t+1", 11)}
+      </text>
+    </DiagramFrame>
+  );
+}
+
+export function RnnFoldUnfold() {
+  // 본문 표기: h_t = f(W x_t + U h_{t−1} + b). 출력층 가중치는 V로 표기한다.
+  const P = "rfu";
+  const hc = inkSecondary;
+  const hY = 128;
+  const node = (x: number, y: number, label: React.ReactNode, color: string, r = 22) => (
+    <g>
+      <circle cx={x} cy={y} r={r} fill={color} fillOpacity={0.16} stroke={color} strokeWidth={1.6} />
+      <text x={x} y={y + 5} textAnchor="middle" fontSize={13} fontWeight={800} fill={ink}>
+        {label}
+      </text>
+    </g>
+  );
+  const hBox = (x: number, label: React.ReactNode) => (
+    <g>
+      <rect x={x - 32} y={hY - 20} width={64} height={40} rx={9} fill={colors.blue} fillOpacity={0.16} stroke={colors.blue} strokeWidth={1.6} />
+      <text x={x} y={hY + 5} textAnchor="middle" fontSize={13} fontWeight={800} fill={ink}>
+        {label}
+      </text>
+    </g>
+  );
+  const wLabel = (x: number, y: number, t: string, color = inkSecondary) => (
+    <text x={x} y={y} fontSize={11} fontWeight={800} fill={color} fontStyle="italic">
+      {t}
+    </text>
+  );
+  const steps = [
+    { x: 360, t: "1" },
+    { x: 490, t: "2" },
+    { x: 620, t: "3" },
+  ];
+  return (
+    <DiagramFrame
+      title="RNN의 순환 구조를 시간축으로 펼치기"
+      caption="왼쪽은 순환 구조의 압축 표기로, 은닉 상태 h가 자기 자신에게 되돌아가는 고리(U)가 있다. 이를 시간축을 따라 오른쪽처럼 펼치면 시점마다 같은 셀이 하나씩 놓인 깊은 신경망이 된다. 모든 시점에서 같은 가중치 W(입력 → 은닉), U(은닉 → 은닉), V(은닉 → 출력)를 쓰고, 은닉 상태가 앞 시점에서 뒤 시점으로 전달된다."
+      viewBox="0 0 720 256"
+      minWidth={560}
+    >
+      <Markers prefix={P} colors={{ ink: hc, blue: colors.blue }} />
+      {/* 압축 표기 */}
+      <Arr x1={110} y1={206} x2={110} y2={hY + 22} color={hc} marker={`${P}-ink`} width={1.8} />
+      <Arr x1={110} y1={hY - 20} x2={110} y2={72} color={hc} marker={`${P}-ink`} width={1.8} />
+      {node(110, 228, withSub("x", "t", "", 13), colors.green)}
+      {node(110, 50, withSub("o", "t", "", 13), colors.magenta)}
+      {hBox(110, withSub("h", "t", "", 13))}
+      <ArrPath d={`M142,${hY - 6} C200,${hY - 50} 200,${hY + 50} 144,${hY + 8}`} color={colors.blue} marker={`${P}-blue`} width={2} />
+      {wLabel(194, hY + 4, "U", colors.blue)}
+      {wLabel(118, 194, "W")}
+      {wLabel(118, 92, "V")}
+      {/* 펼치기 화살표 */}
+      <path d={`M226,${hY - 10} H262 V${hY - 22} L288,${hY} L262,${hY + 22} V${hY + 10} H226 Z`} fill={colors.blue} fillOpacity={0.22} stroke={colors.blue} strokeWidth={1.4} />
+      <text x={256} y={hY + 44} textAnchor="middle" fontSize={11} fontWeight={700} fill={colors.blue}>
+        시간축으로 펼침
+      </text>
+      {/* 펼친 표기 */}
+      <text x={300} y={hY - 8} fontSize={12} fill={inkSecondary}>
+        …
+      </text>
+      <Arr x1={300} y1={hY} x2={steps[0].x - 33} y2={hY} color={colors.blue} marker={`${P}-blue`} width={2} />
+      {steps.map((s, k) => (
+        <g key={s.t}>
+          <Arr x1={s.x} y1={206} x2={s.x} y2={hY + 22} color={hc} marker={`${P}-ink`} width={1.8} />
+          <Arr x1={s.x} y1={hY - 20} x2={s.x} y2={72} color={hc} marker={`${P}-ink`} width={1.8} />
+          {node(s.x, 228, withSub("x", s.t, "", 13), colors.green)}
+          {node(s.x, 50, withSub("o", s.t, "", 13), colors.magenta)}
+          {hBox(s.x, withSub("h", s.t, "", 13))}
+          {wLabel(s.x + 8, 194, "W")}
+          {wLabel(s.x + 8, 92, "V")}
+          <Arr x1={s.x + 32} y1={hY} x2={k < steps.length - 1 ? steps[k + 1].x - 33 : 704} y2={hY} color={colors.blue} marker={`${P}-blue`} width={2} />
+          {wLabel(s.x + 58, hY - 8, "U", colors.blue)}
+        </g>
+      ))}
+      <text x={706} y={hY - 8} textAnchor="end" fontSize={12} fill={inkSecondary}>
+        …
+      </text>
+    </DiagramFrame>
+  );
+}

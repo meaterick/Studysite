@@ -32,7 +32,11 @@ o_t = \sigma(W_o x_t + U_o h_{t-1} + b_o), \qquad h_t = o_t \odot \tanh(c_t)
 - **input gate** $i_t$: 현재 입력으로 계산한 후보 $\tilde{c}_t$를 얼마나 더할지 정한다.
 - **output gate** $o_t$: 갱신된 셀 상태 $c_t$ 중 얼마를 이번 시점의 은닉 상태 $h_t$로 출력할지 정한다.
 
-셀 상태 $c_t$는 시점 사이에 전달되며 계속 갱신되는 값이고, 은닉 상태 $h_t$는 그중 output gate가 고른 부분을 다음 층과 다음 시점에 전달하는 값이다.
+[[diagram:lstm-cell-structure]]
+
+셀 상태 $c_t$는 시점 사이에 전달되며 계속 갱신되는 값이고, 은닉 상태 $h_t$는 그중 output gate가 고른 부분을 다음 층과 다음 시점에 전달하는 값이다. 시간축으로 펼치면 기본 RNN과 달리 두 상태가 함께 다음 시점으로 넘어간다.
+
+[[diagram:lstm-unrolled]]
 
 ### 셀 상태가 기울기 소실을 줄이는 이유
 
@@ -83,15 +87,6 @@ print("파라미터 수:", Wall.size + ball.size)          # 4 × (d_h·(d_x + d
 $f$가 0.94~0.99로 1에 가까워, 처음 넣은 셀 상태 $[1, -1]$의 부호가 다섯 스텝 동안 유지된다. 게이트와 후보 4개가 각각 $d_h \times (d_x + d_h)$개의 가중치와 $d_h$개의 편향을 가지므로 파라미터 수는 $4(d_h(d_x + d_h) + d_h)$로, 같은 크기의 기본 RNN의 4배다.
 
 [[diagram:lstm-retention]]
-
-\`\`\`image
-src: /images/week5/lstm-cell.png
-alt: LSTM 셀의 내부 구조도. forget·input·output 게이트와 셀 상태, 은닉 상태의 흐름이 표시되어 있다
-caption: 위쪽을 가로지르는 선이 셀 상태 c_t의 경로다. 시그모이드(σ) 게이트들이 셀 상태에서 지울 값(forget)과 더할 값(input), 은닉 상태로 출력할 값(output)을 정한다.
-credit: fdeloche, CC BY-SA 4.0, Wikimedia Commons (C. Olah, "Understanding LSTM Networks"의 도식을 바탕으로 함)
-width: 1200
-height: 533
-\`\`\`
 
 ### GRU
 
