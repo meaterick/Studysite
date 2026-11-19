@@ -36,6 +36,8 @@ touch "$RELEASE"
 if [ "$NEW_NAME" != "$ACTIVE_NAME" ]; then
   pm2 delete "$NEW_NAME" >/dev/null 2>&1 || true
 fi
+# 지금부터 두 버전이 잠시 함께 뜬다. 메모리가 모자라 서버가 멈췄을 때 원인을 찾을 수 있도록 여유를 남긴다.
+free -m || true
 APP_NAME="$NEW_NAME" APP_PORT="$NEW_PORT" APP_DIR="$RELEASE" pm2 start "$DEPLOY_DIR/ecosystem.config.js"
 
 echo "waiting for ${NEW_NAME} to become healthy..."
@@ -52,9 +54,15 @@ if [ "$healthy" != 1 ]; then
   exit 1
 fi
 
+# nginx를 돌리기 전에 PM2 목록(재부팅 때 PM2가 되살리는 목록)을 저장해, 이후 어느 시점에 서버가 재부팅돼도
+# nginx가 가리키는 버전이 되살아나게 한다. 예전에는 맨 끝에서만 저장해서, nginx를 새 포트로 돌린 뒤 서버가
+# 멈추면 재부팅 후 PM2가 옛 버전만 되살리고 nginx는 새 포트를 가리켜 502가 났다.
+pm2 save
+
 # nginx를 새 포트로 돌린다. 실패하면 새 버전만 지우고 끝낸다(nginx는 이전 설정 그대로).
 if ! DOMAIN="$DOMAIN" bash "$HERE/nginx-site.sh" "$NEW_PORT"; then
   pm2 delete "$NEW_NAME" || true
+  pm2 save || true
   rm -rf "$RELEASE"
   exit 1
 fi

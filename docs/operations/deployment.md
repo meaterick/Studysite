@@ -11,7 +11,8 @@
 1. GitHub이 제공하는 `ubuntu-latest` 러너가 `npm ci && npm run build`를
    실행합니다 — OCI는 RAM이 1GB뿐이라 빌드는 항상 여기서만 합니다.
 2. `next.config.ts`의 `output: "standalone"`으로 만들어진 최소 실행 번들
-   (pruned `node_modules` 포함, 약 50MB)을 아티팩트로 올립니다.
+   (pruned `node_modules` 포함)을 Actions 캐시에 저장해 deploy 잡으로 넘깁니다. 캐시는 배포가 끝나야
+   지우므로, deploy 잡이 실패했을 때 "Re-run failed jobs"로 deploy 잡만 다시 돌릴 수 있습니다.
 3. OCI에 등록된 self-hosted 러너가 번들을 러너 작업 폴더가 아니라
    `/home/ubuntu/aegis-ai-study`(`DEPLOY_DIR`)의 `releases/<실행 id>`에 풀고,
    `.env.production.local`(권한 600)을 GitHub Secret에서 새로 만듭니다. (러너는 job이
@@ -23,6 +24,11 @@
    연결이 끊기지 않음) 옛 버전을 끕니다. 새 버전이 60초 안에 응답하지 않거나 nginx 설정 검사가
    실패하면 새 버전만 지우고 배포가 실패하며, 사이트는 옛 버전으로 계속 동작합니다.
    release 폴더는 최근 3개만 남깁니다. 전환하는 약 10초 동안은 두 버전이 함께 떠 있습니다.
+   - 두 버전이 함께 뜨는 동안 RAM 1GB가 모자라지 않도록, 배포 전에 `scripts/deploy/swap.sh`가
+     2GB 스왑 파일(`/swapfile`, `/etc/fstab`에 등록)을 처음 한 번 만들고 이후에는 켜져 있는지만
+     확인합니다. 디스크가 부족해 만들 수 없으면 두 버전을 띄우기 전에 배포를 멈춥니다.
+   - 새 버전이 상태 확인을 통과하면 nginx를 돌리기 **전에** `pm2 save`로 PM2 목록을 저장합니다.
+     배포 도중 어느 시점에 서버가 재부팅돼도 PM2가 nginx가 가리키는 버전을 되살립니다.
 5. nginx 설정은 `scripts/deploy/nginx-site.sh`가 매번 통째로 만듭니다. 인증서가 있으면 HTTPS
    서버까지 직접 쓰므로 배포 중 HTTPS가 끊기지 않고, IP별 요청 빈도(초당 30, POST 초당 5)·
    동시 연결 수 제한, 느린 요청 타임아웃, HSTS, `X-Forwarded-Host` 덮어쓰기가 들어 있습니다.
@@ -37,7 +43,8 @@
 처리합니다. 서버에는 Node.js·PM2·git·`sudo` 가능한 self-hosted runner
 서비스만 떠 있으면 됩니다(nginx·certbot이 없으면 `apt-get install`로 자동
 설치를 시도합니다 — 실패하면 배포 로그에 경고만 남고 나머지는 계속
-진행됩니다).
+진행됩니다. 스왑이 없으면 스왑 파일도 만듭니다). 러너는 `./svc.sh install`로
+systemd 서비스로 설치해야 서버가 재부팅된 뒤에도 자동으로 다시 붙습니다.
 
 ### 딱 하나, GitHub에서 할 일 (서버 아님)
 
@@ -74,3 +81,18 @@ Google 자격 증명을 GitHub Actions Secrets로 등록하면 다음 `main` 배
   많습니다 — 콘솔에서 VCN → Security Lists 확인해 주세요.
 - `curl -I http://meaterickedu.kro.kr`로 301이 뜨는지, `curl -Ik
   https://meaterickedu.kro.kr`로 200이 뜨는지로 빠르게 확인할 수 있습니다.
+
+### 배포 단계가 끝나지 않은 채 실패하고 사이트가 응답하지 않을 때
+
+- **증상**: deploy 잡의 `Deploy without downtime (blue-green)` 단계가 진행 중인 채로 약 10분 뒤 잡이
+  실패하고, 잡 로그를 열 수 없습니다(러너가 GitHub와 연결이 끊긴 것). 사이트는 80·443 모두 응답하지 않습니다.
+- **원인**: 두 버전이 함께 뜨는 동안 메모리가 바닥나 VM 전체가 멈춘 경우입니다. 스왑이 없던 때 이 증상이
+  있었고(2026-11-19), 지금은 배포가 스왑을 먼저 만듭니다.
+- **복구**
+  1. OCI 콘솔 → Compute → Instances → 해당 인스턴스 → 재부팅(응답이 없으면 강제 재부팅).
+  2. 서버에서 `systemctl is-active nginx pm2-ubuntu`, `pm2 list`,
+     `systemctl list-units --all 'actions.runner*'`로 nginx·PM2·러너가 다시 떴는지 확인합니다.
+  3. 사이트가 502이면(nginx는 새 포트를, PM2는 옛 버전만 되살린 경우) GitHub Actions →
+     Deploy to OCI → Run workflow로 다시 배포합니다. 배포 스크립트가 포트와 프로세스를 다시 맞춥니다.
+  4. 원인 확인: `journalctl -k -b -1 | grep -iE "out of memory|oom|blocked for more than"`
+     (재부팅 전 커널 로그의 메모리 부족 흔적), OCI 콘솔의 인스턴스 Metrics → Memory Utilization.
