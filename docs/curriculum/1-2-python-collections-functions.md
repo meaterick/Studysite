@@ -21,11 +21,11 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [리스트, 튜플, 딕셔너리, 집합](#lesson-collections) | 핵심 | 40분 | #5 리스트, 튜플, 딕셔너리, 집합 |
-| 2 | [인덱싱과 슬라이싱](#lesson-indexing-slicing) | 핵심 | 35분 | #6 인덱싱과 슬라이싱 |
-| 3 | [함수, 매개변수, 반환값, 변수의 범위](#lesson-functions-scope) | 핵심 | 35분 | #7 함수, 매개변수, 반환값, 변수의 범위 |
-| 4 | [가변·불변 객체와 참조·복사](#lesson-mutability-copy) | 핵심 | 35분 | #8 가변·불변 객체, 참조와 복사 |
-| 5 | [컴프리헨션과 반복자](#lesson-comprehensions-iterators) | 핵심 | 35분 | #9 리스트 컴프리헨션과 반복자 |
+| 1 | [리스트, 튜플, 딕셔너리, 집합](#lesson-collections) | 핵심 | 65분 | #5 리스트, 튜플, 딕셔너리, 집합 |
+| 2 | [인덱싱과 슬라이싱](#lesson-indexing-slicing) | 핵심 | 50분 | #6 인덱싱과 슬라이싱 |
+| 3 | [함수, 매개변수, 반환값, 변수의 범위](#lesson-functions-scope) | 핵심 | 60분 | #7 함수, 매개변수, 반환값, 변수의 범위 |
+| 4 | [가변·불변 객체와 참조·복사](#lesson-mutability-copy) | 핵심 | 55분 | #8 가변·불변 객체, 참조와 복사 |
+| 5 | [컴프리헨션과 반복자](#lesson-comprehensions-iterators) | 핵심 | 55분 | #9 리스트 컴프리헨션과 반복자 |
 
 ## 핵심 레슨
 
@@ -33,15 +33,15 @@
 
 ### 1. 리스트, 튜플, 딕셔너리, 집합
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/python-collections-functions/collections.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/collections.ts)
+핵심 · 65분 · [본문 원본](../../src/content/modules/python-collections-functions/collections.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/collections.ts)
 
 **학습 목표:** 리스트·튜플·딕셔너리·집합의 순서·중복·변경 가능 여부를 비교하고, 문제에 맞는 자료구조를 골라 원소를 추가·조회·삭제·순회한다.
 
 **쓰이는 곳:** 학습 데이터는 샘플의 리스트로, 실험 설정은 딕셔너리로, 어휘(서로 다른 단어 목록)는 집합으로 다룬다. [3-1 NumPy 배열, 축, 형태, 자료형](3-1-numpy.md#lesson-numpy-arrays)의 배열과 [3-2 pandas의 Series와 DataFrame](3-2-pandas.md#lesson-dataframes)의 표도 이 자료구조로 만든 데이터를 받아서 시작한다.
 
-**본문 절:** 네 가지 컬렉션 · 리스트 · 튜플 · 딕셔너리 · 집합 · 문제에 맞는 자료구조 고르기
+**본문 절:** 값 여러 개를 하나의 이름으로 · 리스트 · 튜플 · 딕셔너리 · 집합 · 문제에 맞는 자료구조 고르기
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 6
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 18
 
 **실습**
 
@@ -59,15 +59,15 @@
 
 ### 2. 인덱싱과 슬라이싱
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-collections-functions/indexing-slicing.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/indexing-slicing.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/python-collections-functions/indexing-slicing.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/indexing-slicing.ts)
 
 **학습 목표:** 양수·음수 인덱스와 [시작:끝:간격] 슬라이싱으로 리스트·튜플·문자열의 원소와 구간을 꺼내고, 데이터 분할·구간 자르기·중첩 리스트 선택에 적용한다.
 
 **쓰이는 곳:** 데이터를 학습용과 평가용으로 나누기, 최근 n개의 기록 보기, 시계열에서 길이 k의 구간을 잘라 입력으로 만들기가 모두 슬라이싱이다. 같은 문법이 [3-1 인덱싱, 불리언 마스킹, 브로드캐스팅](3-1-numpy.md#lesson-array-indexing)에서 다차원 배열의 행과 열을 고르는 데 그대로 쓰인다.
 
-**본문 절:** 인덱스 · 슬라이싱 · 데이터를 앞뒤로 나누기 · 연속 구간 자르기 · 중첩 리스트
+**본문 절:** 인덱스: 위치 번호로 원소 꺼내기 · 슬라이싱: 구간 잘라 내기 · 데이터를 앞뒤로 나누기 · 연속 구간 자르기 · 중첩 리스트
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 4 · 그림 1
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 11 · 그림 1
 
 **실습**
 
@@ -85,15 +85,15 @@
 
 ### 3. 함수, 매개변수, 반환값, 변수의 범위
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-collections-functions/functions-scope.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/functions-scope.ts)
+핵심 · 60분 · [본문 원본](../../src/content/modules/python-collections-functions/functions-scope.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/functions-scope.ts)
 
 **학습 목표:** 매개변수·기본값·키워드 인자·반환값을 갖춘 함수를 정의하고, 지역·전역 범위 규칙과 함수를 값으로 넘기는 방법을 적용한다.
 
 **쓰이는 곳:** 전처리, 손실 계산, 평가 지표는 모두 입력을 받아 값을 돌려주는 함수로 작성한다. 같은 계산을 함수로 묶어야 실험마다 같은 방식으로 다시 쓸 수 있다. 수학의 함수와 합성([2-1 함수, 정의역·치역, 함수의 합성](2-1-math-functions.md#lesson-functions-composition)), 연산을 이어 붙여 기울기를 구하는 역전파([5-1 순전파, 역전파, 계산 그래프](5-1-neural-networks.md#lesson-backprop))도 이 구조를 그대로 쓴다.
 
-**본문 절:** 함수 정의와 호출 · 매개변수: 위치, 키워드, 기본값 · 여러 값을 돌려주기 · 변수의 범위 · 함수도 값이다 · 함수를 잘 나누는 기준
+**본문 절:** 함수: 이름을 붙인 코드 블록 · 함수가 실행되는 순서 · return과 print의 차이 · 매개변수: 위치, 키워드, 기본값 · 여러 값을 돌려주기 · 두 리스트를 짝지어 순회하기: zip · 변수의 범위 · 함수도 값이다 · 함수를 잘 나누는 기준
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 5
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 16
 
 **실습**
 
@@ -112,15 +112,15 @@
 
 ### 4. 가변·불변 객체와 참조·복사
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-collections-functions/mutability-copy.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/mutability-copy.ts)
+핵심 · 55분 · [본문 원본](../../src/content/modules/python-collections-functions/mutability-copy.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/mutability-copy.ts)
 
 **학습 목표:** 가변·불변 자료형을 구분하고, 대입과 함수 인자 전달이 같은 객체를 공유한다는 점과 얕은 복사·깊은 복사의 차이를 코드로 확인한다.
 
 **쓰이는 곳:** 전처리 함수에 데이터를 넘겼더니 원본이 바뀌거나, 실험 설정을 복사했다고 생각했는데 두 설정이 함께 바뀌는 오류는 찾기 어렵다. [3-2 데이터 불러오기, 조회, 필터링, 정렬](3-2-pandas.md#lesson-pandas-selection)에서 원본과 복사본을 구분하는 문제, [5-2 PyTorch 텐서, 데이터 로더, 학습 루프, GPU](5-2-deep-training.md#lesson-pytorch)에서 텐서가 메모리를 공유하는 문제도 같은 원리다.
 
-**본문 절:** 두 이름이 같은 객체를 가리킬 때 · 가변 객체와 불변 객체 · 얕은 복사와 깊은 복사 · 함수에 넘긴 객체는 공유된다 · 기본값으로 가변 객체를 쓰면 안 된다
+**본문 절:** 두 이름이 같은 객체를 가리킬 때 · 대입은 이름을 바꾸고, 메서드는 객체를 바꾼다 · 가변 객체와 불변 객체 · 얕은 복사와 깊은 복사 · 함수에 넘긴 객체는 공유된다 · 기본값으로 가변 객체를 쓰면 안 된다
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 5 · 그림 1
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 12 · 그림 1
 
 **실습**
 
@@ -139,15 +139,15 @@
 
 ### 5. 컴프리헨션과 반복자
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-collections-functions/comprehensions-iterators.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/comprehensions-iterators.ts)
+핵심 · 55분 · [본문 원본](../../src/content/modules/python-collections-functions/comprehensions-iterators.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/comprehensions-iterators.ts)
 
 **학습 목표:** 리스트·딕셔너리·집합 컴프리헨션으로 변환과 걸러내기를 한 식에 쓰고, 반복자와 제너레이터가 값을 한 번씩 차례로 만든다는 점을 enumerate·zip·sum과 함께 적용한다.
 
 **쓰이는 곳:** 토큰 목록을 번호로 바꾸기, 조건에 맞는 샘플만 고르기, 레이블 이름과 번호의 대응표 만들기는 컴프리헨션 한 줄로 쓴다. 데이터를 한꺼번에 메모리에 올리지 않고 묶음 단위로 차례로 내주는 데이터 로더([5-2 PyTorch 텐서, 데이터 로더, 학습 루프, GPU](5-2-deep-training.md#lesson-pytorch))는 이 레슨의 제너레이터와 같은 방식으로 동작한다.
 
-**본문 절:** 리스트 컴프리헨션 · 딕셔너리·집합 컴프리헨션 · enumerate와 zip · 반복자: 한 번 꺼내면 끝난다 · 제너레이터: 필요할 때 하나씩 만든다 · 컴프리헨션을 쓰지 않을 때
+**본문 절:** 리스트 컴프리헨션: 새 리스트를 한 줄로 만들기 · 걸러 내기와 바꾸기: if의 위치 · 중첩 반복 컴프리헨션 · enumerate와 zip · 딕셔너리·집합 컴프리헨션 · 반복자: 한 번 꺼내면 끝난다 · 제너레이터: 필요할 때 하나씩 만든다 · 컴프리헨션을 쓰지 않을 때
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 6
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 16
 
 **실습**
 

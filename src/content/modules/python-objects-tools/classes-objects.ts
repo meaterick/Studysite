@@ -11,7 +11,50 @@ export default defineLesson({
   body: md`
 ### 클래스와 인스턴스
 
-**클래스(class)**는 새로운 자료형을 정의한다. 그 자료형의 값이 어떤 데이터를 가지는지(**속성**, attribute)와 어떤 동작을 하는지(**메서드**, method)를 함께 정한다. 클래스로 만든 값 하나하나를 **인스턴스(instance)**라고 한다. \`list\`도 클래스이고, \`[1, 2]\`는 \`list\`의 인스턴스이며, \`append\`는 \`list\`의 메서드다. 같은 클래스의 인스턴스는 같은 메서드를 쓰지만 속성 값은 각자 가진다.
+지금까지 쓴 \`int\`, \`str\`, \`list\`, \`dict\`는 모두 **클래스(class)**다. 클래스는 새로운 자료형을 정의한다. 그 자료형의 값이 어떤 데이터를 가지는지(**속성**, attribute)와 어떤 동작을 하는지(**메서드**, method)를 함께 정한다. 클래스로 만든 값 하나하나를 **인스턴스(instance)**라고 한다. \`[1, 2]\`는 \`list\`의 인스턴스이며, \`append\`는 \`list\`의 메서드다. 같은 클래스의 인스턴스는 같은 메서드를 쓰지만 속성 값은 각자 가진다.
+
+\`\`\`python
+scores = [1, 2]
+print(type(scores).__name__)      # list
+scores.append(3)                  # list 클래스의 메서드 append를 호출한다
+print(scores)                     # [1, 2, 3]
+\`\`\`
+
+\`class\` 문으로 나만의 클래스를 만들 수 있다. 아래는 학생 한 명의 이름과 점수를 함께 담는 \`Student\` 클래스다.
+
+\`\`\`python
+class Student:
+    def __init__(self, name, score):
+        self.name = name          # 이 인스턴스의 속성 name
+        self.score = score        # 이 인스턴스의 속성 score
+
+    def passed(self):
+        return self.score >= 70
+
+a = Student("민수", 88)
+b = Student("도윤", 67)
+print(a.name, a.score, a.passed())   # 민수 88 True
+print(b.name, b.score, b.passed())   # 도윤 67 False
+\`\`\`
+
+| 용어 | 위 예에서 | 뜻 |
+| --- | --- | --- |
+| 클래스 | \`Student\` | 새 자료형의 정의 |
+| 인스턴스 | \`a\`, \`b\` | 클래스로 만든 값 하나하나 |
+| 속성 | \`a.name\`, \`a.score\` | 인스턴스가 가진 데이터 |
+| 메서드 | \`a.passed()\` | 클래스 안에 정의한 함수. 인스턴스로 호출한다 |
+| \`self\` | \`passed(self)\`의 \`self\` | 메서드를 호출한 인스턴스 |
+
+\`a\`와 \`b\`는 같은 클래스로 만들었지만 속성 값을 따로 가진다. 그래서 같은 메서드 \`passed()\`가 \`a\`에서는 \`True\`, \`b\`에서는 \`False\`를 돌려준다.
+
+### __init__과 self
+
+\`Student("민수", 88)\`처럼 클래스 이름을 함수처럼 부르면 인스턴스가 만들어진다. 이때 파이썬은 다음 순서로 실행한다.
+
+1. 속성이 하나도 없는 새 인스턴스를 만든다.
+2. 초기화 메서드 \`__init__(새 인스턴스, "민수", 88)\`을 자동으로 호출한다. \`self\`는 새 인스턴스를 가리킨다.
+3. \`self.name = name\`이 새 인스턴스에 속성 \`name\`을 만든다.
+4. 초기화가 끝난 인스턴스를 돌려주고, 그것이 \`a\`에 대입된다.
 
 아래는 입력에 가중치를 곱하고 편향을 더하는 계산을 클래스로 정의한 예다. 신경망을 이루는 가장 작은 계산 단위가 이 형태다([[lesson:perceptron-mlp]]).
 
@@ -27,12 +70,43 @@ class Perceptron:
 p = Perceptron(w=2, b=1)         # __init__(p, w=2, b=1)이 실행된다
 q = Perceptron(w=-1, b=0.5)
 print(p.predict(3), q.predict(3))   # 7 -2.5
-print(p.w, q.w)                     # 2 -1: 속성은 인스턴스마다 따로 있다
+print(p.w, q.w)                     # 2 -1
 \`\`\`
 
 \`p.predict(3)\`을 호출하면 파이썬은 \`Perceptron.predict(p, 3)\`을 실행한다. 메서드의 첫 매개변수 \`self\`에는 **메서드를 호출한 인스턴스**가 들어간다. 그래서 \`self.w\`는 \`p\`로 호출하면 \`p.w\`, \`q\`로 호출하면 \`q.w\`다. \`self\`는 관례적인 이름이고, 메서드를 정의할 때는 항상 첫 매개변수로 적는다.
 
+\`\`\`python
+print(p.predict(3), Perceptron.predict(p, 3))   # 7 7
+p.w = 10                                        # 속성은 밖에서 바꿀 수도 있다
+print(p.predict(3))                             # 31
+\`\`\`
+
 [[diagram:class-objects]]
+
+메서드 정의에서 \`self\`를 빠뜨리거나, \`__init__\`에서 \`self.\` 없이 대입하면 다음 오류가 난다.
+
+\`\`\`text
+def predict(x):          # self를 빠뜨렸다
+p.predict(3)
+TypeError: Perceptron.predict() takes 1 positional argument but 2 were given
+
+def __init__(self, w):
+    w = w                # self.w가 아니라 지역 변수 w에 대입했다
+...
+AttributeError: 'Broken' object has no attribute 'w'
+\`\`\`
+
+첫 번째 오류는 \`p.predict(3)\`이 \`p\`와 \`3\` 두 개를 넘기는데 \`predict\`는 매개변수를 하나만 받기 때문이다. 두 번째 오류는 \`w = w\`가 \`__init__\` 안의 지역 변수일 뿐이라, 함수가 끝나면 사라지고 인스턴스에는 속성 \`w\`가 없기 때문이다(클래스 이름이 \`Broken\`인 예).
+
+\`isinstance(값, 클래스)\`는 값이 그 클래스의 인스턴스인지 검사한다. 클래스를 튜플로 여러 개 주면 그중 하나에 속하는지 검사한다. 함수가 받은 값의 자료형을 확인할 때 쓴다.
+
+\`\`\`python
+print(type(p).__name__)                  # Perceptron
+print(isinstance(p, Perceptron))         # True
+print(isinstance(3, int), isinstance(3.0, int))       # True False
+print(isinstance(3.0, (int, float)))     # True
+print(isinstance("3", (int, float)))     # False
+\`\`\`
 
 ### 클래스가 필요한 경우
 
@@ -60,11 +134,91 @@ train_loss = RunningMean()
 valid_loss = RunningMean()        # 같은 클래스로 독립된 기록기를 하나 더
 for x in [2, 4, 9]:
     train_loss.add(x)
-print(train_loss.result())        # (2 + 4 + 9) / 3 = 5.0
-print(valid_loss.count)           # 0: 다른 인스턴스의 상태는 그대로다
+    print(train_loss.count, train_loss.mean)
+print(train_loss.result())        # 5.0
+print(valid_loss.count)           # 0
+\`\`\`
+
+\`\`\`output
+1 2.0
+2 3.0
+3 5.0
+5.0
+0
+\`\`\`
+
+| 호출 | \`count\` | 평균 갱신 | \`mean\` |
+| --- | --- | --- | --- |
+| \`add(2)\` | 1 | $0 + \frac{2 - 0}{1}$ | 2.0 |
+| \`add(4)\` | 2 | $2 + \frac{4 - 2}{2}$ | 3.0 |
+| \`add(9)\` | 3 | $3 + \frac{9 - 3}{3}$ | 5.0 |
+
+세 값을 저장하지 않았는데도 평균 $(2 + 4 + 9) / 3 = 5$를 정확히 유지한다. \`valid_loss\`는 별개의 인스턴스라 \`train_loss\`에 값을 넣어도 \`count\`가 0 그대로다. 값이 없는 기록기에 결과를 물으면 예외가 난다.
+
+\`\`\`python
+try:
+    valid_loss.result()
+except ValueError as e:
+    print("ValueError:", e)       # ValueError: 아직 값이 하나도 없다
 \`\`\`
 
 [[diagram:running-mean-trace]]
+
+### 특수 메서드: 파이썬이 자동으로 부르는 메서드
+
+\`__init__\`처럼 앞뒤에 밑줄 두 개가 붙은 메서드는 파이썬이 정해진 상황에서 자동으로 호출하는 **특수 메서드**다.
+
+| 특수 메서드 | 자동으로 호출되는 때 |
+| --- | --- |
+| \`__init__\` | 인스턴스를 만들 때 |
+| \`__repr__\` | \`print()\`나 화면 출력에서 인스턴스를 보여 줄 때 |
+| \`__len__\` | \`len(인스턴스)\`를 부를 때 |
+| \`__bool__\` | 조건문 등에서 참·거짓을 판단할 때 |
+
+\`__bool__\`이 없고 \`__len__\`만 있으면, 길이가 0인 인스턴스는 거짓으로 취급된다([[lesson:conditionals]]의 진릿값). 아래 재생목록 클래스는 \`__len__\`과 \`__repr__\`을 정의해 \`len()\`, \`print()\`, \`if\`가 내장 자료형처럼 동작하게 한다.
+
+\`\`\`python
+class Playlist:
+    def __init__(self, songs):
+        self.songs = list(songs)
+
+    def __len__(self):
+        return len(self.songs)
+
+    def __repr__(self):
+        return f"Playlist({len(self.songs)}곡)"
+
+p1 = Playlist(["봄", "여름"])
+p2 = Playlist([])
+print(p1, len(p1))            # Playlist(2곡) 2
+print(bool(p1), bool(p2))     # True False
+if not p2:
+    print("빈 재생목록")        # 빈 재생목록
+\`\`\`
+
+### 클래스 속성과 인스턴스 속성
+
+\`__init__\`에서 \`self.이름 = 값\`으로 만든 속성은 인스턴스마다 따로 있는 **인스턴스 속성**이다. 반면 클래스 본문에 바로 쓴 이름은 모든 인스턴스가 함께 쓰는 **클래스 속성**이다. 클래스 속성에 리스트 같은 가변 객체를 두면, 한 인스턴스에서 고친 내용이 모든 인스턴스에 보인다([[lesson:mutability-copy]]).
+
+\`\`\`python
+class SharedBasket:
+    items = []                    # 클래스 속성: 모든 인스턴스가 같은 리스트를 쓴다
+    def add(self, x):
+        self.items.append(x)
+
+class Basket:
+    def __init__(self):
+        self.items = []           # 인스턴스 속성: 인스턴스마다 새 리스트
+    def add(self, x):
+        self.items.append(x)
+
+a, b = SharedBasket(), SharedBasket()
+a.add("사과")
+print(b.items)                    # ['사과']
+c, d = Basket(), Basket()
+c.add("사과")
+print(d.items)                    # []
+\`\`\`
 
 ### fit과 predict: 모델 클래스의 형태
 
@@ -90,10 +244,24 @@ class MeanRegressor:
         return f"MeanRegressor(round_to={self.round_to})"
 
 model = MeanRegressor(round_to=1)
-print(model, model.fit([[1], [2], [3]], [10, 20, 33]).predict([[4], [5]]))   # [21.0, 21.0]
+print(model)                                  # MeanRegressor(round_to=1)
+model.fit([[1], [2], [3]], [10, 20, 33])
+print(model.mean_)                            # 21.0
+print(model.predict([[4], [5]]))              # [21.0, 21.0]
 \`\`\`
 
-\`__init__\`, \`__repr__\`처럼 앞뒤에 밑줄 두 개가 붙은 메서드는 파이썬이 정해진 상황에서 자동으로 호출하는 특수 메서드다. \`__repr__\`은 \`print()\`나 화면 출력에서 인스턴스를 어떻게 보여 줄지 정한다.
+\`fit\`은 정답 \`[10, 20, 33]\`의 평균 21.0을 속성 \`mean_\`에 저장한다. 지역 변수가 아니라 \`self\`의 속성에 저장해야 \`fit\`이 끝난 뒤에도 \`predict\`가 그 값을 읽을 수 있다. \`predict\`는 입력 \`X\`의 개수만큼 같은 값을 돌려준다(\`_\`는 쓰지 않는 반복 변수에 붙이는 관례적인 이름이다).
+
+\`fit\`이 \`self\`를 돌려주므로 만들기·학습·예측을 한 줄로 이어 쓸 수 있다. \`fit\`하기 전에 \`predict\`하면 학습 속성 \`mean_\`이 아직 없어 \`AttributeError\`가 난다.
+
+\`\`\`python
+print(MeanRegressor().fit([[0]], [5]).predict([[1], [2], [3]]))   # [5.0, 5.0, 5.0]
+fresh = MeanRegressor()
+try:
+    fresh.predict([[1]])
+except AttributeError as e:
+    print("AttributeError:", e)   # AttributeError: 'MeanRegressor' object has no attribute 'mean_'
+\`\`\`
 
 :::warn 흔한 실수
 - **메서드 정의에서 \`self\`를 빠뜨린다.** \`def predict(x):\`로 쓰면 \`p.predict(3)\`이 인자 두 개(\`p\`, \`3\`)를 넘겨 \`TypeError\`가 난다.

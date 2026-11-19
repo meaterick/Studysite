@@ -20,10 +20,10 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [변수, 값, 자료형, 형 변환](#lesson-variables-types) | 핵심 | 35분 | #1 변수와 값, 자료형, 형 변환 |
-| 2 | [숫자·문자열·불리언과 기본 연산](#lesson-operators) | 핵심 | 35분 | #2 숫자·문자열·불리언과 기본 연산 |
-| 3 | [비교 연산, 논리 연산, 조건문](#lesson-conditionals) | 핵심 | 30분 | #3 비교 연산, 논리 연산, 조건문 |
-| 4 | [반복문과 반복 제어](#lesson-loops) | 핵심 | 35분 | #4 반복문과 반복 제어 |
+| 1 | [변수, 값, 자료형, 형 변환](#lesson-variables-types) | 핵심 | 65분 | #1 변수와 값, 자료형, 형 변환 |
+| 2 | [숫자·문자열·불리언과 기본 연산](#lesson-operators) | 핵심 | 70분 | #2 숫자·문자열·불리언과 기본 연산 |
+| 3 | [비교 연산, 논리 연산, 조건문](#lesson-conditionals) | 핵심 | 65분 | #3 비교 연산, 논리 연산, 조건문 |
+| 4 | [반복문과 반복 제어](#lesson-loops) | 핵심 | 70분 | #4 반복문과 반복 제어 |
 
 ## 핵심 레슨
 
@@ -31,15 +31,15 @@
 
 ### 1. 변수, 값, 자료형, 형 변환
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-flow/variables-types.ts) · [실습 원본](../../src/content/modules/python-flow/labs/variables-types.ts)
+핵심 · 65분 · [본문 원본](../../src/content/modules/python-flow/variables-types.ts) · [실습 원본](../../src/content/modules/python-flow/labs/variables-types.ts)
 
 **학습 목표:** 대입문이 이름과 객체를 연결하는 방식을 설명하고, int·float·str·bool·None을 구분하며, 문자열로 들어온 값을 알맞은 자료형으로 변환한다.
 
 **쓰이는 곳:** 모든 데이터 처리 코드는 값을 변수에 담아 계산한다. 파일이나 입력 창에서 읽은 값은 숫자처럼 보여도 문자열이므로, 숫자로 변환하지 않으면 평균이나 손실을 계산할 수 없다. 자료형을 다루는 규칙은 [3-2 수치형·범주형·시계열 데이터](3-2-pandas.md#lesson-data-types)의 표 데이터 자료형 처리로 그대로 이어진다.
 
-**본문 절:** 코드 셀 실행하기 · 값, 객체, 변수 · 기본 자료형 · 형 변환 · 동적 타이핑
+**본문 절:** 코드 셀 실행하기 · 값과 변수 · 대입문은 오른쪽을 먼저 계산한다 · 변수 이름 짓기 · 기본 자료형 · 숫자처럼 보이는 문자열 · 형 변환 · 들어온 문자열 정리하기: strip, lower, split · 동적 타이핑
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 4
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 18
 
 **실습**
 
@@ -59,15 +59,15 @@
 
 ### 2. 숫자·문자열·불리언과 기본 연산
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-flow/operators.ts) · [실습 원본](../../src/content/modules/python-flow/labs/operators.ts)
+핵심 · 70분 · [본문 원본](../../src/content/modules/python-flow/operators.ts) · [실습 원본](../../src/content/modules/python-flow/labs/operators.ts)
 
 **학습 목표:** 산술·문자열 연산과 연산자 우선순위를 적용해 식의 값을 계산하고, 몫·나머지·거듭제곱과 f-string 서식을 데이터 처리 코드에 쓴다.
 
 **쓰이는 곳:** 손실 계산, 데이터를 배치로 나눌 때의 반복 횟수, 실험 결과의 출력 서식처럼 모델 코드의 대부분은 기본 연산의 조합이다. 몫·나머지는 데이터를 일정한 크기로 나누는 계산([1-2 인덱싱과 슬라이싱](1-2-python-collections-functions.md#lesson-indexing-slicing))에, 거듭제곱은 오차를 제곱하는 손실([4-1 손실함수, 목적함수, 학습과 추론](4-1-ml-framing.md#lesson-loss-functions))에 그대로 쓰인다.
 
-**본문 절:** 산술 연산 · 연산자 우선순위 · 복합 대입과 정수·실수의 혼합 · 문자열 연산 · f-string으로 결과 출력하기 · 불리언도 수처럼 계산된다
+**본문 절:** 연산자와 식 · 산술 연산 · 몫과 나머지가 쓰이는 곳 · 연산자 우선순위 · 복합 대입 · 정수와 실수를 섞은 계산, 숫자 함수 · 문자열 연산 · f-string으로 결과 출력하기 · 불리언도 수처럼 계산된다
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 5
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 24
 
 **실습**
 
@@ -87,15 +87,15 @@
 
 ### 3. 비교 연산, 논리 연산, 조건문
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/python-flow/conditionals.ts) · [실습 원본](../../src/content/modules/python-flow/labs/conditionals.ts)
+핵심 · 65분 · [본문 원본](../../src/content/modules/python-flow/conditionals.ts) · [실습 원본](../../src/content/modules/python-flow/labs/conditionals.ts)
 
 **학습 목표:** 비교·논리 연산의 결과를 계산하고, if/elif/else의 실행 순서와 진릿값 규칙을 적용해 조건 분기 코드를 작성한다.
 
 **쓰이는 곳:** 데이터 정제에서 잘못된 값을 거르는 규칙, 분류 모델이 출력한 확률을 임계값과 비교해 클래스를 정하는 단계([4-2 로지스틱 회귀, 시그모이드, 분류 임계값](4-2-linear-models.md#lesson-logistic-regression)), 손실이 더 줄지 않으면 학습을 멈추는 조건이 모두 조건문으로 작성된다.
 
-**본문 절:** 비교 연산 · 논리 연산과 단락 평가 · 진릿값 · if, elif, else · 조건 표현식
+**본문 절:** 비교 연산 · if 문: 조건이 참일 때만 실행하기 · else와 elif · 논리 연산: and, or, not · 단락 평가와 and·or의 결과값 · 진릿값: 조건 자리에 오는 값 · "x가 1 또는 2"를 검사하는 법 · 조건 표현식
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 21
 
 **실습**
 
@@ -114,15 +114,15 @@
 
 ### 4. 반복문과 반복 제어
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-flow/loops.ts) · [실습 원본](../../src/content/modules/python-flow/labs/loops.ts)
+핵심 · 70분 · [본문 원본](../../src/content/modules/python-flow/loops.ts) · [실습 원본](../../src/content/modules/python-flow/labs/loops.ts)
 
 **학습 목표:** for와 while 반복문으로 누적·탐색·조건부 종료를 구현하고, range와 break·continue로 반복 횟수와 종료 시점을 제어한다.
 
 **쓰이는 곳:** 모델 학습은 같은 계산을 정해진 횟수만큼, 또는 조건을 만족할 때까지 반복하는 일이다. 데이터를 여러 번 훑는 학습 루프([2-3 최솟값과 경사하강법](2-3-calculus-optimization.md#lesson-gradient-descent))와 손실이 더 줄지 않으면 멈추는 조기 종료가 모두 이 레슨의 반복문과 종료 조건으로 작성된다.
 
-**본문 절:** for 반복문과 range · 누적: 합계, 개수, 최댓값 · while 반복문 · break와 continue · 중첩 반복 · 학습 루프의 형태
+**본문 절:** 같은 일을 여러 번: 반복문 · for 반복문 · range로 정수 만들기 · 누적: 합계, 개수, 최댓값 · while 반복문 · break와 continue · 중첩 반복 · 학습 루프의 형태 · 배운 것을 모아 쓰기: 점수 목록 정리
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 6
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 21
 
 **실습**
 

@@ -9,9 +9,41 @@ export default defineLesson({
   goal: "연산의 실행 시간이 입력 크기에 따라 늘어나는 정도를 빅오 표기로 나타내고, 리스트·딕셔너리·집합·덱의 주요 연산 비용을 비교해 알맞은 자료구조를 고른다.",
   why: "데이터가 수백 건일 때는 어떤 방법이든 빠르지만, 수백만 건이 되면 같은 결과를 내는 코드의 실행 시간이 몇 초와 몇 시간으로 갈린다. 어휘 사전 조회([[lesson:tokenization]]), 유사한 문서 찾기([[lesson:retrieval]])처럼 큰 데이터를 반복해서 찾는 작업은 자료구조 선택이 성능을 결정한다.",
   body: md`
-### 실행 시간을 입력 크기로 나타내기
+### 같은 결과, 다른 속도
 
-코드의 빠르기는 컴퓨터마다 다르므로 초 단위가 아니라 **입력 크기 $n$이 커질 때 연산 횟수가 늘어나는 정도**로 비교한다. 이를 빅오(Big-O) 표기로 나타낸다. 상수 배와 작은 항은 무시하고, $n$이 커질 때 가장 빨리 커지는 항만 남긴다. 연산 횟수가 $3n + 5$인 코드와 $n$인 코드는 모두 $O(n)$이다.
+같은 결과를 내는 코드라도 데이터가 커질 때 걸리는 시간은 크게 다를 수 있다. 코드의 빠르기는 컴퓨터마다 다르므로 초 단위로 비교하지 않고, **입력 크기 $n$이 커질 때 연산 횟수가 늘어나는 정도**로 비교한다.
+
+아래 두 함수는 반복이 실행되는 횟수를 센다. 첫 번째는 반복문이 한 겹, 두 번째는 두 겹이다.
+
+\`\`\`python
+def count_single(n):
+    ops = 0
+    for i in range(n):
+        ops += 1
+    return ops
+
+def count_double(n):
+    ops = 0
+    for i in range(n):
+        for j in range(n):
+            ops += 1
+    return ops
+
+for n in [10, 100, 1000]:
+    print(n, count_single(n), count_double(n))
+\`\`\`
+
+\`\`\`output
+10 10 100
+100 100 10000
+1000 1000 1000000
+\`\`\`
+
+$n$이 10배가 될 때 한 겹 반복의 횟수는 10배, 두 겹 반복의 횟수는 100배가 된다. 데이터가 작을 때는 둘 다 금방 끝나지만, 데이터가 커질수록 차이가 걷잡을 수 없이 벌어진다.
+
+### 빅오 표기
+
+연산 횟수가 늘어나는 정도를 **빅오(Big-O) 표기**로 나타낸다. 상수 배와 작은 항은 무시하고, $n$이 커질 때 가장 빨리 커지는 항만 남긴다. 연산 횟수가 $3n + 5$인 코드와 $n$인 코드는 모두 $O(n)$이고, $5n^2 + 100n + 7$인 코드는 $O(n^2)$이다. $n$이 충분히 크면 $n^2$ 항이 나머지를 압도하기 때문이다.
 
 | 표기 | 이름 | $n$이 10배가 되면 | 예 |
 | --- | --- | --- | --- |
@@ -20,6 +52,21 @@ export default defineLesson({
 | $O(n)$ | 선형 시간 | 10배 | 리스트 전체 훑기, \`x in 리스트\` |
 | $O(n \log n)$ | | 10배보다 조금 더 | \`sorted()\` |
 | $O(n^2)$ | 이차 시간 | 100배 | 모든 쌍을 비교하는 중첩 반복 |
+
+$n$에 따라 각 표기의 값이 얼마나 커지는지 계산하면 차이가 분명해진다. \`math.log2(n)\`은 2를 몇 번 곱해야 $n$이 되는지를 나타내는 값이다.
+
+\`\`\`python
+import math
+for n in [10, 100, 1000, 10000]:
+    print(f"n={n:>6} | log n={math.log2(n):5.1f} | n log n={n * math.log2(n):>10,.0f} | n^2={n * n:>12,}")
+\`\`\`
+
+\`\`\`output
+n=    10 | log n=  3.3 | n log n=        33 | n^2=         100
+n=   100 | log n=  6.6 | n log n=       664 | n^2=      10,000
+n=  1000 | log n= 10.0 | n log n=     9,966 | n^2=   1,000,000
+n= 10000 | log n= 13.3 | n log n=   132,877 | n^2= 100,000,000
+\`\`\`
 
 $n = 1{,}000{,}000$일 때 $O(n)$ 코드가 1초 걸린다면, 같은 일을 하는 $O(n^2)$ 코드는 백만 초(약 11.6일)가 걸린다. 데이터가 작을 때는 차이가 드러나지 않으므로, 코드를 쓸 때 반복문이 몇 겹인지, 반복문 안에서 다시 전체를 훑는 연산을 하는지 확인한다.
 
@@ -33,7 +80,35 @@ $n = 1{,}000{,}000$일 때 $O(n)$ 코드가 1초 걸린다면, 같은 일을 하
 | 맨 앞에 추가·삭제 \`insert(0, x)\`, \`pop(0)\` | $O(n)$: 나머지를 모두 한 칸씩 옮김 | (해당 없음) |
 | 값으로 삭제 \`remove(x)\` | $O(n)$ | \`del d[k]\`, \`s.discard(x)\`: $O(1)$(평균) |
 
-딕셔너리와 집합이 포함 여부를 빠르게 검사하는 이유는 **해시(hash)** 덕분이다. 키를 넣을 때 키의 해시 값(\`hash(키)\`, 키에서 계산한 정수)으로 저장 위치를 정하므로, 찾을 때도 해시 값을 계산해 그 위치만 보면 된다. 그래서 키는 해시 값이 바뀌지 않는 불변 객체여야 한다([[lesson:mutability-copy]]).
+리스트에서 \`x in 리스트\`가 $O(n)$인 이유는 앞에서부터 하나씩 비교하기 때문이다. 같은 일을 하는 함수를 직접 만들어 비교 횟수를 세면, 찾는 값이 뒤에 있거나 없을 때 원소 수만큼 비교한다는 것을 볼 수 있다.
+
+\`\`\`python
+def linear_search(items, target):
+    steps = 0
+    for x in items:
+        steps += 1
+        if x == target:
+            return True, steps
+    return False, steps
+
+data = list(range(1, 1001))           # 1부터 1000까지
+print(linear_search(data, 3))         # (True, 3)
+print(linear_search(data, 1000))      # (True, 1000)
+print(linear_search(data, -1))        # (False, 1000)
+\`\`\`
+
+딕셔너리와 집합이 포함 여부를 빠르게 검사하는 이유는 **해시(hash)** 덕분이다. 키를 넣을 때 키의 해시 값(\`hash(키)\`, 키에서 계산한 정수)으로 저장 위치를 정하므로, 찾을 때도 해시 값을 계산해 그 위치만 보면 된다. 원소가 몇 개든 비교할 곳이 거의 하나라서 평균 $O(1)$이다. 그래서 키는 해시 값이 바뀌지 않는 불변 객체여야 한다([[lesson:mutability-copy]]). 내용이 바뀔 수 있는 리스트는 해시 값을 정할 수 없다.
+
+\`\`\`python
+print(hash(42))                  # 42
+print(hash(42) == hash(42.0))    # True
+try:
+    hash([1, 2])
+except TypeError as e:
+    print("TypeError:", e)       # TypeError: unhashable type: 'list'
+\`\`\`
+
+\`hash(42)\`와 \`hash(42.0)\`이 같아서 딕셔너리에서 키 \`42\`와 \`42.0\`은 같은 키로 취급된다. 실제 시간으로도 차이를 확인한다. 아래 셀은 원소 2만 개에서 1,000번 포함 여부를 묻는다. 걸린 시간은 컴퓨터마다 다르므로 출력되는 숫자는 실행할 때마다 조금씩 다르다.
 
 \`\`\`python
 import random
@@ -53,7 +128,7 @@ t2 = time.perf_counter()
 print(hits_list == hits_set, f"리스트 {t1 - t0:.4f}초, 집합 {t2 - t1:.6f}초")
 \`\`\`
 
-결과는 같지만 집합이 수백~수천 배 빠르다. 정확한 배수는 컴퓨터마다 다르다.
+결과는 같지만 집합이 수백~수천 배 빠르다. 정확한 배수는 컴퓨터마다 다르다. \`time.perf_counter()\`는 시간을 재는 함수로, 두 시점의 값을 빼면 그 사이에 걸린 초가 나온다.
 
 ### 스택과 큐
 
@@ -61,17 +136,37 @@ print(hits_list == hits_set, f"리스트 {t1 - t0:.4f}초, 집합 {t2 - t1:.6f}�
 - **큐(queue)**: 먼저 넣은 것을 먼저 꺼낸다. 리스트의 \`pop(0)\`은 $O(n)$이므로 \`collections.deque\`의 \`popleft()\`($O(1)$)를 쓴다. 처리할 작업 목록, 너비 우선 탐색에 쓴다.
 
 \`\`\`python
-import time
-from collections import deque
-
 stack = []
 for step in ["load", "clean", "train"]:
     stack.append(step)
-print(stack.pop(), stack.pop())       # train clean: 나중에 넣은 것부터
+print(stack.pop(), stack.pop(), stack)   # train clean ['load']
+\`\`\`
+
+| 실행 | \`stack\` | 꺼낸 값 |
+| --- | --- | --- |
+| \`append("load")\` | \`['load']\` | |
+| \`append("clean")\` | \`['load', 'clean']\` | |
+| \`append("train")\` | \`['load', 'clean', 'train']\` | |
+| \`pop()\` | \`['load', 'clean']\` | \`'train'\` |
+| \`pop()\` | \`['load']\` | \`'clean'\` |
+
+\`deque\`(double-ended queue)는 양쪽 끝에서 넣고 빼는 연산이 모두 $O(1)$이다. \`append\`·\`pop\`은 오른쪽 끝, \`appendleft\`·\`popleft\`는 왼쪽 끝에서 동작한다.
+
+\`\`\`python
+from collections import deque
 
 queue = deque(["job1", "job2", "job3"])
-queue.append("job4")
-print(queue.popleft(), list(queue))   # job1 ['job2', 'job3', 'job4']
+queue.append("job4")                  # 오른쪽 끝에 추가
+queue.appendleft("job0")              # 왼쪽 끝에 추가
+print(list(queue))                    # ['job0', 'job1', 'job2', 'job3', 'job4']
+print(queue.popleft(), queue.pop())   # job0 job4
+print(list(queue))                    # ['job1', 'job2', 'job3']
+\`\`\`
+
+리스트의 \`pop(0)\`과 \`deque\`의 \`popleft()\`를 2,000번씩 실행해 시간을 비교한다. 리스트는 맨 앞을 꺼낼 때마다 나머지 원소를 모두 한 칸씩 옮겨야 한다.
+
+\`\`\`python
+import time
 
 big_list, big_deque = list(range(20_000)), deque(range(20_000))
 t0 = time.perf_counter()
@@ -86,7 +181,7 @@ print(f"list.pop(0) {t1 - t0:.4f}초, deque.popleft() {t2 - t1:.5f}초")
 
 ### 이차 시간을 선형 시간으로 바꾸기
 
-중복이 있는지 검사할 때 모든 쌍을 비교하면 $\frac{n(n-1)}{2}$번 비교하므로 $O(n^2)$이다. 지금까지 본 값을 집합에 모아 두고, 새 값이 이미 집합에 있는지 확인하면 값마다 $O(1)$이라 전체가 $O(n)$이다. 메모리를 조금 더 써서 시간을 크게 줄이는 방법이며, 큰 데이터에서 가장 자주 쓰는 개선이다.
+중복이 있는지 검사할 때 모든 쌍을 비교하면 $\frac{n(n-1)}{2}$번 비교하므로 $O(n^2)$이다. 원소가 3,000개면 비교는 $\frac{3000 \times 2999}{2} = 4{,}498{,}500$번이다. 지금까지 본 값을 집합에 모아 두고, 새 값이 이미 집합에 있는지 확인하면 값마다 $O(1)$이라 전체가 $O(n)$이다. 메모리를 조금 더 써서 시간을 크게 줄이는 방법이며, 큰 데이터에서 가장 자주 쓰는 개선이다.
 
 \`\`\`python
 import time
@@ -106,13 +201,33 @@ def has_duplicate(items):            # O(n)
         seen.add(x)
     return False
 
+print(has_duplicate([3, 1, 4, 1, 5]), has_duplicate([1, 2, 3]))   # True False
 data = list(range(3_000))
 t0 = time.perf_counter(); has_duplicate_slow(data); t1 = time.perf_counter()
 has_duplicate(data); t2 = time.perf_counter()
 print(f"O(n^2): {t1 - t0:.3f}초, O(n): {t2 - t1:.5f}초")
 \`\`\`
 
-같은 방식으로 "두 수의 합이 목표가 되는 쌍 찾기"도 모든 쌍을 보지 않고, 지금까지 본 값을 딕셔너리에 저장해 두고 \`목표 - 현재 값\`이 있는지 확인하면 $O(n)$에 풀린다. 이 레슨의 실습이다.
+\`has_duplicate([3, 1, 4, 1, 5])\`가 실행되는 과정은 다음과 같다. 두 번째 1을 만났을 때 1이 이미 \`seen\`에 있으므로 바로 \`True\`를 돌려준다.
+
+| \`x\` | \`x in seen\` | 한 일 | 실행 후 \`seen\` |
+| --- | --- | --- | --- |
+| 3 | 거짓 | 추가 | {3} |
+| 1 | 거짓 | 추가 | {1, 3} |
+| 4 | 거짓 | 추가 | {1, 3, 4} |
+| 1 | 참 | \`return True\` | |
+
+두 리스트의 공통 원소를 찾을 때도 같은 방법을 쓴다. \`for x in a\` 안에서 리스트 \`b\`에 대해 \`x in b\`를 검사하면 $O(n^2)$이지만, \`b\`를 반복 전에 한 번 집합으로 바꾸면 $O(n)$이다. 대가로 집합을 저장할 메모리가 더 필요하고, 집합 연산 \`&\`를 쓰면 원래 순서와 중복 정보가 사라진다.
+
+\`\`\`python
+a = [5, 1, 8, 3]
+b = [3, 9, 5]
+b_set = set(b)                         # 한 번만 바꾼다
+print([x for x in a if x in b_set])    # [5, 3]
+print(sorted(set(a) & set(b)))         # [3, 5]
+\`\`\`
+
+첫 번째 방법은 \`a\`의 순서를 그대로 유지한다. 같은 방식으로 "두 수의 합이 목표가 되는 쌍 찾기"도 모든 쌍을 보지 않고, 지금까지 본 값을 딕셔너리에 저장해 두고 \`목표 - 현재 값\`이 있는지 확인하면 $O(n)$에 풀린다. 이 레슨의 실습이다.
 
 :::warn 흔한 실수
 - **반복문 안에서 \`x in 리스트\`를 쓴다.** 바깥 반복이 $n$번이면 전체가 $O(n^2)$이다. 찾을 대상을 집합으로 바꾼다.

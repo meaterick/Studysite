@@ -18,8 +18,8 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [클래스와 객체](#lesson-classes-objects) | 핵심 | 35분 | #13 클래스와 객체의 기초 |
-| 2 | [기본 자료구조와 시간복잡도](#lesson-complexity) | 핵심 | 35분 | #14 기본 자료구조와 시간복잡도 |
+| 1 | [클래스와 객체](#lesson-classes-objects) | 핵심 | 60분 | #13 클래스와 객체의 기초 |
+| 2 | [기본 자료구조와 시간복잡도](#lesson-complexity) | 핵심 | 50분 | #14 기본 자료구조와 시간복잡도 |
 
 ## 핵심 레슨
 
@@ -27,15 +27,15 @@
 
 ### 1. 클래스와 객체
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-objects-tools/classes-objects.ts) · [실습 원본](../../src/content/modules/python-objects-tools/labs/classes-objects.ts)
+핵심 · 60분 · [본문 원본](../../src/content/modules/python-objects-tools/classes-objects.ts) · [실습 원본](../../src/content/modules/python-objects-tools/labs/classes-objects.ts)
 
 **학습 목표:** 클래스로 상태(속성)와 동작(메서드)을 묶고 `self`와 `__init__`의 역할을 설명하며, fit·predict 형태의 모델 클래스를 작성한다.
 
 **쓰이는 곳:** scikit-learn의 모델은 `model.fit(X, y)`로 학습하고 `model.predict(X)`로 예측하는 클래스이고, PyTorch의 신경망도 클래스로 정의한다([5-2 PyTorch 텐서, 데이터 로더, 학습 루프, GPU](5-2-deep-training.md#lesson-pytorch)). [5-1 자동미분 엔진 구현](5-1-neural-networks.md#lesson-micrograd)에서 직접 만드는 자동미분 엔진의 `Value`도 값과 기울기를 함께 담은 클래스다.
 
-**본문 절:** 클래스와 인스턴스 · 클래스가 필요한 경우 · fit과 predict: 모델 클래스의 형태
+**본문 절:** 클래스와 인스턴스 · __init__과 self · 클래스가 필요한 경우 · 특수 메서드: 파이썬이 자동으로 부르는 메서드 · 클래스 속성과 인스턴스 속성 · fit과 predict: 모델 클래스의 형태
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3 · 그림 2
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 11 · 그림 2
 
 **실습**
 
@@ -54,15 +54,15 @@
 
 ### 2. 기본 자료구조와 시간복잡도
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-objects-tools/complexity.ts) · [실습 원본](../../src/content/modules/python-objects-tools/labs/complexity.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/python-objects-tools/complexity.ts) · [실습 원본](../../src/content/modules/python-objects-tools/labs/complexity.ts)
 
 **학습 목표:** 연산의 실행 시간이 입력 크기에 따라 늘어나는 정도를 빅오 표기로 나타내고, 리스트·딕셔너리·집합·덱의 주요 연산 비용을 비교해 알맞은 자료구조를 고른다.
 
 **쓰이는 곳:** 데이터가 수백 건일 때는 어떤 방법이든 빠르지만, 수백만 건이 되면 같은 결과를 내는 코드의 실행 시간이 몇 초와 몇 시간으로 갈린다. 어휘 사전 조회([6-1 토큰화, 서브워드, 토큰 임베딩, 위치 정보](6-1-transformers.md#lesson-tokenization)), 유사한 문서 찾기([6-3 임베딩과 벡터 검색](6-3-llm-systems.md#lesson-retrieval))처럼 큰 데이터를 반복해서 찾는 작업은 자료구조 선택이 성능을 결정한다.
 
-**본문 절:** 실행 시간을 입력 크기로 나타내기 · 자료구조별 연산 비용 · 스택과 큐 · 이차 시간을 선형 시간으로 바꾸기
+**본문 절:** 같은 결과, 다른 속도 · 빅오 표기 · 자료구조별 연산 비용 · 스택과 큐 · 이차 시간을 선형 시간으로 바꾸기
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 10
 
 **실습**
 

@@ -20,9 +20,9 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [파일 입출력: 텍스트, CSV, JSON](#lesson-file-io) | 핵심 | 35분 | #10 파일 입출력: 텍스트, CSV, JSON |
-| 2 | [오류 메시지 읽기, 예외 처리, 디버깅](#lesson-errors-debugging) | 핵심 | 40분 | #11 오류 메시지 읽기, 예외 처리, 디버깅 |
-| 3 | [모듈, 패키지, 가상환경, 의존성](#lesson-modules-environments) | 핵심 | 30분 | #12 모듈, 패키지, 가상환경, 의존성 |
+| 1 | [파일 입출력: 텍스트, CSV, JSON](#lesson-file-io) | 핵심 | 50분 | #10 파일 입출력: 텍스트, CSV, JSON |
+| 2 | [오류 메시지 읽기, 예외 처리, 디버깅](#lesson-errors-debugging) | 핵심 | 60분 | #11 오류 메시지 읽기, 예외 처리, 디버깅 |
+| 3 | [모듈, 패키지, 가상환경, 의존성](#lesson-modules-environments) | 핵심 | 40분 | #12 모듈, 패키지, 가상환경, 의존성 |
 
 ## 핵심 레슨
 
@@ -30,7 +30,7 @@
 
 ### 1. 파일 입출력: 텍스트, CSV, JSON
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-files-errors/file-io.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/file-io.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/python-files-errors/file-io.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/file-io.ts)
 
 **학습 목표:** open과 with로 텍스트 파일을 읽고 쓰며, csv·json 모듈로 표 형식과 중첩 구조의 데이터를 저장한 뒤 같은 내용으로 다시 읽어 들인다.
 
@@ -38,7 +38,7 @@
 
 **본문 절:** 파일과 경로 · 텍스트 파일 쓰고 읽기 · CSV: 표 형식의 데이터 · JSON: 중첩된 데이터 · 어떤 형식을 쓰는가
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 4
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 12
 
 **실습**
 
@@ -58,15 +58,15 @@
 
 ### 2. 오류 메시지 읽기, 예외 처리, 디버깅
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/python-files-errors/errors-debugging.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/errors-debugging.ts)
+핵심 · 60분 · [본문 원본](../../src/content/modules/python-files-errors/errors-debugging.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/errors-debugging.ts)
 
 **학습 목표:** 트레이스백에서 오류의 종류·위치·원인을 읽고, try/except로 예상한 예외만 처리하며, 최소 재현과 assert·print로 버그의 원인을 좁힌다.
 
 **쓰이는 곳:** 데이터 처리와 모델 학습 코드는 잘못된 입력, 모양이 맞지 않는 배열, 0으로 나누기 같은 이유로 자주 멈춘다. 오류 메시지를 정확히 읽고 원인을 좁히는 절차는 [3-3 결측치, 중복값, 이상치, 잘못된 자료형](3-3-data-preparation.md#lesson-data-cleaning)에서 잘못된 값을 처리할 때와 [3-1 NumPy 배열, 축, 형태, 자료형](3-1-numpy.md#lesson-numpy-arrays)에서 배열의 shape 오류를 고칠 때 그대로 쓰인다.
 
-**본문 절:** 트레이스백 읽기 · 자주 만나는 예외 · 예외 처리: try와 except · 예외 일으키기 · assert로 가정 확인하기 · 디버깅 절차
+**본문 절:** 오류의 두 종류 · 트레이스백 읽기 · 자주 만나는 예외 · 예외 처리: try와 except · 예외 일으키기 · assert로 가정 확인하기 · 디버깅 절차
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 5
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 12
 
 **실습**
 
@@ -85,7 +85,7 @@
 
 ### 3. 모듈, 패키지, 가상환경, 의존성
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/python-files-errors/modules-environments.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/modules-environments.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/python-files-errors/modules-environments.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/modules-environments.ts)
 
 **학습 목표:** import로 모듈과 패키지를 불러오는 규칙을 설명하고, 가상환경과 requirements.txt로 프로젝트의 의존성을 격리·기록·재설치한다.
 
@@ -93,7 +93,7 @@
 
 **본문 절:** 모듈과 import · 표준 라이브러리와 외부 패키지 · 내 모듈 만들기 · pip과 버전 · 가상환경 · 의존성 기록과 재설치
 
-**구성:** 확인 문제 5 · 서술형 1 · 실습 1 · 코드 셀 3 · 그림 1
+**구성:** 확인 문제 5 · 서술형 1 · 실습 1 · 코드 셀 5 · 그림 1
 
 **실습**
 
