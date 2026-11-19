@@ -25,6 +25,8 @@ const LANG_LABEL: Record<string, string> = {
   typescript: "TypeScript",
   ts: "TypeScript",
   text: "Text",
+  // 본문에서 바로 위 코드 셀을 실행했을 때 나오는 출력을 보여 준다(실행되지 않는 블록).
+  output: "실행 결과",
 };
 
 export default function CodeBlock({
