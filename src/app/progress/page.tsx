@@ -224,7 +224,7 @@ export default async function ProgressPage() {
           개념별 완료
         </h2>
         <p className="mb-4 text-sm text-ink-muted">개념에 연결된 핵심 레슨을 모두 마치면 완료로 표시됩니다.</p>
-        <ol className="grid grid-cols-8 gap-1.5 sm:grid-cols-[repeat(16,minmax(0,1fr))]" aria-label="80개 개념">
+        <ol className="grid grid-cols-8 gap-1.5 sm:grid-cols-[repeat(16,minmax(0,1fr))]" aria-label={`${CONCEPTS.length}개 개념`}>
           {CONCEPTS.map((c) => {
             const lessons = lessonsOfConcept(c.id);
             const n = lessons.filter((l) => isLessonComplete(record, l.id)).length;

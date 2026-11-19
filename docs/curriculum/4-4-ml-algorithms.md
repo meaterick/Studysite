@@ -21,9 +21,9 @@ k최근접 이웃과 트리 앙상블, 그래디언트 부스팅과 특성 중�
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [k최근접 이웃, 결정트리, 랜덤 포레스트](#lesson-knn-trees) | 핵심 | 45분 | #64 k최근접 이웃, 결정트리, 랜덤 포레스트 |
-| 2 | [그래디언트 부스팅, 특성 중요도](#lesson-boosting) | 핵심 | 35분 | #65 그래디언트 부스팅, 특성 중요도 |
-| 3 | [K-means, PCA, 머신러닝 파이프라인](#lesson-kmeans-pca-pipeline) | 핵심 | 45분 | #66 K-means, PCA, 머신러닝 파이프라인 |
+| 1 | [k최근접 이웃, 결정트리, 랜덤 포레스트](#lesson-knn-trees) | 핵심 | 40분 | #62 k최근접 이웃, 결정트리, 랜덤 포레스트 |
+| 2 | [그래디언트 부스팅, 특성 중요도](#lesson-boosting) | 핵심 | 35분 | #63 그래디언트 부스팅, 특성 중요도 |
+| 3 | [K-means, PCA, 머신러닝 파이프라인](#lesson-kmeans-pca-pipeline) | 핵심 | 45분 | #64 K-means, PCA, 머신러닝 파이프라인 |
 | 4 | [나이브 베이즈 분류기](#lesson-naive-bayes) | 보충 | 25분 | — |
 | 5 | [서포트 벡터 머신](#lesson-svm) | 보충 | 25분 | — |
 
@@ -33,7 +33,7 @@ k최근접 이웃과 트리 앙상블, 그래디언트 부스팅과 특성 중�
 
 ### 1. k최근접 이웃, 결정트리, 랜덤 포레스트
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/ml-algorithms/knn-trees.ts) · [실습 원본](../../src/content/modules/ml-algorithms/labs/knn-trees.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/ml-algorithms/knn-trees.ts) · [실습 원본](../../src/content/modules/ml-algorithms/labs/knn-trees.ts)
 
 **학습 목표:** KNN의 거리 계산과 다수결 예측을 구현하고 K와 스케일링의 영향을 설명하며, 지니 불순도로 결정트리의 분할을 계산하고 깊이로 복잡도를 조절하며, 부트스트랩과 특성 무작위 선택으로 랜덤 포레스트가 분산을 줄이는 원리를 설명한다.
 

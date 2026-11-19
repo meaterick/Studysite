@@ -4,8 +4,8 @@ import exercises from "./labs/git-basics";
 export default defineLesson({
   id: "git-basics",
   title: "Git과 버전 관리",
-  tier: "core",
-  concepts: ["git"],
+  tier: "advanced",
+  requires: ["modules-environments"],
   goal: "작업 폴더·스테이징 영역·저장소·브랜치의 관계를 설명하고, 변경을 기록·비교·되돌리는 Git 명령의 흐름과 .gitignore로 저장소에 넣지 않을 파일을 정한다.",
   why: "실험 코드는 계속 바뀌므로 어떤 결과가 어떤 코드에서 나왔는지 기록하지 않으면 재현할 수 없다. 커밋에 코드와 설정을 함께 남기면 몇 주 뒤에도 결과를 낸 정확한 버전으로 돌아갈 수 있고, 캡스톤 프로젝트([[lesson:capstone-design]])도 이 방식으로 관리한다.",
   body: md`

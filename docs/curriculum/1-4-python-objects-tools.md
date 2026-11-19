@@ -1,20 +1,18 @@
 <!-- npm run docs:generate가 만든 문서입니다. 이 파일 대신 src/content를 고치십시오. -->
-# 1-4 객체·효율·개발 도구
+# 1-4 클래스와 시간복잡도
 
-[전체 목차](README.md) · 트랙 1 프로그래밍 기초 · [모듈 원본](../../src/content/modules/python-objects-tools/index.ts)
+[전체 목차](README.md) · 트랙 1 Python · [모듈 원본](../../src/content/modules/python-objects-tools/index.ts)
 
-클래스와 객체, 자료구조와 시간복잡도, Git, 노트북과 재현 가능한 실행
+클래스와 객체, 자료구조와 시간복잡도
 
 ## 목표 문제
 
-학생 기록을 이름별·과목별로 바로 조회하는 기록부 클래스를 만들고, 데이터가 수만 건으로 늘어나도 조회가 느려지지 않도록 자료구조를 고른다. 작업은 Git 커밋으로 남기고, 시드와 환경을 기록해 누가 언제 실행해도 같은 결과가 나오게 한다. 이 모듈을 마치면 트랙 프로젝트 「학생 기록 정리 리포트」를 제출할 수 있으며, 이후 모델 클래스([4-2 선형회귀, 잔차, 평균제곱오차](4-2-linear-models.md#lesson-linear-regression))와 실험 기록([7-1 신뢰할 수 있는 실험 절차](7-1-capstone-project.md#lesson-research-methods))이 같은 방식을 따른다.
+학생 기록을 이름별·과목별로 바로 조회하는 기록부 클래스를 만들고, 데이터가 수만 건으로 늘어나도 조회가 느려지지 않도록 자료구조를 고른다. 이 모듈을 마치면 트랙 프로젝트 「학생 기록 정리 리포트」를 제출할 수 있으며, 이후 모델 클래스([4-2 선형회귀, 잔차, 평균제곱오차](4-2-linear-models.md#lesson-linear-regression))와 자동미분 엔진([5-1 자동미분 엔진 구현](5-1-neural-networks.md#lesson-micrograd))이 같은 방식을 따른다. 과제의 마지막 단계에서 쓰는 시드 고정과 재현 확인은 선택 분야 레슨 [T-1 Jupyter Notebook과 재현 가능한 실행](T-1-git-jupyter.md#lesson-notebooks-reproducibility)에서 더 자세히 다룬다.
 
 ## 학습 목표
 
 - 클래스로 상태와 동작을 묶고, fit·predict 형태의 모델 클래스를 작성한다.
 - 연산 비용을 빅오 표기로 나타내고, 리스트·딕셔너리·집합·덱 중 알맞은 자료구조를 골라 이차 시간 코드를 선형 시간으로 바꾼다.
-- 작업 폴더·스테이징 영역·저장소의 관계를 설명하고, 커밋 메시지와 .gitignore로 변경 이력을 관리한다.
-- 노트북의 숨은 상태를 피하고, 시드·환경·데이터 해시를 기록해 같은 결과를 다시 얻는다.
 
 ## 레슨
 
@@ -22,8 +20,6 @@
 | ---: | --- | --- | ---: | --- |
 | 1 | [클래스와 객체](#lesson-classes-objects) | 핵심 | 35분 | #13 클래스와 객체의 기초 |
 | 2 | [기본 자료구조와 시간복잡도](#lesson-complexity) | 핵심 | 35분 | #14 기본 자료구조와 시간복잡도 |
-| 3 | [Git과 버전 관리](#lesson-git-basics) | 핵심 | 25분 | #15 Git 기초와 코드 버전 관리 |
-| 4 | [Jupyter Notebook과 재현 가능한 실행](#lesson-notebooks-reproducibility) | 핵심 | 35분 | #16 Jupyter Notebook과 재현 가능한 실행 |
 
 ## 핵심 레슨
 
@@ -81,68 +77,11 @@
 - [Python Wiki — TimeComplexity](https://wiki.python.org/moin/TimeComplexity) — 리스트·deque·dict·set 연산의 시간복잡도 표 (영문)
 - [Python 표준 라이브러리 — collections.deque (한국어)](https://docs.python.org/ko/3/library/collections.html#collections.deque) — 양 끝에서 O(1)로 넣고 빼는 큐
 
-<a id="lesson-git-basics"></a>
-
-### 3. Git과 버전 관리
-
-핵심 · 25분 · [본문 원본](../../src/content/modules/python-objects-tools/git-basics.ts) · [실습 원본](../../src/content/modules/python-objects-tools/labs/git-basics.ts)
-
-**학습 목표:** 작업 폴더·스테이징 영역·저장소·브랜치의 관계를 설명하고, 변경을 기록·비교·되돌리는 Git 명령의 흐름과 .gitignore로 저장소에 넣지 않을 파일을 정한다.
-
-**쓰이는 곳:** 실험 코드는 계속 바뀌므로 어떤 결과가 어떤 코드에서 나왔는지 기록하지 않으면 재현할 수 없다. 커밋에 코드와 설정을 함께 남기면 몇 주 뒤에도 결과를 낸 정확한 버전으로 돌아갈 수 있고, 캡스톤 프로젝트([7-1 핵심 논문과 캡스톤 설계](7-1-capstone-project.md#lesson-capstone-design))도 이 방식으로 관리한다.
-
-**본문 절:** Git이 하는 일 · 세 영역과 커밋 · 기본 명령 · 좋은 커밋 · 브랜치와 충돌 · 저장소에 넣지 않을 파일: .gitignore
-
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 그림 1
-
-**실습**
-
-- `ex1` git status 읽기와 .gitignore 규칙
-
-**서술형**
-
-- `d1` `git add`, `git commit`, `git push`가 각각 무엇을 하는지 순서대로 설명하고, 커밋 메시지에 '무엇을 왜' 바꿨는지 적는 이유를 실험 기록의 관점에서 설명하라.
-
-**참고 자료**
-
-- [Pro Git 2판 (한국어)](https://git-scm.com/book/ko/v2) — 2장 Git의 기초, 3장 브랜치
-- [GitHub Docs — Ignoring files](https://docs.github.com/en/get-started/git-basics/ignoring-files) — .gitignore 작성법 (영문)
-
-<a id="lesson-notebooks-reproducibility"></a>
-
-### 4. Jupyter Notebook과 재현 가능한 실행
-
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-objects-tools/notebooks-reproducibility.ts) · [실습 원본](../../src/content/modules/python-objects-tools/labs/notebooks-reproducibility.ts)
-
-**학습 목표:** 노트북의 셀 실행 순서와 커널 상태가 결과에 주는 영향을 설명하고, 처음부터 다시 실행·시드 고정·환경과 데이터 기록으로 같은 결과를 다시 얻는다.
-
-**쓰이는 곳:** 실험 결과는 다른 사람이 같은 코드를 실행해 같은 숫자를 얻을 수 있을 때 근거가 된다. 이 과정의 과제는 '실행 환경 초기화 후 전체 실행'으로 재현되는지 확인하고 채점하며, 모델 비교([4-3 교차검증, 시계열 검증, 하이퍼파라미터 탐색](4-3-generalization.md#lesson-cross-validation))와 연구 보고([7-1 신뢰할 수 있는 실험 절차](7-1-capstone-project.md#lesson-research-methods))도 여러 시드의 결과로 판단한다.
-
-**본문 절:** 노트북과 커널 · 숨은 상태 · 난수와 시드 · 환경과 데이터 기록 · 이 사이트와 Colab
-
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3
-
-**실습**
-
-- `ex1` 시드로 재현되는 데이터 분할
-
-**서술형**
-
-- `d1` 내 컴퓨터에서 잘 돌던 노트북을 동료가 실행했더니 숫자가 다르게 나오거나 오류가 났다. 원인이 될 수 있는 것을 세 가지 들고, 각각을 막는 방법을 설명하라.
-
-**참고 자료**
-
-- [Google Colab 소개](https://colab.research.google.com/notebooks/intro.ipynb) — 셀 실행, GPU 런타임 설정
-- [NumPy — Random Generator](https://numpy.org/doc/stable/reference/random/generator.html) — default_rng로 시드를 가진 생성기 만들기 (영문)
-- [Python 표준 라이브러리 — hashlib (한국어)](https://docs.python.org/ko/3/library/hashlib.html) — SHA-256 해시 계산
-
 ## 백지 복습
 
 1. 클래스, 인스턴스, 속성, 메서드, `self`의 관계를 예제 클래스 하나로 설명하라.
 2. 리스트와 집합에서 `x in ...`의 시간복잡도를 비교하고, 반복문 안의 포함 여부 검사를 빠르게 바꾸는 방법을 쓰라.
-3. `git add`, `git commit`, `git push`의 역할과 스테이징 영역이 필요한 이유를 설명하라.
-4. 노트북에서 셀 실행 순서 때문에 생기는 문제를 하나 들고, 제출 전에 확인할 방법을 쓰라.
-5. 같은 결과를 다시 얻기 위해 실험 결과와 함께 기록할 것 네 가지를 쓰라.
+3. `fit`과 `predict` 메서드를 가진 모델 클래스의 형태를 코드로 쓰고, 학습한 값을 지역 변수가 아니라 `self`의 속성에 저장해야 하는 이유를 설명하라.
 
 ## 과제: 학생 기록 정리 리포트
 

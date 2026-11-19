@@ -20,10 +20,10 @@ Series와 DataFrame, 조회·필터링·정렬, 그룹 집계와 결합, 자료 
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [pandas의 Series와 DataFrame](#lesson-dataframes) | 핵심 | 40분 | #42 pandas의 Series와 DataFrame |
-| 2 | [데이터 불러오기, 조회, 필터링, 정렬](#lesson-pandas-selection) | 핵심 | 40분 | #43 데이터 불러오기, 조회, 필터링, 정렬 |
-| 3 | [그룹별 집계, 테이블 결합, 형태 변환](#lesson-pandas-aggregation) | 핵심 | 40분 | #44 그룹별 집계, 테이블 결합, 형태 변환 |
-| 4 | [수치형·범주형·시계열 데이터](#lesson-data-types) | 핵심 | 35분 | #45 수치형·범주형·시계열 데이터 |
+| 1 | [pandas의 Series와 DataFrame](#lesson-dataframes) | 핵심 | 35분 | #40 pandas의 Series와 DataFrame |
+| 2 | [데이터 불러오기, 조회, 필터링, 정렬](#lesson-pandas-selection) | 핵심 | 35분 | #41 데이터 불러오기, 조회, 필터링, 정렬 |
+| 3 | [그룹별 집계, 테이블 결합, 형태 변환](#lesson-pandas-aggregation) | 핵심 | 35분 | #42 그룹별 집계, 테이블 결합, 형태 변환 |
+| 4 | [수치형·범주형·시계열 데이터](#lesson-data-types) | 핵심 | 30분 | #43 수치형·범주형·시계열 데이터 |
 
 ## 핵심 레슨
 
@@ -31,7 +31,7 @@ Series와 DataFrame, 조회·필터링·정렬, 그룹 집계와 결합, 자료 
 
 ### 1. pandas의 Series와 DataFrame
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/pandas/dataframes.ts) · [실습 원본](../../src/content/modules/pandas/labs/dataframes.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/pandas/dataframes.ts) · [실습 원본](../../src/content/modules/pandas/labs/dataframes.ts)
 
 **학습 목표:** Series와 DataFrame의 구조(인덱스·열·값)를 설명하고, 딕셔너리와 리스트로 DataFrame을 만들며, shape·dtypes·info·describe로 표의 구성을 확인하고 열 단위 계산으로 새 열을 만든다.
 
@@ -58,7 +58,7 @@ Series와 DataFrame, 조회·필터링·정렬, 그룹 집계와 결합, 자료 
 
 ### 2. 데이터 불러오기, 조회, 필터링, 정렬
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/pandas/pandas-selection.ts) · [실습 원본](../../src/content/modules/pandas/labs/pandas-selection.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/pandas/pandas-selection.ts) · [실습 원본](../../src/content/modules/pandas/labs/pandas-selection.ts)
 
 **학습 목표:** CSV를 읽으며 결측 표기를 지정하고, loc과 iloc으로 행·열을 고르며, 여러 조건으로 행을 필터링하고 정렬한 뒤, 필터링 결과에 값을 안전하게 대입한다.
 
@@ -85,7 +85,7 @@ Series와 DataFrame, 조회·필터링·정렬, 그룹 집계와 결합, 자료 
 
 ### 3. 그룹별 집계, 테이블 결합, 형태 변환
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/pandas/pandas-aggregation.ts) · [실습 원본](../../src/content/modules/pandas/labs/pandas-aggregation.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/pandas/pandas-aggregation.ts) · [실습 원본](../../src/content/modules/pandas/labs/pandas-aggregation.ts)
 
 **학습 목표:** groupby로 그룹별 통계를 계산하고 transform으로 그룹 통계를 행에 붙이며, merge로 두 표를 키로 결합할 때 결합 방식과 키 중복의 영향을 판단하고, melt와 pivot으로 넓은 표와 긴 표를 서로 바꾼다.
 
@@ -112,7 +112,7 @@ Series와 DataFrame, 조회·필터링·정렬, 그룹 집계와 결합, 자료 
 
 ### 4. 수치형·범주형·시계열 데이터
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/pandas/data-types.ts) · [실습 원본](../../src/content/modules/pandas/labs/data-types.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/pandas/data-types.ts) · [실습 원본](../../src/content/modules/pandas/labs/data-types.ts)
 
 **학습 목표:** 열마다 수치형(연속·이산), 범주형(명목·순서), 시계열, 텍스트 중 어느 유형인지 판단하고, 문자열로 읽힌 숫자·범주·날짜를 알맞은 pandas 자료형으로 바꾸며, 날짜에서 요일·경과 일수 같은 값을 꺼낸다.
 

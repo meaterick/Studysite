@@ -33,8 +33,8 @@ export default async function CurriculumDetailsPage() {
   const record = user ? getLearningRecord(user.id) : emptyRecord();
   const href = (path: string) => gatedHref(!!user, path);
   const coreMinutes = CORE_PATH.reduce((sum, l) => sum + l.minutes, 0);
-  const mainTracks = TRACKS.filter((t) => t.id !== "extension");
-  const extension = TRACKS.find((t) => t.id === "extension")!;
+  const mainTracks = TRACKS.filter((t) => !t.optional);
+  const optionalTracks = TRACKS.filter((t) => t.optional);
   const moduleTitle = (slug: string) => {
     const m = getModule(slug);
     return m ? `${m.code} ${m.title}` : slug;
@@ -137,31 +137,33 @@ export default async function CurriculumDetailsPage() {
                 </div>
               </li>
             ))}
-            <li>
-              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-                <Link href={trackHref(extension.id)} className="group flex items-baseline gap-3">
-                  <span aria-hidden="true" className="h-2 w-2 shrink-0 translate-y-[-2px] rounded-full" style={{ background: extension.color }} />
-                  <span className="kicker">분야 {extension.code}</span>
-                  <span className="text-lg font-semibold tracking-[-0.02em] text-ink group-hover:underline group-hover:underline-offset-4">{learningField(extension.id).title}</span>
-                </Link>
-                <span className="text-[13px] text-ink-muted">{learningField(extension.id).description}</span>
-              </div>
-              <ul className="rows border-y border-[var(--border-hairline)]">
-                {modulesOfTrack("extension").map((m) => (
-                  <li key={m.slug}>
-                    <Link href={href(moduleHref(m.slug))} prefetch={user ? undefined : false} className="group row-hover -mx-3 flex items-center gap-4 rounded-xl px-3 py-3.5">
-                      <span className="w-9 shrink-0 font-mono text-xs text-ink-muted">{m.code}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="text-[15px] font-medium text-ink">{m.title}</span>
-                        <span className="mt-0.5 block truncate text-xs text-ink-muted">{m.summary}</span>
-                      </span>
-                      <span className="shrink-0 text-[13px] text-ink-muted">선택 레슨 {m.lessons.length}개</span>
-                      <Icon name="chevronRight" size={16} className="shrink-0 text-ink-muted" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
+            {optionalTracks.map((track) => (
+              <li key={track.id}>
+                <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
+                  <Link href={trackHref(track.id)} className="group flex items-baseline gap-3">
+                    <span aria-hidden="true" className="h-2 w-2 shrink-0 translate-y-[-2px] rounded-full" style={{ background: track.color }} />
+                    <span className="kicker">분야 {track.code}</span>
+                    <span className="text-lg font-semibold tracking-[-0.02em] text-ink group-hover:underline group-hover:underline-offset-4">{learningField(track.id).title}</span>
+                  </Link>
+                  <span className="text-[13px] text-ink-muted">{learningField(track.id).description}</span>
+                </div>
+                <ul className="rows border-y border-[var(--border-hairline)]">
+                  {modulesOfTrack(track.id).map((m) => (
+                    <li key={m.slug}>
+                      <Link href={href(moduleHref(m.slug))} prefetch={user ? undefined : false} className="group row-hover -mx-3 flex items-center gap-4 rounded-xl px-3 py-3.5">
+                        <span className="w-9 shrink-0 font-mono text-xs text-ink-muted">{m.code}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="text-[15px] font-medium text-ink">{m.title}</span>
+                          <span className="mt-0.5 block truncate text-xs text-ink-muted">{m.summary}</span>
+                        </span>
+                        <span className="shrink-0 text-[13px] text-ink-muted">선택 레슨 {m.lessons.length}개</span>
+                        <Icon name="chevronRight" size={16} className="shrink-0 text-ink-muted" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
           </ol>
         </Section>
 
@@ -220,7 +222,7 @@ export default async function CurriculumDetailsPage() {
           </ul>
         </Section>
 
-        <Section id="concepts" title="80개 개념과 선수관계">
+        <Section id="concepts" title={`${CONCEPTS.length}개 개념과 선수관계`}>
           <p className="mb-5 max-w-3xl text-sm leading-relaxed text-ink-muted">
             개념을 다루는 핵심 레슨에는 개념 번호가 붙으며, 하나의 개념이 여러 레슨으로 나뉠 수 있습니다. 선수 개념은 그 개념을 배우기 전에 알아야 하는 개념이며, 기본 학습 순서는 선수 개념을 먼저 학습하도록 구성되어 있습니다.
           </p>

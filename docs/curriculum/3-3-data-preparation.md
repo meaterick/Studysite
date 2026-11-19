@@ -21,11 +21,11 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [결측치, 중복값, 이상치, 잘못된 자료형](#lesson-data-cleaning) | 핵심 | 45분 | #46 결측치, 중복값, 이상치, 잘못된 자료형 |
-| 2 | [히스토그램, 산점도, 상자그림, 상관행렬](#lesson-visualization) | 핵심 | 40분 | #47 히스토그램, 산점도, 상자그림, 상관행렬 |
-| 3 | [탐색적 데이터 분석과 데이터 품질](#lesson-eda) | 핵심 | 35분 | #48 탐색적 데이터 분석과 데이터 품질 |
-| 4 | [범주형 인코딩, 표준화, 정규화](#lesson-encoding-scaling) | 핵심 | 45분 | #49 범주형 인코딩, 표준화, 정규화 |
-| 5 | [특성 생성, 특성 선택, 차원의 저주](#lesson-feature-engineering) | 핵심 | 35분 | #50 특성 생성, 특성 선택, 차원의 저주 |
+| 1 | [결측치, 중복값, 이상치, 잘못된 자료형](#lesson-data-cleaning) | 핵심 | 40분 | #44 결측치, 중복값, 이상치, 잘못된 자료형 |
+| 2 | [히스토그램, 산점도, 상자그림, 상관행렬](#lesson-visualization) | 핵심 | 40분 | #45 히스토그램, 산점도, 상자그림, 상관행렬 |
+| 3 | [탐색적 데이터 분석과 데이터 품질](#lesson-eda) | 핵심 | 30분 | #46 탐색적 데이터 분석과 데이터 품질 |
+| 4 | [범주형 인코딩, 표준화, 정규화](#lesson-encoding-scaling) | 핵심 | 40분 | #47 범주형 인코딩, 표준화, 정규화 |
+| 5 | [특성 생성, 특성 선택, 차원의 저주](#lesson-feature-engineering) | 핵심 | 35분 | #48 특성 생성, 특성 선택, 차원의 저주 |
 
 ## 핵심 레슨
 
@@ -33,7 +33,7 @@
 
 ### 1. 결측치, 중복값, 이상치, 잘못된 자료형
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/data-preparation/data-cleaning.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/data-cleaning.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/data-preparation/data-cleaning.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/data-cleaning.ts)
 
 **학습 목표:** 결측값·중복·표기 불일치·잘못된 자료형·이상치를 찾아내고, 결측의 원인에 따라 처리 방법을 고르며, IQR과 Z-score의 판정이 엇갈리는 이유를 설명하고, 결측을 채우는 통계를 학습용 데이터에서만 계산한다.
 
@@ -88,7 +88,7 @@
 
 ### 3. 탐색적 데이터 분석과 데이터 품질
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/data-preparation/eda.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/eda.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/data-preparation/eda.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/eda.ts)
 
 **학습 목표:** 정해진 순서(구조·결측·중복·범위·분포·목표 변수·관계)로 데이터를 점검해 품질 문제를 찾아 기록하고, 클래스 불균형과 목표 변수의 정보가 새어 든 특성(누수 후보)을 찾아낸다.
 
@@ -115,7 +115,7 @@
 
 ### 4. 범주형 인코딩, 표준화, 정규화
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/data-preparation/encoding-scaling.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/encoding-scaling.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/data-preparation/encoding-scaling.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/encoding-scaling.ts)
 
 **학습 목표:** 명목형·순서형 범주에 맞는 인코딩(원-핫·순서 정수)을 고르고, Min-Max 정규화와 표준화를 계산해 이상치와 분포에 따라 방법을 고르며, 변환 규칙을 학습용 데이터에서만 계산(fit)하고 모든 데이터에 같게 적용(transform)한다.
 

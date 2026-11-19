@@ -5,7 +5,7 @@
 ## 학습자
 
 - [커리큘럼 목차](curriculum/README.md): 분야별 모듈과 레슨, 학습 목표, 16주 추천 일정. 모듈마다 목표 문제, 학습 목표, 레슨, 백지 복습, 과제를 정리한 문서가 있습니다.
-- [개념 색인](curriculum/concept-index.md): 80개 개념과 그 개념을 다루는 레슨, 선수 개념.
+- [개념 색인](curriculum/concept-index.md): 필수 개념과 그 개념을 다루는 레슨, 선수 개념.
 - [집계표](curriculum/coverage.md): 모듈별 레슨·문항·실습·그림 수와 예상 시간.
 - [사이트와 학습 흐름](development/site-guide.md): 페이지, 레슨 완료 조건, 진단 평가, 실습 탭, 백지 복습, 자기 점검 과제 이용 방식.
 

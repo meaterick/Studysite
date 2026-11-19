@@ -20,10 +20,10 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [미분과 도함수](#lesson-derivatives) | 핵심 | 35분 | #25 미분과 도함수, 변화율 |
-| 2 | [편미분과 기울기](#lesson-gradient) | 핵심 | 30분 | #26 편미분과 기울기 |
-| 3 | [연쇄법칙](#lesson-chain-rule) | 핵심 | 30분 | #27 연쇄법칙과 합성함수의 미분 |
-| 4 | [최솟값과 경사하강법](#lesson-gradient-descent) | 핵심 | 45분 | #28 최솟값·최댓값, 경사하강법 |
+| 1 | [미분과 도함수](#lesson-derivatives) | 핵심 | 30분 | #23 미분과 도함수, 변화율 |
+| 2 | [편미분과 기울기](#lesson-gradient) | 핵심 | 30분 | #24 편미분과 기울기 |
+| 3 | [연쇄법칙](#lesson-chain-rule) | 핵심 | 30분 | #25 연쇄법칙과 합성함수의 미분 |
+| 4 | [최솟값과 경사하강법](#lesson-gradient-descent) | 핵심 | 45분 | #26 최솟값·최댓값, 경사하강법 |
 | 5 | [경사하강법의 수렴 조건과 조건수](#lesson-gd-convergence) | 심화 | 40분 | — |
 
 ## 핵심 레슨
@@ -32,7 +32,7 @@
 
 ### 1. 미분과 도함수
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/calculus-optimization/derivatives.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/derivatives.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/calculus-optimization/derivatives.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/derivatives.ts)
 
 **학습 목표:** 평균변화율의 극한으로 도함수를 정의하고, 거듭제곱·상수배·합·곱·지수·로그의 미분 규칙으로 도함수를 구하며, 도함수의 부호로 증가·감소와 최솟값을 판단하고 중심차분으로 결과를 검산한다.
 

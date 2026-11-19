@@ -20,8 +20,9 @@ export default async function ModuleLayout({ children, params }: LayoutProps<"/m
   await requireUser(moduleHref(slug));
   const mod = getModule(slug);
   if (!mod) notFound();
-  // 이전·다음 모듈: 확장 모듈은 필수 경로와 따로 이어진다.
-  const sequence = MODULES.filter((m) => (m.track === "extension") === (mod.track === "extension"));
+  // 이전·다음 모듈: 선택 분야(개발 도구·확장)의 모듈은 필수 경로와 따로 이어진다.
+  const optional = !!mod.trackInfo.optional;
+  const sequence = MODULES.filter((m) => !!m.trackInfo.optional === optional);
   const index = sequence.findIndex((m) => m.slug === slug);
   const prev = sequence[index - 1];
   const next = sequence[index + 1];

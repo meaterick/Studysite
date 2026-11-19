@@ -1,7 +1,7 @@
 import type { Block, Lesson, LessonSource, Module, ModuleSource, TrackId } from "./types";
 import { TIER_ORDER } from "./tiers";
 import { parseMarkdown } from "./markdown";
-import { TRACKS, getTrack } from "./curriculum/tracks";
+import { TRACKS, getTrack, isOptionalTrack } from "./curriculum/tracks";
 import { CONCEPTS, getConcept } from "./curriculum/concepts";
 import { MODULE_SOURCES } from "./modules";
 import { lessonHref } from "../lib/routes";
@@ -43,14 +43,23 @@ function blockTextLength(block: Block): number {
   }
 }
 
+/**
+ * 실행 코드 셀 하나를 읽고 실행해 결과를 확인하는 시간(분): 빈 줄을 뺀 줄 수에 비례하며 1~3분이다.
+ * 한두 줄짜리 예제는 1분, 10줄 이상의 예제는 3분으로 센다.
+ */
+export function codeCellMinutes(code: string): number {
+  const lines = code.split("\n").filter((line) => line.trim() !== "").length;
+  return Math.min(3, Math.max(1, 0.5 + lines * 0.25));
+}
+
 /** 본문 분량·코드 셀·그림·문항 수로 예상 학습 시간을 계산한다(5분 단위, 최소 10분). */
 function estimateMinutes(blocks: Block[], lesson: LessonSource): number {
   const chars = blocks.reduce((sum, b) => sum + blockTextLength(b), 0);
-  const codeCells = blocks.filter((b) => b.type === "code" && (b.lang === "python" || b.lang === "py")).length;
+  const codeMinutes = blocks.reduce((sum, b) => sum + (b.type === "code" && (b.lang === "python" || b.lang === "py") ? codeCellMinutes(b.code) : 0), 0);
   const figures = blocks.filter((b) => b.type === "diagram" || b.type === "image").length;
   const raw =
     chars / READ_CHARS_PER_MINUTE +
-    codeCells * 3 +
+    codeMinutes +
     figures * 1.5 +
     lesson.checks.length +
     (lesson.exercises?.length ?? 0) * 8 +
@@ -154,8 +163,8 @@ export function modulesOfTrack(track: TrackId): Module[] {
   return MODULES.filter((m) => m.track === track);
 }
 
-/** 필수 경로: 확장 모듈을 뺀 모든 모듈의 핵심 레슨을 기본 순서대로 */
-export const CORE_PATH: Lesson[] = MODULES.filter((m) => m.track !== "extension").flatMap((m) => m.lessons.filter((l) => l.tier === "core"));
+/** 필수 경로: 선택 분야(개발 도구·확장)를 뺀 모든 모듈의 핵심 레슨을 기본 순서대로 */
+export const CORE_PATH: Lesson[] = MODULES.filter((m) => !isOptionalTrack(m.track)).flatMap((m) => m.lessons.filter((l) => l.tier === "core"));
 const PATH_INDEX = new Map(CORE_PATH.map((l, i) => [l.id, i]));
 
 export function pathIndex(lessonId: string): number | undefined {
@@ -218,7 +227,7 @@ export function conceptsOf(lesson: Lesson) {
   return (lesson.concepts ?? []).map((c) => getConcept(c)).filter((c) => !!c).sort((a, b) => a!.order - b!.order);
 }
 
-export { CONCEPTS, TRACKS, getConcept, getTrack };
+export { CONCEPTS, TRACKS, getConcept, getTrack, isOptionalTrack };
 
 // ─── 문항·실습의 전역 id ─────────────────────────────────────────────────
 
@@ -243,11 +252,11 @@ export function moduleOfAssignment(key: string): Module | undefined {
 }
 
 /**
- * RAG 과제에서 코드가 읽는 학습 자료 파일: 모듈마다 /course/<모듈 slug>.md 하나(확장 모듈 제외).
+ * RAG 과제에서 코드가 읽는 학습 자료 파일: 모듈마다 /course/<모듈 slug>.md 하나(선택 분야 모듈 제외).
  * 파일 안에는 모듈 제목과 레슨별 제목·본문이 들어 있다. 과제 작업 공간과 실습 검사 스크립트가 같이 쓴다.
  */
 export function courseDocuments(): { path: string; content: string }[] {
-  return MODULES.filter((m) => m.track !== "extension").map((m) => ({
+  return MODULES.filter((m) => !isOptionalTrack(m.track)).map((m) => ({
     path: `/course/${m.slug}.md`,
     content: [`# ${m.code} ${m.title}`, "", ...m.lessons.flatMap((l) => [`## ${l.title}`, "", l.body.trim(), ""])].join("\n"),
   }));

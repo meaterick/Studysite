@@ -1,7 +1,7 @@
 <!-- npm run docs:generate가 만든 문서입니다. 이 파일 대신 src/content를 고치십시오. -->
 # 1-3 파일·오류·모듈
 
-[전체 목차](README.md) · 트랙 1 프로그래밍 기초 · [모듈 원본](../../src/content/modules/python-files-errors/index.ts)
+[전체 목차](README.md) · 트랙 1 Python · [모듈 원본](../../src/content/modules/python-files-errors/index.ts)
 
 텍스트·CSV·JSON 파일 입출력, 오류 메시지와 예외 처리, 모듈·패키지·가상환경
 
@@ -22,7 +22,7 @@
 | ---: | --- | --- | ---: | --- |
 | 1 | [파일 입출력: 텍스트, CSV, JSON](#lesson-file-io) | 핵심 | 35분 | #10 파일 입출력: 텍스트, CSV, JSON |
 | 2 | [오류 메시지 읽기, 예외 처리, 디버깅](#lesson-errors-debugging) | 핵심 | 40분 | #11 오류 메시지 읽기, 예외 처리, 디버깅 |
-| 3 | [모듈, 패키지, 가상환경, 의존성](#lesson-modules-environments) | 핵심 | 35분 | #12 모듈, 패키지, 가상환경, 의존성 |
+| 3 | [모듈, 패키지, 가상환경, 의존성](#lesson-modules-environments) | 핵심 | 30분 | #12 모듈, 패키지, 가상환경, 의존성 |
 
 ## 핵심 레슨
 
@@ -85,11 +85,11 @@
 
 ### 3. 모듈, 패키지, 가상환경, 의존성
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-files-errors/modules-environments.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/modules-environments.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/python-files-errors/modules-environments.ts) · [실습 원본](../../src/content/modules/python-files-errors/labs/modules-environments.ts)
 
 **학습 목표:** import로 모듈과 패키지를 불러오는 규칙을 설명하고, 가상환경과 requirements.txt로 프로젝트의 의존성을 격리·기록·재설치한다.
 
-**쓰이는 곳:** NumPy, pandas, scikit-learn, PyTorch는 모두 패키지로 설치해 import해 쓴다. 패키지 버전이 다르면 같은 코드도 다른 결과를 내거나 실행되지 않으므로, 의존성을 기록해 두어야 실험을 다른 컴퓨터에서 재현할 수 있다([1-4 Jupyter Notebook과 재현 가능한 실행](1-4-python-objects-tools.md#lesson-notebooks-reproducibility)).
+**쓰이는 곳:** NumPy, pandas, scikit-learn, PyTorch는 모두 패키지로 설치해 import해 쓴다. 패키지 버전이 다르면 같은 코드도 다른 결과를 내거나 실행되지 않으므로, 의존성을 기록해 두어야 실험을 다른 컴퓨터에서 재현할 수 있다([T-1 Jupyter Notebook과 재현 가능한 실행](T-1-git-jupyter.md#lesson-notebooks-reproducibility)).
 
 **본문 절:** 모듈과 import · 표준 라이브러리와 외부 패키지 · 내 모듈 만들기 · pip과 버전 · 가상환경 · 의존성 기록과 재설치
 

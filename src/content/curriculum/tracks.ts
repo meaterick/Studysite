@@ -1,7 +1,7 @@
 import type { Track, TrackId } from "../types";
 
-// 트랙: 80개 개념의 여섯 분류에 과정 개요(0)·캡스톤(7)·확장(X)을 더한 최상위 단위.
-// 화면의 표시 순서와 이름·설명·색은 이 파일 한 곳에서 정한다.
+// 트랙: 필수 개념의 여섯 분류에 과정 개요(0)·캡스톤(7)과 선택 분야인 개발 도구(T)·확장(X)을 더한 최상위 단위.
+// 화면의 표시 순서와 이름·설명·색은 이 파일 한 곳에서 정한다. 선택 분야(optional)의 규칙은 Track 타입의 주석을 따른다.
 
 export const TRACKS: Track[] = [
   {
@@ -17,9 +17,9 @@ export const TRACKS: Track[] = [
     id: "programming",
     number: 1,
     code: "1",
-    title: "프로그래밍 기초",
-    summary: "파이썬 문법, 자료구조, 파일·오류 처리, 개발 도구와 재현 가능한 실행.",
-    why: "이 과정의 모든 실습·과제·도구 호출은 파이썬 코드로 작성한다. 데이터 처리, 모델 학습, LLM 응용은 모두 이 트랙의 문법과 실행 환경 위에서 동작한다.",
+    title: "Python",
+    summary: "값과 연산, 조건문과 반복문, 컬렉션과 함수, 파일·오류·모듈, 클래스와 시간복잡도.",
+    why: "이 과정의 모든 실습·과제·도구 호출은 Python 코드로 작성한다. 데이터 처리, 모델 학습, LLM 응용은 모두 이 분야에서 배우는 문법 위에서 동작한다.",
     color: "var(--track-1)",
   },
   {
@@ -77,6 +77,16 @@ export const TRACKS: Track[] = [
     color: "var(--track-7)",
   },
   {
+    id: "devtools",
+    number: -1,
+    code: "T",
+    title: "개발 도구",
+    summary: "Git으로 코드 버전 관리하기, Jupyter Notebook과 재현 가능한 실행.",
+    why: "모델 실험의 결과는 코드·데이터·설정이 조금만 달라도 바뀐다. Git으로 코드의 변경 이력을 남기고 노트북의 실행 순서·시드·환경을 기록하면, 과제와 캡스톤의 결과를 누구나 같은 숫자로 다시 얻을 수 있다. Python 문법과 별개인 선택 분야이며 완료 조건이 없다.",
+    color: "var(--track-t)",
+    optional: true,
+  },
+  {
     id: "extension",
     number: -1,
     code: "X",
@@ -84,6 +94,7 @@ export const TRACKS: Track[] = [
     summary: "필수 과정 밖의 주제: 책임 있는 AI, 비전과 생성 모델.",
     why: "필수 트랙을 마친 뒤 관심 분야를 선택해 더 깊이 학습한다. 확장 모듈은 완료 조건이 없다.",
     color: "var(--track-x)",
+    optional: true,
   },
 ];
 
@@ -93,4 +104,9 @@ export function getTrack(id: TrackId): Track {
   const track = BY_ID.get(id);
   if (!track) throw new Error(`알 수 없는 트랙: ${id}`);
   return track;
+}
+
+/** 선택 분야(개발 도구·확장)인가: 필수 경로·기본 일정·학습 자료 파일에서 빠지고 완료 조건이 없다. */
+export function isOptionalTrack(id: TrackId): boolean {
+  return getTrack(id).optional === true;
 }

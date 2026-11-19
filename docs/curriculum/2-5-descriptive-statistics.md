@@ -20,9 +20,9 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [표본과 모집단, 표본추출, 표본편향](#lesson-sampling) | 핵심 | 30분 | #33 표본과 모집단, 표본추출, 표본편향 |
-| 2 | [평균, 중앙값, 분위수, 표준편차](#lesson-summary-statistics) | 핵심 | 35분 | #34 평균, 중앙값, 분위수, 표준편차 |
-| 3 | [공분산, 상관계수, 상관관계와 인과관계](#lesson-correlation) | 핵심 | 35분 | #35 공분산, 상관계수, 상관관계와 인과관계 |
+| 1 | [표본과 모집단, 표본추출, 표본편향](#lesson-sampling) | 핵심 | 30분 | #31 표본과 모집단, 표본추출, 표본편향 |
+| 2 | [평균, 중앙값, 분위수, 표준편차](#lesson-summary-statistics) | 핵심 | 30분 | #32 평균, 중앙값, 분위수, 표준편차 |
+| 3 | [공분산, 상관계수, 상관관계와 인과관계](#lesson-correlation) | 핵심 | 35분 | #33 공분산, 상관계수, 상관관계와 인과관계 |
 
 ## 핵심 레슨
 
@@ -57,7 +57,7 @@
 
 ### 2. 평균, 중앙값, 분위수, 표준편차
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/descriptive-statistics/summary-statistics.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/summary-statistics.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/descriptive-statistics/summary-statistics.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/summary-statistics.ts)
 
 **학습 목표:** 평균·중앙값·최빈값과 분위수·사분위범위·분산·표준편차를 계산하고, 이상치와 치우친 분포에서 알맞은 대푯값과 퍼짐 지표를 고르며, 표본분산을 $n - 1$로 나누는 이유를 설명한다.
 

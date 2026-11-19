@@ -20,9 +20,9 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [NumPy 배열, 축, 형태, 자료형](#lesson-numpy-arrays) | 핵심 | 45분 | #39 NumPy 배열, 축, 형태, 자료형 |
-| 2 | [인덱싱, 불리언 마스킹, 브로드캐스팅](#lesson-array-indexing) | 핵심 | 45분 | #40 배열 인덱싱, 불리언 마스킹, 브로드캐스팅 |
-| 3 | [벡터화 연산과 난수 시드](#lesson-vectorization) | 핵심 | 35분 | #41 벡터화 연산과 난수 시드 |
+| 1 | [NumPy 배열, 축, 형태, 자료형](#lesson-numpy-arrays) | 핵심 | 40분 | #37 NumPy 배열, 축, 형태, 자료형 |
+| 2 | [인덱싱, 불리언 마스킹, 브로드캐스팅](#lesson-array-indexing) | 핵심 | 40분 | #38 배열 인덱싱, 불리언 마스킹, 브로드캐스팅 |
+| 3 | [벡터화 연산과 난수 시드](#lesson-vectorization) | 핵심 | 30분 | #39 벡터화 연산과 난수 시드 |
 
 ## 핵심 레슨
 
@@ -30,7 +30,7 @@
 
 ### 1. NumPy 배열, 축, 형태, 자료형
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/numpy/numpy-arrays.ts) · [실습 원본](../../src/content/modules/numpy/labs/numpy-arrays.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/numpy/numpy-arrays.ts) · [실습 원본](../../src/content/modules/numpy/labs/numpy-arrays.ts)
 
 **학습 목표:** NumPy 배열을 만들고 자료형(dtype)을 확인·변환하며, 원소별 연산과 축(axis)을 지정한 집계의 결과와 그 모양을 실행 전에 예측한다.
 
@@ -57,7 +57,7 @@
 
 ### 2. 인덱싱, 불리언 마스킹, 브로드캐스팅
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/numpy/array-indexing.ts) · [실습 원본](../../src/content/modules/numpy/labs/array-indexing.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/numpy/array-indexing.ts) · [실습 원본](../../src/content/modules/numpy/labs/array-indexing.ts)
 
 **학습 목표:** 2차원 배열에서 행·열·부분 배열을 인덱싱하고 뷰와 복사본을 구분하며, 불리언 마스크와 정수 배열로 원소를 고르고, 브로드캐스팅 규칙으로 모양이 다른 배열의 연산 결과를 예측한다.
 
@@ -84,11 +84,11 @@
 
 ### 3. 벡터화 연산과 난수 시드
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/numpy/vectorization.ts) · [실습 원본](../../src/content/modules/numpy/labs/vectorization.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/numpy/vectorization.ts) · [실습 원본](../../src/content/modules/numpy/labs/vectorization.ts)
 
 **학습 목표:** 파이썬 반복문으로 쓴 계산을 배열 연산으로 바꾸고(벡터화) 두 방법의 속도를 비교하며, 브로드캐스팅으로 모든 쌍의 거리를 계산하고, 난수 생성기와 시드로 실험을 재현한다.
 
-**쓰이는 곳:** 신경망 한 층의 계산, 미니배치 전체의 손실, 검색 시스템의 유사도 계산은 모두 샘플마다 반복하지 않고 배열 연산 한 번으로 처리한다([2-2 행렬의 형태, 전치, 행렬곱](2-2-linear-algebra.md#lesson-matrix-multiplication), [6-3 임베딩과 벡터 검색](6-3-llm-systems.md#lesson-retrieval)). 데이터 분할·가중치 초기화·미니배치 순서에 쓰는 난수를 시드로 고정해야 실험 결과를 다시 만들고 비교할 수 있다([1-4 Jupyter Notebook과 재현 가능한 실행](1-4-python-objects-tools.md#lesson-notebooks-reproducibility)).
+**쓰이는 곳:** 신경망 한 층의 계산, 미니배치 전체의 손실, 검색 시스템의 유사도 계산은 모두 샘플마다 반복하지 않고 배열 연산 한 번으로 처리한다([2-2 행렬의 형태, 전치, 행렬곱](2-2-linear-algebra.md#lesson-matrix-multiplication), [6-3 임베딩과 벡터 검색](6-3-llm-systems.md#lesson-retrieval)). 데이터 분할·가중치 초기화·미니배치 순서에 쓰는 난수를 시드로 고정해야 실험 결과를 다시 만들고 비교할 수 있다([T-1 Jupyter Notebook과 재현 가능한 실행](T-1-git-jupyter.md#lesson-notebooks-reproducibility)).
 
 **본문 절:** 반복문과 벡터화 · 반복문을 배열 연산으로 바꾸는 방법 · 난수 생성기와 시드
 

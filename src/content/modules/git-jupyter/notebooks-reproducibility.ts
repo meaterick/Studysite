@@ -4,8 +4,8 @@ import exercises from "./labs/notebooks-reproducibility";
 export default defineLesson({
   id: "notebooks-reproducibility",
   title: "Jupyter Notebook과 재현 가능한 실행",
-  tier: "core",
-  concepts: ["notebooks-reproducibility"],
+  tier: "advanced",
+  requires: ["file-io", "modules-environments"],
   goal: "노트북의 셀 실행 순서와 커널 상태가 결과에 주는 영향을 설명하고, 처음부터 다시 실행·시드 고정·환경과 데이터 기록으로 같은 결과를 다시 얻는다.",
   why: "실험 결과는 다른 사람이 같은 코드를 실행해 같은 숫자를 얻을 수 있을 때 근거가 된다. 이 과정의 과제는 '실행 환경 초기화 후 전체 실행'으로 재현되는지 확인하고 채점하며, 모델 비교([[lesson:cross-validation]])와 연구 보고([[lesson:research-methods]])도 여러 시드의 결과로 판단한다.",
   body: md`

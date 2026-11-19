@@ -21,11 +21,11 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [다음 토큰 예측, 사전학습, 문맥 창](#lesson-pretraining) | 핵심 | 30분 | #77 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
-| 2 | [샘플링과 디코딩 전략](#lesson-decoding) | 핵심 | 40분 | #77 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
-| 3 | [지시 미세조정과 LoRA](#lesson-instruction-tuning) | 핵심 | 35분 | #78 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
-| 4 | [선호도 학습: RLHF와 DPO](#lesson-preference-learning) | 핵심 | 45분 | #78 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
-| 5 | [프롬프트 설계](#lesson-prompt-design) | 핵심 | 40분 | #78 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
+| 1 | [다음 토큰 예측, 사전학습, 문맥 창](#lesson-pretraining) | 핵심 | 30분 | #75 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
+| 2 | [샘플링과 디코딩 전략](#lesson-decoding) | 핵심 | 40분 | #75 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
+| 3 | [지시 미세조정과 LoRA](#lesson-instruction-tuning) | 핵심 | 35분 | #76 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
+| 4 | [선호도 학습: RLHF와 DPO](#lesson-preference-learning) | 핵심 | 45분 | #76 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
+| 5 | [프롬프트 설계](#lesson-prompt-design) | 핵심 | 40분 | #76 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
 | 6 | [LLM 구조: BERT, GPT, T5](#lesson-llm-architectures) | 보충 | 35분 | — |
 | 7 | [스케일링 법칙](#lesson-scaling-laws) | 보충 | 40분 | — |
 | 8 | [생성 단계의 트랜스포머: KV 캐시와 RoPE](#lesson-kv-cache-rope) | 보충 | 45분 | — |

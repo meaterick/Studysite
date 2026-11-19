@@ -3,7 +3,7 @@
  *
  *   1. 구조: 트랙·모듈·레슨 id 형식과 고유성, 트랙 안 모듈 순서, 모듈마다 목표 문제·학습 목표·백지 복습,
  *      핵심 레슨 수, 16주 일정표와 예전 주소 대응표가 실제 모듈·레슨·과제를 가리키는가
- *   2. 개념: 80개 개념이 각각 핵심 레슨 하나 이상에 연결되어 있는가, 선수 그래프에 순환이 없는가,
+ *   2. 개념: 모든 개념이 각각 핵심 레슨 하나 이상에 연결되어 있는가, 선수 그래프에 순환이 없는가,
  *      기본 경로에서 선수 개념(과 requires로 적은 레슨)이 먼저 나오는가
  *   3. 레슨: 목표·쓰이는 곳·본문이 채워져 있는가, 확인 문제 수(핵심 4개 이상, 그 밖 2개 이상)와 선택지·정답·해설,
  *      코딩 실습(TODO·@test·모범 답안·힌트 2개 이상), 출력 예측, 서술형(모범답안·핵심 요소 2개 이상), 참고 자료 https
@@ -22,7 +22,7 @@ import { LEGACY_STAGE_LESSON, LEGACY_WEEK_ASSIGNMENT_MODULE } from "../../src/co
 import { parseMarkdown } from "../../src/content/markdown";
 import { TIER_ORDER } from "../../src/content/tiers";
 import { DIAGRAMS } from "../../src/components/diagrams";
-import type { AssignmentSource, Block, Exercise, Lesson, Module } from "../../src/content/types";
+import type { AssignmentSource, Block, Exercise, Lesson, Module, TrackId } from "../../src/content/types";
 
 const ROOT = path.join(__dirname, "../..");
 let errorCount = 0;
@@ -39,8 +39,9 @@ const warn = (msg: string) => {
 const ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const KEY = /^[A-Za-z0-9_-]{1,64}$/;
 const PLACEHOLDER = /\(작성 중\)/;
-/** 핵심 레슨 예상 시간 상한(분) */
+/** 핵심 레슨 예상 시간 상한(분). Python 분야는 입문자를 위한 단계별 풀이와 실행 예제가 많아 상한을 따로 둔다. */
 const MAX_CORE_MINUTES = 45;
+const MAX_CORE_MINUTES_BY_TRACK: Partial<Record<TrackId, number>> = { programming: 90 };
 
 // ─── 글 검사 ────────────────────────────────────────────────────────────────
 
@@ -176,7 +177,8 @@ function checkLesson(lesson: Lesson, mod: Module) {
   else checkInline(lesson.why, `${ctx} 쓰이는 곳`);
   if (!lesson.body.trim()) fail(`${ctx}: 본문이 비어 있음`);
   checkBlocks(lesson.learn, `${ctx} 본문`);
-  if (lesson.tier === "core" && lesson.minutes > MAX_CORE_MINUTES) warn(`${ctx}: 예상 학습 시간 ${lesson.minutes}분 — 핵심 레슨은 ${MAX_CORE_MINUTES}분 이하를 권장합니다`);
+  const maxMinutes = MAX_CORE_MINUTES_BY_TRACK[mod.track] ?? MAX_CORE_MINUTES;
+  if (lesson.tier === "core" && lesson.minutes > maxMinutes) warn(`${ctx}: 예상 학습 시간 ${lesson.minutes}분 — ${mod.trackInfo.title} 분야의 핵심 레슨은 ${maxMinutes}분 이하를 권장합니다`);
 
   for (const c of lesson.concepts ?? []) if (!getConcept(c)) fail(`${ctx}: 없는 개념 id "${c}"`);
   if (lesson.tier === "core" && !lesson.concepts?.length && mod.track !== "intro" && mod.track !== "capstone") warn(`${ctx}: 핵심 레슨인데 다루는 개념(concepts)이 없음`);
@@ -325,8 +327,9 @@ for (const mod of MODULES) {
   if (mod.objectives.length < 2) fail(`${ctx}: 학습 목표(objectives)가 2개 미만`);
   mod.objectives.forEach((o) => checkInline(o, `${ctx} 학습 목표`));
   const core = mod.lessons.filter((l) => l.tier === "core");
-  if (mod.track === "extension") {
-    if (core.length > 0) fail(`${ctx}: 확장 모듈에는 핵심 레슨을 두지 않음`);
+  if (mod.trackInfo.optional) {
+    if (core.length > 0) fail(`${ctx}: 선택 분야(${mod.trackInfo.title}) 모듈에는 핵심 레슨을 두지 않음`);
+    for (const l of mod.lessons) if (!l.requires?.length) fail(`${ctx} ${l.id}: 선택 분야의 레슨은 requires로 선수 레슨을 적어야 함`);
   } else {
     if (core.length === 0) fail(`${ctx}: 핵심 레슨이 없음`);
     else if (core.length > 6) warn(`${ctx}: 핵심 레슨 ${core.length}개 — 모듈당 2~6개를 권장합니다`);
@@ -408,7 +411,8 @@ for (const w of SCHEDULE) {
   }
   for (const due of w.due) if (!moduleOfAssignment(due)) fail(`일정표 ${w.week}주 차: 없는 과제 키 "${due}"`);
 }
-for (const mod of MODULES) if (mod.track !== "extension" && !scheduled.has(mod.slug)) fail(`일정표: 모듈 "${mod.slug}"이(가) 어느 주에도 없음`);
+for (const mod of MODULES) if (!mod.trackInfo.optional && !scheduled.has(mod.slug)) fail(`일정표: 모듈 "${mod.slug}"이(가) 어느 주에도 없음`);
+for (const mod of MODULES) if (mod.trackInfo.optional && scheduled.has(mod.slug)) fail(`일정표: 선택 분야 모듈 "${mod.slug}"은(는) 기본 일정에 넣지 않음`);
 for (const mod of MODULES) if (mod.assignment && !SCHEDULE.some((w) => w.due.includes(mod.assignment!.key))) warn(`일정표: 과제 "${mod.assignment.key}"의 권장 주가 없음`);
 for (const [stage, lesson] of Object.entries(LEGACY_STAGE_LESSON)) if (!getLesson(lesson)) fail(`예전 주소 대응표: 단계 "${stage}" → 없는 레슨 "${lesson}"`);
 for (const [week, slug] of Object.entries(LEGACY_WEEK_ASSIGNMENT_MODULE)) if (!getModule(slug)?.assignment) fail(`예전 주소 대응표: ${week} → 과제가 없는 모듈 "${slug}"`);

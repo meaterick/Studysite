@@ -1,7 +1,7 @@
 <!-- npm run docs:generate가 만든 문서입니다. 이 파일 대신 src/content를 고치십시오. -->
 # 1-1 값과 제어 흐름
 
-[전체 목차](README.md) · 트랙 1 프로그래밍 기초 · [모듈 원본](../../src/content/modules/python-flow/index.ts)
+[전체 목차](README.md) · 트랙 1 Python · [모듈 원본](../../src/content/modules/python-flow/index.ts)
 
 변수와 자료형, 기본 연산, 조건문과 반복문
 
@@ -21,9 +21,9 @@
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
 | 1 | [변수, 값, 자료형, 형 변환](#lesson-variables-types) | 핵심 | 35분 | #1 변수와 값, 자료형, 형 변환 |
-| 2 | [숫자·문자열·불리언과 기본 연산](#lesson-operators) | 핵심 | 40분 | #2 숫자·문자열·불리언과 기본 연산 |
-| 3 | [비교 연산, 논리 연산, 조건문](#lesson-conditionals) | 핵심 | 35분 | #3 비교 연산, 논리 연산, 조건문 |
-| 4 | [반복문과 반복 제어](#lesson-loops) | 핵심 | 40분 | #4 반복문과 반복 제어 |
+| 2 | [숫자·문자열·불리언과 기본 연산](#lesson-operators) | 핵심 | 35분 | #2 숫자·문자열·불리언과 기본 연산 |
+| 3 | [비교 연산, 논리 연산, 조건문](#lesson-conditionals) | 핵심 | 30분 | #3 비교 연산, 논리 연산, 조건문 |
+| 4 | [반복문과 반복 제어](#lesson-loops) | 핵심 | 35분 | #4 반복문과 반복 제어 |
 
 ## 핵심 레슨
 
@@ -59,7 +59,7 @@
 
 ### 2. 숫자·문자열·불리언과 기본 연산
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/python-flow/operators.ts) · [실습 원본](../../src/content/modules/python-flow/labs/operators.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/python-flow/operators.ts) · [실습 원본](../../src/content/modules/python-flow/labs/operators.ts)
 
 **학습 목표:** 산술·문자열 연산과 연산자 우선순위를 적용해 식의 값을 계산하고, 몫·나머지·거듭제곱과 f-string 서식을 데이터 처리 코드에 쓴다.
 
@@ -87,7 +87,7 @@
 
 ### 3. 비교 연산, 논리 연산, 조건문
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/python-flow/conditionals.ts) · [실습 원본](../../src/content/modules/python-flow/labs/conditionals.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/python-flow/conditionals.ts) · [실습 원본](../../src/content/modules/python-flow/labs/conditionals.ts)
 
 **학습 목표:** 비교·논리 연산의 결과를 계산하고, if/elif/else의 실행 순서와 진릿값 규칙을 적용해 조건 분기 코드를 작성한다.
 
@@ -114,7 +114,7 @@
 
 ### 4. 반복문과 반복 제어
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/python-flow/loops.ts) · [실습 원본](../../src/content/modules/python-flow/labs/loops.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/python-flow/loops.ts) · [실습 원본](../../src/content/modules/python-flow/labs/loops.ts)
 
 **학습 목표:** for와 while 반복문으로 누적·탐색·조건부 종료를 구현하고, range와 break·continue로 반복 횟수와 종료 시점을 제어한다.
 

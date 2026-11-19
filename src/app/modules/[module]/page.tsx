@@ -145,14 +145,14 @@ export default async function ModuleOverviewPage({ params, searchParams }: PageP
 
         {optionalTiers.length > 0 && (
           <section aria-labelledby="optional-heading" id="optional" className="scroll-mt-24">
-            <SectionHead id="optional-heading" title={module.track === "extension" ? "레슨" : "선택 레슨"} />
+            <SectionHead id="optional-heading" title={module.trackInfo.optional ? "레슨" : "선택 레슨"} />
             <div className="rows border-y border-[var(--border-hairline)]">
               {optionalTiers.map((tier) => {
                 const rows = status.lessons.filter((r) => r.lesson.tier === tier);
                 const count = status.tiers[tier];
                 const rec = records[tier];
                 return (
-                  <details key={tier} className="group" open={module.track === "extension" || (count.done > 0 && count.done < count.total)}>
+                  <details key={tier} className="group" open={module.trackInfo.optional || (count.done > 0 && count.done < count.total)}>
                     <summary className="row-hover -mx-3 flex cursor-pointer list-none items-center gap-4 rounded-xl px-3 py-4 [&::-webkit-details-marker]:hidden">
                       <span aria-hidden="true" className="grid h-7 w-7 shrink-0 place-items-center">
                         <span className="h-2 w-2 rounded-full" style={{ background: TIER_INFO[tier].color }} />

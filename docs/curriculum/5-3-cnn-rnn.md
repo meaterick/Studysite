@@ -21,11 +21,11 @@ CIFAR-10은 $32 \times 32$ 컬러 이미지로 10개 클래스를 분류하는 �
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [합성곱](#lesson-convolution) | 핵심 | 45분 | #73 합성곱, CNN, 이미지 증강 |
-| 2 | [풀링과 수용영역](#lesson-pooling) | 핵심 | 40분 | #73 합성곱, CNN, 이미지 증강 |
-| 3 | [CNN 학습과 이미지 증강](#lesson-cnn-training) | 핵심 | 35분 | #73 합성곱, CNN, 이미지 증강 |
-| 4 | [시퀀스 데이터와 임베딩](#lesson-embeddings) | 핵심 | 40분 | #74 시퀀스 데이터, 임베딩, RNN의 기본 구조 |
-| 5 | [RNN의 구조와 시간 역전파](#lesson-rnn) | 핵심 | 40분 | #74 시퀀스 데이터, 임베딩, RNN의 기본 구조 |
+| 1 | [합성곱](#lesson-convolution) | 핵심 | 45분 | #71 합성곱, CNN, 이미지 증강 |
+| 2 | [풀링과 수용영역](#lesson-pooling) | 핵심 | 40분 | #71 합성곱, CNN, 이미지 증강 |
+| 3 | [CNN 학습과 이미지 증강](#lesson-cnn-training) | 핵심 | 35분 | #71 합성곱, CNN, 이미지 증강 |
+| 4 | [시퀀스 데이터와 임베딩](#lesson-embeddings) | 핵심 | 40분 | #72 시퀀스 데이터, 임베딩, RNN의 기본 구조 |
+| 5 | [RNN의 구조와 시간 역전파](#lesson-rnn) | 핵심 | 35분 | #72 시퀀스 데이터, 임베딩, RNN의 기본 구조 |
 | 6 | [CNN 구조의 발전과 응용](#lesson-cnn-architectures) | 보충 | 45분 | — |
 | 7 | [LSTM과 GRU](#lesson-lstm-gru) | 보충 | 40분 | — |
 | 8 | [합성곱의 계산: im2col, 역전파, 깊이별 분리](#lesson-conv-as-matmul) | 심화 | 35분 | — |
@@ -149,7 +149,7 @@ CIFAR-10은 $32 \times 32$ 컬러 이미지로 10개 클래스를 분류하는 �
 
 ### 5. RNN의 구조와 시간 역전파
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/cnn-rnn/rnn.ts) · [실습 원본](../../src/content/modules/cnn-rnn/labs/rnn.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/cnn-rnn/rnn.ts) · [실습 원본](../../src/content/modules/cnn-rnn/labs/rnn.ts)
 
 **학습 목표:** RNN의 재귀식 $h_t = f(Wx_t + Uh_{t-1} + b)$과 파라미터 공유를 설명하고, BPTT에서 야코비안이 $T-k$번 곱해져 기울기가 소실되거나 폭주하는 이유를 계산으로 보인다.
 

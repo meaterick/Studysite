@@ -1,7 +1,7 @@
 <!-- npm run docs:generate가 만든 문서입니다. 이 파일 대신 src/content를 고치십시오. -->
 # 1-2 컬렉션과 함수
 
-[전체 목차](README.md) · 트랙 1 프로그래밍 기초 · [모듈 원본](../../src/content/modules/python-collections-functions/index.ts)
+[전체 목차](README.md) · 트랙 1 Python · [모듈 원본](../../src/content/modules/python-collections-functions/index.ts)
 
 리스트·튜플·딕셔너리·집합, 인덱싱과 슬라이싱, 함수, 참조와 복사, 컴프리헨션과 반복자
 
@@ -21,11 +21,11 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [리스트, 튜플, 딕셔너리, 집합](#lesson-collections) | 핵심 | 45분 | #5 리스트, 튜플, 딕셔너리, 집합 |
+| 1 | [리스트, 튜플, 딕셔너리, 집합](#lesson-collections) | 핵심 | 40분 | #5 리스트, 튜플, 딕셔너리, 집합 |
 | 2 | [인덱싱과 슬라이싱](#lesson-indexing-slicing) | 핵심 | 35분 | #6 인덱싱과 슬라이싱 |
-| 3 | [함수, 매개변수, 반환값, 변수의 범위](#lesson-functions-scope) | 핵심 | 40분 | #7 함수, 매개변수, 반환값, 변수의 범위 |
-| 4 | [가변·불변 객체와 참조·복사](#lesson-mutability-copy) | 핵심 | 40분 | #8 가변·불변 객체, 참조와 복사 |
-| 5 | [컴프리헨션과 반복자](#lesson-comprehensions-iterators) | 핵심 | 40분 | #9 리스트 컴프리헨션과 반복자 |
+| 3 | [함수, 매개변수, 반환값, 변수의 범위](#lesson-functions-scope) | 핵심 | 35분 | #7 함수, 매개변수, 반환값, 변수의 범위 |
+| 4 | [가변·불변 객체와 참조·복사](#lesson-mutability-copy) | 핵심 | 35분 | #8 가변·불변 객체, 참조와 복사 |
+| 5 | [컴프리헨션과 반복자](#lesson-comprehensions-iterators) | 핵심 | 35분 | #9 리스트 컴프리헨션과 반복자 |
 
 ## 핵심 레슨
 
@@ -33,7 +33,7 @@
 
 ### 1. 리스트, 튜플, 딕셔너리, 집합
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/python-collections-functions/collections.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/collections.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/python-collections-functions/collections.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/collections.ts)
 
 **학습 목표:** 리스트·튜플·딕셔너리·집합의 순서·중복·변경 가능 여부를 비교하고, 문제에 맞는 자료구조를 골라 원소를 추가·조회·삭제·순회한다.
 
@@ -85,7 +85,7 @@
 
 ### 3. 함수, 매개변수, 반환값, 변수의 범위
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/python-collections-functions/functions-scope.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/functions-scope.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/python-collections-functions/functions-scope.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/functions-scope.ts)
 
 **학습 목표:** 매개변수·기본값·키워드 인자·반환값을 갖춘 함수를 정의하고, 지역·전역 범위 규칙과 함수를 값으로 넘기는 방법을 적용한다.
 
@@ -112,7 +112,7 @@
 
 ### 4. 가변·불변 객체와 참조·복사
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/python-collections-functions/mutability-copy.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/mutability-copy.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/python-collections-functions/mutability-copy.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/mutability-copy.ts)
 
 **학습 목표:** 가변·불변 자료형을 구분하고, 대입과 함수 인자 전달이 같은 객체를 공유한다는 점과 얕은 복사·깊은 복사의 차이를 코드로 확인한다.
 
@@ -139,7 +139,7 @@
 
 ### 5. 컴프리헨션과 반복자
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/python-collections-functions/comprehensions-iterators.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/comprehensions-iterators.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/python-collections-functions/comprehensions-iterators.ts) · [실습 원본](../../src/content/modules/python-collections-functions/labs/comprehensions-iterators.ts)
 
 **학습 목표:** 리스트·딕셔너리·집합 컴프리헨션으로 변환과 걸러내기를 한 식에 쓰고, 반복자와 제너레이터가 값을 한 번씩 차례로 만든다는 점을 enumerate·zip·sum과 함께 적용한다.
 

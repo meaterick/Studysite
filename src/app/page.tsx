@@ -10,10 +10,10 @@ import { isLessonComplete } from "@/lib/study";
 import { trackHref } from "@/lib/routes";
 
 const fieldGroups = [
-  { key: "Part 1", name: "프로그래밍과 수학", ids: ["programming", "math"] },
+  { key: "Part 1", name: "Python과 수학", ids: ["programming", "math"] },
   { key: "Part 2", name: "데이터와 모델링", ids: ["data", "ml"] },
   { key: "Part 3", name: "신경망과 언어 모델", ids: ["dl", "genai"] },
-  { key: "Part 4", name: "프로젝트와 확장", ids: ["capstone", "extension"] },
+  { key: "Part 4", name: "프로젝트와 선택 분야", ids: ["capstone", "devtools", "extension"] },
 ] as const;
 
 function BrowseFields() {

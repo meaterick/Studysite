@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { CONCEPTS, CORE_PATH, MODULES, getLesson, getModule, prerequisitesOf } from "../../src/content/course";
+import { CONCEPTS, CORE_PATH, MODULES, courseDocuments, getLesson, getModule, prerequisitesOf } from "../../src/content/course";
 import { learningField } from "../../src/content/fields";
 import { CAPSTONE_PLAN, CAPSTONE_PLAN_HREF } from "../../src/content/curriculum/capstone-plan";
 import { SCHEDULE } from "../../src/content/curriculum/schedule";
@@ -28,12 +28,36 @@ test("optional lessons without requires still use the mod core fallback", () => 
   assert.deepEqual(prerequisites(lesson.id), getModule(lesson.module)!.lessons.filter((l) => l.tier === "core").map((l) => l.id).sort());
 });
 
-test("every extension lesson has explicit, nonempty preparation guidance", () => {
-  for (const mod of MODULES.filter((m) => m.track === "extension")) {
+test("every optional-track lesson has explicit, nonempty preparation guidance", () => {
+  for (const mod of MODULES.filter((m) => m.trackInfo.optional)) {
     for (const lesson of mod.lessons) {
       assert.ok(lesson.requires?.length, lesson.id);
       assert.ok(prerequisitesOf(lesson).length, lesson.id);
     }
+  }
+});
+
+test("optional tracks stay out of the required path, schedule and course documents", () => {
+  const optional = MODULES.filter((m) => m.trackInfo.optional);
+  assert.deepEqual([...new Set(optional.map((m) => m.track))], ["devtools", "extension"]);
+  const docs = new Set(courseDocuments().map((d) => d.path));
+  for (const mod of optional) {
+    assert.ok(mod.lessons.every((l) => l.tier !== "core" && !l.concepts?.length), mod.slug);
+    assert.ok(!SCHEDULE.some((w) => w.modules.includes(mod.slug)), mod.slug);
+    assert.ok(!docs.has(`/course/${mod.slug}.md`), mod.slug);
+    for (const l of mod.lessons) assert.ok(!CORE_PATH.some((c) => c.id === l.id), l.id);
+  }
+});
+
+test("the Python track keeps only Python lessons; Git and Jupyter live in the devtools track", () => {
+  assert.equal(getModule("python-objects-tools")!.trackInfo.title, "Python");
+  for (const id of ["git-basics", "notebooks-reproducibility"]) {
+    const lesson = getLesson(id)!;
+    assert.equal(lesson.module, "git-jupyter");
+    assert.equal(getModule(lesson.module)!.track, "devtools");
+  }
+  for (const mod of MODULES.filter((m) => m.track === "programming")) {
+    assert.ok(!mod.lessons.some((l) => l.id === "git-basics" || l.id === "notebooks-reproducibility"), mod.slug);
   }
 });
 
@@ -54,7 +78,7 @@ test("resolved lesson prerequisites contain no missing references or cycles", ()
 });
 
 test("concept numbering follows prerequisites while keeping IDs and the core lesson order", () => {
-  assert.equal(CONCEPTS.length, 80);
+  assert.equal(CONCEPTS.length, 78);
   assert.equal(CONCEPTS.find((c) => c.id === "functions-scope")!.order, 7);
   assert.equal(CONCEPTS.find((c) => c.id === "mutability-copy")!.order, 8);
   assert.ok(CORE_PATH.findIndex((l) => l.id === "functions-scope") < CORE_PATH.findIndex((l) => l.id === "mutability-copy"));

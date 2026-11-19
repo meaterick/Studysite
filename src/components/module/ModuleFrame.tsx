@@ -98,7 +98,7 @@ export default function ModuleFrame({
                 </span>
               </span>
             )}
-            {module.track === "extension" && <span>자유 학습 · 레슨 {module.lessons.length}개</span>}
+            {module.trackInfo.optional && <span>자유 학습 · 레슨 {module.lessons.length}개</span>}
           </div>
         </header>
       )}

@@ -34,7 +34,7 @@
 | `src/app/` | App Router 페이지·레이아웃·API·아이콘 | Next.js 파일 규약에 따라 유지 |
 | `src/components/` | 공통 UI와 assignment/chat/diagrams/lab/lesson/module/progress/security 등 기능별 UI | 재사용 UI는 공통, 기능 전용 UI는 해당 하위 폴더 |
 | `src/content/modules/<slug>/` | 모듈 하나: `index.ts`(목표 문제·학습 목표·레슨 순서·백지 복습), 레슨 파일(본문·확인 문제·출력 예측·서술형·참고 자료), `labs/`(코딩 실습), `assignment.ts`(과제) | 레슨 id·문항 key·과제 키·셀 id는 저장된 기록과 연결되므로 바꾸지 않음 |
-| `src/content/curriculum/` | 트랙, 80개 개념과 선수관계, 기본 일정, 예전 주소 대응표 | 개념 id는 안정 키 |
+| `src/content/curriculum/` | 트랙(선택 분야 표시 포함), 필수 개념과 선수관계, 기본 일정, 예전 주소 대응표 | 개념 id는 안정 키 |
 | `src/content/course.ts`, `markdown.ts`, `kit.ts`, `tiers.ts`, `types.ts` | 화면용 구조 생성·조회, 본문 파서, 작성 도우미, 레슨 구분, 타입 | 콘텐츠 원본과 화면 사이의 경계 |
 | `src/lib/` | 인증·DB·학습·과제·보안 등 서버/공용 로직 | 기존 import와 서버/클라이언트 경계를 지킴 |
 | `src/instrumentation.ts`, `src/proxy.ts` | 시작 시 계측과 요청 경계 | 프레임워크 진입점 |

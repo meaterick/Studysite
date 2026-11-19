@@ -168,7 +168,7 @@ for (const m of MODULES) {
 
 const allLessons = MODULES.flatMap((m) => m.lessons);
 const tierCount = (t: string, lessons = allLessons) => lessons.filter((l) => l.tier === t).length;
-const requiredModules = MODULES.filter((m) => m.track !== "extension");
+const requiredModules = MODULES.filter((m) => !m.trackInfo.optional);
 const coreMinutes = (m: Module) => m.lessons.filter((l) => l.tier === "core").reduce((s, l) => s + l.minutes, 0);
 const hours = (min: number) => `${Math.round(min / 6) / 10}시간`;
 
@@ -178,7 +178,7 @@ const readme: string[] = [
   "",
   "[문서 홈](../README.md) · [개념 색인](concept-index.md) · [집계표](coverage.md)",
   "",
-  `이 과정은 트랙 ${TRACKS.length}개, 모듈 ${MODULES.length}개, 레슨 ${allLessons.length}개(핵심 ${tierCount("core")}개, 보충 ${tierCount("supplement")}개, 심화 ${tierCount("advanced")}개)로 이루어진다. 필수 경로는 확장 모듈을 뺀 ${requiredModules.length}개 모듈의 핵심 레슨이며, 예상 학습 시간은 ${hours(requiredModules.reduce((s, m) => s + coreMinutes(m), 0))}이다. 개념 ${CONCEPTS.length}개는 모두 핵심 레슨에서 다룬다.`,
+  `이 과정은 트랙 ${TRACKS.length}개, 모듈 ${MODULES.length}개, 레슨 ${allLessons.length}개(핵심 ${tierCount("core")}개, 보충 ${tierCount("supplement")}개, 심화 ${tierCount("advanced")}개)로 이루어진다. 필수 경로는 선택 분야(${TRACKS.filter((t) => t.optional).map((t) => t.title).join("·")}) 모듈을 뺀 ${requiredModules.length}개 모듈의 핵심 레슨이며, 예상 학습 시간은 ${hours(requiredModules.reduce((s, m) => s + coreMinutes(m), 0))}이다. 개념 ${CONCEPTS.length}개는 모두 핵심 레슨에서 다룬다.`,
   "",
   "## 수료 목표",
   "",

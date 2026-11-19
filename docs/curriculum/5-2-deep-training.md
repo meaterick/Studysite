@@ -21,13 +21,13 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [가중치 초기화와 기울기 소실·폭주](#lesson-initialization) | 핵심 | 35분 | #70 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
-| 2 | [정규화 층: BatchNorm과 LayerNorm](#lesson-normalization-layers) | 핵심 | 30분 | #70 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
-| 3 | [드롭아웃과 잔차 연결](#lesson-dropout-residual) | 핵심 | 40분 | #71 드롭아웃, 잔차 연결, 전이학습 |
-| 4 | [전이학습과 학습 진단](#lesson-transfer-learning) | 핵심 | 30분 | #71 드롭아웃, 잔차 연결, 전이학습 |
-| 5 | [PyTorch 텐서, 데이터 로더, 학습 루프, GPU](#lesson-pytorch) | 핵심 | 35분 | #72 PyTorch 텐서, 데이터 로더, 학습 루프, GPU |
+| 1 | [가중치 초기화와 기울기 소실·폭주](#lesson-initialization) | 핵심 | 35분 | #68 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
+| 2 | [정규화 층: BatchNorm과 LayerNorm](#lesson-normalization-layers) | 핵심 | 30분 | #68 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
+| 3 | [드롭아웃과 잔차 연결](#lesson-dropout-residual) | 핵심 | 35분 | #69 드롭아웃, 잔차 연결, 전이학습 |
+| 4 | [전이학습과 학습 진단](#lesson-transfer-learning) | 핵심 | 30분 | #69 드롭아웃, 잔차 연결, 전이학습 |
+| 5 | [PyTorch 텐서, 데이터 로더, 학습 루프, GPU](#lesson-pytorch) | 핵심 | 35분 | #70 PyTorch 텐서, 데이터 로더, 학습 루프, GPU |
 | 6 | [GPU, 혼합 정밀도와 PyTorch 실습](#lesson-pytorch-practice) | 보충 | 35분 | — |
-| 7 | [가중치 감쇠와 학습률 스케줄](#lesson-training-schedules) | 보충 | 30분 | — |
+| 7 | [가중치 감쇠와 학습률 스케줄](#lesson-training-schedules) | 보충 | 25분 | — |
 | 8 | [기울기 전달의 수학과 기울기 클리핑](#lesson-gradient-flow) | 심화 | 35분 | — |
 
 ## 핵심 레슨
@@ -92,7 +92,7 @@
 
 ### 3. 드롭아웃과 잔차 연결
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/deep-training/dropout-residual.ts) · [실습 원본](../../src/content/modules/deep-training/labs/dropout-residual.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/deep-training/dropout-residual.ts) · [실습 원본](../../src/content/modules/deep-training/labs/dropout-residual.ts)
 
 **학습 목표:** 드롭아웃이 과적합을 줄이는 원리와 역드롭아웃의 보정을 설명하고, 성능 저하 문제가 과적합이 아닌 최적화의 문제인 이유와 잔차 연결의 기울기 $F'(x) + 1$이 깊은 망의 학습을 돕는 원리를 계산으로 보인다.
 
@@ -205,7 +205,7 @@
 
 ### 7. 가중치 감쇠와 학습률 스케줄
 
-보충 · 30분 · [본문 원본](../../src/content/modules/deep-training/training-schedules.ts) · [실습 원본](../../src/content/modules/deep-training/labs/training-schedules.ts)
+보충 · 25분 · [본문 원본](../../src/content/modules/deep-training/training-schedules.ts) · [실습 원본](../../src/content/modules/deep-training/labs/training-schedules.ts)
 
 **학습 목표:** 가중치 감쇠를 갱신식으로 설명하고, 조기 종료와 선형 워밍업·코사인 감쇠 학습률 스케줄을 구현하며, 신경망의 과적합이 검증 손실에서 먼저 드러나는 이유를 설명한다.
 

@@ -20,9 +20,9 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [함수, 정의역·치역, 함수의 합성](#lesson-functions-composition) | 핵심 | 35분 | #17 함수, 정의역·치역, 함수의 합성 |
-| 2 | [일차함수, 이차함수, 지수함수, 로그함수](#lesson-elementary-functions) | 핵심 | 30분 | #18 일차함수, 이차함수, 지수함수, 로그함수 |
-| 3 | [시그마 표기와 수열의 기초](#lesson-sigma-sequences) | 핵심 | 35분 | #19 시그마 표기와 수열의 기초 |
+| 1 | [함수, 정의역·치역, 함수의 합성](#lesson-functions-composition) | 핵심 | 35분 | #15 함수, 정의역·치역, 함수의 합성 |
+| 2 | [일차함수, 이차함수, 지수함수, 로그함수](#lesson-elementary-functions) | 핵심 | 30분 | #16 일차함수, 이차함수, 지수함수, 로그함수 |
+| 3 | [시그마 표기와 수열의 기초](#lesson-sigma-sequences) | 핵심 | 30분 | #17 시그마 표기와 수열의 기초 |
 
 ## 핵심 레슨
 
@@ -84,7 +84,7 @@
 
 ### 3. 시그마 표기와 수열의 기초
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/math-functions/sigma-sequences.ts) · [실습 원본](../../src/content/modules/math-functions/labs/sigma-sequences.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/math-functions/sigma-sequences.ts) · [실습 원본](../../src/content/modules/math-functions/labs/sigma-sequences.ts)
 
 **학습 목표:** 수열과 시그마($\Sigma$) 표기를 읽고 쓰며, 합의 성질과 등차·등비수열의 합을 계산하고, $\Sigma$ 식을 반복문과 배열 연산으로 옮긴다.
 

@@ -20,10 +20,10 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [큰 수의 법칙과 중심극한정리](#lesson-lln-clt) | 핵심 | 35분 | #36 큰 수의 법칙과 중심극한정리 |
-| 2 | [추정, 신뢰구간, 가설검정, p값](#lesson-statistical-inference) | 핵심 | 35분 | #37 추정, 신뢰구간, 가설검정, p값 |
-| 3 | [가능도, 최대가능도추정, 엔트로피, 교차엔트로피](#lesson-likelihood-entropy) | 핵심 | 40분 | #38 가능도(우도), 최대가능도추정, 엔트로피, 교차엔트로피 |
-| 4 | [사전분포와 MAP 추정](#lesson-mle-map) | 심화 | 30분 | — |
+| 1 | [큰 수의 법칙과 중심극한정리](#lesson-lln-clt) | 핵심 | 30분 | #34 큰 수의 법칙과 중심극한정리 |
+| 2 | [추정, 신뢰구간, 가설검정, p값](#lesson-statistical-inference) | 핵심 | 35분 | #35 추정, 신뢰구간, 가설검정, p값 |
+| 3 | [가능도, 최대가능도추정, 엔트로피, 교차엔트로피](#lesson-likelihood-entropy) | 핵심 | 35분 | #36 가능도(우도), 최대가능도추정, 엔트로피, 교차엔트로피 |
+| 4 | [사전분포와 MAP 추정](#lesson-mle-map) | 심화 | 25분 | — |
 | 5 | [교차엔트로피의 분해와 KL 발산](#lesson-entropy-kl) | 심화 | 30분 | — |
 
 ## 핵심 레슨
@@ -32,7 +32,7 @@
 
 ### 1. 큰 수의 법칙과 중심극한정리
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/inference-information/lln-clt.ts) · [실습 원본](../../src/content/modules/inference-information/labs/lln-clt.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/inference-information/lln-clt.ts) · [실습 원본](../../src/content/modules/inference-information/labs/lln-clt.ts)
 
 **학습 목표:** 표본평균의 기댓값과 분산을 유도해 표준오차를 계산하고, 큰 수의 법칙으로 표본평균이 모평균에 가까워지는 것을, 중심극한정리로 표본평균의 분포가 정규분포에 가까워지는 것을 설명하며 시뮬레이션으로 확인한다.
 
@@ -86,7 +86,7 @@
 
 ### 3. 가능도, 최대가능도추정, 엔트로피, 교차엔트로피
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/inference-information/likelihood-entropy.ts) · [실습 원본](../../src/content/modules/inference-information/labs/likelihood-entropy.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/inference-information/likelihood-entropy.ts) · [실습 원본](../../src/content/modules/inference-information/labs/likelihood-entropy.ts)
 
 **학습 목표:** 확률과 가능도를 구분하고 로그가능도를 미분해 베르누이 분포의 최대가능도추정값을 구하며, 엔트로피와 교차엔트로피를 계산해 분류 손실이 정답의 음의 로그가능도와 같은 이유를 설명한다.
 
@@ -115,7 +115,7 @@
 
 ### 4. 사전분포와 MAP 추정
 
-심화 · 30분 · [본문 원본](../../src/content/modules/inference-information/mle-map.ts) · [실습 원본](../../src/content/modules/inference-information/labs/mle-map.ts)
+심화 · 25분 · [본문 원본](../../src/content/modules/inference-information/mle-map.ts) · [실습 원본](../../src/content/modules/inference-information/labs/mle-map.ts)
 
 **학습 목표:** 베타 사전분포와 베르누이 가능도로 사후분포를 구해 MAP 추정값과 사후평균을 계산하고, 데이터 양에 따라 MLE와 MAP의 차이가 줄어드는 이유와 사전분포가 규제 역할을 하는 이유를 설명한다.
 

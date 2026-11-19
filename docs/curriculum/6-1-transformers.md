@@ -21,11 +21,11 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [토큰화, 서브워드, 토큰 임베딩, 위치 정보](#lesson-tokenization) | 핵심 | 45분 | #75 토큰화, 서브워드, 토큰 임베딩, 위치 정보 |
-| 2 | [어텐션의 필요성: Seq2Seq의 병목](#lesson-attention-motivation) | 핵심 | 35분 | #76 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
-| 3 | [셀프 어텐션: 쿼리·키·값](#lesson-self-attention) | 핵심 | 45분 | #76 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
-| 4 | [멀티헤드 어텐션과 인과 마스크](#lesson-multi-head-attention) | 핵심 | 40분 | #76 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
-| 5 | [트랜스포머 디코더 블록](#lesson-transformer-block) | 핵심 | 40분 | #76 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
+| 1 | [토큰화, 서브워드, 토큰 임베딩, 위치 정보](#lesson-tokenization) | 핵심 | 45분 | #73 토큰화, 서브워드, 토큰 임베딩, 위치 정보 |
+| 2 | [어텐션의 필요성: Seq2Seq의 병목](#lesson-attention-motivation) | 핵심 | 35분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
+| 3 | [셀프 어텐션: 쿼리·키·값](#lesson-self-attention) | 핵심 | 45분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
+| 4 | [멀티헤드 어텐션과 인과 마스크](#lesson-multi-head-attention) | 핵심 | 40분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
+| 5 | [트랜스포머 디코더 블록](#lesson-transformer-block) | 핵심 | 40분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
 | 6 | [긴 문맥의 비용: 온라인 softmax와 FlashAttention](#lesson-efficient-attention) | 심화 | 30분 | — |
 | 7 | [선형 어텐션](#lesson-linear-attention) | 심화 | 30분 | — |
 | 8 | [위치 인코딩의 수학과 길이 외삽](#lesson-position-extrapolation) | 심화 | 35분 | — |

@@ -22,12 +22,12 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [특성, 정답, 예측, 모델, 파라미터](#lesson-ml-terms) | 핵심 | 30분 | #51 특성, 정답, 예측, 모델, 파라미터 |
-| 2 | [지도학습, 비지도학습, 자기지도학습, 강화학습](#lesson-learning-paradigms) | 핵심 | 30분 | #52 지도학습, 비지도학습, 자기지도학습, 강화학습 |
-| 3 | [회귀, 분류, 군집화, 이상 탐지](#lesson-task-types) | 핵심 | 35분 | #53 회귀, 분류, 군집화, 이상 탐지 |
-| 4 | [학습·검증·테스트 데이터와 데이터 누수](#lesson-data-splits) | 핵심 | 45분 | #54 학습·검증·테스트 데이터와 데이터 누수 |
-| 5 | [기준 모델과 단순한 예측 기준](#lesson-baselines) | 핵심 | 45분 | #55 기준 모델과 단순한 예측 기준 |
-| 6 | [손실함수, 목적함수, 학습과 추론](#lesson-loss-functions) | 핵심 | 45분 | #56 손실함수, 목적함수, 학습과 추론 |
+| 1 | [특성, 정답, 예측, 모델, 파라미터](#lesson-ml-terms) | 핵심 | 30분 | #49 특성, 정답, 예측, 모델, 파라미터 |
+| 2 | [지도학습, 비지도학습, 자기지도학습, 강화학습](#lesson-learning-paradigms) | 핵심 | 25분 | #50 지도학습, 비지도학습, 자기지도학습, 강화학습 |
+| 3 | [회귀, 분류, 군집화, 이상 탐지](#lesson-task-types) | 핵심 | 30분 | #51 회귀, 분류, 군집화, 이상 탐지 |
+| 4 | [학습·검증·테스트 데이터와 데이터 누수](#lesson-data-splits) | 핵심 | 45분 | #52 학습·검증·테스트 데이터와 데이터 누수 |
+| 5 | [기준 모델과 단순한 예측 기준](#lesson-baselines) | 핵심 | 45분 | #53 기준 모델과 단순한 예측 기준 |
+| 6 | [손실함수, 목적함수, 학습과 추론](#lesson-loss-functions) | 핵심 | 45분 | #54 손실함수, 목적함수, 학습과 추론 |
 
 ## 핵심 레슨
 
@@ -62,7 +62,7 @@
 
 ### 2. 지도학습, 비지도학습, 자기지도학습, 강화학습
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/ml-framing/learning-paradigms.ts) · [실습 원본](../../src/content/modules/ml-framing/labs/learning-paradigms.ts)
+핵심 · 25분 · [본문 원본](../../src/content/modules/ml-framing/learning-paradigms.ts) · [실습 원본](../../src/content/modules/ml-framing/labs/learning-paradigms.ts)
 
 **학습 목표:** 학습 신호가 무엇인지를 기준으로 지도학습·비지도학습·자기지도학습·강화학습을 구분하고, 데이터에서 자기지도학습의 입력과 정답을 만들며, 언어 모델을 만드는 각 단계가 어느 패러다임인지 설명한다.
 
@@ -89,7 +89,7 @@
 
 ### 3. 회귀, 분류, 군집화, 이상 탐지
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/ml-framing/task-types.ts) · [실습 원본](../../src/content/modules/ml-framing/labs/task-types.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/ml-framing/task-types.ts) · [실습 원본](../../src/content/modules/ml-framing/labs/task-types.ts)
 
 **학습 목표:** 답의 모양을 기준으로 회귀·분류(이진·다중·다중 레이블)·군집화·이상 탐지·생성을 구분하고, 문제마다 모델 출력의 형태와 판정 방법을 정하며, 판별 모델과 생성 모델이 추정하는 대상을 구분한다.
 

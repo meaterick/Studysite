@@ -21,7 +21,7 @@ export type CalloutTone = "info" | "warn" | "example" | "quote" | "tip" | "task"
 
 // ─── 커리큘럼 계층: 트랙 → 모듈 → 레슨 ────────────────────────────────────────
 
-export type TrackId = "intro" | "programming" | "math" | "data" | "ml" | "dl" | "genai" | "capstone" | "extension";
+export type TrackId = "intro" | "programming" | "math" | "data" | "ml" | "dl" | "genai" | "capstone" | "devtools" | "extension";
 
 export interface Reference {
   title: string;
@@ -215,9 +215,9 @@ export interface AssignmentSource {
 
 export interface Track {
   id: TrackId;
-  /** 0~7, 확장은 -1 */
+  /** 0~7, 선택 분야(개발 도구·확장)는 -1 */
   number: number;
-  /** 화면 표기: "1", "X" */
+  /** 화면 표기: "1", "T", "X" */
   code: string;
   title: string;
   /** 한 줄 소개 */
@@ -226,6 +226,11 @@ export interface Track {
   why: string;
   /** 표식 색(CSS 변수) */
   color: string;
+  /**
+   * 선택 분야: 필수 경로·기본 일정·학습 자료 파일(/course)에서 빠지고 완료 조건이 없다.
+   * 모듈에는 핵심 레슨을 두지 않고, 보충·심화 레슨마다 requires로 선수 레슨을 적는다.
+   */
+  optional?: boolean;
 }
 
 export interface Lesson extends LessonSource {

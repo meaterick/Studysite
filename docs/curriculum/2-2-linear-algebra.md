@@ -20,11 +20,11 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [스칼라, 벡터, 행렬, 텐서](#lesson-scalars-tensors) | 핵심 | 35분 | #20 스칼라, 벡터, 행렬, 텐서 |
-| 2 | [벡터의 덧셈, 스칼라곱, 선형결합](#lesson-vector-operations) | 핵심 | 35분 | #21 벡터의 덧셈, 스칼라곱, 선형결합 |
-| 3 | [내적, 길이, 거리, 코사인 유사도](#lesson-dot-product) | 핵심 | 40분 | #22 내적, 벡터의 길이, 거리, 코사인 유사도 |
-| 4 | [행렬의 형태, 전치, 행렬곱](#lesson-matrix-multiplication) | 핵심 | 45분 | #23 행렬의 형태, 전치, 행렬곱 |
-| 5 | [선형변환, 선형독립, 기저, 차원](#lesson-linear-maps-basis) | 핵심 | 40분 | #24 선형변환, 선형독립, 기저, 차원 |
+| 1 | [스칼라, 벡터, 행렬, 텐서](#lesson-scalars-tensors) | 핵심 | 30분 | #18 스칼라, 벡터, 행렬, 텐서 |
+| 2 | [벡터의 덧셈, 스칼라곱, 선형결합](#lesson-vector-operations) | 핵심 | 35분 | #19 벡터의 덧셈, 스칼라곱, 선형결합 |
+| 3 | [내적, 길이, 거리, 코사인 유사도](#lesson-dot-product) | 핵심 | 35분 | #20 내적, 벡터의 길이, 거리, 코사인 유사도 |
+| 4 | [행렬의 형태, 전치, 행렬곱](#lesson-matrix-multiplication) | 핵심 | 45분 | #21 행렬의 형태, 전치, 행렬곱 |
+| 5 | [선형변환, 선형독립, 기저, 차원](#lesson-linear-maps-basis) | 핵심 | 35분 | #22 선형변환, 선형독립, 기저, 차원 |
 | 6 | [랭크·노름·고유값·특이값 분해](#lesson-rank-eigen) | 심화 | 45분 | — |
 
 ## 핵심 레슨
@@ -33,7 +33,7 @@
 
 ### 1. 스칼라, 벡터, 행렬, 텐서
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/linear-algebra/scalars-tensors.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/scalars-tensors.ts)
+핵심 · 30분 · [본문 원본](../../src/content/modules/linear-algebra/scalars-tensors.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/scalars-tensors.ts)
 
 **학습 목표:** 스칼라·벡터·행렬·텐서를 차원 수와 모양(shape)으로 구분하고, 표·이미지·문장 데이터를 알맞은 모양의 배열로 나타내며 원소와 축을 읽는다.
 
@@ -87,7 +87,7 @@
 
 ### 3. 내적, 길이, 거리, 코사인 유사도
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/linear-algebra/dot-product.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/dot-product.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/linear-algebra/dot-product.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/dot-product.ts)
 
 **학습 목표:** 내적·노름·거리·코사인 유사도를 손으로 계산하고, 코사인 유사도가 벡터의 크기와 관계없이 방향의 비슷함만 재는 이유를 설명한다.
 
@@ -143,7 +143,7 @@
 
 ### 5. 선형변환, 선형독립, 기저, 차원
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/linear-algebra/linear-maps-basis.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/linear-maps-basis.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/linear-algebra/linear-maps-basis.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/linear-maps-basis.ts)
 
 **학습 목표:** 선형변환의 두 성질과 행렬의 열이 기저 벡터의 상이라는 사실을 설명하고, 선형독립·기저·차원으로 좌표를 구하며, 행렬식으로 역행렬이 있는지 판단한다.
 
