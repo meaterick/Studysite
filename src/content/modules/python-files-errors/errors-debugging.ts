@@ -9,15 +9,50 @@ export default defineLesson({
   goal: "트레이스백에서 오류의 종류·위치·원인을 읽고, try/except로 예상한 예외만 처리하며, 최소 재현과 assert·print로 버그의 원인을 좁힌다.",
   why: "데이터 처리와 모델 학습 코드는 잘못된 입력, 모양이 맞지 않는 배열, 0으로 나누기 같은 이유로 자주 멈춘다. 오류 메시지를 정확히 읽고 원인을 좁히는 절차는 [[lesson:data-cleaning]]에서 잘못된 값을 처리할 때와 [[lesson:numpy-arrays]]에서 배열의 shape 오류를 고칠 때 그대로 쓰인다.",
   body: md`
+### 오류의 두 종류
+
+코드가 의도대로 실행되지 않을 때 파이썬이 알려 주는 오류는 두 종류다.
+
+- **문법 오류(\`SyntaxError\`, \`IndentationError\`)**: 콜론을 빠뜨리거나 들여쓰기가 맞지 않는 등 파이썬 문법에 맞지 않는 코드다. 실행하기 **전에** 발견되므로 셀의 코드가 한 줄도 실행되지 않는다.
+- **예외(exception)**: 문법은 맞지만 실행하는 **도중에** 문제가 생긴 경우다. 0으로 나누기, 없는 키 읽기, 숫자가 아닌 문자열을 정수로 바꾸기 등이다. 예외가 난 줄 앞의 코드는 이미 실행되었다.
+
+처리되지 않은 예외가 생기면 파이썬은 **트레이스백(traceback)**을 출력하고 프로그램을 멈춘다. 아래는 \`main.py\` 파일을 실행했을 때의 출력이다. 첫 줄 \`A반 85.0\`은 예외가 나기 전에 정상적으로 출력된 결과다.
+
+\`\`\`text
+A반 85.0
+Traceback (most recent call last):
+  File "main.py", line 8, in <module>
+    report({"A반": [80, 90], "B반": []})
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "main.py", line 6, in report
+    print(name, average(values))
+                ~~~~~~~^^^^^^^^
+  File "main.py", line 2, in average
+    return sum(values) / len(values)
+           ~~~~~~~~~~~~^~~~~~~~~~~~~
+ZeroDivisionError: division by zero
+\`\`\`
+
 ### 트레이스백 읽기
 
-실행 중에 오류가 나면 파이썬은 **예외(exception)**를 일으키고, 처리되지 않은 예외는 **트레이스백(traceback)**을 출력하며 프로그램을 멈춘다. 트레이스백은 아래에서부터 읽는다.
+트레이스백은 **아래에서부터** 읽는다.
 
 1. **마지막 줄**: 예외의 종류와 메시지. 무엇이 잘못되었는지를 알려 준다.
-2. **그 위의 줄들**: 예외가 일어나기까지 호출된 함수의 순서. 아래로 갈수록 오류에 가까운 곳이고, 각 항목에 파일 이름·줄 번호·함수 이름이 있다.
-3. **내 코드의 마지막 항목**: 라이브러리 내부가 아니라 내가 쓴 코드 중 가장 아래 항목이 대개 고칠 곳이다.
+2. **그 위의 줄들**: 예외가 일어나기까지 호출된 함수의 순서. 아래로 갈수록 오류에 가까운 곳이고, 각 항목에 파일 이름·줄 번호·함수 이름이 있다. 그 아래 줄은 실행한 코드이고, \`~\`와 \`^\` 표시는 그 줄에서 문제가 된 부분을 가리킨다.
+3. **내 코드의 마지막 항목**: 라이브러리 내부가 아니라 내가 쓴 코드 중 가장 아래 항목이 대개 고칠 곳이다. 브라우저 코드 셀의 트레이스백에는 실행 환경 내부의 줄이 함께 나올 수 있으므로, 그 줄들은 건너뛰고 내 코드의 줄 번호를 찾는다.
 
-아래 셀은 일부러 오류를 일으킨 뒤 \`traceback.print_exc()\`로 트레이스백을 출력한다(셀이 멈추지 않도록 \`try\`로 감쌌다).
+위 트레이스백을 한 줄씩 해석하면 다음과 같다.
+
+| 트레이스백의 줄 | 뜻 |
+| --- | --- |
+| \`File "main.py", line 8, in <module>\` | 파일의 가장 바깥(\`<module>\`) 8번째 줄에서 \`report\`를 불렀다 |
+| \`File "main.py", line 6, in report\` | \`report\` 함수의 6번째 줄에서 \`average\`를 불렀다 |
+| \`File "main.py", line 2, in average\` | \`average\` 함수의 2번째 줄에서 예외가 났다 |
+| \`ZeroDivisionError: division by zero\` | 0으로 나누려 했다 |
+
+원인은 B반의 점수 리스트가 비어 있어 \`len(values)\`가 0인 것이다. 오류가 난 줄(\`average\`)과 원인이 생긴 곳(빈 리스트를 넘긴 데이터)이 다를 수 있다는 점에 주의한다.
+
+코드 셀에서 같은 상황을 실행해 보려면 셀이 멈추지 않도록 \`try\`로 감싸고(다음 절), \`traceback.print_exc()\`로 트레이스백을 출력한다.
 
 \`\`\`python
 import traceback
@@ -35,8 +70,6 @@ except ZeroDivisionError:
     traceback.print_exc()
 \`\`\`
 
-출력의 마지막 줄은 \`ZeroDivisionError: division by zero\`다. 그 위는 \`report\`가 \`average\`를 불렀고, \`average\`의 \`return sum(values) / len(values)\` 줄에서 오류가 났다는 뜻이다. 원인은 B반의 점수 리스트가 비어 있어 \`len(values)\`가 0인 것이다. 오류가 난 줄(\`average\`)과 원인이 생긴 곳(빈 리스트를 넘긴 데이터)이 다를 수 있다는 점에 주의한다.
-
 ### 자주 만나는 예외
 
 | 예외 | 흔한 원인 | 예 |
@@ -52,9 +85,35 @@ except ZeroDivisionError:
 | \`FileNotFoundError\` | 없는 파일을 읽음 | 경로 오타, 작업 폴더 착각 |
 | \`ModuleNotFoundError\` | 설치되지 않은 패키지 | 가상환경을 켜지 않음([[lesson:modules-environments]]) |
 
+아래 셀은 여러 예외를 차례로 일으켜 종류와 메시지를 출력한다. \`eval(문자열)\`은 문자열에 든 식을 실행하는 함수로, 여기서는 예외 여러 개를 짧게 보여 주려고 쓴다(실제 코드에서는 쓰지 않는다). \`except Exception as e\`는 모든 예외를 받아 \`e\`에 담고, \`type(e).__name__\`은 예외의 종류 이름이다.
+
+\`\`\`python
+tests = ['int("abc")', '[1, 2][5]', '{"a": 1}["b"]', '10 / 0', 'undefined_name']
+for code in tests:
+    try:
+        eval(code)
+    except Exception as e:
+        print(f"{code:16} → {type(e).__name__}: {e}")
+\`\`\`
+
+\`\`\`output
+int("abc")       → ValueError: invalid literal for int() with base 10: 'abc'
+[1, 2][5]        → IndexError: list index out of range
+{"a": 1}["b"]    → KeyError: 'b'
+10 / 0           → ZeroDivisionError: division by zero
+undefined_name   → NameError: name 'undefined_name' is not defined
+\`\`\`
+
 ### 예외 처리: try와 except
 
-예상할 수 있는 실패는 \`try\`로 감싸고 \`except\`에서 처리한다. \`except\`에는 **처리할 예외의 종류를 정확히** 적는다. \`else\`는 예외가 없을 때만, \`finally\`는 예외와 관계없이 항상 실행된다.
+예상할 수 있는 실패는 \`try\`로 감싸고 \`except\`에서 처리한다. \`try\` 블록을 실행하다 예외가 나면 그 자리에서 \`try\` 블록을 멈추고 \`except\` 블록으로 넘어간다. \`except\`에는 **처리할 예외의 종류를 정확히** 적는다. \`else\`는 예외가 없을 때만, \`finally\`는 예외와 관계없이 항상 실행된다.
+
+| 블록 | 실행되는 때 |
+| --- | --- |
+| \`try\` | 항상 먼저 실행한다 |
+| \`except 종류\` | \`try\`에서 그 종류의 예외가 났을 때 |
+| \`else\` | \`try\`가 예외 없이 끝났을 때 |
+| \`finally\` | 예외가 났든 안 났든 마지막에 항상 |
 
 \`\`\`python
 raw = ["88", "95", "결석", "70", ""]
@@ -69,7 +128,59 @@ for text in raw:
 print(scores, skipped)              # [88, 95, 70] ['결석', '']
 \`\`\`
 
-\`except:\`처럼 종류를 쓰지 않거나 \`except Exception:\`으로 모든 예외를 잡으면, 예상하지 못한 버그(오타로 생긴 \`NameError\` 등)까지 아무 출력 없이 무시하므로 원인을 찾기 어려워진다. 처리할 수 없는 예외는 잡지 말고 그대로 두어 트레이스백을 보는 편이 낫다. 모든 예외를 잡아야 한다면 \`except Exception as e:\`로 받아 메시지를 기록한다.
+| \`text\` | \`int(text)\` | 실행된 블록 | 결과 |
+| --- | --- | --- | --- |
+| \`"88"\` | 88 | \`else\` | \`scores\`에 88 추가 |
+| \`"95"\` | 95 | \`else\` | \`scores\`에 95 추가 |
+| \`"결석"\` | \`ValueError\` | \`except\` | \`skipped\`에 추가 |
+| \`"70"\` | 70 | \`else\` | \`scores\`에 70 추가 |
+| \`""\` | \`ValueError\` | \`except\` | \`skipped\`에 추가 |
+
+\`except ValueError as e:\`로 쓰면 예외 객체를 \`e\`로 받아 메시지를 읽을 수 있다. 언패킹할 값의 개수가 맞지 않을 때도 \`ValueError\`가 난다. 쉼표가 없는 줄을 \`split(",")\`해 두 이름에 나눠 담으려 하면 조각이 하나뿐이라 오류다.
+
+\`\`\`python
+line = "잘못된줄"
+try:
+    name, score = line.split(",")
+except ValueError as e:
+    print("ValueError:", e)    # ValueError: not enough values to unpack (expected 2, got 1)
+\`\`\`
+
+\`finally\`는 \`try\`나 \`except\` 블록에서 \`return\`으로 함수를 끝내는 경우에도, 함수가 끝나기 직전에 실행된다. 열었던 자원을 닫는 정리 작업에 쓴다.
+
+\`\`\`python
+def read_number(text):
+    try:
+        return int(text)
+    except ValueError:
+        return None
+    finally:
+        print("검사한 값:", repr(text))
+
+print(read_number("42"))
+print(read_number("abc"))
+\`\`\`
+
+\`\`\`output
+검사한 값: '42'
+42
+검사한 값: 'abc'
+None
+\`\`\`
+
+\`except:\`처럼 종류를 쓰지 않거나 \`except Exception:\`으로 모든 예외를 잡으면, 예상하지 못한 버그(오타로 생긴 \`NameError\` 등)까지 아무 출력 없이 무시하므로 원인을 찾기 어려워진다. 아래 함수는 변수 이름에 오타(\`valuse\`)가 있는데도 오류 없이 0을 돌려준다.
+
+\`\`\`python
+def average(values):
+    try:
+        return sum(valuse) / len(values)    # 오타: values가 아니라 valuse
+    except Exception:                       # 모든 예외를 잡는다
+        return 0
+
+print(average([1, 2, 3]))                   # 0
+\`\`\`
+
+\`except ZeroDivisionError:\`로 처리할 예외만 적었다면 오타로 생긴 \`NameError\`는 잡히지 않고 트레이스백이 출력되어 바로 고칠 수 있었다. 처리할 수 없는 예외는 잡지 말고 그대로 두어 트레이스백을 보는 편이 낫다. 모든 예외를 잡아야 한다면 \`except Exception as e:\`로 받아 메시지를 기록한다.
 
 ### 예외 일으키기
 
@@ -84,19 +195,48 @@ def safe_mean(values):
 try:
     safe_mean([])
 except ValueError as e:
-    print("오류:", e)
+    print("오류:", e)            # 오류: 빈 리스트의 평균은 정의되지 않는다
+print(safe_mean([2, 4]))        # 3.0
 \`\`\`
+
+\`\`\`python
+def check_score(score):
+    if not 0 <= score <= 100:
+        raise ValueError(f"점수는 0~100이어야 한다: {score}")
+    return score
+
+for s in [90, 120]:
+    try:
+        print("통과:", check_score(s))
+    except ValueError as e:
+        print("오류:", e)
+\`\`\`
+
+\`\`\`output
+통과: 90
+오류: 점수는 0~100이어야 한다: 120
+\`\`\`
+
+메시지에 실제 값 120이 들어 있어, 어떤 입력이 문제였는지 바로 알 수 있다.
 
 ### assert로 가정 확인하기
 
-\`assert 조건, "메시지"\`는 조건이 거짓이면 \`AssertionError\`를 일으킨다. "여기서는 반드시 이래야 한다"는 내부 가정을 코드에 적어 두는 데 쓴다. 예를 들어 데이터를 나눈 뒤 개수가 맞는지, 특성과 레이블의 길이가 같은지 확인한다. 사용자 입력이나 파일 내용처럼 **틀릴 수 있는 외부 값**의 검사에는 \`assert\` 대신 \`if\`와 \`raise\`를 쓴다. \`assert\`는 실행 옵션(\`python -O\`)으로 꺼질 수 있기 때문이다.
+\`assert 조건, "메시지"\`는 조건이 거짓이면 \`AssertionError\`를 일으킨다. "여기서는 반드시 이래야 한다"는 내부 가정을 코드에 적어 두는 데 쓴다. 예를 들어 데이터를 나눈 뒤 개수가 맞는지, 특성과 레이블의 길이가 같은지 확인한다. 조건이 참이면 아무 일도 일어나지 않는다.
 
 \`\`\`python
 features = [[1.0, 2.0], [0.5, 1.5], [2.0, 0.1]]
 labels = [0, 1, 1]
 assert len(features) == len(labels), f"샘플 수 불일치: {len(features)} vs {len(labels)}"
-print("확인 완료")
+print("확인 완료")              # 확인 완료
+
+labels = [0, 1]                 # 레이블 하나가 빠졌다
+try:
+    assert len(features) == len(labels), f"샘플 수 불일치: {len(features)} vs {len(labels)}"
+except AssertionError as e:
+    print("AssertionError:", e) # AssertionError: 샘플 수 불일치: 3 vs 2
 \`\`\`
+
+사용자 입력이나 파일 내용처럼 **틀릴 수 있는 외부 값**의 검사에는 \`assert\` 대신 \`if\`와 \`raise\`를 쓴다. \`assert\`는 실행 옵션(\`python -O\`)으로 꺼질 수 있기 때문이다.
 
 ### 디버깅 절차
 
@@ -108,20 +248,46 @@ print("확인 완료")
 4. **범위를 반으로 나눈다.** 코드 중간에 확인 출력을 넣어 문제가 앞쪽에서 생기는지 뒤쪽에서 생기는지 가른다.
 5. **고친 뒤 같은 입력으로 다시 확인한다.** 같은 버그가 다시 생기지 않도록 그 입력을 시험 코드로 남긴다.
 
+아래 함수는 \`min_len\` 글자 이상인 단어를 세려고 만들었다. \`"data  science model"\`에서 5글자 이상인 단어는 \`science\`와 \`model\` 두 개이므로 2가 나와야 하는데 1이 나온다.
+
 \`\`\`python
 def count_long_words(text, min_len):
     count = 0
     for word in text.split(" "):
-        if len(word) > min_len:       # 버그: "min_len 글자 이상"이어야 하는데 초과로 셈
+        if len(word) > min_len:
             count += 1
     return count
 
-print(count_long_words("data  science model", 5))     # 기대: 2(science와 model은 5글자 이상), 실제: 1
-for word in "data  science model".split(" "):
-    print(repr(word), len(word))      # 가정 확인: 빈 문자열이 끼어 있고 model은 5글자다
+print(count_long_words("data  science model", 5))     # 1
 \`\`\`
 
-확인 출력을 보면 두 가지 문제가 드러난다. 공백이 두 칸인 곳에서 \`split(" ")\`이 빈 문자열 \`''\`을 만들고, \`model\`(5글자)은 \`> 5\`를 만족하지 않는다. \`split()\`(인자 없이)은 연속된 공백을 하나로 취급하고, 조건은 \`>= min_len\`으로 고쳐야 한다.
+3단계에 따라 반복문이 실제로 어떤 단어를 보는지 \`repr()\`과 \`len()\`으로 확인한다.
+
+\`\`\`python
+for word in "data  science model".split(" "):
+    print(repr(word), len(word))
+\`\`\`
+
+\`\`\`output
+'data' 4
+'' 0
+'science' 7
+'model' 5
+\`\`\`
+
+확인 출력을 보면 두 가지 문제가 드러난다. 공백이 두 칸인 곳에서 \`split(" ")\`이 빈 문자열 \`''\`을 만들고, \`model\`(5글자)은 \`> 5\`를 만족하지 않는다. \`split()\`(인자 없이)은 연속된 공백을 하나로 취급하고, 조건은 \`>= min_len\`으로 고쳐야 한다. 고친 뒤 같은 입력으로 다시 확인하고, 그 입력을 \`assert\`로 남긴다.
+
+\`\`\`python
+def count_long_words(text, min_len):
+    count = 0
+    for word in text.split():
+        if len(word) >= min_len:
+            count += 1
+    return count
+
+print(count_long_words("data  science model", 5))     # 2
+assert count_long_words("data  science model", 5) == 2
+\`\`\`
 
 :::warn 흔한 실수
 - **트레이스백의 맨 위만 읽는다.** 예외 종류와 메시지는 맨 아래에 있다.
