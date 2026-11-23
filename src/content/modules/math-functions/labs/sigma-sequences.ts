@@ -2,6 +2,73 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "시그마 식을 반복문으로 옮기기",
+    prompt: md`
+
+$\Sigma$ 식을 반복문으로 옮깁니다. 먼저 작은 $n$에서 항을 손으로 적어 보고 코드를 작성합니다.
+
+1. \`odd_sum(n)\`: $\sum_{i=1}^{n} (2i - 1)$을 돌려줍니다. $n = 3$이면 $1 + 3 + 5 = 9$입니다. $n = 0$이면 더할 항이 없으므로 0입니다.
+2. \`dot(a, b)\`: 길이가 같은 두 리스트의 $\sum_{i} a_i b_i$를 돌려줍니다. 같은 위치의 원소끼리 곱해 더합니다.
+
+\`sum()\`을 쓰지 않고 \`total\` 변수에 더하는 반복문으로 작성합니다.
+`,
+    starter: py`
+def odd_sum(n):
+    """Σ_{i=1}^{n} (2i - 1)"""
+    total = 0
+    # TODO: i = 1, 2, ..., n에 대해 2 * i - 1을 total에 더합니다.
+    return total
+
+def dot(a, b):
+    """Σ a_i * b_i"""
+    total = 0
+    # TODO: 같은 위치의 원소를 곱해 total에 더합니다.
+    return total
+
+print(odd_sum(3), odd_sum(10))
+print(dot([1, 2], [3, 4]))
+`,
+    tests: py`
+@test("odd_sum: 1, 9, 100")
+def _():
+    assert odd_sum(1) == 1 and odd_sum(3) == 9 and odd_sum(10) == 100, f"결과: {odd_sum(1)}, {odd_sum(3)}, {odd_sum(10)}"
+
+@test("odd_sum: 첫 n개 홀수의 합은 n^2")
+def _():
+    for n in range(0, 21):
+        assert odd_sum(n) == n * n, f"n = {n}: 결과 {odd_sum(n)}"
+
+@test("dot: 같은 위치끼리 곱해 더한다")
+def _():
+    assert dot([1, 2], [3, 4]) == 11, f"결과: {dot([1, 2], [3, 4])}"
+    assert dot([1, 0, -1], [2, 5, 2]) == 0
+    assert approx(dot([0.5, 1.5], [2.0, 2.0]), 4.0)
+`,
+    hints: [
+      "`for i in range(1, n + 1):` 안에서 `total += 2 * i - 1`을 실행합니다. 끝 값 n을 포함하려면 범위를 `n + 1`까지 씁니다.",
+      "`for i in range(len(a)):` 안에서 `total += a[i] * b[i]`를 실행합니다. `for x, y in zip(a, b):`로 짝을 지어도 됩니다.",
+    ],
+    solution: py`
+def odd_sum(n):
+    """Σ_{i=1}^{n} (2i - 1)"""
+    total = 0
+    for i in range(1, n + 1):
+        total += 2 * i - 1
+    return total
+
+def dot(a, b):
+    """Σ a_i * b_i"""
+    total = 0
+    for i in range(len(a)):
+        total += a[i] * b[i]
+    return total
+
+print(odd_sum(3), odd_sum(10))
+print(dot([1, 2], [3, 4]))
+`,
+  },
+  {
     key: "ex1",
     title: "시그마 계산과 등비수열의 합",
     prompt: md`

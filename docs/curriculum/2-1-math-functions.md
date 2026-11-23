@@ -20,9 +20,9 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [함수, 정의역·치역, 함수의 합성](#lesson-functions-composition) | 핵심 | 35분 | #15 함수, 정의역·치역, 함수의 합성 |
-| 2 | [일차함수, 이차함수, 지수함수, 로그함수](#lesson-elementary-functions) | 핵심 | 30분 | #16 일차함수, 이차함수, 지수함수, 로그함수 |
-| 3 | [시그마 표기와 수열의 기초](#lesson-sigma-sequences) | 핵심 | 30분 | #17 시그마 표기와 수열의 기초 |
+| 1 | [함수, 정의역·치역, 함수의 합성](#lesson-functions-composition) | 핵심 | 55분 | #15 함수, 정의역·치역, 함수의 합성 |
+| 2 | [일차함수, 이차함수, 지수함수, 로그함수](#lesson-elementary-functions) | 핵심 | 60분 | #16 일차함수, 이차함수, 지수함수, 로그함수 |
+| 3 | [시그마 표기와 수열의 기초](#lesson-sigma-sequences) | 핵심 | 50분 | #17 시그마 표기와 수열의 기초 |
 
 ## 핵심 레슨
 
@@ -30,7 +30,7 @@
 
 ### 1. 함수, 정의역·치역, 함수의 합성
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/math-functions/functions-composition.ts) · [실습 원본](../../src/content/modules/math-functions/labs/functions-composition.ts)
+핵심 · 55분 · [본문 원본](../../src/content/modules/math-functions/functions-composition.ts) · [실습 원본](../../src/content/modules/math-functions/labs/functions-composition.ts)
 
 **학습 목표:** 함수를 입력과 출력의 대응으로 정의하고 정의역·공역·치역을 구분하며, 합성함수 $g \circ f$를 계산하고 여러 층으로 된 모델을 합성으로 나타낸다.
 
@@ -38,10 +38,11 @@
 
 **본문 절:** 함수의 정의 · 자주 쓰는 함수의 정의역과 치역 · 함수의 그래프 · 합성함수 · 모델은 함수의 합성이다 · 역함수
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 4
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 7
 
 **실습**
 
+- `ex0` 층별 중간값으로 합성함수 계산하기
 - `ex1` 합성함수와 정의역 검사
 
 **서술형**
@@ -57,7 +58,7 @@
 
 ### 2. 일차함수, 이차함수, 지수함수, 로그함수
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/math-functions/elementary-functions.ts) · [실습 원본](../../src/content/modules/math-functions/labs/elementary-functions.ts)
+핵심 · 60분 · [본문 원본](../../src/content/modules/math-functions/elementary-functions.ts) · [실습 원본](../../src/content/modules/math-functions/labs/elementary-functions.ts)
 
 **학습 목표:** 일차·이차·지수·로그함수의 식과 그래프의 성질(기울기, 꼭짓점, 증가 속도, 정의역)을 설명하고, 로그의 성질로 곱을 합으로 바꾸어 계산한다.
 
@@ -65,10 +66,11 @@
 
 **본문 절:** 일차함수 · 이차함수 · 지수함수 · 로그함수 · 증가 속도 비교
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 2
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 10
 
 **실습**
 
+- `ex0` 평균제곱오차를 이차함수의 계수로 정리하기
 - `ex1` 포물선의 꼭짓점, 로그 가능도, 넘치지 않는 시그모이드
 
 **서술형**
@@ -84,7 +86,7 @@
 
 ### 3. 시그마 표기와 수열의 기초
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/math-functions/sigma-sequences.ts) · [실습 원본](../../src/content/modules/math-functions/labs/sigma-sequences.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/math-functions/sigma-sequences.ts) · [실습 원본](../../src/content/modules/math-functions/labs/sigma-sequences.ts)
 
 **학습 목표:** 수열과 시그마($\Sigma$) 표기를 읽고 쓰며, 합의 성질과 등차·등비수열의 합을 계산하고, $\Sigma$ 식을 반복문과 배열 연산으로 옮긴다.
 
@@ -92,10 +94,11 @@
 
 **본문 절:** 수열 · 시그마 표기 · 합의 성질 · 통계량과 손실을 $\Sigma$로 쓰기 · 등차수열과 등비수열 · 이중 시그마
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 7
 
 **실습**
 
+- `ex0` 시그마 식을 반복문으로 옮기기
 - `ex1` 시그마 계산과 등비수열의 합
 
 **서술형**

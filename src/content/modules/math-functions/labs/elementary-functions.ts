@@ -2,6 +2,87 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "평균제곱오차를 이차함수의 계수로 정리하기",
+    prompt: md`
+
+모델 $\hat y = wx$의 평균제곱오차는 $L(w) = aw^2 + bw + c$ 꼴의 이차함수이고, 계수는 다음과 같습니다(레슨 본문의 전개).
+
+\`\`\`math
+a = \frac{1}{n}\sum_i x_i^2, \quad b = -\frac{2}{n}\sum_i x_i y_i, \quad c = \frac{1}{n}\sum_i y_i^2
+\`\`\`
+
+1. \`mse_coefficients(xs, ys)\`: 계수 \`(a, b, c)\`를 돌려줍니다.
+2. \`best_w(xs, ys)\`: 꼭짓점 $w^* = -\frac{b}{2a}$를 돌려줍니다. 1번 함수를 이용합니다.
+
+본문의 데이터 $(1, 2), (2, 4), (3, 7)$에서는 \`(14/3, -62/3, 23)\`과 \`31/14\`가 나와야 합니다. NumPy 없이 \`sum\`과 \`zip\`으로 작성합니다.
+`,
+    starter: py`
+def mse_coefficients(xs, ys):
+    """L(w) = a w^2 + b w + c의 (a, b, c)"""
+    n = len(xs)
+    a = 0.0   # TODO: x_i^2의 합 / n
+    b = 0.0   # TODO: -2 * (x_i * y_i의 합) / n
+    c = 0.0   # TODO: y_i^2의 합 / n
+    return a, b, c
+
+def best_w(xs, ys):
+    """평균제곱오차가 가장 작은 w"""
+    a, b, c = mse_coefficients(xs, ys)
+    return 0.0   # TODO: 꼭짓점 -b / (2a)
+
+xs, ys = [1, 2, 3], [2, 4, 7]
+print(mse_coefficients(xs, ys))
+print(best_w(xs, ys))
+`,
+    tests: py`
+@test("본문 데이터의 계수 (14/3, -62/3, 23)")
+def _():
+    got = mse_coefficients([1, 2, 3], [2, 4, 7])
+    assert approx(list(got), [14 / 3, -62 / 3, 23.0]), f"결과: {got}"
+
+@test("본문 데이터의 꼭짓점 31/14")
+def _():
+    got = best_w([1, 2, 3], [2, 4, 7])
+    assert approx(got, 31 / 14), f"결과: {got}"
+
+@test("다른 데이터: (0, 1), (1, 3), (2, 2), (3, 5)")
+def _():
+    xs, ys = [0, 1, 2, 3], [1, 3, 2, 5]
+    assert approx(list(mse_coefficients(xs, ys)), [3.5, -11.0, 9.75]), f"결과: {mse_coefficients(xs, ys)}"
+    assert approx(best_w(xs, ys), 22 / 14), f"결과: {best_w(xs, ys)}"
+
+@test("완벽히 맞는 데이터에서는 꼭짓점의 손실이 0")
+def _():
+    xs, ys = [1, 2, 4], [3, 6, 12]
+    a, b, c = mse_coefficients(xs, ys)
+    w = best_w(xs, ys)
+    assert approx(w, 3.0) and approx(a * w * w + b * w + c, 0.0, tol=1e-9), f"w = {w}"
+`,
+    hints: [
+      "합은 `sum(x * x for x in xs)`처럼 씁니다. 두 리스트의 같은 위치 원소를 함께 쓰려면 `sum(x * y for x, y in zip(xs, ys))`입니다.",
+      "`b`에는 음수 부호와 2를 함께 붙입니다: `b = -2 * sum(...) / n`. 꼭짓점은 `-b / (2 * a)`입니다.",
+    ],
+    solution: py`
+def mse_coefficients(xs, ys):
+    """L(w) = a w^2 + b w + c의 (a, b, c)"""
+    n = len(xs)
+    a = sum(x * x for x in xs) / n
+    b = -2 * sum(x * y for x, y in zip(xs, ys)) / n
+    c = sum(y * y for y in ys) / n
+    return a, b, c
+
+def best_w(xs, ys):
+    """평균제곱오차가 가장 작은 w"""
+    a, b, c = mse_coefficients(xs, ys)
+    return -b / (2 * a)
+
+xs, ys = [1, 2, 3], [2, 4, 7]
+print(mse_coefficients(xs, ys))
+print(best_w(xs, ys))
+`,
+  },
+  {
     key: "ex1",
     title: "포물선의 꼭짓점, 로그 가능도, 넘치지 않는 시그모이드",
     prompt: md`
