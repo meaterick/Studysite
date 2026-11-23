@@ -21,11 +21,11 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [결측치, 중복값, 이상치, 잘못된 자료형](#lesson-data-cleaning) | 핵심 | 40분 | #44 결측치, 중복값, 이상치, 잘못된 자료형 |
-| 2 | [히스토그램, 산점도, 상자그림, 상관행렬](#lesson-visualization) | 핵심 | 40분 | #45 히스토그램, 산점도, 상자그림, 상관행렬 |
-| 3 | [탐색적 데이터 분석과 데이터 품질](#lesson-eda) | 핵심 | 30분 | #46 탐색적 데이터 분석과 데이터 품질 |
-| 4 | [범주형 인코딩, 표준화, 정규화](#lesson-encoding-scaling) | 핵심 | 40분 | #47 범주형 인코딩, 표준화, 정규화 |
-| 5 | [특성 생성, 특성 선택, 차원의 저주](#lesson-feature-engineering) | 핵심 | 35분 | #48 특성 생성, 특성 선택, 차원의 저주 |
+| 1 | [결측치, 중복값, 이상치, 잘못된 자료형](#lesson-data-cleaning) | 핵심 | 50분 | #44 결측치, 중복값, 이상치, 잘못된 자료형 |
+| 2 | [히스토그램, 산점도, 상자그림, 상관행렬](#lesson-visualization) | 핵심 | 50분 | #45 히스토그램, 산점도, 상자그림, 상관행렬 |
+| 3 | [탐색적 데이터 분석과 데이터 품질](#lesson-eda) | 핵심 | 40분 | #46 탐색적 데이터 분석과 데이터 품질 |
+| 4 | [범주형 인코딩, 표준화, 정규화](#lesson-encoding-scaling) | 핵심 | 50분 | #47 범주형 인코딩, 표준화, 정규화 |
+| 5 | [특성 생성, 특성 선택, 차원의 저주](#lesson-feature-engineering) | 핵심 | 45분 | #48 특성 생성, 특성 선택, 차원의 저주 |
 
 ## 핵심 레슨
 
@@ -33,7 +33,7 @@
 
 ### 1. 결측치, 중복값, 이상치, 잘못된 자료형
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/data-preparation/data-cleaning.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/data-cleaning.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/data-preparation/data-cleaning.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/data-cleaning.ts)
 
 **학습 목표:** 결측값·중복·표기 불일치·잘못된 자료형·이상치를 찾아내고, 결측의 원인에 따라 처리 방법을 고르며, IQR과 Z-score의 판정이 엇갈리는 이유를 설명하고, 결측을 채우는 통계를 학습용 데이터에서만 계산한다.
 
@@ -41,10 +41,11 @@
 
 **본문 절:** 수집, 정제, 전처리 · 결측값과 결측의 원인 · 중복과 표기 불일치 · 이상치 찾기: IQR과 Z-score · 이상치를 찾은 뒤 · 통계는 학습용 데이터에서만 계산한다
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 3 · 그림 2
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 3 · 그림 2
 
 **실습**
 
+- `ex0` 표기 통일·결측 표시·중앙값 채우기를 차례로
 - `ex1` 학습용 데이터로 정제 기준을 정하고 평가용 데이터에 적용하기
 
 **서술형**
@@ -61,7 +62,7 @@
 
 ### 2. 히스토그램, 산점도, 상자그림, 상관행렬
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/data-preparation/visualization.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/visualization.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/data-preparation/visualization.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/visualization.ts)
 
 **학습 목표:** 알고 싶은 질문에 맞는 그래프(히스토그램·산점도·상자그림·막대그래프·상관행렬)를 고르고 matplotlib으로 그리며, 구간 수·축 범위·점의 겹침 같은 설정 때문에 그래프가 잘못 읽히는 경우를 찾아낸다.
 
@@ -69,10 +70,11 @@
 
 **본문 절:** 질문에 맞는 그래프 · 히스토그램: 분포의 모양 · 산점도: 두 변수의 관계 · 상자그림: 범주마다 분포 비교 · 상관행렬 히트맵: 여러 변수의 상관을 한 번에 · 그래프가 잘못 읽히는 경우
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 5
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 5
 
 **실습**
 
+- `ex0` 그래프가 그릴 값을 먼저 계산하기
 - `ex1` 확인용 그래프를 만드는 함수 작성하기
 
 **서술형**
@@ -88,7 +90,7 @@
 
 ### 3. 탐색적 데이터 분석과 데이터 품질
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/data-preparation/eda.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/eda.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/data-preparation/eda.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/eda.ts)
 
 **학습 목표:** 정해진 순서(구조·결측·중복·범위·분포·목표 변수·관계)로 데이터를 점검해 품질 문제를 찾아 기록하고, 클래스 불균형과 목표 변수의 정보가 새어 든 특성(누수 후보)을 찾아낸다.
 
@@ -96,10 +98,11 @@
 
 **본문 절:** 탐색적 데이터 분석의 순서 · 구조, 결측, 중복, 범위 · 목표 변수와 클래스 불균형 · 특성과 목표 변수의 관계, 누수 후보 · 점검 결과 기록하기
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 4
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 4
 
 **실습**
 
+- `ex0` 품질 점검 항목을 하나씩 세기
 - `ex1` 품질 점검표와 누수 후보를 자동으로 만들기
 
 **서술형**
@@ -115,7 +118,7 @@
 
 ### 4. 범주형 인코딩, 표준화, 정규화
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/data-preparation/encoding-scaling.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/encoding-scaling.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/data-preparation/encoding-scaling.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/encoding-scaling.ts)
 
 **학습 목표:** 명목형·순서형 범주에 맞는 인코딩(원-핫·순서 정수)을 고르고, Min-Max 정규화와 표준화를 계산해 이상치와 분포에 따라 방법을 고르며, 변환 규칙을 학습용 데이터에서만 계산(fit)하고 모든 데이터에 같게 적용(transform)한다.
 
@@ -123,10 +126,11 @@
 
 **본문 절:** 범주형 인코딩 · 스케일링: Min-Max 정규화와 표준화 · 스케일링이 필요한 모델과 필요 없는 모델 · 학습용 데이터로 fit, 모든 데이터에 transform
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 3 · 그림 3
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 3 · 그림 3
 
 **실습**
 
+- `ex0` 원-핫 인코딩과 순서 인코딩을 손으로 확인하기
 - `ex1` 학습용 데이터 통계로만 변환하는 표준화 함수 만들기
 
 **서술형**
@@ -143,7 +147,7 @@
 
 ### 5. 특성 생성, 특성 선택, 차원의 저주
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/data-preparation/feature-engineering.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/feature-engineering.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/data-preparation/feature-engineering.ts) · [실습 원본](../../src/content/modules/data-preparation/labs/feature-engineering.ts)
 
 **학습 목표:** 비율·차이·날짜·구간·거듭제곱 같은 파생 특성을 만들어 선형 모델이 표현하지 못하는 관계를 표현하고, 값이 변하지 않거나 서로 거의 같은 특성을 골라내며, 특성이 많아질수록 거리 기반 방법이 약해지는 차원의 저주를 시뮬레이션으로 확인한다.
 
@@ -151,10 +155,11 @@
 
 **본문 절:** 파생 특성 만들기 · 선형 모델에 곡선 관계를 표현하기 · 특성 선택 · 차원의 저주
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 4
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 4
 
 **실습**
 
+- `ex0` 주문 표에서 파생 특성 만들기
 - `ex1` 파생 특성 만들기와 중복 특성 걸러 내기
 
 **서술형**

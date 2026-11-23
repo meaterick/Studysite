@@ -2,6 +2,72 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "주문 표에서 파생 특성 만들기",
+    prompt: md`
+
+주문 표 \`orders\`(\`qty\`, \`unit_price\`, \`ordered\`)에 다음 열을 더합니다. 원래 표를 고치지 않도록 \`df = orders.copy()\`에 더합니다.
+
+1. \`total\`: 수량과 단가의 곱
+2. \`month\`: 주문 월
+3. \`is_weekend\`: 토·일요일 주문이면 1, 아니면 0
+4. \`size_band\`: 수량을 구간 \`[0, 2, 5, 100]\`으로 나눈 \`"small"\`, \`"mid"\`, \`"bulk"\`. 구간은 오른쪽 끝을 포함합니다.
+`,
+    starter: py`
+import pandas as pd
+
+orders = pd.DataFrame({
+    "qty": [1, 3, 5, 12],
+    "unit_price": [1000, 2500, 400, 300],
+    "ordered": pd.to_datetime(["2024-06-01", "2024-06-03", "2024-07-06", "2024-07-10"]),
+})
+
+df = orders.copy()
+# TODO: total, month, is_weekend, size_band 열을 만듭니다.
+
+print(df)
+`,
+    tests: py`
+@test("total과 month")
+def _():
+    assert "total" in df and df["total"].tolist() == [1000, 7500, 2000, 3600], f"total: {df.get('total')}"
+    assert "month" in df and df["month"].tolist() == [6, 6, 7, 7], f"month: {df.get('month')}"
+
+@test("주말 여부: 6월 1일과 7월 6일은 토요일")
+def _():
+    assert "is_weekend" in df and df["is_weekend"].tolist() == [1, 0, 1, 0], f"is_weekend: {df.get('is_weekend')}"
+
+@test("수량 구간: 경계 2와 5는 왼쪽 구간")
+def _():
+    assert "size_band" in df and list(map(str, df["size_band"])) == ["small", "mid", "mid", "bulk"], f"size_band: {df.get('size_band')}"
+
+@test("원래 표는 그대로")
+def _():
+    assert list(orders.columns) == ["qty", "unit_price", "ordered"], "orders에 열이 추가되었습니다. copy()한 df에 더하십시오."
+`,
+    hints: [
+      "`df[\"total\"] = df[\"qty\"] * df[\"unit_price\"]`, `df[\"month\"] = df[\"ordered\"].dt.month`입니다.",
+      "`(df[\"ordered\"].dt.dayofweek >= 5).astype(int)`가 주말 여부이고, `pd.cut(df[\"qty\"], bins=[0, 2, 5, 100], labels=[\"small\", \"mid\", \"bulk\"])`이 구간입니다.",
+    ],
+    solution: py`
+import pandas as pd
+
+orders = pd.DataFrame({
+    "qty": [1, 3, 5, 12],
+    "unit_price": [1000, 2500, 400, 300],
+    "ordered": pd.to_datetime(["2024-06-01", "2024-06-03", "2024-07-06", "2024-07-10"]),
+})
+
+df = orders.copy()
+df["total"] = df["qty"] * df["unit_price"]
+df["month"] = df["ordered"].dt.month
+df["is_weekend"] = (df["ordered"].dt.dayofweek >= 5).astype(int)
+df["size_band"] = pd.cut(df["qty"], bins=[0, 2, 5, 100], labels=["small", "mid", "bulk"])
+
+print(df)
+`,
+  },
+  {
     key: "ex1",
     title: "파생 특성 만들기와 중복 특성 걸러 내기",
     prompt: md`

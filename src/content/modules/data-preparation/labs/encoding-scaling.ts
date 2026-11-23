@@ -2,6 +2,62 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "원-핫 인코딩과 순서 인코딩을 손으로 확인하기",
+    prompt: md`
+
+표 \`df\`의 \`city\`는 명목형, \`size\`는 순서형(\`S < M < L\`)입니다.
+
+1. \`onehot\`: \`city\`를 원-핫 인코딩한 DataFrame. \`pd.get_dummies(..., dtype=int)\`를 씁니다.
+2. \`size_codes\`: \`size\`를 \`S → 0\`, \`M → 1\`, \`L → 2\`로 바꾼 정수 리스트
+3. \`ones_per_row\`: \`onehot\`의 행마다 1의 개수 리스트(원-핫이면 모두 1)
+
+먼저 \`onehot\`의 열 순서와 각 행의 값을 손으로 적어 본 뒤 실행합니다.
+`,
+    starter: py`
+import pandas as pd
+
+df = pd.DataFrame({"city": ["부산", "서울", "부산", "대구"], "size": ["M", "S", "L", "M"]})
+
+onehot = None         # TODO
+size_codes = None     # TODO
+ones_per_row = None   # TODO
+
+print(onehot)
+print(size_codes, ones_per_row)
+`,
+    tests: py`
+@test("원-핫 열: 대구, 부산, 서울")
+def _():
+    assert onehot is not None and list(onehot.columns) == ["대구", "부산", "서울"], f"열: {None if onehot is None else list(onehot.columns)}"
+    assert onehot.values.tolist() == [[0, 1, 0], [0, 0, 1], [0, 1, 0], [1, 0, 0]], f"값: {onehot.values.tolist()}"
+
+@test("순서 인코딩 [1, 0, 2, 1]")
+def _():
+    assert size_codes == [1, 0, 2, 1], f"결과: {size_codes}"
+
+@test("행마다 1이 하나")
+def _():
+    assert ones_per_row == [1, 1, 1, 1], f"결과: {ones_per_row}"
+`,
+    hints: [
+      "`pd.get_dummies(df[\"city\"], dtype=int)`의 열은 범주 이름의 정렬 순서로 만들어집니다.",
+      "`df[\"size\"].map({\"S\": 0, \"M\": 1, \"L\": 2}).tolist()`이고, 행마다 1의 개수는 `onehot.sum(axis=1).tolist()`입니다.",
+    ],
+    solution: py`
+import pandas as pd
+
+df = pd.DataFrame({"city": ["부산", "서울", "부산", "대구"], "size": ["M", "S", "L", "M"]})
+
+onehot = pd.get_dummies(df["city"], dtype=int)
+size_codes = df["size"].map({"S": 0, "M": 1, "L": 2}).tolist()
+ones_per_row = onehot.sum(axis=1).tolist()
+
+print(onehot)
+print(size_codes, ones_per_row)
+`,
+  },
+  {
     key: "ex1",
     title: "학습용 데이터 통계로만 변환하는 표준화 함수 만들기",
     prompt: md`

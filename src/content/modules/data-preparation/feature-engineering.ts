@@ -38,6 +38,25 @@ houses["area_band"] = pd.cut(houses["area"], bins=[0, 60, 85, 200], labels=["sma
 print(houses.drop(columns=["sold"]))
 \`\`\`
 
+\`\`\`output
+   price  area  built  price_per_m2  age  sold_weekend area_band
+0  52000    84   2005         619.0   19             1       mid
+1  31000    59   1998         525.4   26             1     small
+2  78000   114   2015         684.2    9             0     large
+3  45000    76   2010         592.1   14             0       mid
+4  60000    84   1990         714.3   34             1       mid
+\`\`\`
+
+\`pd.cut\`의 구간 \`[0, 60, 85, 200]\`은 오른쪽 끝을 포함한다. 그래서 면적 60은 \`small\`, 85는 \`mid\`에 들어간다.
+
+| 구간 | 포함하는 면적 | 이름 |
+| --- | --- | --- |
+| $(0, 60]$ | 0 초과 60 이하 | small |
+| $(60, 85]$ | 60 초과 85 이하 | mid |
+| $(85, 200]$ | 85 초과 200 이하 | large |
+
+첫 행의 \`price_per_m2\`는 $52000 / 84 \approx 619.0$, \`age\`는 판매 연도 2024에서 건축 연도 2005를 뺀 19다. 2024년 3월 2일은 토요일이라 \`sold_weekend\`가 1이다.
+
 파생 특성을 만들 때도 **예측 시점에 알 수 있는 값**만 써야 한다([[lesson:eda]]). 목표 변수인 가격으로 만든 \`price_per_m2\`는 가격을 예측하는 모델의 특성으로 쓰면 누수다. 이 예는 다른 목표(예: 판매 기간)를 예측할 때의 특성으로만 쓸 수 있다.
 
 ### 선형 모델에 곡선 관계를 표현하기
@@ -161,6 +180,17 @@ print(pd.cut(s, bins=[0, 60, 85, 200], labels=["small", "mid", "large"]).tolist(
 `,
       expected: "['small', 'small', 'mid', 'large']",
       explanation: "`pd.cut`의 구간은 기본으로 오른쪽 끝을 포함한다: (0, 60], (60, 85], (85, 200]. 45와 59는 첫 구간, 84는 둘째 구간, 114는 셋째 구간에 들어간다.",
+    },
+    {
+      key: "p2",
+      question: "면적을 세 구간으로 나눈다. 경계값이 어느 구간에 들어가는지 생각해 출력을 예측하십시오.",
+      code: py`
+import pandas as pd
+area = pd.Series([50, 60, 85, 120])
+print(pd.cut(area, bins=[0, 60, 85, 200], labels=["small", "mid", "large"]).tolist())
+`,
+      expected: "['small', 'small', 'mid', 'large']",
+      explanation: "`pd.cut`의 구간은 기본으로 오른쪽 끝을 포함한다($(0, 60]$, $(60, 85]$, $(85, 200]$). 그래서 60은 `small`, 85는 `mid`다. 왼쪽 끝을 포함하려면 `right=False`를 준다.",
     },
   ],
   descriptive: [

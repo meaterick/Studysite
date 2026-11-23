@@ -2,6 +2,67 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "표기 통일·결측 표시·중앙값 채우기를 차례로",
+    prompt: md`
+
+도시 \`cities\`와 나이 \`ages\`가 Series로 주어집니다. 본문의 정제 순서대로 처리합니다.
+
+1. \`clean_cities\`: 앞뒤 공백을 지우고 \`"Seoul"\`을 \`"서울"\`로 바꾼 Series
+2. \`n_cities\`: \`clean_cities\`의 서로 다른 값의 수
+3. \`age_missing\`: 나이가 결측이면 1, 아니면 0인 정수 Series(결측을 채우기 **전에** 만듭니다)
+4. \`ages_filled\`: 나이의 결측을 결측이 아닌 값의 중앙값으로 채운 Series
+`,
+    starter: py`
+import pandas as pd
+
+cities = pd.Series(["서울", " 서울", "Seoul", "부산", "부산 "])
+ages = pd.Series([25, None, 31, 47, None])
+
+clean_cities = None   # TODO
+n_cities = None       # TODO
+age_missing = None    # TODO
+ages_filled = None    # TODO
+
+print(clean_cities.tolist() if clean_cities is not None else None, n_cities)
+print(age_missing.tolist() if age_missing is not None else None)
+print(ages_filled.tolist() if ages_filled is not None else None)
+`,
+    tests: py`
+@test("표기 통일: 서울 3개, 부산 2개")
+def _():
+    assert clean_cities is not None and clean_cities.tolist() == ["서울", "서울", "서울", "부산", "부산"], f"결과: {None if clean_cities is None else clean_cities.tolist()}"
+    assert n_cities == 2, f"n_cities: {n_cities}"
+
+@test("결측 표시 [0, 1, 0, 0, 1]")
+def _():
+    assert age_missing is not None and age_missing.tolist() == [0, 1, 0, 0, 1], f"결과: {None if age_missing is None else age_missing.tolist()}"
+
+@test("중앙값 31로 채우기")
+def _():
+    assert ages_filled is not None and ages_filled.tolist() == [25.0, 31.0, 31.0, 47.0, 31.0], f"결과: {None if ages_filled is None else ages_filled.tolist()}"
+`,
+    hints: [
+      "`cities.str.strip().replace({\"Seoul\": \"서울\"})`로 표기를 통일하고, `nunique()`로 서로 다른 값을 셉니다.",
+      "`ages.isna().astype(int)`로 결측 표시를 만들고, `ages.fillna(ages.median())`로 채웁니다. `median()`은 결측을 빼고 계산합니다.",
+    ],
+    solution: py`
+import pandas as pd
+
+cities = pd.Series(["서울", " 서울", "Seoul", "부산", "부산 "])
+ages = pd.Series([25, None, 31, 47, None])
+
+clean_cities = cities.str.strip().replace({"Seoul": "서울"})
+n_cities = clean_cities.nunique()
+age_missing = ages.isna().astype(int)
+ages_filled = ages.fillna(ages.median())
+
+print(clean_cities.tolist() if clean_cities is not None else None, n_cities)
+print(age_missing.tolist() if age_missing is not None else None)
+print(ages_filled.tolist() if ages_filled is not None else None)
+`,
+  },
+  {
     key: "ex1",
     title: "학습용 데이터로 정제 기준을 정하고 평가용 데이터에 적용하기",
     prompt: md`

@@ -56,6 +56,24 @@ print(df["plan"].value_counts().to_dict())          # Free, "free "처럼 표기
 print(df[["age", "minutes"]].describe().round(1))   # 나이의 최솟값 0, 최댓값 150
 \`\`\`
 
+\`\`\`output
+(302, 7)
+{'minutes': 0.04}
+2 2
+{'free': 135, 'basic': 87, 'pro': 78, 'Free': 1, 'free ': 1}
+         age  minutes
+count  302.0    290.0
+mean    35.1     13.9
+std     11.9      8.8
+min      0.0      3.0
+25%     28.0      8.3
+50%     33.5     11.1
+75%     41.0     17.1
+max    150.0     54.2
+\`\`\`
+
+\`describe()\`의 \`count\`가 행 수(302)보다 작은 열에는 결측이 있다. \`minutes\`는 290개라 12개가 비어 있다. \`min\`과 \`max\` 줄에서 나이 0과 150이 보인다.
+
 한 행이 사용자 한 명이라면 \`user_id\`는 중복되면 안 된다. 완전히 같은 행은 수집 과정에서 두 번 들어간 것이고, 키만 같고 다른 열이 다르다면 어느 행이 맞는지 먼저 확인해야 한다. 나이 0과 150은 실제로 있을 수 없는 값이라 입력 오류로 보고 결측으로 바꾼 뒤 처리한다. 이런 문제는 [[lesson:data-cleaning]]의 방법으로 고친다.
 
 데이터 품질은 보통 다음 기준으로 점검한다.
@@ -82,6 +100,15 @@ print(df["churned"].value_counts(normalize=True).round(3).to_dict())   # {0: 0.6
 print(df.groupby("churned")[["sessions", "minutes"]].median())
 print(df[["age", "sessions", "minutes", "refund_amount"]].corrwith(df["churned"]).round(3).to_dict())
 print(((df["refund_amount"] > 0) == (df["churned"] == 1)).mean())   # 1.0: 환불액만 보면 해지 여부를 100% 맞힌다
+\`\`\`
+
+\`\`\`output
+         sessions  minutes
+churned                   
+0             6.0     11.1
+1             3.0     10.9
+{'age': -0.044, 'sessions': -0.419, 'minutes': 0.004, 'refund_amount': 0.854}
+1.0
 \`\`\`
 
 해지한 사용자는 접속 횟수의 중앙값이 3으로, 해지하지 않은 사용자(6)보다 적다. 이런 관계는 모델이 학습할 유용한 정보다. 반면 \`refund_amount\`는 해지 여부와의 상관이 약 0.85이고, 환불액이 있는지만 보면 해지 여부를 모두 맞힌다. 환불은 해지한 **뒤에** 생기는 값이라 해지를 예측해야 하는 시점에는 알 수 없다. 이렇게 예측 시점에 알 수 없는 정보나 목표 변수에서 만들어진 정보가 특성에 섞이는 것을 **누수**(leakage)라고 한다. 누수가 있으면 평가 성능은 매우 높지만 실제로 쓰면 성능이 크게 떨어진다.
@@ -171,6 +198,17 @@ print(df.duplicated().sum(), df.duplicated(subset=["id"]).sum(), df.drop_duplica
 `,
       expected: "1 2 4",
       explanation: "행 전체가 같은 중복은 (2, 20) 한 번뿐이다. id만 보면 2와 3이 각각 한 번씩 더 나와 중복이 2개다. 완전한 중복만 지우면 4행이 남고, id 3의 두 행(30과 31)은 어느 쪽이 맞는지 따로 확인해야 한다.",
+    },
+    {
+      key: "p2",
+      question: "중복 행, 키 중복, 범위를 벗어난 나이를 센다. 출력을 예측하십시오.",
+      code: py`
+import pandas as pd
+df = pd.DataFrame({"id": [1, 2, 2, 3], "age": [20, 200, 200, 31]})
+print(df.duplicated().sum(), df["id"].duplicated().sum(), ((df["age"] < 0) | (df["age"] > 120)).sum())
+`,
+      expected: "1 1 2",
+      explanation: "두 번째와 세 번째 행이 완전히 같으므로 `duplicated()`는 세 번째 행 하나를 중복으로 센다. `id`만 봐도 2가 한 번 더 나와 1이다. 나이 200은 범위 밖이고 두 행에 있으므로 2다. 중복을 지우기 전에 세면 같은 오류가 두 번 세어진다.",
     },
   ],
   descriptive: [

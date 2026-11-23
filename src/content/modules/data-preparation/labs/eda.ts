@@ -2,6 +2,74 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "품질 점검 항목을 하나씩 세기",
+    prompt: md`
+
+사용자 표 \`df\`에 대해 본문의 점검 순서대로 값을 구합니다.
+
+1. \`n_rows\`: 행 수
+2. \`missing\`: 열마다 결측 개수 딕셔너리(결측이 없는 열도 0으로 포함)
+3. \`full_dup\`: 행 전체가 같은 중복의 수
+4. \`key_dup\`: \`user_id\` 기준 중복의 수
+5. \`bad_age\`: 나이가 0 이하이거나 120 초과인 값의 개수(결측은 세지 않음)
+`,
+    starter: py`
+import numpy as np
+import pandas as pd
+
+df = pd.DataFrame({
+    "user_id": [1, 2, 3, 3, 4, 5],
+    "age": [25, 0, 41, 41, np.nan, 150],
+    "plan": ["free", "pro", "free", "free", "basic", None],
+})
+
+n_rows = None     # TODO
+missing = None    # TODO
+full_dup = None   # TODO
+key_dup = None    # TODO
+bad_age = None    # TODO
+
+print(n_rows, missing, full_dup, key_dup, bad_age)
+`,
+    tests: py`
+@test("행 수와 결측")
+def _():
+    assert n_rows == 6, f"n_rows: {n_rows}"
+    assert missing == {"user_id": 0, "age": 1, "plan": 1}, f"missing: {missing}"
+
+@test("중복: 행 전체 1개, user_id 1개")
+def _():
+    assert full_dup == 1 and key_dup == 1, f"full_dup: {full_dup}, key_dup: {key_dup}"
+
+@test("범위를 벗어난 나이 2개")
+def _():
+    assert bad_age == 2, f"bad_age: {bad_age} — 0과 150입니다. 결측은 비교에서 False입니다."
+`,
+    hints: [
+      "`len(df)`, `df.isna().sum().to_dict()`, `df.duplicated().sum()`, `df[\"user_id\"].duplicated().sum()`을 씁니다.",
+      "`((df[\"age\"] <= 0) | (df[\"age\"] > 120)).sum()`입니다. 결측은 어떤 비교에서도 `False`라 세어지지 않습니다.",
+    ],
+    solution: py`
+import numpy as np
+import pandas as pd
+
+df = pd.DataFrame({
+    "user_id": [1, 2, 3, 3, 4, 5],
+    "age": [25, 0, 41, 41, np.nan, 150],
+    "plan": ["free", "pro", "free", "free", "basic", None],
+})
+
+n_rows = len(df)
+missing = df.isna().sum().to_dict()
+full_dup = df.duplicated().sum()
+key_dup = df["user_id"].duplicated().sum()
+bad_age = ((df["age"] <= 0) | (df["age"] > 120)).sum()
+
+print(n_rows, missing, full_dup, key_dup, bad_age)
+`,
+  },
+  {
     key: "ex1",
     title: "품질 점검표와 누수 후보를 자동으로 만들기",
     prompt: md`

@@ -2,6 +2,74 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "그래프가 그릴 값을 먼저 계산하기",
+    prompt: md`
+
+그래프는 데이터에서 계산한 값을 그린 것입니다. 그리기 전에 그 값을 직접 계산합니다.
+
+1. \`hist_counts\`: \`minutes\`를 구간 \`[0, 10, 20, 30]\`으로 나눈 히스토그램의 막대 높이(정수 리스트). \`np.histogram\`을 씁니다.
+2. \`plan_counts\`: 요금제별 사용자 수 딕셔너리(\`value_counts\`)
+3. \`fig\`: \`plan_counts\`를 막대그래프(\`ax.bar\`)로 그린 그림. 세로축 이름은 \`"users"\`입니다.
+`,
+    starter: py`
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+minutes = np.array([3, 8, 12, 15, 18, 22, 9, 27, 11, 5])
+plans = pd.Series(["free", "pro", "free", "basic", "free", "pro"])
+
+hist_counts = None   # TODO
+plan_counts = None   # TODO
+
+fig, ax = plt.subplots()
+# TODO: plan_counts의 키를 가로축, 값을 막대 높이로 그리고 세로축 이름을 정합니다.
+plt.show()
+
+print(hist_counts, plan_counts)
+`,
+    tests: py`
+@test("히스토그램 막대 높이 [4, 4, 2]")
+def _():
+    assert hist_counts is not None and list(hist_counts) == [4, 4, 2], f"결과: {hist_counts}"
+
+@test("요금제별 사용자 수")
+def _():
+    assert plan_counts == {"free": 3, "pro": 2, "basic": 1}, f"결과: {plan_counts}"
+
+@test("막대 3개와 세로축 이름")
+def _():
+    ax = fig.axes[0]
+    assert len(ax.patches) == 3, f"막대 수: {len(ax.patches)}"
+    assert sorted(round(p.get_height()) for p in ax.patches) == [1, 2, 3], "막대 높이가 사용자 수와 다릅니다."
+    assert ax.get_ylabel() == "users", f"세로축 이름: {ax.get_ylabel()!r}"
+`,
+    hints: [
+      "`counts, edges = np.histogram(minutes, bins=[0, 10, 20, 30])`이고 `hist_counts = counts.tolist()`입니다. 구간은 $[0, 10)$, $[10, 20)$, $[20, 30]$입니다.",
+      "`plan_counts = plans.value_counts().to_dict()`이고, `ax.bar(list(plan_counts.keys()), list(plan_counts.values()))`와 `ax.set_ylabel(\"users\")`로 그립니다.",
+    ],
+    solution: py`
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+minutes = np.array([3, 8, 12, 15, 18, 22, 9, 27, 11, 5])
+plans = pd.Series(["free", "pro", "free", "basic", "free", "pro"])
+
+counts, edges = np.histogram(minutes, bins=[0, 10, 20, 30])
+hist_counts = counts.tolist()
+plan_counts = plans.value_counts().to_dict()
+
+fig, ax = plt.subplots()
+ax.bar(list(plan_counts.keys()), list(plan_counts.values()))
+ax.set_ylabel("users")
+plt.show()
+
+print(hist_counts, plan_counts)
+`,
+  },
+  {
     key: "ex1",
     title: "확인용 그래프를 만드는 함수 작성하기",
     prompt: md`
