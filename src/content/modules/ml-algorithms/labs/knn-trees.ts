@@ -2,6 +2,64 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "거리와 지니 불순도를 손계산과 맞추기",
+    prompt: md`
+
+KNN과 결정트리가 쓰는 두 계산을 함수로 만듭니다(NumPy 없이).
+
+1. \`euclid(a, b)\`: 두 점(같은 길이의 리스트) 사이의 유클리드 거리
+2. \`gini(counts)\`: 클래스별 샘플 수 리스트의 지니 불순도 $1 - \sum_k p_k^2$
+3. \`split_gini(left, right)\`: 두 자식 노드의 지니 불순도를 샘플 수로 가중 평균한 값
+
+본문의 예 \`gini([5, 3])\`은 약 0.4688, \`split_gini([3, 1], [2, 2])\`는 0.4375입니다.
+`,
+    starter: py`
+def euclid(a, b):
+    return 0.0   # TODO
+
+def gini(counts):
+    return 0.0   # TODO
+
+def split_gini(left, right):
+    return 0.0   # TODO: 왼쪽·오른쪽의 샘플 수를 가중치로
+
+print(euclid([2, 2], [5, 5]), gini([5, 3]), split_gini([3, 1], [2, 2]))
+`,
+    tests: py`
+@test("유클리드 거리")
+def _():
+    assert approx(euclid([2, 2], [5, 5]), 18 ** 0.5) and approx(euclid([0, 0], [3, 4]), 5.0), f"결과: {euclid([0, 0], [3, 4])}"
+
+@test("지니 불순도: 0, 0.5, 0.46875")
+def _():
+    assert approx(gini([4, 0]), 0.0) and approx(gini([2, 2]), 0.5) and approx(gini([5, 3]), 0.46875), f"gini([5, 3]) = {gini([5, 3])}"
+
+@test("분할 뒤의 가중 평균 0.4375")
+def _():
+    assert approx(split_gini([3, 1], [2, 2]), 0.4375), f"결과: {split_gini([3, 1], [2, 2])}"
+    assert approx(split_gini([4, 0], [0, 4]), 0.0)
+`,
+    hints: [
+      "거리는 `sum((x - y) ** 2 for x, y in zip(a, b)) ** 0.5`입니다.",
+      "`n = sum(counts)`로 두고 `1 - sum((c / n) ** 2 for c in counts)`입니다. 가중 평균은 `(nl * gini(left) + nr * gini(right)) / (nl + nr)`입니다.",
+    ],
+    solution: py`
+def euclid(a, b):
+    return sum((x - y) ** 2 for x, y in zip(a, b)) ** 0.5
+
+def gini(counts):
+    n = sum(counts)
+    return 1 - sum((c / n) ** 2 for c in counts)
+
+def split_gini(left, right):
+    nl, nr = sum(left), sum(right)
+    return (nl * gini(left) + nr * gini(right)) / (nl + nr)
+
+print(euclid([2, 2], [5, 5]), gini([5, 3]), split_gini([3, 1], [2, 2]))
+`,
+  },
+  {
     key: "ex1",
     title: "KNN 다수결과 결정트리의 분할 직접 구현하기",
     prompt: md`

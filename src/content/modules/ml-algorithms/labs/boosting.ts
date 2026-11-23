@@ -2,6 +2,70 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "잔차를 구하고 한 번 갱신하기",
+    prompt: md`
+
+그래디언트 부스팅의 한 단계를 리스트로 계산합니다.
+
+1. \`residuals(y, F)\`: 정답 \`y\`에서 현재 예측 \`F\`를 뺀 잔차 리스트
+2. \`update(F, h, lr)\`: 트리의 예측 \`h\`에 학습률을 곱해 더한 새 예측 $F + \eta\,h$
+3. \`mse(y, F)\`: 평균제곱오차
+
+본문 예제의 첫 단계에서 \`residuals([1, 3, 6, 8], [4.5] * 4)\`는 \`[-3.5, -1.5, 1.5, 3.5]\`이고, 트리가 \`[-2.5, -2.5, 2.5, 2.5]\`를 예측하면 \`update(..., lr=0.5)\`는 \`[3.25, 3.25, 5.75, 5.75]\`입니다.
+`,
+    starter: py`
+def residuals(y, F):
+    return []   # TODO
+
+def update(F, h, lr):
+    return F    # TODO
+
+def mse(y, F):
+    return 0.0  # TODO
+
+y = [1.0, 3.0, 6.0, 8.0]
+F0 = [4.5] * 4
+F1 = update(F0, [-2.5, -2.5, 2.5, 2.5], 0.5)
+print(residuals(y, F0), F1, mse(y, F0), mse(y, F1))
+`,
+    tests: py`
+@test("잔차")
+def _():
+    assert approx(residuals([1.0, 3.0, 6.0, 8.0], [4.5] * 4), [-3.5, -1.5, 1.5, 3.5]), f"결과: {residuals([1.0, 3.0, 6.0, 8.0], [4.5] * 4)}"
+
+@test("갱신 F + lr * h")
+def _():
+    got = update([4.5] * 4, [-2.5, -2.5, 2.5, 2.5], 0.5)
+    assert approx(got, [3.25, 3.25, 5.75, 5.75]), f"결과: {got}"
+
+@test("갱신하면 학습 MSE가 7.25에서 2.5625로 준다")
+def _():
+    y = [1.0, 3.0, 6.0, 8.0]
+    assert approx(mse(y, [4.5] * 4), 7.25), f"처음 MSE: {mse(y, [4.5] * 4)}"
+    assert approx(mse(y, [3.25, 3.25, 5.75, 5.75]), 2.5625)
+`,
+    hints: [
+      "`[yi - fi for yi, fi in zip(y, F)]`가 잔차이고, 갱신은 `[fi + lr * hi for fi, hi in zip(F, h)]`입니다.",
+      "MSE는 `sum((yi - fi) ** 2 for yi, fi in zip(y, F)) / len(y)`입니다.",
+    ],
+    solution: py`
+def residuals(y, F):
+    return [yi - fi for yi, fi in zip(y, F)]
+
+def update(F, h, lr):
+    return [fi + lr * hi for fi, hi in zip(F, h)]
+
+def mse(y, F):
+    return sum((yi - fi) ** 2 for yi, fi in zip(y, F)) / len(y)
+
+y = [1.0, 3.0, 6.0, 8.0]
+F0 = [4.5] * 4
+F1 = update(F0, [-2.5, -2.5, 2.5, 2.5], 0.5)
+print(residuals(y, F0), F1, mse(y, F0), mse(y, F1))
+`,
+  },
+  {
     key: "ex1",
     title: "그래디언트 부스팅과 순열 중요도 직접 구현하기",
     prompt: md`
