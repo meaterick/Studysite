@@ -2,6 +2,75 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "평균변화율 계산과 미분 규칙 적용하기",
+    prompt: md`
+
+1. \`avg_rate(f, a, h)\`: 입력이 $a$에서 $a + h$로 바뀔 때의 평균변화율 $\frac{f(a + h) - f(a)}{h}$를 돌려줍니다.
+2. \`dg(x)\`: $g(x) = 3x^2 - 4x + 5$의 도함수를 미분 규칙으로 **손으로 구해** 식으로 씁니다. 수치미분을 쓰지 않습니다.
+
+\`avg_rate(lambda x: x ** 2, 1, h)\`는 $h$가 작아질수록 2에 가까워져야 합니다.
+`,
+    starter: py`
+def avg_rate(f, a, h):
+    """a에서 a + h까지의 평균변화율"""
+    return 0.0   # TODO
+
+def g(x):
+    return 3 * x ** 2 - 4 * x + 5
+
+def dg(x):
+    """g의 도함수(미분 규칙으로 구한 식)"""
+    return 0.0   # TODO
+
+f = lambda x: x ** 2
+print([avg_rate(f, 1, h) for h in (1, 0.1, 0.01)])
+print(dg(2))
+`,
+    tests: py`
+@test("x^2의 평균변화율: 3, 2.1, 2.01")
+def _():
+    f = lambda x: x ** 2
+    got = [avg_rate(f, 1, h) for h in (1, 0.1, 0.01)]
+    assert approx(got, [3.0, 2.1, 2.01]), f"결과: {got}"
+
+@test("일차함수의 평균변화율은 기울기와 같다")
+def _():
+    got = avg_rate(lambda x: 5 * x + 2, 3, 0.5)
+    assert approx(got, 5.0), f"결과: {got}"
+
+@test("dg(2) = 8, dg(0) = -4")
+def _():
+    assert approx(dg(2), 8.0) and approx(dg(0), -4.0), f"dg(2) = {dg(2)}, dg(0) = {dg(0)}"
+
+@test("dg는 중심차분과 같다")
+def _():
+    for x in (-1.5, 0.3, 4.0):
+        numeric = (g(x + 1e-5) - g(x - 1e-5)) / 2e-5
+        assert approx(dg(x), numeric, tol=1e-4), f"x = {x}: dg = {dg(x)}, 중심차분 = {numeric}"
+`,
+    hints: [
+      "평균변화율은 `(f(a + h) - f(a)) / h`입니다.",
+      "항마다 미분합니다: $(3x^2)' = 6x$, $(-4x)' = -4$, $(5)' = 0$이므로 `return 6 * x - 4`입니다.",
+    ],
+    solution: py`
+def avg_rate(f, a, h):
+    """a에서 a + h까지의 평균변화율"""
+    return (f(a + h) - f(a)) / h
+
+def g(x):
+    return 3 * x ** 2 - 4 * x + 5
+
+def dg(x):
+    """g의 도함수(미분 규칙으로 구한 식)"""
+    return 6 * x - 4
+
+f = lambda x: x ** 2
+print([avg_rate(f, 1, h) for h in (1, 0.1, 0.01)])
+print(dg(2))
+`,
+  },
+  {
     key: "ex1",
     title: "다항식의 도함수와 중심차분 검산",
     prompt: md`

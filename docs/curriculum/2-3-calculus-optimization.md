@@ -20,10 +20,10 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [미분과 도함수](#lesson-derivatives) | 핵심 | 30분 | #23 미분과 도함수, 변화율 |
-| 2 | [편미분과 기울기](#lesson-gradient) | 핵심 | 30분 | #24 편미분과 기울기 |
-| 3 | [연쇄법칙](#lesson-chain-rule) | 핵심 | 30분 | #25 연쇄법칙과 합성함수의 미분 |
-| 4 | [최솟값과 경사하강법](#lesson-gradient-descent) | 핵심 | 45분 | #26 최솟값·최댓값, 경사하강법 |
+| 1 | [미분과 도함수](#lesson-derivatives) | 핵심 | 45분 | #23 미분과 도함수, 변화율 |
+| 2 | [편미분과 기울기](#lesson-gradient) | 핵심 | 45분 | #24 편미분과 기울기 |
+| 3 | [연쇄법칙](#lesson-chain-rule) | 핵심 | 50분 | #25 연쇄법칙과 합성함수의 미분 |
+| 4 | [최솟값과 경사하강법](#lesson-gradient-descent) | 핵심 | 60분 | #26 최솟값·최댓값, 경사하강법 |
 | 5 | [경사하강법의 수렴 조건과 조건수](#lesson-gd-convergence) | 심화 | 40분 | — |
 
 ## 핵심 레슨
@@ -32,7 +32,7 @@
 
 ### 1. 미분과 도함수
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/calculus-optimization/derivatives.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/derivatives.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/calculus-optimization/derivatives.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/derivatives.ts)
 
 **학습 목표:** 평균변화율의 극한으로 도함수를 정의하고, 거듭제곱·상수배·합·곱·지수·로그의 미분 규칙으로 도함수를 구하며, 도함수의 부호로 증가·감소와 최솟값을 판단하고 중심차분으로 결과를 검산한다.
 
@@ -40,10 +40,11 @@
 
 **본문 절:** 평균변화율과 순간변화율 · 미분 규칙 · 도함수의 부호와 최솟값 · 수치미분
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 2 · 그림 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 4 · 그림 1
 
 **실습**
 
+- `ex0` 평균변화율 계산과 미분 규칙 적용하기
 - `ex1` 다항식의 도함수와 중심차분 검산
 
 **서술형**
@@ -59,7 +60,7 @@
 
 ### 2. 편미분과 기울기
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/calculus-optimization/gradient.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/gradient.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/calculus-optimization/gradient.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/gradient.ts)
 
 **학습 목표:** 다변수 함수의 편미분을 계산해 기울기 벡터를 만들고, 기울기가 함수가 가장 빠르게 증가하는 방향이며 등고선에 수직이라는 사실을 방향도함수로 설명하며, 파라미터와 같은 모양의 기울기를 수치미분으로 검산한다.
 
@@ -67,10 +68,11 @@
 
 **본문 절:** 편미분 · 기울기 벡터 · 기울기는 가장 빠르게 증가하는 방향이다 · 손실함수의 기울기 · 수치 기울기
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 3 · 그림 1
 
 **실습**
 
+- `ex0` 편미분을 손으로 구해 기울기 함수 만들기
 - `ex1` 수치 기울기와 평균제곱오차의 기울기
 
 **서술형**
@@ -86,7 +88,7 @@
 
 ### 3. 연쇄법칙
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/calculus-optimization/chain-rule.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/chain-rule.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/calculus-optimization/chain-rule.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/chain-rule.ts)
 
 **학습 목표:** 합성함수의 도함수를 연쇄법칙으로 구하고, 여러 단계로 된 계산에서 국소 도함수를 뒤에서부터 곱해 손실의 기울기를 구하며, 한 변수가 여러 경로로 결과에 영향을 줄 때 경로별 기여를 더한다.
 
@@ -94,10 +96,11 @@
 
 **본문 절:** 합성함수의 미분 · 손실을 파라미터로 미분하기 · 여러 단계로 나누어 계산하기 · 시그모이드의 도함수 · 여러 경로로 영향을 줄 때
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 3 · 그림 1
 
 **실습**
 
+- `ex0` 순전파와 역전파를 한 단계씩 계산하기
 - `ex1` 연쇄법칙으로 뉴런 하나의 기울기 구하기
 
 **서술형**
@@ -113,7 +116,7 @@
 
 ### 4. 최솟값과 경사하강법
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/calculus-optimization/gradient-descent.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/gradient-descent.ts)
+핵심 · 60분 · [본문 원본](../../src/content/modules/calculus-optimization/gradient-descent.ts) · [실습 원본](../../src/content/modules/calculus-optimization/labs/gradient-descent.ts)
 
 **학습 목표:** 경사하강법의 갱신식으로 1변수와 다변수 손실의 최솟값을 반복 계산으로 구하고, 학습률에 따른 수렴·진동·발산을 오차의 배율 $1 - 2\eta$로 설명하며, 기울기가 0인 지점이 최솟값이 아닐 수 있는 경우를 구분한다.
 
@@ -121,10 +124,11 @@
 
 **본문 절:** 최솟값을 찾는 두 가지 방법 · 경사하강법 · 학습률과 수렴 · 파라미터가 여러 개일 때: 선형 회귀 · 기울기가 0인 곳
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3 · 이미지 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 3 · 그림 3 · 이미지 1
 
 **실습**
 
+- `ex0` 경사하강법의 갱신을 한 번씩 계산하기
 - `ex1` 경사하강법 함수와 학습률 진단
 
 **서술형**

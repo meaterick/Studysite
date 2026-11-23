@@ -2,6 +2,75 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "순전파와 역전파를 한 단계씩 계산하기",
+    prompt: md`
+
+모델 $\hat y = wx$, 오차 $e = \hat y - y$, 손실 $L = e^2$의 계산을 한 줄씩 작성합니다. 본문의 표처럼 순전파로 값을 구한 뒤, 손실 쪽부터 국소 도함수를 하나씩 곱해 역전파합니다.
+
+\`forward_backward(w, x, y)\`는 \`(y_hat, e, L, dL_de, dL_dyhat, dL_dw)\`를 돌려줍니다.
+
+- $\frac{\partial L}{\partial e} = 2e$
+- $\frac{\partial L}{\partial \hat y} = \frac{\partial L}{\partial e} \times \frac{\partial e}{\partial \hat y}$이고 $\frac{\partial e}{\partial \hat y} = 1$
+- $\frac{\partial L}{\partial w} = \frac{\partial L}{\partial \hat y} \times \frac{\partial \hat y}{\partial w}$이고 $\frac{\partial \hat y}{\partial w} = x$
+
+먼저 \`forward_backward(2, 4, 10)\`의 결과를 손으로 계산해 적어 두면 채점 결과와 비교할 수 있습니다.
+`,
+    starter: py`
+def forward_backward(w, x, y):
+    # 순전파
+    y_hat = None      # TODO
+    e = None          # TODO
+    L = None          # TODO
+    # 역전파
+    dL_de = None      # TODO
+    dL_dyhat = None   # TODO
+    dL_dw = None      # TODO
+    return y_hat, e, L, dL_de, dL_dyhat, dL_dw
+
+print(forward_backward(2, 4, 10))
+`,
+    tests: py`
+@test("(w, x, y) = (2, 4, 10)")
+def _():
+    got = forward_backward(2, 4, 10)
+    assert None not in got, f"결과: {got}"
+    assert approx(list(got), [8, -2, 4, -4, -4, -16]), f"결과: {got}"
+
+@test("본문의 예 (1, 2, 6)")
+def _():
+    got = forward_backward(1, 2, 6)
+    assert None not in got, f"결과: {got}"
+    assert approx(list(got), [2, -4, 16, -8, -8, -16]), f"결과: {got}"
+
+@test("dL/dw는 수치미분과 같다")
+def _():
+    for w, x, y in ((0.5, 3.0, 1.0), (-1.0, 2.0, 2.0)):
+        L = lambda w_: (w_ * x - y) ** 2
+        numeric = (L(w + 1e-5) - L(w - 1e-5)) / 2e-5
+        got = forward_backward(w, x, y)[5]
+        assert got is not None and approx(got, numeric, tol=1e-4), f"(w, x, y) = {(w, x, y)}: 결과 {got}, 수치미분 {numeric}"
+`,
+    hints: [
+      "순전파는 `y_hat = w * x`, `e = y_hat - y`, `L = e ** 2`입니다.",
+      "역전파는 윗줄의 결과에 국소 도함수를 곱합니다: `dL_de = 2 * e`, `dL_dyhat = dL_de * 1`, `dL_dw = dL_dyhat * x`입니다.",
+    ],
+    solution: py`
+def forward_backward(w, x, y):
+    # 순전파
+    y_hat = w * x
+    e = y_hat - y
+    L = e ** 2
+    # 역전파
+    dL_de = 2 * e
+    dL_dyhat = dL_de * 1
+    dL_dw = dL_dyhat * x
+    return y_hat, e, L, dL_de, dL_dyhat, dL_dw
+
+print(forward_backward(2, 4, 10))
+`,
+  },
+  {
     key: "ex1",
     title: "연쇄법칙으로 뉴런 하나의 기울기 구하기",
     prompt: md`

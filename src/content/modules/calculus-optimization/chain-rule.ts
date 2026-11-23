@@ -23,6 +23,15 @@ $y = f(g(x))$처럼 함수를 합성한 경우([[lesson:functions-composition]])
 - $y = e^{-x^2}$: $u = -x^2$이므로 $\frac{dy}{dx} = e^{u} \cdot (-2x) = -2x\,e^{-x^2}$이다.
 - $y = \ln(1 + e^x)$: $u = 1 + e^x$이므로 $\frac{dy}{dx} = \frac{1}{u} \cdot e^x = \frac{e^x}{1 + e^x}$이다. 이 값은 아래에서 다룰 시그모이드 함수 $\sigma(x)$와 같다.
 
+:::example 예제: $y = (3x + 1)^2$의 $x = 2$에서의 기울기
+1. 안쪽 함수의 값을 구한다: $u = 3 \times 2 + 1 = 7$
+2. 바깥 함수 $y = u^2$의 도함수를 $u = 7$에서 계산한다: $\frac{dy}{du} = 2u = 14$
+3. 안쪽 함수 $u = 3x + 1$의 도함수: $\frac{du}{dx} = 3$
+4. 두 값을 곱한다: $\frac{dy}{dx} = 14 \times 3 = 42$
+
+식 $6(3x + 1)$에 $x = 2$를 넣어도 $6 \times 7 = 42$다.
+:::
+
 ### 손실을 파라미터로 미분하기
 
 데이터 한 개 $(x, y)$에 대한 모델 $\hat y = wx$의 제곱오차 $L(w) = (wx - y)^2$에서 $u = wx - y$로 두면
@@ -42,6 +51,30 @@ $y = f(g(x))$처럼 함수를 합성한 경우([[lesson:functions-composition]])
 \`\`\`
 
 이다. 각 단계의 도함수 $\frac{\partial L}{\partial e} = 2e$, $\frac{\partial e}{\partial \hat y} = 1$, $\frac{\partial \hat y}{\partial w} = x$를 **국소 도함수**라고 한다. 먼저 입력에서 손실까지 값을 차례로 계산하고(순전파), 손실에서 거꾸로 국소 도함수를 하나씩 곱해 나가면(역전파) 중간값마다의 기울기 $\frac{\partial L}{\partial e}$, $\frac{\partial L}{\partial \hat y}$, $\frac{\partial L}{\partial w}$를 차례로 얻는다. 층이 수십 개인 신경망도 이 순서로 기울기를 계산한다.
+
+$(x, y) = (2, 6)$, $w = 1$로 두 방향의 계산을 표로 따라가면 다음과 같다.
+
+| 순전파 | 값 | 역전파 | 값 |
+| --- | --- | --- | --- |
+| $\hat y = wx$ | 2 | $\frac{\partial L}{\partial e} = 2e$ | −8 |
+| $e = \hat y - y$ | −4 | $\frac{\partial L}{\partial \hat y} = \frac{\partial L}{\partial e} \times 1$ | −8 |
+| $L = e^2$ | 16 | $\frac{\partial L}{\partial w} = \frac{\partial L}{\partial \hat y} \times x$ | −16 |
+
+순전파는 위에서 아래로, 역전파는 손실 쪽 값부터 계산한다. 역전파의 각 줄은 바로 윗줄의 결과에 국소 도함수 하나를 곱한다.
+
+\`\`\`python
+x, y, w = 2.0, 6.0, 1.0
+# 순전파
+y_hat = w * x
+e = y_hat - y
+L = e ** 2
+print(y_hat, e, L)                # 2.0 -4.0 16.0
+# 역전파: 국소 도함수를 하나씩 곱한다
+dL_de = 2 * e
+dL_dyhat = dL_de * 1
+dL_dw = dL_dyhat * x
+print(dL_de, dL_dyhat, dL_dw)     # -8.0 -8.0 -16.0
+\`\`\`
 
 [[diagram:chain-rule-chain]]
 
@@ -78,6 +111,15 @@ for z in [0, 2, 5]:
     print(z, round(s * (1 - s), 4), round(numeric(sigmoid, z), 4))   # σ(z)(1 − σ(z))와 수치미분
 \`\`\`
 
+\`\`\`output
+42 42.0
+0 0.25 0.25
+2 0.105 0.105
+5 0.0066 0.0066
+\`\`\`
+
+$z$가 0에서 5로 커지는 동안 시그모이드의 도함수는 0.25에서 0.0066으로 작아진다.
+
 ### 여러 경로로 영향을 줄 때
 
 변수 하나가 여러 중간값을 거쳐 결과에 영향을 주면, 경로마다 연쇄법칙으로 구한 값을 **더한다**. $u = w^2$, $v = 3w$, $f = uv$이면 $w$는 $u$와 $v$ 두 경로로 $f$에 영향을 준다.
@@ -87,6 +129,21 @@ for z in [0, 2, 5]:
 \`\`\`
 
 $f = 3w^3$을 직접 미분한 $9w^2$와 같다. 곱의 미분 규칙 $(gh)' = g'h + gh'$도 두 경로의 기여를 더한 식이다. 신경망에서 한 값이 다음 층의 여러 뉴런으로 전달되면, 역전파는 각 뉴런에서 돌아온 기울기를 더해 그 값의 기울기를 구한다([[lesson:micrograd]]).
+
+$w = 2$에서 두 경로의 기여를 따로 계산해 더하고, 수치미분과 비교한다.
+
+\`\`\`python
+w = 2.0
+u, v = w ** 2, 3 * w            # 두 중간값: u = 4, v = 6
+path_u = v * (2 * w)            # f → u → w 경로: ∂f/∂u × du/dw
+path_v = u * 3                  # f → v → w 경로: ∂f/∂v × dv/dw
+print(path_u, path_v, path_u + path_v)               # 24.0 12.0 36.0
+print(round(numeric(lambda w: (w ** 2) * (3 * w), 2.0), 4))   # 36.0
+\`\`\`
+
+:::task 직접 해 보기
+$f = u + v$로 바꾸면($u = w^2$, $v = 3w$) $\frac{\partial f}{\partial u} = 1$, $\frac{\partial f}{\partial v} = 1$이다. $w = 2$에서 두 경로의 기여와 그 합을 먼저 계산한 뒤, 위 코드를 고쳐 수치미분과 비교한다.
+:::
 
 :::warn 흔한 실수
 - **안쪽 함수의 도함수를 곱하지 않는다.** $\frac{d}{dx}(3x + 1)^2 = 2(3x + 1)$이라고 쓰면 안쪽의 도함수 3을 빠뜨린 것이다.
@@ -153,6 +210,21 @@ print(grad)
 `,
       expected: "0.015625",
       explanation: "시그모이드의 도함수는 $z = 0$에서 $0.5 \\times 0.5 = 0.25$다. 세 단계를 지나며 연쇄법칙으로 0.25가 세 번 곱해지므로 $0.25^3 = 0.015625$다. 층이 깊어질수록 기울기가 기하급수적으로 작아진다.",
+    },
+    {
+      key: "p2",
+      question: "순전파로 손실을 구하고 역전파로 기울기를 구한다. 출력을 예측하십시오.",
+      code: py`
+x, y, w = 3, 5, 2
+y_hat = w * x
+e = y_hat - y
+L = e ** 2
+dL_de = 2 * e
+dL_dw = dL_de * x
+print(y_hat, e, L, dL_de, dL_dw)
+`,
+      expected: "6 1 1 2 6",
+      explanation: "순전파: $\\hat y = 2 \\times 3 = 6$, $e = 6 - 5 = 1$, $L = 1^2 = 1$이다. 역전파: $\\frac{\\partial L}{\\partial e} = 2e = 2$이고, $\\frac{\\partial e}{\\partial \\hat y} = 1$, $\\frac{\\partial \\hat y}{\\partial w} = x = 3$이므로 $\\frac{\\partial L}{\\partial w} = 2 \\times 1 \\times 3 = 6$이다. 모두 정수 연산이라 정수로 출력된다.",
     },
   ],
   descriptive: [

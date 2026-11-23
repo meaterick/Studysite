@@ -2,6 +2,75 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "경사하강법의 갱신을 한 번씩 계산하기",
+    prompt: md`
+
+손실 $L(w) = (w + 1)^2$의 최솟값 $w = -1$을 경사하강법으로 찾습니다.
+
+1. \`grad(w)\`: $L$의 도함수 $\frac{dL}{dw}$를 손으로 구해 씁니다.
+2. \`step(w, lr)\`: 갱신 한 번 $w - \eta \frac{dL}{dw}$의 결과를 돌려줍니다.
+
+시작 코드는 $w = 2$, 학습률 0.1로 세 번 갱신한 값을 \`history\`에 모읍니다. 첫 갱신은 $2 - 0.1 \times 6 = 1.4$입니다. 나머지 두 값도 손으로 계산해 보고 결과와 비교합니다.
+`,
+    starter: py`
+def grad(w):
+    """L(w) = (w + 1)^2의 도함수"""
+    return 0.0   # TODO
+
+def step(w, lr):
+    """경사하강법 한 번"""
+    return w     # TODO: w - lr * grad(w)
+
+w = 2.0
+history = []
+for _ in range(3):
+    w = step(w, 0.1)
+    history.append(w)
+print(history)
+`,
+    tests: py`
+@test("도함수: grad(2) = 6, grad(-1) = 0")
+def _():
+    assert approx(grad(2.0), 6.0) and approx(grad(-1.0), 0.0), f"grad(2) = {grad(2.0)}, grad(-1) = {grad(-1.0)}"
+
+@test("한 번 갱신: step(2, 0.1) = 1.4")
+def _():
+    assert approx(step(2.0, 0.1), 1.4), f"결과: {step(2.0, 0.1)}"
+
+@test("세 번 갱신: 1.4, 0.92, 0.536")
+def _():
+    assert approx(history, [1.4, 0.92, 0.536]), f"결과: {history}"
+
+@test("200번 갱신하면 최솟값 -1에 가까워진다")
+def _():
+    w = 2.0
+    for _ in range(200):
+        w = step(w, 0.1)
+    assert approx(w, -1.0, tol=1e-6), f"결과: {w}"
+`,
+    hints: [
+      "연쇄법칙이나 전개로 $\\frac{d}{dw}(w + 1)^2 = 2(w + 1)$입니다.",
+      "`step`은 `return w - lr * grad(w)`입니다. 두 번째 갱신은 $1.4 - 0.1 \\times 2(1.4 + 1) = 0.92$입니다.",
+    ],
+    solution: py`
+def grad(w):
+    """L(w) = (w + 1)^2의 도함수"""
+    return 2 * (w + 1)
+
+def step(w, lr):
+    """경사하강법 한 번"""
+    return w - lr * grad(w)
+
+w = 2.0
+history = []
+for _ in range(3):
+    w = step(w, 0.1)
+    history.append(w)
+print(history)
+`,
+  },
+  {
     key: "ex1",
     title: "경사하강법 함수와 학습률 진단",
     prompt: md`

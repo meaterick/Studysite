@@ -2,6 +2,75 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "편미분을 손으로 구해 기울기 함수 만들기",
+    prompt: md`
+
+$g(x, y) = x^2 y + y^3 - 2x$의 편미분을 손으로 구해 함수로 씁니다. 한 변수로 미분할 때 다른 변수는 상수로 봅니다.
+
+1. \`dg_dx(x, y)\`: $\frac{\partial g}{\partial x}$
+2. \`dg_dy(x, y)\`: $\frac{\partial g}{\partial y}$
+
+\`grad_g(x, y)\`는 두 편미분을 리스트로 모으며 미리 주어집니다. 점 $(1, 2)$에서 기울기는 \`[2, 13]\`이어야 합니다.
+`,
+    starter: py`
+def g(x, y):
+    return x ** 2 * y + y ** 3 - 2 * x
+
+def dg_dx(x, y):
+    """y를 상수로 보고 x로 미분"""
+    return 0.0   # TODO
+
+def dg_dy(x, y):
+    """x를 상수로 보고 y로 미분"""
+    return 0.0   # TODO
+
+def grad_g(x, y):
+    return [dg_dx(x, y), dg_dy(x, y)]
+
+print(grad_g(1, 2))
+`,
+    tests: py`
+@test("점 (1, 2)의 기울기 [2, 13]")
+def _():
+    got = grad_g(1, 2)
+    assert approx(got, [2.0, 13.0]), f"결과: {got}"
+
+@test("원점의 기울기 [-2, 0]")
+def _():
+    assert approx(grad_g(0, 0), [-2.0, 0.0]), f"결과: {grad_g(0, 0)}"
+
+@test("중심차분과 같다")
+def _():
+    h = 1e-5
+    for x, y in ((0.5, -1.0), (2.0, 0.3), (-1.2, 1.5)):
+        nx = (g(x + h, y) - g(x - h, y)) / (2 * h)
+        ny = (g(x, y + h) - g(x, y - h)) / (2 * h)
+        assert approx(grad_g(x, y), [nx, ny], tol=1e-4), f"({x}, {y}): 결과 {grad_g(x, y)}, 중심차분 {[nx, ny]}"
+`,
+    hints: [
+      "$x$로 미분할 때 $x^2 y$는 $y$가 상수라 $2xy$, $y^3$은 0, $-2x$는 $-2$입니다.",
+      "$y$로 미분할 때 $x^2 y$는 $x^2$, $y^3$은 $3y^2$, $-2x$는 0입니다. `return x ** 2 + 3 * y ** 2`입니다.",
+    ],
+    solution: py`
+def g(x, y):
+    return x ** 2 * y + y ** 3 - 2 * x
+
+def dg_dx(x, y):
+    """y를 상수로 보고 x로 미분"""
+    return 2 * x * y - 2
+
+def dg_dy(x, y):
+    """x를 상수로 보고 y로 미분"""
+    return x ** 2 + 3 * y ** 2
+
+def grad_g(x, y):
+    return [dg_dx(x, y), dg_dy(x, y)]
+
+print(grad_g(1, 2))
+`,
+  },
+  {
     key: "ex1",
     title: "수치 기울기와 평균제곱오차의 기울기",
     prompt: md`
