@@ -2,6 +2,66 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "이항분포의 확률을 두 부분으로 나누어 계산하기",
+    prompt: md`
+
+정답률이 0.8인 모델이 10문제 중 정확히 8문제를 맞힐 확률을 본문의 표처럼 나누어 계산합니다.
+
+1. \`ways\`: 10문제 중 맞힌 8문제의 위치를 고르는 경우의 수 $\binom{10}{8}$. \`math.comb\`를 씁니다.
+2. \`one_order\`: 맞힘 8번과 틀림 2번이 특정한 순서로 나올 확률 $0.8^8 \times 0.2^2$
+3. \`prob\`: 두 값의 곱
+4. \`bern_mean\`, \`bern_var\`: 성공 확률이 0.3인 베르누이 분포의 평균 $p$와 분산 $p(1 - p)$
+`,
+    starter: py`
+from math import comb
+
+ways = None        # TODO
+one_order = None   # TODO
+prob = None        # TODO
+
+p = 0.3
+bern_mean = None   # TODO
+bern_var = None    # TODO
+
+print(ways, one_order, prob)
+print(bern_mean, bern_var)
+`,
+    tests: py`
+@test("경우의 수 45")
+def _():
+    assert ways == 45, f"결과: {ways}"
+
+@test("순서 하나의 확률과 전체 확률")
+def _():
+    assert one_order is not None and approx(one_order, 0.8 ** 8 * 0.2 ** 2), f"one_order: {one_order}"
+    assert prob is not None and approx(prob, 0.30199, tol=1e-4), f"prob: {prob}"
+
+@test("베르누이 분포: 평균 0.3, 분산 0.21")
+def _():
+    assert bern_mean is not None and approx(bern_mean, 0.3), f"평균: {bern_mean}"
+    assert bern_var is not None and approx(bern_var, 0.21), f"분산: {bern_var}"
+`,
+    hints: [
+      "`ways = comb(10, 8)`이고 `one_order = 0.8 ** 8 * 0.2 ** 2`입니다.",
+      "베르누이 분포는 $E[X] = p$, $\\mathrm{Var}(X) = p(1 - p)$이므로 `bern_mean = p`, `bern_var = p * (1 - p)`입니다.",
+    ],
+    solution: py`
+from math import comb
+
+ways = comb(10, 8)
+one_order = 0.8 ** 8 * 0.2 ** 2
+prob = ways * one_order
+
+p = 0.3
+bern_mean = p
+bern_var = p * (1 - p)
+
+print(ways, one_order, prob)
+print(bern_mean, bern_var)
+`,
+  },
+  {
     key: "ex1",
     title: "이항분포의 확률과 정규분포의 구간 확률 계산하기",
     prompt: md`

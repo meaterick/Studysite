@@ -2,6 +2,58 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "표본공간을 만들고 사건의 결과 세기",
+    prompt: md`
+
+주사위 두 개를 던지는 실험을 코드로 나열하고 확률을 셉니다.
+
+1. \`omega\`: 두 눈의 순서쌍 \`(첫째 눈, 둘째 눈)\` 36개를 담은 리스트. 리스트 컴프리헨션으로 만듭니다.
+2. \`high\`: \`omega\` 중 두 눈의 합이 10 이상인 결과의 리스트
+3. \`p_high\`: 합이 10 이상일 확률. \`Fraction(결과 수, 전체 결과 수)\`로 정확한 분수를 씁니다.
+
+먼저 본문의 표에서 합이 10 이상인 칸이 몇 개인지 세어 두면 결과를 확인할 수 있습니다.
+`,
+    starter: py`
+from fractions import Fraction
+
+omega = []      # TODO: (a, b) 순서쌍 36개
+high = []       # TODO: 합이 10 이상인 결과
+p_high = None   # TODO: Fraction으로 확률
+
+print(len(omega), high, p_high)
+`,
+    tests: py`
+from fractions import Fraction
+
+@test("표본공간: 순서쌍 36개")
+def _():
+    assert len(omega) == 36, f"결과 수: {len(omega)}"
+    assert set(omega) == {(a, b) for a in range(1, 7) for b in range(1, 7)}, "1~6의 모든 순서쌍이어야 합니다."
+
+@test("합이 10 이상인 결과 6개")
+def _():
+    assert sorted(high) == [(4, 6), (5, 5), (5, 6), (6, 4), (6, 5), (6, 6)], f"결과: {sorted(high)}"
+
+@test("확률 1/6")
+def _():
+    assert p_high == Fraction(1, 6), f"결과: {p_high}"
+`,
+    hints: [
+      "`omega = [(a, b) for a in range(1, 7) for b in range(1, 7)]`처럼 반복을 두 번 씁니다. `range(1, 7)`은 1부터 6까지입니다.",
+      "`high = [o for o in omega if o[0] + o[1] >= 10]`이고, 확률은 `Fraction(len(high), len(omega))`입니다.",
+    ],
+    solution: py`
+from fractions import Fraction
+
+omega = [(a, b) for a in range(1, 7) for b in range(1, 7)]
+high = [o for o in omega if o[0] + o[1] >= 10]
+p_high = Fraction(len(high), len(omega))
+
+print(len(omega), high, p_high)
+`,
+  },
+  {
     key: "ex1",
     title: "사건의 확률을 세어서 계산하고 독립성 판정하기",
     prompt: md`

@@ -2,6 +2,58 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "베이즈 정리를 단계별로 계산하기",
+    prompt: md`
+
+본문의 다섯 단계 표를 함수로 옮깁니다. \`bayes_steps(prior, sensitivity, false_pos)\`는 다음 세 값을 튜플로 돌려줍니다.
+
+1. \`joint\`: 환자이면서 양성일 확률 $P(B \mid A)\,P(A)$
+2. \`evidence\`: 양성 전체의 확률 $P(B) = P(B \mid A)\,P(A) + P(B \mid A^c)\,P(A^c)$
+3. \`post\`: 사후확률 $P(A \mid B) = \frac{\text{joint}}{\text{evidence}}$
+
+본문의 예 \`bayes_steps(0.01, 0.99, 0.05)\`는 \`(0.0099, 0.0594, 약 0.1667)\`입니다.
+`,
+    starter: py`
+def bayes_steps(prior, sensitivity, false_pos):
+    joint = 0.0      # TODO: 환자이면서 양성
+    evidence = 0.0   # TODO: 양성 전체
+    post = 0.0       # TODO: 사후확률
+    return joint, evidence, post
+
+print(bayes_steps(0.01, 0.99, 0.05))
+`,
+    tests: py`
+@test("본문의 예: 0.0099, 0.0594, 0.1667")
+def _():
+    got = bayes_steps(0.01, 0.99, 0.05)
+    assert approx(list(got), [0.0099, 0.0594, 0.0099 / 0.0594], tol=1e-9), f"결과: {got}"
+
+@test("기저율 10%: 사후확률 0.6875")
+def _():
+    assert approx(bayes_steps(0.10, 0.99, 0.05)[2], 0.6875, tol=1e-9), f"결과: {bayes_steps(0.10, 0.99, 0.05)}"
+
+@test("사후확률을 다음 사전확률로: 두 번째 양성 뒤 약 0.80")
+def _():
+    p1 = bayes_steps(0.01, 0.99, 0.05)[2]
+    p2 = bayes_steps(p1, 0.99, 0.05)[2]
+    assert approx(p2, 0.7984, tol=1e-3), f"결과: {p2}"
+`,
+    hints: [
+      "`joint = sensitivity * prior`입니다. 건강한 사람의 비율은 `1 - prior`입니다.",
+      "`evidence = joint + false_pos * (1 - prior)`, `post = joint / evidence`입니다.",
+    ],
+    solution: py`
+def bayes_steps(prior, sensitivity, false_pos):
+    joint = sensitivity * prior
+    evidence = joint + false_pos * (1 - prior)
+    post = joint / evidence
+    return joint, evidence, post
+
+print(bayes_steps(0.01, 0.99, 0.05))
+`,
+  },
+  {
     key: "ex1",
     title: "베이즈 정리를 사람 수(자연 빈도)로 계산하기",
     prompt: md`

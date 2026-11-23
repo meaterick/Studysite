@@ -20,10 +20,10 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [확률, 사건, 독립성](#lesson-probability-rules) | 핵심 | 30분 | #27 확률, 사건, 독립성 |
-| 2 | [조건부확률과 베이즈 정리](#lesson-bayes) | 핵심 | 35분 | #28 조건부확률과 베이즈 정리 |
-| 3 | [확률변수, 기댓값, 분산](#lesson-random-variables) | 핵심 | 30분 | #29 확률변수, 확률분포, 기댓값, 분산 |
-| 4 | [정규분포, 이항분포, 표준정규분포](#lesson-distributions) | 핵심 | 40분 | #30 정규분포, 이항분포, 표준정규분포 |
+| 1 | [확률, 사건, 독립성](#lesson-probability-rules) | 핵심 | 45분 | #27 확률, 사건, 독립성 |
+| 2 | [조건부확률과 베이즈 정리](#lesson-bayes) | 핵심 | 55분 | #28 조건부확률과 베이즈 정리 |
+| 3 | [확률변수, 기댓값, 분산](#lesson-random-variables) | 핵심 | 45분 | #29 확률변수, 확률분포, 기댓값, 분산 |
+| 4 | [정규분포, 이항분포, 표준정규분포](#lesson-distributions) | 핵심 | 50분 | #30 정규분포, 이항분포, 표준정규분포 |
 
 ## 핵심 레슨
 
@@ -31,7 +31,7 @@
 
 ### 1. 확률, 사건, 독립성
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/probability-basics/probability-rules.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/probability-rules.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/probability-basics/probability-rules.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/probability-rules.ts)
 
 **학습 목표:** 표본공간과 사건으로 확률을 정의하고, 여사건·합사건·곱사건의 확률을 덧셈 법칙과 곱셈 법칙으로 계산하며, 배반과 독립을 구분하고 시뮬레이션으로 확률을 근사한다.
 
@@ -39,10 +39,11 @@
 
 **본문 절:** 표본공간과 사건 · 확률의 기본 성질 · 합사건과 덧셈 법칙 · 독립과 곱셈 법칙 · 시뮬레이션으로 확률 근사하기
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 4
 
 **실습**
 
+- `ex0` 표본공간을 만들고 사건의 결과 세기
 - `ex1` 사건의 확률을 세어서 계산하고 독립성 판정하기
 
 **서술형**
@@ -58,7 +59,7 @@
 
 ### 2. 조건부확률과 베이즈 정리
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/probability-basics/bayes.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/bayes.ts)
+핵심 · 55분 · [본문 원본](../../src/content/modules/probability-basics/bayes.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/bayes.ts)
 
 **학습 목표:** 조건부확률을 정의하고 곱셈 법칙과 전체확률의 법칙으로 확률을 계산하며, 베이즈 정리로 사전확률을 사후확률로 갱신하고 기저율이 결과에 미치는 영향을 사람 수로 설명한다.
 
@@ -66,10 +67,11 @@
 
 **본문 절:** 조건부확률 · 곱셈 법칙과 전체확률의 법칙 · 베이즈 정리 · 관찰이 쌓일 때의 갱신
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 4 · 그림 3
 
 **실습**
 
+- `ex0` 베이즈 정리를 단계별로 계산하기
 - `ex1` 베이즈 정리를 사람 수(자연 빈도)로 계산하기
 
 **서술형**
@@ -86,7 +88,7 @@
 
 ### 3. 확률변수, 기댓값, 분산
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/probability-basics/random-variables.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/random-variables.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/probability-basics/random-variables.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/random-variables.ts)
 
 **학습 목표:** 확률변수와 확률분포(확률질량함수·확률밀도함수·누적분포함수)를 구분하고, 기댓값과 분산을 정의대로 계산하며, 기댓값의 선형성과 독립인 확률변수의 분산의 합 성질을 적용한다.
 
@@ -94,10 +96,11 @@
 
 **본문 절:** 확률변수 · 이산확률분포와 확률질량함수 · 연속확률분포와 확률밀도함수 · 기댓값 · 분산과 표준편차 · 기댓값과 분산의 성질
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 2
 
 **실습**
 
+- `ex0` 결과를 세어 확률분포와 기댓값 구하기
 - `ex1` 확률질량함수로 기댓값·분산 계산하고 합의 분포 만들기
 
 **서술형**
@@ -113,7 +116,7 @@
 
 ### 4. 정규분포, 이항분포, 표준정규분포
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/probability-basics/distributions.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/distributions.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/probability-basics/distributions.ts) · [실습 원본](../../src/content/modules/probability-basics/labs/distributions.ts)
 
 **학습 목표:** 베르누이·이항·균등·정규분포의 확률질량함수나 확률밀도함수와 평균·분산을 쓰고, 이항분포로 성공 횟수의 확률을 계산하며, 정규분포를 표준화해 z-점수와 표준정규분포로 구간의 확률을 구한다.
 
@@ -121,10 +124,11 @@
 
 **본문 절:** 베르누이 분포 · 이항분포 · 균등분포 · 정규분포 · 표준정규분포와 z-점수
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3 · 그림 3
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 4 · 그림 3
 
 **실습**
 
+- `ex0` 이항분포의 확률을 두 부분으로 나누어 계산하기
 - `ex1` 이항분포의 확률과 정규분포의 구간 확률 계산하기
 
 **서술형**

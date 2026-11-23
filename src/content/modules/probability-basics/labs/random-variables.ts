@@ -2,6 +2,58 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "결과를 세어 확률분포와 기댓값 구하기",
+    prompt: md`
+
+동전을 세 번 던지는 실험에서 앞면의 개수 $Y$의 분포를 직접 셉니다.
+
+1. \`outcomes\`: 결과 8가지를 \`"앞앞뒤"\`처럼 세 글자 문자열로 담은 리스트
+2. \`pmf\`: \`{앞면의 개수: 확률}\` 딕셔너리. 개수별로 결과를 센 뒤 8로 나눕니다.
+3. \`mean\`: $E[Y] = \sum_y y\,p(y)$
+
+본문의 표와 같은 \`{0: 1/8, 1: 3/8, 2: 3/8, 3: 1/8}\`, \`1.5\`가 나와야 합니다.
+`,
+    starter: py`
+outcomes = []   # TODO: 세 글자 문자열 8개
+pmf = {}        # TODO: {앞면의 개수: 확률}
+mean = None     # TODO: Σ y * p(y)
+
+print(outcomes)
+print(pmf, mean)
+`,
+    tests: py`
+@test("결과 8가지")
+def _():
+    assert sorted(outcomes) == sorted(a + b + c for a in "앞뒤" for b in "앞뒤" for c in "앞뒤"), f"결과: {outcomes}"
+
+@test("분포: 1/8, 3/8, 3/8, 1/8")
+def _():
+    assert set(pmf) == {0, 1, 2, 3}, f"키: {sorted(pmf)}"
+    for y, want in ((0, 1 / 8), (1, 3 / 8), (2, 3 / 8), (3, 1 / 8)):
+        assert approx(pmf[y], want), f"P(Y = {y}) = {pmf[y]}"
+
+@test("기댓값 1.5")
+def _():
+    assert mean is not None and approx(mean, 1.5), f"결과: {mean}"
+`,
+    hints: [
+      "`outcomes = [a + b + c for a in \"앞뒤\" for b in \"앞뒤\" for c in \"앞뒤\"]`로 만듭니다. 문자열의 `count(\"앞\")`이 앞면의 개수입니다.",
+      "개수를 셀 때는 `pmf[y] = pmf.get(y, 0) + 1 / 8`처럼 결과마다 1/8씩 더해도 됩니다. 기댓값은 `sum(y * p for y, p in pmf.items())`입니다.",
+    ],
+    solution: py`
+outcomes = [a + b + c for a in "앞뒤" for b in "앞뒤" for c in "앞뒤"]
+pmf = {}
+for o in outcomes:
+    y = o.count("앞")
+    pmf[y] = pmf.get(y, 0) + 1 / len(outcomes)
+mean = sum(y * p for y, p in pmf.items())
+
+print(outcomes)
+print(pmf, mean)
+`,
+  },
+  {
     key: "ex1",
     title: "확률질량함수로 기댓값·분산 계산하고 합의 분포 만들기",
     prompt: md`
