@@ -2,6 +2,69 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "임계값 하나에서 TPR과 FPR 계산하기",
+    prompt: md`
+
+ROC 곡선의 점 하나를 직접 계산합니다. \`rates(y_true, scores, t)\`는 점수가 \`t\` 이상이면 양성으로 판정했을 때의 \`(TPR, FPR)\`를 돌려줍니다.
+
+- $\text{TPR} = TP / (\text{실제 양성 수})$, $\text{FPR} = FP / (\text{실제 음성 수})$
+
+본문의 다섯 샘플에서 \`rates(y, s, 0.6)\`은 \`(1.0, 0.333...)\`입니다. 표의 다른 행과도 맞춰 봅니다.
+`,
+    starter: py`
+def rates(y_true, scores, t):
+    tp = fp = 0
+    n_pos = sum(y_true)
+    n_neg = len(y_true) - n_pos
+    # TODO: 점수가 t 이상인 샘플을 정답에 따라 tp 또는 fp로 셉니다.
+    return 0.0, 0.0
+
+y = [1, 0, 1, 0, 0]
+s = [0.9, 0.8, 0.6, 0.5, 0.2]
+print([rates(y, s, t) for t in (0.9, 0.8, 0.6, 0.5, 0.2)])
+`,
+    tests: py`
+@test("임계값 0.6: (1.0, 1/3)")
+def _():
+    y, s = [1, 0, 1, 0, 0], [0.9, 0.8, 0.6, 0.5, 0.2]
+    got = rates(y, s, 0.6)
+    assert approx(list(got), [1.0, 1 / 3]), f"결과: {got}"
+
+@test("본문 표의 다섯 점")
+def _():
+    y, s = [1, 0, 1, 0, 0], [0.9, 0.8, 0.6, 0.5, 0.2]
+    want = [(0.5, 0.0), (0.5, 1 / 3), (1.0, 1 / 3), (1.0, 2 / 3), (1.0, 1.0)]
+    for t, w in zip((0.9, 0.8, 0.6, 0.5, 0.2), want):
+        assert approx(list(rates(y, s, t)), list(w)), f"t = {t}: 결과 {rates(y, s, t)}"
+
+@test("임계값이 가장 큰 점수보다 크면 (0, 0)")
+def _():
+    assert approx(list(rates([1, 0], [0.7, 0.3], 0.95)), [0.0, 0.0])
+`,
+    hints: [
+      "`for yt, sc in zip(y_true, scores):` 안에서 `if sc >= t:`이면 `yt == 1`일 때 `tp += 1`, 아니면 `fp += 1`입니다.",
+      "`return tp / n_pos, fp / n_neg`입니다. 분모는 판정과 관계없는 실제 양성·음성의 수입니다.",
+    ],
+    solution: py`
+def rates(y_true, scores, t):
+    tp = fp = 0
+    n_pos = sum(y_true)
+    n_neg = len(y_true) - n_pos
+    for yt, sc in zip(y_true, scores):
+        if sc >= t:
+            if yt == 1:
+                tp += 1
+            else:
+                fp += 1
+    return tp / n_pos, fp / n_neg
+
+y = [1, 0, 1, 0, 0]
+s = [0.9, 0.8, 0.6, 0.5, 0.2]
+print([rates(y, s, t) for t in (0.9, 0.8, 0.6, 0.5, 0.2)])
+`,
+  },
+  {
     key: "ex1",
     title: "ROC 곡선, AUC, 평균 정밀도를 직접 계산하기",
     prompt: md`

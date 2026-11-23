@@ -17,6 +17,30 @@ export default defineLesson({
 
 scikit-learn의 \`confusion_matrix(y_true, y_pred)\`는 클래스 번호 순서로 행(실제)과 열(예측)을 놓으므로 \`[[TN, FP], [FN, TP]]\` 순서로 나온다.
 
+네 칸은 정답과 예측을 샘플마다 짝지어 센다. 정답과 예측이 모두 1이면 TP, 예측만 1이면 FP, 정답만 1이면 FN, 둘 다 0이면 TN이다.
+
+\`\`\`python
+import numpy as np
+from sklearn.metrics import confusion_matrix
+
+y_true = np.array([1, 0, 1, 1, 0, 0, 1, 0, 0, 1])
+y_pred = np.array([1, 0, 0, 1, 0, 1, 1, 0, 0, 0])
+tp = int(((y_pred == 1) & (y_true == 1)).sum())
+fp = int(((y_pred == 1) & (y_true == 0)).sum())
+fn = int(((y_pred == 0) & (y_true == 1)).sum())
+tn = int(((y_pred == 0) & (y_true == 0)).sum())
+print(tp, fp, fn, tn)
+print(confusion_matrix(y_true, y_pred))
+\`\`\`
+
+\`\`\`output
+3 1 2 4
+[[4 1]
+ [2 3]]
+\`\`\`
+
+\`confusion_matrix\`의 첫 행은 실제 음성(TN 4, FP 1), 둘째 행은 실제 양성(FN 2, TP 3)이다.
+
 ### 지표 다섯 가지
 
 \`\`\`math
@@ -141,6 +165,18 @@ for t in (0.85, 0.55):
 `,
       expected: "0.85 1 0\n0.55 2 1",
       explanation: "임계값 0.85에서는 0.9 하나만 양성으로 판정해 TP 1, FP 0이다. 0.55로 낮추면 0.9, 0.8, 0.6이 양성으로 판정되어 TP 2(0.9, 0.6), FP 1(0.8)이 된다. 임계값을 낮추면 재현율이 오르고 FP도 늘어난다.",
+    },
+    {
+      key: "p2",
+      question: "혼동행렬의 네 칸으로 정밀도, 재현율, 정확도를 계산한다. 출력을 예측하십시오.",
+      code: py`
+tp, fp, fn, tn = 8, 2, 4, 86
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+print(precision, round(recall, 3), (tp + tn) / (tp + fp + fn + tn))
+`,
+      expected: "0.8 0.667 0.94",
+      explanation: "정밀도는 양성 판정 10개 가운데 실제 양성 8개라 0.8, 재현율은 실제 양성 12개 가운데 찾은 8개라 약 0.667이다. 정확도는 $94/100 = 0.94$로 높지만 실제 양성의 3분의 1을 놓쳤다.",
     },
   ],
   descriptive: [

@@ -27,6 +27,25 @@ export default defineLesson({
 w^{*} = (X^\top X)^{-1} X^\top y
 \`\`\`
 
+특성이 하나이면 해를 손으로 구할 수 있다. $\hat y = wx + b$의 최소제곱 해는 다음과 같다.
+
+\`\`\`math
+w^{*} = \frac{\sum_i (x_i - \bar x)(y_i - \bar y)}{\sum_i (x_i - \bar x)^2}, \qquad b^{*} = \bar y - w^{*} \bar x
+\`\`\`
+
+:::example 예제: 데이터 $(1, 2), (2, 4), (3, 7)$의 최소제곱 해
+평균은 $\bar x = 2$, $\bar y = 13/3 \approx 4.333$이다.
+
+| $i$ | $x_i - \bar x$ | $y_i - \bar y$ | 곱 | $(x_i - \bar x)^2$ |
+| --- | --- | --- | --- | --- |
+| 1 | −1 | −2.333 | 2.333 | 1 |
+| 2 | 0 | −0.333 | 0 | 0 |
+| 3 | 1 | 2.667 | 2.667 | 1 |
+| 합 | | | 5 | 2 |
+
+$w^{*} = 5 / 2 = 2.5$, $b^{*} = 4.333 - 2.5 \times 2 \approx -0.667$이다. [[lesson:gradient-descent]]에서 경사하강법으로 2000번 갱신해 얻은 값과 같다.
+:::
+
 실제 계산에서는 역행렬을 직접 구하지 않고 \`np.linalg.lstsq\`나 scikit-learn의 \`LinearRegression\`을 쓴다. 두 방법은 같은 해를 수치적으로 안정되게 구한다. 특성이 수십만 개이거나 데이터가 메모리에 다 들어가지 않으면 경사하강법으로 같은 해에 다가간다([[lesson:gradient-descent]]).
 
 \`\`\`python
@@ -86,6 +105,24 @@ $\hat y = w_1 x + w_2 x^2 + b$는 $x$에 대해서는 곡선이지만 파라미�
 \`\`\`
 
 정답 $y = [3, 5, 7, 9]$, 예측 $\hat y = [2.5, 5.5, 6, 10]$이면 오차가 $0.5, -0.5, 1, -1$이므로 MAE $= 0.75$, MSE $= 0.625$, RMSE $\approx 0.791$이다. RMSE는 MSE에 제곱근을 씌워 정답과 같은 단위로 되돌린 값이다. $R^2$의 분모는 항상 평균 $\bar y = 6$을 예측하는 기준 모델의 오차 제곱합 $9 + 1 + 1 + 9 = 20$이고, 분자는 모델의 오차 제곱합 $2.5$이므로 $R^2 = 1 - 2.5/20 = 0.875$다. $R^2$는 기준 모델 대비 줄인 오차의 비율이다([[lesson:baselines]]).
+
+| $i$ | $y_i$ | $\hat y_i$ | $y_i - \hat y_i$ | 절대 오차 | 제곱 오차 | $(y_i - \bar y)^2$ |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 3 | 2.5 | 0.5 | 0.5 | 0.25 | 9 |
+| 2 | 5 | 5.5 | −0.5 | 0.5 | 0.25 | 1 |
+| 3 | 7 | 6 | 1 | 1 | 1 | 1 |
+| 4 | 9 | 10 | −1 | 1 | 1 | 9 |
+| 합 | | | | 3 | 2.5 | 20 |
+
+\`\`\`python
+import numpy as np
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+y = np.array([3, 5, 7, 9])
+y_hat = np.array([2.5, 5.5, 6, 10])
+mse = mean_squared_error(y, y_hat)
+print(mean_absolute_error(y, y_hat), mse, round(np.sqrt(mse), 3), r2_score(y, y_hat))   # 0.75 0.625 0.791 0.875
+\`\`\`
 
 [[diagram:r2-squares]]
 
@@ -174,6 +211,20 @@ for y_hat in [np.array([4.0, 4.0, 4.0]), np.array([2.0, 4.0, 7.0])]:
 `,
       expected: "0.0\n0.875",
       explanation: "첫 예측은 평균 4를 그대로 예측하는 기준 모델이라 $R^2 = 0$이다. 둘째는 오차 제곱합이 $0 + 0 + 1 = 1$이고 기준 모델의 오차 제곱합이 $4 + 0 + 4 = 8$이므로 $1 - 1/8 = 0.875$다.",
+    },
+    {
+      key: "p2",
+      question: "오차 제곱합과 평균 기준 모델의 오차 제곱합으로 결정계수를 계산한다. 출력을 예측하십시오.",
+      code: py`
+import numpy as np
+y = np.array([2.0, 4.0, 6.0])
+y_hat = np.array([3.0, 4.0, 5.0])
+sse = ((y - y_hat) ** 2).sum()
+sst = ((y - y.mean()) ** 2).sum()
+print(sse, sst, 1 - sse / sst)
+`,
+      expected: "2.0 8.0 0.75",
+      explanation: "오차는 $-1, 0, 1$이라 제곱합은 2다. 평균 4를 예측하는 기준 모델의 오차는 $-2, 0, 2$라 제곱합은 8이다. $R^2 = 1 - 2/8 = 0.75$로, 기준 모델의 오차 제곱합을 75% 줄였다.",
     },
   ],
   descriptive: [

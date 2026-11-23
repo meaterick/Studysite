@@ -2,6 +2,67 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "혼동행렬의 네 칸을 직접 세기",
+    prompt: md`
+
+정답 \`y_true\`와 예측 \`y_pred\`(파이썬 리스트)가 주어집니다. 반복문으로 샘플마다 짝지어 셉니다.
+
+1. \`tp\`, \`fp\`, \`fn\`, \`tn\`: 혼동행렬의 네 칸
+2. \`precision\`: $TP / (TP + FP)$
+3. \`recall\`: $TP / (TP + FN)$
+
+먼저 표를 그려 열 개를 손으로 분류해 본 뒤 코드로 확인합니다.
+`,
+    starter: py`
+y_true = [1, 0, 1, 1, 0, 0, 1, 0, 0, 1]
+y_pred = [1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
+
+tp = fp = fn = tn = 0
+for t, p in zip(y_true, y_pred):
+    pass   # TODO: (t, p)의 조합에 따라 네 칸 중 하나를 1 늘립니다.
+
+precision = None   # TODO
+recall = None      # TODO
+
+print(tp, fp, fn, tn, precision, recall)
+`,
+    tests: py`
+@test("네 칸: TP 3, FP 1, FN 2, TN 4")
+def _():
+    assert (tp, fp, fn, tn) == (3, 1, 2, 4), f"결과: {(tp, fp, fn, tn)}"
+
+@test("정밀도 0.75, 재현율 0.6")
+def _():
+    assert precision is not None and approx(precision, 0.75), f"precision: {precision}"
+    assert recall is not None and approx(recall, 0.6), f"recall: {recall}"
+`,
+    hints: [
+      "`if t == 1 and p == 1: tp += 1`, `elif t == 0 and p == 1: fp += 1`처럼 네 경우를 나눕니다.",
+      "정밀도의 분모는 양성으로 **예측한** 수(`tp + fp`), 재현율의 분모는 **실제** 양성 수(`tp + fn`)입니다.",
+    ],
+    solution: py`
+y_true = [1, 0, 1, 1, 0, 0, 1, 0, 0, 1]
+y_pred = [1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
+
+tp = fp = fn = tn = 0
+for t, p in zip(y_true, y_pred):
+    if t == 1 and p == 1:
+        tp += 1
+    elif t == 0 and p == 1:
+        fp += 1
+    elif t == 1 and p == 0:
+        fn += 1
+    else:
+        tn += 1
+
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+
+print(tp, fp, fn, tn, precision, recall)
+`,
+  },
+  {
     key: "ex1",
     title: "혼동행렬과 임계값별 정밀도·재현율",
     prompt: md`

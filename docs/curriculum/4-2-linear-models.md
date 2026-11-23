@@ -21,10 +21,10 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [선형회귀, 잔차, 평균제곱오차](#lesson-linear-regression) | 핵심 | 45분 | #55 선형회귀, 잔차, MSE·MAE·RMSE·R² |
-| 2 | [로지스틱 회귀, 시그모이드, 분류 임계값](#lesson-logistic-regression) | 핵심 | 40분 | #56 로지스틱·소프트맥스 회귀, 시그모이드, 분류 임계값 |
-| 3 | [혼동행렬, 정확도, 정밀도, 재현율, F1](#lesson-classification-metrics) | 핵심 | 35분 | #57 혼동행렬, 정확도, 정밀도, 재현율, F1 |
-| 4 | [ROC-AUC, PR-AUC, 클래스 불균형](#lesson-roc-pr) | 핵심 | 40분 | #58 ROC-AUC, PR-AUC, 클래스 불균형 |
+| 1 | [선형회귀, 잔차, 평균제곱오차](#lesson-linear-regression) | 핵심 | 50분 | #55 선형회귀, 잔차, MSE·MAE·RMSE·R² |
+| 2 | [로지스틱 회귀, 시그모이드, 분류 임계값](#lesson-logistic-regression) | 핵심 | 45분 | #56 로지스틱·소프트맥스 회귀, 시그모이드, 분류 임계값 |
+| 3 | [혼동행렬, 정확도, 정밀도, 재현율, F1](#lesson-classification-metrics) | 핵심 | 45분 | #57 혼동행렬, 정확도, 정밀도, 재현율, F1 |
+| 4 | [ROC-AUC, PR-AUC, 클래스 불균형](#lesson-roc-pr) | 핵심 | 50분 | #58 ROC-AUC, PR-AUC, 클래스 불균형 |
 | 5 | [비용 기반 임계값과 확률 보정](#lesson-cost-threshold) | 보충 | 25분 | — |
 | 6 | [손실함수의 확률적 기원](#lesson-loss-likelihood) | 심화 | 35분 | — |
 
@@ -34,7 +34,7 @@
 
 ### 1. 선형회귀, 잔차, 평균제곱오차
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/linear-models/linear-regression.ts) · [실습 원본](../../src/content/modules/linear-models/labs/linear-regression.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/linear-models/linear-regression.ts) · [실습 원본](../../src/content/modules/linear-models/labs/linear-regression.ts)
 
 **학습 목표:** 다중 선형회귀의 가중치를 해석하고 최소제곱 해를 계산하며, 잔차 그래프로 모델을 진단해 다항 특성을 추가하고, MAE·MSE·RMSE·$R^2$로 평가해 기준 모델과 비교한다.
 
@@ -42,7 +42,7 @@
 
 **본문 절:** 선형회귀 모델 · 최소제곱 해 · 잔차로 진단한다 · 회귀 지표
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 2 · 코드 셀 2 · 그림 2
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 3 · 그림 2
 
 **실습**
 
@@ -64,7 +64,7 @@
 
 ### 2. 로지스틱 회귀, 시그모이드, 분류 임계값
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/linear-models/logistic-regression.ts) · [실습 원본](../../src/content/modules/linear-models/labs/logistic-regression.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/linear-models/logistic-regression.ts) · [실습 원본](../../src/content/modules/linear-models/labs/logistic-regression.ts)
 
 **학습 목표:** 시그모이드로 점수를 확률로 바꾸고 가중치를 로그 오즈로 해석하며, 분류 임계값과 결정 경계의 관계를 설명하고, 이진 교차 엔트로피의 기울기 $(p - y)x$를 유도해 경사하강법으로 학습한다. 다중 분류로 확장한 소프트맥스 회귀의 확률과 기울기도 계산한다.
 
@@ -72,7 +72,7 @@
 
 **본문 절:** 점수를 확률로 바꾸는 시그모이드 · 분류 임계값과 결정 경계 · 교차 엔트로피와 기울기 $(p - y)x$ · 다중 분류: 소프트맥스 회귀
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 2 · 코드 셀 2 · 그림 2
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 3 · 그림 2
 
 **실습**
 
@@ -93,7 +93,7 @@
 
 ### 3. 혼동행렬, 정확도, 정밀도, 재현율, F1
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/linear-models/classification-metrics.ts) · [실습 원본](../../src/content/modules/linear-models/labs/classification-metrics.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/linear-models/classification-metrics.ts) · [실습 원본](../../src/content/modules/linear-models/labs/classification-metrics.ts)
 
 **학습 목표:** 혼동행렬에서 정확도·정밀도·재현율·F1·특이도를 계산하고, 오류 비용에 따라 우선할 지표를 고르며, 분류 임계값을 바꿀 때 정밀도와 재현율이 어떻게 달라지는지 설명하고, 다중 분류의 macro·weighted 평균을 해석한다.
 
@@ -101,10 +101,11 @@
 
 **본문 절:** 혼동행렬 · 지표 다섯 가지 · 임계값에 따라 지표가 바뀐다 · 다중 분류: macro 평균과 weighted 평균
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 2
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 2 · 그림 2
 
 **실습**
 
+- `ex0` 혼동행렬의 네 칸을 직접 세기
 - `ex1` 혼동행렬과 임계값별 정밀도·재현율
 
 **서술형**
@@ -121,7 +122,7 @@
 
 ### 4. ROC-AUC, PR-AUC, 클래스 불균형
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/linear-models/roc-pr.ts) · [실습 원본](../../src/content/modules/linear-models/labs/roc-pr.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/linear-models/roc-pr.ts) · [실습 원본](../../src/content/modules/linear-models/labs/roc-pr.ts)
 
 **학습 목표:** 임계값을 바꿔 가며 ROC 곡선을 그리고 AUC를 순위 확률로 해석하며, PR 곡선과 평균 정밀도(AP)를 계산하고, 양성이 드문 데이터에서 두 지표가 다르게 반응하는 이유를 설명한다. 불균형 데이터를 다루는 방법을 상황에 맞게 고른다.
 
@@ -129,10 +130,11 @@
 
 **본문 절:** ROC 곡선 · AUC는 순위를 맞힐 확률이다 · PR 곡선과 평균 정밀도 · 양성이 드물면 두 지표가 다르게 반응한다 · 불균형 데이터를 다루는 방법
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 2 · 그림 3
 
 **실습**
 
+- `ex0` 임계값 하나에서 TPR과 FPR 계산하기
 - `ex1` ROC 곡선, AUC, 평균 정밀도를 직접 계산하기
 
 **서술형**
