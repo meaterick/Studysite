@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/rnn";
 
 export default defineLesson({
@@ -44,6 +44,17 @@ for t in range(T):
     print(f"t={t + 1}: h = {h.round(3)}")
 print("파라미터 수:", W.size + U.size + b.size)   # 4×3 + 4×4 + 4 = 32
 \`\`\`
+
+\`\`\`output
+t=1: h = [-0.351 -0.259  0.16   0.197]
+t=2: h = [ 0.41   0.382 -0.519 -0.127]
+t=3: h = [-0.352 -0.498  0.727  0.192]
+t=4: h = [ 0.344  0.444 -0.644 -0.587]
+t=5: h = [ 0.397 -0.681 -0.183  0.777]
+파라미터 수: 32
+\`\`\`
+
+시점마다 같은 \`W\`, \`U\`, \`b\`를 쓰므로 파라미터 수는 시퀀스 길이와 관계없이 32개다. 은닉 상태의 값은 $\tanh$를 거쳐 항상 $-1$과 $1$ 사이에 있다.
 
 반복문 안의 한 줄이 재귀식이다. 시퀀스가 5토큰이든 500토큰이든 반복 횟수만 달라지고 같은 파라미터 32개를 쓴다.
 
@@ -122,6 +133,23 @@ $r = 0.9$이면 한 스텝에 10%씩 줄어들 뿐인데도 50스텝 뒤에는 �
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "은닉 상태가 수 하나인 RNN $h_t = \\tanh(w h_{t-1} + u x_t)$를 세 시점 계산한다. 출력을 예측하십시오.",
+      code: py`
+import math
+w, u, h = 0.5, 1.0, 0.0
+hs = []
+for xt in [1.0, 0.0, 0.0]:
+    h = math.tanh(w * h + u * xt)
+    hs.append(round(h, 3))
+print(hs)
+`,
+      expected: "[0.762, 0.363, 0.18]",
+      explanation: "$h_1 = \\tanh(1) \\approx 0.762$다. 이후 입력은 0이라 이전 상태만 남는다: $h_2 = \\tanh(0.5 \\times 0.762) = \\tanh(0.381) \\approx 0.363$, $h_3 = \\tanh(0.5 \\times 0.363) \\approx 0.18$이다. 첫 입력의 정보가 시점마다 $w = 0.5$를 곱한 만큼 줄어든다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

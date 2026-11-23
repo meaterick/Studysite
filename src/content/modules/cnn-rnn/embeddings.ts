@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/embeddings";
 
 export default defineLesson({
@@ -153,6 +153,19 @@ height: 420
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "어휘 사전으로 문장을 정수 시퀀스로 바꾼다. 사전에 없는 단어는 `<unk>`의 번호로 바꾼다. 출력을 예측하십시오.",
+      code: py`
+vocab = {"<unk>": 0, "나는": 1, "고양이": 2, "를": 3}
+encode = lambda s: [vocab.get(w, 0) for w in s.split()]
+print(encode("나는 고양이 를"), encode("나는 사자 를"))
+`,
+      expected: "[1, 2, 3] [1, 0, 3]",
+      explanation: "`split()`이 공백으로 단어를 나누고, `vocab.get(w, 0)`은 사전에 있으면 그 번호를, 없으면 0을 돌려준다. \"사자\"는 사전에 없어 `<unk>`의 번호 0이 된다. 임베딩 층은 이 번호로 임베딩 행렬의 행을 꺼낸다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

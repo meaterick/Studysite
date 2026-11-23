@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/cnn-training";
 
 export default defineLesson({
@@ -168,6 +168,19 @@ for ep in range(10):
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "모양이 (N, C, H, W) = (2, 2, 1, 2)인 텐서에서 BatchNorm이 쓰는 채널별 평균을 계산한다. 출력을 예측하십시오.",
+      code: py`
+import numpy as np
+x = np.arange(8, dtype=float).reshape(2, 2, 1, 2)
+print(x.mean(axis=(0, 2, 3)).tolist())
+`,
+      expected: "[2.5, 4.5]",
+      explanation: "값 0~7이 (샘플, 채널, 세로, 가로) 순서로 채워지므로 샘플 0의 채널 0은 [0, 1], 채널 1은 [2, 3], 샘플 1의 채널 0은 [4, 5], 채널 1은 [6, 7]이다. 채널마다 배치·세로·가로에 걸쳐 평균하면 채널 0은 $(0 + 1 + 4 + 5)/4 = 2.5$, 채널 1은 4.5다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",
