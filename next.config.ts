@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
   // server + pruned node_modules into .next/standalone so the OCI box only
   // ever has to run `node server.js`, never `npm install`/`next build`.
   output: "standalone",
+  // 응답에 프레임워크 이름(x-powered-by: Next.js)을 싣지 않는다. 자동 스캐너가 버전별 취약점을 고르는 단서를 줄인다.
+  poweredByHeader: false,
   experimental: {
     // 과제 제출(서버 액션)에 첨부 파일이 실린다: 파일 합계 9MB + 본문 여유분.
     // nginx의 client_max_body_size(.github/workflows/deploy.yml)와 함께 맞춰야 한다.

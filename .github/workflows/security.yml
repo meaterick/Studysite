@@ -3,6 +3,11 @@ name: Security and build checks
 on:
   pull_request:
     branches: [main]
+  # main에 직접 푸시한 변경과 새로 공개된 의존성 보안 권고도 확인한다. 배포 워크플로와 별개라 배포를 막지 않는다.
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 18 * * 0" # 매주 월요일 03:17(KST)
   workflow_dispatch: {}
 
 permissions:

@@ -21,6 +21,7 @@ OCI 네트워크에서 차단된 패킷·포트 스캔이나 SSH 접속은 이 �
 OCI VCN Flow Logs 및 호스트 인증 로그를 따로 확인해야 합니다. 배포 이전 요청은 소급 수집되지 않습니다.
 
 검증: `npm run test:security`, `npm run lint`, `npm run build`, `npm audit --omit=dev`.
+이 검사와 HTTP 점검(`npm run test:security:http`)은 `.github/workflows/security.yml`이 PR, main 푸시, 매주 월요일 03:17(KST)에 실행합니다. 이 워크플로가 실패해도 배포는 멈추지 않으므로 Actions 화면에서 결과를 확인합니다.
 
 ### IP 차단·반복 탐지
 

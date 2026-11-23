@@ -138,6 +138,7 @@ try {
   const initial = await request("/operator/security", { cookie: cookies.admin });
   assert.equal(initial.status, 200);
   const html = await initial.text();
+  assert.equal(initial.headers.get("x-powered-by"), null, "the framework banner header is not sent");
   const csp = initial.headers.get("content-security-policy") || "";
   const scriptsPolicy = csp.split(";").find((p) => p.trim().startsWith("script-src")) || "";
   assert.equal(scriptsPolicy.includes("unsafe-inline"), false, "inline scripts require a nonce");

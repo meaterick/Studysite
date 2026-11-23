@@ -23,6 +23,11 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+# 권한을 따로 정하지 않은 잡(build)은 저장소 읽기 권한만 받는다. deploy 잡은 아래에서
+# 빌드 캐시 삭제 권한(actions: write)을 더 받는다.
+permissions:
+  contents: read
+
 env:
   DOMAIN: meaterickedu.kro.kr
   # Everything the running app touches lives here, NOT inside the runner's
