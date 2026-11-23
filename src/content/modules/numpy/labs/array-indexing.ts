@@ -2,6 +2,76 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "인덱스·슬라이스·마스크로 원소 고르기",
+    prompt: md`
+
+\`x = np.arange(12).reshape(3, 4)\`에서 다음을 고릅니다. 먼저 본문의 출력처럼 배열을 종이에 적고 위치를 확인한 뒤 코드를 씁니다.
+
+1. \`corner\`: 마지막 행의 마지막 열 원소
+2. \`middle_row\`: 가운데 행 전체
+3. \`last_col\`: 마지막 열 전체
+4. \`top_left\`: 앞의 두 행과 앞의 두 열로 된 $2 \times 2$ 부분
+5. \`evens\`: 짝수인 원소만 모은 1차원 배열(불리언 마스크)
+`,
+    starter: py`
+import numpy as np
+
+x = np.arange(12).reshape(3, 4)
+print(x)
+
+corner = None       # TODO
+middle_row = None   # TODO
+last_col = None     # TODO
+top_left = None     # TODO
+evens = None        # TODO
+
+print(corner, middle_row, last_col)
+print(top_left)
+print(evens)
+`,
+    tests: py`
+import numpy as np
+
+@test("원소 하나와 행 하나")
+def _():
+    assert corner == 11, f"corner: {corner}"
+    assert middle_row is not None and np.array_equal(middle_row, [4, 5, 6, 7]), f"middle_row: {middle_row}"
+
+@test("마지막 열 [3, 7, 11]")
+def _():
+    assert last_col is not None and np.array_equal(last_col, [3, 7, 11]), f"last_col: {last_col}"
+
+@test("왼쪽 위 2×2 부분")
+def _():
+    assert top_left is not None and np.array_equal(top_left, [[0, 1], [4, 5]]), f"top_left: {top_left}"
+
+@test("짝수만 고르기")
+def _():
+    assert evens is not None and np.array_equal(evens, [0, 2, 4, 6, 8, 10]), f"evens: {evens}"
+`,
+    hints: [
+      "`x[2, 3]`이나 `x[-1, -1]`이 마지막 원소입니다. 가운데 행은 `x[1]`, 마지막 열은 `x[:, -1]`입니다.",
+      "부분 행렬은 축마다 슬라이스를 씁니다: `x[:2, :2]`. 짝수는 `x[x % 2 == 0]`입니다.",
+    ],
+    solution: py`
+import numpy as np
+
+x = np.arange(12).reshape(3, 4)
+print(x)
+
+corner = x[-1, -1]
+middle_row = x[1]
+last_col = x[:, -1]
+top_left = x[:2, :2]
+evens = x[x % 2 == 0]
+
+print(corner, middle_row, last_col)
+print(top_left)
+print(evens)
+`,
+  },
+  {
     key: "ex1",
     title: "마스킹·정수 배열 인덱싱·브로드캐스팅으로 데이터 다루기",
     prompt: md`

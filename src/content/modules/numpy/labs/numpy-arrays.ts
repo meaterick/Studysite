@@ -2,6 +2,78 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "리스트 계산을 배열 연산으로 옮기기",
+    prompt: md`
+
+상품 세 개의 가격 \`p\`와 수량 \`q\`가 NumPy 배열로 주어집니다. 반복문 없이 배열 연산으로 계산합니다.
+
+1. \`line_totals\`: 상품마다 가격과 수량의 곱
+2. \`grand_total\`: \`line_totals\`의 합
+3. \`with_tax\`: \`line_totals\`에 1.1을 곱한 배열(자료형은 \`float64\`가 됩니다)
+4. \`expensive\`: 가격이 1,000원보다 비싼지 나타내는 bool 배열
+5. \`grid\`: 0으로 채운 모양 \`(2, 3)\` 배열
+`,
+    starter: py`
+import numpy as np
+
+p = np.array([1200, 3400, 560])
+q = np.array([3, 1, 10])
+
+line_totals = None   # TODO
+grand_total = None   # TODO
+with_tax = None      # TODO
+expensive = None     # TODO
+grid = None          # TODO
+
+print(line_totals, grand_total)
+print(with_tax, expensive)
+print(grid)
+`,
+    tests: py`
+import numpy as np
+
+@test("상품별 금액과 합계")
+def _():
+    assert line_totals is not None and np.array_equal(line_totals, [3600, 3400, 5600]), f"line_totals: {line_totals}"
+    assert grand_total == 12600, f"grand_total: {grand_total}"
+
+@test("세금 포함 금액은 실수 배열")
+def _():
+    assert with_tax is not None and np.allclose(with_tax, [3960, 3740, 6160]), f"with_tax: {with_tax}"
+    assert with_tax.dtype == np.float64, f"자료형: {with_tax.dtype}"
+
+@test("비교 결과는 bool 배열")
+def _():
+    assert expensive is not None and expensive.dtype == bool, "비교식의 결과를 그대로 저장하십시오."
+    assert expensive.tolist() == [True, True, False], f"expensive: {expensive}"
+
+@test("0으로 채운 (2, 3) 배열")
+def _():
+    assert grid is not None and grid.shape == (2, 3) and not grid.any(), f"grid: {grid}"
+`,
+    hints: [
+      "배열끼리의 `*`는 같은 자리끼리 곱합니다: `line_totals = p * q`, 합은 `line_totals.sum()`입니다.",
+      "`with_tax = line_totals * 1.1`, `expensive = p > 1000`, `grid = np.zeros((2, 3))`입니다. 모양은 괄호로 묶은 튜플로 넘깁니다.",
+    ],
+    solution: py`
+import numpy as np
+
+p = np.array([1200, 3400, 560])
+q = np.array([3, 1, 10])
+
+line_totals = p * q
+grand_total = line_totals.sum()
+with_tax = line_totals * 1.1
+expensive = p > 1000
+grid = np.zeros((2, 3))
+
+print(line_totals, grand_total)
+print(with_tax, expensive)
+print(grid)
+`,
+  },
+  {
     key: "ex1",
     title: "점수표를 축별로 요약하기",
     prompt: md`
