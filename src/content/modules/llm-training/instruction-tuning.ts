@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/instruction-tuning";
 
 export default defineLesson({
@@ -62,6 +62,13 @@ print("합친 가중치로 계산해도 같은가?", np.allclose(W_merged @ x, W
 print("ΔW의 랭크:", np.linalg.matrix_rank(B @ A))
 \`\`\`
 
+\`\`\`output
+시작 시점 출력이 원래 모델과 같은가? True
+ΔW 직접 학습: 262,144개, LoRA(B, A): 8,192개 → 32분의 1
+합친 가중치로 계산해도 같은가? True
+ΔW의 랭크: 8
+\`\`\`
+
 $512 \times 512$ 행렬 하나에서 학습 파라미터가 32분의 1이 되었다. 마지막 줄의 랭크 8은 $BA$가 원래 가중치를 8개 방향의 조합으로만 바꿀 수 있다는 뜻이다. LoRA는 미세조정에 필요한 변화가 이 정도의 낮은 랭크로 충분하다는 가정에 기반한다.
 
 ### QLoRA
@@ -108,6 +115,20 @@ $512 \times 512$ 행렬 하나에서 학습 파라미터가 32분의 1이 되었
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "$512 \\times 512$ 가중치를 그대로 학습할 때와 랭크 8의 LoRA로 학습할 때의 파라미터 수를 비교한다. 출력을 예측하십시오.",
+      code: py`
+d, r = 512, 8
+full = d * d
+lora = d * r + r * d
+print(full, lora, full // lora)
+`,
+      expected: "262144 8192 32",
+      explanation: "전체 미세조정은 $512^2 = 262,144$개를 학습한다. LoRA는 $B$($512 \\times 8$)와 $A$($8 \\times 512$)만 학습하므로 $4096 + 4096 = 8192$개로 32분의 1이다. 랭크 $r$을 두 배로 늘리면 LoRA의 파라미터도 두 배가 된다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

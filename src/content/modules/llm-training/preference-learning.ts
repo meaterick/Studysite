@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/preference-learning";
 
 export default defineLesson({
@@ -157,6 +157,20 @@ for beta in (0.01, 0.1, 0.5, 1.0):               # 같은 로그확률에서 β�
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "보상 차이로 Bradley–Terry 선호 확률과 보상 모델의 손실을 계산한다. 출력을 예측하십시오.",
+      code: py`
+import math
+r_w, r_l = 1.5, 0.5
+p = 1 / (1 + math.exp(-(r_w - r_l)))
+print(round(p, 3), round(-math.log(p), 3))
+`,
+      expected: "0.731 0.313",
+      explanation: "보상 차이는 1이므로 $P = \\sigma(1) \\approx 0.731$이다. 손실 $-\\ln 0.731 \\approx 0.313$은 선호된 답의 보상이 더 클수록 0에 가까워진다. 두 보상이 같으면 확률 0.5, 손실 $\\ln 2 \\approx 0.693$이다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

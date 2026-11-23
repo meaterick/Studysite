@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/prompt-design";
 
 export default defineLesson({
@@ -150,6 +150,26 @@ for out in ['{"label": "부정", "reason": "색상 불일치"}', "부정입니�
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "모델의 응답을 JSON으로 검증해 허용된 레이블만 받아들인다. 출력을 예측하십시오.",
+      code: py`
+import json
+
+def parse(text):
+    try:
+        out = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    return out.get("label") if out.get("label") in ("긍정", "부정", "중립") else None
+
+print(parse('{"label": "중립"}'), parse("중립입니다"), parse('{"label": "neutral"}'))
+`,
+      expected: "중립 None None",
+      explanation: "첫 응답은 올바른 JSON이고 레이블도 허용 목록에 있어 `중립`이다. 둘째는 JSON이 아니라 `json.loads`가 오류를 내 `None`이다. 셋째는 JSON이지만 레이블이 허용 목록 밖이라 `None`이다. 형식과 값을 모두 검사해야 다음 단계의 코드가 안전하다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

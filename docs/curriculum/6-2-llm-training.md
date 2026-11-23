@@ -21,11 +21,11 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [다음 토큰 예측, 사전학습, 문맥 창](#lesson-pretraining) | 핵심 | 30분 | #75 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
-| 2 | [샘플링과 디코딩 전략](#lesson-decoding) | 핵심 | 40분 | #75 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
+| 1 | [다음 토큰 예측, 사전학습, 문맥 창](#lesson-pretraining) | 핵심 | 35분 | #75 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
+| 2 | [샘플링과 디코딩 전략](#lesson-decoding) | 핵심 | 45분 | #75 다음 토큰 예측, 사전학습, 문맥 창, 샘플링 |
 | 3 | [지시 미세조정과 LoRA](#lesson-instruction-tuning) | 핵심 | 35분 | #76 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
 | 4 | [선호도 학습: RLHF와 DPO](#lesson-preference-learning) | 핵심 | 45분 | #76 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
-| 5 | [프롬프트 설계](#lesson-prompt-design) | 핵심 | 40분 | #76 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
+| 5 | [프롬프트 설계](#lesson-prompt-design) | 핵심 | 45분 | #76 지시 미세조정, LoRA, 선호도 학습, 프롬프트 설계 |
 | 6 | [LLM 구조: BERT, GPT, T5](#lesson-llm-architectures) | 보충 | 35분 | — |
 | 7 | [스케일링 법칙](#lesson-scaling-laws) | 보충 | 40분 | — |
 | 8 | [생성 단계의 트랜스포머: KV 캐시와 RoPE](#lesson-kv-cache-rope) | 보충 | 45분 | — |
@@ -40,7 +40,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 ### 1. 다음 토큰 예측, 사전학습, 문맥 창
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/llm-training/pretraining.ts) · [실습 원본](../../src/content/modules/llm-training/labs/pretraining.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/llm-training/pretraining.ts) · [실습 원본](../../src/content/modules/llm-training/labs/pretraining.ts)
 
 **학습 목표:** 사전학습의 다음 토큰 예측 손실 $L = -\frac{1}{T}\sum_t \log P(x_t \mid x_{<t})$과 perplexity $e^L$을 계산하고, 라벨 없이 학습 데이터가 만들어지는 이유와 문맥 창의 의미와 한계를 설명한다.
 
@@ -48,7 +48,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 **본문 절:** 다음 토큰 예측 · 손으로, 그리고 코드로 계산하기 · 문맥 창
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 2
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 2
 
 **실습**
 
@@ -68,7 +68,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 ### 2. 샘플링과 디코딩 전략
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/llm-training/decoding.ts) · [실습 원본](../../src/content/modules/llm-training/labs/decoding.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/llm-training/decoding.ts) · [실습 원본](../../src/content/modules/llm-training/labs/decoding.ts)
 
 **학습 목표:** $\text{softmax}(z/T)$로 temperature의 효과를 계산하고, greedy 디코딩·빔 서치·top-k·top-p·반복 페널티·스톱 토큰의 차이를 설명하며 직접 구현한다.
 
@@ -76,7 +76,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 **본문 절:** temperature · 디코딩 방법 · greedy 디코딩과 빔 서치 · top-k와 top-p 샘플링 · 반복 페널티와 스톱 토큰
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3
 
 **실습**
 
@@ -104,7 +104,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 **본문 절:** SFT: 지시를 따르도록 학습하기 · 전체 미세조정의 메모리 비용 · LoRA · QLoRA
 
-**구성:** 확인 문제 5 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3
 
 **실습**
 
@@ -133,7 +133,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 **본문 절:** SFT 다음 단계 · RLHF: 보상 모델과 PPO · DPO · 선호도 학습의 한계
 
-**구성:** 확인 문제 7 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3 · 이미지 1
+**구성:** 확인 문제 7 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3 · 이미지 1
 
 **실습**
 
@@ -154,7 +154,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 ### 5. 프롬프트 설계
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/llm-training/prompt-design.ts) · [실습 원본](../../src/content/modules/llm-training/labs/prompt-design.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/llm-training/prompt-design.ts) · [실습 원본](../../src/content/modules/llm-training/labs/prompt-design.ts)
 
 **학습 목표:** 역할, 출력 형식, Few-shot 예시, 불확실성 허용, 구분자 원칙으로 프롬프트를 작성하고, CoT·Self-Consistency·구조화 출력의 원리와 탈옥·프롬프트 인젝션의 차이를 설명한다.
 
@@ -162,7 +162,7 @@ GPT 같은 LLM은 대규모 텍스트로 다음 토큰을 예측하도록 사전
 
 **본문 절:** 프롬프트와 출력 분포 · 설계 원칙 · Chain-of-Thought · Self-Consistency · 구조화 출력 · 원칙을 적용한 프롬프트 · 탈옥과 프롬프트 인젝션
 
-**구성:** 확인 문제 6 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 5
+**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 5
 
 **실습**
 
