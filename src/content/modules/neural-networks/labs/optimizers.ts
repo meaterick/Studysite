@@ -2,6 +2,63 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "반복 수 계산과 SGD 한 걸음",
+    prompt: md`
+
+1. \`iterations_per_epoch(n, batch)\`: 학습 데이터 \`n\`개를 배치 크기 \`batch\`로 나눌 때 한 에포크의 반복 수. 나누어떨어지지 않으면 마지막 배치도 한 번으로 셉니다(\`math.ceil\`).
+2. \`sgd_step(w, g, lr)\`: SGD 갱신 $w - \eta g$. \`w\`와 \`g\`는 같은 길이의 리스트입니다.
+3. \`total_steps(n, batch, epochs)\`: \`epochs\` 에포크 동안의 전체 반복 수
+`,
+    starter: py`
+import math
+
+def iterations_per_epoch(n, batch):
+    return 0      # TODO
+
+def sgd_step(w, g, lr):
+    return w      # TODO
+
+def total_steps(n, batch, epochs):
+    return 0      # TODO
+
+print(iterations_per_epoch(1000, 32), sgd_step([1.0, -2.0], [0.5, -1.0], 0.1), total_steps(1000, 100, 3))
+`,
+    tests: py`
+@test("에포크당 반복 수: 10, 32, 1")
+def _():
+    assert iterations_per_epoch(1000, 100) == 10, f"결과: {iterations_per_epoch(1000, 100)}"
+    assert iterations_per_epoch(1000, 32) == 32, f"결과: {iterations_per_epoch(1000, 32)}"
+    assert iterations_per_epoch(1000, 1000) == 1
+
+@test("SGD 한 걸음")
+def _():
+    assert approx(sgd_step([1.0, -2.0], [0.5, -1.0], 0.1), [0.95, -1.9]), f"결과: {sgd_step([1.0, -2.0], [0.5, -1.0], 0.1)}"
+
+@test("전체 반복 수")
+def _():
+    assert total_steps(1000, 100, 3) == 30 and total_steps(1000, 32, 3) == 96, f"결과: {total_steps(1000, 32, 3)}"
+`,
+    hints: [
+      "`math.ceil(n / batch)`입니다. 1000 / 32 = 31.25라 32번입니다.",
+      "`[wi - lr * gi for wi, gi in zip(w, g)]`가 SGD 한 걸음이고, 전체 반복 수는 `iterations_per_epoch(n, batch) * epochs`입니다.",
+    ],
+    solution: py`
+import math
+
+def iterations_per_epoch(n, batch):
+    return math.ceil(n / batch)
+
+def sgd_step(w, g, lr):
+    return [wi - lr * gi for wi, gi in zip(w, g)]
+
+def total_steps(n, batch, epochs):
+    return iterations_per_epoch(n, batch) * epochs
+
+print(iterations_per_epoch(1000, 32), sgd_step([1.0, -2.0], [0.5, -1.0], 0.1), total_steps(1000, 100, 3))
+`,
+  },
+  {
     key: "ex1",
     title: "Momentum과 Adam 한 스텝 구현하기",
     prompt: md`

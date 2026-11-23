@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/micrograd";
 
 export default defineLesson({
@@ -162,6 +162,12 @@ for step in range(200):
         print(f"step {step:3d}: loss={loss.data:.4f}, w={w.data:.3f}, b={b.data:.3f}")
 \`\`\`
 
+\`\`\`output
+step   0: loss=21.0000, w=0.850, b=0.400
+step   1: loss=7.0587, w=1.343, b=0.633
+step 199: loss=0.0000, w=2.000, b=1.000
+\`\`\`
+
 손실이 21에서 시작해 200번 반복 뒤에는 $w = 2$, $b = 1$에 도달한다. 반복마다 \`w.grad, b.grad = 0.0, 0.0\`을 하지 않으면 이전 반복의 기울기가 쌓여 갱신량이 계속 커지므로 학습이 수렴하지 않는다. PyTorch의 \`optimizer.zero_grad()\`가 이 줄에 해당한다.
 `,
   checks: [
@@ -209,6 +215,27 @@ for step in range(200):
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "`backward`의 위상정렬과 같은 방식으로 노드 순서를 만든다. 출력을 예측하십시오.",
+      code: py`
+order = []
+def build(v, graph, seen):
+    if v not in seen:
+        seen.add(v)
+        for c in graph[v]:
+            build(c, graph, seen)
+        order.append(v)
+
+graph = {"L": ["d"], "d": ["c", "b"], "c": ["a", "b"], "b": [], "a": []}
+build("L", graph, set())
+print(order, list(reversed(order)))
+`,
+      expected: "['a', 'b', 'c', 'd', 'L'] ['L', 'd', 'c', 'b', 'a']",
+      explanation: "`build`는 입력 노드를 모두 넣은 뒤에 자신을 넣는다. `L`에서 시작해 `d`, `c`, `a`로 내려가 `a`를 먼저 넣고, `b`, `c`, `d`, `L` 순서로 넣는다. `b`는 두 번 만나지만 `seen` 때문에 한 번만 들어간다. 역전파는 이 순서를 뒤집어 `L`부터 실행하므로, 각 노드의 기울기가 확정된 뒤에 입력 쪽으로 보낸다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

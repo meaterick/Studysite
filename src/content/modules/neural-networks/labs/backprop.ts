@@ -2,6 +2,82 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "노드 하나씩 역전파 규칙 적용하기",
+    prompt: md`
+
+계산 그래프의 노드마다 "출력 쪽 기울기 \`g\`를 받아 입력 쪽 기울기를 돌려주는" 함수를 만듭니다(본문의 노드별 국소 미분 표).
+
+1. \`add_backward(g)\`: 덧셈 $z = a + b$ → \`(g, g)\`
+2. \`mul_backward(a, b, g)\`: 곱셈 $z = a b$ → \`(b * g, a * g)\`
+3. \`square_backward(a, g)\`: 제곱 $z = a^2$ → \`2 * a * g\`
+4. \`relu_backward(a, g)\`: ReLU → \`a > 0\`이면 \`g\`, 아니면 0
+
+마지막 줄은 이 함수들을 이어 붙여 $L = (wx + c)^2$의 기울기를 구합니다. 본문 예제와 같은 \`(42, 28, 14)\`가 나와야 합니다.
+`,
+    starter: py`
+def add_backward(g):
+    return 0.0, 0.0     # TODO
+
+def mul_backward(a, b, g):
+    return 0.0, 0.0     # TODO
+
+def square_backward(a, g):
+    return 0.0          # TODO
+
+def relu_backward(a, g):
+    return 0.0          # TODO
+
+w, x, c = 2.0, 3.0, 1.0
+u = w * x
+v = u + c
+dv = square_backward(v, 1.0)
+du, dc = add_backward(dv)
+dw, dx = mul_backward(w, x, du)
+print(dw, dx, dc)
+`,
+    tests: py`
+@test("덧셈·곱셈·제곱 노드")
+def _():
+    assert add_backward(5.0) == (5.0, 5.0), f"add_backward: {add_backward(5.0)}"
+    assert mul_backward(2.0, 3.0, 1.5) == (4.5, 3.0), f"mul_backward: {mul_backward(2.0, 3.0, 1.5)}"
+    assert square_backward(7.0, 1.0) == 14.0, f"square_backward: {square_backward(7.0, 1.0)}"
+
+@test("ReLU 노드: 양수만 통과")
+def _():
+    assert relu_backward(2.0, 3.0) == 3.0 and relu_backward(-1.0, 3.0) == 0, "음수 입력에서는 기울기가 0입니다."
+
+@test("이어 붙인 결과 (42, 28, 14)")
+def _():
+    assert (dw, dx, dc) == (42.0, 28.0, 14.0), f"결과: {(dw, dx, dc)}"
+`,
+    hints: [
+      "덧셈은 `return g, g`, 곱셈은 `return b * g, a * g`입니다. 곱셈 노드는 **상대** 입력의 값을 곱합니다.",
+      "제곱은 `return 2 * a * g`, ReLU는 `return g if a > 0 else 0.0`입니다.",
+    ],
+    solution: py`
+def add_backward(g):
+    return g, g
+
+def mul_backward(a, b, g):
+    return b * g, a * g
+
+def square_backward(a, g):
+    return 2 * a * g
+
+def relu_backward(a, g):
+    return g if a > 0 else 0.0
+
+w, x, c = 2.0, 3.0, 1.0
+u = w * x
+v = u + c
+dv = square_backward(v, 1.0)
+du, dc = add_backward(dv)
+dw, dx = mul_backward(w, x, du)
+print(dw, dx, dc)
+`,
+  },
+  {
     key: "ex1",
     title: "덧셈·곱셈 노드로 손 역전파, 그리고 층 하나의 δxᵀ",
     prompt: md`

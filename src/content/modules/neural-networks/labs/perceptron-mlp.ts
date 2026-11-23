@@ -2,6 +2,78 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "MLP 순전파를 층마다 계산하기",
+    prompt: md`
+
+입력 2개, 은닉 뉴런 2개(ReLU), 출력 1개인 MLP의 순전파를 NumPy로 한 단계씩 계산합니다. 가중치 행렬의 모양은 (출력 수, 입력 수)입니다.
+
+1. \`z1\`: 은닉층의 점수 $W_1 x + b_1$
+2. \`h\`: ReLU를 적용한 은닉층 출력
+3. \`y_hat\`: 출력 $W_2 h + b_2$(수 하나)
+4. \`n_params\`: 이 MLP의 파라미터 수
+
+먼저 $x = (1, 2)$에서 세 값을 손으로 계산해 적은 뒤 코드를 채웁니다.
+`,
+    starter: py`
+import numpy as np
+
+x = np.array([1.0, 2.0])
+W1 = np.array([[1.0, -1.0],
+               [0.5, 0.5]])
+b1 = np.array([0.5, -1.0])
+W2 = np.array([[2.0, -3.0]])
+b2 = np.array([1.0])
+
+z1 = None        # TODO
+h = None         # TODO
+y_hat = None     # TODO
+n_params = None  # TODO
+
+print(z1, h, y_hat, n_params)
+`,
+    tests: py`
+import numpy as np
+
+@test("은닉층 점수 [-0.5, 0.5]")
+def _():
+    assert z1 is not None and np.allclose(z1, [-0.5, 0.5]), f"z1: {z1}"
+
+@test("ReLU 뒤 [0, 0.5]")
+def _():
+    assert h is not None and np.allclose(h, [0.0, 0.5]), f"h: {h}"
+
+@test("출력 -0.5")
+def _():
+    assert y_hat is not None and np.allclose(np.ravel(y_hat), [-0.5]), f"y_hat: {y_hat}"
+
+@test("파라미터 수 9")
+def _():
+    assert n_params == 9, f"n_params: {n_params} — 은닉층 2×2 + 2, 출력층 1×2 + 1입니다."
+`,
+    hints: [
+      "`z1 = W1 @ x + b1`, `h = np.maximum(0, z1)`, `y_hat = W2 @ h + b2`입니다.",
+      "첫 층은 $1 \\times 1 + (-1) \\times 2 + 0.5 = -0.5$와 $0.5 + 1 - 1 = 0.5$입니다. 파라미터는 `W1.size + b1.size + W2.size + b2.size`입니다.",
+    ],
+    solution: py`
+import numpy as np
+
+x = np.array([1.0, 2.0])
+W1 = np.array([[1.0, -1.0],
+               [0.5, 0.5]])
+b1 = np.array([0.5, -1.0])
+W2 = np.array([[2.0, -3.0]])
+b2 = np.array([1.0])
+
+z1 = W1 @ x + b1
+h = np.maximum(0, z1)
+y_hat = W2 @ h + b2
+n_params = W1.size + b1.size + W2.size + b2.size
+
+print(z1, h, y_hat, n_params)
+`,
+  },
+  {
     key: "ex1",
     title: "뉴런·층 계산과 \"비선형이 없으면 한 층\" 증명",
     prompt: md`

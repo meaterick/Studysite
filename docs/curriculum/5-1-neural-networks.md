@@ -20,10 +20,10 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [퍼셉트론, 다층 신경망, 활성화 함수](#lesson-perceptron-mlp) | 핵심 | 40분 | #65 퍼셉트론, 다층 신경망, 활성화 함수 |
-| 2 | [순전파, 역전파, 계산 그래프](#lesson-backprop) | 핵심 | 35분 | #66 순전파, 역전파, 계산 그래프, 자동미분 |
+| 1 | [퍼셉트론, 다층 신경망, 활성화 함수](#lesson-perceptron-mlp) | 핵심 | 55분 | #65 퍼셉트론, 다층 신경망, 활성화 함수 |
+| 2 | [순전파, 역전파, 계산 그래프](#lesson-backprop) | 핵심 | 50분 | #66 순전파, 역전파, 계산 그래프, 자동미분 |
 | 3 | [자동미분 엔진 구현](#lesson-micrograd) | 핵심 | 40분 | #66 순전파, 역전파, 계산 그래프, 자동미분 |
-| 4 | [배치, 에포크, 학습률, SGD, Adam](#lesson-optimizers) | 핵심 | 35분 | #67 배치, 에포크, 학습률, SGD, Adam |
+| 4 | [배치, 에포크, 학습률, SGD, Adam](#lesson-optimizers) | 핵심 | 45분 | #67 배치, 에포크, 학습률, SGD, Adam |
 | 5 | [자동미분의 두 모드와 메모리](#lesson-autodiff-theory) | 심화 | 30분 | — |
 | 6 | [Adam의 이론: 편향 보정, AdamW, 워밍업](#lesson-adam-theory) | 심화 | 30분 | — |
 
@@ -33,7 +33,7 @@
 
 ### 1. 퍼셉트론, 다층 신경망, 활성화 함수
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/neural-networks/perceptron-mlp.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/perceptron-mlp.ts)
+핵심 · 55분 · [본문 원본](../../src/content/modules/neural-networks/perceptron-mlp.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/perceptron-mlp.ts)
 
 **학습 목표:** 퍼셉트론과 뉴런 하나의 계산을 하고, 다층 신경망(MLP)의 순전파를 행렬 모양과 파라미터 수까지 추적하며, 활성화 함수가 없으면 여러 층이 한 층과 같아지는 이유와 XOR을 푸는 은닉층의 역할을 설명한다. 시그모이드·tanh·ReLU·GELU의 차이도 설명한다.
 
@@ -41,10 +41,11 @@
 
 **본문 절:** 퍼셉트론과 뉴런 · 다층 신경망과 행렬 모양 · 활성화 함수가 없으면 한 층과 같다 · 활성화 함수의 종류
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 5
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 2 · 그림 5
 
 **실습**
 
+- `ex0` MLP 순전파를 층마다 계산하기
 - `ex1` 뉴런·층 계산과 "비선형이 없으면 한 층" 증명
 
 **서술형**
@@ -62,7 +63,7 @@
 
 ### 2. 순전파, 역전파, 계산 그래프
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/neural-networks/backprop.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/backprop.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/neural-networks/backprop.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/backprop.ts)
 
 **학습 목표:** 계산 식을 계산 그래프로 나누고, 덧셈·곱셈·ReLU 등 노드의 국소 미분과 연쇄법칙으로 역전파를 손으로 수행하며, 한 층의 기울기 $\partial L/\partial W = \delta x^\top$, $\partial L/\partial x = W^\top \delta$를 행렬 모양으로 확인하고 수치미분으로 검산한다.
 
@@ -70,10 +71,11 @@
 
 **본문 절:** 계산 그래프와 순전파 · 역전파 · 노드별 국소 미분 · 한 층의 역전파
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 2 · 그림 3
 
 **실습**
 
+- `ex0` 노드 하나씩 역전파 규칙 적용하기
 - `ex1` 덧셈·곱셈 노드로 손 역전파, 그리고 층 하나의 δxᵀ
 
 **서술형**
@@ -98,7 +100,7 @@
 
 **본문 절:** 이 레슨에서 쓰는 파이썬 문법 · Value 클래스 · 엔진으로 학습 루프 만들기
 
-**구성:** 확인 문제 6 · 서술형 2 · 실습 1 · 코드 셀 3 · 그림 3
+**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 3 · 그림 3
 
 **실습**
 
@@ -118,7 +120,7 @@
 
 ### 4. 배치, 에포크, 학습률, SGD, Adam
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/neural-networks/optimizers.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/optimizers.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/neural-networks/optimizers.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/optimizers.ts)
 
 **학습 목표:** 미니배치·반복·에포크를 구분하고 배치 크기와 학습률이 학습에 주는 영향을 설명하며, SGD·Momentum·Adam의 갱신식을 쓰고 Momentum의 누적과 Adam의 첫 갱신을 손으로 계산하고, 문제에 맞는 최적화기를 고른다.
 
@@ -126,10 +128,11 @@
 
 **본문 절:** 미니배치, 반복, 에포크 · SGD와 학습률 · Momentum · Adam · 최적화기 고르기
 
-**구성:** 확인 문제 6 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 2
+**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 2 · 코드 셀 1 · 그림 2
 
 **실습**
 
+- `ex0` 반복 수 계산과 SGD 한 걸음
 - `ex1` Momentum과 Adam 한 스텝 구현하기
 
 **서술형**
