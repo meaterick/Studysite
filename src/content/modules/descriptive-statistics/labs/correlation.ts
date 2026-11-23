@@ -2,6 +2,71 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "편차의 곱으로 공분산을 단계별로 계산하기",
+    prompt: md`
+
+본문의 공분산 표를 코드로 옮깁니다. \`x = [2, 4, 6, 8]\`, \`y = [1, 3, 2, 6]\`(NumPy 배열)에 대해 다음을 차례로 계산합니다.
+
+1. \`dx\`, \`dy\`: 각 변수에서 평균을 뺀 편차
+2. \`products\`: 같은 위치의 편차끼리 곱한 배열
+3. \`positive\`: \`products\` 중 0보다 큰 값의 개수(두 변수가 함께 평균보다 크거나 작은 데이터의 수)
+4. \`cov\`: 곱의 합을 $n - 1$로 나눈 표본공분산
+`,
+    starter: py`
+import numpy as np
+
+x = np.array([2, 4, 6, 8], dtype=float)
+y = np.array([1, 3, 2, 6], dtype=float)
+
+dx = None         # TODO
+dy = None         # TODO
+products = None   # TODO
+positive = None   # TODO
+cov = None        # TODO
+
+print(dx, dy)
+print(products, positive, cov)
+`,
+    tests: py`
+import numpy as np
+
+@test("편차: [-3, -1, 1, 3]과 [-2, 0, -1, 3]")
+def _():
+    assert dx is not None and np.allclose(dx, [-3, -1, 1, 3]), f"dx: {dx}"
+    assert dy is not None and np.allclose(dy, [-2, 0, -1, 3]), f"dy: {dy}"
+
+@test("편차의 곱과 양수인 곱의 개수")
+def _():
+    assert products is not None and np.allclose(products, [6, 0, -1, 9]), f"products: {products}"
+    assert positive == 2, f"positive: {positive}"
+
+@test("표본공분산 14/3")
+def _():
+    assert cov is not None and approx(cov, 14 / 3), f"cov: {cov}"
+    assert approx(cov, np.cov(x, y)[0, 1]), "np.cov의 결과와 다릅니다."
+`,
+    hints: [
+      "`dx = x - x.mean()`, `dy = y - y.mean()`, `products = dx * dy`입니다.",
+      "양수의 개수는 `(products > 0).sum()`이고, 공분산은 `products.sum() / (len(x) - 1)`입니다.",
+    ],
+    solution: py`
+import numpy as np
+
+x = np.array([2, 4, 6, 8], dtype=float)
+y = np.array([1, 3, 2, 6], dtype=float)
+
+dx = x - x.mean()
+dy = y - y.mean()
+products = dx * dy
+positive = (products > 0).sum()
+cov = products.sum() / (len(x) - 1)
+
+print(dx, dy)
+print(products, positive, cov)
+`,
+  },
+  {
     key: "ex1",
     title: "공분산·피어슨 상관계수·스피어먼 순위상관계수 구현하기",
     prompt: md`

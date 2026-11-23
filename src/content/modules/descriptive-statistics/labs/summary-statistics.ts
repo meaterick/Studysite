@@ -2,6 +2,71 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "평균과 중앙값을 직접 구하기",
+    prompt: md`
+
+NumPy 없이 대푯값 두 개를 구합니다.
+
+1. \`mean(xs)\`: 산술평균
+2. \`median(xs)\`: 값을 정렬한 뒤, 개수가 홀수이면 가운데 값, 짝수이면 가운데 두 값의 평균. \`sorted\`를 써서 **원래 리스트는 바꾸지 않습니다.**
+
+본문의 연봉 데이터 \`[30, 32, 35, 38, 40, 42, 300]\`에서 평균은 약 73.9, 중앙값은 38입니다.
+`,
+    starter: py`
+def mean(xs):
+    return 0.0   # TODO
+
+def median(xs):
+    s = sorted(xs)
+    n = len(s)
+    # TODO: n이 홀수이면 s[n // 2], 짝수이면 가운데 두 값의 평균
+    return 0.0
+
+salary = [30, 32, 35, 38, 40, 42, 300]
+print(round(mean(salary), 1), median(salary))
+print(median([7, 1, 3, 9]))
+`,
+    tests: py`
+@test("연봉 데이터: 평균 73.9, 중앙값 38")
+def _():
+    salary = [30, 32, 35, 38, 40, 42, 300]
+    assert approx(mean(salary), 517 / 7), f"평균: {mean(salary)}"
+    assert median(salary) == 38, f"중앙값: {median(salary)}"
+
+@test("개수가 홀수·짝수인 중앙값")
+def _():
+    assert median([7, 1, 3, 9, 5]) == 5, f"결과: {median([7, 1, 3, 9, 5])}"
+    assert approx(median([7, 1, 3, 9]), 5.0), f"결과: {median([7, 1, 3, 9])}"
+    assert approx(median([4, 1]), 2.5)
+
+@test("원래 리스트를 바꾸지 않는다")
+def _():
+    xs = [3, 1, 2]
+    median(xs)
+    assert xs == [3, 1, 2], f"리스트가 {xs}로 바뀌었습니다."
+`,
+    hints: [
+      "평균은 `sum(xs) / len(xs)`입니다.",
+      "`if n % 2 == 1: return s[n // 2]`이고, 짝수이면 `return (s[n // 2 - 1] + s[n // 2]) / 2`입니다. 4개이면 가운데 두 값의 인덱스는 1과 2입니다.",
+    ],
+    solution: py`
+def mean(xs):
+    return sum(xs) / len(xs)
+
+def median(xs):
+    s = sorted(xs)
+    n = len(s)
+    if n % 2 == 1:
+        return s[n // 2]
+    return (s[n // 2 - 1] + s[n // 2]) / 2
+
+salary = [30, 32, 35, 38, 40, 42, 300]
+print(round(mean(salary), 1), median(salary))
+print(median([7, 1, 3, 9]))
+`,
+  },
+  {
     key: "ex1",
     title: "분위수·이상치·표본분산을 정의대로 구현하기",
     prompt: md`

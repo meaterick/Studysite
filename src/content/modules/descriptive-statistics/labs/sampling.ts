@@ -2,6 +2,71 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "층의 비율대로 표본 크기 정하기",
+    prompt: md`
+
+층화추출의 첫 단계인 "층마다 몇 개를 뽑을지"를 계산합니다.
+
+1. \`strata_sizes(counts, n)\`: 층별 개수를 담은 딕셔너리 \`counts\`와 전체 표본 크기 \`n\`을 받아, 층마다 $n \times \frac{\text{층의 개수}}{\text{전체 개수}}$를 \`round\`로 반올림한 값을 딕셔너리로 돌려줍니다.
+2. \`share(labels, value)\`: 리스트 \`labels\`에서 값이 \`value\`인 원소의 비율
+
+학년별 인원이 \`{1: 300, 2: 300, 3: 400}\`인 학교에서 100명을 뽑으면 \`{1: 30, 2: 30, 3: 40}\`입니다.
+`,
+    starter: py`
+def strata_sizes(counts, n):
+    """{층: 개수} → {층: 뽑을 개수}"""
+    total = sum(counts.values())
+    sizes = {}
+    # TODO: 층마다 round(n * 개수 / total)을 sizes에 저장합니다.
+    return sizes
+
+def share(labels, value):
+    """labels에서 value가 차지하는 비율"""
+    return 0.0   # TODO
+
+print(strata_sizes({1: 300, 2: 300, 3: 400}, 100))
+print(share([1, 0, 0, 1, 0], 1))
+`,
+    tests: py`
+@test("학년별 30, 30, 40")
+def _():
+    got = strata_sizes({1: 300, 2: 300, 3: 400}, 100)
+    assert got == {1: 30, 2: 30, 3: 40}, f"결과: {got}"
+
+@test("양성 5%인 데이터에서 100개: 양성 5, 음성 95")
+def _():
+    got = strata_sizes({1: 50, 0: 950}, 100)
+    assert got == {1: 5, 0: 95}, f"결과: {got}"
+
+@test("share: 비율")
+def _():
+    assert approx(share([1, 0, 0, 1, 0], 1), 0.4), f"결과: {share([1, 0, 0, 1, 0], 1)}"
+    assert approx(share([1] * 5 + [0] * 95, 1), 0.05)
+    assert approx(share(["a", "b", "a", "a"], "a"), 0.75)
+`,
+    hints: [
+      "`for layer, count in counts.items():` 안에서 `sizes[layer] = round(n * count / total)`을 실행합니다.",
+      "비율은 `labels.count(value) / len(labels)`입니다.",
+    ],
+    solution: py`
+def strata_sizes(counts, n):
+    """{층: 개수} → {층: 뽑을 개수}"""
+    total = sum(counts.values())
+    sizes = {}
+    for layer, count in counts.items():
+        sizes[layer] = round(n * count / total)
+    return sizes
+
+def share(labels, value):
+    """labels에서 value가 차지하는 비율"""
+    return labels.count(value) / len(labels)
+
+print(strata_sizes({1: 300, 2: 300, 3: 400}, 100))
+print(share([1, 0, 0, 1, 0], 1))
+`,
+  },
+  {
     key: "ex1",
     title: "층화추출 직접 구현하고 단순무작위추출과 비교하기",
     prompt: md`

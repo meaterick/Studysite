@@ -20,9 +20,9 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [표본과 모집단, 표본추출, 표본편향](#lesson-sampling) | 핵심 | 30분 | #31 표본과 모집단, 표본추출, 표본편향 |
-| 2 | [평균, 중앙값, 분위수, 표준편차](#lesson-summary-statistics) | 핵심 | 30분 | #32 평균, 중앙값, 분위수, 표준편차 |
-| 3 | [공분산, 상관계수, 상관관계와 인과관계](#lesson-correlation) | 핵심 | 35분 | #33 공분산, 상관계수, 상관관계와 인과관계 |
+| 1 | [표본과 모집단, 표본추출, 표본편향](#lesson-sampling) | 핵심 | 45분 | #31 표본과 모집단, 표본추출, 표본편향 |
+| 2 | [평균, 중앙값, 분위수, 표준편차](#lesson-summary-statistics) | 핵심 | 45분 | #32 평균, 중앙값, 분위수, 표준편차 |
+| 3 | [공분산, 상관계수, 상관관계와 인과관계](#lesson-correlation) | 핵심 | 45분 | #33 공분산, 상관계수, 상관관계와 인과관계 |
 
 ## 핵심 레슨
 
@@ -30,7 +30,7 @@
 
 ### 1. 표본과 모집단, 표본추출, 표본편향
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/descriptive-statistics/sampling.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/sampling.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/descriptive-statistics/sampling.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/sampling.ts)
 
 **학습 목표:** 모집단과 표본, 모수와 통계량을 구분하고, 단순무작위추출과 층화추출로 표본을 뽑으며, 선택 편향·생존 편향·무응답 편향이 추정을 어떻게 왜곡하는지 설명한다.
 
@@ -38,10 +38,11 @@
 
 **본문 절:** 모집단과 표본 · 표본추출 방법 · 표본편향 · 학습 데이터는 표본이다
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 2 · 그림 1
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 3 · 그림 1
 
 **실습**
 
+- `ex0` 층의 비율대로 표본 크기 정하기
 - `ex1` 층화추출 직접 구현하고 단순무작위추출과 비교하기
 
 **서술형**
@@ -57,7 +58,7 @@
 
 ### 2. 평균, 중앙값, 분위수, 표준편차
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/descriptive-statistics/summary-statistics.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/summary-statistics.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/descriptive-statistics/summary-statistics.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/summary-statistics.ts)
 
 **학습 목표:** 평균·중앙값·최빈값과 분위수·사분위범위·분산·표준편차를 계산하고, 이상치와 치우친 분포에서 알맞은 대푯값과 퍼짐 지표를 고르며, 표본분산을 $n - 1$로 나누는 이유를 설명한다.
 
@@ -65,10 +66,11 @@
 
 **본문 절:** 대푯값: 평균, 중앙값, 최빈값 · 분위수와 사분위범위 · 분산과 표준편차 · 이상치가 통계량에 미치는 영향
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 2 · 그림 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 5 · 그림 1
 
 **실습**
 
+- `ex0` 평균과 중앙값을 직접 구하기
 - `ex1` 분위수·이상치·표본분산을 정의대로 구현하기
 
 **서술형**
@@ -84,7 +86,7 @@
 
 ### 3. 공분산, 상관계수, 상관관계와 인과관계
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/descriptive-statistics/correlation.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/correlation.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/descriptive-statistics/correlation.ts) · [실습 원본](../../src/content/modules/descriptive-statistics/labs/correlation.ts)
 
 **학습 목표:** 공분산과 피어슨 상관계수를 계산하고 상관계수를 중심화한 벡터의 코사인 유사도로 해석하며, 상관계수가 직선 관계만 재고 이상치에 민감하다는 점과 상관관계가 인과관계를 뜻하지 않는 이유를 설명한다.
 
@@ -92,10 +94,11 @@
 
 **본문 절:** 공분산 · 피어슨 상관계수 · 상관계수의 한계 · 상관관계와 인과관계 · 공분산행렬과 상관행렬
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 2 · 그림 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 2 · 그림 1
 
 **실습**
 
+- `ex0` 편차의 곱으로 공분산을 단계별로 계산하기
 - `ex1` 공분산·피어슨 상관계수·스피어먼 순위상관계수 구현하기
 
 **서술형**
