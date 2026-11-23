@@ -57,6 +57,27 @@ print(np.round(W1, 3))                                  # 200번 갱신 뒤에�
 
 fan_in = 100, $\mathrm{Var}(w) = \mathrm{Var}(x) = 1$이면 $\mathrm{Var}(z) \approx 100$이라 표준편차가 층 하나에 10배가 된다. 층을 지나도 분산을 유지하려면 $\mathrm{Var}(w) \approx 1/\text{fan\_in}$이어야 한다.
 
+이 식을 숫자로 확인한다. 입력의 분산은 1로 두고, 가중치의 표준편차와 fan_in을 바꿔 $z$의 분산을 잰다. 식이 가정한 대로 샘플마다 가중치도 새로 뽑는다.
+
+\`\`\`python
+import numpy as np
+
+rng = np.random.default_rng(0)
+for fan_in, std_w in [(100, 1.0), (100, 0.1), (400, 0.05)]:
+    x = rng.normal(size=(10_000, fan_in))              # Var(x) = 1
+    w = rng.normal(0, std_w, size=(10_000, fan_in))    # Var(w) = std_w²
+    z = (x * w).sum(axis=1)                            # 항 fan_in개의 합
+    print(fan_in, std_w, round(z.var(), 1), round(fan_in * std_w ** 2, 1))
+\`\`\`
+
+\`\`\`output
+100 1.0 100.5 100.0
+100 0.1 1.0 1.0
+400 0.05 1.0 1.0
+\`\`\`
+
+셋째 열(측정한 분산)과 넷째 열($\text{fan\_in} \cdot \mathrm{Var}(w)$)이 같다. 표준편차를 $1/\sqrt{\text{fan\_in}}$으로 정한 둘째·셋째 줄은 fan_in과 관계없이 분산이 1로 유지된다.
+
 - **Xavier(Glorot) 초기화**: 순전파에서는 fan_in, 역전파에서는 fan_out(층의 출력 수)에 맞춰야 하므로 둘의 평균을 써서 $\mathrm{Var}(w) = 2/(\text{fan\_in} + \text{fan\_out})$로 정한다. tanh·시그모이드에 쓴다.
 - **He 초기화**: ReLU는 입력의 절반가량을 0으로 만들어 분산을 절반으로 줄이므로, 이를 보충해 $\mathrm{Var}(w) = 2/\text{fan\_in}$으로 정한다. ReLU 계열에 쓴다.
 
@@ -131,6 +152,19 @@ print(round(1.2 ** 15, 1))
 `,
       expected: "57.7 0.107\n15.4",
       explanation: "층마다 표준편차가 1.5배씩 커지면 10층 뒤 약 57.7배(폭주), 0.8배씩 줄면 약 0.107배(소실)가 된다. 1.2배씩 15층이면 약 15.4배다. 층 하나의 작은 어긋남이 깊이만큼 거듭제곱된다.",
+    },
+    {
+      key: "p2",
+      question: "fan_in = fan_out = 50인 층의 He 초기화와 Xavier 초기화 표준편차를 계산한다. 출력을 예측하십시오.",
+      code: py`
+import math
+fan_in, fan_out = 50, 50
+he = math.sqrt(2 / fan_in)
+xavier = math.sqrt(2 / (fan_in + fan_out))
+print(round(he, 4), round(xavier, 4))
+`,
+      expected: "0.2 0.1414",
+      explanation: "He는 $\\mathrm{Var}(w) = 2 / 50 = 0.04$라 표준편차가 0.2이고, Xavier는 $2 / 100 = 0.02$라 약 0.1414다. ReLU가 분산을 절반으로 줄이는 것을 보충하므로 He의 분산이 두 배 크다.",
     },
   ],
   descriptive: [

@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/dropout-residual";
 
 export default defineLesson({
@@ -129,6 +129,23 @@ $F(x) + x$는 원소별 덧셈이므로 $F(x)$와 $x$의 모양이 같아야 한
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "정해진 마스크로 역드롭아웃($p = 0.5$)을 적용한다. 출력을 예측하십시오.",
+      code: py`
+import numpy as np
+h = np.array([2.0, 4.0, 6.0, 8.0])
+mask = np.array([1, 0, 1, 0])
+p = 0.5
+out = h * mask / (1 - p)
+print(out, out.mean(), h.mean())
+`,
+      expected: "[ 4.  0. 12.  0.] 4.0 5.0",
+      alternatives: ["[4. 0. 12. 0.] 4.0 5.0"],
+      explanation: "남은 값 2와 6을 $1/(1 - 0.5) = 2$배 해 4와 12가 되고 나머지는 0이다. 이번 마스크의 평균은 4.0으로 원래 평균 5.0과 다르지만, 마스크를 무작위로 많이 뽑아 평균하면 원래 평균과 같아진다. 역드롭아웃은 기댓값을 유지한다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

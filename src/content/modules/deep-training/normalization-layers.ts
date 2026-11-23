@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/normalization-layers";
 
 export default defineLesson({
@@ -63,6 +63,17 @@ print("LN 평균", ln_mean.ravel(), "분산", ln_var.ravel())
 eps = 1e-5
 print("BN 결과:\n", np.round((z - bn_mean) / np.sqrt(bn_var + eps), 3))
 print("LN 결과:\n", np.round((z - ln_mean) / np.sqrt(ln_var + eps), 3))
+\`\`\`
+
+\`\`\`output
+BN 평균 [4. 6.] 분산 [4. 4.]
+LN 평균 [3. 7.] 분산 [1. 1.]
+BN 결과:
+ [[-1. -1.]
+ [ 1.  1.]]
+LN 결과:
+ [[-1.  1.]
+ [-1.  1.]]
 \`\`\`
 
 BN에서는 각 특성 안에서 샘플 1이 작고 샘플 2가 크므로 결과가 $[-1, -1], [1, 1]$이고, LN에서는 각 샘플 안에서 특성 1이 작고 특성 2가 크므로 결과가 $[-1, 1], [-1, 1]$이다.
@@ -149,6 +160,19 @@ height: 315
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "샘플 하나의 특성 세 개에 LayerNorm을 적용한다(감마 1, 베타 0). 출력을 예측하십시오.",
+      code: py`
+import numpy as np
+z = np.array([1.0, 3.0, 5.0])
+print(np.round((z - z.mean()) / np.sqrt(z.var() + 1e-5), 3).tolist())
+`,
+      expected: "[-1.225, 0.0, 1.225]",
+      explanation: "평균은 3, 분산은 $(4 + 0 + 4)/3 = 8/3$이라 표준편차는 약 1.633이다. $(1 - 3)/1.633 \\approx -1.225$, 0, $1.225$다. $\\epsilon = 10^{-5}$은 분산에 비해 아주 작아 셋째 자리까지는 영향이 없다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/pytorch";
 
 export default defineLesson({
@@ -230,6 +230,20 @@ PyTorch 코드는 오류 없이 실행되는데 학습 결과가 이상한 경�
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "PyTorch 없이 \`nn.Linear(20, 64)\` → ReLU → \`nn.Linear(64, 3)\` 모델의 출력 모양과 파라미터 수를 계산한다. 출력을 예측하십시오.",
+      code: py`
+batch, d_in, d_hidden, d_out = 32, 20, 64, 3
+out_shape = (batch, d_out)
+params = (d_in * d_hidden + d_hidden) + (d_hidden * d_out + d_out)
+print(out_shape, params)
+`,
+      expected: "(32, 3) 1539",
+      explanation: "배치 축은 그대로 지나가므로 출력은 `(32, 3)`이다. 첫 층은 $20 \\times 64 + 64 = 1344$개, 둘째 층은 $64 \\times 3 + 3 = 195$개로 합이 1,539개다. `sum(p.numel() for p in model.parameters())`로 같은 값을 확인할 수 있다. ReLU에는 파라미터가 없다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

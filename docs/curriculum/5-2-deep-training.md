@@ -21,11 +21,11 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [가중치 초기화와 기울기 소실·폭주](#lesson-initialization) | 핵심 | 35분 | #68 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
-| 2 | [정규화 층: BatchNorm과 LayerNorm](#lesson-normalization-layers) | 핵심 | 30분 | #68 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
-| 3 | [드롭아웃과 잔차 연결](#lesson-dropout-residual) | 핵심 | 35분 | #69 드롭아웃, 잔차 연결, 전이학습 |
+| 1 | [가중치 초기화와 기울기 소실·폭주](#lesson-initialization) | 핵심 | 40분 | #68 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
+| 2 | [정규화 층: BatchNorm과 LayerNorm](#lesson-normalization-layers) | 핵심 | 35분 | #68 가중치 초기화, 기울기 소실·폭주, 정규화 층 |
+| 3 | [드롭아웃과 잔차 연결](#lesson-dropout-residual) | 핵심 | 40분 | #69 드롭아웃, 잔차 연결, 전이학습 |
 | 4 | [전이학습과 학습 진단](#lesson-transfer-learning) | 핵심 | 30분 | #69 드롭아웃, 잔차 연결, 전이학습 |
-| 5 | [PyTorch 텐서, 데이터 로더, 학습 루프, GPU](#lesson-pytorch) | 핵심 | 35분 | #70 PyTorch 텐서, 데이터 로더, 학습 루프, GPU |
+| 5 | [PyTorch 텐서, 데이터 로더, 학습 루프, GPU](#lesson-pytorch) | 핵심 | 40분 | #70 PyTorch 텐서, 데이터 로더, 학습 루프, GPU |
 | 6 | [GPU, 혼합 정밀도와 PyTorch 실습](#lesson-pytorch-practice) | 보충 | 35분 | — |
 | 7 | [가중치 감쇠와 학습률 스케줄](#lesson-training-schedules) | 보충 | 25분 | — |
 | 8 | [기울기 전달의 수학과 기울기 클리핑](#lesson-gradient-flow) | 심화 | 35분 | — |
@@ -36,7 +36,7 @@
 
 ### 1. 가중치 초기화와 기울기 소실·폭주
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/deep-training/initialization.ts) · [실습 원본](../../src/content/modules/deep-training/labs/initialization.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/deep-training/initialization.ts) · [실습 원본](../../src/content/modules/deep-training/labs/initialization.ts)
 
 **학습 목표:** 역전파에서 국소 미분이 층마다 곱해져 기울기가 소실되거나 폭주하는 원리와 dead ReLU 문제를 설명하고, 가중치를 같은 값으로 초기화하면 안 되는 이유를 확인하며, $\mathrm{Var}(z) \approx \text{fan\_in}\cdot\mathrm{Var}(w)\cdot\mathrm{Var}(x)$에서 Xavier·He 초기화를 유도해 깊은 신경망의 활성화 크기를 비교한다.
 
@@ -44,7 +44,7 @@
 
 **본문 절:** 기울기 소실과 폭주 · 같은 값으로 초기화하면 안 된다 · 분산이 fan_in에 반비례해야 하는 이유
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 1
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 2 · 실습 1 · 코드 셀 3 · 그림 1
 
 **실습**
 
@@ -64,7 +64,7 @@
 
 ### 2. 정규화 층: BatchNorm과 LayerNorm
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/deep-training/normalization-layers.ts) · [실습 원본](../../src/content/modules/deep-training/labs/normalization-layers.ts)
+핵심 · 35분 · [본문 원본](../../src/content/modules/deep-training/normalization-layers.ts) · [실습 원본](../../src/content/modules/deep-training/labs/normalization-layers.ts)
 
 **학습 목표:** BatchNorm과 LayerNorm이 평균과 분산을 계산하는 축의 차이를 작은 예제로 계산하고, Transformer가 LayerNorm을 쓰는 이유를 설명한다.
 
@@ -72,7 +72,7 @@
 
 **본문 절:** 정규화 층이 하는 일 · BatchNorm: 배치 축을 따라 정규화한다 · LayerNorm: 특성 축을 따라 정규화한다 · 작은 예제로 비교하기 · Transformer가 LayerNorm을 쓰는 이유
 
-**구성:** 확인 문제 6 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 1 · 이미지 2
+**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 1 · 이미지 2
 
 **실습**
 
@@ -92,7 +92,7 @@
 
 ### 3. 드롭아웃과 잔차 연결
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/deep-training/dropout-residual.ts) · [실습 원본](../../src/content/modules/deep-training/labs/dropout-residual.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/deep-training/dropout-residual.ts) · [실습 원본](../../src/content/modules/deep-training/labs/dropout-residual.ts)
 
 **학습 목표:** 드롭아웃이 과적합을 줄이는 원리와 역드롭아웃의 보정을 설명하고, 성능 저하 문제가 과적합이 아닌 최적화의 문제인 이유와 잔차 연결의 기울기 $F'(x) + 1$이 깊은 망의 학습을 돕는 원리를 계산으로 보인다.
 
@@ -100,7 +100,7 @@
 
 **본문 절:** 드롭아웃 · 깊게 쌓은 망의 성능 저하 · 잔차 연결
 
-**구성:** 확인 문제 7 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3 · 이미지 1
+**구성:** 확인 문제 7 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3 · 이미지 1
 
 **실습**
 
@@ -129,7 +129,7 @@
 
 **본문 절:** 전이학습 · 학습 진단 순서
 
-**구성:** 확인 문제 6 · 서술형 2 · 실습 1 · Colab 코드 2 · 그림 2
+**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · Colab 코드 2 · 그림 2
 
 **실습**
 
@@ -150,7 +150,7 @@
 
 ### 5. PyTorch 텐서, 데이터 로더, 학습 루프, GPU
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/deep-training/pytorch.ts) · [실습 원본](../../src/content/modules/deep-training/labs/pytorch.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/deep-training/pytorch.ts) · [실습 원본](../../src/content/modules/deep-training/labs/pytorch.ts)
 
 **학습 목표:** Tensor, autograd, nn.Module, 옵티마이저, DataLoader가 직접 구현한 자동미분과 경사하강법의 어느 부분을 대신하는지 대응시키고, GPU를 쓰는 학습 루프와 검증 루프를 작성하며, autograd가 계산하는 2층 신경망의 기울기를 NumPy로 직접 구한다.
 
@@ -158,7 +158,7 @@
 
 **본문 절:** 직접 구현한 것과 PyTorch의 대응 · 텐서와 autograd · nn.Module과 옵티마이저 · Dataset과 DataLoader · 학습 루프와 GPU · 자주 생기는 오류 다섯 가지
 
-**구성:** 확인 문제 7 · 서술형 2 · 실습 1 · Colab 코드 5 · 그림 2 · 이미지 1
+**구성:** 확인 문제 7 · 출력 예측 1 · 서술형 2 · 실습 1 · Colab 코드 5 · 그림 2 · 이미지 1
 
 **실습**
 

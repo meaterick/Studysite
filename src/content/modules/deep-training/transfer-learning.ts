@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/transfer-learning";
 
 export default defineLesson({
@@ -145,6 +145,19 @@ opt = torch.optim.Adam([
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "백본을 고정하고 분류 머리만 학습할 때 학습하는 파라미터 수와 비율을 계산한다. 출력을 예측하십시오.",
+      code: py`
+backbone = 11_000_000          # 고정하는 백본의 파라미터 수(가정)
+head = 512 * 10 + 10           # 특성 512개 → 클래스 10개인 선형 층
+print(head, round(head / (backbone + head), 5))
+`,
+      expected: "5130 0.00047",
+      explanation: "분류 머리는 가중치 $512 \\times 10 = 5120$개와 편향 10개로 5,130개다. 전체의 약 0.047%만 학습하므로, 데이터가 적어도 과적합 위험이 작고 학습이 빠르다. 데이터가 더 많으면 백본의 뒤쪽 층부터 풀어 미세조정한다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",
