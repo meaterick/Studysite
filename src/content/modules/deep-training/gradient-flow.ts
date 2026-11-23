@@ -64,6 +64,12 @@ print("클리핑 후:", [np.round(g, 3) for g in clipped])
 print("클리핑 후 노름:", round(float(np.sqrt(sum(np.sum(g ** 2) for g in clipped))), 3))
 \`\`\`
 
+\`\`\`output
+원래 노름: 130.0
+클리핑 후: [array([1.154, 1.538]), array([4.615])]
+클리핑 후 노름: 5.0
+\`\`\`
+
 세 성분의 비율 $30 : 40 : 120$은 유지되고 전체 노름만 130에서 5가 되었다. 원소마다 $[-5, 5]$로 자르면 $[5, 5, 5]$가 되어 방향이 바뀐다.
 
 [[diagram:clip-norm-vs-value]]

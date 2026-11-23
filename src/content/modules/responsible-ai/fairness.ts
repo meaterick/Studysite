@@ -107,6 +107,12 @@ for g, metrics in report.items():
     print(f"{g} 집단 -> 선택률 {metrics['selection_rate']:.0%}, TPR {metrics['tpr']:.0%}, FPR {metrics['fpr']:.0%}")
 \`\`\`
 
+\`\`\`output
+(200, 3)
+A 집단 -> 선택률 50%, TPR 80%, FPR 20%
+B 집단 -> 선택률 32%, TPR 80%, FPR 20%
+\`\`\`
+
 A 집단은 선택률 50%, TPR 80%, FPR 20%이고, B 집단은 선택률 32%, TPR 80%, FPR 20%다. TPR과 FPR은 같고 선택률만 다르므로, 이 모델은 균등화된 오즈를 만족하지만 인구통계 동등성은 만족하지 않는다.
 
 다음 코드는 B 집단의 임계값을 세 단계로 낮추면서 선택률 격차와 FPR 격차가 어떻게 변하는지 계산한다.
@@ -132,6 +138,12 @@ for name, groups in scenarios.items():
     sel_gap = abs(metrics["A"]["selection_rate"] - metrics["B"]["selection_rate"])
     fpr_gap = abs(metrics["A"]["fpr"] - metrics["B"]["fpr"])
     print(f"[{name}] B 선택률={metrics['B']['selection_rate']:.0%}  B FPR={metrics['B']['fpr']:.0%}  |  선택률 격차={sel_gap:.2f}  FPR 격차={fpr_gap:.2f}")
+\`\`\`
+
+\`\`\`output
+[기존 임계값] B 선택률=32%  B FPR=20%  |  선택률 격차=0.18  FPR 격차=0.00
+[임계값을 조금 낮춤] B 선택률=41%  B FPR=30%  |  선택률 격차=0.09  FPR 격차=0.10
+[선택률을 맞춘 임계값] B 선택률=50%  B FPR=40%  |  선택률 격차=0.00  FPR 격차=0.20
 \`\`\`
 
 임계값을 낮출수록 선택률 격차는 0.18, 0.09, 0.00으로 줄지만, FPR 격차는 0.00, 0.10, 0.20으로 커진다. 기저율이 다른 집단에서는 한 기준을 맞추는 만큼 다른 기준이 깨지며, 이 관계는 임계값을 조금씩 움직일 때마다 연속적으로 나타난다. 캡스톤에서 공정성을 다루는 프로젝트(특히 D. 책임형)는 위 \`fairness_report\` 함수를 자신의 데이터에 맞게 확장해 집단별 지표를 보고할 수 있다.

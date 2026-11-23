@@ -66,6 +66,11 @@ print(nb.predict(vec.transform(new)), np.round(nb.predict_proba(vec.transform(ne
 #  [0.923 0.077]]
 \`\`\`
 
+\`\`\`output
+[1 0] [[0.2   0.8  ]
+ [0.923 0.077]]
+\`\`\`
+
 학습에는 클래스별 단어 횟수를 세는 일만 필요하므로, 문서가 많아도 학습이 빠르다.
 `,
   checks: [

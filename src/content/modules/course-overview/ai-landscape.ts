@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/ai-landscape";
 
 export default defineLesson({
@@ -140,6 +140,19 @@ $\theta$가 너무 작아도(1), 너무 커도(3) 손실이 크고, 2 근처에�
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "데이터 $(1, 2), (2, 4), (3, 7)$에서 $\\theta = 2.5$인 모델 $\\hat y = \\theta x$의 평균제곱오차를 계산한다. 출력을 예측하십시오.",
+      code: py`
+xs, ys = [1, 2, 3], [2, 4, 7]
+theta = 2.5
+print(round(sum((theta * x - y) ** 2 for x, y in zip(xs, ys)) / 3, 3))
+`,
+      expected: "0.5",
+      explanation: "예측은 2.5, 5, 7.5이고 오차는 0.5, 1, 0.5다. 제곱하면 0.25, 1, 0.25로 합이 1.5이고, 3으로 나누면 0.5다. 최적값 $31/14 \\approx 2.21$에서 멀어진 만큼 $\\theta = 2.2$(MSE 0.12)보다 손실이 크다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

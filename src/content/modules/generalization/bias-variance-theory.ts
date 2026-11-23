@@ -48,6 +48,11 @@ print("평균 예측의 분산(실험):", round(preds.mean(axis=1).var(), 3))
 print("공식 rho + (1 - rho)/B :", rho + (1 - rho) / B)
 \`\`\`
 
+\`\`\`output
+평균 예측의 분산(실험): 0.506
+공식 rho + (1 - rho)/B : 0.51
+\`\`\`
+
 상관이 0.5면 트리를 50개 모아도 분산이 0.5 근처에서 멈춘다. 같은 50개라도 상관이 0이었다면 $1/50 = 0.02$까지 내려갔을 것이다.
 
 [[diagram:ensemble-correlation]]

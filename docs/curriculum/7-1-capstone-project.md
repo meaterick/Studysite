@@ -22,7 +22,7 @@
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
 | 1 | [신뢰할 수 있는 실험 절차](#lesson-research-methods) | 핵심 | 35분 | — |
-| 2 | [모델카드와 위험 점검](#lesson-model-cards) | 핵심 | 40분 | — |
+| 2 | [모델카드와 위험 점검](#lesson-model-cards) | 핵심 | 45분 | — |
 | 3 | [핵심 논문과 캡스톤 설계](#lesson-capstone-design) | 핵심 | 45분 | — |
 
 ## 핵심 레슨
@@ -60,7 +60,7 @@
 
 ### 2. 모델카드와 위험 점검
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/capstone-project/model-cards.ts) · [실습 원본](../../src/content/modules/capstone-project/labs/model-cards.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/capstone-project/model-cards.ts) · [실습 원본](../../src/content/modules/capstone-project/labs/model-cards.ts)
 
 **학습 목표:** NIST AI RMF의 네 기능과 위험 점검표로 프로젝트의 위험을 점검하고, EU AI Act의 위험 기반 4등급을 용도에 따라 판단하며, 모델카드의 여섯 항목을 작성할 수 있다.
 
@@ -68,7 +68,7 @@
 
 **본문 절:** 용도에 따라 달라지는 위험 · NIST AI RMF: 위험 관리의 네 기능 · 위험 점검표 · EU AI Act: 용도에 따른 위험 등급 · 모델카드 · AI 도구를 쓸 때의 규칙
 
-**구성:** 확인 문제 7 · 서술형 3 · 실습 1 · 그림 3
+**구성:** 확인 문제 7 · 출력 예측 1 · 서술형 3 · 실습 1 · 그림 3
 
 **실습**
 
@@ -99,7 +99,7 @@
 
 **본문 절:** 핵심 논문 · 캡스톤 유형 · 성공 기준 · 캡스톤 일정
 
-**구성:** 확인 문제 6 · 서술형 3 · 실습 1 · 그림 2
+**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 3 · 실습 1 · 그림 2
 
 **실습**
 

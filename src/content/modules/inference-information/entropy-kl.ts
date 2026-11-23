@@ -74,6 +74,14 @@ print("KL(biased‖fair) =", round(cross_entropy(biased, fair) - entropy(biased)
 print("KL(fair‖biased)를 냇으로:", round((cross_entropy(fair, biased) - entropy(fair)) * np.log(2), 3))
 \`\`\`
 
+\`\`\`output
+1.0 0.469
+1.737
+KL(fair‖biased) = 0.737
+KL(biased‖fair) = 0.531
+KL(fair‖biased)를 냇으로: 0.511
+\`\`\`
+
 :::warn 흔한 실수
 - **KL 발산을 거리처럼 대칭으로 쓴다.** $D_{\mathrm{KL}}(p \parallel q) \ne D_{\mathrm{KL}}(q \parallel p)$이므로 어느 분포가 기준인지 명시한다.
 - **예측 확률이 0인 경우를 처리하지 않는다.** $p(x) > 0$인 곳에서 $q(x) = 0$이면 KL과 교차엔트로피가 무한대가 된다.

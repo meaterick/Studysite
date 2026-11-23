@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import { CAPSTONE_PLAN, CAPSTONE_PLAN_HREF } from "../../curriculum/capstone-plan";
 import exercises from "./labs/capstone-design";
 
@@ -137,6 +137,20 @@ ${CAPSTONE_PLAN.map((step) => `| ${step.title} | ${step.timing} | ${step.task} |
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "테스트 데이터 400개에서 기준 모델 0.70, 제안 모델 0.76이 나왔다. 개선 폭이 표준오차의 두 배를 넘는지 확인한다. 출력을 예측하십시오.",
+      code: py`
+import math
+base, model, n = 0.70, 0.76, 400
+se = math.sqrt(model * (1 - model) / n)
+print(round(model - base, 2), round(se, 3), model - base > 2 * se)
+`,
+      expected: "0.06 0.021 True",
+      explanation: "정확도의 표준오차는 $\\sqrt{0.76 \\times 0.24 / 400} \\approx 0.021$이다. 개선 폭 0.06은 그 두 배(약 0.043)보다 크므로 테스트 데이터의 우연한 흔들림만으로 설명하기 어렵다. 엄밀한 비교는 같은 샘플에서 두 모델을 짝지어 비교하는 검정으로 한다([[lesson:eval-statistics]]).",
+    },
+  ],
   descriptive: [
     {
       key: "d1",
