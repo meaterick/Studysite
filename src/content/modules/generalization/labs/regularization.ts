@@ -2,6 +2,66 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "가중치 하나인 Ridge 해로 규제 세기 비교하기",
+    prompt: md`
+
+모델 $\hat y = wx$에 L2 규제를 더한 목적함수 $J(w) = \sum_i (w x_i - y_i)^2 + \lambda w^2$의 해는 $w^{*} = \frac{\sum_i x_i y_i}{\sum_i x_i^2 + \lambda}$입니다.
+
+1. \`ridge_1d(x, y, lam)\`: 위 식으로 $w^{*}$를 돌려줍니다(NumPy 없이).
+2. \`objective(w, x, y, lam)\`: 목적함수 $J(w)$의 값
+
+\`ridge_1d\`의 결과가 근처의 다른 $w$보다 \`objective\`를 작게 만드는지 확인하면 식을 검산할 수 있습니다.
+`,
+    starter: py`
+def ridge_1d(x, y, lam):
+    return 0.0   # TODO
+
+def objective(w, x, y, lam):
+    return 0.0   # TODO: 오차 제곱합 + lam * w ** 2
+
+x, y = [1.0, 2.0, 3.0], [2.0, 4.0, 7.0]
+print([round(ridge_1d(x, y, lam), 3) for lam in (0, 1, 10, 100)])
+`,
+    tests: py`
+@test("본문의 표: 2.214, 2.067, 1.292, 0.272")
+def _():
+    x, y = [1.0, 2.0, 3.0], [2.0, 4.0, 7.0]
+    got = [ridge_1d(x, y, lam) for lam in (0, 1, 10, 100)]
+    assert approx(got, [31 / 14, 31 / 15, 31 / 24, 31 / 114]), f"결과: {got}"
+
+@test("규제가 강할수록 가중치가 작아진다")
+def _():
+    x, y = [1.0, -2.0, 4.0], [3.0, -1.0, 9.0]
+    ws = [abs(ridge_1d(x, y, lam)) for lam in (0, 0.5, 5, 50)]
+    assert all(a > b for a, b in zip(ws, ws[1:])), f"결과: {ws}"
+
+@test("해는 목적함수를 가장 작게 만든다")
+def _():
+    x, y, lam = [1.0, 2.0, 3.0], [2.0, 4.0, 7.0], 10
+    w = ridge_1d(x, y, lam)
+    assert objective(w, x, y, lam) > 0, "objective를 계산하십시오."
+    for d in (-0.1, 0.1):
+        assert objective(w, x, y, lam) < objective(w + d, x, y, lam), "근처의 w보다 목적함수가 작아야 합니다."
+`,
+    hints: [
+      "`sxy = sum(a * b for a, b in zip(x, y))`, `sxx = sum(a * a for a in x)`로 두고 `return sxy / (sxx + lam)`입니다.",
+      "`sum((w * a - b) ** 2 for a, b in zip(x, y)) + lam * w ** 2`가 목적함수입니다.",
+    ],
+    solution: py`
+def ridge_1d(x, y, lam):
+    sxy = sum(a * b for a, b in zip(x, y))
+    sxx = sum(a * a for a in x)
+    return sxy / (sxx + lam)
+
+def objective(w, x, y, lam):
+    return sum((w * a - b) ** 2 for a, b in zip(x, y)) + lam * w ** 2
+
+x, y = [1.0, 2.0, 3.0], [2.0, 4.0, 7.0]
+print([round(ridge_1d(x, y, lam), 3) for lam in (0, 1, 10, 100)])
+`,
+  },
+  {
     key: "ex1",
     title: "Ridge 닫힌 해, L1의 0 만들기, 조기 종료",
     prompt: md`

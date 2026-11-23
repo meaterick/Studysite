@@ -19,6 +19,40 @@ export default defineLesson({
 
 $\lambda$가 클수록 가중치가 작아져 모델이 단순해진다. 편향 $b$는 예측의 전체 수준을 정할 뿐이므로 규제하지 않는다. 규제항은 가중치의 크기를 그대로 더하므로 특성의 단위에 따라 규제가 다르게 걸린다. 그래서 규제를 쓰기 전에 특성을 표준화한다([[lesson:encoding-scaling]]). scikit-learn의 \`Ridge\`·\`Lasso\`는 \`alpha\`가 $\lambda$이고, \`LogisticRegression\`의 \`C\`는 $1/\lambda$에 해당해 **작을수록** 규제가 강하다.
 
+### 가중치 하나로 보는 L2 규제
+
+가중치가 하나인 모델 $\hat y = wx$에서 오차 제곱합에 L2 규제를 더한 $J(w) = \sum_i (w x_i - y_i)^2 + \lambda w^2$을 생각하자. $w$로 미분해 0으로 두면 해가 바로 나온다([[lesson:derivatives]]).
+
+\`\`\`math
+\frac{dJ}{dw} = 2\sum_i x_i (w x_i - y_i) + 2\lambda w = 0 \quad\Rightarrow\quad w^{*} = \frac{\sum_i x_i y_i}{\sum_i x_i^2 + \lambda}
+\`\`\`
+
+$\lambda$가 분모에 더해지므로 $\lambda$가 클수록 $w^{*}$가 0 쪽으로 작아진다. 데이터 $(1, 2), (2, 4), (3, 7)$은 $\sum x_i y_i = 31$, $\sum x_i^2 = 14$다.
+
+| $\lambda$ | $w^{*} = 31 / (14 + \lambda)$ | 오차 제곱합 | 규제항 $\lambda w^2$ |
+| --- | --- | --- | --- |
+| 0 | 2.214 | 0.357 | 0 |
+| 1 | 2.067 | 0.662 | 4.271 |
+| 10 | 1.292 | 12.274 | 16.684 |
+| 100 | 0.272 | 53.176 | 7.395 |
+
+$\lambda$를 키우면 학습 데이터의 오차는 커지는 대신 가중치가 작아진다. $\lambda = 0$이면 규제가 없는 최소제곱 해 $31/14$다([[lesson:elementary-functions]]).
+
+\`\`\`python
+x, y = [1.0, 2.0, 3.0], [2.0, 4.0, 7.0]
+sxy = sum(a * b for a, b in zip(x, y))   # 31
+sxx = sum(a * a for a in x)              # 14
+for lam in (0, 1, 10, 100):
+    print(lam, round(sxy / (sxx + lam), 3))
+\`\`\`
+
+\`\`\`output
+0 2.214
+1 2.067
+10 1.292
+100 0.272
+\`\`\`
+
 ### L2와 L1의 차이: 희소성
 
 규제항의 기울기를 보면 두 방법의 차이가 드러난다. L2 항 $\lambda w_j^2$의 기울기 $2\lambda w_j$는 가중치에 비례하므로, 큰 가중치는 많이, 작은 가중치는 조금 줄인다. 가중치가 0에 가까워질수록 줄이는 양도 0에 가까워지므로 정확히 0이 되는 경우는 드물다. L1 항 $\lambda |w_j|$의 기울기는 가중치의 크기와 관계없이 $\pm\lambda$로 일정하다. 손실을 줄이는 효과가 $\lambda$보다 작은 가중치는 정확히 0이 되므로, L1은 일부 특성을 모델에서 빼는 **희소한** 해를 만든다.
@@ -179,6 +213,17 @@ print(best, val[best])
 `,
       expected: "3 0.42",
       explanation: "반복마다 잰 검증 손실 가운데 가장 작은 값은 위치 3의 0.42다. 조기 종료는 이 시점의 파라미터를 남기고, 이후 검증 손실이 커지는 구간은 과적합이다.",
+    },
+    {
+      key: "p2",
+      question: "가중치 하나인 Ridge의 해 $\\sum xy / (\\sum x^2 + \\lambda)$를 $\\lambda$마다 계산한다. 출력을 예측하십시오.",
+      code: py`
+sxy, sxx = 31, 14
+for lam in (0, 2, 17):
+    print(lam, round(sxy / (sxx + lam), 3))
+`,
+      expected: "0 2.214\n2 1.938\n17 1.0",
+      explanation: "분모가 $14, 16, 31$이 되므로 가중치는 $31/14 \\approx 2.214$, $31/16 \\approx 1.938$, $31/31 = 1$이다. 규제가 강할수록 가중치가 0 쪽으로 작아진다.",
     },
   ],
   descriptive: [

@@ -2,6 +2,67 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "예측 다섯 개로 편향 제곱·분산·오차 계산하기",
+    prompt: md`
+
+같은 모델을 학습 데이터 다섯 세트로 학습해 한 입력에서 얻은 예측 \`preds\`와 참값 \`truth\`가 주어집니다.
+
+\`bias_var(preds, truth)\`가 다음 세 값을 튜플로 돌려주게 합니다. NumPy 없이 작성합니다.
+
+1. $\text{편향}^2$: $(\text{예측의 평균} - \text{참값})^2$
+2. 분산: 예측이 평균에서 벗어난 차이의 제곱의 평균($n$으로 나눔)
+3. 평균제곱오차: 예측과 참값의 차이의 제곱의 평균
+
+세 번째 값이 앞의 두 값의 합과 같은지도 확인합니다.
+`,
+    starter: py`
+def bias_var(preds, truth):
+    n = len(preds)
+    mean = sum(preds) / n
+    bias2 = 0.0   # TODO
+    var = 0.0     # TODO
+    mse = 0.0     # TODO
+    return bias2, var, mse
+
+print(bias_var([6, 14, 8, 15, 7], 10))
+print(bias_var([7.1, 7.3, 6.9, 7.2, 7.0], 10))
+`,
+    tests: py`
+@test("모델 B: 편향 제곱 0, 분산 14")
+def _():
+    got = bias_var([6, 14, 8, 15, 7], 10)
+    assert approx(list(got), [0.0, 14.0, 14.0]), f"결과: {got}"
+
+@test("모델 C: 편향 제곱 8.41, 분산 0.02")
+def _():
+    got = bias_var([7.1, 7.3, 6.9, 7.2, 7.0], 10)
+    assert approx(list(got), [8.41, 0.02, 8.43], tol=1e-6), f"결과: {got}"
+
+@test("오차 = 편향 제곱 + 분산")
+def _():
+    for preds, truth in (([4.0, 6.0, 5.0, 7.0, 3.0], 6.0), ([1.0, 2.0], 0.0)):
+        b2, v, m = bias_var(preds, truth)
+        assert approx(m, b2 + v), f"{preds}: mse {m}, bias² + var {b2 + v}"
+`,
+    hints: [
+      "`bias2 = (mean - truth) ** 2`입니다.",
+      "`var = sum((p - mean) ** 2 for p in preds) / n`, `mse = sum((p - truth) ** 2 for p in preds) / n`입니다.",
+    ],
+    solution: py`
+def bias_var(preds, truth):
+    n = len(preds)
+    mean = sum(preds) / n
+    bias2 = (mean - truth) ** 2
+    var = sum((p - mean) ** 2 for p in preds) / n
+    mse = sum((p - truth) ** 2 for p in preds) / n
+    return bias2, var, mse
+
+print(bias_var([6, 14, 8, 15, 7], 10))
+print(bias_var([7.1, 7.3, 6.9, 7.2, 7.0], 10))
+`,
+  },
+  {
     key: "ex1",
     title: "편향²과 분산을 시뮬레이션으로 계산하기",
     prompt: md`
