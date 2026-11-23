@@ -2,6 +2,75 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "모양을 읽고 수학 표기를 인덱스로 바꾸기",
+    prompt: md`
+
+행렬 \`M\`이 주어집니다. 값을 출력해 보기 전에 손으로 답을 정한 뒤 코드를 채웁니다.
+
+1. \`shape_M\`: \`M\`의 모양(튜플)
+2. \`a23\`: 수학 표기 $M_{23}$(2행 3열)의 값. \`M[행, 열]\`로 꺼냅니다.
+3. \`row3\`: 3행 전체, \`col2\`: 2열 전체
+4. \`flat_len\`: \`M\`을 1차원으로 펼친 배열의 길이
+
+수학의 행·열 번호는 1부터, 코드의 인덱스는 0부터 셉니다.
+`,
+    starter: py`
+import numpy as np
+
+M = np.array([[3, 1, 4, 1],
+              [5, 9, 2, 6],
+              [5, 3, 5, 8]])
+
+shape_M = None    # TODO: 모양
+a23 = None        # TODO: 2행 3열의 값
+row3 = None       # TODO: 3행 전체
+col2 = None       # TODO: 2열 전체
+flat_len = None   # TODO: 펼친 배열의 길이
+
+print(shape_M, a23, row3, col2, flat_len)
+`,
+    tests: py`
+import numpy as np
+
+@test("모양 (3, 4)")
+def _():
+    assert shape_M is not None and tuple(shape_M) == (3, 4), f"결과: {shape_M}"
+
+@test("2행 3열의 값은 M[1, 2]")
+def _():
+    assert a23 is not None and a23 == 2, f"결과: {a23} — 2행 3열은 M[1, 2]입니다."
+
+@test("3행과 2열")
+def _():
+    assert row3 is not None and np.array_equal(row3, [5, 3, 5, 8]), f"3행: {row3}"
+    assert col2 is not None and np.array_equal(col2, [1, 9, 3]), f"2열: {col2}"
+
+@test("펼친 길이 12")
+def _():
+    assert flat_len == 12, f"결과: {flat_len}"
+`,
+    hints: [
+      "모양은 `M.shape`로도 얻을 수 있지만, 먼저 행 수와 열 수를 세어 `(3, 4)`처럼 직접 써 보십시오. 2행 3열은 0부터 세면 `M[1, 2]`입니다.",
+      "3행 전체는 `M[2]`, 2열 전체는 `M[:, 1]`입니다. 펼친 길이는 원소 수 `3 * 4`이고 `M.reshape(-1)`의 길이와 같습니다.",
+    ],
+    solution: py`
+import numpy as np
+
+M = np.array([[3, 1, 4, 1],
+              [5, 9, 2, 6],
+              [5, 3, 5, 8]])
+
+shape_M = M.shape
+a23 = M[1, 2]
+row3 = M[2]
+col2 = M[:, 1]
+flat_len = len(M.reshape(-1))
+
+print(shape_M, a23, row3, col2, flat_len)
+`,
+  },
+  {
     key: "ex1",
     title: "중첩 리스트의 모양, 전치, 펼치기",
     prompt: md`

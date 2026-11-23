@@ -2,6 +2,77 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "NumPy로 선형결합과 보간 계산하기",
+    prompt: md`
+
+NumPy 배열로 선형결합을 계산합니다.
+
+1. \`combo(c1, v1, c2, v2)\`: $c_1 v_1 + c_2 v_2$를 돌려줍니다.
+2. \`lerp(a, b, t)\`: 보간 $(1 - t)a + tb$를 돌려줍니다.
+3. \`c1\`, \`c2\`: $c_1 [1, 1] + c_2 [1, 3] = [4, 10]$을 만족하는 계수입니다. 성분별로 연립방정식을 세워 **손으로** 푼 값을 적습니다.
+`,
+    starter: py`
+import numpy as np
+
+def combo(c1, v1, c2, v2):
+    """c1 * v1 + c2 * v2"""
+    return None   # TODO
+
+def lerp(a, b, t):
+    """(1 - t) * a + t * b"""
+    return None   # TODO
+
+c1, c2 = None, None   # TODO: 손으로 푼 계수
+
+v1, v2 = np.array([1, 1]), np.array([1, 3])
+print(combo(2, np.array([1, 0]), 3, np.array([0, 1])))
+print(lerp(np.array([2.0, 1.0]), np.array([1.0, 3.0]), 0.5))
+`,
+    tests: py`
+import numpy as np
+
+@test("combo: 2·[1, 0] + 3·[0, 1] = [2, 3]")
+def _():
+    got = combo(2, np.array([1, 0]), 3, np.array([0, 1]))
+    assert got is not None and np.allclose(got, [2, 3]), f"결과: {got}"
+
+@test("lerp: t = 0이면 a, t = 1이면 b, t = 0.5이면 가운데")
+def _():
+    a, b = np.array([2.0, 1.0]), np.array([1.0, 3.0])
+    for t, want in ((0, a), (1, b), (0.5, [1.5, 2.0])):
+        got = lerp(a, b, t)
+        assert got is not None and np.allclose(got, want), f"t = {t}: 결과 {got}"
+
+@test("[4, 10]을 만드는 계수")
+def _():
+    assert c1 is not None and c2 is not None, "c1, c2를 적으십시오."
+    got = c1 * np.array([1, 1]) + c2 * np.array([1, 3])
+    assert np.allclose(got, [4, 10]), f"c1 = {c1}, c2 = {c2}이면 {got}입니다."
+`,
+    hints: [
+      "NumPy 배열은 `c1 * v1 + c2 * v2`처럼 수식 그대로 계산됩니다. `lerp`도 `(1 - t) * a + t * b`입니다.",
+      "성분별로 쓰면 $c_1 + c_2 = 4$, $c_1 + 3c_2 = 10$입니다. 둘째 식에서 첫째 식을 빼면 $2c_2 = 6$입니다.",
+    ],
+    solution: py`
+import numpy as np
+
+def combo(c1, v1, c2, v2):
+    """c1 * v1 + c2 * v2"""
+    return c1 * v1 + c2 * v2
+
+def lerp(a, b, t):
+    """(1 - t) * a + t * b"""
+    return (1 - t) * a + t * b
+
+c1, c2 = 1, 3
+
+v1, v2 = np.array([1, 1]), np.array([1, 3])
+print(combo(2, np.array([1, 0]), 3, np.array([0, 1])))
+print(lerp(np.array([2.0, 1.0]), np.array([1.0, 3.0]), 0.5))
+`,
+  },
+  {
     key: "ex1",
     title: "선형결합과 평균 벡터",
     prompt: md`

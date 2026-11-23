@@ -2,6 +2,76 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "행렬을 열의 선형결합으로 적용하기",
+    prompt: md`
+
+$2 \times 2$ 행렬을 다루는 두 함수를 중첩 리스트로 작성합니다(NumPy를 쓰지 않습니다).
+
+1. \`det2(M)\`: \`M = [[a, b], [c, d]]\`의 행렬식 $ad - bc$
+2. \`apply_by_columns(M, v)\`: $Mv = v_1 \cdot (\text{1열}) + v_2 \cdot (\text{2열})$을 리스트로 돌려줍니다. 1열은 \`[M[0][0], M[1][0]]\`, 2열은 \`[M[0][1], M[1][1]]\`입니다.
+
+본문의 $A = \begin{bmatrix}2 & 1\\1 & 2\end{bmatrix}$에서 \`apply_by_columns(A, [3, -1])\`은 \`[5, 1]\`입니다.
+`,
+    starter: py`
+def det2(M):
+    """[[a, b], [c, d]] → ad - bc"""
+    return 0   # TODO
+
+def apply_by_columns(M, v):
+    """v[0] * (1열) + v[1] * (2열)"""
+    col1 = [M[0][0], M[1][0]]
+    col2 = [0, 0]   # TODO: 2열
+    return [v[0] * col1[0], v[0] * col1[1]]   # TODO: 2열의 항을 더합니다.
+
+A = [[2, 1], [1, 2]]
+print(det2(A), apply_by_columns(A, [3, -1]))
+`,
+    tests: py`
+@test("행렬식: 3, 0, 1")
+def _():
+    assert det2([[2, 1], [1, 2]]) == 3, f"결과: {det2([[2, 1], [1, 2]])}"
+    assert det2([[1, 2], [2, 4]]) == 0
+    assert det2([[1, 2], [0, 1]]) == 1
+
+@test("열의 선형결합: A[3, -1] = [5, 1]")
+def _():
+    got = apply_by_columns([[2, 1], [1, 2]], [3, -1])
+    assert got == [5, 1], f"결과: {got}"
+
+@test("90° 회전 행렬: [2, 1] → [-1, 2]")
+def _():
+    got = apply_by_columns([[0, -1], [1, 0]], [2, 1])
+    assert got == [-1, 2], f"결과: {got}"
+
+@test("행마다 내적한 결과와 같다")
+def _():
+    for M, v in (([[3, 1], [2, 1]], [1, 0]), ([[3, 1], [2, 1]], [0, 1]), ([[1, -2], [4, 5]], [2, 3])):
+        by_rows = [M[0][0] * v[0] + M[0][1] * v[1], M[1][0] * v[0] + M[1][1] * v[1]]
+        assert apply_by_columns(M, v) == by_rows, f"M = {M}, v = {v}: 결과 {apply_by_columns(M, v)}"
+`,
+    hints: [
+      "`a, b = M[0]`과 `c, d = M[1]`로 원소를 꺼내면 행렬식은 `a * d - b * c`입니다.",
+      "2열은 `[M[0][1], M[1][1]]`입니다. 결과는 `[v[0] * col1[0] + v[1] * col2[0], v[0] * col1[1] + v[1] * col2[1]]`입니다.",
+    ],
+    solution: py`
+def det2(M):
+    """[[a, b], [c, d]] → ad - bc"""
+    a, b = M[0]
+    c, d = M[1]
+    return a * d - b * c
+
+def apply_by_columns(M, v):
+    """v[0] * (1열) + v[1] * (2열)"""
+    col1 = [M[0][0], M[1][0]]
+    col2 = [M[0][1], M[1][1]]
+    return [v[0] * col1[0] + v[1] * col2[0], v[0] * col1[1] + v[1] * col2[1]]
+
+A = [[2, 1], [1, 2]]
+print(det2(A), apply_by_columns(A, [3, -1]))
+`,
+  },
+  {
     key: "ex1",
     title: "기저 좌표와 2×2 역행렬 직접 계산하기",
     prompt: md`

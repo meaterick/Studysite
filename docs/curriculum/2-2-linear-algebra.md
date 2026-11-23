@@ -20,11 +20,11 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [스칼라, 벡터, 행렬, 텐서](#lesson-scalars-tensors) | 핵심 | 30분 | #18 스칼라, 벡터, 행렬, 텐서 |
-| 2 | [벡터의 덧셈, 스칼라곱, 선형결합](#lesson-vector-operations) | 핵심 | 35분 | #19 벡터의 덧셈, 스칼라곱, 선형결합 |
-| 3 | [내적, 길이, 거리, 코사인 유사도](#lesson-dot-product) | 핵심 | 35분 | #20 내적, 벡터의 길이, 거리, 코사인 유사도 |
-| 4 | [행렬의 형태, 전치, 행렬곱](#lesson-matrix-multiplication) | 핵심 | 45분 | #21 행렬의 형태, 전치, 행렬곱 |
-| 5 | [선형변환, 선형독립, 기저, 차원](#lesson-linear-maps-basis) | 핵심 | 35분 | #22 선형변환, 선형독립, 기저, 차원 |
+| 1 | [스칼라, 벡터, 행렬, 텐서](#lesson-scalars-tensors) | 핵심 | 45분 | #18 스칼라, 벡터, 행렬, 텐서 |
+| 2 | [벡터의 덧셈, 스칼라곱, 선형결합](#lesson-vector-operations) | 핵심 | 45분 | #19 벡터의 덧셈, 스칼라곱, 선형결합 |
+| 3 | [내적, 길이, 거리, 코사인 유사도](#lesson-dot-product) | 핵심 | 55분 | #20 내적, 벡터의 길이, 거리, 코사인 유사도 |
+| 4 | [행렬의 형태, 전치, 행렬곱](#lesson-matrix-multiplication) | 핵심 | 55분 | #21 행렬의 형태, 전치, 행렬곱 |
+| 5 | [선형변환, 선형독립, 기저, 차원](#lesson-linear-maps-basis) | 핵심 | 50분 | #22 선형변환, 선형독립, 기저, 차원 |
 | 6 | [랭크·노름·고유값·특이값 분해](#lesson-rank-eigen) | 심화 | 45분 | — |
 
 ## 핵심 레슨
@@ -33,18 +33,19 @@
 
 ### 1. 스칼라, 벡터, 행렬, 텐서
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/linear-algebra/scalars-tensors.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/scalars-tensors.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/linear-algebra/scalars-tensors.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/scalars-tensors.ts)
 
 **학습 목표:** 스칼라·벡터·행렬·텐서를 차원 수와 모양(shape)으로 구분하고, 표·이미지·문장 데이터를 알맞은 모양의 배열로 나타내며 원소와 축을 읽는다.
 
 **쓰이는 곳:** 모델은 모든 데이터를 숫자 배열로 받는다. 표 데이터는 행렬, 컬러 이미지 묶음은 4차원 텐서, 문장 묶음은 (문장 수, 토큰 수, 임베딩 차원) 텐서다. 배열의 모양을 정확히 읽어야 [2-2 행렬의 형태, 전치, 행렬곱](#lesson-matrix-multiplication)의 모양 규칙과 [3-1 NumPy 배열, 축, 형태, 자료형](3-1-numpy.md#lesson-numpy-arrays)의 배열 연산, 신경망 층의 입력·출력 크기를 맞출 수 있다.
 
-**본문 절:** 수를 담는 네 가지 형태 · 모양과 축 · 데이터를 배열로 나타내기 · 모양 바꾸기와 전치
+**본문 절:** 수를 담는 네 가지 형태 · 모양과 축 · 대괄호로 모양 읽기 · 데이터를 배열로 나타내기 · 모양 바꾸기와 전치
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 5
 
 **실습**
 
+- `ex0` 모양을 읽고 수학 표기를 인덱스로 바꾸기
 - `ex1` 중첩 리스트의 모양, 전치, 펼치기
 
 **서술형**
@@ -60,7 +61,7 @@
 
 ### 2. 벡터의 덧셈, 스칼라곱, 선형결합
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/linear-algebra/vector-operations.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/vector-operations.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/linear-algebra/vector-operations.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/vector-operations.ts)
 
 **학습 목표:** 벡터의 덧셈·뺄셈·스칼라곱을 성분별로 계산하고 좌표평면에서 해석하며, 선형결합으로 평균 벡터·보간·방향 이동을 표현한다.
 
@@ -68,10 +69,11 @@
 
 **본문 절:** 벡터의 덧셈과 뺄셈 · 스칼라곱 · 선형결합 · 갱신식과 방향 이동
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3 · 그림 1
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 5 · 그림 1
 
 **실습**
 
+- `ex0` NumPy로 선형결합과 보간 계산하기
 - `ex1` 선형결합과 평균 벡터
 
 **서술형**
@@ -87,7 +89,7 @@
 
 ### 3. 내적, 길이, 거리, 코사인 유사도
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/linear-algebra/dot-product.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/dot-product.ts)
+핵심 · 55분 · [본문 원본](../../src/content/modules/linear-algebra/dot-product.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/dot-product.ts)
 
 **학습 목표:** 내적·노름·거리·코사인 유사도를 손으로 계산하고, 코사인 유사도가 벡터의 크기와 관계없이 방향의 비슷함만 재는 이유를 설명한다.
 
@@ -95,10 +97,11 @@
 
 **본문 절:** 내적 · 길이(노름)와 거리 · 코사인 유사도 · 정규화한 벡터의 내적
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 2
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 5 · 그림 2
 
 **실습**
 
+- `ex0` 내적·길이·거리를 단계별로 계산하기
 - `ex1` NumPy 없이 내적과 코사인 유사도
 
 **서술형**
@@ -115,7 +118,7 @@
 
 ### 4. 행렬의 형태, 전치, 행렬곱
 
-핵심 · 45분 · [본문 원본](../../src/content/modules/linear-algebra/matrix-multiplication.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/matrix-multiplication.ts)
+핵심 · 55분 · [본문 원본](../../src/content/modules/linear-algebra/matrix-multiplication.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/matrix-multiplication.ts)
 
 **학습 목표:** 행렬-벡터 곱을 행마다 내적으로, 행렬곱을 행과 열의 내적으로 계산하고, 모양 규칙·곱의 순서·전치의 곱 규칙을 적용해 신경망 한 층의 계산을 샘플 묶음에 대해 쓴다.
 
@@ -123,10 +126,11 @@
 
 **본문 절:** 행렬-벡터 곱: 행마다 내적 · 행렬곱 · 곱하는 순서가 결과를 바꾼다 · 전치와 곱 · 샘플 묶음을 한 번에 계산하기 · 항등행렬
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 4 · 그림 3
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 2 · 코드 셀 5 · 그림 3
 
 **실습**
 
+- `ex0` 곱의 모양과 원소 하나 계산하기
 - `ex1` 행렬곱, 전치, 샘플 묶음에 대한 신경망 한 층
 
 **서술형**
@@ -143,7 +147,7 @@
 
 ### 5. 선형변환, 선형독립, 기저, 차원
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/linear-algebra/linear-maps-basis.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/linear-maps-basis.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/linear-algebra/linear-maps-basis.ts) · [실습 원본](../../src/content/modules/linear-algebra/labs/linear-maps-basis.ts)
 
 **학습 목표:** 선형변환의 두 성질과 행렬의 열이 기저 벡터의 상이라는 사실을 설명하고, 선형독립·기저·차원으로 좌표를 구하며, 행렬식으로 역행렬이 있는지 판단한다.
 
@@ -151,10 +155,11 @@
 
 **본문 절:** 선형변환 · 선형독립 · 기저, 좌표, 차원 · 역행렬과 행렬식
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3 · 그림 2
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 5 · 그림 2
 
 **실습**
 
+- `ex0` 행렬을 열의 선형결합으로 적용하기
 - `ex1` 기저 좌표와 2×2 역행렬 직접 계산하기
 
 **서술형**

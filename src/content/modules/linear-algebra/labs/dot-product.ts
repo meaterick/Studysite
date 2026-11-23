@@ -2,6 +2,73 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "내적·길이·거리를 단계별로 계산하기",
+    prompt: md`
+
+두 벡터 $a = [2, -1, 2]$, $b = [1, 4, 1]$에 대해 본문의 계산 순서를 한 줄씩 코드로 옮깁니다. NumPy 배열의 \`*\`, \`.sum()\`, \`np.sqrt\`를 씁니다(\`@\`와 \`np.linalg.norm\`은 쓰지 않습니다).
+
+1. \`products\`: 같은 위치끼리 곱한 배열
+2. \`dot\`: \`products\`의 합(내적)
+3. \`orthogonal\`: 두 벡터가 직교하면 \`True\`
+4. \`length_a\`: $a$의 길이(성분 제곱 → 합 → 제곱근)
+5. \`distance\`: 두 점 사이의 거리 $|a - b|$
+`,
+    starter: py`
+import numpy as np
+
+a = np.array([2, -1, 2])
+b = np.array([1, 4, 1])
+
+products = None     # TODO: 같은 위치끼리 곱한 배열
+dot = None          # TODO: products의 합
+orthogonal = None   # TODO: 내적이 0이면 True
+length_a = None     # TODO: a의 길이
+distance = None     # TODO: a - b의 길이
+
+print(products, dot, orthogonal, length_a, distance)
+`,
+    tests: py`
+import numpy as np
+
+@test("같은 위치끼리 곱하기: [2, -4, 2]")
+def _():
+    assert products is not None and np.array_equal(products, [2, -4, 2]), f"결과: {products}"
+
+@test("내적 0, 직교")
+def _():
+    assert dot == 0, f"내적: {dot}"
+    assert orthogonal is True or orthogonal == True, f"orthogonal: {orthogonal}"
+
+@test("a의 길이 3")
+def _():
+    assert length_a is not None and approx(length_a, 3.0), f"결과: {length_a}"
+
+@test("거리 |a - b| = √27")
+def _():
+    assert distance is not None and approx(distance, 27 ** 0.5), f"결과: {distance}"
+`,
+    hints: [
+      "`products = a * b`이고 `dot = products.sum()`입니다. 직교 여부는 `dot == 0`의 결과를 그대로 저장합니다.",
+      "길이는 `np.sqrt((a ** 2).sum())`입니다. 거리는 차 벡터 `d = a - b`의 길이 `np.sqrt((d ** 2).sum())`입니다.",
+    ],
+    solution: py`
+import numpy as np
+
+a = np.array([2, -1, 2])
+b = np.array([1, 4, 1])
+
+products = a * b
+dot = products.sum()
+orthogonal = dot == 0
+length_a = np.sqrt((a ** 2).sum())
+d = a - b
+distance = np.sqrt((d ** 2).sum())
+
+print(products, dot, orthogonal, length_a, distance)
+`,
+  },
+  {
     key: "ex1",
     title: "NumPy 없이 내적과 코사인 유사도",
     prompt: md`

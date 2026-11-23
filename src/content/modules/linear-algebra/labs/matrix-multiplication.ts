@@ -2,6 +2,83 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "곱의 모양과 원소 하나 계산하기",
+    prompt: md`
+
+행렬곱 전체를 구현하기 전에 두 단계를 먼저 연습합니다. 행렬은 행(리스트)들의 리스트입니다.
+
+1. \`matmul_shape(shape_a, shape_b)\`: 두 모양 \`(m, n)\`과 \`(n2, p)\`를 받아, 안쪽 차원이 같으면 곱의 모양 \`(m, p)\`를, 다르면 \`None\`을 돌려줍니다.
+2. \`entry(A, B, i, j)\`: 곱 $AB$의 $(i, j)$ 원소 $\sum_k A_{ik} B_{kj}$ 하나만 계산합니다. \`i\`, \`j\`는 0부터 셉니다.
+`,
+    starter: py`
+def matmul_shape(shape_a, shape_b):
+    """(m, n) × (n, p) → (m, p). 안쪽 차원이 다르면 None"""
+    m, n = shape_a
+    n2, p = shape_b
+    # TODO: n과 n2가 같은지 확인합니다.
+    return None
+
+def entry(A, B, i, j):
+    """(AB)[i][j] = Σ_k A[i][k] * B[k][j]"""
+    total = 0
+    # TODO: k = 0, 1, ...에 대해 A[i][k] * B[k][j]를 더합니다.
+    return total
+
+A = [[1, 2], [0, 1]]
+B = [[1, 0], [3, 1]]
+print(matmul_shape((2, 3), (3, 4)), entry(A, B, 0, 0))
+`,
+    tests: py`
+@test("모양 규칙: 안쪽 차원이 같으면 바깥 차원")
+def _():
+    assert matmul_shape((2, 3), (3, 4)) == (2, 4), f"결과: {matmul_shape((2, 3), (3, 4))}"
+    assert matmul_shape((1, 3), (3, 1)) == (1, 1)
+    assert matmul_shape((3, 2), (2, 1)) == (3, 1)
+
+@test("모양 규칙: 안쪽 차원이 다르면 None")
+def _():
+    assert matmul_shape((2, 3), (2, 3)) is None, f"결과: {matmul_shape((2, 3), (2, 3))}"
+
+@test("본문의 AB: 원소 네 개")
+def _():
+    A = [[1, 2], [0, 1]]
+    B = [[1, 0], [3, 1]]
+    got = [[entry(A, B, i, j) for j in range(2)] for i in range(2)]
+    assert got == [[7, 2], [3, 1]], f"결과: {got}"
+
+@test("정사각행렬이 아니어도 계산된다")
+def _():
+    A = [[1, 2, 3]]
+    B = [[1], [1], [2]]
+    assert entry(A, B, 0, 0) == 9, f"결과: {entry(A, B, 0, 0)}"
+`,
+    hints: [
+      "`if n != n2: return None`으로 먼저 걸러 내고, 같으면 `return (m, p)`입니다.",
+      "`for k in range(len(B)):` 안에서 `total += A[i][k] * B[k][j]`를 실행합니다. `len(B)`는 B의 행 수, 즉 안쪽 차원입니다.",
+    ],
+    solution: py`
+def matmul_shape(shape_a, shape_b):
+    """(m, n) × (n, p) → (m, p). 안쪽 차원이 다르면 None"""
+    m, n = shape_a
+    n2, p = shape_b
+    if n != n2:
+        return None
+    return (m, p)
+
+def entry(A, B, i, j):
+    """(AB)[i][j] = Σ_k A[i][k] * B[k][j]"""
+    total = 0
+    for k in range(len(B)):
+        total += A[i][k] * B[k][j]
+    return total
+
+A = [[1, 2], [0, 1]]
+B = [[1, 0], [3, 1]]
+print(matmul_shape((2, 3), (3, 4)), entry(A, B, 0, 0))
+`,
+  },
+  {
     key: "ex1",
     title: "행렬곱, 전치, 샘플 묶음에 대한 신경망 한 층",
     prompt: md`
