@@ -2,6 +2,7 @@
  * 코딩 실습·출력 예측·과제 자동 테스트를 로컬 CPython으로 실제 실행해 검증한다(브라우저 Pyodide와 같은 채점 프로그램 사용).
  *   0. 레슨 본문의 실행 가능한 코드 셀(\`\`\`python)을 레슨마다 새 이름공간에서 위에서부터 차례로 실행해 오류가 없어야 한다.
  *      브라우저에서 학습자가 셀을 순서대로 실행하는 것과 같다. Colab 전용 셀(\`\`\`python-colab)은 건너뛴다.
+ *      셀 바로 아래에 실행 결과 블록(\`\`\`output)이 있으면 그 셀의 실제 출력과 같아야 한다(줄 끝 공백만 무시).
  *   1. 레슨 실습·과제 심화 문제: 모범 답안은 모든 채점 항목을 통과하고, 시작 코드는 통과하지 못해야 한다.
  *   2. 출력 예측 문제: 코드를 실행한 출력이 정답(expected)과 같아야 한다.
  *   3. 과제 자동 테스트: 시작 코드의 TODO를 채운 참조 노트북(scripts/content/fixtures.ts)은 통과하고,
@@ -62,12 +63,25 @@ function printLastExpression(program: string): string {
 
 const lastLine = (text: string) => text.trimEnd().split("\n").pop() ?? "";
 
-/** 본문(콜아웃 안 포함)의 실행 가능한 코드 셀, 화면에 나오는 순서대로 */
-function runnableCells(blocks: Block[]): string[] {
-  return blocks.flatMap((b) =>
-    b.type === "code" && (b.lang === "python" || b.lang === "py") ? [b.code] : b.type === "callout" ? runnableCells(b.blocks) : []
-  );
+/** 본문의 실행 코드 셀 하나와, 셀 바로 아래에 있으면 그 실행 결과 블록(```output) */
+interface LessonCell {
+  code: string;
+  expected?: string;
 }
+
+/** 본문(콜아웃 안 포함)의 실행 가능한 코드 셀, 화면에 나오는 순서대로 */
+function runnableCells(blocks: Block[]): LessonCell[] {
+  return blocks.flatMap((b, i): LessonCell[] => {
+    if (b.type === "code" && (b.lang === "python" || b.lang === "py")) {
+      const next = blocks[i + 1];
+      return [{ code: b.code, expected: next?.type === "code" && next.lang === "output" ? next.code : undefined }];
+    }
+    return b.type === "callout" ? runnableCells(b.blocks) : [];
+  });
+}
+
+/** 실행 결과 블록 비교용: 줄 끝 공백과 앞뒤 빈 줄만 무시한다(화면에 그대로 보이는 출력이라 공백 차이도 본다). */
+const outputLines = (text: string) => text.replace(/\r\n?/g, "\n").split("\n").map((l) => l.trimEnd()).join("\n").replace(/^\n+|\n+$/g, "");
 
 /** 코드 셀 하나가 이 시간(초)을 넘기면 경고한다. 브라우저(Pyodide)는 CPython보다 몇 배 느리다. */
 const SLOW_CELL_SECS = 5;
@@ -76,22 +90,24 @@ function checkLessonCells(lesson: Lesson) {
   const cells = runnableCells(lesson.learn);
   if (cells.length === 0) return;
   const script = `
-import time, json
+import contextlib, io, time, json
 import matplotlib
 matplotlib.use("agg")
 import matplotlib.pyplot as plt
 plt.show = lambda *a, **k: None
 __ns = {"__name__": "__main__"}
 __report = []
-for __i, __src in enumerate(${JSON.stringify(cells)}):
+for __i, __src in enumerate(${JSON.stringify(cells.map((c) => c.code))}):
     __t = time.time()
+    __out = io.StringIO()
     try:
-        exec(compile(__src, f"<셀 {__i + 1}>", "exec"), __ns)
+        with contextlib.redirect_stdout(__out):
+            exec(compile(__src, f"<셀 {__i + 1}>", "exec"), __ns)
         __err = None
     except Exception as e:
         __err = f"{type(e).__name__}: {e}"
     plt.close("all")
-    __report.append({"cell": __i + 1, "secs": round(time.time() - __t, 2), "error": __err})
+    __report.append({"cell": __i + 1, "secs": round(time.time() - __t, 2), "error": __err, "stdout": __out.getvalue()})
 print("@@REPORT@@" + json.dumps(__report, ensure_ascii=False))
 `;
   const res = runPython(script, 600_000);
@@ -100,13 +116,23 @@ print("@@REPORT@@" + json.dumps(__report, ensure_ascii=False))
     fail(`${lesson.id}: 본문 코드 셀 실행 결과를 읽지 못함\n${res.stderr.slice(-800)}`);
     return;
   }
-  const report = JSON.parse(line.slice("@@REPORT@@".length)) as { cell: number; secs: number; error: string | null }[];
+  const report = JSON.parse(line.slice("@@REPORT@@".length)) as { cell: number; secs: number; error: string | null; stdout: string }[];
+  let outputs = 0;
+  let ok = true;
   for (const r of report) {
-    if (r.error) fail(`${lesson.id}: 본문 코드 셀 ${r.cell} 실행 오류 — ${r.error}`);
-    else if (r.secs > SLOW_CELL_SECS) fail(`${lesson.id}: 본문 코드 셀 ${r.cell}이(가) ${r.secs}s 걸림(기준 ${SLOW_CELL_SECS}s) — 브라우저에서 오래 걸립니다`);
+    const expected = cells[r.cell - 1].expected;
+    if (r.error) {
+      ok = false;
+      fail(`${lesson.id}: 본문 코드 셀 ${r.cell} 실행 오류 — ${r.error}`);
+    } else if (r.secs > SLOW_CELL_SECS) fail(`${lesson.id}: 본문 코드 셀 ${r.cell}이(가) ${r.secs}s 걸림(기준 ${SLOW_CELL_SECS}s) — 브라우저에서 오래 걸립니다`);
+    if (expected === undefined || r.error) continue;
+    outputs++;
+    if (outputLines(r.stdout) !== outputLines(expected)) {
+      ok = false;
+      fail(`${lesson.id}: 본문 코드 셀 ${r.cell}의 실행 결과 블록이 실제 출력과 다름\n  실제: ${JSON.stringify(outputLines(r.stdout))}\n  블록: ${JSON.stringify(outputLines(expected))}`);
+    }
   }
-  const ok = report.every((r) => !r.error);
-  console.log(`  ${ok ? "✓" : "✗"} ${lesson.id} 본문 코드 셀 ${cells.length}개`);
+  console.log(`  ${ok ? "✓" : "✗"} ${lesson.id} 본문 코드 셀 ${cells.length}개${outputs ? `(실행 결과 블록 ${outputs}개)` : ""}`);
 }
 
 function checkExercise(id: string, ex: Exercise) {
