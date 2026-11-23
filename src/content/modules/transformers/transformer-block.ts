@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/transformer-block";
 
 export default defineLesson({
@@ -175,6 +175,20 @@ print("LayerNorm 뒤 토큰별 표준편차:", layer_norm(x).std(-1).round(3))
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "$d_{model} = 8$, $d_{ff} = 32$인 FFN과 LayerNorm 하나의 파라미터 수를 계산한다. 출력을 예측하십시오.",
+      code: py`
+d, d_ff = 8, 32
+ffn = (d * d_ff + d_ff) + (d_ff * d + d)
+layer_norm = 2 * d
+print(ffn, layer_norm)
+`,
+      expected: "552 16",
+      explanation: "FFN의 첫 선형층은 $8 \\times 32 + 32 = 288$개, 둘째 선형층은 $32 \\times 8 + 8 = 264$개로 합이 552개다. LayerNorm은 차원마다 감마와 베타를 하나씩 가지므로 $2 \\times 8 = 16$개다. 블록의 파라미터는 대부분 FFN과 attention의 선형층에 있다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

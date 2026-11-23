@@ -64,6 +64,23 @@ vocab = {tok: idx for idx, tok in enumerate(sorted({t for tokens in corpus for t
 print(f"어휘 사전 크기 |V| = {len(vocab)}")   # 토큰 -> 정수 번호
 \`\`\`
 
+\`\`\`output
+1번째 병합: 'w' + 'e' -> 'we'
+2번째 병합: 'l' + 'o' -> 'lo'
+3번째 병합: 'we' + 'r' -> 'wer'
+4번째 병합: 'wer' + '</w>' -> 'wer</w>'
+5번째 병합: 'n' + 'e' -> 'ne'
+6번째 병합: 'lo' + 'w' -> 'low'
+7번째 병합: 'low' + '</w>' -> 'low</w>'
+8번째 병합: 'we' + 's' -> 'wes'
+low -> ['low</w>']
+lower -> ['lo', 'wer</w>']
+lowest -> ['lo', 'wes', 't', '</w>']
+newer -> ['ne', 'wer</w>']
+newest -> ['ne', 'wes', 't', '</w>']
+어휘 사전 크기 |V| = 7
+\`\`\`
+
 첫 병합은 \`'w' + 'e'\`다. "newer"와 "newest"에 공통으로 들어 있는 "we"가 이 말뭉치에서 가장 자주 붙어 나오는 쌍이기 때문이다. 두 번 나온 "low"는 6번째와 7번째 병합을 거쳐 \`['low</w>']\` 한 조각이 되지만, "lower"는 \`['lo', 'wer</w>']\`, "lowest"는 \`['lo', 'wes', 't', '</w>']\`로 나뉜다. 단어 끝 표시 \`</w>\`는 단어 끝의 조각과 단어 안의 같은 글자열을 구별하고, 토큰을 다시 이어 붙일 때 단어 경계를 복원하는 데 쓰인다.
 
 ### 학습한 규칙으로 새 단어 토큰화하기
@@ -92,6 +109,16 @@ def encode(word):
 for w in ["lower", "slow", "slower", "renew", "west"]:
     print(f"{w:6s} -> {encode(w)}")
 \`\`\`
+
+\`\`\`output
+lower  -> ['lo', 'wer</w>']
+slow   -> ['s', 'low</w>']
+slower -> ['s', 'lo', 'wer</w>']
+renew  -> ['r', 'e', 'ne', 'w', '</w>']
+west   -> ['wes', 't', '</w>']
+\`\`\`
+
+"slow"는 학습 말뭉치에 없던 단어지만, 글자 \`s\`와 학습한 조각 \`low</w>\`로 나뉘어 어휘 사전 밖의 단어 없이 표현된다. 규칙을 적용하는 순서를 바꾸면 다른 조각이 나올 수 있으므로 학습한 순서대로 적용한다.
 
 학습 말뭉치에 없던 "slow", "slower", "west"도 \`<unk>\` 없이 이미 아는 조각의 조합으로 표현된다. 아는 조각이 거의 없는 "renew"는 글자 단위에 가깝게 나뉜다. 어떤 단어든 최소한 글자 단위로는 나눌 수 있으므로 OOV가 크게 줄어든다.
 
@@ -223,6 +250,24 @@ print(len(pairs))
 `,
       expected: "[(('l', 'o'), 3), (('o', 'w'), 3)]\n6",
       explanation: "인접 쌍은 (l,o)와 (o,w)가 세 단어 모두에서 3번, (w,</w>)가 2번, (w,e)·(e,r)·(r,</w>)가 1번씩으로 모두 6종류다. 빈도가 같으면 먼저 나온 쌍이 앞에 온다. BPE는 다음 단계에서 (l,o)를 'lo'로 병합한다.",
+    },
+    {
+      key: "p2",
+      question: "병합 규칙 두 개를 순서대로 적용해 단어를 토큰으로 나눈다. 출력을 예측하십시오.",
+      code: py`
+merges = [("l", "o"), ("lo", "w")]
+tokens = list("slow")
+for a, b in merges:
+    i = 0
+    while i < len(tokens) - 1:
+        if tokens[i] == a and tokens[i + 1] == b:
+            tokens[i:i + 2] = [a + b]
+        else:
+            i += 1
+print(tokens)
+`,
+      expected: "['s', 'low']",
+      explanation: "처음에는 `['s', 'l', 'o', 'w']`다. 첫 규칙이 `l`과 `o`를 합쳐 `['s', 'lo', 'w']`가 되고, 둘째 규칙이 `lo`와 `w`를 합쳐 `['s', 'low']`가 된다. `s`는 어떤 규칙과도 짝이 맞지 않아 글자 그대로 남는다.",
     },
   ],
   descriptive: [

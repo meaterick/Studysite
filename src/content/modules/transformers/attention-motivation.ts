@@ -1,4 +1,4 @@
-import { defineLesson, md } from "../../kit";
+import { defineLesson, md, py } from "../../kit";
 import exercises from "./labs/attention-motivation";
 
 export default defineLesson({
@@ -128,6 +128,20 @@ self-attention은 모든 토큰 쌍의 관련도를 행렬 곱 $QK^\top$ 한 번
     },
   ],
   exercises,
+  predicts: [
+    {
+      key: "p1",
+      question: "합이 1인 가중치로 인코더 은닉 상태 세 개의 문맥 벡터를 계산한다. 출력을 예측하십시오.",
+      code: py`
+import numpy as np
+w = np.array([0.5, 0.25, 0.25])
+h = np.array([[2.0, 0.0], [0.0, 4.0], [4.0, 4.0]])
+print(w @ h, w.sum())
+`,
+      expected: "[2. 2.] 1.0",
+      explanation: "문맥 벡터는 가중합 $0.5 \\cdot [2, 0] + 0.25 \\cdot [0, 4] + 0.25 \\cdot [4, 4] = [1 + 0 + 1, 0 + 1 + 1] = [2, 2]$다. 가중치의 합이 1이라 문맥 벡터는 은닉 상태들의 평균과 같은 단위를 갖는다.",
+    },
+  ],
   descriptive: [
     {
       key: "d1",

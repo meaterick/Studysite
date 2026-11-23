@@ -22,9 +22,9 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
 | 1 | [토큰화, 서브워드, 토큰 임베딩, 위치 정보](#lesson-tokenization) | 핵심 | 45분 | #73 토큰화, 서브워드, 토큰 임베딩, 위치 정보 |
-| 2 | [어텐션의 필요성: Seq2Seq의 병목](#lesson-attention-motivation) | 핵심 | 35분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
+| 2 | [어텐션의 필요성: Seq2Seq의 병목](#lesson-attention-motivation) | 핵심 | 40분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
 | 3 | [셀프 어텐션: 쿼리·키·값](#lesson-self-attention) | 핵심 | 45분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
-| 4 | [멀티헤드 어텐션과 인과 마스크](#lesson-multi-head-attention) | 핵심 | 40분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
+| 4 | [멀티헤드 어텐션과 인과 마스크](#lesson-multi-head-attention) | 핵심 | 45분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
 | 5 | [트랜스포머 디코더 블록](#lesson-transformer-block) | 핵심 | 40분 | #74 쿼리·키·값, 셀프 어텐션, 트랜스포머 |
 | 6 | [긴 문맥의 비용: 온라인 softmax와 FlashAttention](#lesson-efficient-attention) | 심화 | 30분 | — |
 | 7 | [선형 어텐션](#lesson-linear-attention) | 심화 | 30분 | — |
@@ -44,7 +44,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 **본문 절:** 토큰화와 BPE · 학습한 규칙으로 새 단어 토큰화하기 · 토큰화가 만드는 현상 · 토큰 임베딩 · 위치 정보
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 3 · Colab 코드 1 · 그림 3
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 1 · 코드 셀 3 · Colab 코드 1 · 그림 3
 
 **실습**
 
@@ -66,7 +66,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 ### 2. 어텐션의 필요성: Seq2Seq의 병목
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/transformers/attention-motivation.ts) · [실습 원본](../../src/content/modules/transformers/labs/attention-motivation.ts)
+핵심 · 40분 · [본문 원본](../../src/content/modules/transformers/attention-motivation.ts) · [실습 원본](../../src/content/modules/transformers/labs/attention-motivation.ts)
 
 **학습 목표:** Seq2Seq의 인코더-디코더 구조와 Teacher Forcing을 설명하고, 고정 크기 문맥 벡터의 병목이 attention으로 이어진 이유와 RNN 대비 self-attention의 경로 길이·연산량($O(1)$ 대 $O(n)$, $O(n^2)$)을 비교한다.
 
@@ -74,7 +74,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 **본문 절:** Seq2Seq: 인코더와 디코더 · Teacher Forcing과 노출 편향 · 고정 크기 문맥 벡터의 병목 · Attention: 스텝마다 새로 만드는 문맥 벡터 · 경로 길이와 병렬화
 
-**구성:** 확인 문제 5 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3 · 이미지 1
+**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 1 · 그림 3 · 이미지 1
 
 **실습**
 
@@ -102,7 +102,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 **본문 절:** Query, Key, Value · 코드로 확인하기 · 모든 Query를 한꺼번에 계산하기 · $\sqrt{d_k}$의 효과
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 4
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 4
 
 **실습**
 
@@ -123,7 +123,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 ### 4. 멀티헤드 어텐션과 인과 마스크
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/transformers/multi-head-attention.ts) · [실습 원본](../../src/content/modules/transformers/labs/multi-head-attention.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/transformers/multi-head-attention.ts) · [실습 원본](../../src/content/modules/transformers/labs/multi-head-attention.ts)
 
 **학습 목표:** 멀티헤드 attention의 헤드 나누기, 헤드별 attention, 이어 붙이기, $W^O$ 투영 과정을 모양과 함께 계산하고, causal mask가 필요한 이유와 올바르게 적용되었는지 검사하는 방법을 설명한다.
 
@@ -131,7 +131,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 **본문 절:** 헤드를 여러 개 쓰는 이유 · Causal mask · NumPy로 구현하기 · 마스크가 제대로 적용되었는지 검사하기
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · Colab 코드 1 · 그림 2 · 이미지 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 2 · 실습 1 · 코드 셀 2 · Colab 코드 1 · 그림 2 · 이미지 1
 
 **실습**
 
@@ -160,7 +160,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 **본문 절:** 인코더와 디코더 · 위치 정보가 필요한 이유 · Attention과 MLP · 잔차 연결과 LayerNorm
 
-**구성:** 확인 문제 6 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3 · 이미지 1
+**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 2 · 실습 1 · 코드 셀 2 · 그림 3 · 이미지 1
 
 **실습**
 
