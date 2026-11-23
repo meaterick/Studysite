@@ -44,12 +44,17 @@ print(np.eye(2))                           # 2×2 단위행렬
 
 ### 자료형
 
-배열의 모든 원소는 같은 자료형(\`dtype\`)을 가진다. 정수는 보통 \`int64\`, 실수는 \`float64\`, 참·거짓은 \`bool\`이다. 정수와 실수를 섞어 만들면 모두 실수로 바뀐다.
+배열의 모든 원소는 같은 자료형(\`dtype\`)을 가진다. 실수는 \`float64\`, 참·거짓은 \`bool\`이고, 정수의 기본 자료형은 실행 환경에 따라 다르다. 64비트 컴퓨터의 Python에서는 \`int64\`, 이 사이트의 브라우저 실행 환경(Pyodide, 32비트 WebAssembly)에서는 \`int32\`다. 정수의 범위가 중요하면 \`np.array([1, 2, 3], dtype=np.int64)\`처럼 자료형을 직접 지정한다. 정수와 실수를 섞어 만들면 모두 실수로 바뀐다.
 
 \`\`\`python
 a = np.array([1, 2, 3])
 b = np.array([1, 2.5, 3])
-print(a.dtype, b.dtype)              # int64 float64: 실수가 하나라도 있으면 실수 배열
+# 실수가 하나라도 있으면 실수 배열이 된다
+# 브라우저에서는 int32 float64, 64비트 컴퓨터의 Python에서는 int64 float64
+print(a.dtype, b.dtype)
+\`\`\`
+
+\`\`\`python
 print(a / 2, a // 2)                 # [0.5 1.  1.5] [0 1 1]: /는 실수 나눗셈, //는 정수 나눗셈
 
 a[0] = 9.7                           # 정수 배열에 실수를 넣으면
@@ -61,7 +66,6 @@ print(x.nbytes, x.astype(np.float32).nbytes)   # 8000000 4000000: float32는 메
 \`\`\`
 
 \`\`\`output
-int64 float64
 [0.5 1.  1.5] [0 1 1]
 [9 2 3]
 [9. 2. 3.] float32
@@ -180,7 +184,7 @@ print(v.shape, v.reshape(1, -1).shape, v.reshape(-1, 1).shape)   # (3,) (1, 3) (
       question: "`a = np.array([1, 2, 3])`에서 `a[0] = 9.7`을 실행한 뒤 `a`는?",
       choices: ["`[9 2 3]`", "`[9.7 2. 3.]`", "오류가 난다", "`[10 2 3]`"],
       answer: 0,
-      explanation: "`a`는 `int64` 배열이라 실수를 넣으면 소수점 이하가 버려진다. 반올림이 아니라 버림이고, 경고도 나오지 않는다.",
+      explanation: "`a`는 정수 배열이라 실수를 넣으면 소수점 이하가 버려진다. 반올림이 아니라 버림이고, 경고도 나오지 않는다.",
     },
     {
       key: "c6",
@@ -201,8 +205,9 @@ x = np.array([[1, 2, 3],
 print(x.shape, x.sum(axis=0))
 print(x.mean(axis=1), x.dtype, x.mean(axis=1).dtype)
 `,
-      expected: "(2, 3) [5 7 9]\n[2. 5.] int64 float64",
-      explanation: "`axis=0`은 같은 열끼리 더해 `[1 + 4, 2 + 5, 3 + 6]`이다. `axis=1`은 같은 행끼리 평균을 내 `[2, 5]`이고, 평균은 실수라 결과의 자료형이 `float64`가 되어 `2.`처럼 출력된다. 원래 배열은 정수 배열이다.",
+      expected: "(2, 3) [5 7 9]\n[2. 5.] int32 float64",
+      alternatives: ["(2, 3) [5 7 9]\n[2. 5.] int64 float64"],
+      explanation: "`axis=0`은 같은 열끼리 더해 `[1 + 4, 2 + 5, 3 + 6]`이다. `axis=1`은 같은 행끼리 평균을 내 `[2, 5]`이고, 평균은 실수라 결과의 자료형이 `float64`가 되어 `2.`처럼 출력된다. 원래 배열은 정수 배열이며, 이 사이트의 브라우저에서는 `int32`, 64비트 컴퓨터의 Python에서는 `int64`로 출력된다. 두 답을 모두 정답으로 인정한다.",
     },
     {
       key: "p2",
