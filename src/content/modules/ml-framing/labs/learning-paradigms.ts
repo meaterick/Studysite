@@ -2,6 +2,52 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "학습 신호로 패러다임 구분하기",
+    prompt: md`
+
+상황마다 모델이 무엇을 신호로 학습하는지 보고 패러다임을 고릅니다. 값은 \`"지도학습"\`, \`"비지도학습"\`, \`"자기지도학습"\`, \`"강화학습"\` 중 하나입니다.
+
+- \`"photos"\`: 사람이 사진마다 붙인 고양이·개 레이블로 분류기를 학습한다.
+- \`"customers"\`: 레이블 없는 구매 기록으로 비슷한 고객끼리 묶는다.
+- \`"next_word"\`: 웹 문서에서 다음 단어를 맞히도록 학습한다.
+- \`"game"\`: 게임을 끝까지 둔 뒤의 승패 점수로 수를 두는 규칙을 고친다.
+
+\`n_samples(n_tokens)\`는 토큰이 \`n_tokens\`개인 문장에서 "앞부분 → 다음 토큰" 샘플이 몇 개 나오는지 돌려줍니다.
+`,
+    starter: py`
+paradigm = {"photos": None, "customers": None, "next_word": None, "game": None}   # TODO
+
+def n_samples(n_tokens):
+    return 0   # TODO
+
+print(paradigm, n_samples(4))
+`,
+    tests: py`
+@test("상황별 패러다임")
+def _():
+    want = {"photos": "지도학습", "customers": "비지도학습", "next_word": "자기지도학습", "game": "강화학습"}
+    wrong = [k for k in want if paradigm.get(k) != want[k]]
+    assert not wrong, f"다시 생각할 상황: {wrong}"
+
+@test("문장 하나에서 나오는 샘플 수")
+def _():
+    assert n_samples(4) == 3 and n_samples(2) == 1 and n_samples(10) == 9, f"n_samples(4) = {n_samples(4)}"
+`,
+    hints: [
+      "사람이 붙인 정답이 있으면 지도학습, 정답 없이 구조만 찾으면 비지도학습, 데이터 자체에서 정답을 만들면 자기지도학습, 행동의 결과로 받는 점수로 배우면 강화학습입니다.",
+      "토큰이 $n$개이면 첫 토큰부터 $i$개를 입력으로 쓰는 경우가 $i = 1, \\ldots, n - 1$이라 `n_tokens - 1`개입니다.",
+    ],
+    solution: py`
+paradigm = {"photos": "지도학습", "customers": "비지도학습", "next_word": "자기지도학습", "game": "강화학습"}
+
+def n_samples(n_tokens):
+    return n_tokens - 1
+
+print(paradigm, n_samples(4))
+`,
+  },
+  {
     key: "ex1",
     title: "텍스트에서 자기지도학습 샘플 만들기",
     prompt: md`

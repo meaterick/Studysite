@@ -42,7 +42,7 @@ const PLACEHOLDER = /\(작성 중\)/;
 /** 핵심 레슨 예상 시간 상한(분). Python 분야는 입문자를 위한 단계별 풀이와 실행 예제가 많아 상한을 따로 둔다. */
 const MAX_CORE_MINUTES = 45;
 // 입문자를 위한 단계별 풀이·실행 예제·준비 실습을 둔 분야는 기준을 따로 둔다.
-const MAX_CORE_MINUTES_BY_TRACK: Partial<Record<TrackId, number>> = { programming: 75, math: 60, data: 60 };
+const MAX_CORE_MINUTES_BY_TRACK: Partial<Record<TrackId, number>> = { programming: 75, math: 60, data: 60, ml: 60 };
 
 // ─── 글 검사 ────────────────────────────────────────────────────────────────
 

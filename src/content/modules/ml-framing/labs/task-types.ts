@@ -2,6 +2,53 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "답의 모양으로 문제 유형 정하기",
+    prompt: md`
+
+1. \`task\`: 질문마다 문제 유형을 적은 딕셔너리입니다. 값은 \`"회귀"\`, \`"분류"\`, \`"군집화"\`, \`"이상 탐지"\` 중 하나입니다.
+   - \`"delivery_minutes"\`: 배달이 몇 분 걸릴지 예측한다.
+   - \`"late_delivery"\`: 배달이 30분을 넘을지 예측한다.
+   - \`"rider_groups"\`: 정답 없이 배달원을 운행 패턴이 비슷한 집단으로 묶는다.
+   - \`"fraud_orders"\`: 정상 주문과 크게 다른 주문을 찾아 점수를 매긴다.
+2. \`binary_decision(probs, threshold=0.5)\`: 양성 확률 리스트를 기준값 이상이면 1, 아니면 0인 리스트로 바꿉니다.
+`,
+    starter: py`
+task = {"delivery_minutes": None, "late_delivery": None, "rider_groups": None, "fraud_orders": None}   # TODO
+
+def binary_decision(probs, threshold=0.5):
+    return []   # TODO
+
+print(task)
+print(binary_decision([0.2, 0.5, 0.9]), binary_decision([0.2, 0.5, 0.9], threshold=0.6))
+`,
+    tests: py`
+@test("질문별 문제 유형")
+def _():
+    want = {"delivery_minutes": "회귀", "late_delivery": "분류", "rider_groups": "군집화", "fraud_orders": "이상 탐지"}
+    wrong = [k for k in want if task.get(k) != want[k]]
+    assert not wrong, f"다시 생각할 질문: {wrong}"
+
+@test("기준값으로 판정")
+def _():
+    assert binary_decision([0.2, 0.5, 0.9]) == [0, 1, 1], f"결과: {binary_decision([0.2, 0.5, 0.9])}"
+    assert binary_decision([0.2, 0.5, 0.9], threshold=0.6) == [0, 0, 1]
+`,
+    hints: [
+      "같은 배달 데이터라도 분 단위의 수를 맞히면 회귀, 30분을 넘는지 여부를 맞히면 분류입니다.",
+      "`[1 if p >= threshold else 0 for p in probs]`처럼 확률마다 비교합니다.",
+    ],
+    solution: py`
+task = {"delivery_minutes": "회귀", "late_delivery": "분류", "rider_groups": "군집화", "fraud_orders": "이상 탐지"}
+
+def binary_decision(probs, threshold=0.5):
+    return [1 if p >= threshold else 0 for p in probs]
+
+print(task)
+print(binary_decision([0.2, 0.5, 0.9]), binary_decision([0.2, 0.5, 0.9], threshold=0.6))
+`,
+  },
+  {
     key: "ex1",
     title: "문제 유형에 맞게 모델 출력을 판정으로 바꾸기",
     prompt: md`

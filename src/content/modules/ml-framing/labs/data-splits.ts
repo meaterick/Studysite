@@ -2,6 +2,56 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "분할 크기를 계산하고 누수 특성 고르기",
+    prompt: md`
+
+1. \`split_sizes(n, rest_ratio)\`: 먼저 \`int(n * rest_ratio)\`개를 떼어 내고, 떼어 낸 부분을 \`//\`로 반으로 나눠 \`(학습, 검증, 테스트)\` 개수를 돌려줍니다. 남는 하나가 있으면 테스트 쪽에 둡니다.
+2. \`leaky\`: 다음 달 대출 연체 여부를 예측할 때 **예측 시점에 알 수 없어** 누수가 되는 특성 이름을 고른 리스트(이름 순서는 상관없음)
+   - \`"income"\`(신청 시 소득), \`"age"\`(신청 시 나이), \`"collection_start_date"\`(연체 뒤 시작되는 추심 날짜), \`"past_late_count"\`(지난해 연체 횟수), \`"next_month_balance"\`(다음 달 말 잔액)
+`,
+    starter: py`
+def split_sizes(n, rest_ratio):
+    n_rest = 0    # TODO
+    n_val = 0     # TODO
+    return n - n_rest, n_val, n_rest - n_val
+
+leaky = []        # TODO
+
+print(split_sizes(1000, 0.3), split_sizes(101, 0.3))
+print(sorted(leaky))
+`,
+    tests: py`
+@test("1,000개를 0.3으로: 700, 150, 150")
+def _():
+    assert split_sizes(1000, 0.3) == (700, 150, 150), f"결과: {split_sizes(1000, 0.3)}"
+
+@test("나누어떨어지지 않을 때: 101개를 0.3으로")
+def _():
+    assert split_sizes(101, 0.3) == (71, 15, 15), f"결과: {split_sizes(101, 0.3)}"
+    assert split_sizes(10, 0.5) == (5, 2, 3), f"결과: {split_sizes(10, 0.5)}"
+
+@test("예측 시점에 알 수 없는 특성")
+def _():
+    assert sorted(leaky) == ["collection_start_date", "next_month_balance"], f"결과: {sorted(leaky)}"
+`,
+    hints: [
+      "`n_rest = int(n * rest_ratio)`, `n_val = n_rest // 2`입니다. `//`는 버림이므로 홀수이면 테스트 쪽이 하나 많습니다.",
+      "신청 시점에 이미 있는 값(소득, 나이, 지난해 기록)은 쓸 수 있습니다. 연체가 일어난 뒤나 다음 달에 생기는 값은 누수입니다.",
+    ],
+    solution: py`
+def split_sizes(n, rest_ratio):
+    n_rest = int(n * rest_ratio)
+    n_val = n_rest // 2
+    return n - n_rest, n_val, n_rest - n_val
+
+leaky = ["collection_start_date", "next_month_balance"]
+
+print(split_sizes(1000, 0.3), split_sizes(101, 0.3))
+print(sorted(leaky))
+`,
+  },
+  {
     key: "ex1",
     title: "세 부분 분할, 그룹 분할, 학습 데이터 통계로 표준화",
     prompt: md`
