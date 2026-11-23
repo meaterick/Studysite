@@ -43,6 +43,18 @@ df = pd.read_csv(io.StringIO(csv), dtype={"zip": str})      # 우편번호는 �
 print(df.dtypes)
 \`\`\`
 
+\`\`\`output
+[4524, 48058, 4524, 61452]
+user_id          int64
+zip             object
+signup          object
+plan            object
+size            object
+price           object
+satisfaction     int64
+dtype: object
+\`\`\`
+
 우편번호를 숫자로 읽으면 앞의 0이 사라지므로 \`dtype={"zip": str}\`로 문자열임을 지정한다. 가격은 천 단위 쉼표 때문에, 날짜는 형식을 알려 주지 않았기 때문에 문자열(pandas 2에서는 \`object\`)로 읽혔다.
 
 ### 숫자로 바꾸기
@@ -53,6 +65,15 @@ print(df.dtypes)
 df["price"] = pd.to_numeric(df["price"].str.replace(",", ""), errors="coerce")   # 쉼표를 지우고 숫자로
 print(df["price"].tolist(), df["price"].dtype)       # [1200.0, 3500.0, nan, 0.0] float64
 \`\`\`
+
+변환 과정을 값마다 따라가면 다음과 같다. \`N/A\`는 \`read_csv\`가 기본으로 결측값으로 읽는 표기라 처음부터 \`NaN\`이었다.
+
+| 읽은 값 | 쉼표를 지운 값 | \`to_numeric\` 결과 |
+| --- | --- | --- |
+| \`"1,200"\` | \`"1200"\` | 1200.0 |
+| \`"3,500"\` | \`"3500"\` | 3500.0 |
+| \`NaN\` | \`NaN\` | \`NaN\` |
+| \`"0"\` | \`"0"\` | 0.0 |
 
 ### 범주형으로 바꾸기
 
@@ -67,6 +88,11 @@ df["size"] = df["size"].astype(size_type)
 print((df["size"] >= "M").tolist(), df["size"].cat.codes.tolist())   # [True, True, False, True] [1, 2, 0, 1]
 \`\`\`
 
+\`\`\`output
+['basic', 'free', 'pro']
+[True, True, False, True] [1, 2, 0, 1]
+\`\`\`
+
 순서형의 정수 코드(S → 0, M → 1, L → 2)는 순서를 담은 인코딩으로 쓸 수 있지만, 명목형 범주에 정수를 붙이면 모델이 없는 순서를 학습할 수 있다. 명목형은 원-핫 인코딩 같은 다른 방법을 쓴다([[lesson:encoding-scaling]]).
 
 ### 날짜와 시각
@@ -79,6 +105,18 @@ print(df["signup"].dt.month.tolist())                          # [1, 2, 2, 3]
 print(df["signup"].dt.dayofweek.tolist())                      # [0, 5, 1, 4]: 월요일이 0
 print((df["signup"] - df["signup"].min()).dt.days.tolist())    # [0, 19, 36, 46]: 첫 가입일로부터 지난 일수
 \`\`\`
+
+\`\`\`output
+[1, 2, 2, 3]
+[0, 5, 1, 4]
+[0, 19, 36, 46]
+\`\`\`
+
+2024년 1월 15일은 월요일이라 요일 번호가 0이고, 2월 3일은 토요일이라 5다. 1월 15일부터 2월 3일까지는 1월의 남은 16일과 2월의 3일을 더한 19일이다.
+
+:::task 직접 해 보기
+가입일에서 \`dt.day\`(일)와 \`dt.year\`(연)를 꺼내 출력하기 전에 네 값을 먼저 적어 본다. 그다음 \`df["signup"].dt.day.tolist()\`를 실행해 확인한다.
+:::
 
 날짜 자체는 모델에 그대로 넣기 어렵다. 요일, 월, 경과 일수처럼 의미 있는 값으로 바꿔 특성으로 쓴다([[lesson:feature-engineering]]). 시간 순서가 있는 데이터는 무작위로 섞어 나누면 미래의 정보로 과거를 예측하게 되므로, 과거 구간으로 학습하고 이후 구간으로 평가한다([[lesson:data-splits]]).
 
@@ -152,6 +190,18 @@ print(s.cat.codes.tolist(), s.max(), (s > "S").sum())
 `,
       expected: "[1, 0, 2, 1] L 3",
       explanation: "범주 순서가 S < M < L이므로 정수 코드는 S 0, M 1, L 2다. 순서가 있어 최댓값은 L이고, S보다 큰 값은 M, L, M의 3개다.",
+    },
+    {
+      key: "p2",
+      question: "쉼표를 지운 뒤 숫자로 바꾸고, 바꿀 수 없는 값은 결측값으로 만든다. 출력을 예측하십시오.",
+      code: py`
+import pandas as pd
+s = pd.Series(["10", "2,000", "abc", None])
+nums = pd.to_numeric(s.str.replace(",", ""), errors="coerce")
+print(nums.tolist(), int(nums.isna().sum()))
+`,
+      expected: "[10.0, 2000.0, nan, nan] 2",
+      explanation: "`\"2,000\"`은 쉼표를 지우면 2000이 된다. `\"abc\"`는 숫자로 바꿀 수 없어 `errors=\"coerce\"`로 결측값이 되고, `None`은 원래 결측이다. 결측이 섞여 결과가 실수가 되므로 `10.0`처럼 출력되고, 결측값은 2개다.",
     },
   ],
   descriptive: [

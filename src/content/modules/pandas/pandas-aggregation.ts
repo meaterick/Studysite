@@ -30,6 +30,27 @@ print(orders.groupby("product").agg(
 ))
 \`\`\`
 
+\`\`\`output
+customer_id
+10    44500
+11    56000
+12    15000
+Name: amount, dtype: int64
+         n  total     mean
+product                   
+bag      2  75000  37500.0
+note     2  21000  10500.0
+pen      2  19500   9750.0
+\`\`\`
+
+\`groupby\`는 세 단계로 계산한다. (1) 묶을 열의 값이 같은 행끼리 나누고, (2) 묶음마다 집계 함수를 적용하고, (3) 결과를 그룹당 한 행으로 모은다. 고객별 합계를 손으로 따라가면 다음과 같다.
+
+| \`customer_id\` | 묶인 주문 | 금액 | 합 |
+| --- | --- | --- | --- |
+| 10 | 1, 3, 6 | $4500 + 25000 + 15000$ | 44500 |
+| 11 | 2, 5 | $6000 + 50000$ | 56000 |
+| 12 | 4 | 15000 | 15000 |
+
 \`agg\`에 \`새 열 이름=(대상 열, 함수)\`를 여러 개 주면 집계 결과를 한 번에 만들고 열 이름도 정할 수 있다. 집계 함수로는 \`sum\`, \`mean\`, \`median\`, \`min\`, \`max\`, \`count\`(결측이 아닌 값의 수), \`size\`(행 수), \`nunique\`(서로 다른 값의 수)를 자주 쓴다. 결과의 인덱스는 묶은 열의 값이고, 일반 열로 돌리려면 \`reset_index()\`를 쓴다. 범주 하나의 행 수만 필요하면 \`value_counts()\`가 같은 일을 한다.
 
 모델 평가에서도 그룹 집계를 쓴다. 예측이 맞았는지를 bool 열로 만들고 집단별 평균을 내면 집단별 정확도가 된다.
@@ -38,6 +59,13 @@ print(orders.groupby("product").agg(
 res = pd.DataFrame({"group": ["A", "A", "B", "B", "B"], "y": [1, 0, 1, 1, 0], "pred": [1, 0, 0, 1, 1]})
 res["correct"] = res["y"] == res["pred"]
 print(res.groupby("group")["correct"].mean())            # A 1.0, B 0.333: 전체 정확도 0.6에 가려진 차이
+\`\`\`
+
+\`\`\`output
+group
+A    1.000000
+B    0.333333
+Name: correct, dtype: float64
 \`\`\`
 
 ### 그룹 통계를 행마다 붙이기: transform
@@ -49,6 +77,22 @@ customer_total = orders.groupby("customer_id")["amount"].transform("sum")   # �
 orders["share"] = (orders["amount"] / customer_total).round(3)              # 고객의 전체 구매 중 이 주문의 비율
 print(orders[["order_id", "customer_id", "amount", "share"]])
 \`\`\`
+
+\`\`\`output
+   order_id  customer_id  amount  share
+0         1           10    4500  0.101
+1         2           11    6000  0.107
+2         3           10   25000  0.562
+3         4           12   15000  1.000
+4         5           11   50000  0.893
+5         6           10   15000  0.337
+\`\`\`
+
+주문 1은 고객 10의 합계 44500 중 4500이므로 $4500 / 44500 \approx 0.101$이다. 고객 12는 주문이 하나뿐이라 비율이 1이다.
+
+:::task 직접 해 보기
+고객별 주문 수를 \`orders.groupby("customer_id").size()\`로 구하기 전에 위 표에서 먼저 세어 적는다. 그다음 같은 값을 \`transform("size")\`로 행마다 붙이면 결과가 몇 행인지 예측하고 확인한다.
+:::
 
 \`groupby(...).sum()\`은 그룹 수만큼의 행을, \`transform("sum")\`은 원래 행 수만큼의 행을 돌려준다는 차이를 기억한다.
 
@@ -71,6 +115,11 @@ print(len(inner), len(left))                              # 5 6: 고객 12는 �
 print(left[left["region"].isna()]["order_id"].tolist())   # [4]: 짝이 없는 주문
 \`\`\`
 
+\`\`\`output
+5 6
+[4]
+\`\`\`
+
 \`inner\`는 짝이 없는 주문 4를 조용히 버리므로, 결합 전후의 행 수를 비교해 빠진 행이 없는지 확인한다.
 
 결합에서 가장 흔한 문제는 **키 중복**이다. 오른쪽 표에 같은 키가 두 번 있으면 왼쪽 행이 그만큼 복제되어 행 수가 늘어난다. 고객 정보처럼 키마다 한 행이어야 하는 표를 붙일 때는 \`validate="many_to_one"\`으로 이 가정을 검사한다.
@@ -82,6 +131,11 @@ try:
     orders.merge(coupons, on="customer_id", how="left", validate="many_to_one")
 except pd.errors.MergeError as e:
     print("결합 오류:", e)
+\`\`\`
+
+\`\`\`output
+6 9
+결합 오류: Merge keys are not unique in right dataset; not a many-to-one merge
 \`\`\`
 
 행이 복제되면 매출 합계가 부풀거나, 같은 샘플이 학습용과 평가용에 함께 들어가는 데이터 누수가 생길 수 있다([[lesson:data-splits]]). 열 구성이 같은 표를 위아래로 이어 붙일 때는 \`pd.concat([df1, df2])\`를 쓴다.
@@ -97,6 +151,24 @@ print(long)                                                          # 4행: (�
 print(long.pivot(index="student", columns="subject", values="score"))   # 다시 넓은 표
 print(long.groupby("subject")["score"].mean())                       # 긴 표는 그룹 집계가 쉽다
 \`\`\`
+
+\`\`\`output
+  student  subject  score
+0     kim     math     90
+1     lee     math     70
+2     kim  english     80
+3     lee  english     95
+subject  english  math
+student               
+kim           80    90
+lee           95    70
+subject
+english    87.5
+math       80.0
+Name: score, dtype: float64
+\`\`\`
+
+넓은 표의 한 행(\`kim\`, 90, 80)이 긴 표에서는 과목마다 한 행씩 두 행이 되었다.
 
 그룹 집계와 그래프 도구는 긴 표를 다루기 쉽고, 모델의 특성 행렬은 샘플 하나가 한 행인 넓은 표여야 한다. 같은 칸에 값이 여러 개 들어갈 수 있으면 \`pivot\` 대신 집계 함수를 지정하는 \`pivot_table(..., aggfunc="sum")\`을 쓴다.
 
@@ -181,6 +253,17 @@ print(len(a.merge(b, on="k")), len(a.merge(b, on="k", how="left")), len(a.merge(
 `,
       expected: "3 4 5",
       explanation: "inner는 짝이 있는 키 2(1행), 3(b에 두 번 → 2행)으로 3행이다. left는 여기에 짝 없는 키 1을 더해 4행이고, outer는 b에만 있는 키 4까지 더해 5행이다. 키 3이 b에서 중복되어 a의 한 행이 두 행이 되었다.",
+    },
+    {
+      key: "p2",
+      question: "팀별 합계와, 행마다 붙인 팀별 최댓값을 출력한다. 출력을 예측하십시오.",
+      code: py`
+import pandas as pd
+df = pd.DataFrame({"team": ["A", "B", "A", "B", "A"], "pts": [3, 1, 2, 5, 4]})
+print(df.groupby("team")["pts"].sum().tolist(), df.groupby("team")["pts"].transform("max").tolist())
+`,
+      expected: "[9, 6] [4, 5, 4, 5, 4]",
+      explanation: "A팀은 $3 + 2 + 4 = 9$, B팀은 $1 + 5 = 6$이고, 그룹 집계는 그룹당 한 값이라 길이가 2다. `transform(\"max\")`는 원래 행 수(5개) 그대로, 각 행에 그 팀의 최댓값(A 4, B 5)을 붙인다.",
     },
   ],
   descriptive: [

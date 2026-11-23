@@ -2,6 +2,68 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "인덱스로 짝짓는 Series 계산",
+    prompt: md`
+
+상품별 재고 \`stock\`과 오늘 판매량 \`sold\`가 Series로 주어집니다. \`sold\`에는 판매되지 않은 상품이 없습니다.
+
+1. \`remaining\`: \`stock - sold\`. 판매 기록이 없는 상품은 결측값이 되는 것을 확인합니다.
+2. \`remaining_filled\`: 판매 기록이 없으면 0개 팔린 것으로 보고 계산한 남은 재고. \`stock.sub(sold, fill_value=0)\`을 씁니다.
+3. \`in_stock\`: 재고(\`stock\`)가 0보다 큰 상품 이름의 리스트(원래 순서대로)
+`,
+    starter: py`
+import pandas as pd
+
+stock = pd.Series([5, 0, 12], index=["pen", "note", "bag"])
+sold = pd.Series({"pen": 2, "bag": 4})
+
+remaining = None          # TODO
+remaining_filled = None   # TODO
+in_stock = None           # TODO
+
+print(remaining)
+print(remaining_filled)
+print(in_stock)
+`,
+    tests: py`
+import math
+
+@test("stock - sold: note는 결측")
+def _():
+    assert remaining is not None, "remaining을 계산하십시오."
+    assert math.isnan(remaining["note"]), f"note: {remaining['note']}"
+    assert remaining["pen"] == 3 and remaining["bag"] == 8, f"결과: {remaining.to_dict()}"
+
+@test("fill_value=0으로 계산한 남은 재고")
+def _():
+    assert remaining_filled is not None, "remaining_filled를 계산하십시오."
+    assert remaining_filled.to_dict() == {"bag": 8.0, "note": 0.0, "pen": 3.0}, f"결과: {remaining_filled.to_dict()}"
+
+@test("재고가 있는 상품")
+def _():
+    assert in_stock == ["pen", "bag"], f"결과: {in_stock}"
+`,
+    hints: [
+      "Series끼리의 `-`는 인덱스 이름이 같은 값끼리 계산합니다. `remaining = stock - sold`입니다.",
+      "조건으로 고른 Series의 인덱스를 리스트로 바꿉니다: `stock[stock > 0].index.tolist()`",
+    ],
+    solution: py`
+import pandas as pd
+
+stock = pd.Series([5, 0, 12], index=["pen", "note", "bag"])
+sold = pd.Series({"pen": 2, "bag": 4})
+
+remaining = stock - sold
+remaining_filled = stock.sub(sold, fill_value=0)
+in_stock = stock[stock > 0].index.tolist()
+
+print(remaining)
+print(remaining_filled)
+print(in_stock)
+`,
+  },
+  {
     key: "ex1",
     title: "레코드 목록으로 DataFrame을 만들고 열 추가하기",
     prompt: md`

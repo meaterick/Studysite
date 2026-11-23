@@ -2,6 +2,63 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "groupby 결과를 손계산과 맞추기",
+    prompt: md`
+
+매장별 판매 기록 \`sales\`가 주어집니다. 먼저 표를 보고 매장마다 합계와 거래 수를 손으로 세어 적은 뒤 코드로 확인합니다.
+
+1. \`by_store\`: 매장별 \`amount\` 합계(Series)
+2. \`n_by_store\`: 매장별 거래 수(Series). \`size()\`를 씁니다.
+3. \`best_store\`: 합계가 가장 큰 매장 이름. \`idxmax()\`를 씁니다.
+`,
+    starter: py`
+import pandas as pd
+
+sales = pd.DataFrame({"store": ["A", "B", "A", "C", "B", "A"],
+                      "amount": [100, 250, 300, 50, 150, 200]})
+
+by_store = None     # TODO
+n_by_store = None   # TODO
+best_store = None   # TODO
+
+print(by_store)
+print(n_by_store)
+print(best_store)
+`,
+    tests: py`
+@test("매장별 합계: A 600, B 400, C 50")
+def _():
+    assert by_store is not None and by_store.to_dict() == {"A": 600, "B": 400, "C": 50}, f"결과: {None if by_store is None else by_store.to_dict()}"
+
+@test("매장별 거래 수: A 3, B 2, C 1")
+def _():
+    assert n_by_store is not None and n_by_store.to_dict() == {"A": 3, "B": 2, "C": 1}, f"결과: {None if n_by_store is None else n_by_store.to_dict()}"
+
+@test("합계가 가장 큰 매장")
+def _():
+    assert best_store == "A", f"결과: {best_store}"
+`,
+    hints: [
+      "`sales.groupby(\"store\")[\"amount\"].sum()`은 매장별 합계, `sales.groupby(\"store\").size()`는 매장별 행 수입니다.",
+      "합계 Series에서 `by_store.idxmax()`는 값이 가장 큰 인덱스, 즉 매장 이름을 돌려줍니다.",
+    ],
+    solution: py`
+import pandas as pd
+
+sales = pd.DataFrame({"store": ["A", "B", "A", "C", "B", "A"],
+                      "amount": [100, 250, 300, 50, 150, 200]})
+
+by_store = sales.groupby("store")["amount"].sum()
+n_by_store = sales.groupby("store").size()
+best_store = by_store.idxmax()
+
+print(by_store)
+print(n_by_store)
+print(best_store)
+`,
+  },
+  {
     key: "ex1",
     title: "고객별 특성 만들기와 안전한 표 결합",
     prompt: md`

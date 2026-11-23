@@ -30,6 +30,23 @@ print(df)
 print(df.isna().sum())          # 열마다 결측값의 개수: qty 1, status 1
 \`\`\`
 
+\`\`\`output
+   order_id     city product  price   qty  status
+0      1001    Seoul     pen   1500   3.0    paid
+1      1002    Busan    note   3000   NaN    paid
+2      1003    Seoul     bag  25000   1.0  cancel
+3      1004  Incheon     pen   1500  10.0    paid
+4      1005    Busan     bag  25000   2.0    paid
+5      1006    Seoul    note   3000   5.0     NaN
+order_id    0
+city        0
+product     0
+price       0
+qty         1
+status      1
+dtype: int64
+\`\`\`
+
 빈칸은 기본으로 결측값 \`NaN\`이 되고, \`-\`는 \`na_values\`로 지정해서 결측값이 되었다. \`qty\` 열은 정수만 있었지만 \`NaN\`이 섞여 실수(\`float64\`)가 되었다. NumPy의 정수 배열은 \`NaN\`을 담을 수 없기 때문이다. 그 밖에 자주 쓰는 인자는 구분자 \`sep\`(예: 탭은 \`"\t"\`), 읽을 열 \`usecols\`, 읽을 행 수 \`nrows\`, 문자 인코딩 \`encoding\`이다.
 
 ### 열 고르기, loc과 iloc
@@ -48,7 +65,47 @@ by_id = df.set_index("order_id")               # 주문 번호를 인덱스로
 print(by_id.loc[1004, "city"])                 # Incheon: 이름으로 찾는다
 \`\`\`
 
+\`\`\`output
+bag Seoul
+      city  price
+1    Busan   3000
+2    Seoul  25000
+3  Incheon   1500
+    city product
+1  Busan    note
+2  Seoul     bag
+Incheon
+\`\`\`
+
+같은 \`1:3\`이라도 \`loc\`은 이름 1, 2, 3의 세 행을, \`iloc\`은 위치 1, 2의 두 행을 골랐다.
+
 처음 읽은 표는 인덱스가 0, 1, 2, …라서 \`loc\`과 \`iloc\`의 결과가 같아 보이지만, 정렬이나 필터링을 하면 인덱스 이름과 위치가 달라진다. 이름으로 찾을지 위치로 찾을지 정해서 쓴다.
+
+정렬한 표에서 차이가 분명히 보인다. 가격으로 정렬하면 인덱스 이름은 그대로 두고 행의 순서만 바뀐다.
+
+\`\`\`python
+s = df.sort_values("price", kind="stable")[["order_id", "price"]]
+print(s)
+print(s.loc[3:5])    # 이름 3이 있는 행부터 이름 5가 있는 행까지(현재 순서 기준, 끝 포함)
+print(s.iloc[3:5])   # 위에서 네 번째와 다섯 번째 행(위치 3, 4)
+\`\`\`
+
+\`\`\`output
+   order_id  price
+0      1001   1500
+3      1004   1500
+1      1002   3000
+5      1006   3000
+2      1003  25000
+4      1005  25000
+   order_id  price
+3      1004   1500
+1      1002   3000
+5      1006   3000
+   order_id  price
+5      1006   3000
+2      1003  25000
+\`\`\`
 
 ### 조건으로 행 고르기
 
@@ -61,6 +118,20 @@ print(df[df["city"].isin(["Busan", "Incheon"])]["order_id"].tolist())   # [1002,
 print(df[df["qty"].between(2, 5)]["order_id"].tolist())                 # [1001, 1005, 1006]: 2 이상 5 이하
 \`\`\`
 
+\`\`\`output
+   order_id   city product  price  qty  status
+0      1001  Seoul     pen   1500  3.0    paid
+2      1003  Seoul     bag  25000  1.0  cancel
+5      1006  Seoul    note   3000  5.0     NaN
+   order_id   city product  price  qty status
+1      1002  Busan    note   3000  NaN   paid
+4      1005  Busan     bag  25000  2.0   paid
+[1002, 1004, 1005]
+[1001, 1005, 1006]
+\`\`\`
+
+두 번째 조건은 행마다 두 비교의 결과를 \`&\`로 합친다. 1001번과 1004번은 가격이 1500이라 첫 비교에서, 1003번은 취소된 주문이라 둘째 비교에서 \`False\`다. 1006번은 상태가 결측이라 둘째 비교가 \`False\`가 되어 빠졌다.
+
 \`isin\`은 여러 값 중 하나인지, \`between\`은 범위 안인지를 확인한다. 문자열 열은 \`df["city"].str.startswith("S")\`처럼 \`.str\`로 문자열 메서드를 쓸 수 있다. 결측값은 어떤 비교에서도 \`False\`라서, \`qty\`가 결측인 1002번 주문은 \`between\` 결과에 들어가지 않았다.
 
 ### 정렬
@@ -72,6 +143,28 @@ print(df.sort_values("qty", ascending=False)[["order_id", "qty"]])     # 수량�
 print(df.sort_values(["city", "price"], ascending=[True, False])[["order_id", "city", "price"]])
 print(df.nlargest(2, "qty")[["order_id", "qty"]])                       # 수량 상위 2개
 \`\`\`
+
+\`\`\`output
+   order_id   qty
+3      1004  10.0
+5      1006   5.0
+0      1001   3.0
+4      1005   2.0
+2      1003   1.0
+1      1002   NaN
+   order_id     city  price
+4      1005    Busan  25000
+1      1002    Busan   3000
+3      1004  Incheon   1500
+2      1003    Seoul  25000
+5      1006    Seoul   3000
+0      1001    Seoul   1500
+   order_id   qty
+3      1004  10.0
+5      1006   5.0
+\`\`\`
+
+두 번째 결과는 도시를 가나다(알파벳) 순으로 먼저 정렬하고, 같은 도시 안에서 가격이 높은 순으로 정렬했다.
 
 정렬 기준 값이 같은 행끼리의 순서는 기본 정렬 방법에서 보장되지 않는다. 원래 순서를 유지해야 하면 \`kind="stable"\`을 쓴다. 정렬하거나 필터링한 뒤의 인덱스는 원래 이름을 그대로 가지므로, 0부터 다시 번호를 매기려면 \`reset_index(drop=True)\`를 쓴다.
 
@@ -160,6 +253,17 @@ print(s.index.tolist(), s.loc[20, "x"], s.iloc[0, 0])
 `,
       expected: "[40, 20, 10, 30] 3 1",
       explanation: "정렬해도 행은 원래 인덱스 이름을 그대로 가진다. `loc[20]`은 이름이 20인 행(값 3)이고, `iloc[0]`은 정렬된 뒤 첫 위치의 행(이름 40, 값 1)이다.",
+    },
+    {
+      key: "p2",
+      question: "인덱스가 3, 2, 1, 0인 표에서 `loc`과 `iloc`으로 슬라이싱한다. 출력을 예측하십시오.",
+      code: py`
+import pandas as pd
+df = pd.DataFrame({"x": [10, 20, 30, 40]}, index=[3, 2, 1, 0])
+print(df.loc[2:0, "x"].tolist(), df.iloc[2:4, 0].tolist())
+`,
+      expected: "[20, 30, 40] [30, 40]",
+      explanation: "`loc[2:0]`은 이름 2인 행부터 이름 0인 행까지 현재 순서대로, 끝을 포함해 고른다. 이름 2, 1, 0의 값은 20, 30, 40이다. `iloc[2:4]`는 위치 2, 3의 행이라 30, 40이다.",
     },
   ],
   descriptive: [

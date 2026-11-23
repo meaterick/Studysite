@@ -2,6 +2,69 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "loc과 iloc으로 같은 표에서 값 고르기",
+    prompt: md`
+
+인덱스가 주문 번호(101~104)인 표 \`d\`가 주어집니다. 이름으로 고를 때는 \`loc\`, 위치로 고를 때는 \`iloc\`을 씁니다.
+
+1. \`busan_price\`: 주문 번호 102의 \`price\`
+2. \`third_city\`: 위에서 세 번째 행의 \`city\`(위치로)
+3. \`first_two\`: 위에서 두 행의 주문 번호 리스트
+4. \`label_range\`: 주문 번호 102부터 104까지(끝 포함)의 \`price\` 리스트
+5. \`seoul_ids\`: 도시가 \`"Seoul"\`인 주문 번호 리스트
+`,
+    starter: py`
+import pandas as pd
+
+d = pd.DataFrame({"city": ["Seoul", "Busan", "Daegu", "Seoul"],
+                  "price": [1500, 3000, 2500, 4000]},
+                 index=[101, 102, 103, 104])
+
+busan_price = None   # TODO: loc
+third_city = None    # TODO: iloc
+first_two = None     # TODO: iloc으로 고른 행의 index.tolist()
+label_range = None   # TODO: loc 슬라이스의 tolist()
+seoul_ids = None     # TODO: 조건으로 고른 행의 index.tolist()
+
+print(busan_price, third_city, first_two, label_range, seoul_ids)
+`,
+    tests: py`
+@test("이름과 위치로 값 하나 고르기")
+def _():
+    assert busan_price == 3000, f"busan_price: {busan_price}"
+    assert third_city == "Daegu", f"third_city: {third_city}"
+
+@test("위치 슬라이스와 이름 슬라이스")
+def _():
+    assert first_two == [101, 102], f"first_two: {first_two}"
+    assert label_range == [3000, 2500, 4000], f"label_range: {label_range} — loc의 슬라이스는 끝을 포함합니다."
+
+@test("조건으로 고른 행")
+def _():
+    assert seoul_ids == [101, 104], f"seoul_ids: {seoul_ids}"
+`,
+    hints: [
+      "`d.loc[102, \"price\"]`는 이름으로, `d.iloc[2, 0]`은 위치(셋째 행, 첫 열)로 고릅니다.",
+      "`d.iloc[:2].index.tolist()`, `d.loc[102:104, \"price\"].tolist()`, `d[d[\"city\"] == \"Seoul\"].index.tolist()`입니다.",
+    ],
+    solution: py`
+import pandas as pd
+
+d = pd.DataFrame({"city": ["Seoul", "Busan", "Daegu", "Seoul"],
+                  "price": [1500, 3000, 2500, 4000]},
+                 index=[101, 102, 103, 104])
+
+busan_price = d.loc[102, "price"]
+third_city = d.iloc[2, 0]
+first_two = d.iloc[:2].index.tolist()
+label_range = d.loc[102:104, "price"].tolist()
+seoul_ids = d[d["city"] == "Seoul"].index.tolist()
+
+print(busan_price, third_city, first_two, label_range, seoul_ids)
+`,
+  },
+  {
     key: "ex1",
     title: "주문 데이터를 읽어 조건으로 고르고 정렬하기",
     prompt: md`

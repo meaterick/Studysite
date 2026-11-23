@@ -22,6 +22,20 @@ print(height["lee"], height.to_numpy(), height.index.tolist())   # 165 [170 165 
 print(height / 100)                                              # 원소별 연산
 \`\`\`
 
+\`\`\`output
+kim     170
+lee     165
+park    180
+dtype: int64
+165 [170 165 180] ['kim', 'lee', 'park']
+kim     1.70
+lee     1.65
+park    1.80
+dtype: float64
+\`\`\`
+
+Series를 출력하면 왼쪽에 인덱스, 오른쪽에 값이 한 줄씩 나오고, 마지막 줄에 값의 자료형이 나온다. 키를 100으로 나눈 결과는 실수라 \`float64\`가 되었다.
+
 두 Series를 계산하면 pandas는 위치가 아니라 **인덱스가 같은 값끼리** 짝짓는다. 한쪽에만 있는 인덱스는 짝이 없어 결측값 \`NaN\`이 된다.
 
 \`\`\`python
@@ -29,6 +43,25 @@ a = pd.Series([1, 2, 3], index=["x", "y", "z"])
 b = pd.Series([10, 20, 30], index=["y", "z", "w"])
 print(a + b)            # w와 x는 NaN, y는 12.0, z는 23.0
 \`\`\`
+
+\`\`\`output
+w     NaN
+x     NaN
+y    12.0
+z    23.0
+dtype: float64
+\`\`\`
+
+두 Series의 인덱스를 모두 모아 이름마다 짝을 찾는 과정은 다음과 같다.
+
+| 인덱스 | \`a\` | \`b\` | \`a + b\` |
+| --- | --- | --- | --- |
+| w | 없음 | 30 | NaN |
+| x | 1 | 없음 | NaN |
+| y | 2 | 10 | 12 |
+| z | 3 | 20 | 23 |
+
+\`NaN\`이 섞이면 정수를 담을 수 없어 결과 전체가 실수가 된다. 짝이 없는 쪽을 0으로 보고 계산하려면 \`a.add(b, fill_value=0)\`처럼 \`fill_value\`를 준다.
 
 같은 위치끼리 계산하는 NumPy와 다르므로, 인덱스가 다른 두 Series를 계산할 때는 결과에 \`NaN\`이 생기지 않았는지 확인한다.
 
@@ -48,6 +81,19 @@ print(df)
 print(df.shape, df.columns.tolist())   # (5, 5) ['name', 'group', 'height', 'weight', 'score']
 print(type(df["score"]).__name__, type(df[["score"]]).__name__)   # Series DataFrame
 \`\`\`
+
+\`\`\`output
+   name group  height  weight  score
+0   kim     A   170.0    65.0     88
+1   lee     B   165.0    55.0     92
+2  park     A   180.0    80.0     75
+3  choi     B   158.0    50.0     95
+4  jung     A   175.0    70.0     81
+(5, 5) ['name', 'group', 'height', 'weight', 'score']
+Series DataFrame
+\`\`\`
+
+출력의 맨 왼쪽 열 0~4가 행 인덱스이고, 첫 줄이 열 이름이다. 값이 실수인 열(\`height\`, \`weight\`)은 \`170.0\`처럼 소수점이 붙는다.
 
 \`df["열 이름"]\`은 열 하나를 Series로, \`df[["열1", "열2"]]\`처럼 리스트를 넣으면 고른 열들을 DataFrame으로 돌려준다. 행 하나가 딕셔너리 하나인 리스트(\`[{"name": "kim", ...}, ...]\`)로도 DataFrame을 만들 수 있다. JSON 파일을 읽으면 흔히 이 형태다([[lesson:file-io]]).
 
@@ -73,6 +119,21 @@ df["passed"] = df["score"] >= 85                                   # bool 열
 print(df[["name", "bmi", "passed"]])
 \`\`\`
 
+\`\`\`output
+   name   bmi  passed
+0   kim  22.5    True
+1   lee  20.2    True
+2  park  24.7   False
+3  choi  20.0    True
+4  jung  22.9   False
+\`\`\`
+
+첫 행을 손으로 계산하면 $65 / 1.7^2 = 65 / 2.89 \approx 22.5$다. 열 하나의 식이 다섯 행에 모두 적용되었다.
+
+:::task 직접 해 보기
+키를 cm에서 m로 바꾼 \`height_m\` 열을 만들고, 키가 170cm 이상인지 나타내는 \`tall\` 열을 만든다. 두 열을 출력하기 전에 \`lee\`(165cm)의 두 값을 먼저 적어 본다.
+:::
+
 ### NumPy 배열과 오가기
 
 모델에 넣을 특성 행렬이 필요하면 \`to_numpy()\`로 배열을 꺼내고, 배열을 표로 보고 싶으면 열 이름을 붙여 DataFrame으로 만든다.
@@ -82,6 +143,12 @@ X = df[["height", "weight"]].to_numpy()       # 모양 (5, 2)인 특성 행렬
 print(X.shape, X.dtype)                       # (5, 2) float64
 summary = pd.DataFrame(X.mean(axis=0).reshape(1, -1), columns=["height", "weight"])
 print(summary)
+\`\`\`
+
+\`\`\`output
+(5, 2) float64
+   height  weight
+0   169.6    64.0
 \`\`\`
 
 :::warn 흔한 실수
@@ -150,6 +217,18 @@ print(df.shape, df["c"].tolist(), df["c"].sum())
 `,
       expected: "(3, 3) [10.0, 40.0, 90.0] 140.0",
       explanation: "새 열 c가 추가되어 모양이 (3, 3)이 된다. 정수 열 a와 실수 열 b를 곱하면 실수가 되어 `[10.0, 40.0, 90.0]`이고, 합은 140.0이다.",
+    },
+    {
+      key: "p2",
+      question: "인덱스 순서가 다른 두 Series를 더한다. 출력을 예측하십시오.",
+      code: py`
+import pandas as pd
+s = pd.Series([3, 1, 2], index=["a", "b", "c"])
+t = pd.Series([10, 20], index=["b", "a"])
+print((s + t).tolist())
+`,
+      expected: "[23.0, 11.0, nan]",
+      explanation: "pandas는 위치가 아니라 인덱스 이름으로 짝짓는다. `a`는 $3 + 20 = 23$, `b`는 $1 + 10 = 11$이고, `c`는 `t`에 없어 `NaN`이다. `NaN`이 섞이면 결과 전체가 실수가 되어 `23.0`처럼 출력된다.",
     },
   ],
   descriptive: [

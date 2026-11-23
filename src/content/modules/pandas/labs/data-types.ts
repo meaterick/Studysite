@@ -2,6 +2,63 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "열의 유형을 판단하고 문자열 숫자 바꾸기",
+    prompt: md`
+
+1. \`kinds\`: 열 이름마다 본문 표의 유형 중 하나를 적은 딕셔너리입니다. \`"연속형"\`, \`"이산형"\`, \`"명목형"\`, \`"순서형"\`, \`"시계열"\` 중에서 고릅니다.
+   - \`price\`(상품 가격), \`zip\`(우편번호), \`size\`(옷 크기 S·M·L), \`signup\`(가입일), \`visits\`(방문 횟수)
+2. \`prices\`: 문자열 Series \`raw_price\`에서 쉼표를 지우고 숫자로 바꾼 Series. 바꿀 수 없는 값은 결측값으로 만듭니다.
+3. \`n_missing\`: \`prices\`의 결측값 개수(정수)
+`,
+    starter: py`
+import pandas as pd
+
+kinds = {"price": None, "zip": None, "size": None, "signup": None, "visits": None}   # TODO
+
+raw_price = pd.Series(["1,200", "N/A", "300", "1,050"])
+prices = None      # TODO
+n_missing = None   # TODO
+
+print(kinds)
+print(prices.tolist() if prices is not None else None, n_missing)
+`,
+    tests: py`
+@test("열의 유형")
+def _():
+    want = {"price": "연속형", "zip": "명목형", "size": "순서형", "signup": "시계열", "visits": "이산형"}
+    wrong = [k for k in want if kinds.get(k) != want[k]]
+    assert not wrong, f"다시 판단할 열: {wrong}"
+
+@test("쉼표를 지우고 숫자로")
+def _():
+    assert prices is not None, "prices를 계산하십시오."
+    got = prices.tolist()
+    assert got[0] == 1200 and got[2] == 300 and got[3] == 1050, f"결과: {got}"
+    assert pd.isna(got[1]), "N/A는 결측값이어야 합니다."
+
+@test("결측값 1개")
+def _():
+    assert n_missing == 1, f"결과: {n_missing}"
+`,
+    hints: [
+      "우편번호는 숫자로 적혀 있어도 크기나 평균에 뜻이 없으니 명목형입니다. 방문 횟수는 정수 값만 가지는 수치입니다.",
+      "`pd.to_numeric(raw_price.str.replace(\",\", \"\"), errors=\"coerce\")`로 바꾸고, `int(prices.isna().sum())`으로 셉니다.",
+    ],
+    solution: py`
+import pandas as pd
+
+kinds = {"price": "연속형", "zip": "명목형", "size": "순서형", "signup": "시계열", "visits": "이산형"}
+
+raw_price = pd.Series(["1,200", "N/A", "300", "1,050"])
+prices = pd.to_numeric(raw_price.str.replace(",", ""), errors="coerce")
+n_missing = int(prices.isna().sum())
+
+print(kinds)
+print(prices.tolist() if prices is not None else None, n_missing)
+`,
+  },
+  {
     key: "ex1",
     title: "문자열로 읽힌 열을 알맞은 자료형으로 바꾸기",
     prompt: md`
