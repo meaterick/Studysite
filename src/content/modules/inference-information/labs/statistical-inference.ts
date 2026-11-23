@@ -2,6 +2,70 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "가설검정의 네 단계를 차례로 계산하기",
+    prompt: md`
+
+동전을 100번 던져 앞면이 58번 나왔습니다. 공정한 동전($H_0$: $p = 0.5$)인지 유의수준 0.05의 양측 z 검정으로 판단합니다. 본문의 네 단계 표를 따라 변수를 채웁니다.
+
+1. \`p_hat\`: 앞면 비율
+2. \`se0\`: $H_0$ 아래의 표준오차 $\sqrt{0.5 \times 0.5 / n}$
+3. \`z\`: 검정통계량 $(\hat p - 0.5) / \mathrm{SE}_0$
+4. \`p_value\`: 양측 p값 $2(1 - \Phi(|z|))$. \`normal_cdf\`는 주어집니다.
+5. \`reject\`: p값이 0.05보다 작으면 \`True\`
+`,
+    starter: py`
+import math
+
+def normal_cdf(z):
+    return (1 + math.erf(z / math.sqrt(2))) / 2
+
+heads, n = 58, 100
+p_hat = None     # TODO
+se0 = None       # TODO
+z = None         # TODO
+p_value = None   # TODO
+reject = None    # TODO
+
+print(p_hat, se0, z, p_value, reject)
+`,
+    tests: py`
+@test("비율 0.58과 표준오차 0.05")
+def _():
+    assert p_hat is not None and approx(p_hat, 0.58), f"p_hat: {p_hat}"
+    assert se0 is not None and approx(se0, 0.05), f"se0: {se0}"
+
+@test("검정통계량 1.6과 p값 약 0.11")
+def _():
+    assert z is not None and approx(z, 1.6), f"z: {z}"
+    assert p_value is not None and approx(p_value, 0.1096, tol=1e-3), f"p_value: {p_value}"
+
+@test("유의수준 0.05에서 기각하지 않는다")
+def _():
+    assert reject is False or reject == False, f"reject: {reject} — p값이 0.05보다 큽니다."
+    assert reject is not None
+`,
+    hints: [
+      "`p_hat = heads / n`, `se0 = math.sqrt(0.5 * 0.5 / n)`, `z = (p_hat - 0.5) / se0`입니다.",
+      "`p_value = 2 * (1 - normal_cdf(abs(z)))`이고 `reject = p_value < 0.05`입니다. 비교식의 결과는 `True`나 `False`입니다.",
+    ],
+    solution: py`
+import math
+
+def normal_cdf(z):
+    return (1 + math.erf(z / math.sqrt(2))) / 2
+
+heads, n = 58, 100
+p_hat = heads / n
+se0 = math.sqrt(0.5 * 0.5 / n)
+z = (p_hat - 0.5) / se0
+p_value = 2 * (1 - normal_cdf(abs(z)))
+reject = p_value < 0.05
+
+print(p_hat, se0, z, p_value, reject)
+`,
+  },
+  {
     key: "ex1",
     title: "신뢰구간과 z 검정, 순열 검정 구현하기",
     prompt: md`

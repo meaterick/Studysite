@@ -2,6 +2,69 @@ import { defineExercises, md, py } from "../../../kit";
 
 export default defineExercises([
   {
+    key: "ex0",
+    title: "표준오차로 필요한 표본 크기와 범위 구하기",
+    prompt: md`
+
+표준오차 $\sigma / \sqrt{n}$을 이용하는 두 함수를 작성합니다.
+
+1. \`n_needed(sigma, target)\`: 표준오차가 \`target\` 이하가 되는 가장 작은 표본 크기. $\frac{\sigma}{\sqrt{n}} \le \text{target}$을 $n$에 대해 풀면 $n \ge (\sigma / \text{target})^2$이므로 \`math.ceil\`로 올림합니다.
+2. \`mean_range(mu, sigma, n, z=1.96)\`: 표본평균이 약 95%의 확률로 들어가는 범위 $\mu \pm z \cdot \sigma / \sqrt{n}$을 \`(하한, 상한)\`으로 돌려줍니다.
+
+본문의 주사위 30번 예에서 \`mean_range(3.5, 1.708, 30)\`은 약 \`(2.889, 4.111)\`입니다.
+`,
+    starter: py`
+import math
+
+def n_needed(sigma, target):
+    """표준오차가 target 이하가 되는 가장 작은 n"""
+    return 0   # TODO
+
+def mean_range(mu, sigma, n, z=1.96):
+    """표본평균의 약 95% 범위"""
+    half = 0.0   # TODO: z * 표준오차
+    return mu - half, mu + half
+
+print(n_needed(2, 0.5), mean_range(3.5, 1.708, 30))
+`,
+    tests: py`
+@test("필요한 표본 크기: 16, 100, 293")
+def _():
+    assert n_needed(2, 0.5) == 16, f"n_needed(2, 0.5) = {n_needed(2, 0.5)}"
+    assert n_needed(10, 1) == 100, f"n_needed(10, 1) = {n_needed(10, 1)}"
+    assert n_needed(1.71, 0.1) == 293, f"n_needed(1.71, 0.1) = {n_needed(1.71, 0.1)}"
+
+@test("구한 n에서 표준오차가 target 이하이고, n - 1에서는 넘는다")
+def _():
+    for sigma, target in ((2, 0.3), (1.71, 0.05)):
+        n = n_needed(sigma, target)
+        assert n > 1 and sigma / n ** 0.5 <= target < sigma / (n - 1) ** 0.5, f"sigma = {sigma}, target = {target}: n = {n}"
+
+@test("주사위 30번 평균의 범위 (2.889, 4.111)")
+def _():
+    lo, hi = mean_range(3.5, 1.708, 30)
+    assert approx(lo, 2.889, tol=1e-3) and approx(hi, 4.111, tol=1e-3), f"결과: {(lo, hi)}"
+`,
+    hints: [
+      "`return math.ceil((sigma / target) ** 2)`입니다. 올림하지 않으면 표준오차가 target을 조금 넘을 수 있습니다.",
+      "`half = z * sigma / math.sqrt(n)`입니다.",
+    ],
+    solution: py`
+import math
+
+def n_needed(sigma, target):
+    """표준오차가 target 이하가 되는 가장 작은 n"""
+    return math.ceil((sigma / target) ** 2)
+
+def mean_range(mu, sigma, n, z=1.96):
+    """표본평균의 약 95% 범위"""
+    half = z * sigma / math.sqrt(n)
+    return mu - half, mu + half
+
+print(n_needed(2, 0.5), mean_range(3.5, 1.708, 30))
+`,
+  },
+  {
     key: "ex1",
     title: "누적 평균과 표본평균의 분포를 시뮬레이션으로 확인하기",
     prompt: md`

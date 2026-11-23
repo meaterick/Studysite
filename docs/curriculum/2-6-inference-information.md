@@ -20,9 +20,9 @@
 
 | 순서 | 레슨 | 구분 | 예상 시간 | 개념 |
 | ---: | --- | --- | ---: | --- |
-| 1 | [큰 수의 법칙과 중심극한정리](#lesson-lln-clt) | 핵심 | 30분 | #34 큰 수의 법칙과 중심극한정리 |
-| 2 | [추정, 신뢰구간, 가설검정, p값](#lesson-statistical-inference) | 핵심 | 35분 | #35 추정, 신뢰구간, 가설검정, p값 |
-| 3 | [가능도, 최대가능도추정, 엔트로피, 교차엔트로피](#lesson-likelihood-entropy) | 핵심 | 35분 | #36 가능도(우도), 최대가능도추정, 엔트로피, 교차엔트로피 |
+| 1 | [큰 수의 법칙과 중심극한정리](#lesson-lln-clt) | 핵심 | 45분 | #34 큰 수의 법칙과 중심극한정리 |
+| 2 | [추정, 신뢰구간, 가설검정, p값](#lesson-statistical-inference) | 핵심 | 50분 | #35 추정, 신뢰구간, 가설검정, p값 |
+| 3 | [가능도, 최대가능도추정, 엔트로피, 교차엔트로피](#lesson-likelihood-entropy) | 핵심 | 50분 | #36 가능도(우도), 최대가능도추정, 엔트로피, 교차엔트로피 |
 | 4 | [사전분포와 MAP 추정](#lesson-mle-map) | 심화 | 25분 | — |
 | 5 | [교차엔트로피의 분해와 KL 발산](#lesson-entropy-kl) | 심화 | 30분 | — |
 
@@ -32,7 +32,7 @@
 
 ### 1. 큰 수의 법칙과 중심극한정리
 
-핵심 · 30분 · [본문 원본](../../src/content/modules/inference-information/lln-clt.ts) · [실습 원본](../../src/content/modules/inference-information/labs/lln-clt.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/inference-information/lln-clt.ts) · [실습 원본](../../src/content/modules/inference-information/labs/lln-clt.ts)
 
 **학습 목표:** 표본평균의 기댓값과 분산을 유도해 표준오차를 계산하고, 큰 수의 법칙으로 표본평균이 모평균에 가까워지는 것을, 중심극한정리로 표본평균의 분포가 정규분포에 가까워지는 것을 설명하며 시뮬레이션으로 확인한다.
 
@@ -40,10 +40,11 @@
 
 **본문 절:** 표본평균의 기댓값과 분산 · 큰 수의 법칙 · 중심극한정리 · 미니배치 기울기와 표본평균
 
-**구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 2 · 그림 2
+**구성:** 확인 문제 5 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 3 · 그림 2
 
 **실습**
 
+- `ex0` 표준오차로 필요한 표본 크기와 범위 구하기
 - `ex1` 누적 평균과 표본평균의 분포를 시뮬레이션으로 확인하기
 
 **서술형**
@@ -59,7 +60,7 @@
 
 ### 2. 추정, 신뢰구간, 가설검정, p값
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/inference-information/statistical-inference.ts) · [실습 원본](../../src/content/modules/inference-information/labs/statistical-inference.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/inference-information/statistical-inference.ts) · [실습 원본](../../src/content/modules/inference-information/labs/statistical-inference.ts)
 
 **학습 목표:** 표준오차로 평균과 비율의 95% 신뢰구간을 계산해 바르게 해석하고, 귀무가설·검정통계량·p값·유의수준으로 가설검정을 하며, 제1종·제2종 오류와 다중 비교의 문제를 설명한다.
 
@@ -67,10 +68,11 @@
 
 **본문 절:** 점추정과 표준오차 · 신뢰구간 · 가설검정 · 순열 검정 · 두 가지 오류와 검정력 · p값을 해석할 때 주의할 점
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 2
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 4 · 그림 2
 
 **실습**
 
+- `ex0` 가설검정의 네 단계를 차례로 계산하기
 - `ex1` 신뢰구간과 z 검정, 순열 검정 구현하기
 
 **서술형**
@@ -86,7 +88,7 @@
 
 ### 3. 가능도, 최대가능도추정, 엔트로피, 교차엔트로피
 
-핵심 · 35분 · [본문 원본](../../src/content/modules/inference-information/likelihood-entropy.ts) · [실습 원본](../../src/content/modules/inference-information/labs/likelihood-entropy.ts)
+핵심 · 50분 · [본문 원본](../../src/content/modules/inference-information/likelihood-entropy.ts) · [실습 원본](../../src/content/modules/inference-information/labs/likelihood-entropy.ts)
 
 **학습 목표:** 확률과 가능도를 구분하고 로그가능도를 미분해 베르누이 분포의 최대가능도추정값을 구하며, 엔트로피와 교차엔트로피를 계산해 분류 손실이 정답의 음의 로그가능도와 같은 이유를 설명한다.
 
@@ -94,10 +96,11 @@
 
 **본문 절:** 확률과 가능도 · 최대가능도추정 · 로그가능도와 음의 로그가능도 · 엔트로피 · 교차엔트로피와 분류 손실
 
-**구성:** 확인 문제 6 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 3 · 그림 2 · 이미지 1
+**구성:** 확인 문제 6 · 출력 예측 2 · 서술형 1 · 실습 2 · 코드 셀 3 · 그림 2 · 이미지 1
 
 **실습**
 
+- `ex0` 후보마다 로그가능도를 계산하고 이진 엔트로피 구하기
 - `ex1` 음의 로그가능도로 최대가능도추정하고 교차엔트로피 손실 구하기
 
 **서술형**
