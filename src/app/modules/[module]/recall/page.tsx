@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { MODULES, conceptsOf } from "@/content/course";
+import { MODULES, conceptsOf, recallKey } from "@/content/course";
 import { lessonLabel } from "@/content/tiers";
 import { Inline } from "@/components/MarkdownBlocks";
 import ModuleFrame from "@/components/module/ModuleFrame";
@@ -93,9 +93,10 @@ export default async function RecallPage({ params, searchParams }: PageProps<"/m
         <p className="mb-10 mt-2 text-[15px] text-ink-secondary">학습 자료를 보지 않고 기억하는 핵심 내용을 작성합니다. 제출하면 비교 자료가 열립니다.</p>
         <RecallSheet
           moduleSlug={slug}
-          fields={module.recall.map(({ prompt, hint }) => ({
-            label: <Inline text={prompt} />,
-            hint: hint ? <Inline text={hint} /> : undefined,
+          fields={module.recall.map((item, i) => ({
+            key: recallKey(item, i),
+            label: <Inline text={item.prompt} />,
+            hint: item.hint ? <Inline text={item.hint} /> : undefined,
           }))}
           saved={sheet.answers}
           savedAt={sheet.savedAt}

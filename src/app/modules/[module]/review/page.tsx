@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { MODULES } from "@/content/course";
+import { MODULES, recallKey } from "@/content/course";
 import { parseMarkdown } from "@/content/markdown";
 import { lessonLabel } from "@/content/tiers";
 import { BlocksRenderer, Inline, RichText } from "@/components/MarkdownBlocks";
@@ -124,7 +124,7 @@ export default async function ModuleReviewPage({ params, searchParams }: PagePro
     return { lesson, access, notes };
   });
 
-  const sheetWeak = module.recall.map((f, i) => ({ field: f, i, answer: sheet.answers[String(i)] })).filter((f) => sheet.marks[String(f.i)] === "weak");
+  const sheetWeak = module.recall.map((f, i) => ({ field: f, i, answer: sheet.answers[recallKey(f, i)] })).filter((f) => sheet.marks[recallKey(f.field, f.i)] === "weak");
   const allNotes = groups.flatMap((g) => g.notes);
   const weakBySource = (src: Source) => allNotes.filter((n) => n.source === src && n.weak).length;
   const totalWeak = allNotes.filter((n) => n.weak).length + sheetWeak.length;

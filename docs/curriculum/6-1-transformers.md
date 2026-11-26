@@ -156,7 +156,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 **학습 목표:** 마스크 없는 self-attention이 순열 등변 연산이라 위치 정보가 필요한 이유와 causal mask가 이를 바꾸는 방식을 설명하고, GPT형 디코더 블록에서 attention, MLP, 잔차 연결, LayerNorm이 맡는 역할을 코드로 확인한다.
 
-**쓰이는 곳:** GPT를 포함한 현재의 LLM은 이 레슨의 디코더 블록을 수십 개 쌓은 구조다([6-2 LLM 구조: BERT, GPT, T5](6-2-llm-training.md#lesson-llm-architectures)). 블록의 구성 요소별 역할을 알아야 모델의 파라미터 수와 계산량을 계산할 수 있고([6-3 트랜스포머의 크기 계산](6-3-llm-systems.md#lesson-transformer-params)), 미니 GPT 블록을 직접 구현할 수 있다.
+**쓰이는 곳:** GPT를 포함한 현재의 LLM은 이 레슨의 디코더 블록을 수십 개 쌓은 구조다([6-2 LLM 구조: BERT, GPT, T5](6-2-llm-training.md#lesson-llm-architectures)). 블록의 구성 요소별 역할을 알아야 모델의 파라미터 수와 계산량을 계산할 수 있고([6-4 트랜스포머의 크기 계산](6-4-llm-agents-ops.md#lesson-transformer-params)), 미니 GPT 블록을 직접 구현할 수 있다.
 
 **본문 절:** 인코더와 디코더 · 위치 정보가 필요한 이유 · Attention과 MLP · 잔차 연결과 LayerNorm
 
@@ -187,7 +187,7 @@ GPT 같은 언어 모델은 문장을 토큰으로 나누고, 토큰마다 앞�
 
 **학습 목표:** 최댓값을 빼는 안전한 softmax와 온라인 softmax 갱신식을 유도하고 구현하며, FlashAttention이 GPU 메모리 계층에서 HBM 읽기·쓰기를 줄여 빨라지는 이유와 한계를 설명한다.
 
-**쓰이는 곳:** LLM의 문맥 길이와 학습·추론 속도는 attention의 메모리 사용량에 크게 좌우된다. PyTorch의 `scaled_dot_product_attention`과 대부분의 LLM 서빙 엔진이 FlashAttention 계열의 방법을 쓰므로, 그 원리를 알아야 긴 문맥의 비용을 추정하고 서빙 비용([6-3 모델 서빙과 추론 비용](6-3-llm-systems.md#lesson-serving-cost))을 이해할 수 있다.
+**쓰이는 곳:** LLM의 문맥 길이와 학습·추론 속도는 attention의 메모리 사용량에 크게 좌우된다. PyTorch의 `scaled_dot_product_attention`과 대부분의 LLM 서빙 엔진이 FlashAttention 계열의 방법을 쓰므로, 그 원리를 알아야 긴 문맥의 비용을 추정하고 서빙 비용([6-4 모델 서빙과 추론 비용](6-4-llm-agents-ops.md#lesson-serving-cost))을 이해할 수 있다.
 
 **본문 절:** 안전한 softmax와 온라인 softmax · 빨라지는 이유: GPU의 메모리 계층
 

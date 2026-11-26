@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/dal";
 import { listUsers } from "@/lib/userStore";
 import { descriptiveCountsByLesson, readLessonAnswers, readModuleRecalls, type ReviewStatus } from "@/lib/learningStore";
 import { formatDateTime } from "@/lib/datetime";
-import { MODULES, getModule } from "@/content/course";
+import { MODULES, getModule, recallKey } from "@/content/course";
 import { parseMarkdown } from "@/content/markdown";
 import type { Descriptive, Lesson } from "@/content/types";
 import { lessonLabel, TIER_INFO } from "@/content/tiers";
@@ -87,9 +87,9 @@ export default async function OperatorAnswersPage({ searchParams }: PageProps<"/
     prompt: field.prompt,
     answers: collect(
       [...recalls].flatMap(([userId, sheet]) => {
-        const text = sheet.answers?.[String(i)];
+        const text = sheet.answers?.[recallKey(field, i)];
         if (!sheet.submittedAt || !text?.trim()) return [];
-        const mark = sheet.marks?.[String(i)];
+        const mark = sheet.marks?.[recallKey(field, i)];
         const review: ReviewStatus | undefined = mark === "weak" ? "incorrect" : mark === "ok" ? "correct" : undefined;
         return [{ userId, text, at: sheet.submittedAt, review }];
       })

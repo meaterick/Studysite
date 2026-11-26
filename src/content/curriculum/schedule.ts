@@ -26,6 +26,6 @@ export const SCHEDULE: ScheduleWeek[] = [
   { week: 12, modules: ["cnn-rnn"], due: ["cnn-ablation"], milestone: "데이터와 기준 모델" },
   { week: 13, modules: ["transformers"], due: ["mini-gpt-block"] },
   { week: 14, modules: ["llm-training"], due: ["llm-anatomy"] },
-  { week: 15, modules: ["llm-systems"], due: ["rag-qa-bot"], milestone: "평가와 위험 점검" },
+  { week: 15, modules: ["llm-systems", "llm-agents-ops"], due: ["rag-qa-bot"], milestone: "평가와 위험 점검" },
   { week: 16, modules: ["capstone-project"], due: ["capstone"] },
 ];

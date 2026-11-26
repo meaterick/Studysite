@@ -133,7 +133,7 @@ check(lambda a, b: (a * b) / (a + b), 1.5, -0.7)
       tier: "core",
       instructions: md`
 
-\`Neuron\`, \`Layer\`, \`MLP\` 클래스는 제공합니다. 학습 루프의 \`TODO\` 두 곳(기울기 초기화와 파라미터 갱신)을 채운 뒤 실행합니다. 권장 설정(샘플 100개, 은닉층 8개 2층, tanh, 학습률 0.3, 60에폭, 전체 배치)에서 **학습 데이터 정확도 90% 이상**이면 통과입니다. 실행에는 20~40초 정도 걸립니다.
+\`Neuron\`, \`Layer\`, \`MLP\` 클래스는 제공합니다. 학습 루프의 \`TODO\` 두 곳(기울기 초기화와 파라미터 갱신)을 채운 뒤 실행합니다. 권장 설정(샘플 100개, 은닉층 8개 2층, tanh, 학습률 0.3, 60에포크, 전체 배치)에서 **학습 데이터 정확도 90% 이상**이면 통과입니다. 실행에는 20~40초 정도 걸립니다.
 
 정확도가 90%에 못 미치면 ① 학습률이 적절한지, ② 매 스텝 \`grad\`를 0으로 초기화했는지, ③ 가중치를 무작위로 초기화했는지, ④ 손실이 실제로 줄고 있는지를 순서대로 확인하고, 무엇을 고쳤는지 답안에 적습니다.
 `,
@@ -318,8 +318,8 @@ t0 = time.perf_counter()
 _ = total_loss(model)[0].backward()
 t_value_step = time.perf_counter() - t0
 
-print(f"NumPy  : 60에폭 {t_np * 1000:.1f} ms, 정확도 {acc_np:.2f}")
-print(f"Value  : 1에폭(순전파+역전파) {t_value_step * 1000:.1f} ms → 60에폭 약 {t_value_step * 60:.1f} s")
+print(f"NumPy  : 60에포크 {t_np * 1000:.1f} ms, 정확도 {acc_np:.2f}")
+print(f"Value  : 1에포크(순전파+역전파) {t_value_step * 1000:.1f} ms → 60에포크 약 {t_value_step * 60:.1f} s")
 print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
 ` },
         { kind: "text", id: "numpy-answer", prompt: "두 구현의 정확도와 속도를 비교하고, Value 구현이 느린 이유를 세 가지 이상 설명해 주십시오.", minChars: 150 },
@@ -353,7 +353,7 @@ print(f"속도 차이: 약 {t_value_step * 60 / max(t_np, 1e-9):.0f}배")
   ],
   gradingNotes: md`
 - **Value에 나눗셈과 exp 추가하기**: 나눗셈은 $\partial(a/b)/\partial a = 1/b$, $\partial(a/b)/\partial b = -a/b^2$이고, exp는 출력값 $e^x$를 그대로 곱한다. $a \cdot b^{-1}$로 기존 연산을 재사용한 구현도 정답이다. 나눗셈의 역전파가 없으면 손실을 샘플 수로 나누는 단계에서 기울기가 끊겨 MLP 학습이 진행되지 않는다. 이 원인을 스스로 찾아 기록했다면 "MLP 학습과 문제 해결 과정" 항목에서 높게 평가한다.
-- **Value로 만든 MLP로 make_moons 분류하기**: 학습률 0.3, 60에폭이면 학습 데이터 정확도 약 0.95에 도달한다.
+- **Value로 만든 MLP로 make_moons 분류하기**: 학습률 0.3, 60에포크면 학습 데이터 정확도 약 0.95에 도달한다.
 - **MLP 전체에 대한 gradient check**: 상대오차가 $10^{-9}$ 수준이어야 한다.
 - **보충: NumPy 벡터화 구현과 비교하기**: NumPy 구현이 수백에서 수천 배 빠르다. 느린 이유로 Python 객체 생성, 노드마다의 클로저 호출, 스칼라 단위 연산(벡터화 부재), 위상 정렬 비용을 들면 충분하다.
 `,

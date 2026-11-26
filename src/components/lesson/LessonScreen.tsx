@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { conceptsOf, dependentsOf, directPrerequisitesOf, getModule, getModuleLesson, itemId } from "@/content/course";
+import { conceptsOf, dependentsOf, directPrerequisitesOf, getLesson, getModule, getModuleLesson, itemId } from "@/content/course";
 import type { Lesson } from "@/content/types";
 import { parseMarkdown } from "@/content/markdown";
 import { TIER_INFO, TIER_ORDER, lessonLabel } from "@/content/tiers";
@@ -48,6 +48,11 @@ export default async function LessonScreen({
   lessonId: string;
   practice?: boolean;
 }) {
+  // 다른 모듈로 옮긴 레슨의 예전 주소(즐겨찾기·문서 링크)는 지금 속한 모듈의 주소로 보낸다(예: 6-3에서 6-4로 옮긴 레슨).
+  if (!getModuleLesson(slug, lessonId)) {
+    const moved = getLesson(lessonId);
+    if (moved) redirect(practice ? practiceHref(moved.module, moved.id) : lessonHref(moved.module, moved.id));
+  }
   const lessonPath = lessonHref(slug, lessonId);
   const practicePath = practiceHref(slug, lessonId);
   const { module, record, status, isAdmin } = await loadModulePage(slug, practice ? practicePath : lessonPath);

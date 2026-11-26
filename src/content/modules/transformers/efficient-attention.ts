@@ -72,7 +72,7 @@ print("온라인 결과 == 정확한 값?", np.allclose(a / l, exact))
 
 ### 빨라지는 이유: GPU의 메모리 계층
 
-GPU에는 크고 느린 메모리(HBM, 수십 GB)와 작고 빠른 메모리(SRAM, 연산 장치 옆의 수십~수백 KB)가 있다. 표준 attention은 $QK^\top$을 계산해 HBM에 쓰고, 다시 읽어 softmax를 계산해 쓰고, 다시 읽어 $V$와 곱한다. $n \times n$ 행렬을 HBM에 여러 번 쓰고 읽는 것이다. 현재의 GPU는 연산 속도에 비해 메모리 대역폭이 훨씬 작아서, attention의 실행 시간은 연산량보다 메모리 읽기·쓰기에 의해 정해진다(**메모리 병목**, memory-bound). FlashAttention은 $Q$, $K$, $V$를 SRAM에 들어가는 타일로 나누고, 온라인 softmax로 점수를 SRAM 안에서만 계산하며 HBM에 쓰지 않는다. FLOPs는 같거나(역전파에서 점수를 다시 계산하므로) 오히려 늘지만, HBM 읽기·쓰기가 크게 줄어 몇 배 빨라지고 메모리는 $O(n^2)$에서 $O(n)$이 된다. [[lesson:autodiff-theory]]의 그레이디언트 체크포인팅처럼, 값을 저장했다가 읽는 비용보다 다시 계산하는 비용이 작다는 점을 이용한다.
+GPU에는 크고 느린 메모리(HBM, 수십 GB)와 작고 빠른 메모리(SRAM, 연산 장치 옆의 수십~수백 KB)가 있다. 표준 attention은 $QK^\top$을 계산해 HBM에 쓰고, 다시 읽어 softmax를 계산해 쓰고, 다시 읽어 $V$와 곱한다. $n \times n$ 행렬을 HBM에 여러 번 쓰고 읽는 것이다. 현재의 GPU는 연산 속도에 비해 메모리 대역폭이 훨씬 작아서, attention의 실행 시간은 연산량보다 메모리 읽기·쓰기에 의해 정해진다(**메모리 병목**, memory-bound). FlashAttention은 $Q$, $K$, $V$를 SRAM에 들어가는 타일로 나누고, 온라인 softmax로 점수를 SRAM 안에서만 계산하며 HBM에 쓰지 않는다. FLOPs는 같거나(역전파에서 점수를 다시 계산하므로) 오히려 늘지만, HBM 읽기·쓰기가 크게 줄어 몇 배 빨라지고 메모리는 $O(n^2)$에서 $O(n)$이 된다. [[lesson:autodiff-theory]]의 그래디언트 체크포인팅처럼, 값을 저장했다가 읽는 비용보다 다시 계산하는 비용이 작다는 점을 이용한다.
 
 \`\`\`image
 src: /images/week5/flashattention-overview.png

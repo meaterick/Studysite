@@ -153,11 +153,11 @@
 
 심화 · 30분 · [본문 원본](../../src/content/modules/neural-networks/autodiff-theory.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/autodiff-theory.ts)
 
-**학습 목표:** 야코비안-벡터 곱(JVP)과 벡터-야코비안 곱(VJP)으로 순방향·역방향 자동미분의 비용을 비교하고, 이원수로 순방향 모드를 구현하며, 그레이디언트 체크포인팅의 메모리·계산 거래를 설명할 수 있다.
+**학습 목표:** 야코비안-벡터 곱(JVP)과 벡터-야코비안 곱(VJP)으로 순방향·역방향 자동미분의 비용을 비교하고, 이원수로 순방향 모드를 구현하며, 그래디언트 체크포인팅의 메모리·계산 거래를 설명할 수 있다.
 
-**쓰이는 곳:** PyTorch·JAX 같은 프레임워크는 두 모드를 모두 제공하고, 큰 모델을 학습할 때 GPU 메모리를 가장 많이 쓰는 것은 역전파를 위해 저장하는 중간 활성화다. 두 모드의 비용과 메모리 구조를 알면 거대 언어 모델 학습에서 쓰는 그레이디언트 체크포인팅([5-2 GPU, 혼합 정밀도와 PyTorch 실습](5-2-deep-training.md#lesson-pytorch-practice))과 헤세 행렬·벡터 곱 같은 고급 기법을 이해할 수 있다.
+**쓰이는 곳:** PyTorch·JAX 같은 프레임워크는 두 모드를 모두 제공하고, 큰 모델을 학습할 때 GPU 메모리를 가장 많이 쓰는 것은 역전파를 위해 저장하는 중간 활성화다. 두 모드의 비용과 메모리 구조를 알면 거대 언어 모델 학습에서 쓰는 그래디언트 체크포인팅([5-2 GPU, 혼합 정밀도와 PyTorch 실습](5-2-deep-training.md#lesson-pytorch-practice))과 헤세 행렬·벡터 곱 같은 고급 기법을 이해할 수 있다.
 
-**본문 절:** 야코비안, JVP, VJP · 메모리와 그레이디언트 체크포인팅
+**본문 절:** 야코비안, JVP, VJP · 메모리와 그래디언트 체크포인팅
 
 **구성:** 확인 문제 5 · 출력 예측 1 · 서술형 1 · 실습 1 · 코드 셀 1 · 그림 3
 
@@ -167,12 +167,12 @@
 
 **서술형**
 
-- `d1` 함수 $f: \mathbb{R}^n \to \mathbb{R}^m$의 기울기(야코비안)를 구할 때 순방향 모드와 역방향 모드는 각각 몇 번 지나가야 하는가? 신경망 학습에 역방향 모드가 쓰이는 이유와 그 대가(메모리), 그레이디언트 체크포인팅의 원리를 설명하라.
+- `d1` 함수 $f: \mathbb{R}^n \to \mathbb{R}^m$의 기울기(야코비안)를 구할 때 순방향 모드와 역방향 모드는 각각 몇 번 지나가야 하는가? 신경망 학습에 역방향 모드가 쓰이는 이유와 그 대가(메모리), 그래디언트 체크포인팅의 원리를 설명하라.
 
 **참고 자료**
 
 - [Baydin et al. (2018) — Automatic Differentiation in Machine Learning: a Survey](https://jmlr.org/papers/v18/17-468.html) — 순방향·역방향 모드의 표준 정리 (영문)
-- [Chen et al. (2016) — Training Deep Nets with Sublinear Memory Cost](https://arxiv.org/abs/1604.06174) — 그레이디언트 체크포인팅 (영문, 연구 논문)
+- [Chen et al. (2016) — Training Deep Nets with Sublinear Memory Cost](https://arxiv.org/abs/1604.06174) — 그래디언트 체크포인팅 (영문, 연구 논문)
 
 <a id="lesson-adam-theory"></a>
 

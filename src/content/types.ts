@@ -109,7 +109,14 @@ export interface LessonSource {
 export interface RecallItem {
   prompt: string;
   hint?: string;
+  /**
+   * 답안·자기평가를 저장하는 키. 생략하면 목록에서의 순서("0", "1", …)를 쓴다.
+   * 문항을 지우거나 다른 모듈로 옮겨 순서가 바뀔 때, 이미 저장된 답안과의 연결을 지키려고 예전 순서 번호를 그대로 적는다.
+   * 한 모듈 안에서 고유해야 하며 한 번 정하면 바꾸지 않는다(validate:content가 중복을 검사한다).
+   */
+  key?: string;
 }
+
 
 /** 모듈 원본(src/content/modules/<모듈>/index.ts) */
 export interface ModuleSource {

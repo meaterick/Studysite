@@ -23,10 +23,11 @@ import cnnRnn from "./cnn-rnn";
 import transformers from "./transformers";
 import llmTraining from "./llm-training";
 import llmSystems from "./llm-systems";
+import llmAgentsOps from "./llm-agents-ops";
 import capstoneProject from "./capstone-project";
 import responsibleAi from "./responsible-ai";
 import visionGenerative from "./vision-generative";
 import gitJupyter from "./git-jupyter";
 
 // 모듈 등록: 트랙 순서와 트랙 안의 순서는 각 모듈의 track·order가 정한다. 여기의 나열 순서는 의미가 없다.
-export const MODULE_SOURCES: ModuleSource[] = [courseOverview, pythonFlow, pythonCollectionsFunctions, pythonFilesErrors, pythonObjectsTools, mathFunctions, linearAlgebra, calculusOptimization, probabilityBasics, descriptiveStatistics, inferenceInformation, numpy, pandas, dataPreparation, mlFraming, linearModels, generalization, mlAlgorithms, neuralNetworks, deepTraining, cnnRnn, transformers, llmTraining, llmSystems, capstoneProject, gitJupyter, responsibleAi, visionGenerative];
+export const MODULE_SOURCES: ModuleSource[] = [courseOverview, pythonFlow, pythonCollectionsFunctions, pythonFilesErrors, pythonObjectsTools, mathFunctions, linearAlgebra, calculusOptimization, probabilityBasics, descriptiveStatistics, inferenceInformation, numpy, pandas, dataPreparation, mlFraming, linearModels, generalization, mlAlgorithms, neuralNetworks, deepTraining, cnnRnn, transformers, llmTraining, llmSystems, llmAgentsOps, capstoneProject, gitJupyter, responsibleAi, visionGenerative];

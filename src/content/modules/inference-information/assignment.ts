@@ -195,7 +195,7 @@ assert abs(posterior(0.3, 0.9, 0.1) - 0.27 / (0.27 + 0.07)) < 1e-4, "민감도·
       title: "미니배치 확률적 경사하강법",
       prompt: md`
 
-과제의 선형회귀를 **미니배치 SGD**로 바꿉니다. 에폭마다 데이터를 섞고(\`rng.permutation\`) \`batch_size\`개씩 잘라, 그 배치의 MSE 기울기로 $w, b$를 갱신합니다. 에폭이 끝날 때마다 **전체 데이터**의 MSE를 기록합니다.
+과제의 선형회귀를 **미니배치 SGD**로 바꿉니다. 에포크마다 데이터를 섞고(\`rng.permutation\`) \`batch_size\`개씩 잘라, 그 배치의 MSE 기울기로 $w, b$를 갱신합니다. 에포크가 끝날 때마다 **전체 데이터**의 MSE를 기록합니다.
 
 배치 크기 1, 10, 100의 결과를 비교해 보십시오. 배치 100(전체)은 과제의 일반 경사하강법과 정확히 같아야 합니다.
 `,
@@ -208,7 +208,7 @@ x = rng.uniform(-3, 3, n)
 y = 2 * x + 1 + rng.normal(0, 0.5, n)
 
 def minibatch_sgd(x, y, lr=0.05, batch_size=10, epochs=50, seed=0):
-    """반환: (w, b, 에폭마다 전체 데이터 MSE를 담은 리스트)"""
+    """반환: (w, b, 에포크마다 전체 데이터 MSE를 담은 리스트)"""
     rng = np.random.default_rng(seed)
     w, b = 0.0, 0.0
     losses = []
@@ -237,7 +237,7 @@ def _():
     w, b, losses = minibatch_sgd(xx, yy, lr=0.05, batch_size=10, epochs=50)
     assert abs(w - w_star) < 0.05 and abs(b - b_star) < 0.05, f"w={w:.3f}, b={b:.3f} / 해석해 {w_star:.3f}, {b_star:.3f}"
 
-@test("에폭마다 손실을 기록하고, 손실이 줄었다")
+@test("에포크마다 손실을 기록하고, 손실이 줄었다")
 def _():
     w, b, losses = minibatch_sgd(xx, yy, batch_size=10, epochs=20)
     assert len(losses) == 20 and losses[-1] < losses[0], f"손실 기록: {losses[:3]} ..."

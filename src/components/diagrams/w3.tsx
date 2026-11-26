@@ -883,7 +883,7 @@ export function TrainingLoop() {
   return (
     <DiagramFrame
       title="PyTorch 학습 루프: 미니배치마다 반복하는 여섯 단계"
-      caption="미니배치마다 ①~⑥을 반복한다. ④ zero_grad를 빠뜨리면 .grad가 +=로 누적되어 갱신량이 점점 커진다(자동미분 엔진에서 grad를 0으로 초기화하던 줄과 같은 역할). 한 에폭이 끝나면 오른쪽처럼 평가 모드(model.eval)와 torch.no_grad()로 검증 손실을 계산하고, 검증 성능이 가장 좋았던 시점의 파라미터를 체크포인트로 저장한다."
+      caption="미니배치마다 ①~⑥을 반복한다. ④ zero_grad를 빠뜨리면 .grad가 +=로 누적되어 갱신량이 점점 커진다(자동미분 엔진에서 grad를 0으로 초기화하던 줄과 같은 역할). 한 에포크가 끝나면 오른쪽처럼 평가 모드(model.eval)와 torch.no_grad()로 검증 손실을 계산하고, 검증 성능이 가장 좋았던 시점의 파라미터를 체크포인트로 저장한다."
       viewBox="0 0 720 260"
       minWidth={560}
     >
@@ -913,7 +913,7 @@ export function TrainingLoop() {
         다음 배치
       </text>
       <Arr x1={602} y1={136} x2={622} y2={136} color={colors.violet} marker={`${P}-violet`} width={1.8} />
-      <Tag x={626} y={80} w={88} h={112} lines={["에폭 끝", "model.eval()", "no_grad()", "검증 손실", "체크포인트"]} color={colors.violet} tint={0.1} size={11.5} />
+      <Tag x={626} y={80} w={88} h={112} lines={["에포크 끝", "model.eval()", "no_grad()", "검증 손실", "체크포인트"]} color={colors.violet} tint={0.1} size={11.5} />
     </DiagramFrame>
   );
 }
@@ -1808,7 +1808,7 @@ export function CheckpointMemory() {
   const mem = (k: number) => 100 / k + k;
   return (
     <DiagramFrame
-      title="그레이디언트 체크포인팅: 계산을 한 번 더 해서 메모리를 √L로 줄인다"
+      title="그래디언트 체크포인팅: 계산을 한 번 더 해서 메모리를 √L로 줄인다"
       caption="층이 16개인 신경망의 역전파에 필요한 활성화 저장을 칸으로 그렸다. 위: 보통의 역전파는 순전파에서 계산한 활성화 16개를 모두 저장해야 한다(메모리 ∝ L). 아래: 4층마다 체크포인트(진한 칸, 4·8·12·16층) 4개만 남기고 나머지는 버린다. 역전파가 13~16층 구간에 오면 12층 체크포인트에서 그 구간만 순전파를 다시 해 활성화를 되살리고(점선 칸), 그 구간이 끝나면 버린다. 한순간에 저장하고 있는 것은 체크포인트 4개 + 다시 계산한 3개 = 7개로, 대략 L/k + k다. 오른쪽: 층 100개를 k층마다 끊으면 메모리는 100/k + k로, k = √100 = 10에서 최소 20이다. 대가는 순전파를 대략 한 번 더 하는 계산이다."
       viewBox="0 0 720 256"
       minWidth={620}

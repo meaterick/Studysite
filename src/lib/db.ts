@@ -269,6 +269,16 @@ MIGRATIONS.push({ version: 6, name: "security-query-indexes", sql: `
   CREATE INDEX security_oauth_expiry ON security_oauth_used(expires_at);
 ` });
 
+// 6-3 "LLM 시스템과 운영"을 6-3 검색·RAG와 평가(llm-systems)와 6-4 에이전트와 운영(llm-agents-ops)으로 나눴다.
+// 6-4로 옮긴 백지 복습 문항은 예전 순서 번호를 저장 키("2"·"4")로 쓰므로, 6-3의 복습 기록을 6-4에 그대로 복사하면
+// 이미 쓴 답안과 자기평가가 옮긴 문항에 다시 연결된다. 행을 더하기만 하므로 배포 중 이전 버전과 함께 돌아도 안전하다.
+MIGRATIONS.push({ version: 7, name: "split-llm-systems-recall", sql: `
+  INSERT OR IGNORE INTO learning_items (user_id, kind, week_slug, item_id, data, completed_at, updated_at)
+  SELECT user_id, kind, 'llm-agents-ops', item_id, data, completed_at, updated_at
+  FROM learning_items
+  WHERE kind = 'recall' AND week_slug = 'llm-systems';
+` });
+
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
 
 interface DbState {

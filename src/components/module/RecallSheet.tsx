@@ -21,7 +21,8 @@ export default function RecallSheet({
   review,
 }: {
   moduleSlug: string;
-  fields: { label: ReactNode; hint?: ReactNode }[];
+  /** key: 답안 저장 키(content/course.ts의 recallKey) */
+  fields: { key: string; label: ReactNode; hint?: ReactNode }[];
   saved: Record<string, string>;
   savedAt?: string;
   submittedAt?: string;
@@ -80,7 +81,7 @@ export default function RecallSheet({
     });
   };
 
-  const filled = fields.filter((_, i) => (values[String(i)] ?? "").trim()).length;
+  const filled = fields.filter((f) => (values[f.key] ?? "").trim()).length;
 
   return (
     <div className="space-y-10">
@@ -101,8 +102,8 @@ export default function RecallSheet({
         </button>
       </div>
       <ol className="space-y-10">
-        {fields.map((f, i) => {
-          const key = String(i);
+        {fields.map((f) => {
+          const key = f.key;
           return (
             <li key={key}>
               <div className="min-w-0">

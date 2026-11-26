@@ -83,7 +83,7 @@ net = nn.Sequential(block(3, 32), block(32, 64), block(64, 128), nn.Flatten(),
 opt = torch.optim.AdamW(net.parameters(), lr=1e-3, weight_decay=5e-4)
 \`\`\`
 
-학습 루프는 에폭마다 \`net.train()\`으로 학습 모드를, 평가 전에 \`net.eval()\`로 평가 모드를 설정한다. 학습 모드에서 BatchNorm은 현재 배치의 평균과 분산을 쓰면서 이동평균을 갱신하고, 드롭아웃은 뉴런의 출력을 무작위로 0으로 만든다. 평가 모드에서 BatchNorm은 이동평균을 쓰고 드롭아웃은 적용되지 않는다.
+학습 루프는 에포크마다 \`net.train()\`으로 학습 모드를, 평가 전에 \`net.eval()\`로 평가 모드를 설정한다. 학습 모드에서 BatchNorm은 현재 배치의 평균과 분산을 쓰면서 이동평균을 갱신하고, 드롭아웃은 뉴런의 출력을 무작위로 0으로 만든다. 평가 모드에서 BatchNorm은 이동평균을 쓰고 드롭아웃은 적용되지 않는다.
 
 \`\`\`python-colab
 for ep in range(10):

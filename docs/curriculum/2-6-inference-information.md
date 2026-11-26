@@ -64,7 +64,7 @@
 
 **학습 목표:** 표준오차로 평균과 비율의 95% 신뢰구간을 계산해 바르게 해석하고, 귀무가설·검정통계량·p값·유의수준으로 가설검정을 하며, 제1종·제2종 오류와 다중 비교의 문제를 설명한다.
 
-**쓰이는 곳:** 테스트 정확도에 오차 범위를 붙이고 두 모델의 차이가 우연인지 판단할 때([4-3 모델 평가의 통계: 선택 편향과 짝지은 비교](4-3-generalization.md#lesson-model-evaluation-stats), [6-3 LLM 평가의 통계](6-3-llm-systems.md#lesson-eval-statistics)), 서비스의 A/B 테스트와 배포 뒤 입력 분포의 변화를 감지할 때([6-3 드리프트 감지의 통계](6-3-llm-systems.md#lesson-drift-statistics)) 이 레슨의 방법을 쓴다.
+**쓰이는 곳:** 테스트 정확도에 오차 범위를 붙이고 두 모델의 차이가 우연인지 판단할 때([4-3 모델 평가의 통계: 선택 편향과 짝지은 비교](4-3-generalization.md#lesson-model-evaluation-stats), [6-3 LLM 평가의 통계](6-3-llm-systems.md#lesson-eval-statistics)), 서비스의 A/B 테스트와 배포 뒤 입력 분포의 변화를 감지할 때([6-4 드리프트 감지의 통계](6-4-llm-agents-ops.md#lesson-drift-statistics)) 이 레슨의 방법을 쓴다.
 
 **본문 절:** 점추정과 표준오차 · 신뢰구간 · 가설검정 · 순열 검정 · 두 가지 오류와 검정력 · p값을 해석할 때 주의할 점
 

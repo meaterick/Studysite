@@ -1,4 +1,4 @@
-import type { Block, Lesson, LessonSource, Module, ModuleSource, TrackId } from "./types";
+import type { Block, Lesson, LessonSource, Module, ModuleSource, RecallItem, TrackId } from "./types";
 import { TIER_ORDER } from "./tiers";
 import { parseMarkdown } from "./markdown";
 import { TRACKS, getTrack, isOptionalTrack } from "./curriculum/tracks";
@@ -109,7 +109,7 @@ function mapModuleText(m: ModuleSource, f: (text: string) => string): ModuleSour
   return {
     ...m,
     anchor: f(m.anchor),
-    recall: m.recall.map((r) => ({ prompt: f(r.prompt), hint: r.hint && f(r.hint) })),
+    recall: m.recall.map((r) => ({ prompt: f(r.prompt), hint: r.hint && f(r.hint), key: r.key })),
     lessons: m.lessons.map((l) => mapLessonText(l, f)),
     assignment: m.assignment && {
       ...m.assignment,
@@ -153,6 +153,11 @@ export function getLesson(id: string): Lesson | undefined {
 }
 
 /** 모듈 안의 레슨(없으면 undefined): URL의 모듈과 레슨이 맞지 않는 주소를 막는다. */
+/** 백지 복습 문항의 저장 키: 적어 둔 key, 없으면 목록 순서("0", "1", …) */
+export function recallKey(item: RecallItem, index: number): string {
+  return item.key ?? String(index);
+}
+
 export function getModuleLesson(moduleSlug: string, lessonId: string): { module: Module; lesson: Lesson } | undefined {
   const mod = getModule(moduleSlug);
   const lesson = getLesson(lessonId);

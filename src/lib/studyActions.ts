@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { createElement, type ReactNode } from "react";
-import { getLesson, getModule } from "@/content/course";
+import { getLesson, getModule, recallKey } from "@/content/course";
 import { parseMarkdown } from "@/content/markdown";
 import { BlocksRenderer, Inline } from "@/components/MarkdownBlocks";
 import { requireUser } from "./dal";
@@ -216,8 +216,9 @@ export async function saveRecall(moduleSlug: string, answers: Record<string, str
   const { user, module } = await loadRecallContext(moduleSlug);
   if (!consumeRate(`learn:${user.id}`, RATE_RULES.learningWrite)) return { ok: false as const, error: RATE_LIMIT_MESSAGE };
   const clean: Record<string, string> = {};
-  module.recall.forEach((_, index) => {
-    clean[String(index)] = String(answers?.[String(index)] ?? "").slice(0, ANSWER_MAX);
+  module.recall.forEach((item, index) => {
+    const key = recallKey(item, index);
+    clean[key] = String(answers?.[key] ?? "").slice(0, ANSWER_MAX);
   });
   if (submit && Object.values(clean).some((v) => !v.trim())) {
     return { ok: false as const, error: "모든 칸을 채운 뒤 제출해 주십시오. 떠오르지 않는 부분은 '기억나지 않음'이라고 적어도 됩니다." };
@@ -234,11 +235,11 @@ export async function saveRecall(moduleSlug: string, answers: Record<string, str
 export async function markRecall(moduleSlug: string, field: string, mark: RecallMark) {
   const { user, module } = await loadRecallContext(moduleSlug);
   limit(user.id, "learn", RATE_RULES.learningWrite);
-  const index = Number(field);
-  if (!Number.isInteger(index) || index < 0 || index >= module.recall.length || (mark !== "ok" && mark !== "weak")) throw new Error("INVALID_MARK");
+  const keys = module.recall.map(recallKey);
+  if (!keys.includes(field) || (mark !== "ok" && mark !== "weak")) throw new Error("INVALID_MARK");
   await updateLearningRecord(user.id, (record) => {
     const prev = readRecallState(record, module.slug);
-    record.recalls[module.slug] = { ...prev, marks: { ...prev.marks, [String(index)]: mark } };
+    record.recalls[module.slug] = { ...prev, marks: { ...prev.marks, [field]: mark } };
   });
   refresh();
 }

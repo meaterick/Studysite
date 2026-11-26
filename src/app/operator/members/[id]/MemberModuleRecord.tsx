@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import type { Check, Exercise, Lesson, Predict } from "@/content/types";
-import { itemId } from "@/content/course";
+import { itemId, recallKey } from "@/content/course";
 import { lessonLabel } from "@/content/tiers";
 import { Inline, RichText } from "@/components/MarkdownBlocks";
 import ReviewPill from "@/components/ReviewPill";
@@ -232,7 +232,7 @@ export default function MemberModuleRecord({
             ) : (
               <dl className="space-y-2">
                 {module.recall.map((field, i) => {
-                  const mark = recall.marks[String(i)];
+                  const mark = recall.marks[recallKey(field, i)];
                   const review: ReviewStatus | undefined = mark === "weak" ? "incorrect" : mark === "ok" ? "correct" : undefined;
                   return (
                     <div key={i} className="rounded-xl border border-[var(--border-hairline)] px-4 py-3">
@@ -240,7 +240,7 @@ export default function MemberModuleRecord({
                         <Inline text={field.prompt} />
                         {recall.submittedAt && <ReviewPill review={review} />}
                       </dt>
-                      <dd className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-secondary">{recall.answers[String(i)]?.trim() || "—"}</dd>
+                      <dd className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-ink-secondary">{recall.answers[recallKey(field, i)]?.trim() || "—"}</dd>
                     </div>
                   );
                 })}

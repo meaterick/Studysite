@@ -336,6 +336,8 @@ for (const mod of MODULES) {
     else if (core.length > 6) warn(`${ctx}: 핵심 레슨 ${core.length}개 — 모듈당 2~6개를 권장합니다`);
     if (mod.recall.length < 3 || mod.recall.length > 5) fail(`${ctx}: 백지 복습 문항 ${mod.recall.length}개 — 3~5개`);
   }
+  const recallKeys = mod.recall.map((r, i) => r.key ?? String(i));
+  if (new Set(recallKeys).size !== recallKeys.length) fail(`${ctx}: 백지 복습 문항의 저장 키가 겹침(${recallKeys.join(", ")}) — key는 모듈 안에서 고유해야 함`);
   mod.recall.forEach((r, i) => {
     checkInline(r.prompt, `${ctx} 백지 복습 ${i + 1}`);
     if (r.hint) checkInline(r.hint, `${ctx} 백지 복습 ${i + 1} 힌트`);

@@ -8,7 +8,7 @@ export default defineExercises([
 본문의 학습률 스케줄과 조기 종료를 함수로 만듭니다.
 
 1. \`lr_at(step, total, warmup, lr_max, lr_min)\`: \`step < warmup\`이면 $\eta_{\max}\cdot\frac{\text{step}+1}{\text{warmup}}$, 그 뒤에는 코사인 감쇠 $\eta_{\min} + \frac{1}{2}(\eta_{\max} - \eta_{\min})\left(1 + \cos\left(\pi\cdot\frac{\text{step} - \text{warmup}}{\text{total} - \text{warmup}}\right)\right)$를 돌려줍니다.
-2. \`early_stop_epoch(val_losses, patience)\`: 검증 손실을 앞에서부터 보다가 최솟값이 \`patience\`번 연속으로 갱신되지 않으면 멈춘다고 할 때, **최종 모델로 고를 에폭 번호**(멈출 때까지의 최솟값 위치, 0부터)를 돌려줍니다.
+2. \`early_stop_epoch(val_losses, patience)\`: 검증 손실을 앞에서부터 보다가 최솟값이 \`patience\`번 연속으로 갱신되지 않으면 멈춘다고 할 때, **최종 모델로 고를 에포크 번호**(멈출 때까지의 최솟값 위치, 0부터)를 돌려줍니다.
 `,
     starter: py`
 import numpy as np
@@ -42,7 +42,7 @@ def _():
     vals = [lr_at(s) for s in range(100, 1001, 50)]
     assert all(a >= b for a, b in zip(vals, vals[1:])), "학습률이 늘어나는 구간이 있습니다."
 
-@test("조기 종료: patience 3이면 2에폭을 고르고, 뒤의 0.5는 보지 못한다")
+@test("조기 종료: patience 3이면 2에포크를 고르고, 뒤의 0.5는 보지 못한다")
 def _():
     losses = [0.9, 0.7, 0.6, 0.62, 0.61, 0.65, 0.5]
     assert early_stop_epoch(losses, patience=3) == 2, f"결과: {early_stop_epoch(losses, 3)}"

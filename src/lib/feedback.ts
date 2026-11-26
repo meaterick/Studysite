@@ -1,5 +1,5 @@
 import "server-only";
-import { MODULES } from "@/content/course";
+import { MODULES, recallKey } from "@/content/course";
 import { lessonLabel } from "@/content/tiers";
 import { readLessonState, readRecallState, type LearningRecord } from "./learningStore";
 import { reviewHref } from "./routes";
@@ -38,7 +38,9 @@ export function moduleReview(slug: string, record: LearningRecord): ModuleReview
       lessons.push({ lessonId: lesson.id, label: lessonLabel(lesson), title: lesson.title, wrongChecks, recovered, weakAnswers, revealedPredicts });
     }
   }
-  const weakRecall = Object.values(readRecallState(record, slug).marks).filter((m) => m === "weak").length;
+  // 지금 모듈에 있는 문항의 표시만 센다(다른 모듈로 옮긴 문항의 예전 표시는 기록에 남아 있어도 세지 않는다).
+  const recallMarks = readRecallState(record, slug).marks;
+  const weakRecall = mod.recall.filter((item, i) => recallMarks[recallKey(item, i)] === "weak").length;
   const open = lessons.reduce((n, l) => n + l.wrongChecks - l.recovered + l.weakAnswers + l.revealedPredicts, 0) + weakRecall;
   if (lessons.length === 0 && weakRecall === 0) return undefined;
   return { moduleSlug: slug, moduleCode: mod.code, moduleTitle: mod.title, lessons, weakRecall, open, href: reviewHref(slug) };
