@@ -13,6 +13,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "validate:content": "tsx scripts/content/validate.ts",
     "check:labs": "tsx scripts/content/check-labs.ts",
+    "audit:content": "tsx scripts/content/audit.ts",
+    "audit:comments": "tsx scripts/content/audit-comments.ts",
     "test:security": "node --conditions=react-server --import tsx --test tests/security/security.test.ts tests/security/security-defense.test.ts tests/security/security-monitoring.test.ts tests/security/security-runtime.test.ts",
     "bench:security": "node --conditions=react-server --import tsx scripts/security/benchmark.mjs",
     "test:security:http": "node scripts/security/http-smoke.mjs",
