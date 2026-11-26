@@ -91,7 +91,7 @@ $$w \leftarrow w - \eta\left(\frac{\hat m_t}{\sqrt{\hat v_t} + \epsilon} + \lamb
       question: "AdamW에서 학습률 $\\eta = 10^{-3}$, 가중치 감쇠 $\\lambda = 0.1$일 때, 기울기 항과 별도로 매 스텝 가중치에 곱해지는 값과 그 성질은?",
       choices: ["$0.9999$배이며, 모든 파라미터에 기울기 크기와 무관하게 같은 비율로 걸린다", "$0.9$배이며, 기울기가 큰 파라미터에만 걸린다", "$\\sqrt{\\hat v}$에 따라 파라미터마다 다르다", "감쇠는 적용되지 않는다"],
       answer: 0,
-      explanation: "AdamW는 $w \\leftarrow w - \\eta\\lambda w$를 갱신에서 따로 적용하므로 $1 - 10^{-3}\\times 0.1 = 0.9999$배가 모든 파라미터에 똑같이 걸립니다. Adam + L2에서는 감쇠 항이 $\\sqrt{\\hat v}$로 나눠져 파라미터마다 강도가 달라집니다.",
+      explanation: "AdamW는 $w \\leftarrow w - \\eta\\lambda w$를 갱신에서 따로 적용하므로 $1 - 10^{-3}\\times 0.1 = 0.9999$배가 모든 파라미터에 똑같이 걸린다. Adam + L2에서는 감쇠 항이 $\\sqrt{\\hat v}$로 나눠져 파라미터마다 강도가 달라진다.",
     },
   ],
   exercises,

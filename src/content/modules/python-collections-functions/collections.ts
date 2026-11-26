@@ -239,7 +239,7 @@ print(counts)                        # {'the': 3, 'model': 2, 'learns': 1, 'data
 print(max(counts, key=counts.get))   # the
 \`\`\`
 
-딕셔너리의 키에는 바뀔 수 없는 값(문자열, 숫자, 튜플)만 쓸 수 있다. 리스트를 키로 쓰면 \`TypeError: unhashable type: 'list'\`가 난다. 값에는 리스트·딕셔너리를 포함해 어떤 자료형이든 쓸 수 있다.
+딕셔너리의 키에는 바뀔 수 없는 값(문자열, 숫자, 원소가 모두 바뀔 수 없는 튜플)만 쓸 수 있다. 리스트를 키로 쓰면 \`TypeError: unhashable type: 'list'\`가 난다. 값에는 리스트·딕셔너리를 포함해 어떤 자료형이든 쓸 수 있다.
 
 ### 집합
 

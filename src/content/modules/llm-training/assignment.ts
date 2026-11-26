@@ -171,7 +171,7 @@ for prompt in prompts:
 | --- | --- | --- | --- |
 | Chinchilla | 70B | 1.4T | [Hoffmann et al., 2022](https://arxiv.org/abs/2203.15556) |
 | Llama 2 7B | 7B | 2T | [Touvron et al., 2023](https://arxiv.org/abs/2307.09288) |
-| Llama 3 8B | 8B | 15T 이상 | [Meta Llama 3 모델 카드](https://github.com/meta-llama/llama3/blob/main/MODEL_CARD.md) |
+| Llama 3 8B | 8B | 15T 이상 | [Meta Llama 3 모델카드](https://github.com/meta-llama/llama3/blob/main/MODEL_CARD.md) |
 `,
       cells: [
         { kind: "code", id: "scaling-code", label: "Chinchilla 최적 N, D", starter: py`

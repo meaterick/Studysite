@@ -167,7 +167,7 @@ EU AI Act는 2024년 8월 발효된 뒤 금지 조항(2025년 2월), 범용 AI �
   predicts: [
     {
       key: "p1",
-      question: "모델 카드에 적을 집단별 정확도와 전체 정확도, 집단 간 차이를 계산한다. 출력을 예측하십시오.",
+      question: "모델카드에 적을 집단별 정확도와 전체 정확도, 집단 간 차이를 계산한다. 출력을 예측하십시오.",
       code: py`
 results = {"A": (90, 100), "B": (40, 50)}   # (맞힌 수, 샘플 수)
 acc = {g: c / n for g, (c, n) in results.items()}
@@ -175,7 +175,7 @@ total = sum(c for c, n in results.values()) / sum(n for c, n in results.values()
 print(acc, round(total, 3), round(max(acc.values()) - min(acc.values()), 2))
 `,
       expected: "{'A': 0.9, 'B': 0.8} 0.867 0.1",
-      explanation: "집단 A는 $90/100 = 0.9$, B는 $40/50 = 0.8$이다. 전체 정확도는 $130/150 \\approx 0.867$로 표본이 많은 A 쪽에 가깝다. 전체 값만 적으면 B 집단에서 10%p 낮다는 사실이 드러나지 않으므로, 모델 카드에는 집단별 값과 샘플 수를 함께 적는다.",
+      explanation: "집단 A는 $90/100 = 0.9$, B는 $40/50 = 0.8$이다. 전체 정확도는 $130/150 \\approx 0.867$로 표본이 많은 A 쪽에 가깝다. 전체 값만 적으면 B 집단에서 10%p 낮다는 사실이 드러나지 않으므로, 모델카드에는 집단별 값과 샘플 수를 함께 적는다.",
     },
   ],
   descriptive: [

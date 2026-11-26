@@ -73,7 +73,8 @@ print("호출 후:", result)
 
 \`\`\`python
 def show_double(x):
-    print(x * 2)          # 화면에 출력만 한다
+    # 화면에 출력만 한다
+    print(x * 2)
 
 def get_double(x):
     return x * 2          # 값을 돌려준다

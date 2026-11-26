@@ -70,6 +70,23 @@ npm run check:labs
 
 필요한 Python 패키지는 `python -m pip install -r scripts/content/requirements.txt`로 설치합니다. 버전은 학습자의 Pyodide 환경과 맞춰 고정되어 있으므로 가상환경을 따로 만들어 쓰는 것이 좋습니다. `check:labs`는 Windows에서 `python`, 그 밖의 환경에서 `python3`을 쓰며, 환경 변수 `PYTHON`으로 가상환경의 실행 파일을 지정할 수 있습니다(예: `PYTHON=.venv/bin/python npm run check:labs`).
 
+```bash
+npm run audit:content
+npm run audit:comments
+```
+
+학습자료 품질을 감사할 때 쓰는 개발용 신호입니다. 빌드와 CI에는 필요하지 않습니다.
+
+- `audit:content`는 레슨마다 다음 신호를 모읍니다. 점수는 매기지 않습니다. 모듈 slug나 레슨 id를 주면 그 범위만 보고, `--detail`은 문장과 문항 단위 후보를, `--json <파일>`은 전체 신호를 저장합니다.
+  - 목표 동사의 블룸 수준과 문항 수준 분포
+  - 정답 위치·길이 편중
+  - 오답을 다루지 않는 해설
+  - 주의 콜아웃
+  - 긴 문장과 합니다체 문장
+- `audit:comments`는 본문 코드 셀의 `print` 줄 끝 주석이 실제 출력과 같은지 비교하고, 불일치가 있으면 종료 코드 1로 끝납니다.
+
+채점 기준과 수정 절차는 [concept-auditor 스킬](../../.claude/skills/concept-auditor/SKILL.md)에 있습니다. 경미한 결함은 바로 고치고, 구조·대상·학습 기록에 영향을 주는 수정은 선택지를 정리해 승인을 받은 뒤 고칩니다. 최근 감사 결과는 [학습자료 개념 감사 (2026-11-26)](../development/concept-audit-2026-11-26.md)에 있습니다.
+
 ## 용어와 입문 코드 안내
 
 - 화면 설명은 `합니다`, 사용자 지시는 `하십시오`, 학습 본문은 `한다`, 평가 문항은 `설명하라·계산하라` 형식을 기본으로 사용합니다.

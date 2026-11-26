@@ -106,7 +106,7 @@
 
 **서술형**
 
-- `d1` $a=[1,2]$, $b=[2,1]$의 내적과 코사인 유사도는?
+- `d1` $a=[1,2]$, $b=[2,1]$의 내적과 코사인 유사도를 계산하라.
 - `d2` 검색 시스템이 문서 유사도에 내적 대신 코사인 유사도를 쓰는 이유를 "긴 문서와 짧은 문서" 관점에서 설명하라. $b$를 10배 하면 내적과 코사인 유사도가 각각 어떻게 되는지를 근거로 든다.
 
 **참고 자료**
@@ -181,7 +181,7 @@
 
 **학습 목표:** 행렬의 랭크와 벡터의 L1·L2 노름을 계산하고, 특성방정식으로 $2 \times 2$ 행렬의 고유값·고유벡터를 구하며, 특이값 분해로 저랭크 근사를 만들고 그 오차를 설명한다.
 
-**쓰이는 곳:** L1·L2 노름은 정규화([4-3 L1·L2 규제, 조기 종료, 학습 곡선](4-3-generalization.md#lesson-regularization))와 거리 계산에 쓰인다. 고유값은 경사하강법의 학습률 한계를 정하고([2-3 경사하강법의 수렴 조건과 조건수](2-3-calculus-optimization.md#lesson-gd-convergence)), 특이값 분해는 주성분 분석([4-4 K-means, PCA, 머신러닝 파이프라인](4-4-ml-algorithms.md#lesson-kmeans-pca-pipeline))과 언어 모델 미세조정 기법 LoRA([6-2 지시 미세조정과 LoRA](6-2-llm-training.md#lesson-instruction-tuning))의 바탕이다.
+**쓰이는 곳:** L1·L2 노름은 규제([4-3 L1·L2 규제, 조기 종료, 학습 곡선](4-3-generalization.md#lesson-regularization))와 거리 계산에 쓰인다. 고유값은 경사하강법의 학습률 한계를 정하고([2-3 경사하강법의 수렴 조건과 조건수](2-3-calculus-optimization.md#lesson-gd-convergence)), 특이값 분해는 주성분 분석([4-4 K-means, PCA, 머신러닝 파이프라인](4-4-ml-algorithms.md#lesson-kmeans-pca-pipeline))과 언어 모델 미세조정 기법 LoRA([6-2 지시 미세조정과 LoRA](6-2-llm-training.md#lesson-instruction-tuning))의 바탕이다.
 
 **본문 절:** 랭크 · 노름 · 고유값과 고유벡터 · 특이값 분해 · 저랭크 근사
 

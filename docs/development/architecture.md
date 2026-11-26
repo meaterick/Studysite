@@ -58,4 +58,5 @@
 - 문서·커리큘럼: `npm run docs:check`, `npm run validate:content`.
 - TypeScript·UI: `npm run lint`, `npm run typecheck`, `npm run build` (`typecheck`는 Next.js 경로 타입을 먼저 생성).
 - 실습·과제 코드: `npm run check:labs`.
+- 학습자료 품질 감사(선택): `npm run audit:content`, `npm run audit:comments`. 채점 절차는 `.claude/skills/concept-auditor/`.
 - 인증·운영·보안: `npm run test:security`, `npm run test:security:python`, 필요시 standalone 빌드 후 `npm run test:security:http`.

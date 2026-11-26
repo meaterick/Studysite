@@ -22,7 +22,7 @@
 | ---: | --- | --- | ---: | --- |
 | 1 | [퍼셉트론, 다층 신경망, 활성화 함수](#lesson-perceptron-mlp) | 핵심 | 55분 | #65 퍼셉트론, 다층 신경망, 활성화 함수 |
 | 2 | [순전파, 역전파, 계산 그래프](#lesson-backprop) | 핵심 | 50분 | #66 순전파, 역전파, 계산 그래프, 자동미분 |
-| 3 | [자동미분 엔진 구현](#lesson-micrograd) | 핵심 | 40분 | #66 순전파, 역전파, 계산 그래프, 자동미분 |
+| 3 | [자동미분 엔진 구현](#lesson-micrograd) | 핵심 | 45분 | #66 순전파, 역전파, 계산 그래프, 자동미분 |
 | 4 | [배치, 에포크, 학습률, SGD, Adam](#lesson-optimizers) | 핵심 | 45분 | #67 배치, 에포크, 학습률, SGD, Adam |
 | 5 | [자동미분의 두 모드와 메모리](#lesson-autodiff-theory) | 심화 | 30분 | — |
 | 6 | [Adam의 이론: 편향 보정, AdamW, 워밍업](#lesson-adam-theory) | 심화 | 30분 | — |
@@ -92,7 +92,7 @@
 
 ### 3. 자동미분 엔진 구현
 
-핵심 · 40분 · [본문 원본](../../src/content/modules/neural-networks/micrograd.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/micrograd.ts)
+핵심 · 45분 · [본문 원본](../../src/content/modules/neural-networks/micrograd.ts) · [실습 원본](../../src/content/modules/neural-networks/labs/micrograd.ts)
 
 **학습 목표:** 연산자 메서드·클로저·재귀로 만든 Value 클래스가 계산 그래프를 기록하고 위상정렬의 역순으로 `_backward`를 실행하는 과정을 설명하고, 기울기를 `+=`로 누적하는 이유를 계산하며, 이 엔진으로 경사하강법 학습 루프를 구현한다.
 

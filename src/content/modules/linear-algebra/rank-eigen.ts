@@ -7,7 +7,7 @@ export default defineLesson({
   tier: "advanced",
   requires: ["linear-maps-basis"],
   goal: "행렬의 랭크와 벡터의 L1·L2 노름을 계산하고, 특성방정식으로 $2 \\times 2$ 행렬의 고유값·고유벡터를 구하며, 특이값 분해로 저랭크 근사를 만들고 그 오차를 설명한다.",
-  why: "L1·L2 노름은 정규화([[lesson:regularization]])와 거리 계산에 쓰인다. 고유값은 경사하강법의 학습률 한계를 정하고([[lesson:gd-convergence]]), 특이값 분해는 주성분 분석([[lesson:kmeans-pca-pipeline]])과 언어 모델 미세조정 기법 LoRA([[lesson:instruction-tuning]])의 바탕이다.",
+  why: "L1·L2 노름은 규제([[lesson:regularization]])와 거리 계산에 쓰인다. 고유값은 경사하강법의 학습률 한계를 정하고([[lesson:gd-convergence]]), 특이값 분해는 주성분 분석([[lesson:kmeans-pca-pipeline]])과 언어 모델 미세조정 기법 LoRA([[lesson:instruction-tuning]])의 바탕이다.",
   body: md`
 ### 랭크
 
@@ -37,7 +37,7 @@ A = \begin{bmatrix}1 & 2\\2 & 4\end{bmatrix}
 
 L2 노름은 [[lesson:dot-product]]에서 쓴 벡터의 길이 $\sqrt{a \cdot a}$이고, 원점에서 끝점까지의 직선 거리다. L1 노름은 좌표축 방향으로만 움직일 때의 거리라 맨해튼 거리라고도 한다. $a = [3, 4]$이면 $\lVert a \rVert_2 = 5$, $\lVert a \rVert_1 = 7$이다. 두 벡터의 거리는 차의 노름 $\lVert a - b \rVert$으로 잰다.
 
-노름이 1인 점들의 집합은 L2에서 원, L1에서 꼭짓점이 좌표축 위에 놓인 마름모다. L2 정규화는 파라미터의 L2 노름을, L1 정규화는 L1 노름을 손실에 더해 파라미터가 커지는 것을 제한한다([[lesson:regularization]]). L1 노름이 일정한 집합은 꼭짓점이 축 위에 있어서, L1 정규화로 얻은 해는 일부 성분이 정확히 0이 되는 경우가 많다.
+노름이 1인 점들의 집합은 L2에서 원, L1에서 꼭짓점이 좌표축 위에 놓인 마름모다. L2 규제는 파라미터의 L2 노름을, L1 규제는 L1 노름을 손실에 더해 파라미터가 커지는 것을 제한한다([[lesson:regularization]]). L1 노름이 일정한 집합은 꼭짓점이 축 위에 있어서, L1 규제로 얻은 해는 일부 성분이 정확히 0이 되는 경우가 많다.
 
 [[diagram:norm-balls]]
 

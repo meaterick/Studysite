@@ -105,7 +105,7 @@ $O(n^2)$ 연산량 자체는 그대로다. 문맥을 수백만 토큰으로 늘�
       question: "FlashAttention이 표준 attention보다 빠른 주된 이유는?",
       choices: ["점수 행렬을 HBM에 쓰고 읽는 과정을 없애 메모리 병목을 줄이기 때문", "FLOPs를 $O(n)$으로 줄이기 때문", "근사 계산을 하기 때문", "softmax를 생략하기 때문"],
       answer: 0,
-      explanation: "attention의 실행 시간은 메모리 대역폭에 의해 정해진다. 타일을 SRAM에서만 처리해 $n\\times n$ 행렬을 HBM에 만들지 않는다. FLOPs와 결과는 그대로다.",
+      explanation: "attention의 실행 시간은 메모리 대역폭에 의해 정해진다. 타일을 SRAM에서만 처리해 $n\\times n$ 행렬을 HBM에 만들지 않는다. 결과는 그대로이고 FLOPs는 줄지 않는다(역전파에서는 점수를 다시 계산하는 만큼 늘어난다).",
     },
     {
       key: "c4",

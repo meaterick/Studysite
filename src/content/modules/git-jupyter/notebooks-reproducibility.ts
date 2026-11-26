@@ -69,12 +69,13 @@ def run_experiment(seed):
 
 accs = [run_experiment(s) for s in range(5)]
 print([round(a, 2) for a in accs])
-print(f"정확도 {np.mean(accs):.3f} ± {np.std(accs):.3f} (시드 5개)")
+# 시드가 5개뿐이므로 n − 1로 나누는 표본 표준편차(ddof=1)를 보고한다
+print(f"정확도 {np.mean(accs):.3f} ± {np.std(accs, ddof=1):.3f} (시드 5개)")
 \`\`\`
 
 \`\`\`output
 [0.76, 0.72, 0.78, 0.76, 0.86]
-정확도 0.776 ± 0.046 (시드 5개)
+정확도 0.776 ± 0.052 (시드 5개)
 \`\`\`
 
 같은 방법인데도 시드에 따라 정확도가 0.72에서 0.86까지 달라진다. 시드 하나의 결과로 두 방법을 비교하면, 차이가 방법 때문인지 시드 때문인지 구분할 수 없다.

@@ -131,7 +131,7 @@ def _():
 def _():
     assert approx(minmax([2, 4, 6, 8]), [0, 1 / 3, 2 / 3, 1])
 `,
-    hints: ["샘플이 행, 특징이 열이므로 열별 통계는 `X.mean(axis=0)`, `X.std(axis=0)`입니다.", "`standardize`는 `(X - mean) / std`입니다. 여기서 X의 평균을 다시 구하면 안 됩니다. 그것이 바로 누수입니다.", "`minmax`는 `(x - x.min()) / (x.max() - x.min())`입니다."],
+    hints: ["샘플이 행, 특성이 열이므로 열별 통계는 `X.mean(axis=0)`, `X.std(axis=0)`입니다.", "`standardize`는 `(X - mean) / std`입니다. 여기서 X의 평균을 다시 구하면 안 됩니다. 그것이 바로 누수입니다.", "`minmax`는 `(x - x.min()) / (x.max() - x.min())`입니다."],
     solution: py`
 import numpy as np
 

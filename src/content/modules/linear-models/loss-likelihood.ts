@@ -6,7 +6,7 @@ export default defineLesson({
   title: "손실함수의 확률적 기원",
   tier: "advanced",
   requires: ["loss-functions", "likelihood-entropy", "regularization"],
-  goal: "가우시안·베르누이 가능도에서 MSE와 교차 엔트로피를 유도하고, L2·L1 정규화를 가우시안·라플라스 사전분포의 MAP로 설명하며, 로지스틱 손실의 볼록성과 선형분리 데이터에서의 발산을 분석할 수 있다.",
+  goal: "가우시안·베르누이 가능도에서 MSE와 교차 엔트로피를 유도하고, L2·L1 규제를 가우시안·라플라스 사전분포의 MAP로 설명하며, 로지스틱 손실의 볼록성과 선형분리 데이터에서의 발산을 분석할 수 있다.",
   why: "손실함수와 규제를 확률 모델의 가정으로 이해하면, 이상치가 많은 데이터나 새로운 형태의 출력처럼 정해진 규칙이 없는 상황에서도 손실을 직접 정할 수 있다. 언어 모델의 학습 목표인 다음 토큰의 음의 로그가능도와 그 평가에 쓰는 퍼플렉시티도 같은 원리에서 나온다([[lesson:pretraining]]).",
   body: md`
 회귀는 평균제곱오차를, 분류는 교차 엔트로피를 손실로 쓰고([[lesson:loss-functions]]), 과적합을 줄이려면 L1·L2 규제를 더한다([[lesson:regularization]]). 이 레슨은 세 가지가 모두 최대가능도(MLE)와 최대사후확률(MAP)이라는 **하나의 원리**에서 나온다는 것을 보인다([[lesson:mle-map]]). 이 관점을 쓰면 손실함수를 외워서 고르지 않고, 데이터가 어떤 분포에서 나왔다고 가정하는지로부터 손실을 **유도**할 수 있다. 언어 모델이 다음 토큰의 교차 엔트로피를 최소화하는 이유도 같다([[lesson:pretraining]]).
@@ -50,7 +50,7 @@ $$-\log L(w) = -\sum_i \left[\, y_i \log p_i + (1-y_i)\log(1-p_i) \,\right]$$
 
 로 이진 교차 엔트로피의 합 그 자체다. 클래스가 $K$개면 범주 분포 $P(y = k \mid x) = \text{softmax}(z)_k$를 가정하고, NLL은 $-\log p_{\text{정답}}$이 된다. 이름은 정보이론([[lesson:entropy-kl]])에서 왔지만 내용은 최대가능도다. 그래서 교차 엔트로피 최소화는 "모델 분포와 데이터 분포의 KL 발산 최소화"와도 같다.
 
-### 정규화 = 사전분포를 넣은 MAP
+### 규제 = 사전분포를 넣은 MAP
 
 MAP는 가능도에 파라미터의 사전분포 $p(w)$를 곱한 사후확률을 최대화한다. 음의 로그를 취하면 $-\log p(w \mid D) = -\log L(w) - \log p(w) + \text{상수}$이므로, **사전분포의 음의 로그가 곧 벌점 항**이다.
 
@@ -99,7 +99,7 @@ $$H = \frac{1}{n} X^\top S X, \qquad S = \operatorname{diag}\big(p_i(1-p_i)\big)
       question: "선형분리 가능한 데이터에서 규제 없는 로지스틱 회귀를 경사하강법으로 오래 학습하면?",
       choices: ["가중치 크기가 끝없이(대략 로그로) 커지고 손실은 0으로 다가간다", "유한한 최적값에 수렴한다", "가중치가 0으로 줄어든다", "손실이 ln 2에 머문다"],
       answer: 0,
-      explanation: "모든 점을 가르는 $w$의 크기를 키울수록 손실이 계속 줄어 MLE가 존재하지 않는다. 경사하강법을 돌리면 스텝이 10배 늘 때마다 $w$가 약 2.3씩 커지고 손실은 10분의 1이 된다. L2 규제를 넣으면 유한한 해가 생긴다.",
+      explanation: "모든 점을 가르는 $w$의 크기를 키울수록 손실이 계속 줄어 MLE가 존재하지 않는다. 경사하강법을 돌리면 스텝이 10배 늘 때마다 $\\lVert w \\rVert$가 거의 일정한 양만큼(본문 그림의 데이터에서는 약 3.5씩) 커지고 손실은 약 10분의 1이 된다. L2 규제를 넣으면 유한한 해가 생긴다.",
     },
     {
       key: "c4",
@@ -127,9 +127,9 @@ $$H = \frac{1}{n} X^\top S X, \qquad S = \operatorname{diag}\big(p_i(1-p_i)\big)
   descriptive: [
     {
       key: "d1",
-      question: "잡음이 정규분포라고 가정하면 최대가능도 추정이 MSE 최소화와 같아지는 이유를 유도하라. L2 정규화가 어떤 사전분포의 MAP와 같은지, 그때 $\\lambda$가 무엇으로 정해지는지도 설명하라.",
+      question: "잡음이 정규분포라고 가정하면 최대가능도 추정이 MSE 최소화와 같아지는 이유를 유도하라. L2 규제가 어떤 사전분포의 MAP와 같은지, 그때 $\\lambda$가 무엇으로 정해지는지도 설명하라.",
       answer: md`
-$y_i = w^\top x_i + \varepsilon_i$, $\varepsilon_i \sim \mathcal{N}(0, \sigma^2)$ 독립이면 음의 로그가능도는 $\frac{n}{2}\log(2\pi\sigma^2) + \frac{1}{2\sigma^2}\sum_i (y_i - w^\top x_i)^2$이다. 첫 항은 $w$와 무관하고 둘째 항은 오차 제곱합의 양수배이므로, 가능도를 최대화하는 $w$와 MSE를 최소화하는 $w$가 같다. L2 정규화는 가중치에 가우시안 사전분포 $w_j \sim \mathcal{N}(0, \tau^2)$를 둔 MAP와 같다. 음의 로그 사전이 $\frac{1}{2\tau^2}\lVert w \rVert^2$이므로 전체 목적함수를 $2\sigma^2$배 하면 $\lVert y - Xw \rVert^2 + \frac{\sigma^2}{\tau^2}\lVert w \rVert^2$가 되어 $\lambda = \sigma^2/\tau^2$다. 잡음이 클수록, 사전분포가 좁을수록 규제가 세진다(라플라스 사전분포이면 L1).
+$y_i = w^\top x_i + \varepsilon_i$, $\varepsilon_i \sim \mathcal{N}(0, \sigma^2)$ 독립이면 음의 로그가능도는 $\frac{n}{2}\log(2\pi\sigma^2) + \frac{1}{2\sigma^2}\sum_i (y_i - w^\top x_i)^2$이다. 첫 항은 $w$와 무관하고 둘째 항은 오차 제곱합의 양수배이므로, 가능도를 최대화하는 $w$와 MSE를 최소화하는 $w$가 같다. L2 규제는 가중치에 가우시안 사전분포 $w_j \sim \mathcal{N}(0, \tau^2)$를 둔 MAP와 같다. 음의 로그 사전이 $\frac{1}{2\tau^2}\lVert w \rVert^2$이므로 전체 목적함수를 $2\sigma^2$배 하면 $\lVert y - Xw \rVert^2 + \frac{\sigma^2}{\tau^2}\lVert w \rVert^2$가 되어 $\lambda = \sigma^2/\tau^2$다. 잡음이 클수록, 사전분포가 좁을수록 규제가 세진다(라플라스 사전분포이면 L1).
 `,
       keyPoints: ["가우시안 잡음의 음의 로그가능도 = 상수 + 오차 제곱합의 양수배", "따라서 MLE와 MSE 최소화의 해가 같다", "L2 = 가우시안 사전분포의 MAP", "$\\lambda = \\sigma^2/\\tau^2$"],
     },

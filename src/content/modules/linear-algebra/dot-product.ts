@@ -229,7 +229,7 @@ print(a @ b, np.linalg.norm(a), a @ b / (np.linalg.norm(a) * np.linalg.norm(b)))
   descriptive: [
     {
       key: "d1",
-      question: "$a=[1,2]$, $b=[2,1]$의 내적과 코사인 유사도는?",
+      question: "$a=[1,2]$, $b=[2,1]$의 내적과 코사인 유사도를 계산하라.",
       answer: md`
 내적 = $1 \cdot 2 + 2 \cdot 1 = 4$. 두 벡터의 길이는 모두 $\sqrt{1 + 4} = \sqrt{5}$이므로 코사인 유사도 $= \frac{4}{\sqrt5 \cdot \sqrt5} = 0.8$이다(사잇각 약 $36.9°$).
 `,

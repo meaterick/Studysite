@@ -48,7 +48,7 @@ def _():
 `,
     hints: [
       "`len(df)`, `df.isna().sum().to_dict()`, `df.duplicated().sum()`, `df[\"user_id\"].duplicated().sum()`을 씁니다.",
-      "`((df[\"age\"] <= 0) | (df[\"age\"] > 120)).sum()`입니다. 결측은 어떤 비교에서도 `False`라 세어지지 않습니다.",
+      "`((df[\"age\"] <= 0) | (df[\"age\"] > 120)).sum()`입니다. 결측은 `<=`·`>` 비교에서 `False`라 세어지지 않습니다.",
     ],
     solution: py`
 import numpy as np

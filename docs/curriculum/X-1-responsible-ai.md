@@ -237,7 +237,7 @@ AI 위험, 공정성 기준, 프라이버시 공학, 편향 완화, 적대적 �
 
 **참고 자료**
 
-- [Goodfellow, Shlens & Szegedy (2015) — Explaining and Harnessing Adversarial Examples](https://arxiv.org/abs/1412.6572) — 선형성 가설과 FGSM (영문)
+- [Goodfellow, Shlens & Szegedy (2014) — Explaining and Harnessing Adversarial Examples](https://arxiv.org/abs/1412.6572) — 선형성 가설과 FGSM (영문)
 - [Madry et al. (2018) — Towards Deep Learning Models Resistant to Adversarial Attacks](https://arxiv.org/abs/1706.06083) — PGD와 적대적 학습 (영문)
 
 ## 백지 복습

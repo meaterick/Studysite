@@ -31,8 +31,8 @@ def train(steps=300, N=32, tau=0.5, lr=0.05, seed=0):
     rng = np.random.default_rng(seed)
     A_img, A_txt = rng.normal(size=(8, 12)), rng.normal(size=(8, 10))
     Z = rng.normal(size=(N, 8))                                  # 같은 장면(잠재 의미)
-    img = Z @ A_img + 0.1 * rng.normal(size=(N, 12))             # 이미지 특징
-    txt = Z @ A_txt + 0.1 * rng.normal(size=(N, 10))             # 캡션 특징
+    img = Z @ A_img + 0.1 * rng.normal(size=(N, 12))             # 이미지 특성
+    txt = Z @ A_txt + 0.1 * rng.normal(size=(N, 10))             # 캡션 특성
     img, txt = (img - img.mean(0)) / img.std(0), (txt - txt.mean(0)) / txt.std(0)
     Wi, Wt = rng.normal(0, 0.1, (12, 8)), rng.normal(0, 0.1, (10, 8))
     losses = []
@@ -100,8 +100,8 @@ def train(steps=300, N=32, tau=0.5, lr=0.05, seed=0):
     rng = np.random.default_rng(seed)
     A_img, A_txt = rng.normal(size=(8, 12)), rng.normal(size=(8, 10))
     Z = rng.normal(size=(N, 8))                                  # 같은 장면(잠재 의미)
-    img = Z @ A_img + 0.1 * rng.normal(size=(N, 12))             # 이미지 특징
-    txt = Z @ A_txt + 0.1 * rng.normal(size=(N, 10))             # 캡션 특징
+    img = Z @ A_img + 0.1 * rng.normal(size=(N, 12))             # 이미지 특성
+    txt = Z @ A_txt + 0.1 * rng.normal(size=(N, 10))             # 캡션 특성
     img, txt = (img - img.mean(0)) / img.std(0), (txt - txt.mean(0)) / txt.std(0)
     Wi, Wt = rng.normal(0, 0.1, (12, 8)), rng.normal(0, 0.1, (10, 8))
     losses = []

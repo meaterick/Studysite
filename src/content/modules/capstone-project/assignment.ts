@@ -5,7 +5,7 @@ export default defineAssignment({
   kind: "capstone",
   title: "캡스톤 프로젝트",
   summary: md`
-앞선 트랙에서 배운 내용을 하나의 프로젝트로 묶습니다. 유형(A 구현형 · B 응용형 · C 분석형 · D 책임형)과 단계별 일정은 [[lesson:capstone-design]]을 참고합니다. 코드는 이 작업 공간에서 실행하며(NumPy, pandas, scikit-learn, matplotlib 사용 가능), 리포트·모델카드·발표 개요·성찰문도 모두 답안 칸에 작성합니다. 과정의 학습 자료는 모듈마다 파일 하나(\`/course/llm-systems.md\` 등, 선택 분야 모듈 제외)로 읽을 수 있습니다.
+앞선 트랙에서 배운 내용을 하나의 프로젝트로 묶습니다. 유형(A 구현형 · B 응용형 · C 분석형 · D 책임형)과 단계별 일정은 [[lesson:capstone-design]]를 참고합니다. 코드는 이 작업 공간에서 실행하며(NumPy, pandas, scikit-learn, matplotlib 사용 가능), 리포트·모델카드·발표 개요·성찰문도 모두 답안 칸에 작성합니다. 과정의 학습 자료는 모듈마다 파일 하나(\`/course/llm-systems.md\` 등, 선택 분야 모듈 제외)로 읽을 수 있습니다.
 
 마지막으로 **실행 환경 초기화** 후 **전체 실행**을 눌러 모든 셀이 처음부터 오류 없이 실행되는지 확인합니다.
 

@@ -9,7 +9,7 @@ export default defineLesson({
   goal: "옌센 부등식으로 ELBO를 유도하고 가우시안 KL의 닫힌 형태를 쓰며, 재매개변수화 트릭의 필요성과 확산 모델의 순방향 닫힌 형태·노이즈 예측 손실을 설명할 수 있다.",
   why: "VAE와 확산 모델의 손실 함수는 직접 계산할 수 없는 로그가능도의 하한에서 나온다. 손실의 각 항이 어디서 나오는지 알아야 KL 항의 가중치나 노이즈 일정 같은 설정을 바꿀 때 결과를 예측하고, 생성 모델 논문의 수식을 읽을 수 있다.",
   body: md`
-[[lesson:generative-models]]는 VAE의 KL 항, GAN의 minimax, Diffusion의 노이즈 예측을 개념으로 설명했다. 이 레슨은 그중 VAE와 Diffusion의 학습 목표를 유도한다. 두 모델은 모두 "직접 계산할 수 없는 로그가능도 $\log p(x)$ 대신, 계산할 수 있는 하한을 최대화한다"는 같은 아이디어 위에 서 있다.
+[[lesson:generative-models]]은 VAE의 KL 항, GAN의 minimax, Diffusion의 노이즈 예측을 개념으로 설명했다. 이 레슨은 그중 VAE와 Diffusion의 학습 목표를 유도한다. 두 모델은 모두 "직접 계산할 수 없는 로그가능도 $\log p(x)$ 대신, 계산할 수 있는 하한을 최대화한다"는 같은 아이디어 위에 서 있다.
 
 ### ELBO: 로그가능도의 하한
 
@@ -72,7 +72,7 @@ $$\mathcal{L}_{\text{simple}} = \mathbb{E}_{t,\,x_0,\,\varepsilon}\big\lVert \va
       question: "재매개변수화 $z = \\mu + \\sigma\\varepsilon$, $\\varepsilon \\sim \\mathcal{N}(0,1)$이 하는 일은?",
       choices: ["무작위성을 학습과 무관한 $\\varepsilon$으로 옮겨 $\\mu, \\sigma$로 역전파가 가능하게 한다", "샘플링을 없앤다", "KL 항을 없앤다", "분산을 0으로 만든다"],
       answer: 0,
-      explanation: "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기를 인코더 파라미터에 대해서도 계산할 수 있다. 점수 함수 추정보다 분산도 훨씬 작다(예: 같은 문제에서 표준편차 약 0.20 대 0.54).",
+      explanation: "$z$가 $\\mu, \\sigma$의 미분 가능한 함수가 되어 복원 항의 기울기를 인코더 파라미터에 대해서도 계산할 수 있다. 점수 함수 추정보다 분산도 훨씬 작다(본문 그림의 예에서 표준편차 2 대 약 5.5).",
     },
     {
       key: "c3",

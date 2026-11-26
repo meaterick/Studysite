@@ -17,7 +17,7 @@ export default defineLesson({
 
 $$w^\top\eta = \varepsilon\sum_i |w_i| = \varepsilon\,\lVert w\rVert_1$$
 
-이다. 픽셀 하나당 변화는 $\varepsilon$으로 작아도, 입력 차원 $n$이 크면 $\lVert w\rVert_1$은 $n$에 비례해 커지므로 로짓이 크게 움직인다. Goodfellow et al. (2015)은 신경망이 ReLU처럼 구간별로 거의 **선형**으로 동작하는 구성 요소로 이루어져 있기 때문에 고차원에서 이런 취약성이 생긴다고 설명했다. 무작위 노이즈는 부호가 무작위라 $w^\top\eta$의 항들이 서로 상쇄되어(표준편차가 $\sqrt{n}$에 비례) 같은 크기라도 효과가 훨씬 작다.
+이다. 픽셀 하나당 변화는 $\varepsilon$으로 작아도, 입력 차원 $n$이 크면 $\lVert w\rVert_1$은 $n$에 비례해 커지므로 로짓이 크게 움직인다. Goodfellow et al. (2014)은 신경망이 ReLU처럼 구간별로 거의 **선형**으로 동작하는 구성 요소로 이루어져 있기 때문에 고차원에서 이런 취약성이 생긴다고 설명했다. 무작위 노이즈는 부호가 무작위라 $w^\top\eta$의 항들이 서로 상쇄되어(표준편차가 $\sqrt{n}$에 비례) 같은 크기라도 효과가 훨씬 작다.
 
 다음 코드는 입력 차원을 늘려 가며 같은 크기($\varepsilon = 0.01$)의 "맞춘 노이즈"와 "무작위 노이즈"가 선형 로짓을 얼마나 바꾸는지 잰다.
 
@@ -55,7 +55,7 @@ $$x_{\text{adv}} = \operatorname{clip}_{[0,1]}\big(x + \varepsilon\,\operatornam
 src: /images/week4/fgsm-panda.jpg
 alt: 판다 사진(GoogLeNet이 57.7% 확신으로 판다라고 분류)에 손실 기울기의 부호로 만든 알록달록한 노이즈를 0.007배 더하면, 사람 눈에는 똑같은 판다 사진인데 모델은 99.3% 확신으로 긴팔원숭이라고 분류한다.
 caption: FGSM의 대표적인 예다. 원본(왼쪽, 판다 57.7%)에 입력에 대한 손실 기울기의 부호(가운데)를 ε = 0.007배 더하면, 사람 눈에는 차이가 보이지 않는 이미지(오른쪽)를 GoogLeNet이 99.3% 확신으로 긴팔원숭이라고 분류한다. ε = 0.007은 GoogLeNet이 입력을 실수로 변환했을 때 8비트 이미지의 최소 단위 한 칸에 해당하는 크기다.
-credit: Goodfellow, Shlens & Szegedy (2015), Explaining and Harnessing Adversarial Examples, Figure 1 (arXiv:1412.6572)
+credit: Goodfellow, Shlens & Szegedy (2014), Explaining and Harnessing Adversarial Examples, Figure 1 (arXiv:1412.6572)
 width: 1760
 height: 636
 \`\`\`
@@ -81,7 +81,7 @@ height: 636
     },
     {
       key: "c3",
-      question: "실습의 softmax 회귀에서 $\\varepsilon = 0.1$의 FGSM은 정확도를 0.965에서 0.646으로 떨어뜨렸지만, 같은 크기의 무작위 부호 노이즈를 더한 정확도는 0.965 그대로였다. 가장 알맞은 해석은?",
+      question: "실습의 softmax 회귀에서 $\\varepsilon = 0.1$의 FGSM은 정확도를 0.965에서 0.646으로 떨어뜨렸지만, 같은 크기의 무작위 부호 노이즈를 더한 정확도는 0.954로 거의 그대로였다. 가장 알맞은 해석은?",
       choices: ["노이즈의 크기보다 방향(기울기와 맞춘 부호)이 결정적이다", "무작위 노이즈가 더 작았다", "모델이 무작위 노이즈로 학습되었다", "테스트셋이 달랐다"],
       answer: 0,
       explanation: "무작위 부호는 $w^\\top\\eta$의 항들이 상쇄되어 효과가 $\\sqrt{n}$ 정도로 작지만, FGSM은 모든 항이 같은 방향으로 더해져 $n$에 비례한다.",
@@ -115,13 +115,13 @@ height: 636
       key: "d2",
       question: "어떤 팀이 \"우리 이미지 분류기는 테스트 정확도 98%이고, 가우시안 노이즈를 섞어도 95%를 유지하니 강건하다\"고 주장한다. 적대적 예제의 관점에서 이 주장의 허점을 설명하고, 강건성을 제대로 평가하고 높이는 방법을 제안하라.",
       answer: md`
-무작위 노이즈에 대한 성능은 평균적인 교란에 대한 성적일 뿐, 최악의 교란에 대한 보장이 아니다. 무작위 노이즈는 방향이 무작위라 로짓에 주는 효과가 서로 상쇄되지만, FGSM처럼 입력 기울기의 부호로 맞춘 노이즈는 같은 크기에서도 모든 항이 같은 방향으로 더해져 $\varepsilon\lVert w\rVert_1$만큼 로짓을 움직이고, 고차원 이미지에서는 이 값이 매우 크다(실습의 모델에서도 같은 크기의 교란에서 무작위 노이즈는 정확도 0.965를 유지했지만 FGSM은 0.646까지 떨어뜨렸다). 따라서 강건성은 허용 교란 크기 $\varepsilon$를 정하고 FGSM보다 강한 PGD 같은 반복 공격으로 측정한 정확도로 보고해야 한다. 강건성을 높이는 방법으로는 학습 중 PGD 적대적 예제를 섞는 적대적 학습이 대표적으로 사용되며, 교란하지 않은 데이터의 정확도가 조금 떨어지는 것과 학습 비용이 늘어나는 것을 함께 보고한다.
+무작위 노이즈에 대한 성능은 평균적인 교란에 대한 성적일 뿐, 최악의 교란에 대한 보장이 아니다. 무작위 노이즈는 방향이 무작위라 로짓에 주는 효과가 서로 상쇄되지만, FGSM처럼 입력 기울기의 부호로 맞춘 노이즈는 같은 크기에서도 모든 항이 같은 방향으로 더해져 $\varepsilon\lVert w\rVert_1$만큼 로짓을 움직이고, 고차원 이미지에서는 이 값이 매우 크다(실습의 모델에서도 같은 크기의 교란에서 무작위 노이즈는 정확도를 0.954로 거의 유지했지만 FGSM은 0.646까지 떨어뜨렸다). 따라서 강건성은 허용 교란 크기 $\varepsilon$를 정하고 FGSM보다 강한 PGD 같은 반복 공격으로 측정한 정확도로 보고해야 한다. 강건성을 높이는 방법으로는 학습 중 PGD 적대적 예제를 섞는 적대적 학습이 대표적으로 사용되며, 교란하지 않은 데이터의 정확도가 조금 떨어지는 것과 학습 비용이 늘어나는 것을 함께 보고한다.
 `,
       keyPoints: ["무작위 노이즈에 대한 강건성은 최악의 경우 강건성이 아니다", "기울기 부호로 맞춘 노이즈의 효과가 차원에 비례", "PGD 등 강한 공격으로 허용 교란 크기를 명시해 평가", "적대적 학습과 그 대가"],
     },
   ],
   references: [
-    { title: "Goodfellow, Shlens & Szegedy (2015) — Explaining and Harnessing Adversarial Examples", url: "https://arxiv.org/abs/1412.6572", note: "선형성 가설과 FGSM (영문)" },
+    { title: "Goodfellow, Shlens & Szegedy (2014) — Explaining and Harnessing Adversarial Examples", url: "https://arxiv.org/abs/1412.6572", note: "선형성 가설과 FGSM (영문)" },
     { title: "Madry et al. (2018) — Towards Deep Learning Models Resistant to Adversarial Attacks", url: "https://arxiv.org/abs/1706.06083", note: "PGD와 적대적 학습 (영문)" },
   ],
 });
