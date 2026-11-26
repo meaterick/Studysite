@@ -392,7 +392,7 @@ print(f"A {count_a}명, B {count_b}명, C {count_c}명, F {count_f}명")    # A 
       question: "`print(list(range(1, 5)))`의 출력은?",
       choices: ["`[1, 2, 3, 4]`", "`[1, 2, 3, 4, 5]`", "`[0, 1, 2, 3, 4]`", "`[2, 3, 4, 5]`"],
       answer: 0,
-      explanation: "`range(시작, 끝)`은 시작부터 끝 **직전**까지 만든다. 슬라이싱에서 끝 인덱스가 빠지는 것과 같은 규칙이다.",
+      explanation: "`range(시작, 끝)`은 시작부터 끝 **직전**까지 만든다. 슬라이싱에서 끝 인덱스가 빠지는 것과 같은 규칙이다. 시작 값 1을 주었으므로 0부터 시작하지도 않는다.",
     },
     {
       key: "c2",
@@ -406,14 +406,14 @@ print(f"A {count_a}명, B {count_b}명, C {count_c}명, F {count_f}명")    # A 
       question: "다음 코드의 출력은?\n\n```python\nfor x in [1, 2, 3, 4, 5]:\n    if x == 2:\n        continue\n    if x == 4:\n        break\n    print(x)\n```",
       choices: ["`1 3`(한 줄에 하나씩)", "`1 3 5`(한 줄에 하나씩)", "`1 2 3`(한 줄에 하나씩)", "`1`"],
       answer: 0,
-      explanation: "x가 2일 때는 `continue`로 출력을 건너뛰고, 4일 때 `break`로 반복이 끝난다. 그래서 1과 3만 출력된다.",
+      explanation: "x가 2일 때는 `continue`로 출력을 건너뛰고, 4일 때 `break`로 반복이 끝난다. 그래서 1과 3만 출력된다. `break`를 `continue`처럼 다음 값으로 넘어가는 것으로 보면 `1 3 5`를 고르게 된다.",
     },
     {
       key: "c4",
       question: "모든 값이 음수인 리스트에서 최댓값을 구하는 반복문의 시작 값으로 알맞은 것은?",
       choices: ["`best = 0`", "`best = values[0]`", "`best = None` 다음 `best > v`로 비교", "`best = len(values)`"],
       answer: 1,
-      explanation: "0에서 시작하면 어떤 음수도 0보다 크지 않아 답이 0이 된다. 첫 원소에서 시작하거나 `float(\"-inf\")`에서 시작해야 한다.",
+      explanation: "0에서 시작하면 어떤 음수도 0보다 크지 않아 답이 0이 된다. 첫 원소에서 시작하거나 `float(\"-inf\")`에서 시작해야 한다. `None`에서 시작하면 `None`과 숫자의 크기를 비교할 수 없어 `TypeError`가 난다.",
     },
     {
       key: "c5",

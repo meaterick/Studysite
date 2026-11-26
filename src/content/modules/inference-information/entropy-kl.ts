@@ -99,7 +99,7 @@ KL(fair‖biased)를 냇으로: 0.511
     {
       key: "c2",
       question: "KL 발산 $D_{\\mathrm{KL}}(p \\parallel q)$에 대한 설명으로 **틀린** 것은?",
-      choices: ["항상 0 이상이다", "$p = q$일 때만 0이다", "$H(p, q) - H(p)$와 같다", "항상 $D_{\\mathrm{KL}}(q \\parallel p)$와 같다"],
+      choices: ["항상 0 이상이다", "$p$와 $q$가 같은 분포일 때만 0이 된다", "교차엔트로피에서 엔트로피를 뺀 값 $H(p, q) - H(p)$와 같다", "항상 $D_{\\mathrm{KL}}(q \\parallel p)$와 같다"],
       answer: 3,
       explanation: "KL 발산은 대칭이 아니다. 공정한 분포와 (0.9, 0.1) 사이에서 $D_{\\mathrm{KL}}(\\text{fair} \\parallel \\text{biased}) \\approx 0.737$, $D_{\\mathrm{KL}}(\\text{biased} \\parallel \\text{fair}) \\approx 0.531$이다.",
     },
@@ -115,7 +115,7 @@ KL(fair‖biased)를 냇으로: 0.511
       question: "봉우리가 둘인 분포 $p$를 정규분포 $q$ 하나로 근사할 때, $D_{\\mathrm{KL}}(p \\parallel q)$를 줄인 결과로 알맞은 것은?",
       choices: [
         "$q$가 두 봉우리를 모두 덮도록 넓게 퍼진다",
-        "$q$가 봉우리 하나에 좁게 맞춰진다",
+        "$q$가 두 봉우리 중 하나에만 좁게 맞춰진다",
         "$q$가 $p$와 정확히 같아진다",
         "$q$의 분산이 0이 된다",
       ],
@@ -125,14 +125,14 @@ KL(fair‖biased)를 냇으로: 0.511
     {
       key: "c5",
       question: "모델의 예측 분포 $q$가 정답 분포 $p$와 완전히 같아지면 교차엔트로피 $H(p, q)$는?",
-      choices: ["$H(p)$와 같아지고 KL 발산은 0이 된다", "0이 된다", "무한대가 된다", "1비트가 된다"],
+      choices: ["$H(p)$와 같아진다", "0이 된다. 정답을 완벽히 맞혔기 때문이다", "무한대가 된다", "1비트가 된다"],
       answer: 0,
       explanation: "$H(p, q) = H(p) + D_{\\mathrm{KL}}(p \\parallel q)$이고 $q = p$면 KL이 0이다. 정답 분포 자체가 불확실하면 $H(p) > 0$이라 손실이 0까지 내려가지 않는다.",
     },
     {
       key: "c6",
       question: "엔트로피 구현의 `p = p[p > 0]` 줄을 지우고 `entropy([1.0, 0.0])`을 계산하면?",
-      choices: ["0.0이 정상적으로 나온다", "`nan`이 나온다. $0 \\cdot \\log 0$이 `0 * -inf = nan`이 되기 때문이다", "1.0이 나온다", "`ZeroDivisionError`가 발생한다"],
+      choices: ["0.0이 정상적으로 나온다", "`nan`이 나온다(`0 * -inf`)", "1.0이 나온다", "`ZeroDivisionError`가 발생한다"],
       answer: 1,
       explanation: "NumPy에서 `np.log2(0)`은 `-inf`이고 `0 * -inf`는 `nan`이다. 수학에서는 극한으로 $0 \\cdot \\log 0 = 0$으로 정의하므로, 코드에서도 확률이 0인 항을 빼고 더해야 정의와 같아진다.",
     },

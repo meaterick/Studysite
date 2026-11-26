@@ -186,7 +186,7 @@ Name: score, dtype: float64
       choices: [
         "고객마다 한 행이고, 인덱스가 customer_id인 Series다",
         "원래 행 수만큼의 Series다",
-        "주문마다 고객의 총액을 붙인 DataFrame이다",
+        "주문마다 그 고객의 총액을 붙인, 원래 크기의 DataFrame이다",
         "전체 금액의 합인 숫자 하나다",
       ],
       answer: 0,
@@ -198,8 +198,8 @@ Name: score, dtype: float64
       choices: [
         "고객 표에 같은 customer_id가 여러 번 있다",
         "주문 표에 결측값이 있다",
-        "고객 표에 없는 고객이 있다",
-        "left 결합은 항상 행을 늘린다",
+        "고객 표에 없는 고객의 주문이 있다",
+        "left 결합은 오른쪽 표의 행 수만큼 항상 행을 늘린다",
       ],
       answer: 0,
       explanation: "오른쪽 표의 키가 중복되면 왼쪽 행이 그 수만큼 복제된다. 짝이 없는 고객은 left 결합에서 결측으로 남을 뿐 행 수를 늘리지 않는다. `validate='many_to_one'`으로 중복을 검사한다.",
@@ -210,11 +210,11 @@ Name: score, dtype: float64
       choices: [
         "`orders['amount'] / orders.groupby('customer_id')['amount'].transform('sum')`",
         "`orders['amount'] / orders.groupby('customer_id')['amount'].sum()`",
-        "`orders.groupby('customer_id')['amount'].mean()`",
+        "`orders['amount'] / orders.groupby('customer_id')['amount'].transform('mean')`",
         "`orders['amount'] / orders['amount'].sum()`",
       ],
       answer: 0,
-      explanation: "`transform('sum')`은 행마다 그 행이 속한 고객의 합을 원래 행 수 그대로 돌려주므로 나눗셈이 행 단위로 맞는다. 두 번째 식은 인덱스가 고객 번호인 Series와 나누어 인덱스가 맞지 않는다.",
+      explanation: "`transform('sum')`은 행마다 그 행이 속한 고객의 합을 원래 행 수 그대로 돌려주므로 나눗셈이 행 단위로 맞는다. 두 번째 식은 인덱스가 고객 번호인 Series와 나누어 인덱스가 맞지 않는다. `transform('mean')`으로 나누면 비율이 아니라 고객 평균에 대한 배수가 되고, 마지막 식은 고객이 아니라 전체 합에 대한 비율이다.",
     },
     {
       key: "c4",
@@ -232,7 +232,7 @@ Name: score, dtype: float64
       key: "c5",
       question: "집단 A와 B의 정확도가 각각 0.95와 0.70이고 전체 정확도가 0.9이다. 이 결과에서 확인해야 할 점으로 가장 알맞은 것은?",
       choices: [
-        "전체 정확도가 높아도 집단 B에서 모델이 훨씬 자주 틀리므로 원인을 따로 살펴야 한다",
+        "집단 B에서 훨씬 자주 틀리므로 원인을 따로 살핀다",
         "전체 정확도가 0.9이므로 집단별 차이는 무시해도 된다",
         "집단 B의 데이터를 버리면 된다",
         "정확도는 집단별로 계산할 수 없다",

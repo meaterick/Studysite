@@ -333,7 +333,7 @@ print(status)           # 0
       question: "`print(3 < 5 and not 2 > 1)`의 출력은?",
       choices: ["`True`", "`False`", "`None`", "`SyntaxError`"],
       answer: 1,
-      explanation: "`3 < 5`는 True, `2 > 1`은 True라서 `not 2 > 1`은 False다. True and False는 False다. 비교 연산이 `not`보다 먼저 계산된다.",
+      explanation: "`3 < 5`는 True, `2 > 1`은 True라서 `not 2 > 1`은 False다. True and False는 False다. 비교 연산이 `not`보다 먼저 계산되므로 `not 2 > 1`은 `not (2 > 1)`이고 문법 오류가 아니다.",
     },
     {
       key: "c2",
@@ -346,13 +346,13 @@ print(status)           # 0
       key: "c3",
       question: "`x = 5`일 때 `if x == 1 or 2:` 블록은 실행되는가?",
       choices: [
-        "실행되지 않는다. x는 1도 2도 아니다",
-        "실행된다. `(x == 1) or 2`의 값이 참인 2이기 때문이다",
+        "실행되지 않는다. x는 1도 2도 아니므로 조건이 거짓이다",
+        "실행된다. `or`의 오른쪽 값 2가 참이기 때문이다",
         "`SyntaxError`가 난다",
         "실행되지 않는다. `or`는 정수와 쓸 수 없다",
       ],
       answer: 1,
-      explanation: "`x == 1 or 2`는 `(x == 1) or 2`다. 왼쪽이 False라 `or`는 오른쪽 값 2를 돌려주고, 2는 참으로 취급된다. `x in (1, 2)`로 써야 한다.",
+      explanation: "`x == 1 or 2`는 `(x == 1) or 2`다. 왼쪽이 False라 `or`는 오른쪽 값 2를 돌려주고, 2는 참으로 취급된다. \"x는 1도 2도 아니다\"라고 읽는 것은 `x == 1 or x == 2`로 착각한 것이다. 그렇게 검사하려면 `x in (1, 2)`로 써야 한다.",
     },
     {
       key: "c4",

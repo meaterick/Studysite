@@ -119,14 +119,14 @@ print(dW.shape, db.shape, dx.shape, float(np.max(np.abs(dW - num))) < 1e-6)   # 
       question: "곱셈 노드 $z = a \\cdot b$에서 $a = 3$, $b = -2$이고 출력 쪽 기울기가 $\\partial L/\\partial z = 5$일 때 $\\partial L/\\partial a$는?",
       choices: ["$-10$", "$5$", "$15$", "$-2$"],
       answer: 0,
-      explanation: "곱셈 노드는 상대 입력의 값을 곱해 보낸다: $5 \\times b = 5 \\times (-2) = -10$.",
+      explanation: "곱셈 노드는 상대 입력의 값을 곱해 보낸다: $5 \\times b = 5 \\times (-2) = -10$. $15$는 자기 값 $a$를 곱한 것이고, $5$는 덧셈 노드처럼 그대로 보낸 것이다.",
     },
     {
       key: "c2",
       question: "덧셈 노드 $z = a + b$에서 기울기 $g$를 받으면 $a$, $b$로 보내는 기울기는?",
       choices: ["각각 $g$", "각각 $g/2$", "$a$에만 $g$", "$g \\cdot a$, $g \\cdot b$"],
       answer: 0,
-      explanation: "$\\partial z / \\partial a = \\partial z / \\partial b = 1$이므로 기울기가 그대로 양쪽으로 간다.",
+      explanation: "$\\partial z / \\partial a = \\partial z / \\partial b = 1$이므로 기울기가 그대로 양쪽으로 간다. 덧셈 노드는 기울기를 반으로 나누지 않고 양쪽에 같은 값을 보낸다.",
     },
     {
       key: "c3",
@@ -138,14 +138,14 @@ print(dW.shape, db.shape, dx.shape, float(np.max(np.abs(dW - num))) < 1e-6)   # 
         "GPU에서만 동작하기 때문",
       ],
       answer: 0,
-      explanation: "수치미분은 파라미터마다 순전파를 다시 해야 하므로 $p$번 이상의 순전파가 필요하다. 역전파는 중간값을 재사용해 그래프를 거꾸로 한 번 지난다.",
+      explanation: "수치미분은 파라미터마다 순전파를 다시 해야 하므로 $p$번 이상의 순전파가 필요하다. 역전파는 중간값을 재사용해 그래프를 거꾸로 한 번 지난다. 역전파도 연쇄법칙을 쓸 뿐 새로운 미분 규칙이 아니며, 수치미분과 달리 근사 오차가 없다.",
     },
     {
       key: "c4",
       question: "한 값 $a$가 두 노드의 입력으로 쓰여, 두 경로에서 기울기 3과 −1이 돌아왔다. $\\partial L / \\partial a$는?",
       choices: ["2", "3", "−3", "−1"],
       answer: 0,
-      explanation: "여러 경로로 손실에 영향을 주는 값의 기울기는 경로별 기울기의 합이다.",
+      explanation: "여러 경로로 손실에 영향을 주는 값의 기울기는 경로별 기울기의 합이므로 $3 + (-1) = 2$다. 한 경로의 기울기만 고르면 3이나 −1이 된다.",
     },
     {
       key: "c5",

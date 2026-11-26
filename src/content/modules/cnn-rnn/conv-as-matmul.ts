@@ -78,7 +78,7 @@ im2col 행렬 shape: (9, 9)
     {
       key: "c2",
       question: "합성곱 $y = x \\star k$에서 출력 쪽에서 전달된 기울기가 $G$일 때 커널의 기울기 $\\partial L/\\partial k$는?",
-      choices: ["입력 $x$와 $G$의 합성곱", "$G$와 커널의 곱", "$x$의 전치", "커널을 180° 뒤집은 것"],
+      choices: ["입력 $x$와 $G$의 합성곱", "$G$와 커널의 곱", "$x$의 전치", "$G$를 180° 뒤집은 커널로 합성곱한 것"],
       answer: 0,
       explanation: "$\\partial L/\\partial k_{ab} = \\sum_{i,j} G_{ij}x_{i+a,j+b}$이므로 $x \\star G$다. 입력의 기울기는 가장자리에 0을 채운 $G$를 뒤집은 커널로 합성곱한 것이다.",
     },
@@ -99,7 +99,7 @@ im2col 행렬 shape: (9, 9)
     {
       key: "c5",
       question: "해상도를 두 배($H, W \\to 2H, 2W$)로 키우면 같은 합성곱층의 파라미터 수와 FLOPs는?",
-      choices: ["파라미터는 그대로, FLOPs는 4배", "둘 다 4배", "파라미터 4배, FLOPs 그대로", "둘 다 2배"],
+      choices: ["파라미터 그대로, FLOPs 4배", "둘 다 4배", "파라미터 4배, FLOPs 그대로", "둘 다 2배"],
       answer: 0,
       explanation: "파라미터 $K^2C_{in}C_{out}$은 해상도와 무관하고, FLOPs $2HWK^2C_{in}C_{out}$은 출력 위치 수 $HW$에 비례해 4배가 된다.",
     },

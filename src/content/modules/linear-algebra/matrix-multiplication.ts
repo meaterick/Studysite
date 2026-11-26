@@ -163,7 +163,7 @@ print(np.allclose(by_loop, by_batch), by_batch.shape)   # True (4, 2)
       question: "$2 \\times 3$ 행렬과 $3 \\times 4$ 행렬을 곱한 결과의 모양은?",
       choices: ["$2 \\times 4$", "$3 \\times 3$", "$2 \\times 3$", "곱할 수 없다"],
       answer: 0,
-      explanation: "안쪽 차원 3이 같아 곱할 수 있고, 바깥 차원 2와 4가 결과의 모양이 된다: $(2 \\times 3)(3 \\times 4) = (2 \\times 4)$.",
+      explanation: "안쪽 차원 3이 같아 곱할 수 있고, 바깥 차원 2와 4가 결과의 모양이 된다: $(2 \\times 3)(3 \\times 4) = (2 \\times 4)$. 안쪽 차원 3은 곱하는 과정에서 사라진다.",
     },
     {
       key: "c2",
@@ -198,7 +198,7 @@ print(np.allclose(by_loop, by_batch), by_batch.shape)   # True (4, 2)
       question: "NumPy에서 `A = np.array([[1, 2], [3, 4]])`, `B = np.array([[5, 6], [7, 8]])`일 때 `(A * B)[0, 1]`과 `(A @ B)[0, 1]`은?",
       choices: ["12와 22", "22와 12", "12와 12", "6과 22"],
       answer: 0,
-      explanation: "`*`는 같은 위치끼리 곱하므로 $2 \\times 6 = 12$이고, `@`는 행렬곱이라 1행과 2열의 내적 $1 \\cdot 6 + 2 \\cdot 8 = 22$다.",
+      explanation: "`*`는 같은 위치끼리 곱하므로 $2 \\times 6 = 12$이고, `@`는 행렬곱이라 1행과 2열의 내적 $1 \\cdot 6 + 2 \\cdot 8 = 22$다. 두 값을 바꿔 고르면 `*`를 행렬곱으로 본 것이다.",
     },
   ],
   exercises,

@@ -99,7 +99,7 @@ print(f"예측 양성 비율 {mu} → 추정한 실제 양성 비율 {(mu - fpr)
     {
       key: "c1",
       question: "PSI $= \\sum_i (p_i - q_i)\\ln(p_i/q_i)$와 같은 것은?",
-      choices: ["$\\text{KL}(p \\Vert q)$", "$\\text{KL}(p \\Vert q) + \\text{KL}(q \\Vert p)$", "$\\text{KL}(q \\Vert p)$", "교차 엔트로피"],
+      choices: ["$\\text{KL}(p \\Vert q)$", "$\\text{KL}(p \\Vert q) + \\text{KL}(q \\Vert p)$", "$\\text{KL}(q \\Vert p)$", "$\\text{KL}(p \\Vert q) - \\text{KL}(q \\Vert p)$"],
       answer: 1,
       explanation: "$(p - q)\\ln(p/q) = p\\ln(p/q) + q\\ln(q/p)$이므로 두 방향 KL의 합(제프리스 발산)이다.",
     },
@@ -108,14 +108,14 @@ print(f"예측 양성 비율 {mu} → 추정한 실제 양성 비율 {(mu - fpr)
       question: "구간 10개, 학습 표본 1만 개로 PSI를 잰다. 드리프트가 전혀 없을 때 운영 표본이 100명이면 PSI는 대략 얼마인가?",
       choices: ["정확히 0", "약 0.09", "약 0.5", "약 1.0"],
       answer: 1,
-      explanation: "$(B-1)(1/n + 1/m) = 9 \\times (0.0001 + 0.01) \\approx 0.09$. 시뮬레이션하면 40%의 경우 0.1을 넘어 거짓 경보가 울린다.",
+      explanation: "$(B-1)(1/n + 1/m) = 9 \\times (0.0001 + 0.01) \\approx 0.09$. 시뮬레이션하면 40%의 경우 0.1을 넘어 거짓 경보가 울린다. 표본이 유한하면 드리프트가 없어도 PSI는 0보다 크다.",
     },
     {
       key: "c3",
       question: "BBSE로 라벨 드리프트를 추정할 때 꼭 필요한 가정은?",
-      choices: ["입력 분포 $P(x)$가 그대로다", "각 클래스 안의 모습 $P(x \\mid y)$가 그대로다", "운영 데이터의 라벨을 모두 안다", "분류기가 완벽하다"],
+      choices: ["입력 분포 $P(x)$가 학습 때와 그대로다", "$P(x \\mid y)$가 그대로다", "운영 데이터의 라벨을 모두 안다", "분류기가 완벽하다"],
       answer: 1,
-      explanation: "$P(x \\mid y)$가 그대로여야 검증 데이터의 혼동 행렬이 운영에서도 유효해 $\\mu = Cw$가 성립한다. 분류기는 혼동 행렬이 가역이기만 하면 된다.",
+      explanation: "각 클래스 안의 모습 $P(x \\mid y)$가 그대로여야 검증 데이터의 혼동 행렬이 운영에서도 유효해 $\\mu = Cw$가 성립한다. 분류기는 혼동 행렬이 가역이기만 하면 된다. 라벨 드리프트에서는 $P(y)$가 바뀌므로 $P(x)$도 함께 바뀐다.",
     },
     {
       key: "c4",

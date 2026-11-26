@@ -178,7 +178,7 @@ $f = u + v$로 바꾸면($u = w^2$, $v = 3w$) $\frac{\partial f}{\partial u} = 1
       question: "$\\sigma(z) = 0.8$일 때 $\\sigma'(z)$는?",
       choices: ["$0.16$", "$0.8$", "$0.2$", "$0.64$"],
       answer: 0,
-      explanation: "$\\sigma'(z) = \\sigma(z)(1 - \\sigma(z)) = 0.8 \\times 0.2 = 0.16$이다.",
+      explanation: "$\\sigma'(z) = \\sigma(z)(1 - \\sigma(z)) = 0.8 \\times 0.2 = 0.16$이다. 0.8은 $\\sigma(z)$ 자체이고, 0.64는 $\\sigma(z)^2$이다.",
     },
     {
       key: "c5",
@@ -192,7 +192,7 @@ $f = u + v$로 바꾸면($u = w^2$, $v = 3w$) $\frac{\partial f}{\partial u} = 1
       question: "$u = 2w$, $v = w^2$, $f = u + v$일 때 $w = 1$에서 $\\frac{df}{dw}$는?",
       choices: ["$4$", "$2$", "$3$", "$1$"],
       answer: 0,
-      explanation: "두 경로의 기여를 더한다. $\\frac{\\partial f}{\\partial u}\\frac{du}{dw} + \\frac{\\partial f}{\\partial v}\\frac{dv}{dw} = 1 \\cdot 2 + 1 \\cdot 2w = 4$이다. $f = 2w + w^2$을 직접 미분해도 $2 + 2w = 4$다.",
+      explanation: "두 경로의 기여를 더한다. $\\frac{\\partial f}{\\partial u}\\frac{du}{dw} + \\frac{\\partial f}{\\partial v}\\frac{dv}{dw} = 1 \\cdot 2 + 1 \\cdot 2w = 4$이다. $f = 2w + w^2$을 직접 미분해도 $2 + 2w = 4$다. 한 경로만 따라가면 2가 나온다.",
     },
   ],
   exercises,
